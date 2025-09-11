@@ -9,126 +9,6 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The project ID to deploy to"
-  type        = string
-}
-
-variable "region" {
-  description = "The region for the Cloud Run service"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "database_connection_name" {
-  description = "The connection name of the Cloud SQL instance"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment (staging, prod)"
-  type        = string
-  default     = "staging"
-}
-
-variable "image_tag_suffix" {
-  description = "Image tag suffix (latest, staging-latest)"
-  type        = string
-  default     = "latest"
-}
-
-variable "discord_webhook_url" {
-  description = "Discord webhook URL for notifications"
-  type        = string
-  default     = ""
-}
-
-variable "min_instances" {
-  description = "Minimum number of Cloud Run instances"
-  type        = number
-  default     = 0
-}
-
-variable "max_instances" {
-  description = "Maximum number of Cloud Run instances"
-  type        = number
-  default     = 10
-}
-
-variable "cpu_limit" {
-  description = "CPU allocation for Cloud Run containers"
-  type        = string
-  default     = "1"
-}
-
-variable "memory_limit" {
-  description = "Memory allocation for Cloud Run containers"
-  type        = string
-  default     = "1Gi"
-}
-
-variable "enable_cpu_throttling" {
-  description = "Enable CPU throttling"
-  type        = bool
-  default     = true
-}
-
-variable "enable_http2" {
-  description = "Enable HTTP/2"
-  type        = bool
-  default     = false
-}
-
-variable "request_timeout" {
-  description = "Request timeout in seconds"
-  type        = number
-  default     = 300
-}
-
-variable "concurrency_limit" {
-  description = "Maximum number of concurrent requests per instance"
-  type        = number
-  default     = 80
-}
-
-variable "custom_domain" {
-  description = "Custom domain for backend service (e.g., api.grantflow.ai)"
-  type        = string
-  default     = ""
-}
-
-variable "crawler_custom_domain" {
-  description = "Custom domain for crawler service"
-  type        = string
-  default     = ""
-}
-
-variable "indexer_custom_domain" {
-  description = "Custom domain for indexer service"
-  type        = string
-  default     = ""
-}
-
-variable "rag_custom_domain" {
-  description = "Custom domain for rag service"
-  type        = string
-  default     = ""
-}
-
-variable "scraper_custom_domain" {
-  description = "Custom domain for scraper service"
-  type        = string
-  default     = ""
-}
-
-variable "backend_service_account_email" {
-  description = "Service account email for the backend service"
-  type        = string
-  default     = ""
-}
-
-
-
 resource "google_cloud_run_v2_service" "backend" {
   name                = "backend"
   location            = var.region
@@ -182,6 +62,10 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -249,6 +133,31 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "rag-processing"
       }
 
+      env {
+        name  = "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC"
+        value = "email-notifications"
+      }
+
+      env {
+        name = "PUBSUB_WEBHOOK_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = "PUBSUB_WEBHOOK_TOKEN"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "RESEND_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "RESEND_API_KEY"
+            version = "latest"
+          }
+        }
+      }
+
 
       volume_mounts {
         name       = "cloudsql"
@@ -276,6 +185,12 @@ resource "google_cloud_run_v2_service" "backend" {
   ingress = "INGRESS_TRAFFIC_ALL"
 }
 
+resource "google_cloud_run_v2_service_iam_member" "backend_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
 
 resource "google_cloud_run_v2_service" "crawler" {
   name                = "crawler"
@@ -288,8 +203,8 @@ resource "google_cloud_run_v2_service" "crawler" {
 
       resources {
         limits = {
-          cpu    = var.cpu_limit
-          memory = var.memory_limit
+          cpu    = var.crawler_cpu_limit != "" ? var.crawler_cpu_limit : var.cpu_limit
+          memory = var.crawler_memory_limit != "" ? var.crawler_memory_limit : var.memory_limit
         }
       }
 
@@ -328,6 +243,10 @@ resource "google_cloud_run_v2_service" "crawler" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -371,12 +290,13 @@ resource "google_cloud_run_v2_service" "crawler" {
     }
 
     scaling {
-      max_instance_count = var.max_instances
-      min_instance_count = var.min_instances
+      max_instance_count = var.crawler_max_instances >= 0 ? var.crawler_max_instances : var.max_instances
+      min_instance_count = var.crawler_min_instances >= 0 ? var.crawler_min_instances : var.min_instances
     }
 
-    timeout                          = "${var.request_timeout}s"
-    max_instance_request_concurrency = var.concurrency_limit
+    timeout = "${var.request_timeout}s"
+    # ~keep Reduced concurrency for crawler to process one URL at a time
+    max_instance_request_concurrency = var.crawler_concurrency_limit > 0 ? var.crawler_concurrency_limit : var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -395,7 +315,7 @@ resource "google_cloud_run_v2_service" "indexer" {
       resources {
         limits = {
           cpu    = var.cpu_limit
-          memory = var.memory_limit
+          memory = var.indexer_memory_limit != "" ? var.indexer_memory_limit : var.memory_limit
         }
       }
 
@@ -434,6 +354,10 @@ resource "google_cloud_run_v2_service" "indexer" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -477,12 +401,13 @@ resource "google_cloud_run_v2_service" "indexer" {
     }
 
     scaling {
-      max_instance_count = var.max_instances
-      min_instance_count = var.min_instances
+      max_instance_count = var.indexer_max_instances >= 0 ? var.indexer_max_instances : var.max_instances
+      min_instance_count = var.indexer_min_instances >= 0 ? var.indexer_min_instances : var.min_instances
     }
 
-    timeout                          = "${var.request_timeout}s"
-    max_instance_request_concurrency = var.concurrency_limit
+    timeout = "${var.request_timeout}s"
+    # ~keep Reduced concurrency for indexer to prevent 429 errors during bursts
+    max_instance_request_concurrency = var.indexer_concurrency_limit > 0 ? var.indexer_concurrency_limit : var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -495,13 +420,15 @@ resource "google_cloud_run_v2_service" "rag" {
   deletion_protection = false
 
   template {
+    service_account = var.rag_service_account_email != "" ? var.rag_service_account_email : null
+
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:${var.image_tag_suffix}"
 
       resources {
         limits = {
-          cpu    = var.cpu_limit
-          memory = var.memory_limit
+          cpu    = var.rag_cpu_limit != "" ? var.rag_cpu_limit : var.cpu_limit
+          memory = var.rag_memory_limit != "" ? var.rag_memory_limit : var.memory_limit
         }
       }
 
@@ -540,6 +467,10 @@ resource "google_cloud_run_v2_service" "rag" {
         value = "frontend-notifications"
       }
 
+      env {
+        name  = "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC"
+        value = "email-notifications"
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -652,20 +583,21 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_rag" {
 }
 
 
-# Scraper Service - NIH grant scraping with Cloud Scheduler
 resource "google_cloud_run_v2_service" "scraper" {
   name                = "scraper"
   location            = var.region
   deletion_protection = false
 
   template {
+    service_account = var.scraper_service_account_email
+
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
 
       resources {
         limits = {
           cpu    = var.cpu_limit
-          memory = var.memory_limit
+          memory = var.scraper_memory_limit != "" ? var.scraper_memory_limit : var.memory_limit
         }
       }
 
@@ -684,7 +616,6 @@ resource "google_cloud_run_v2_service" "scraper" {
         failure_threshold     = 5
       }
 
-      # Standard environment variables
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
         value = var.project_id
@@ -700,25 +631,26 @@ resource "google_cloud_run_v2_service" "scraper" {
         value = "us-central1"
       }
 
-      # Scraper-specific bucket name
       env {
         name  = "SCRAPER_GCS_BUCKET_NAME"
-        value = "grantflow-scraper"
+        value = "grantflow-scraper-${var.environment}"
       }
 
-      # Environment name
       env {
         name  = "ENVIRONMENT"
         value = var.environment
       }
 
-      # Discord webhook URL for notifications
       env {
         name  = "DISCORD_WEBHOOK_URL"
         value = var.discord_webhook_url
       }
 
-      # Playwright configuration for browser automation
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
+
       env {
         name  = "PLAYWRIGHT_BROWSERS_PATH"
         value = "/app/.cache/ms-playwright"
@@ -729,7 +661,21 @@ resource "google_cloud_run_v2_service" "scraper" {
         value = "0"
       }
 
-      # GCS credentials from Secret Manager
+      env {
+        name  = "INSTANCE_CONNECTION_NAME"
+        value = var.database_connection_name
+      }
+
+      env {
+        name = "DATABASE_CONNECTION_STRING"
+        value_source {
+          secret_key_ref {
+            secret  = "DATABASE_CONNECTION_STRING"
+            version = "latest"
+          }
+        }
+      }
+
       env {
         name = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
         value_source {
@@ -739,28 +685,127 @@ resource "google_cloud_run_v2_service" "scraper" {
           }
         }
       }
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.database_connection_name]
+      }
     }
 
     scaling {
-      max_instance_count = 1 # Only one instance needed - scheduled job, not concurrent
-      min_instance_count = 0 # Scale to zero when not in use
+      max_instance_count = 1
+      min_instance_count = 0
     }
 
-    timeout = "3600s" # 60 minutes - browser automation can take significant time
+    timeout = "3600s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
 }
 
-# Service account for Cloud Scheduler to invoke scraper
+resource "google_cloud_run_v2_service" "crdt_server" {
+  name                = "crdt"
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    containers {
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt:${var.image_tag_suffix}"
+
+      resources {
+        limits = {
+          cpu    = var.cpu_limit
+          memory = var.crdt_server_memory_limit != "" ? var.crdt_server_memory_limit : var.memory_limit
+        }
+      }
+
+      ports {
+        container_port = 8080
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8080
+        }
+        initial_delay_seconds = 10
+        timeout_seconds       = 5
+        period_seconds        = 15
+        failure_threshold     = 3
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8080
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 5
+        period_seconds        = 10
+        failure_threshold     = 10
+      }
+
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+
+      env {
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = "DATABASE_CONNECTION_STRING"
+            version = "latest"
+          }
+        }
+      }
+    }
+
+    annotations = {
+      "run.googleapis.com/execution-environment" = "gen2"
+      "run.googleapis.com/session-affinity"      = "true"
+    }
+
+    scaling {
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
+    }
+
+    timeout = "3600s"
+  }
+
+  ingress = "INGRESS_TRAFFIC_ALL"
+
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      template[0].annotations["run.googleapis.com/client-name"],
+      template[0].annotations["run.googleapis.com/client-version"],
+    ]
+  }
+}
+
+resource "google_cloud_run_v2_service_iam_member" "crdt_server_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.crdt_server.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 resource "google_service_account" "scheduler_invoker" {
   account_id   = "scheduler-invoker"
   display_name = "Cloud Scheduler Service Account"
   description  = "Service account used by Cloud Scheduler to invoke Cloud Run services"
 }
 
-# IAM binding for scheduler to invoke scraper service
 resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_scraper" {
   location = var.region
   name     = google_cloud_run_v2_service.scraper.name
@@ -768,25 +813,11 @@ resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_scraper" {
   member   = "serviceAccount:${google_service_account.scheduler_invoker.email}"
 }
 
+resource "google_cloud_run_v2_service_iam_member" "scraper_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.scraper.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 data "google_project" "project" {}
-
-
-output "pubsub_invoker_service_account_email" {
-  value       = google_service_account.pubsub_invoker.email
-  description = "Email address of the service account used for Pub/Sub to invoke Cloud Run"
-}
-
-output "scheduler_invoker_service_account_email" {
-  value       = google_service_account.scheduler_invoker.email
-  description = "Email address of the service account used for Cloud Scheduler to invoke Cloud Run"
-}
-
-output "scraper_url" {
-  description = "The URL of the deployed scraper service"
-  value       = google_cloud_run_v2_service.scraper.uri
-}
-
-output "scraper_service_id" {
-  description = "The ID of the scraper service"
-  value       = google_cloud_run_v2_service.scraper.name
-}

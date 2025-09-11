@@ -8,6 +8,7 @@ const envRef: { value: null | Readonly<Env> } = { value: null };
 export function getEnv(): Env {
 	envRef.value ??= createEnv({
 		client: {
+			NEXT_PUBLIC_CRDT_SERVER_URL: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.url()),
 			NEXT_PUBLIC_FIREBASE_API_KEY: z.preprocess(
 				(val) => (typeof val === "string" ? val.trim() : val),
 				z.string(),
@@ -44,6 +45,7 @@ export function getEnv(): Env {
 		},
 		experimental__runtimeEnv: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
+			NEXT_PUBLIC_CRDT_SERVER_URL: process.env.NEXT_PUBLIC_CRDT_SERVER_URL,
 			NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG === "true",
 			NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 			NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
@@ -54,12 +56,10 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 			NEXT_PUBLIC_GCS_EMULATOR_URL: process.env.NEXT_PUBLIC_GCS_EMULATOR_URL,
-			NEXT_PUBLIC_MOCK_API: process.env.NEXT_PUBLIC_MOCK_API === "true",
-			NEXT_PUBLIC_MOCK_AUTH: process.env.NEXT_PUBLIC_MOCK_AUTH === "true",
 			NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 		},
 		server: {
-			RESEND_API_KEY: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.string()),
+			RESEND_API_KEY: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.string().optional()),
 		},
 		shared: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.preprocess(
@@ -84,50 +84,8 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_GCS_EMULATOR_URL: z
 				.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.url())
 				.optional(),
-			NEXT_PUBLIC_MOCK_API: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						const trimmed = val.trim().toLowerCase();
-						if (trimmed === "true") {
-							return true;
-						}
-						if (trimmed === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
-			NEXT_PUBLIC_MOCK_AUTH: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						const trimmed = val.trim().toLowerCase();
-						if (trimmed === "true") {
-							return true;
-						}
-						if (trimmed === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
 		},
 	});
 
 	return envRef.value;
-}
-
-/**
- * Get mock API setting - bypasses T3-env validation to avoid build-time issues
- * Firebase App Hosting injects secrets as strings at runtime
- */
-export function getMockAPIEnabled(): boolean {
-	const val = process.env.NEXT_PUBLIC_MOCK_API;
-	if (typeof val === "string") {
-		return val.trim().toLowerCase() === "true";
-	}
-	return false;
 }

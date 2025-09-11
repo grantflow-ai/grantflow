@@ -1,9 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe } from "vitest";
 
 import { BaseModal } from "./base-modal";
 
-describe("BaseModal", () => {
+describe.sequential("BaseModal", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockOnClose = vi.fn();
 
 	beforeEach(() => {

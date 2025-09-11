@@ -4,10 +4,30 @@ import { HTTPError } from "ky";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SESSION_COOKIE } from "@/constants";
-import { isMockAuthEnabled } from "@/dev-tools/mock-auth";
-import { PagePath } from "@/enums";
-import { log } from "@/utils/logger";
+import { COOKIE_CONSENT, SESSION_COOKIE } from "@/constants";
+import type { CookieConsentData } from "@/hooks/use-cookie-consent";
+import { log } from "@/utils/logger/server";
+import { routes } from "@/utils/navigation";
+
+export async function checkCookieConsent(): Promise<boolean> {
+	const cookieStore = await cookies();
+	const consentCookie = cookieStore.get(COOKIE_CONSENT);
+
+	if (!consentCookie?.value) {
+		return false;
+	}
+
+	try {
+		const consentData = JSON.parse(consentCookie.value) as CookieConsentData;
+		return consentData.consentGiven && consentData.hasInteracted;
+	} catch (error) {
+		log.warn("Invalid consent cookie format, clearing cookie", {
+			cookie_name: COOKIE_CONSENT,
+			error: error instanceof Error ? error.message : String(error),
+		});
+		return false;
+	}
+}
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function redirectWithToastParams({
@@ -16,7 +36,7 @@ export async function redirectWithToastParams({
 	type,
 }: {
 	message: string;
-	path: PagePath | string;
+	path: string;
 	type: "error" | "info" | "success";
 }) {
 	redirect(`${path}?toastType=${type}&toastContent=${message}`);
@@ -30,7 +50,7 @@ export async function withErrorToast<T>({
 }: {
 	identifier: string;
 	message: string;
-	path: PagePath | string;
+	path: string;
 	value: Promise<T>;
 }): Promise<T> {
 	try {
@@ -43,23 +63,15 @@ export async function withErrorToast<T>({
 }
 
 export const createAuthHeaders = async () => {
-	if (isMockAuthEnabled()) {
-		const mockToken =
-			// eslint-disable-next-line sonarjs/no-hardcoded-secrets
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXVzZXItdWlkLTEyMyIsIm5hbWUiOiJUZXN0IFVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3MzU1NTY0MDAsImV4cCI6MTczNjE2MTIwMH0.mock-signature";
-		log.info("Using mock auth token", { mock_auth: true });
-		return { Authorization: `Bearer ${mockToken}` };
-	}
-
 	const cookieStore = await cookies();
 	const cookie = cookieStore.get(SESSION_COOKIE);
 
 	if (!cookie?.value) {
 		log.warn("No session cookie found, redirecting to onboarding", {
 			cookie_name: SESSION_COOKIE,
-			redirect_path: PagePath.ONBOARDING,
+			redirect_path: routes.onboarding(),
 		});
-		redirect(PagePath.ONBOARDING);
+		redirect(routes.onboarding());
 	}
 
 	log.info("Auth headers created", {
@@ -71,23 +83,26 @@ export const createAuthHeaders = async () => {
 };
 
 export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
+	const hasConsent = await checkCookieConsent();
+
+	if (!hasConsent) {
+		log.warn("No cookie consent found, redirecting to onboarding", {
+			cookie_name: COOKIE_CONSENT,
+			redirect_path: routes.onboarding(),
+		});
+		redirect(routes.onboarding());
+	}
+
 	try {
 		return await promise;
 	} catch (error) {
-		if (isMockAuthEnabled()) {
-			log.warn("Auth error in mock mode", {
-				mock_auth: true,
-			});
-			throw error;
-		}
-
 		if (error instanceof HTTPError && error.response.status === 401) {
 			log.warn("Unauthorized request, redirecting to onboarding", {
-				redirect_path: PagePath.ONBOARDING,
+				redirect_path: routes.onboarding(),
 				status: error.response.status,
 				url: error.request.url,
 			});
-			redirect(PagePath.ONBOARDING);
+			redirect(routes.onboarding());
 		}
 
 		log.error("API request failed", error, {

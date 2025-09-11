@@ -5,6 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 const storybookEnv = {
 	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
+	NEXT_PUBLIC_CRDT_SERVER_URL: "ws://localhost:3001",
 	NEXT_PUBLIC_DEBUG: true,
 	NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
 	NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
@@ -42,9 +43,15 @@ const config: StorybookConfig = {
 					...Object.fromEntries(Object.entries(storybookEnv).map(([key, value]) => [key, value.toString()])),
 				}),
 			},
+			optimizeDeps: {
+				exclude: ["@google-cloud/pino-logging-gcp-config", "google-logging-utils", "gcp-metadata"],
+			},
 			plugins: [react(), tsconfigPaths()],
 			resolve: {
 				alias: Object.assign({}, config.resolve?.alias, {
+					"@google-cloud/pino-logging-gcp-config": require.resolve("../.storybook/mocks/logger.mock.ts"),
+					"gcp-metadata": require.resolve("../.storybook/mocks/logger.mock.ts"),
+					"google-logging-utils": require.resolve("../.storybook/mocks/logger.mock.ts"),
 					"next/navigation": require.resolve("../.storybook/mocks/next-navigation.mock.ts"),
 				}),
 			},

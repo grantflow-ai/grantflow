@@ -36,7 +36,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Indexer E2E Tests (Smoke)
               uses: ./.github/actions/run-python-e2e-tests
@@ -72,7 +72,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Indexer E2E Tests (Quality Assessment)
               uses: ./.github/actions/run-python-e2e-tests
@@ -108,7 +108,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Indexer E2E Tests (Full)
               uses: ./.github/actions/run-python-e2e-tests
@@ -145,7 +145,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Indexer AI Evaluation Tests
               uses: ./.github/actions/run-python-e2e-tests

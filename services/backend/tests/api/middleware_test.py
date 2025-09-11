@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -12,10 +12,12 @@ from services.backend.src.api.middleware import (
     ADMIN_PATHS,
     PUBLIC_PATHS,
     AuthMiddleware,
+    TraceIdMiddleware,
 )
 
 if TYPE_CHECKING:
     from litestar.middleware import AuthenticationResult
+    from litestar.types import HTTPScope, Scope
 
 
 class MockASGIConnection(MagicMock):
@@ -137,11 +139,11 @@ async def test_authenticate_with_allowed_roles(app: MagicMock, mock_verify_jwt_t
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
-    project_user: MagicMock = MagicMock()
-    project_user.role = UserRoleEnum.ADMIN
+    organization_user: MagicMock = MagicMock()
+    organization_user.role = UserRoleEnum.ADMIN
 
     session_result = MagicMock()
-    session_result.scalar_one_or_none.return_value = project_user
+    session_result.scalar_one_or_none.return_value = organization_user
 
     session = AsyncMock()
     session.execute.return_value = session_result
@@ -154,9 +156,9 @@ async def test_authenticate_with_allowed_roles(app: MagicMock, mock_verify_jwt_t
     app.state.session_maker = session_maker
 
     connection = MockASGIConnection(
-        url_path="/projects/test-project-id/something",
+        url_path="/organizations/test-org-id/projects/test-project-id/something",
         headers={"Authorization": "Bearer test-token"},
-        path_params={"project_id": "test-project-id"},
+        path_params={"organization_id": "test-org-id", "project_id": "test-project-id"},
         route_handler_opt={"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]},
         app=app,
     )
@@ -238,3 +240,288 @@ async def test_authenticate_no_auth(app: MagicMock) -> None:
 
     with pytest.raises(NotAuthorizedException):
         await middleware.authenticate_request(connection)
+
+
+async def test_authenticate_options_method(app: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+
+    from litestar import Request
+
+    scope = cast(
+        "HTTPScope",
+        {
+            "type": "http",
+            "method": "OPTIONS",
+            "url": {"path": "/any-path"},
+            "headers": [],
+            "app": app,
+        },
+    )
+    connection: Request[Any, Any, Any] = Request(scope)
+
+    result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+    assert result.user is None
+    assert result.auth is None
+
+
+async def test_authenticate_admin_source_patterns(app: MagicMock, mock_get_env: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+
+    test_paths = [
+        "/granting-institutions/123/sources",
+        "/granting-institutions/456/sources/789",
+        "/granting-institutions/abc/sources/upload-url",
+        "/granting-institutions/def/sources/crawl-url",
+    ]
+
+    for path in test_paths:
+        connection = MockASGIConnection(url_path=path, headers={"Authorization": "test-admin-code"}, app=app)
+
+        result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+        assert result.user is None
+        assert result.auth is None
+
+        connection_invalid = MockASGIConnection(url_path=path, headers={"Authorization": "invalid-code"}, app=app)
+
+        with pytest.raises(NotAuthorizedException):
+            await middleware.authenticate_request(connection_invalid)
+
+
+async def test_authenticate_schema_endpoints(app: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+
+    test_paths = ["/schema", "/schema/openapi.json", "/schema/swagger"]
+
+    for path in test_paths:
+        connection = MockASGIConnection(url_path=path, app=app)
+
+        result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+        assert result.user is None
+        assert result.auth is None
+
+
+async def test_authenticate_organizations_endpoint_with_auth(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+    mock_verify_jwt_token.return_value = "test-uid"
+
+    connection = MockASGIConnection(url_path="/organizations", headers={"Authorization": "Bearer test-token"}, app=app)
+
+    result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+    assert result.auth == "test-uid"
+    assert result.user is None
+    mock_verify_jwt_token.assert_called_once_with("test-token")
+
+
+async def test_authenticate_organizations_endpoint_no_auth(app: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+
+    connection = MockASGIConnection(url_path="/organizations", app=app)
+
+    with pytest.raises(NotAuthorizedException):
+        await middleware.authenticate_request(connection)
+
+
+async def test_authenticate_collaborator_with_project_access(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+    mock_verify_jwt_token.return_value = "test-uid"
+
+    organization_user: MagicMock = MagicMock()
+    organization_user.role = UserRoleEnum.COLLABORATOR
+    organization_user.has_all_projects_access = False
+
+    project_access: MagicMock = MagicMock()
+
+    session_result = MagicMock()
+    session_result.scalar_one_or_none.return_value = organization_user
+
+    session = AsyncMock()
+    session.execute.return_value = session_result
+    session.scalar.return_value = project_access
+
+    session_ctx = AsyncMock()
+    session_ctx.__aenter__.return_value = session
+
+    session_maker = MagicMock()
+    session_maker.return_value = session_ctx
+    app.state.session_maker = session_maker
+
+    connection = MockASGIConnection(
+        url_path="/organizations/test-org-id/projects/test-project-id/something",
+        headers={"Authorization": "Bearer test-token"},
+        path_params={"organization_id": "test-org-id", "project_id": "test-project-id"},
+        route_handler_opt={"allowed_roles": [UserRoleEnum.COLLABORATOR]},
+        app=app,
+    )
+
+    result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+    assert result.user == UserRoleEnum.COLLABORATOR
+    assert result.auth == "test-uid"
+    session.scalar.assert_called_once()
+
+
+async def test_authenticate_collaborator_without_project_access(
+    app: MagicMock, mock_verify_jwt_token: MagicMock
+) -> None:
+    middleware = AuthMiddleware(app=app)
+    mock_verify_jwt_token.return_value = "test-uid"
+
+    organization_user: MagicMock = MagicMock()
+    organization_user.role = UserRoleEnum.COLLABORATOR
+    organization_user.has_all_projects_access = False
+
+    session_result = MagicMock()
+    session_result.scalar_one_or_none.return_value = organization_user
+
+    session = AsyncMock()
+    session.execute.return_value = session_result
+    session.scalar.return_value = None
+
+    session_ctx = AsyncMock()
+    session_ctx.__aenter__.return_value = session
+
+    session_maker = MagicMock()
+    session_maker.return_value = session_ctx
+    app.state.session_maker = session_maker
+
+    connection = MockASGIConnection(
+        url_path="/organizations/test-org-id/projects/test-project-id/something",
+        headers={"Authorization": "Bearer test-token"},
+        path_params={"organization_id": "test-org-id", "project_id": "test-project-id"},
+        route_handler_opt={"allowed_roles": [UserRoleEnum.COLLABORATOR]},
+        app=app,
+    )
+
+    with pytest.raises(NotAuthorizedException, match="Project access required"):
+        await middleware.authenticate_request(connection)
+
+
+async def test_authenticate_collaborator_with_all_projects_access(
+    app: MagicMock, mock_verify_jwt_token: MagicMock
+) -> None:
+    middleware = AuthMiddleware(app=app)
+    mock_verify_jwt_token.return_value = "test-uid"
+
+    organization_user: MagicMock = MagicMock()
+    organization_user.role = UserRoleEnum.COLLABORATOR
+    organization_user.has_all_projects_access = True
+
+    session_result = MagicMock()
+    session_result.scalar_one_or_none.return_value = organization_user
+
+    session = AsyncMock()
+    session.execute.return_value = session_result
+
+    session_ctx = AsyncMock()
+    session_ctx.__aenter__.return_value = session
+
+    session_maker = MagicMock()
+    session_maker.return_value = session_ctx
+    app.state.session_maker = session_maker
+
+    connection = MockASGIConnection(
+        url_path="/organizations/test-org-id/projects/test-project-id/something",
+        headers={"Authorization": "Bearer test-token"},
+        path_params={"organization_id": "test-org-id", "project_id": "test-project-id"},
+        route_handler_opt={"allowed_roles": [UserRoleEnum.COLLABORATOR]},
+        app=app,
+    )
+
+    result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+    assert result.user == UserRoleEnum.COLLABORATOR
+    assert result.auth == "test-uid"
+    session.scalar.assert_not_called()
+
+
+async def test_trace_id_middleware_http_request() -> None:
+    app = AsyncMock()
+    middleware = TraceIdMiddleware()
+
+    trace_id = "test-trace-id-123"
+    scope = cast(
+        "HTTPScope",
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/test",
+            "headers": [(b"x-trace-id", trace_id.encode())],
+            "state": {},
+            "scheme": "https",
+        },
+    )
+
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    with patch("services.backend.src.api.middleware.start_span_with_trace_id") as mock_span:
+        mock_span.return_value.__enter__ = MagicMock()
+        mock_span.return_value.__exit__ = MagicMock()
+
+        await middleware.handle(scope, receive, send, app)
+
+        assert scope["state"]["trace_id"] == trace_id
+        app.assert_called_once_with(scope, receive, send)
+        mock_span.assert_called_once_with(
+            span_name="GET /test",
+            trace_id=trace_id,
+            tracer_name="backend.middleware",
+            http_method="GET",
+            http_url="/test",
+            http_scheme="https",
+        )
+
+
+async def test_trace_id_middleware_generates_trace_id() -> None:
+    app = AsyncMock()
+    middleware = TraceIdMiddleware()
+
+    scope = cast(
+        "HTTPScope",
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/test",
+            "headers": [],
+            "state": {},
+            "scheme": "http",
+        },
+    )
+
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    with patch("services.backend.src.api.middleware.uuid4") as mock_uuid:
+        mock_uuid.return_value = "generated-uuid"
+
+        with patch("services.backend.src.api.middleware.start_span_with_trace_id") as mock_span:
+            mock_span.return_value.__enter__ = MagicMock()
+            mock_span.return_value.__exit__ = MagicMock()
+
+            await middleware.handle(scope, receive, send, app)
+
+            assert scope["state"]["trace_id"] == "generated-uuid"
+            app.assert_called_once_with(scope, receive, send)
+
+
+async def test_trace_id_middleware_non_http_request() -> None:
+    app = AsyncMock()
+    middleware = TraceIdMiddleware()
+
+    scope = cast(
+        "Scope",
+        {
+            "type": "websocket",
+        },
+    )
+
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    await middleware.handle(scope, receive, send, app)
+
+    app.assert_called_once_with(scope, receive, send)

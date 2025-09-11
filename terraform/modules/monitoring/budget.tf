@@ -1,4 +1,3 @@
-# Budget Alert: Monthly Spend Threshold
 resource "google_billing_budget" "monthly_budget" {
   count = var.enable_billing_budget ? 1 : 0
 
@@ -8,8 +7,6 @@ resource "google_billing_budget" "monthly_budget" {
   budget_filter {
     projects = ["projects/${var.project_id}"]
 
-    # Optional: Filter by specific services
-    # services = ["services/24E6-581D-38E5"] # Cloud Run
   }
 
   amount {
@@ -49,20 +46,22 @@ resource "google_billing_budget" "monthly_budget" {
   }
 }
 
-variable "enable_billing_budget" {
-  description = "Whether to create billing budget alerts"
-  type        = bool
-  default     = false
-}
 
-# Pub/Sub topic for budget alerts
+
 resource "google_pubsub_topic" "budget_alerts" {
   name = "budget-alerts-${var.environment}"
+
+  message_retention_duration = "86400s" # ~keep 1 day
+
+  labels = {
+    environment = var.environment
+    purpose     = "budget_monitoring"
+  }
 }
 
-# Cloud Function to forward budget alerts to Discord
+
 resource "google_cloudfunctions2_function" "budget_to_discord" {
-  name        = "budget-alerts-to-discord-${var.environment}"
+  name        = "fn-alerts-budget-${var.environment}"
   location    = "us-central1"
   description = "Forward budget alerts to Discord"
 
@@ -95,24 +94,52 @@ resource "google_cloudfunctions2_function" "budget_to_discord" {
     event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic          = google_pubsub_topic.budget_alerts.id
     service_account_email = google_service_account.budget_function.email
+    retry_policy          = "RETRY_POLICY_RETRY"
   }
 }
 
-# Service account for the Cloud Function
 resource "google_service_account" "budget_function" {
-  account_id   = "budget-alerts-function-${var.environment}"
+  account_id   = "fn-budget-sa-${var.environment}"
   display_name = "Budget Alerts Function"
   description  = "Service account for budget alerts Cloud Function"
 }
 
-# Grant the service account permission to receive Pub/Sub messages
+resource "google_pubsub_subscription" "budget_alerts_subscription" {
+  name  = "budget-alerts-subscription-${var.environment}"
+  topic = google_pubsub_topic.budget_alerts.name
+
+  push_config {
+    push_endpoint = google_cloudfunctions2_function.budget_to_discord.service_config[0].uri
+
+    oidc_token {
+      service_account_email = google_service_account.budget_function.email
+    }
+  }
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+
+  ack_deadline_seconds = 60
+
+  labels = {
+    environment = var.environment
+    purpose     = "budget_monitoring"
+  }
+}
+
 resource "google_pubsub_topic_iam_member" "budget_function_subscriber" {
   topic  = google_pubsub_topic.budget_alerts.name
   role   = "roles/pubsub.subscriber"
   member = "serviceAccount:${google_service_account.budget_function.email}"
 }
 
-# Allow the service account to invoke the Cloud Function
 resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
   project        = google_cloudfunctions2_function.budget_to_discord.project
   location       = google_cloudfunctions2_function.budget_to_discord.location
@@ -121,8 +148,7 @@ resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
   member         = "serviceAccount:${google_service_account.budget_function.email}"
 }
 
-# Storage bucket for Cloud Function source
-# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-budget-functions-${var.environment}"
   location = "US"
@@ -146,37 +172,23 @@ resource "google_storage_bucket" "function_source" {
   }
 }
 
-# Upload the function code
 resource "google_storage_bucket_object" "function_zip" {
   name   = "budget-alert-function-${data.archive_file.function.output_md5}.zip"
   bucket = google_storage_bucket.function_source.name
   source = data.archive_file.function.output_path
 }
 
-# Create the function code archive
 data "archive_file" "function" {
   type        = "zip"
   output_path = "${path.module}/budget-function.zip"
 
   source {
-    content  = file("../../../cloud_functions/src/budget_alerts/main.py")
+    content  = file("${path.root}/../functions/src/budget_alerts/main.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("../../../cloud_functions/requirements.txt")
+    content  = file("${path.module}/../../../functions/requirements.txt")
     filename = "requirements.txt"
   }
-}
-
-# Data source to get billing account
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-# Additional variables needed
-variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
-  type        = string
-  default     = "500" # Adjust based on your needs
 }

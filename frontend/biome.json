@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -28,17 +28,16 @@
 			"**/*.tsx",
 			"**/*.json",
 			"**/*.jsonc",
-			"**/*.css",
 			"**/*.md",
-			"!**/functions/**",
-			"!**/node_modules/**",
-			"!**/.next/**",
-			"!**/dist/**",
-			"!**/build/**",
+			"!**/functions",
+			"!**/node_modules",
+			"!**/.next",
+			"!**/dist",
+			"!**/build",
 			"!**/pnpm-lock.yaml",
-			"!**/storybook-static/**",
-			"!**/.git/**",
-			"!**/coverage/**",
+			"!**/storybook-static",
+			"!**/.git",
+			"!**/coverage",
 			"!**/*.min.js",
 			"!**/*.min.css",
 			"!**/api-types.ts"
@@ -102,6 +101,7 @@
 				"useHtmlLang": "error",
 				"useKeyWithClickEvents": "warn",
 				"useKeyWithMouseEvents": "warn",
+				"useSemanticElements": "off",
 				"useValidAnchor": "error"
 			},
 			"complexity": {
@@ -216,7 +216,7 @@
 				"noDuplicateObjectKeys": "error",
 				"noDuplicateParameters": "error",
 				"noEmptyBlockStatements": "off",
-				"noExplicitAny": "off",
+				"noExplicitAny": "error",
 				"noExtraNonNullAssertion": "error",
 				"noFallthroughSwitchClause": "error",
 				"noFunctionAssign": "error",
@@ -236,9 +236,30 @@
 			}
 		}
 	},
+	"overrides": [
+		{
+			"includes": [
+				"**/*.spec.ts",
+				"**/*.spec.tsx",
+				"**/testing/**/*",
+				"**/*.test.ts",
+				"**/*.test.tsx",
+				"**/*.stories.ts",
+				"**/*.stories.tsx",
+				"**/tests/**/*"
+			],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off"
+					}
+				}
+			}
+		}
+	],
 	"vcs": {
 		"clientKind": "git",
 		"enabled": true,
-		"useIgnoreFile": true
+		"useIgnoreFile": false
 	}
 }

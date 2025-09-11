@@ -5,9 +5,9 @@ import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagSource,
 )
 from packages.shared_utils.src.exceptions import ValidationError
@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
     GrantTemplateFactory,
+    OrganizationFactory,
     ProjectFactory,
     RagSourceFactory,
 )
@@ -26,7 +27,11 @@ from services.rag.src.utils.checks import verify_rag_sources_indexed
 @pytest.fixture
 async def test_project(async_session_maker: async_sessionmaker[Any]) -> tuple[Any, Any]:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
         return project, session
@@ -37,7 +42,11 @@ async def test_grant_application(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantApplication:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
@@ -52,7 +61,11 @@ async def test_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantTemplate:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
@@ -60,7 +73,7 @@ async def test_grant_template(
         session.add(application)
         await session.flush()
 
-        template = GrantTemplateFactory.build(grant_application_id=application.id, funding_organization_id=None)
+        template = GrantTemplateFactory.build(grant_application_id=application.id, granting_institution_id=None)
         session.add(template)
         await session.commit()
         return template
@@ -82,18 +95,17 @@ async def create_rag_source_with_status(
 
 
 async def link_source_to_application(session: Any, application_id: Any, source_id: Any) -> None:
-    link = GrantApplicationRagSource(grant_application_id=application_id, rag_source_id=source_id)
+    link = GrantApplicationSource(grant_application_id=application_id, rag_source_id=source_id)
     session.add(link)
     await session.flush()
 
 
 async def link_source_to_template(session: Any, template_id: Any, source_id: Any) -> None:
-    link = GrantTemplateRagSource(grant_template_id=template_id, rag_source_id=source_id)
+    link = GrantTemplateSource(grant_template_id=template_id, rag_source_id=source_id)
     session.add(link)
     await session.flush()
 
 
-@pytest.mark.asyncio
 async def test_all_sources_finished_grant_application(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -113,7 +125,6 @@ async def test_all_sources_finished_grant_application(
     mock_publish_notification.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_all_sources_finished_grant_template(
     test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
@@ -138,7 +149,6 @@ async def test_all_sources_finished_grant_template(
 # TODO: Convert this complex recursive test - requires mocking the state change
 
 
-@pytest.mark.asyncio
 async def test_all_sources_failed_grant_application(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -174,7 +184,6 @@ async def test_all_sources_failed_grant_application(
     assert exc_info.value.context["error_type"] == "indexing_failure"
 
 
-@pytest.mark.asyncio
 async def test_all_sources_failed_grant_template(
     test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
@@ -213,7 +222,6 @@ async def test_all_sources_failed_grant_template(
 # TODO: Convert this complex recursive test - requires mocking the recursive behavior
 
 
-@pytest.mark.asyncio
 async def test_empty_sources_list(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -232,7 +240,6 @@ async def test_empty_sources_list(
     assert notification_call.kwargs["data"]["data"]["total_count"] == 0
 
 
-@pytest.mark.asyncio
 async def test_mixed_statuses_with_at_least_one_finished(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],

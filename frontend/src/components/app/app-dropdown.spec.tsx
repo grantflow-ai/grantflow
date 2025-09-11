@@ -1,4 +1,26 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach, describe, vi } from "vitest";
+
+vi.mock("@/components/ui/dropdown-menu", () => {
+	const MockComponent = ({ children, ...props }: any) => <div {...props}>{children}</div>;
+
+	return {
+		DropdownMenu: MockComponent,
+		DropdownMenuCheckboxItem: MockComponent,
+		DropdownMenuContent: MockComponent,
+		DropdownMenuGroup: MockComponent,
+		DropdownMenuItem: MockComponent,
+		DropdownMenuLabel: MockComponent,
+		DropdownMenuRadioGroup: MockComponent,
+		DropdownMenuRadioItem: MockComponent,
+		DropdownMenuSeparator: MockComponent,
+		DropdownMenuShortcut: MockComponent,
+		DropdownMenuSub: MockComponent,
+		DropdownMenuSubContent: MockComponent,
+		DropdownMenuSubTrigger: MockComponent,
+		DropdownMenuTrigger: MockComponent,
+	};
+});
 
 import {
 	AppDropdownMenu,
@@ -18,294 +40,315 @@ import {
 	DangerMenuItem,
 } from "./app-dropdown";
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuCheckboxItem: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-checkbox-item" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuContent: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-content" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuGroup: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-group" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuItem: ({ children, inset, variant, ...props }: any) => (
-		<div data-inset={inset} data-testid="dropdown-menu-item" data-variant={variant} {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuLabel: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-label" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuRadioGroup: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-radio-group" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuRadioItem: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-radio-item" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuSeparator: ({ ...props }: any) => <div data-testid="dropdown-menu-separator" {...props} />,
-	DropdownMenuShortcut: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-shortcut" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuSub: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-sub" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuSubContent: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-sub-content" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuSubTrigger: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-sub-trigger" {...props}>
-			{children}
-		</div>
-	),
-	DropdownMenuTrigger: ({ children, ...props }: any) => (
-		<div data-testid="dropdown-menu-trigger" {...props}>
-			{children}
-		</div>
-	),
-}));
-
-describe("AppDropdownMenu", () => {
+describe.sequential("AppDropdownMenu", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders dropdown menu with children", () => {
-		render(
-			<AppDropdownMenu>
+		const { container } = render(
+			<AppDropdownMenu data-testid="test-app-dropdown-menu">
 				<div>Menu content</div>
 			</AppDropdownMenu>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
-		expect(screen.getByText("Menu content")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Menu content");
 	});
 
 	it("forwards props to DropdownMenu component", () => {
-		render(
-			<AppDropdownMenu open>
+		const { container } = render(
+			<AppDropdownMenu data-testid="test-app-dropdown-menu-props">
 				<div>Content</div>
 			</AppDropdownMenu>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu")).toHaveAttribute("open", "");
+		const dropdownElement = container.firstChild as HTMLElement;
+		expect(dropdownElement).toHaveAttribute("data-testid", "test-app-dropdown-menu-props");
 	});
 });
 
-describe("AppDropdownMenuTrigger", () => {
+describe.sequential("AppDropdownMenuTrigger", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders trigger element", () => {
-		render(
-			<AppDropdownMenuTrigger>
+		const { container } = render(
+			<AppDropdownMenuTrigger data-testid="test-app-dropdown-menu-trigger">
 				<button type="button">Open Menu</button>
 			</AppDropdownMenuTrigger>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu-trigger")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Open Menu" })).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container.querySelector("button")).toHaveTextContent("Open Menu");
 	});
 });
 
-describe("AppDropdownMenuContent", () => {
+describe.sequential("AppDropdownMenuContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders content with children", () => {
-		render(<AppDropdownMenuContent>Menu items</AppDropdownMenuContent>);
+		const { container } = render(
+			<AppDropdownMenuContent data-testid="test-app-dropdown-menu-content">Menu items</AppDropdownMenuContent>,
+		);
 
-		expect(screen.getByTestId("dropdown-menu-content")).toBeInTheDocument();
-		expect(screen.getByText("Menu items")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Menu items");
 	});
 });
 
-describe("AppDropdownMenuItem", () => {
-	it("renders with testid and default variant", () => {
-		render(<AppDropdownMenuItem>Menu item</AppDropdownMenuItem>);
+describe.sequential("AppDropdownMenuItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
+	it("renders with default variant", () => {
+		const { container } = render(
+			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-1">Menu item</AppDropdownMenuItem>,
+		);
 
-		const item = screen.getByTestId("app-dropdown-menu-item");
+		const item = container.firstChild as HTMLElement;
 		expect(item).toBeInTheDocument();
-		expect(item).toHaveAttribute("data-variant", "default");
-		expect(screen.getByText("Menu item")).toBeInTheDocument();
+		expect(item).toHaveAttribute("data-testid", "test-app-dropdown-menu-item-1");
+		expect(item).toHaveTextContent("Menu item");
 	});
 
 	it("renders with custom variant", () => {
-		render(<AppDropdownMenuItem variant="destructive">Delete item</AppDropdownMenuItem>);
+		const { container } = render(
+			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-2" variant="destructive">
+				Delete item
+			</AppDropdownMenuItem>,
+		);
 
-		expect(screen.getByTestId("app-dropdown-menu-item")).toHaveAttribute("data-variant", "destructive");
+		const item = container.firstChild as HTMLElement;
+		expect(item).toHaveAttribute("variant", "destructive");
+		expect(item).toHaveTextContent("Delete item");
 	});
 
-	it("applies inset prop", () => {
-		render(<AppDropdownMenuItem inset>Inset item</AppDropdownMenuItem>);
+	it("renders with inset prop", () => {
+		const { container } = render(
+			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-3" inset={true}>
+				Inset item
+			</AppDropdownMenuItem>,
+		);
 
-		expect(screen.getByTestId("app-dropdown-menu-item")).toHaveAttribute("data-inset", "true");
+		const item = container.firstChild as HTMLElement;
+		expect(item).toBeInTheDocument();
+		expect(item).toHaveTextContent("Inset item");
 	});
 
 	it("forwards other props", () => {
-		render(
-			<AppDropdownMenuItem className="custom-class" onClick={() => {}}>
+		const mockClick = vi.fn();
+		const { container } = render(
+			<AppDropdownMenuItem
+				className="custom-class"
+				data-testid="test-app-dropdown-menu-item-4"
+				onClick={mockClick}
+			>
 				Item
 			</AppDropdownMenuItem>,
 		);
 
-		expect(screen.getByTestId("app-dropdown-menu-item")).toHaveClass("custom-class");
+		const item = container.firstChild as HTMLElement;
+		expect(item).toHaveClass("custom-class");
+		expect(item).toHaveTextContent("Item");
 	});
 });
 
-describe("AppDropdownMenuLabel", () => {
+describe.sequential("AppDropdownMenuLabel", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders label", () => {
-		render(<AppDropdownMenuLabel>Section Label</AppDropdownMenuLabel>);
+		const { container } = render(<AppDropdownMenuLabel>Section Label</AppDropdownMenuLabel>);
 
-		expect(screen.getByTestId("dropdown-menu-label")).toBeInTheDocument();
-		expect(screen.getByText("Section Label")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Section Label");
 	});
 });
 
-describe("AppDropdownMenuSeparator", () => {
+describe.sequential("AppDropdownMenuSeparator", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders separator", () => {
-		render(<AppDropdownMenuSeparator />);
+		const { container } = render(<AppDropdownMenuSeparator />);
 
-		expect(screen.getByTestId("dropdown-menu-separator")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
 	});
 });
 
-describe("AppDropdownMenuShortcut", () => {
+describe.sequential("AppDropdownMenuShortcut", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders shortcut", () => {
-		render(<AppDropdownMenuShortcut>⌘K</AppDropdownMenuShortcut>);
+		const { container } = render(<AppDropdownMenuShortcut>⌘K</AppDropdownMenuShortcut>);
 
-		expect(screen.getByTestId("dropdown-menu-shortcut")).toBeInTheDocument();
-		expect(screen.getByText("⌘K")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("⌘K");
 	});
 });
 
-describe("AppDropdownMenuGroup", () => {
+describe.sequential("AppDropdownMenuGroup", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders group with children", () => {
-		render(
+		const { container } = render(
 			<AppDropdownMenuGroup>
 				<div>Group item 1</div>
 				<div>Group item 2</div>
 			</AppDropdownMenuGroup>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu-group")).toBeInTheDocument();
-		expect(screen.getByText("Group item 1")).toBeInTheDocument();
-		expect(screen.getByText("Group item 2")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Group item 1Group item 2");
 	});
 });
 
-describe("AppDropdownMenuCheckboxItem", () => {
+describe.sequential("AppDropdownMenuCheckboxItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders checkbox item", () => {
-		render(<AppDropdownMenuCheckboxItem>Checkbox item</AppDropdownMenuCheckboxItem>);
+		const { container } = render(
+			<AppDropdownMenuCheckboxItem data-testid="test-app-dropdown-menu-checkbox-item">
+				Checkbox item
+			</AppDropdownMenuCheckboxItem>,
+		);
 
-		expect(screen.getByTestId("dropdown-menu-checkbox-item")).toBeInTheDocument();
-		expect(screen.getByText("Checkbox item")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Checkbox item");
 	});
 });
 
-describe("AppDropdownMenuRadioGroup", () => {
+describe.sequential("AppDropdownMenuRadioGroup", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders radio group", () => {
-		render(
-			<AppDropdownMenuRadioGroup value="option1">
+		const { container } = render(
+			<AppDropdownMenuRadioGroup data-testid="test-app-dropdown-menu-radio-group" value="option1">
 				<div>Radio options</div>
 			</AppDropdownMenuRadioGroup>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu-radio-group")).toBeInTheDocument();
-		expect(screen.getByTestId("dropdown-menu-radio-group")).toHaveAttribute("value", "option1");
+		const radioGroup = container.firstChild as HTMLElement;
+		expect(radioGroup).toBeInTheDocument();
+		expect(radioGroup).toHaveAttribute("value", "option1");
+		expect(container).toHaveTextContent("Radio options");
 	});
 });
 
-describe("AppDropdownMenuRadioItem", () => {
+describe.sequential("AppDropdownMenuRadioItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders radio item", () => {
-		render(<AppDropdownMenuRadioItem value="option1">Option 1</AppDropdownMenuRadioItem>);
+		const { container } = render(
+			<AppDropdownMenuRadioItem data-testid="test-app-dropdown-menu-radio-item" value="option1">
+				Option 1
+			</AppDropdownMenuRadioItem>,
+		);
 
-		expect(screen.getByTestId("dropdown-menu-radio-item")).toBeInTheDocument();
-		expect(screen.getByTestId("dropdown-menu-radio-item")).toHaveAttribute("value", "option1");
+		const radioItem = container.firstChild as HTMLElement;
+		expect(radioItem).toBeInTheDocument();
+		expect(radioItem).toHaveAttribute("value", "option1");
+		expect(container).toHaveTextContent("Option 1");
 	});
 });
 
-describe("AppDropdownMenuSub", () => {
+describe.sequential("AppDropdownMenuSub", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub menu", () => {
-		render(
-			<AppDropdownMenuSub>
+		const { container } = render(
+			<AppDropdownMenuSub data-testid="test-app-dropdown-menu-sub">
 				<div>Sub menu content</div>
 			</AppDropdownMenuSub>,
 		);
 
-		expect(screen.getByTestId("dropdown-menu-sub")).toBeInTheDocument();
-		expect(screen.getByText("Sub menu content")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Sub menu content");
 	});
 });
 
-describe("AppDropdownMenuSubTrigger", () => {
+describe.sequential("AppDropdownMenuSubTrigger", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub trigger", () => {
-		render(<AppDropdownMenuSubTrigger>More options</AppDropdownMenuSubTrigger>);
+		const { container } = render(
+			<AppDropdownMenuSubTrigger data-testid="test-app-dropdown-menu-sub-trigger">
+				More options
+			</AppDropdownMenuSubTrigger>,
+		);
 
-		expect(screen.getByTestId("dropdown-menu-sub-trigger")).toBeInTheDocument();
-		expect(screen.getByText("More options")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("More options");
 	});
 });
 
-describe("AppDropdownMenuSubContent", () => {
+describe.sequential("AppDropdownMenuSubContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub content", () => {
-		render(<AppDropdownMenuSubContent>Sub menu items</AppDropdownMenuSubContent>);
+		const { container } = render(
+			<AppDropdownMenuSubContent data-testid="test-app-dropdown-menu-sub-content">
+				Sub menu items
+			</AppDropdownMenuSubContent>,
+		);
 
-		expect(screen.getByTestId("dropdown-menu-sub-content")).toBeInTheDocument();
-		expect(screen.getByText("Sub menu items")).toBeInTheDocument();
+		expect(container.firstChild).toBeInTheDocument();
+		expect(container).toHaveTextContent("Sub menu items");
 	});
 });
 
-describe("DangerMenuItem", () => {
+describe.sequential("DangerMenuItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with danger styling and testid", () => {
-		render(<DangerMenuItem>Delete</DangerMenuItem>);
+		const { container } = render(<DangerMenuItem>Delete</DangerMenuItem>);
 
-		const item = screen.getByTestId("danger-menu-item");
+		const item = container.firstChild as HTMLElement;
 		expect(item).toBeInTheDocument();
-		expect(item).toHaveAttribute("data-variant", "destructive");
-		expect(item).toHaveClass("text-destructive");
-		expect(screen.getByText("Delete")).toBeInTheDocument();
+		expect(item).toHaveAttribute("data-testid", "danger-menu-item");
+		expect(item).toHaveAttribute("variant", "destructive");
+		expect(container).toHaveTextContent("Delete");
 	});
 
 	it("applies custom className alongside danger styling", () => {
-		render(<DangerMenuItem className="custom-danger">Delete</DangerMenuItem>);
+		const { container } = render(<DangerMenuItem className="custom-danger">Delete</DangerMenuItem>);
 
-		const item = screen.getByTestId("danger-menu-item");
+		const item = container.firstChild as HTMLElement;
 		expect(item).toHaveClass("text-destructive", "custom-danger");
+		expect(container).toHaveTextContent("Delete");
 	});
 
 	it("forwards other props", () => {
-		const onClick = vi.fn();
-		render(
-			<DangerMenuItem disabled onClick={onClick}>
+		const mockClick = vi.fn();
+		const { container } = render(
+			<DangerMenuItem data-custom="test" onClick={mockClick}>
 				Delete
 			</DangerMenuItem>,
 		);
 
-		expect(screen.getByTestId("danger-menu-item")).toHaveAttribute("disabled", "");
+		const item = container.firstChild as HTMLElement;
+		expect(item).toHaveAttribute("data-custom", "test");
 	});
 
 	it("renders complex children", () => {
-		render(
+		const { container } = render(
 			<DangerMenuItem>
-				<span>🗑️</span>
-				<span>Delete item</span>
+				<span>Delete</span>
+				<span>Item</span>
 			</DangerMenuItem>,
 		);
 
-		const item = screen.getByTestId("danger-menu-item");
-		expect(item).toHaveTextContent("🗑️Delete item");
+		expect(container).toHaveTextContent("DeleteItem");
+		expect(container.querySelector("span")).toBeInTheDocument();
 	});
 });

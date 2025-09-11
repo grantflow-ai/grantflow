@@ -1,10 +1,3 @@
-"""
-Enhanced Metrics Collection for Vector Benchmarks
-
-This module provides comprehensive metrics collection that goes beyond basic
-throughput and timing to include detailed performance characteristics.
-"""
-
 import asyncio
 import time
 from contextlib import asynccontextmanager, suppress
@@ -22,12 +15,6 @@ logger = get_logger(__name__)
 
 @dataclass
 class DetailedBenchmarkMetrics:
-    """
-    Comprehensive metrics for vector performance analysis.
-
-    Captures all relevant performance data for optimization decisions.
-    """
-
     test_name: str
     vector_dimension: int
     dataset_size: int
@@ -70,13 +57,6 @@ class DetailedBenchmarkMetrics:
 
 
 class EnhancedPerformanceTracker:
-    """
-    Advanced performance tracking with detailed metrics collection.
-
-    Provides comprehensive monitoring for vector operations including
-    timing distributions, memory profiling, and index performance.
-    """
-
     def __init__(self, test_name: str, vector_dimension: int, dataset_size: int) -> None:
         self.test_name = test_name
         self.vector_dimension = vector_dimension
@@ -103,7 +83,6 @@ class EnhancedPerformanceTracker:
         self.monitoring_active = False
 
     async def start_monitoring(self) -> None:
-        """Start comprehensive performance monitoring."""
         self.start_time = time.time()
         self.initial_memory = self.process.memory_info().rss / 1024 / 1024
         self.monitoring_active = True
@@ -113,7 +92,6 @@ class EnhancedPerformanceTracker:
         logger.debug("Started enhanced monitoring", test_name=self.test_name)
 
     async def stop_monitoring(self) -> None:
-        """Stop performance monitoring and finalize metrics."""
         self.end_time = time.time()
         self.monitoring_active = False
 
@@ -125,7 +103,6 @@ class EnhancedPerformanceTracker:
         logger.debug("Stopped enhanced monitoring", test_name=self.test_name)
 
     async def _monitor_system_metrics(self) -> None:
-        """Background task to monitor system metrics."""
         try:
             while self.monitoring_active:
                 memory_mb = self.process.memory_info().rss / 1024 / 1024
@@ -140,18 +117,15 @@ class EnhancedPerformanceTracker:
             pass
 
     def record_operation(self, operation_time_ms: float, result_count: int | None = None) -> None:
-        """Record an individual operation (insertion batch, search query, etc.)."""
         self.operation_times.append(operation_time_ms)
 
         if result_count is not None:
             self.search_results.append(result_count)
 
     def record_error(self, error: str) -> None:
-        """Record an error that occurred during testing."""
         self.errors.append(error)
 
     def record_index_metrics(self, build_time_ms: float, m: int, ef_construction: int) -> None:
-        """Record HNSW index-specific metrics."""
         self.index_metrics = {
             "build_time_ms": build_time_ms,
             "m": m,
@@ -159,11 +133,9 @@ class EnhancedPerformanceTracker:
         }
 
     def set_batch_size(self, batch_size: int) -> None:
-        """Set the batch size for context."""
         self.batch_size = batch_size
 
     async def measure_index_size(self, session: AsyncSession) -> None:
-        """Measure the size of the HNSW index."""
         try:
             result = await session.execute(
                 text("""
@@ -180,7 +152,6 @@ class EnhancedPerformanceTracker:
             logger.warning("Could not measure index size", error=str(e))
 
     def calculate_percentiles(self, values: list[float]) -> dict[str, float]:
-        """Calculate percentile values for a list of measurements."""
         if not values:
             return {"p50": 0, "p95": 0, "p99": 0}
 
@@ -194,12 +165,6 @@ class EnhancedPerformanceTracker:
         }
 
     def get_detailed_metrics(self) -> DetailedBenchmarkMetrics:
-        """
-        Generate comprehensive metrics from collected data.
-
-        Returns:
-            DetailedBenchmarkMetrics with all collected performance data
-        """
         if not self.start_time or not self.end_time:
             raise RuntimeError("Monitoring not completed - call start_monitoring() and stop_monitoring()")
 
@@ -279,16 +244,6 @@ class EnhancedPerformanceTracker:
 
 @asynccontextmanager
 async def enhanced_metrics_tracking(test_name: str, vector_dimension: int, dataset_size: int) -> Any:
-    """
-    Context manager for enhanced metrics tracking.
-
-    Usage:
-        async with enhanced_metrics_tracking("test_name", 384, 1000) as tracker:
-            # Your benchmark code here
-            tracker.record_operation(operation_time_ms, result_count)
-
-        metrics = tracker.get_detailed_metrics()
-    """
     tracker = EnhancedPerformanceTracker(test_name, vector_dimension, dataset_size)
     await tracker.start_monitoring()
 
@@ -299,15 +254,6 @@ async def enhanced_metrics_tracking(test_name: str, vector_dimension: int, datas
 
 
 def format_metrics_summary(metrics: DetailedBenchmarkMetrics) -> str:
-    """
-    Format comprehensive metrics into a readable summary.
-
-    Args:
-        metrics: DetailedBenchmarkMetrics to format
-
-    Returns:
-        Formatted string with key performance insights
-    """
     summary = f"""
 📊 {metrics.test_name} Performance Summary:
 ├── Configuration: {metrics.vector_dimension}d vectors, {metrics.dataset_size:,} dataset, batch={metrics.batch_size}

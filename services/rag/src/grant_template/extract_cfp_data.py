@@ -12,6 +12,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
+from services.rag.src.grant_template.nlp_categorizer import (
+    NLPCategorizationResult,
+    categorize_text_async,
+    format_nlp_analysis_for_prompt,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -37,6 +42,7 @@ class RagSourceData(TypedDict):
     source_type: str
     text_content: str
     chunks: list[str]
+    nlp_analysis: NotRequired[NLPCategorizationResult]
 
 
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
@@ -44,7 +50,6 @@ CFP_CACHE_TTL_SECONDS = 3600
 
 
 def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
-    """Create a stable cache key from source IDs and organization mapping."""
     cache_data = {
         "source_ids": sorted(source_ids),
         "organizations": dict(sorted(organization_mapping.items())),
@@ -54,7 +59,6 @@ def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dic
 
 
 def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
-    """Get cached CFP extraction result if still valid."""
     if cache_key not in _cfp_extraction_cache:
         return None
 
@@ -71,7 +75,6 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
 
 
 def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
-    """Cache CFP extraction result."""
     _cfp_extraction_cache[cache_key] = (result, time.time())
     logger.debug("CFP result cached", cache_key=cache_key, cache_size=len(_cfp_extraction_cache))
 
@@ -81,6 +84,9 @@ TEMPERATURE: Final[float] = 0.1
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
 Extract structured requirements from funding announcements.
 Prioritize official CFP docs over supplementary materials.
+
+CRITICAL: Respond only with valid JSON. Do not include repetitive text, escaped characters, or malformed content.
+If encountering unclear content, use "[UNCLEAR]" markers instead of repeating text patterns.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -89,28 +95,44 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Extract from: <rag_sources>${rag_sources}</rag_sources>
     Organizations: <orgs>${organization_mapping}</orgs>
 
+    USE NLP ANALYSIS AS SUPPLEMENTAL GUIDANCE:
+    Each source includes semantic categorization to help identify key content:
+    - Money/Budget, Date/Time, Writing-related requirements
+    - Orders (mandatory) vs Recommendations (optional)
+    - Positive vs Negative instructions
+    - Evaluation criteria
+
+    IMPORTANT: You must still read and analyze ALL source content comprehensively.
+    The NLP analysis is supportive context - not a replacement for thorough text analysis.
+
+    EXTRACTION PRIORITIES (NLP categories help identify):
+    1. Orders & Positive Instructions → Likely contain mandatory requirements
+    2. Evaluation Criteria → Often critical for application structure
+    3. Date/Time → May contain essential deadlines (prioritize for submission_date)
+    4. Writing-related → May contain format compliance requirements
+    5. Money/Budget → May provide funding context
+    6. Negative Instructions → May contain important restrictions
+
     Extract:
     1. Organization ID from mapping (or null)
     2. CFP subject (one sentence: type, audience, focus)
-    3. Deadline (YYYY-MM-DD)
-    4. Section structure (titles, page limits, preserve numbering)
+    3. Deadline (YYYY-MM-DD format) - prioritize Date/Time categories from NLP
+    4. Section structure (titles, page limits, preserve numbering) - use Orders/Writing-related
 
     Exclude: URLs, Grants.gov steps, addresses, admin details
+
+    IMPORTANT OUTPUT RULES:
+    - Return valid JSON only
+    - Maximum 50 subtitles per section
+    - No repetitive text patterns
+    - Use "[UNCLEAR]" for ambiguous information
+    - Limit response to 5000 tokens maximum
+    - Leverage NLP categorization to improve extraction quality
     """,
 )
 
 
 async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessionmaker[Any]) -> list[RagSourceData]:
-    """
-    Retrieve text content and chunks from multiple RAG sources with optimized batch processing.
-
-    Args:
-        source_ids: List of RAG source IDs to retrieve
-        session_maker: Database session maker
-
-    Returns:
-        List of RagSourceData containing content and chunks for each source
-    """
     async with session_maker() as session:
         sources_result = await session.execute(
             select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
@@ -127,58 +149,127 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             if chunk_content:
                 chunks_by_source[source_id].append(chunk_content)
 
-    return [
-        RagSourceData(
-            source_id=str(source_id),
-            source_type=source_type,
-            text_content=text_content or "",
-            chunks=chunks_by_source.get(source_id, []),
+    rag_sources_data = []
+    for source_id, source_type, source_text_content in sources:
+        text_content = source_text_content or ""
+        chunks = chunks_by_source.get(source_id, [])
+
+        try:
+            nlp_analysis = await categorize_text_async(text_content)
+            total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
+            categories_found = {
+                k: len(v)
+                for k, v in [
+                    ("money", nlp_analysis["money"]),
+                    ("date_time", nlp_analysis["date_time"]),
+                    ("writing_related", nlp_analysis["writing_related"]),
+                    ("other_numbers", nlp_analysis["other_numbers"]),
+                    ("recommendations", nlp_analysis["recommendations"]),
+                    ("orders", nlp_analysis["orders"]),
+                    ("positive_instructions", nlp_analysis["positive_instructions"]),
+                    ("negative_instructions", nlp_analysis["negative_instructions"]),
+                    ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
+                ]
+                if v
+            }
+            logger.debug(
+                "NLP analysis completed for source",
+                source_id=str(source_id),
+                total_sentences=total_sentences,
+                categories_found=categories_found,
+            )
+        except Exception as e:
+            logger.warning(
+                "NLP analysis failed for source, using empty analysis", source_id=str(source_id), error=str(e)
+            )
+            nlp_analysis = NLPCategorizationResult(
+                money=[],
+                date_time=[],
+                writing_related=[],
+                other_numbers=[],
+                recommendations=[],
+                orders=[],
+                positive_instructions=[],
+                negative_instructions=[],
+                evaluation_criteria=[],
+            )
+
+        rag_sources_data.append(
+            RagSourceData(
+                source_id=str(source_id),
+                source_type=source_type,
+                text_content=text_content,
+                chunks=chunks,
+                nlp_analysis=nlp_analysis,
+            )
         )
-        for source_id, source_type, text_content in sources
-    ]
+
+    return rag_sources_data
+
+
+_ESCAPED_CRLF_PATTERN = re.compile(r"\\+r\\+n")
+_ESCAPED_LF_PATTERN = re.compile(r"\\+n")
+_ESCAPED_CR_PATTERN = re.compile(r"\\+r")
+_REPETITIVE_PATTERN = re.compile(r"(.{1,10})\1{20,}")
+_MULTIPLE_NEWLINES_PATTERN = re.compile(r"\n{3,}")
+_MULTIPLE_SPACES_PATTERN = re.compile(r" {2,}")
+_CONTROL_CHARS_PATTERN = re.compile(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 def sanitize_text_content(text: str) -> str:
-    """
-    Sanitize text content by removing excessive newlines and whitespace.
-
-    Args:
-        text: Text to sanitize
-
-    Returns:
-        Sanitized text
-    """
-
     text = text.replace("\r\n", "\n")
     text = text.replace("\r", "\n")
+    text = _ESCAPED_CRLF_PATTERN.sub("\n", text)
+    text = _ESCAPED_LF_PATTERN.sub("\n", text)
+    text = _ESCAPED_CR_PATTERN.sub("\n", text)
+    repetitive_pattern = _REPETITIVE_PATTERN.search(text)
+    if repetitive_pattern:
+        start_pos = repetitive_pattern.start()
+        logger.warning(
+            "Detected repetitive pattern in text content",
+            pattern=repetitive_pattern.group(1)[:20],
+            original_length=len(text),
+            truncated_length=start_pos,
+        )
+        text = text[:start_pos] + "\n[Content truncated due to repetitive pattern]"
 
-    text = re.sub(r"\n{3,}", "\n\n", text)
-
-    text = re.sub(r" {2,}", " ", text)
-
+    text = _MULTIPLE_NEWLINES_PATTERN.sub("\n\n", text)
+    text = _MULTIPLE_SPACES_PATTERN.sub(" ", text)
     lines = text.split("\n")
     lines = [line.rstrip() for line in lines]
     text = "\n".join(lines)
 
     text = text.replace("\x00", "")
+    text = _CONTROL_CHARS_PATTERN.sub("", text)
 
     return text.strip()
 
 
 def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
-    """
-    Format RAG sources data for inclusion in the prompt.
-
-    Args:
-        rag_sources: List of RAG source data
-
-    Returns:
-        Formatted string for prompt inclusion
-    """
     formatted_sources = []
 
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
+
+        nlp_analysis = source.get(
+            "nlp_analysis",
+            NLPCategorizationResult(
+                money=[],
+                date_time=[],
+                writing_related=[],
+                other_numbers=[],
+                recommendations=[],
+                orders=[],
+                positive_instructions=[],
+                negative_instructions=[],
+                evaluation_criteria=[],
+            ),
+        )
+        if nlp_analysis:
+            formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
+            source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
+        else:
+            source_section += "#### NLP Analysis:\nNo semantic analysis available for this source.\n\n"
 
         sanitized_content = sanitize_text_content(source["text_content"])
         source_section += "#### Full Content:\n"
@@ -285,19 +376,6 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
 async def handle_extract_cfp_data_from_rag_sources(
     *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any]
 ) -> ExtractedCFPData:
-    """
-    Extract CFP data from multiple RAG sources (files and URLs).
-    Uses intelligent caching to avoid redundant LLM calls.
-
-    Args:
-        source_ids: List of RAG source IDs to use for extraction
-        organization_mapping: Mapping of organization IDs to names/abbreviations
-        session_maker: Database session maker
-
-    Returns:
-        Extracted CFP data synthesized from all sources
-    """
-
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
@@ -336,6 +414,16 @@ async def handle_extract_cfp_data_from_rag_sources(
                 weight=0.8,
             ),
             EvaluationCriterion(
+                name="NLP-Enhanced Extraction Quality",
+                evaluation_instructions="""
+                Evaluate whether the extraction effectively leveraged the NLP semantic analysis to prioritize mandatory requirements (Orders/Positive Instructions),
+                evaluation criteria, and formatting requirements over optional recommendations and administrative details.
+                Check if Date/Time categories from NLP analysis were properly identified for deadlines.
+                Assess if the extraction properly distinguished between mandatory vs optional content using NLP categorization.
+                """,
+                weight=0.9,
+            ),
+            EvaluationCriterion(
                 name="Correctness",
                 evaluation_instructions="""
                 Assess whether extracted content correctly reflects the explicit grant requirements from all sources, avoiding extraneous administrative details.
@@ -345,6 +433,7 @@ async def handle_extract_cfp_data_from_rag_sources(
                 name="Structural Completeness",
                 evaluation_instructions="""
                 Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria from all relevant sources.
+                Verify that critical restrictions and prohibitions identified in NLP analysis are included.
                 """,
                 weight=0.9,
             ),
@@ -352,6 +441,7 @@ async def handle_extract_cfp_data_from_rag_sources(
                 name="Filtering Accuracy",
                 evaluation_instructions="""
                 Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information from all sources.
+                Ensure that NLP-identified mandatory requirements are retained while optional recommendations are appropriately categorized.
                 """,
                 weight=0.7,
             ),

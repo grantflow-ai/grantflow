@@ -197,8 +197,8 @@ describe("useNotificationStore", () => {
 
 		const secondId = result.current.notifications[1].id;
 
-		const firstNum = Number.parseInt(firstId.replace("notification-", ""));
-		const secondNum = Number.parseInt(secondId.replace("notification-", ""));
+		const firstNum = Number.parseInt(firstId.replace("notification-", ""), 10);
+		const secondNum = Number.parseInt(secondId.replace("notification-", ""), 10);
 
 		expect(secondNum).toBeGreaterThan(firstNum);
 	});

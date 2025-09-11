@@ -1,11 +1,24 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ArrowRight, Check, Send } from "lucide-react";
-import { action } from "storybook/actions";
 import { SubmitButton } from "./submit-button";
 
 const meta: Meta<typeof SubmitButton> = {
+	argTypes: {
+		children: {
+			control: "text",
+			name: "text",
+		},
+		onClick: {
+			action: false,
+		},
+	},
 	component: SubmitButton,
 	parameters: {
+		actions: {
+			disable: true,
+		},
+		controls: {
+			include: ["children", "variant", "size"],
+		},
 		layout: "centered",
 	},
 	title: "Components/Buttons/SubmitButton",
@@ -14,206 +27,113 @@ const meta: Meta<typeof SubmitButton> = {
 export default meta;
 type Story = StoryObj<typeof SubmitButton>;
 
-export const Default: Story = {
-	args: {
-		children: "Submit",
+export const StateComparison: Story = {
+	parameters: {
+		layout: "fullscreen",
 	},
-};
-
-export const Loading: Story = {
-	args: {
-		children: "Submitting...",
-		isLoading: true,
-	},
-};
-
-export const WithRightIcon: Story = {
-	args: {
-		children: "Submit",
-		rightIcon: <ArrowRight className="size-4" />,
-	},
-};
-
-export const LoadingWithIcon: Story = {
-	args: {
-		children: "Processing",
-		isLoading: true,
-		rightIcon: <Send className="size-4" />,
-	},
-	name: "Loading (Icon Replaced)",
-};
-
-export const Disabled: Story = {
-	args: {
-		children: "Submit",
-		disabled: true,
-	},
-};
-
-export const DisabledLoading: Story = {
-	args: {
-		children: "Processing",
-		disabled: true,
-		isLoading: true,
-	},
-};
-
-export const PrimaryVariant: Story = {
-	args: {
-		children: "Submit Application",
-		variant: "primary",
-	},
-};
-
-export const SecondaryVariant: Story = {
-	args: {
-		children: "Save Draft",
-		variant: "secondary",
-	},
-};
-
-export const LinkVariant: Story = {
-	args: {
-		children: "Skip for Now",
-		variant: "link",
-	},
-};
-
-export const DarkTheme: Story = {
-	args: {
-		children: "Submit",
-		theme: "dark",
-	},
-};
-
-export const LightTheme: Story = {
-	args: {
-		children: "Submit",
-		theme: "light",
-	},
-};
-
-export const SmallSize: Story = {
-	args: {
-		children: "Submit",
-		size: "sm",
-	},
-};
-
-export const MediumSize: Story = {
-	args: {
-		children: "Submit",
-		size: "md",
-	},
-};
-
-export const LargeSize: Story = {
-	args: {
-		children: "Submit",
-		size: "lg",
-	},
-};
-
-export const LongText: Story = {
-	args: {
-		children: "Submit Grant Application for Review",
-	},
-};
-
-export const WithCustomIcon: Story = {
-	args: {
-		children: "Complete",
-		rightIcon: <Check className="size-4" />,
-	},
-};
-
-export const FormExample: Story = {
-	name: "In Form Context",
 	render: () => (
-		<form
-			className="w-80 space-y-4"
-			onSubmit={(e) => {
-				e.preventDefault();
-				action("form-submitted")();
-			}}
-		>
-			<div className="space-y-2">
-				<label className="text-sm font-medium" htmlFor="email">
-					Email
-				</label>
-				<input
-					className="w-full rounded-md border px-3 py-2"
-					id="email"
-					placeholder="Enter your email"
-					required
-					type="email"
-				/>
-			</div>
-			<div className="space-y-2">
-				<label className="text-sm font-medium" htmlFor="message">
-					Message
-				</label>
-				<textarea
-					className="w-full rounded-md border px-3 py-2"
-					id="message"
-					placeholder="Enter your message"
-					required
-					rows={3}
-				/>
-			</div>
-			<SubmitButton>Submit Form</SubmitButton>
-		</form>
-	),
-};
+		<div className="p-8 max-w-6xl mx-auto">
+			<h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Submit Button States</h2>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+				<div className="space-y-4">
+					<h3 className="text-lg font-semibold text-gray-800 text-center">Enabled</h3>
+					<div className="p-6 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg">
+						<form className="space-y-4">
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="enabled-email">
+									Email
+								</label>
+								<input
+									className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+									defaultValue="user@example.com"
+									id="enabled-email"
+									readOnly
+									type="email"
+								/>
+							</div>
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="enabled-message">
+									Message
+								</label>
+								<textarea
+									className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+									defaultValue="Ready to submit"
+									id="enabled-message"
+									readOnly
+									rows={2}
+								/>
+							</div>
+							<SubmitButton>Submit Application</SubmitButton>
+						</form>
+					</div>
+				</div>
 
-export const LoadingStates: Story = {
-	name: "Loading State Comparison",
-	render: () => (
-		<div className="space-y-4">
-			<div className="space-y-2">
-				<p className="text-muted-foreground text-sm">Default state:</p>
-				<SubmitButton>Submit Application</SubmitButton>
-			</div>
-			<div className="space-y-2">
-				<p className="text-muted-foreground text-sm">Loading state:</p>
-				<SubmitButton isLoading>Submitting...</SubmitButton>
-			</div>
-			<div className="space-y-2">
-				<p className="text-muted-foreground text-sm">Loading with custom icon (replaced):</p>
-				<SubmitButton isLoading rightIcon={<Send className="size-4" />}>
-					Sending...
-				</SubmitButton>
-			</div>
-		</div>
-	),
-};
+				<div className="space-y-4">
+					<h3 className="text-lg font-semibold text-gray-800 text-center">Disabled</h3>
+					<div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg">
+						<form className="space-y-4">
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="disabled-email">
+									Email
+								</label>
+								<input
+									className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
+									disabled
+									id="disabled-email"
+									placeholder="Enter your email"
+									type="email"
+								/>
+							</div>
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="disabled-message">
+									Message
+								</label>
+								<textarea
+									className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
+									disabled
+									id="disabled-message"
+									placeholder="Enter message"
+									rows={2}
+								/>
+							</div>
+							<SubmitButton disabled>Submit Application</SubmitButton>
+						</form>
+					</div>
+				</div>
 
-export const VariantShowcase: Story = {
-	name: "All Variants",
-	render: () => (
-		<div className="space-y-4">
-			<SubmitButton variant="primary">Primary Submit</SubmitButton>
-			<SubmitButton variant="secondary">Secondary Submit</SubmitButton>
-			<SubmitButton variant="link">Link Submit</SubmitButton>
-			<SubmitButton isLoading variant="primary">
-				Loading Primary
-			</SubmitButton>
-			<SubmitButton isLoading variant="secondary">
-				Loading Secondary
-			</SubmitButton>
-			<SubmitButton isLoading variant="link">
-				Loading Link
-			</SubmitButton>
-		</div>
-	),
-};
-
-export const SizeComparison: Story = {
-	render: () => (
-		<div className="flex items-center gap-4">
-			<SubmitButton size="sm">Small</SubmitButton>
-			<SubmitButton size="md">Medium</SubmitButton>
-			<SubmitButton size="lg">Large</SubmitButton>
+				<div className="space-y-4">
+					<h3 className="text-lg font-semibold text-gray-800 text-center">Loading</h3>
+					<div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg">
+						<form className="space-y-4">
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="loading-email">
+									Email
+								</label>
+								<input
+									className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm bg-blue-50"
+									defaultValue="user@example.com"
+									id="loading-email"
+									readOnly
+									type="email"
+								/>
+							</div>
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-gray-700" htmlFor="loading-message">
+									Message
+								</label>
+								<textarea
+									className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm bg-blue-50"
+									defaultValue="Processing..."
+									id="loading-message"
+									readOnly
+									rows={2}
+								/>
+							</div>
+							<SubmitButton isLoading>Submitting...</SubmitButton>
+						</form>
+					</div>
+				</div>
+			</div>
 		</div>
 	),
 };

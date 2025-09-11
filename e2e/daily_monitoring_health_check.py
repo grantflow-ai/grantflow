@@ -1,5 +1,3 @@
-"""Daily monitoring health check for GrantFlow App Hosting."""
-
 import asyncio
 import sys
 from datetime import UTC, datetime
@@ -8,8 +6,6 @@ import httpx
 
 
 async def send_daily_health_check() -> bool:
-    """Send a daily health check message to Discord."""
-
     webhook_url = "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
 
     embed = {
@@ -48,7 +44,6 @@ async def send_daily_health_check() -> bool:
 
 
 async def main() -> None:
-    """Main function for daily health check."""
     success = await send_daily_health_check()
 
     if success:

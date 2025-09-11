@@ -4,12 +4,12 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationGenerationJob,
     GrantTemplate,
     GrantTemplateGenerationJob,
     RagGenerationJob,
-    RagGenerationNotification,
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
@@ -20,14 +20,11 @@ logger = get_logger(__name__)
 
 
 class JobManager:
-    """Manages RAG generation job lifecycle and notifications."""
-
     def __init__(self, session_maker: async_sessionmaker[Any], job_id: UUID | None = None) -> None:
         self.session_maker = session_maker
         self.job_id = job_id
 
     async def create_grant_template_job(self, grant_template_id: UUID, total_stages: int) -> GrantTemplateGenerationJob:
-        """Create a new grant template generation job or return existing one."""
         logger.debug(
             "Attempting to create grant template job",
             template_id=str(grant_template_id),
@@ -113,7 +110,6 @@ class JobManager:
     async def create_grant_application_job(
         self, grant_application_id: UUID, total_stages: int
     ) -> GrantApplicationGenerationJob:
-        """Create a new grant application generation job or return existing one."""
         async with self.session_maker() as session:
             existing_job_result = await session.execute(
                 select(GrantApplicationGenerationJob).where(
@@ -156,7 +152,6 @@ class JobManager:
         error_message: str | None = None,
         error_details: dict[str, Any] | None = None,
     ) -> None:
-        """Update job status and related timestamps."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -182,7 +177,6 @@ class JobManager:
         current_stage: int,
         checkpoint_data: dict[str, Any] | None = None,
     ) -> None:
-        """Update job progress stage and checkpoint data."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -206,12 +200,12 @@ class JobManager:
         current_pipeline_stage: int | None = None,
         total_pipeline_stages: int | None = None,
     ) -> None:
-        """Add a notification to the job history and publish it."""
+        logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
-            notification = RagGenerationNotification(
+            notification = GenerationNotification(
                 rag_job_id=self.job_id,
                 event=event,
                 message=message,
@@ -224,8 +218,7 @@ class JobManager:
 
             if current_pipeline_stage is not None:
                 await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
-                job = await session.get(RagGenerationJob, self.job_id)
-                if job:
+                if job := await session.get(RagGenerationJob, self.job_id):
                     job.current_stage = current_pipeline_stage
 
             await session.commit()
@@ -242,14 +235,12 @@ class JobManager:
             status_data["total_pipeline_stages"] = total_pipeline_stages
 
         await publish_notification(
-            logger=logger,
             parent_id=parent_id,
             event=event,
             data=status_data,
         )
 
     async def increment_retry_count(self) -> int:
-        """Increment the retry count for a job and return the new count."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -262,7 +253,6 @@ class JobManager:
             return int(job.retry_count)
 
     async def get_job(self) -> RagGenerationJob | None:
-        """Get the current job."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -272,16 +262,15 @@ class JobManager:
                 await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id)),
             )
 
-    async def get_job_notifications(self, limit: int | None = None) -> list[RagGenerationNotification]:
-        """Get notifications for the current job, ordered by creation time."""
+    async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
             query = (
-                select(RagGenerationNotification)
-                .where(RagGenerationNotification.rag_job_id == self.job_id)
-                .order_by(RagGenerationNotification.created_at.desc())
+                select(GenerationNotification)
+                .where(GenerationNotification.rag_job_id == self.job_id)
+                .order_by(GenerationNotification.created_at.desc())
             )
 
             if limit:

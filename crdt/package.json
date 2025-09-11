@@ -1,0 +1,43 @@
+{
+	"dependencies": {
+		"@google-cloud/pino-logging-gcp-config": "^1.1.0",
+		"@hocuspocus/extension-database": "^3.2.3",
+		"@hocuspocus/server": "^3.2.3",
+		"dotenv": "^17.2.2",
+		"drizzle-orm": "^0.44.5",
+		"pg": "^8.16.3",
+		"pino": "^9.9.5",
+		"zod": "^4.1.7"
+	},
+	"devDependencies": {
+		"tsx": "^4.20.5"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"main": "dist/index.js",
+	"name": "crdt",
+	"packageManager": "pnpm@10.13.1",
+	"private": true,
+	"scripts": {
+		"biome": "biome",
+		"build": "vite build",
+		"check": "biome check --write . && eslint ",
+		"db:introspect": "drizzle-kit introspect && mv drizzle/schema.ts src/db/schema.ts && mv drizzle/relations.ts src/db/relations.ts && pnpm lint",
+		"dev": "tsx watch src/index.ts",
+		"eslint": "eslint",
+		"format": "biome format --write .",
+		"knip": "knip",
+		"knip:fix": "knip --fix",
+		"knip:production": "knip --production",
+		"lint": "biome lint --write . && eslint . --fix",
+		"preinstall": "npx only-allow pnpm",
+		"start": "node dist/index.js",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest watch --coverage",
+		"typecheck": "tsc --noEmit"
+	},
+	"type": "module",
+	"version": "1.0.0"
+}

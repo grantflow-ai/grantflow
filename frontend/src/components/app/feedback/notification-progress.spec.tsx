@@ -1,8 +1,12 @@
 import { RagProcessingStatusFactory } from "::testing/factories";
-import { render, screen } from "@testing-library/react";
-import { NotificationProgress } from "@/components/app";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
+import { NotificationProgress } from "@/components/app/feedback/notification-progress";
 
-describe("NotificationProgress", () => {
+describe.sequential("NotificationProgress", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockNotification = RagProcessingStatusFactory.build({
 		current_pipeline_stage: 4,
 		event: "generating_section_texts",

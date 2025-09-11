@@ -1,7 +1,7 @@
 "use server";
 
 import type { API } from "@/types/api-types";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 export async function acceptInvitation(invitationId: string) {
@@ -14,10 +14,14 @@ export async function acceptInvitation(invitationId: string) {
 	);
 }
 
-export async function createInvitation(projectId: string, data: API.CreateInvitationRedirectUrl.RequestBody) {
+export async function createInvitation(
+	organizationId: string,
+	projectId: string,
+	data: API.CreateInvitationRedirectUrl.RequestBody,
+) {
 	return withAuthRedirect(
 		getClient()
-			.post(`projects/${projectId}/create-invitation-redirect-url`, {
+			.post(`organizations/${organizationId}/projects/${projectId}/create-invitation-redirect-url`, {
 				headers: await createAuthHeaders(),
 				json: data,
 			})
@@ -25,76 +29,84 @@ export async function createInvitation(projectId: string, data: API.CreateInvita
 	);
 }
 
-export async function createProject(data: API.CreateProject.RequestBody) {
+export async function createProject(organizationId: string, data: API.CreateProject.RequestBody) {
 	return withAuthRedirect(
 		getClient()
-			.post("projects", { headers: await createAuthHeaders(), json: data })
+			.post(`organizations/${organizationId}/projects`, { headers: await createAuthHeaders(), json: data })
 			.json<API.CreateProject.Http201.ResponseBody>(),
 	);
 }
 
-export async function deleteInvitation(projectId: string, invitationId: string) {
+export async function deleteInvitation(organizationId: string, projectId: string, invitationId: string) {
 	await withAuthRedirect(
-		getClient().delete(`projects/${projectId}/invitations/${invitationId}`, {
+		getClient().delete(`organizations/${organizationId}/projects/${projectId}/invitations/${invitationId}`, {
 			headers: await createAuthHeaders(),
 		}),
 	);
 }
 
-export async function deleteProject(projectId: string) {
-	await withAuthRedirect(getClient().delete(`projects/${projectId}`, { headers: await createAuthHeaders() }));
+export async function deleteProject(organizationId: string, projectId: string) {
+	await withAuthRedirect(
+		getClient().delete(`organizations/${organizationId}/projects/${projectId}`, {
+			headers: await createAuthHeaders(),
+		}),
+	);
 }
 
-export async function duplicateProject(projectId: string) {
-	const originalProject = await getProject(projectId);
-
-	const duplicateData: API.CreateProject.RequestBody = {
-		description: originalProject.description,
-		logo_url: originalProject.logo_url,
-		name: `Copy of ${originalProject.name}`,
-	};
-
-	return createProject(duplicateData);
-}
-
-export async function getProject(projectId: string) {
+export async function duplicateProject(organizationId: string, projectId: string) {
 	return withAuthRedirect(
 		getClient()
-			.get(`projects/${projectId}`, { headers: await createAuthHeaders() })
+			.post(`organizations/${organizationId}/projects/${projectId}/duplicate`, {
+				headers: await createAuthHeaders(),
+				json: {},
+			})
+			.json<API.DuplicateProject.Http201.ResponseBody>(),
+	);
+}
+
+export async function getProject(organizationId: string, projectId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`organizations/${organizationId}/projects/${projectId}`, { headers: await createAuthHeaders() })
 			.json<API.GetProject.Http200.ResponseBody>(),
 	);
 }
 
-export async function getProjectMembers(projectId: string) {
+export async function getProjectMembers(organizationId: string, projectId: string) {
 	return withAuthRedirect(
 		getClient()
-			.get(`projects/${projectId}/members`, { headers: await createAuthHeaders() })
+			.get(`organizations/${organizationId}/projects/${projectId}/members`, {
+				headers: await createAuthHeaders(),
+			})
 			.json<API.ListProjectMembers.Http200.ResponseBody>(),
 	);
 }
 
-export async function getProjects() {
+export async function getProjects(organizationId: string) {
 	return withAuthRedirect(
 		getClient()
-			.get("projects", { headers: await createAuthHeaders() })
+			.get(`organizations/${organizationId}/projects`, { headers: await createAuthHeaders() })
 			.json<API.ListProjects.Http200.ResponseBody>(),
 	);
 }
 
-export async function removeProjectMember(projectId: string, firebaseUid: string) {
+export async function removeProjectMember(organizationId: string, projectId: string, firebaseUid: string) {
 	await withAuthRedirect(
-		getClient().delete(`projects/${projectId}/members/${firebaseUid}`, { headers: await createAuthHeaders() }),
+		getClient().delete(`organizations/${organizationId}/projects/${projectId}/members/${firebaseUid}`, {
+			headers: await createAuthHeaders(),
+		}),
 	);
 }
 
 export async function updateInvitationRole(
+	organizationId: string,
 	projectId: string,
 	invitationId: string,
 	data: API.UpdateInvitationRole.RequestBody,
 ) {
 	return withAuthRedirect(
 		getClient()
-			.patch(`projects/${projectId}/invitations/${invitationId}`, {
+			.patch(`organizations/${organizationId}/projects/${projectId}/invitations/${invitationId}`, {
 				headers: await createAuthHeaders(),
 				json: data,
 			})
@@ -102,22 +114,29 @@ export async function updateInvitationRole(
 	);
 }
 
-export async function updateProject(projectId: string, data: API.UpdateProject.RequestBody) {
+export async function updateProject(organizationId: string, projectId: string, data: API.UpdateProject.RequestBody) {
 	return withAuthRedirect(
 		getClient()
-			.patch(`projects/${projectId}`, { headers: await createAuthHeaders(), json: data })
+			.patch(`organizations/${organizationId}/projects/${projectId}`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
 			.json<API.UpdateProject.Http200.ResponseBody>(),
 	);
 }
 
 export async function updateProjectMemberRole(
+	organizationId: string,
 	projectId: string,
 	firebaseUid: string,
 	data: API.UpdateProjectMemberRole.RequestBody,
 ) {
 	return withAuthRedirect(
 		getClient()
-			.patch(`projects/${projectId}/members/${firebaseUid}`, { headers: await createAuthHeaders(), json: data })
+			.patch(`organizations/${organizationId}/projects/${projectId}/members/${firebaseUid}`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
 			.json<API.UpdateProjectMemberRole.Http200.ResponseBody>(),
 	);
 }

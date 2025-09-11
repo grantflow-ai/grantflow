@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTraceHeaders, generateTraceId, logTraceEvent } from "./tracing";
 
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock("@/utils/logger", () => ({
 	},
 }));
 
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const mockLog = vi.mocked(log);
 

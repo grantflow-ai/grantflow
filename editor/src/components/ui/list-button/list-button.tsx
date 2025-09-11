@@ -1,0 +1,89 @@
+import * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import type { ButtonProps } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import type { ListType, UseListConfig } from "@/components/ui/list-button";
+import { LIST_SHORTCUT_KEYS, useList } from "@/components/ui/list-button";
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+
+import { parseShortcutKeys } from "@/utils";
+
+export interface ListButtonProps extends Omit<ButtonProps, "type">, UseListConfig {
+	text?: string;
+	showShortcut?: boolean;
+}
+
+export function ListShortcutBadge({
+	type,
+	shortcutKeys = LIST_SHORTCUT_KEYS[type],
+}: {
+	type: ListType;
+	shortcutKeys?: string;
+}) {
+	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
+}
+
+export const ListButton = React.forwardRef<HTMLButtonElement, ListButtonProps>(
+	(
+		{
+			editor: providedEditor,
+			type,
+			text,
+			hideWhenUnavailable = false,
+			onToggled,
+			showShortcut = false,
+			onClick,
+			children,
+			...buttonProps
+		},
+		ref,
+	) => {
+		const { editor } = useTiptapEditor(providedEditor);
+		const { isVisible, canToggle, isActive, handleToggle, label, shortcutKeys, Icon } = useList({
+			editor,
+			hideWhenUnavailable,
+			onToggled,
+			type,
+		});
+
+		const handleClick = React.useCallback(
+			(event: React.MouseEvent<HTMLButtonElement>) => {
+				onClick?.(event);
+				if (event.defaultPrevented) return;
+				handleToggle();
+			},
+			[handleToggle, onClick],
+		);
+
+		if (!isVisible) {
+			return null;
+		}
+
+		return (
+			<Button
+				type="button"
+				data-style="ghost"
+				data-active-state={isActive ? "on" : "off"}
+				tabIndex={-1}
+				disabled={!canToggle}
+				data-disabled={!canToggle}
+				aria-label={label}
+				aria-pressed={isActive}
+				tooltip={label}
+				onClick={handleClick}
+				{...buttonProps}
+				ref={ref}
+			>
+				{children ?? (
+					<>
+						<Icon className="tiptap-button-icon" />
+						{text && <span className="tiptap-button-text">{text}</span>}
+						{showShortcut && <ListShortcutBadge type={type} shortcutKeys={shortcutKeys} />}
+					</>
+				)}
+			</Button>
+		);
+	},
+);
+
+ListButton.displayName = "ListButton";

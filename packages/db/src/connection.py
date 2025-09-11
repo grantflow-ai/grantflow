@@ -11,7 +11,15 @@ engine_ref = Ref[AsyncEngine]()
 
 def get_async_engine() -> AsyncEngine:
     if engine_ref.value is None:
-        engine_ref.value = create_async_engine(get_env("DATABASE_CONNECTION_STRING"), echo=True, pool_size=25)
+        engine_ref.value = create_async_engine(
+            get_env("DATABASE_CONNECTION_STRING"),
+            echo=True,
+            pool_size=10,
+            max_overflow=5,
+            pool_timeout=30,
+            pool_recycle=1800,
+            pool_pre_ping=True,
+        )
     return engine_ref.value
 
 

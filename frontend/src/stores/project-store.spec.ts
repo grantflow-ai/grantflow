@@ -1,27 +1,45 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createProject, deleteProject, getProject, getProjects, updateProject } from "@/actions/project";
+import { log } from "@/utils/logger/client";
 
 import { useProjectStore } from "./project-store";
 
 vi.mock("@/actions/project");
 vi.mock("sonner", () => ({
 	toast: {
+		dismiss: vi.fn(),
 		error: vi.fn(),
+		loading: vi.fn(() => "mock-toast-id"),
 		success: vi.fn(),
+	},
+}));
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			selectedOrganizationId: "mock-org-id",
+		})),
+	},
+}));
+vi.mock("@/utils/logger/client", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
 	},
 }));
 
 describe("Project Store", () => {
 	beforeEach(() => {
 		useProjectStore.setState({
-			areOperationsInProgress: false,
 			project: null,
 			projects: [],
 		});
 
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 	});
 
 	describe("state management", () => {
@@ -29,7 +47,6 @@ describe("Project Store", () => {
 			const state = useProjectStore.getState();
 			expect(state.project).toBeNull();
 			expect(state.projects).toEqual([]);
-			expect(state.areOperationsInProgress).toBe(false);
 		});
 
 		it("should set project", () => {
@@ -42,7 +59,6 @@ describe("Project Store", () => {
 			const project = ProjectFactory.build();
 			const projectListItem = ProjectListItemFactory.build();
 			useProjectStore.setState({
-				areOperationsInProgress: true,
 				project,
 				projects: [projectListItem],
 			});
@@ -52,7 +68,6 @@ describe("Project Store", () => {
 			const state = useProjectStore.getState();
 			expect(state.project).toBeNull();
 			expect(state.projects).toEqual([]);
-			expect(state.areOperationsInProgress).toBe(false);
 		});
 	});
 
@@ -66,12 +81,11 @@ describe("Project Store", () => {
 			vi.mocked(createProject).mockResolvedValue(createdProject);
 			vi.mocked(getProjects).mockResolvedValue(projectsList);
 
-			await useProjectStore.getState().createProject(projectData);
+			await useProjectStore.getState().createProject("mock-org-id", projectData);
 
-			expect(createProject).toHaveBeenCalledWith(projectData);
-			expect(getProjects).toHaveBeenCalled();
+			expect(createProject).toHaveBeenCalledWith("mock-org-id", projectData);
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 			expect(useProjectStore.getState().projects).toEqual(projectsList);
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
 
 		it("should handle creation error", async () => {
@@ -80,10 +94,10 @@ describe("Project Store", () => {
 
 			vi.mocked(createProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().createProject(projectData);
+			await useProjectStore.getState().createProject("mock-org-id", projectData);
 
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toBeNull();
+			expect(log.error).toHaveBeenCalledWith("createProject", error);
 		});
 	});
 
@@ -92,11 +106,10 @@ describe("Project Store", () => {
 			const project = ProjectFactory.build();
 			vi.mocked(getProject).mockResolvedValue(project);
 
-			await useProjectStore.getState().getProject(project.id);
+			await useProjectStore.getState().getProject("mock-org-id", project.id);
 
-			expect(getProject).toHaveBeenCalledWith(project.id);
+			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
 			expect(useProjectStore.getState().project).toEqual(project);
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
 
 		it("should handle fetch error", async () => {
@@ -105,9 +118,9 @@ describe("Project Store", () => {
 
 			vi.mocked(getProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().getProject(projectId);
+			await useProjectStore.getState().getProject("mock-org-id", projectId);
 
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
+			expect(log.error).toHaveBeenCalledWith("getProject", error);
 		});
 	});
 
@@ -116,21 +129,20 @@ describe("Project Store", () => {
 			const projects = [ProjectListItemFactory.build(), ProjectListItemFactory.build()];
 			vi.mocked(getProjects).mockResolvedValue(projects);
 
-			await useProjectStore.getState().getProjects();
+			await useProjectStore.getState().getProjects("mock-org-id");
 
-			expect(getProjects).toHaveBeenCalled();
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 			expect(useProjectStore.getState().projects).toEqual(projects);
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
 
 		it("should handle fetch error", async () => {
 			const error = new Error("Fetch failed");
 			vi.mocked(getProjects).mockRejectedValue(error);
 
-			await useProjectStore.getState().getProjects();
+			await useProjectStore.getState().getProjects("mock-org-id");
 
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().projects).toEqual([]);
+			expect(log.error).toHaveBeenCalledWith("getProjects", error);
 		});
 	});
 
@@ -149,16 +161,15 @@ describe("Project Store", () => {
 				id: project.id,
 				logo_url: null,
 				name: "Updated Name",
-				role: "OWNER",
 			});
 			vi.mocked(getProject).mockResolvedValue(updatedProject);
 			vi.mocked(getProjects).mockResolvedValue([updatedProjectListItem]);
 
-			await useProjectStore.getState().updateProject(project.id, updateData);
+			await useProjectStore.getState().updateProject("mock-org-id", project.id, updateData);
 
-			expect(updateProject).toHaveBeenCalledWith(project.id, updateData);
-			expect(getProject).toHaveBeenCalledWith(project.id);
-			expect(getProjects).toHaveBeenCalled();
+			expect(updateProject).toHaveBeenCalledWith("mock-org-id", project.id, updateData);
+			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 		});
 
 		it("should handle update error and restore previous state", async () => {
@@ -171,11 +182,11 @@ describe("Project Store", () => {
 
 			vi.mocked(updateProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().updateProject(project.id, updateData);
+			await useProjectStore.getState().updateProject("mock-org-id", project.id, updateData);
 
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().projects).toEqual([projectListItem]);
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
+			expect(log.error).toHaveBeenCalledWith("updateProject", error);
 		});
 	});
 
@@ -191,12 +202,11 @@ describe("Project Store", () => {
 
 			vi.mocked(deleteProject).mockResolvedValue(undefined);
 
-			await useProjectStore.getState().deleteProject(project1.id);
+			await useProjectStore.getState().deleteProject("mock-org-id", project1.id);
 
-			expect(deleteProject).toHaveBeenCalledWith(project1.id);
+			expect(deleteProject).toHaveBeenCalledWith("mock-org-id", project1.id);
 			expect(useProjectStore.getState().project).toBeNull();
 			expect(useProjectStore.getState().projects).toEqual([projectListItem2]);
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
 
 		it("should handle delete error", async () => {
@@ -208,11 +218,66 @@ describe("Project Store", () => {
 
 			vi.mocked(deleteProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().deleteProject(project.id);
+			await useProjectStore.getState().deleteProject("mock-org-id", project.id);
 
-			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().projects).toEqual([projectListItem]);
+			expect(log.error).toHaveBeenCalledWith("deleteProject", error);
+		});
+	});
+
+	describe("removeApplicationFromProject", () => {
+		it("should remove application from project grant_applications", () => {
+			const app1 = { completed_at: null, id: "app-1", title: "Application 1" };
+			const app2 = { completed_at: null, id: "app-2", title: "Application 2" };
+			const app3 = { completed_at: null, id: "app-3", title: "Application 3" };
+			const project = ProjectFactory.build({
+				grant_applications: [app1, app2, app3],
+			});
+
+			useProjectStore.setState({ project });
+
+			useProjectStore.getState().removeApplicationFromProject("app-2");
+
+			const updatedProject = useProjectStore.getState().project;
+			expect(updatedProject?.grant_applications).toHaveLength(2);
+			expect(updatedProject?.grant_applications).toEqual([app1, app3]);
+			expect(updatedProject?.grant_applications).not.toContainEqual(app2);
+		});
+
+		it("should handle missing project gracefully", () => {
+			useProjectStore.setState({ project: null });
+
+			useProjectStore.getState().removeApplicationFromProject("app-1");
+
+			expect(useProjectStore.getState().project).toBeNull();
+		});
+
+		it("should handle project without grant_applications gracefully", () => {
+			const project = ProjectFactory.build({
+				grant_applications: undefined,
+			});
+
+			useProjectStore.setState({ project });
+
+			useProjectStore.getState().removeApplicationFromProject("app-1");
+
+			expect(useProjectStore.getState().project).toEqual(project);
+		});
+
+		it("should handle non-existent application ID gracefully", () => {
+			const app1 = { completed_at: null, id: "app-1", title: "Application 1" };
+			const project = ProjectFactory.build({
+				grant_applications: [app1],
+			});
+
+			useProjectStore.setState({ project });
+
+			useProjectStore.getState().removeApplicationFromProject("non-existent-id");
+
+			const updatedProject = useProjectStore.getState().project;
+			expect(updatedProject?.grant_applications).toHaveLength(1);
+			expect(updatedProject?.grant_applications).toEqual([app1]);
 		});
 	});
 });

@@ -27,13 +27,16 @@ from packages.shared_utils.src.gcs import (
 
 
 @pytest.fixture(autouse=True)
-def reset_refs() -> None:
+def reset_refs() -> Generator[None, None, None]:
+    storage_client_ref.value = None
+    bucket_ref.value = None
+    yield
     storage_client_ref.value = None
     bucket_ref.value = None
 
 
 @pytest.fixture
-def mock_env_vars() -> Generator[None]:
+def mock_env_vars() -> Generator[None, None, None]:
     with patch.dict(
         os.environ,
         {
@@ -213,7 +216,7 @@ async def test_download_blob_success(
 async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_name = "test-blob"
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.download_as_bytes.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
@@ -235,63 +238,64 @@ async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) 
 
 
 def test_construct_object_uri() -> None:
-    project_id = "project-123"
-    parent_id = "parent-456"
+    entity_type = "grant_application"
+    entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type="grant_application",
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
-    assert uri == f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    assert uri == f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
 
 def test_construct_object_uri_with_uuids() -> None:
-    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+    entity_type = "granting_institution"
+    entity_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type="granting_institution",
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
-    assert uri == f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    assert uri == f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
 
-def test_construct_object_uri_with_none_project() -> None:
-    parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+def test_construct_object_uri_with_granting_institution() -> None:
+    entity_type = "granting_institution"
+    entity_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        project_id=None,
-        parent_id=parent_id,
+        entity_type="granting_institution",
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
-    assert uri == f"{parent_id}/{source_id}/{blob_name}"
+    assert uri == f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
 
 def test_parse_object_uri_valid() -> None:
-    project_id = "123e4567-e89b-12d3-a456-426614174000"
-    parent_id = "223e4567-e89b-12d3-a456-426614174001"
+    entity_type = "grant_application"
+    entity_id = "223e4567-e89b-12d3-a456-426614174001"
     source_id = "323e4567-e89b-12d3-a456-426614174002"
     blob_name = "test-file.pdf"
-    object_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    object_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
     result = parse_object_uri(object_path=object_path)
 
-    assert result["project_id"] == UUID(project_id)
-    assert result["parent_id"] == UUID(parent_id)
+    assert result["entity_type"] == entity_type
+    assert result["entity_id"] == UUID(entity_id)
     assert result["source_id"] == UUID(source_id)
     assert result["blob_name"] == blob_name
 
@@ -299,16 +303,19 @@ def test_parse_object_uri_valid() -> None:
 async def test_create_signed_upload_url(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    project_id = "project-123"
-    parent_id = "parent-456"
+    entity_type = "grant_application"
+    entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
 
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
@@ -316,12 +323,27 @@ async def test_create_signed_upload_url(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            project_id=project_id,
-            parent_id=parent_id,
+            entity_type="grant_application",
+            entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
         )
@@ -332,6 +354,7 @@ async def test_create_signed_upload_url(
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
             headers=None,
+            content_type=None,
         )
         assert url == expected_signed_url
 
@@ -339,16 +362,19 @@ async def test_create_signed_upload_url(
 async def test_create_signed_upload_url_with_uuids(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+    entity_type = "granting_institution"
+    entity_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
     expected_signed_url = "https://storage.googleapis.com/signed-url"
 
     mock_blob = MagicMock()
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
 
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
@@ -356,12 +382,27 @@ async def test_create_signed_upload_url_with_uuids(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            project_id=project_id,
-            parent_id=parent_id,
+            entity_type="granting_institution",
+            entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
         )
@@ -372,6 +413,7 @@ async def test_create_signed_upload_url_with_uuids(
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
             headers=None,
+            content_type=None,
         )
         assert url == expected_signed_url
 
@@ -379,16 +421,19 @@ async def test_create_signed_upload_url_with_uuids(
 async def test_create_signed_upload_url_error(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    project_id = "project-123"
-    parent_id = "parent-456"
+    entity_type = "grant_application"
+    entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
-    expected_blob_path = f"{project_id}/{parent_id}/{source_id}/{blob_name}"
+    expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.generate_signed_url.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
 
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
@@ -396,13 +441,28 @@ async def test_create_signed_upload_url_error(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
         pytest.raises(ExternalOperationError) as exc_info,
     ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         await create_signed_upload_url(
-            project_id=project_id,
-            parent_id=parent_id,
+            entity_type="grant_application",
+            entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
         )
@@ -410,6 +470,69 @@ async def test_create_signed_upload_url_error(
     assert "Failed to create signed upload URL" in str(exc_info.value)
     assert exc_info.value.context["blob_path"] == expected_blob_path
     assert "Test error" in exc_info.value.context["error"]
+
+
+async def test_create_signed_upload_url_with_content_type(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    entity_type = "grant_application"
+    entity_id = "entity-123"
+    source_id = "source-456"
+    blob_name = "test-file.pdf"
+    content_type = "application/pdf"
+    trace_id = "trace-789"
+    expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
+    expected_signed_url = "https://storage.googleapis.com/signed-url"
+
+    mock_blob = MagicMock()
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
+    with (
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch(
+            "packages.shared_utils.src.gcs.run_sync",
+            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+        ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
+    ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_upload_url(
+            entity_type="grant_application",
+            entity_id=entity_id,
+            source_id=source_id,
+            blob_name=blob_name,
+            trace_id=trace_id,
+            content_type=content_type,
+        )
+
+        mock_bucket.blob.assert_called_once_with(expected_blob_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=ONE_MINUTE_SECONDS * 5,
+            method="PUT",
+            headers={"Content-Type": content_type},
+            content_type=content_type,
+        )
+        assert url == expected_signed_url
 
 
 async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
@@ -439,7 +562,7 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
     content = b"test content"
 
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.upload_from_string.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
@@ -460,59 +583,52 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
     assert "Test error" in exc_info.value.context["error"]
 
 
-def test_parse_object_uri_valid_three_components() -> None:
-    parent_id = "223e4567-e89b-12d3-a456-426614174001"
+def test_parse_object_uri_granting_institution() -> None:
+    entity_type = "granting_institution"
+    entity_id = "223e4567-e89b-12d3-a456-426614174001"
     source_id = "323e4567-e89b-12d3-a456-426614174002"
     blob_name = "test-file.pdf"
-    object_path = f"{parent_id}/{source_id}/{blob_name}"
+    object_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
     result = parse_object_uri(object_path=object_path)
 
-    assert result["project_id"] is None
-    assert result["parent_id"] == UUID(parent_id)
+    assert result["entity_type"] == entity_type
+    assert result["entity_id"] == UUID(entity_id)
     assert result["source_id"] == UUID(source_id)
     assert result["blob_name"] == blob_name
 
 
-def test_parse_object_uri_invalid_three_components_bad_uuid() -> None:
-    object_path = "project-123/parent-456/test-file.pdf"
-
-    with pytest.raises(ValueError) as exc_info:
-        parse_object_uri(object_path=object_path)
-
-    assert "badly formed hexadecimal UUID string" in str(exc_info.value)
-
-
-def test_parse_object_uri_invalid_five_components() -> None:
-    object_path = "project/ws-123/grant_application/app-456/test-file.pdf"
+def test_parse_object_uri_invalid_three_components() -> None:
+    object_path = "grant_application/parent-456/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
-    assert (
-        "Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
-        in str(exc_info.value)
-    )
+
+
+def test_parse_object_uri_invalid_five_components() -> None:
+    object_path = "grant_application/ws-123/grant_application/app-456/test-file.pdf"
+
+    with pytest.raises(ValidationError) as exc_info:
+        parse_object_uri(object_path=object_path)
+
+    assert "Invalid object path format" in str(exc_info.value)
     assert exc_info.value.context["object_path"] == object_path
 
 
 def test_parse_object_uri_invalid_two_components() -> None:
-    object_path = "project-123/test-file.pdf"
+    object_path = "grant_application/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
 
     assert "Invalid object path format" in str(exc_info.value)
-    assert (
-        "Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>"
-        in str(exc_info.value)
-    )
     assert exc_info.value.context["object_path"] == object_path
 
 
 def test_parse_object_uri_invalid_uuid() -> None:
-    object_path = "invalid-uuid/parent-456/source-789/test-file.pdf"
+    object_path = "grant_application/invalid-uuid/source-789/test-file.pdf"
 
     with pytest.raises(ValueError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -521,21 +637,21 @@ def test_parse_object_uri_invalid_uuid() -> None:
 
 
 def test_construct_and_parse_round_trip() -> None:
-    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    parent_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+    entity_type = "grant_application"
+    entity_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type="grant_application",
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
 
     result = parse_object_uri(object_path=uri)
 
-    assert result["project_id"] == project_id
-    assert result["parent_id"] == parent_id
+    assert result["entity_type"] == entity_type
+    assert result["entity_id"] == entity_id
     assert result["source_id"] == source_id
     assert result["blob_name"] == blob_name

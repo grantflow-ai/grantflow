@@ -1,75 +1,161 @@
-import { Body, Button, Container, Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
+import {
+	Body,
+	Button,
+	Container,
+	Head,
+	Heading,
+	Html,
+	Img,
+	Link,
+	Preview,
+	Section,
+	Text,
+} from "@react-email/components";
 
-interface InvitationEmailTemplateProps {
+interface InviteCollaboratorsEmailTemplateProps {
 	acceptInvitationUrl: string;
 	inviterName: string;
 	projectName: string;
-	role: string;
 }
 
-export function InvitationEmailTemplate({
+export default function InviteCollaboratorsEmailTemplate({
 	acceptInvitationUrl,
 	inviterName,
 	projectName,
-	role,
-}: InvitationEmailTemplateProps) {
+}: InviteCollaboratorsEmailTemplateProps) {
 	return (
 		<Html>
-			<Head />
+			<Head>
+				<meta content="text/html; charset=UTF-8" httpEquiv="Content-Type" />
+				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+				<link href="https://fonts.googleapis.com" rel="preconnect" />
+				<link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
+				{/* eslint-disable-next-line @next/next/no-page-custom-font */}
+				<link
+					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
+					rel="stylesheet"
+				/>
+				<style>
+					{`
+            @media (max-width: 600px) {
+              .container {
+                width: 100% !important;
+                padding: 20px !important;
+              }
+              .content {
+                padding: 20px !important;
+              }
+              .heading {
+                font-size: 22px !important;
+              }
+              .paragraph {
+                font-size: 16px !important;
+                line-height: 24px !important;
+              }
+            }
+          `}
+				</style>
+			</Head>
 			<Preview>You&apos;ve been invited to collaborate on {projectName}</Preview>
 			<Body style={main}>
-				<Container style={container}>
+				<Container className="container" style={container}>
 					<Section style={header}>
-						<Heading style={headerTitle}>GrantFlow</Heading>
+						<div style={headerContent}>
+							<Img
+								alt="GrantFlow Logo"
+								height={59}
+								src="https://staging.grantflow.ai/assets/logo-horizontal.svg"
+								style={logo}
+								width={58}
+							/>
+							<Img
+								alt="GrantFlow Logo Text"
+								height={31}
+								src="https://staging.grantflow.ai/assets/grantflow.svg"
+								style={logo}
+								width={79}
+							/>
+
+							<Text style={logoSubtext}>By Vsphera</Text>
+						</div>
 					</Section>
 
-					<Section style={content}>
-						<Heading style={title}>Invitation to Collaborate on a Research Project</Heading>
+					<Section className="content" style={content}>
+						<Heading className="heading" style={heading}>
+							Dear Researcher
+						</Heading>
 
-						<Text style={paragraph}>Dear Researcher,</Text>
-
-						<Text style={paragraph}>
+						<Text className="paragraph" style={paragraph}>
 							You have been invited by <strong>{inviterName}</strong> to collaborate on the research
-							project <strong style={projectNameStyle}>&ldquo;{projectName}&rdquo;</strong> as a{" "}
-							<strong>{role}</strong> within the GrantFlow platform.
-						</Text>
-
-						<Text style={paragraph}>
+							project <strong style={projectNameStyle}>&quot;{projectName}&quot;</strong> within the
+							GrantFlow platform.
+							<br />
 							GrantFlow is designed to help research teams streamline and manage the grant application
 							process.
-						</Text>
-
-						<Text style={paragraph}>
+							<br />
 							As a collaborator, you will gain access to the project workspace and will be able to
 							contribute to grant applications and related documentation.
 						</Text>
 
-						<Text style={paragraph}>To accept the invitation, please click the button below:</Text>
+						<Text className="paragraph" style={paragraph}>
+							To accept the invitation, please click the link below:
+						</Text>
 
 						<Section style={buttonContainer}>
 							<Button href={acceptInvitationUrl} style={button}>
-								Accept Invitation
+								<span style={{ verticalAlign: "middle" }}>Accept Invitation</span>
+								<span style={{ display: "inline-block", verticalAlign: "middle" }}>
+									<svg
+										className="lucide lucide-chevron-right-icon lucide-chevron-right"
+										fill="none"
+										height="16"
+										stroke="currentColor"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										viewBox="0 0 24 24"
+										width="16"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<title>Right Arrow Icon</title>
+										<path d="m9 18 6-6-6-6" />
+									</svg>
+								</span>
 							</Button>
 						</Section>
 
-						<Text style={paragraph}>
+						<Text className="paragraph" style={paragraph}>
 							If you do not yet have a GrantFlow account, you will be guided through a brief sign-up
 							process before accessing the project.
 						</Text>
 
-						<Text style={paragraph}>We look forward to your participation.</Text>
+						<Text className="paragraph" style={paragraph}>
+							We look forward to your participation.
+						</Text>
 
-						<Text style={paragraph}>
-							Sincerely,
+						<Text className="paragraph" style={paragraph}>
+							Warm regards,
 							<br />
-							The GrantFlow Team
+							Vsphera Team
 						</Text>
 					</Section>
 
 					<Section style={footer}>
-						<Text style={footerText}>This invitation was sent by {inviterName} from GrantFlow.</Text>
-						<Text style={footerText}>If you received this email by mistake, you can safely ignore it.</Text>
-						<Text style={footerText}>&copy; 2025 GrantFlow. All rights reserved.</Text>
+						<Img
+							alt="LinkedIn"
+							height={27}
+							src="https://static.cdnlogo.com/logos/l/78/linkedin-icon.svg"
+							style={socialIcon}
+							width={32}
+						/>
+						<Text style={footerText}>
+							Want to change how you receive these emails?
+							<br />
+							You can{" "}
+							<Link href="#" style={footerLink}>
+								update your preferences
+							</Link>
+						</Text>
 					</Section>
 				</Container>
 			</Body>
@@ -78,230 +164,112 @@ export function InvitationEmailTemplate({
 }
 
 const main = {
-	backgroundColor: "#f4f4f4",
-	color: "#333",
-	fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-	lineHeight: 1.6,
-	margin: 0,
+	backgroundColor: "#f6f6f6",
+	fontFamily: "'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+	margin: "12px 0 0",
 	padding: 0,
 };
 
 const container = {
 	backgroundColor: "#ffffff",
-	boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+	border: "1px solid #dddddd",
 	margin: "0 auto",
-	maxWidth: "600px",
+	maxWidth: "592px",
 };
 
 const header = {
-	backgroundColor: "#1e13f8",
-	padding: "30px",
-	textAlign: "center" as const,
+	padding: "32px 20px 0",
+	width: "100%",
 };
 
-const headerTitle = {
-	color: "white",
-	fontSize: "32px",
-	fontWeight: "bold",
-	margin: 0,
+const headerContent = {
+	textAlign: "center" as const,
+	width: "79px",
+};
+
+const logo = {
+	display: "block",
+	margin: "0 auto",
+};
+
+const logoSubtext = {
+	color: "#211962",
+	fontSize: "10px",
+	fontWeight: "500",
+	margin: "-8px 0 0 0",
+	textAlign: "center" as const,
 };
 
 const content = {
-	padding: "40px 30px",
+	color: "#505050",
+	fontSize: "16px",
+	lineHeight: "150%",
+	padding: "32px 24px",
+	textAlign: "left" as const,
 };
 
-const title = {
-	color: "#1e13f8",
+const heading = {
+	color: "#2e2d36",
 	fontSize: "24px",
-	marginBottom: "20px",
-	marginTop: "0px",
+	fontWeight: "600",
+	lineHeight: "22px",
+	marginBottom: "16px",
 };
 
 const paragraph = {
+	color: "#2e2d36",
 	fontSize: "16px",
-	lineHeight: 1.8,
-	marginBottom: "20px",
+	fontWeight: "400",
+	lineHeight: "20px",
+	marginBottom: "16px",
 };
 
 const projectNameStyle = {
-	color: "#1e13f8",
-	fontWeight: "bold",
+	color: "#2e2d36",
+	fontWeight: "600",
 };
 
 const buttonContainer = {
-	margin: "30px 0",
-	textAlign: "center" as const,
+	margin: "32px 0",
+	textAlign: "left" as const,
 };
 
 const button = {
+	alignItems: "center",
 	backgroundColor: "#1e13f8",
-	borderRadius: "5px",
+	border: "0",
+	borderRadius: "4px",
 	color: "#ffffff",
-	display: "inline-block",
-	fontSize: "16px",
-	fontWeight: "bold",
-	padding: "12px 30px",
+	display: "inline-flex",
+	fontFamily: "'Sora', sans-serif",
+	fontSize: "14px",
+	fontWeight: "400",
+	justifyContent: "center",
+	padding: "8px 12px",
 	textDecoration: "none",
+	width: "167px",
 };
 
 const footer = {
-	backgroundColor: "#f8f9fa",
-	padding: "30px",
+	borderTop: "1px solid #E1DFEB",
+	padding: "24px 24px 32px",
 	textAlign: "center" as const,
 };
 
-const footerText = {
-	color: "#666",
-	fontSize: "14px",
-	margin: "5px 0",
+const socialIcon = {
+	display: "block",
+	margin: "0 auto",
 };
 
-export function getInvitationEmailTemplateHtml(
-	inviterName: string,
-	projectName: string,
-	acceptInvitationUrl: string,
-): string {
-	return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitation to Collaborate - GrantFlow</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            background-color: #1e13f8;
-            padding: 30px;
-            text-align: center;
-        }
-        .header img {
-            max-width: 150px;
-            height: auto;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        h1 {
-            color: #1e13f8;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        p {
-            margin-bottom: 20px;
-            line-height: 1.8;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #1e13f8;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .button:hover {
-            background-color: #1710d4;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-        .project-name {
-            font-weight: bold;
-            color: #1e13f8;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="cid:logo.png" alt="GrantFlow Logo">
-        </div>
-        <div class="content">
-            <h1>Invitation to Collaborate on a Research Project in GrantFlow</h1>
+const footerText = {
+	color: "#2E2D36",
+	fontFamily: "'Source Sans 3', sans-serif",
+	fontSize: "14px",
+	fontWeight: "400",
+	lineHeight: "18px",
+};
 
-            <p>Dear Researcher,</p>
-
-            <p>You have been invited to collaborate on the research project <span class="project-name">"${projectName}"</span> within the GrantFlow platform.</p>
-
-            <p>GrantFlow is designed to help research teams streamline and manage the grant application process.</p>
-
-            <p>As a collaborator, you will gain access to the project workspace and will be able to contribute to grant applications and related documentation.</p>
-
-            <p>To accept the invitation, please click the link below:</p>
-
-            <div style="text-align: center;">
-                <a href="${acceptInvitationUrl}" class="button">Accept Invitation</a>
-            </div>
-
-            <p>If you do not yet have a GrantFlow account, you will be guided through a brief sign-up process before accessing the project.</p>
-
-            <p>We look forward to your participation.</p>
-
-            <p>Sincerely,<br>
-            The GrantFlow Team</p>
-        </div>
-        <div class="footer">
-            <p>This invitation was sent by ${inviterName} from GrantFlow.</p>
-            <p>If you received this email by mistake, you can safely ignore it.</p>
-            <p>&copy; 2025 GrantFlow. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-`;
-}
-
-export function invitationEmailTemplateText(
-	inviterName: string,
-	projectName: string,
-	acceptInvitationUrl: string,
-): string {
-	return `
-Subject: Invitation to Collaborate on a Research Project in GrantFlow
-
-Dear Researcher,
-
-You have been invited to collaborate on the research project "${projectName}" within the GrantFlow platform.
-
-GrantFlow is designed to help research teams streamline and manage the grant application process.
-
-As a collaborator, you will gain access to the project workspace and will be able to contribute to grant applications and related documentation.
-
-To accept the invitation, please click the link below:
-
-[Accept Invitation]
-${acceptInvitationUrl}
-
-If you do not yet have a GrantFlow account, you will be guided through a brief sign-up process before accessing the project.
-
-We look forward to your participation.
-
-Sincerely,
-The GrantFlow Team
-
----
-This invitation was sent by ${inviterName} from GrantFlow.
-If you received this email by mistake, you can safely ignore it.
-
-© 2025 GrantFlow. All rights reserved.
-`;
-}
+const footerLink = {
+	color: "#2E2D36",
+	textDecoration: "underline",
+};

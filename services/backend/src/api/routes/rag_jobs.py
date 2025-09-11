@@ -4,6 +4,7 @@ from uuid import UUID
 from litestar import get
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationGenerationJob,
@@ -42,11 +43,12 @@ class RagJobResponse(TypedDict):
 
 
 @get(
-    "/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveRagJob",
 )
 async def handle_retrieve_rag_job(
+    *,
     project_id: UUID,
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
@@ -54,7 +56,7 @@ async def handle_retrieve_rag_job(
     logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session:
-        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        job = await session.scalar(select_active(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
         if not job:
             raise NotFoundException("RAG job not found")
@@ -70,7 +72,9 @@ async def handle_retrieve_rag_job(
                     .join(GrantApplication)
                     .where(
                         GrantTemplate.id == template_job.grant_template_id,
+                        GrantTemplate.deleted_at.is_(None),
                         GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
                     )
                 )
                 project_match = template is not None
@@ -83,6 +87,7 @@ async def handle_retrieve_rag_job(
                     select(GrantApplication).where(
                         GrantApplication.id == app_job.grant_application_id,
                         GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
                     )
                 )
                 project_match = application is not None

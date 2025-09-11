@@ -1,9 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { NotificationData } from "@/components/app";
-import { NotificationBanner } from "@/components/app";
+import { afterEach, describe } from "vitest";
+import { NotificationBanner } from "@/components/app/feedback/notification-banner";
+import type { NotificationData } from "@/stores/notification-store";
 
-describe("NotificationBanner", () => {
+describe.sequential("NotificationBanner", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockNotification: NotificationData = {
 		id: "test-123",
 		message: "has a grant deadline in 2 days",

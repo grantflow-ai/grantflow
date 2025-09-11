@@ -28,3 +28,9 @@ variable "discord_webhook_url" {
   default     = ""
   sensitive   = true
 }
+
+variable "image_tag" {
+  description = "Docker image tag for deployments"
+  type        = string
+  default     = "staging-latest"
+}

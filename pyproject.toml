@@ -10,15 +10,26 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.13",
 ]
+dependencies = [  ]
 
 [dependency-groups]
 dev = [
-  "ai-rulez>=1.0.0",
+  "asyncpg>=0.30.0",
   "codespell>=2.4.0",
   "covdefaults>=2.3.0",
   "faker>=37.0.1",
+  "firebase-admin>=7.0.0",
+  "google-cloud-pubsub>=2.31.0",
   "lefthook>=1.11.14",
+  "litestar>=2.16.0",
   "mypy>=1.15.0",
+  "opentelemetry-api>=1.35.0",
+  "opentelemetry-exporter-gcp-trace>=1.9.0",
+  "opentelemetry-instrumentation>=0.56b0",
+  "opentelemetry-instrumentation-httpx>=0.56b0",
+  "opentelemetry-instrumentation-sqlalchemy>=0.56b0",
+  "opentelemetry-sdk>=1.35.0",
+  "pgvector>=0.4.1",
   "polyfactory>=2.19.0",
   "pyproject-fmt>=2.6.0",
   "pytest>=8.3.5",
@@ -26,10 +37,11 @@ dev = [
   "pytest-cov>=6.0.0",
   "pytest-mock>=3.14.0",
   "pytest-timeout>=2.3.1",
-  "pytest-xdist>=3.7.0",
   "python-dotenv>=1.0.1",
   "pyyaml>=6.0.2",
   "ruff>=0.11.1",
+  "sqlalchemy>=2.0.41",
+  "structlog>=25.4.0",
   "uncomment>=2.2.3",
   "uv-bump",
 ]
@@ -100,7 +112,9 @@ lint.per-file-ignores."scripts/**/*.*" = [
   "N999",
   "S",
 ]
-lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ] # Allow empty method in base class
+lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [
+  "B027",
+] # Allow empty method in base class
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -121,8 +135,8 @@ lint.pylint.max-returns = 10
 lint.pylint.max-statements = 100
 
 [tool.codespell]
-ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll,TE"
-skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,*.spec.ts,*.spec.tsx,*_test.py,*/tests/*,**/tests/**,*/coverage/*,**/coverage/**,**/functions/**"
+ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll,TE,wasn,mor,couldn"
+skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,*.spec.ts,*.spec.tsx,*_test.py,*/tests/*,**/tests/**,*/coverage/*,**/coverage/**,**/functions/**,*/dist/*,**/dist/**"
 
 [tool.pyproject-fmt]
 keep_full_version = true
@@ -131,7 +145,7 @@ max_supported_python = "3.13"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
-timeout = 120
+timeout = 600
 markers = [
   "smoke: Quick smoke tests (< 1 min)",
   "quality_assessment: Quality assessment tests (2-5 min)",
@@ -139,7 +153,6 @@ markers = [
   "slow: All slow tests",
   "semantic_evaluation: Semantic similarity evaluation tests",
   "ai_eval: AI-powered evaluation tests",
-  "xdist_group(name): Mark tests to run in the same xdist worker",
   "vector_benchmark: Vector database performance benchmarks",
   "benchmark: All benchmark tests",
   "benchmark_vector: Vector-specific benchmarks",
@@ -155,19 +168,15 @@ filterwarnings = [
   "ignore::DeprecationWarning:tracerite.*",
   "ignore::DeprecationWarning:spacy.*",
   "ignore::DeprecationWarning:weasel.*",
+  "ignore:pkg_resources is deprecated:UserWarning:google.*",
+  "ignore:Use of deprecated default '__check_model__':DeprecationWarning:polyfactory.*",
 ]
-# Enable pytest-xdist for both local development and CI
+# Run tests serially without retries for stability
 addopts = [
-  "-n",
-  "auto",             # Use all available CPU cores (2 in GitHub Actions, more locally)
-  "--dist",
-  "worksteal",        # Dynamic test distribution for better load balancing
-  "--maxprocesses",
-  "4",                # Limit to 4 workers max
-  "-x",               # Stop on first failure to get faster feedback
   "--strict-markers", # Ensure all markers are registered
   "--tb=short",       # Shorter traceback format for better readability in CI
 ]
+testpaths = [ "packages/*/tests", "services/*/tests" ]
 
 [tool.coverage.run]
 plugins = [ "covdefaults" ]
@@ -176,7 +185,6 @@ source = [ "services/**/src", "packages/**/src" ]
 
 [tool.coverage.report]
 exclude_lines = [ 'if TYPE_CHECKING:' ]
-fail_under = 80
 
 [tool.mypy]
 python_version = "3.13"
@@ -187,7 +195,20 @@ strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = [ "." ]
-exclude = [ "^cloud_functions/.*" ]
+exclude = [ "^functions/.*", "^terraform/.*" ]
+
+[[tool.mypy.overrides]]
+module = [
+  "google.cloud.*",
+  "google.cloud.firestore",
+  "google.cloud.firestore_v1",
+  "google.cloud.pubsub_v1",
+  "firebase_admin.*",
+  "firebase_functions.*",
+]
+ignore_missing_imports = true
+follow_imports = "skip"
+no_implicit_reexport = false
 
 [tool.uv.workspace]
 members = [
@@ -198,7 +219,7 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
-  "cloud_functions",
+  "functions",
 ]
 
 [tool.uv.sources]

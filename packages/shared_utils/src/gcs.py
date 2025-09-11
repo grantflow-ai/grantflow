@@ -15,6 +15,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.sync import run_sync
+from packages.shared_utils.src.shared_types import EntityType
 
 logger = get_logger(__name__)
 
@@ -23,8 +24,8 @@ bucket_ref = Ref[Bucket]()
 
 
 class URIParseResult(TypedDict):
-    project_id: UUID | None
-    parent_id: UUID
+    entity_type: EntityType
+    entity_id: UUID
     source_id: UUID
     blob_name: str
 
@@ -109,16 +110,12 @@ async def download_blob(blob_name: str) -> bytes:
 
 def construct_object_uri(
     *,
-    project_id: UUID | str | None,
-    parent_id: UUID | str,
+    entity_type: EntityType,
+    entity_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
 ) -> str:
-    return (
-        f"{project_id}/{parent_id}/{source_id}/{blob_name}"
-        if project_id
-        else f"{parent_id}/{source_id}/{blob_name}"
-    )
+    return f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
 
 def parse_object_uri(
@@ -126,23 +123,31 @@ def parse_object_uri(
     object_path: str,
 ) -> URIParseResult:
     components = object_path.split("/")
+    if len(components) == 4:
+        entity_type_str, entity_id_str, source_id_str, blob_name = components
 
-    if len(components) == 4 or len(components) == 3:
-        if len(components) == 4:
-            project_id, parent_id, source_id, blob_name = components
-        else:
-            project_id = None
-            parent_id, source_id, blob_name = components
+        if entity_type_str not in (
+            "grant_application",
+            "grant_template",
+            "granting_institution",
+        ):
+            raise ValidationError(
+                "Invalid entity type. Must be one of: grant_application, grant_template, granting_institution",
+                context={
+                    "entity_type": entity_type_str,
+                    "object_path": object_path,
+                },
+            )
 
         return URIParseResult(
-            project_id=UUID(project_id) if project_id else None,
-            parent_id=UUID(parent_id),
-            source_id=UUID(source_id),
+            entity_type=entity_type_str,  # type: ignore[typeddict-item]
+            entity_id=UUID(entity_id_str),
+            source_id=UUID(source_id_str),
             blob_name=blob_name,
         )
 
     raise ValidationError(
-        "Invalid object path format. Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>",
+        "Invalid object path format. Expected format: <entity_type>/<entity_id>/<source_id>/<blob_name>",
         context={
             "object_path": object_path,
         },
@@ -150,15 +155,16 @@ def parse_object_uri(
 
 
 async def create_signed_upload_url(
-    project_id: UUID | str | None,
-    parent_id: UUID | str,
+    entity_type: EntityType,
+    entity_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
     trace_id: str | None = None,
+    content_type: str | None = None,
 ) -> str:
     blob_path = construct_object_uri(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
@@ -194,8 +200,8 @@ async def create_signed_upload_url(
         blob = bucket.blob(blob_path)
 
         headers = {}
-        if trace_id:
-            headers["x-goog-meta-trace-id"] = trace_id
+        if content_type:
+            headers["Content-Type"] = content_type
 
         signed_url = await run_sync(
             lambda: blob.generate_signed_url(
@@ -203,6 +209,7 @@ async def create_signed_upload_url(
                 expiration=ONE_MINUTE_SECONDS * 5,
                 method="PUT",
                 headers=headers if headers else None,
+                content_type=content_type,
             )
         )
 

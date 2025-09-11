@@ -104,11 +104,11 @@ response_schema = {
 SIMILARITY_THRESHOLD: Final[float] = 0.85
 
 
-async def deduplicate_queries(queries: list[str]) -> list[str]:
+async def deduplicate_queries(queries: list[str], model_name: str | None = None) -> list[str]:
     if len(queries) <= 1:
         return queries
 
-    model = get_embedding_model()
+    model = get_embedding_model(model_name) if model_name else get_embedding_model()
     embeddings = model.encode(queries, convert_to_tensor=True)
 
     keep_indices = set(range(len(queries)))
@@ -139,7 +139,9 @@ async def deduplicate_queries(queries: list[str]) -> list[str]:
     return [queries[i] for i in sorted(keep_indices)]
 
 
-async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **kwargs: Any) -> list[str]:
+async def handle_create_search_queries(
+    *, user_prompt: str | PromptTemplate, embedding_model: str | None = None, **kwargs: Any
+) -> list[str]:
     messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
     if kwargs:
         messages.append(
@@ -169,11 +171,13 @@ async def handle_create_search_queries(*, user_prompt: str | PromptTemplate, **k
         existing_query_texts = [q["query"] for q in query_results]
 
         if existing_query_texts:
-            deduplicated_texts = await deduplicate_queries(existing_query_texts + current_query_texts)
+            deduplicated_texts = await deduplicate_queries(
+                existing_query_texts + current_query_texts, model_name=embedding_model
+            )
 
             new_query_texts = [q for q in deduplicated_texts if q not in existing_query_texts]
         else:
-            new_query_texts = await deduplicate_queries(current_query_texts)
+            new_query_texts = await deduplicate_queries(current_query_texts, model_name=embedding_model)
 
         query_results.extend(
             [

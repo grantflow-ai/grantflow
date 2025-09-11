@@ -5,7 +5,7 @@
  */
 
 import { getEnv } from "./env";
-import { log } from "./logger";
+import { log } from "./logger/client";
 
 const INDEXER_URL = "http://localhost:8001";
 const RETRY_DELAY = 1000;
@@ -16,10 +16,6 @@ interface GCSEventData {
 	name: string;
 }
 
-/**
- * Extracts the object path from a signed upload URL
- * The URL format includes the object name as a query parameter
- */
 export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 	try {
 		const url = new URL(uploadUrl);
@@ -32,6 +28,12 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 		const pathMatch = /\/o\/([^?]+)/.exec(uploadUrl);
 		if (pathMatch) {
 			return decodeURIComponent(pathMatch[1]);
+		}
+
+		const pathSegments = url.pathname.split("/").filter(Boolean);
+		if (pathSegments.length >= 2) {
+			const objectPath = pathSegments.slice(1).join("/");
+			return decodeURIComponent(objectPath);
 		}
 	} catch (error) {
 		log.error("[Dev Indexing Patch] Failed to parse URL", error);

@@ -23,6 +23,11 @@ variable "domain" {
   type        = string
 }
 
+variable "crdt_server_domain" {
+  description = "Domain for the load balancer (e.g., staging-api.grantflow.ai)"
+  type        = string
+}
+
 variable "enable_ssl" {
   description = "Enable SSL certificate"
   type        = bool

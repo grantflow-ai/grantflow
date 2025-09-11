@@ -134,6 +134,8 @@ runs:
               elif [[ "${{ inputs.service }}" == "scraper" ]]; then
                 cat > services/${{ inputs.service }}/.env << EOF
               DEBUG=True
+              GCP_PROJECT_ID=grantflow-test
+              ENVIRONMENT=test
               EOF
               fi
 

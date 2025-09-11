@@ -12,60 +12,6 @@ terraform {
   }
 }
 
-variable "bucket_name" {
-  description = "The name of the storage bucket"
-  type        = string
-  default     = "grantflow-uploads"
-}
-
-variable "environment" {
-  description = "Environment (dev, staging, prod)"
-  type        = string
-  default     = "prod"
-}
-
-variable "file_indexing_topic" {
-  description = "The Pub/Sub topic for file indexing notifications"
-  type        = string
-  default     = "file-indexing"
-}
-
-variable "storage_class" {
-  description = "Default storage class for the bucket"
-  type        = string
-  default     = "STANDARD"
-}
-
-variable "retention_days" {
-  description = "Object lifecycle retention in days"
-  type        = number
-  default     = 30
-}
-
-variable "location" {
-  description = "Storage bucket location (for GDPR compliance)"
-  type        = string
-  default     = "US"
-}
-
-variable "enable_versioning" {
-  description = "Enable object versioning"
-  type        = bool
-  default     = false
-}
-
-variable "enable_lifecycle" {
-  description = "Enable lifecycle management"
-  type        = bool
-  default     = true
-}
-
-variable "uniform_bucket_access" {
-  description = "Enable uniform bucket-level access"
-  type        = bool
-  default     = true
-}
-
 resource "google_storage_bucket" "uploads" {
   name                        = var.bucket_name
   location                    = var.location
@@ -73,6 +19,13 @@ resource "google_storage_bucket" "uploads" {
   storage_class               = var.storage_class
   uniform_bucket_level_access = var.uniform_bucket_access
   public_access_prevention    = "enforced"
+
+  cors {
+    origin          = var.environment == "staging" ? ["http://localhost:*", "https://staging--grantflow-staging.us-central1.hosted.app", "https://staging.grantflow.ai"] : ["http://localhost:*", "https://grantflow.ai", "https://www.grantflow.ai"]
+    method          = ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"]
+    response_header = ["*"]
+    max_age_seconds = 3600
+  }
 
   dynamic "versioning" {
     for_each = var.enable_versioning ? [1] : []
@@ -186,7 +139,6 @@ resource "google_storage_notification" "file_indexing_notification" {
   depends_on = [google_pubsub_topic_iam_binding.gcs_pubsub_publish]
 }
 
-# Scraper-specific bucket for NIH grant data
 resource "google_storage_bucket" "scraper" {
   name                        = "grantflow-scraper-${var.environment}"
   location                    = var.location
@@ -196,7 +148,7 @@ resource "google_storage_bucket" "scraper" {
   public_access_prevention    = "enforced"
 
   soft_delete_policy {
-    retention_duration_seconds = 604800 # 7 days
+    retention_duration_seconds = 604800
   }
 
   encryption {
@@ -210,39 +162,14 @@ resource "google_storage_bucket" "scraper" {
   }
 }
 
-# IAM policy for scraper bucket - similar to uploads bucket
-resource "google_storage_bucket_iam_policy" "scraper" {
-  bucket      = google_storage_bucket.scraper.name
-  policy_data = <<POLICY
-{
-  "bindings": [
-    {
-      "members": [
-        "projectEditor:grantflow",
-        "projectOwner:grantflow"
-      ],
-      "role": "roles/storage.legacyBucketOwner"
-    },
-    {
-      "members": [
-        "projectViewer:grantflow"
-      ],
-      "role": "roles/storage.legacyBucketReader"
-    },
-    {
-      "members": [
-        "projectEditor:grantflow",
-        "projectOwner:grantflow"
-      ],
-      "role": "roles/storage.legacyObjectOwner"
-    },
-    {
-      "members": [
-        "projectViewer:grantflow"
-      ],
-      "role": "roles/storage.legacyObjectReader"
-    }
-  ]
+resource "google_storage_bucket_iam_member" "scraper_bucket_object_viewer" {
+  bucket = google_storage_bucket.scraper.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:scraper-service@grantflow.iam.gserviceaccount.com"
 }
-POLICY
+
+resource "google_storage_bucket_iam_member" "scraper_bucket_object_creator" {
+  bucket = google_storage_bucket.scraper.name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:scraper-service@grantflow.iam.gserviceaccount.com"
 }

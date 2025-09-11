@@ -44,6 +44,14 @@ vi.mock("firebase/auth", () => ({
 	updateProfile: vi.fn(),
 }));
 
+vi.mock("@/utils/logger/client", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
+
 const mockUser: UserInfo = createUserInfo({
 	displayName: "John Doe",
 	email: "john.doe@example.com",

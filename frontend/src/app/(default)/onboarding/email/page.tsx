@@ -9,10 +9,10 @@ import { toast } from "sonner";
 
 import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
+import { routes } from "@/utils/navigation";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
@@ -26,7 +26,7 @@ export default function FinalizeEmailLogin() {
 			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
 			if (!(email && isEmailLink)) {
 				toast.error("Invalid or expired sign-in link");
-				router.replace(PagePath.ONBOARDING);
+				router.replace(routes.onboarding());
 				return;
 			}
 
@@ -41,7 +41,7 @@ export default function FinalizeEmailLogin() {
 				if (!isRedirectError(error)) {
 					log.error("finalizeSignIn", error);
 					toast.error("Failed to sign in with email link");
-					router.replace(PagePath.LOGIN);
+					router.replace(routes.login());
 				}
 			} finally {
 				globalThis.localStorage.removeItem(FIREBASE_LOCAL_STORAGE_KEY);

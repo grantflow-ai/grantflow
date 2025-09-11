@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
+import { cleanup, render, screen } from "@testing-library/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { acceptInvitation } from "@/actions/project";
 import { useUserStore } from "@/stores/user-store";
 import AcceptInvitationPage from "./page";
 
-// Mock dependencies
 vi.mock("next/navigation");
 vi.mock("@/actions/project");
 vi.mock("@/stores/user-store");
@@ -21,6 +21,7 @@ const mockGet = vi.fn();
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	setupAuthenticatedTest();
 
 	(useRouter as any).mockReturnValue({
 		push: mockPush,
@@ -35,7 +36,11 @@ beforeEach(() => {
 	});
 });
 
-describe("AcceptInvitationPage", () => {
+describe.sequential("AcceptInvitationPage", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("should show loading spinner initially", () => {
 		mockGet.mockReturnValue("valid.jwt.token");
 
@@ -65,12 +70,10 @@ describe("AcceptInvitationPage", () => {
 	});
 
 	it("should process invitation and redirect to project on success", async () => {
-		// Mock JWT token with invitation_id
 		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
 		const fullToken = `header.${mockToken}.signature`;
 		mockGet.mockReturnValue(fullToken);
 
-		// Mock successful invitation acceptance
 		const mockResultToken = btoa(JSON.stringify({ project_id: "proj-456" }));
 		const fullResultToken = `header.${mockResultToken}.signature`;
 		(acceptInvitation as any).mockResolvedValue({
@@ -79,7 +82,6 @@ describe("AcceptInvitationPage", () => {
 
 		render(<AcceptInvitationPage />);
 
-		// Wait for async operations
 		await vi.waitFor(() => {
 			expect(acceptInvitation).toHaveBeenCalledWith("inv-123");
 		});
@@ -104,7 +106,7 @@ describe("AcceptInvitationPage", () => {
 	});
 
 	it("should handle invalid token format", async () => {
-		const mockToken = btoa(JSON.stringify({})); // Missing invitation_id
+		const mockToken = btoa(JSON.stringify({}));
 		const fullToken = `header.${mockToken}.signature`;
 		mockGet.mockReturnValue(fullToken);
 

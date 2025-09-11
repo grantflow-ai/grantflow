@@ -1,53 +1,31 @@
 "use client";
 
-import Image from "next/image";
-import { useTheme } from "next-themes";
+import { CircleCheck, Info, LoaderCircle, TriangleAlert, XCircle } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-	const { theme = "system" } = useTheme();
-
 	return (
-		<>
-			{/* eslint-disable-next-line react/no-unknown-property */}
-			<style global jsx>{`
-			`}</style>
-			<Sonner
-				closeButton={false}
-				icons={{
-					error: <Image alt="Error" height={16} src="/icons/icon-toast-error.svg" width={16} />,
-					info: <Image alt="Info" height={16} src="/icons/icon-toast-info.svg" width={16} />,
-					success: <Image alt="Success" height={16} src="/icons/icon-toast-success-white.svg" width={16} />,
-					warning: <Image alt="Warning" height={16} src="/icons/icon-toast-warning.svg" width={16} />,
-				}}
-				offset={24}
-				position="bottom-center"
-				theme={theme as ToasterProps["theme"]}
-				toastOptions={{
-					className: "flex flex-row items-start !rounded-sm border shadow-none",
-					classNames: {
-						description: "!text-app-gray-600",
-						error: "!bg-rose-50 !border-destructive",
-						info: "!bg-slate-100 !border-slate-400",
-						success:
-							"!bg-app-dark-blue !border-app-dark-blue !text-white [&_[data-description]]:!text-white/70",
-						warning: "!bg-orange-50 !border-amber-200",
-					},
-					style: {
-						alignItems: "flex-start",
-						boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-						display: "flex",
-						fontSize: "14px",
-						fontWeight: "400",
-						lineHeight: "1",
-						maxWidth: "min(480px, calc(100vw - 32px))",
-						minWidth: "min(320px, calc(100vw - 32px))",
-						padding: "8px",
-					},
-				}}
-				{...props}
-			/>
-		</>
+		<Sonner
+			className="toaster group"
+			icons={{
+				error: <XCircle className="size-5" />,
+				info: <Info className="size-5" />,
+				loading: <LoaderCircle className="size-5 animate-spin" />,
+				success: <CircleCheck className="size-5" />,
+				warning: <TriangleAlert className="size-5" />,
+			}}
+			position="bottom-center"
+			theme="light"
+			toastOptions={{
+				classNames: {
+					actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+					cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+					description: "group-[.toast]:!text-white/70",
+					toast: "group toast !flex !items-center !gap-1 !w-[456px] !p-[8px] !rounded !bg-app-dark-blue !text-white !text-[14px] !font-normal",
+				},
+			}}
+			{...props}
+		/>
 	);
 };
 

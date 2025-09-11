@@ -1,18 +1,12 @@
-"""
-Matrix-Based Vector Benchmark Tests
-
-This module implements comprehensive parameter matrix testing for systematic
-performance optimization. Tests are organized by optimization focus area.
-"""
-
 from typing import Any
 
 import pytest
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import benchmark_vector
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
+from .data_test import BenchmarkDataGenerator
 from .framework import VectorBenchmarkFramework
 from .parameter_matrix import (
     BATCH_OPTIMIZATION_MATRIX,
@@ -25,12 +19,11 @@ from .parameter_matrix import (
     VectorTestParameters,
 )
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
 
-@benchmark_vector(timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 @pytest.mark.parametrize("params", DIMENSION_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_dimension_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -38,12 +31,6 @@ async def test_dimension_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic dimension optimization testing.
-
-    Tests all dimensions with consistent parameters to find optimal dimension.
-    This gives us clear data on dimension vs performance trade-offs.
-    """
     logger.info("Testing dimension optimization", description=params.description)
     logger.info("Parameters", dimension=params.dimension, dataset_size=params.dataset_size)
 
@@ -52,7 +39,7 @@ async def test_dimension_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -72,11 +59,11 @@ async def test_dimension_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -110,7 +97,7 @@ async def test_dimension_optimization_matrix(
     assert search_result.throughput > 50, f"Search performance too low: {search_result.throughput:.1f}"
 
 
-@benchmark_vector(timeout=2400)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
 @pytest.mark.parametrize("params", HNSW_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_hnsw_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -118,11 +105,6 @@ async def test_hnsw_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic HNSW parameter optimization testing.
-
-    Tests different M and ef_construction combinations to find optimal index settings.
-    """
     logger.info("Testing HNSW optimization", description=params.description)
     logger.info("Parameters", m=params.m, ef_construction=params.ef_construction)
 
@@ -131,7 +113,7 @@ async def test_hnsw_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -151,11 +133,11 @@ async def test_hnsw_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -193,7 +175,7 @@ async def test_hnsw_optimization_matrix(
     assert search_result.throughput > min_search_threshold, f"Search too slow for ef={params.ef_construction}"
 
 
-@benchmark_vector(timeout=3600)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=3600)
 @pytest.mark.parametrize("params", SCALE_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_scale_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -201,11 +183,6 @@ async def test_scale_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic dataset scale optimization testing.
-
-    Tests how performance scales with different dataset sizes.
-    """
     logger.info("Testing scale optimization", description=params.description)
     logger.info("Dataset size", dataset_size=params.dataset_size)
 
@@ -214,7 +191,7 @@ async def test_scale_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -234,11 +211,11 @@ async def test_scale_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -277,7 +254,7 @@ async def test_scale_optimization_matrix(
     assert search_result.throughput > min_search_threshold, f"Search scaling poor at {params.dataset_size}"
 
 
-@benchmark_vector(timeout=900)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=900)
 @pytest.mark.parametrize("params", BATCH_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_batch_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -285,11 +262,6 @@ async def test_batch_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic batch size optimization testing.
-
-    Tests different batch sizes to find optimal insertion strategy.
-    """
     logger.info("Testing batch optimization", description=params.description)
     logger.info("Batch size", batch_size=params.batch_size)
 
@@ -298,7 +270,7 @@ async def test_batch_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -318,11 +290,11 @@ async def test_batch_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -344,7 +316,7 @@ async def test_batch_optimization_matrix(
     assert insertion_result.memory_usage_mb < 500, f"Batch size {params.batch_size} uses too much memory"
 
 
-@benchmark_vector(timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=600)
 @pytest.mark.parametrize("params", SEARCH_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_search_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -352,11 +324,6 @@ async def test_search_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic search parameter optimization testing.
-
-    Tests different search k values and their impact on performance.
-    """
     logger.info("Testing search optimization", description=params.description)
     logger.info("Search k", search_k=params.search_k)
 
@@ -365,7 +332,7 @@ async def test_search_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -385,11 +352,11 @@ async def test_search_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -421,7 +388,7 @@ async def test_search_optimization_matrix(
     assert search_result.throughput > min_threshold, f"Search k={params.search_k} too slow"
 
 
-@benchmark_vector(timeout=4800)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=4800)
 @pytest.mark.parametrize("params", PRODUCTION_CANDIDATES_MATRIX, ids=lambda p: p.name)
 async def test_production_candidates_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -429,11 +396,6 @@ async def test_production_candidates_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Test production candidate configurations with large datasets.
-
-    These are the final configurations being considered for production deployment.
-    """
     logger.info("Testing production candidate", description=params.description)
     logger.info("Expected use case", expected_use_case=params.expected_use_case)
 
@@ -442,7 +404,7 @@ async def test_production_candidates_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -462,11 +424,11 @@ async def test_production_candidates_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -508,7 +470,6 @@ async def test_production_candidates_matrix(
 
 
 async def run_matrix_summary() -> None:
-    """Helper to print matrix summaries for planning."""
     matrices = {
         "Dimension Optimization": DIMENSION_OPTIMIZATION_MATRIX,
         "HNSW Optimization": HNSW_OPTIMIZATION_MATRIX,

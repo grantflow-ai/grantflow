@@ -14,6 +14,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import publish_email_notification
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -21,10 +22,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
-from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
-from services.rag.src.grant_application.generate_section_text import (
-    generate_sections_with_shared_retrieval,
+from services.rag.src.grant_application.enrich_research_objective import (
+    ObjectiveEnrichmentDTO,
+    enrich_objective_with_wikidata,
 )
+from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
+from services.rag.src.grant_application.generate_section_text import generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from services.rag.src.grant_application.utils import (
     generate_application_text,
@@ -85,6 +88,41 @@ async def generate_work_plan_text(
             "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
         },
         current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+    )
+
+    await job_manager.add_notification(
+        parent_id=UUID(application_id),
+        event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
+        message="Enhancing objectives with Wikidata scientific context...",
+        notification_type="info",
+        current_pipeline_stage=6,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+    )
+
+    combined_enrichment_data: ObjectiveEnrichmentDTO = {
+        "research_objective": enrichment_responses[0]["research_objective"],
+        "research_tasks": [],
+    }
+
+    for response in enrichment_responses:
+        combined_enrichment_data["research_tasks"].extend(response["research_tasks"])
+
+    wikidata_enrichment = await enrich_objective_with_wikidata(
+        combined_enrichment_data,
+        trace_id=application_id,
+    )
+
+    await job_manager.add_notification(
+        parent_id=UUID(application_id),
+        event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
+        message="Wikidata enhancement completed",
+        notification_type="info",
+        data={
+            "scientific_terms_count": len(wikidata_enrichment["core_scientific_terms"]),
+            "has_scientific_context": bool(wikidata_enrichment["scientific_context"]),
+        },
+        current_pipeline_stage=6,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
@@ -225,7 +263,7 @@ async def generate_grant_section_texts(
         if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None
     ]
 
-    return await generate_sections_with_shared_retrieval(
+    return await generate_section_text(
         sections=long_form_sections,
         research_deep_dives=research_objectives,
         application_id=application_id,
@@ -236,7 +274,7 @@ async def grant_application_text_generation_pipeline_handler(
     grant_application_id: UUID,
     session_maker: async_sessionmaker[Any],
     job_manager: JobManager | None = None,
-) -> tuple[str, dict[str, str]]:
+) -> tuple[str, dict[str, str]] | None:
     application_id = grant_application_id
     logger.info("Starting grant application text generation pipeline", application_id=application_id)
 
@@ -384,7 +422,7 @@ async def grant_application_text_generation_pipeline_handler(
             total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        section_texts = await generate_sections_with_shared_retrieval(
+        section_texts = await generate_section_text(
             application_id=str(application_id),
             sections=grant_template.grant_sections,  # type: ignore[arg-type]
             research_deep_dives=grant_application.research_objectives or [],
@@ -469,7 +507,15 @@ async def grant_application_text_generation_pipeline_handler(
                 "recoverable": recoverable,
             },
         )
-        raise
+        logger.info(
+            "Grant application generation failed with error notification sent",
+            application_id=str(application_id),
+            error_type=e.__class__.__name__,
+            event_type=event_type,
+            error_message=error_message[:200],
+            recoverable=recoverable,
+        )
+        return None
 
     async with session_maker() as session, session.begin():
         try:
@@ -516,5 +562,18 @@ async def grant_application_text_generation_pipeline_handler(
         current_pipeline_stage=GRANT_APPLICATION_PIPELINE_STAGES,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
+
+    try:
+        await publish_email_notification(
+            application_id=application_id,
+            trace_id=None,  # TODO: Get trace_id from context when available
+        )
+        logger.info("Email notification published", application_id=str(application_id))
+    except Exception as e:
+        logger.error(
+            "Failed to publish email notification",
+            application_id=str(application_id),
+            error=str(e),
+        )
 
     return application_text, section_texts

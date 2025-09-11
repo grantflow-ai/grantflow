@@ -16,6 +16,10 @@ on:
             - ".github/workflows/ci-terraform.yaml"
             - "terraform/**"
 
+permissions:
+    contents: read
+    id-token: write
+
 jobs:
     fmt:
         name: Format Check
@@ -23,12 +27,18 @@ jobs:
         timeout-minutes: 5
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
-            - name: OpenTofu Format
-              uses: dflook/tofu-fmt-check@v2
+            - name: Setup OpenTofu
+              uses: opentofu/setup-opentofu@v1
               with:
-                  path: terraform/environments/staging
+                  tofu_version: latest
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Check Format
+              run: |
+                  cd terraform
+                  tofu fmt -check -recursive
 
     validate:
         name: Validate
@@ -36,15 +46,37 @@ jobs:
         timeout-minutes: 5
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
-            - name: OpenTofu Validate
-              uses: dflook/tofu-validate@v2
+            - name: Setup Task
+              uses: ./.github/actions/setup-task
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v6
               with:
-                  path: terraform/environments/staging
-                  backend_config: |
-                      bucket=grantflow-terraform-state
-                      prefix=staging
+                  enable-cache: true
+
+            - name: Generate cloud functions requirements
+              run: task cloud-functions:generate-requirements
+
+            - name: Setup GCP
+              uses: ./.github/actions/setup-gcp
+
+            - name: Setup OpenTofu
+              uses: opentofu/setup-opentofu@v1
+              with:
+                  tofu_version: latest
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Initialize OpenTofu
+              run: |
+                  cd terraform/environments/staging
+                  tofu init -backend-config="bucket=grantflow-terraform-state" -backend-config="prefix=staging"
+
+            - name: Validate OpenTofu
+              run: |
+                  cd terraform/environments/staging
+                  tofu validate
 
     tflint:
         name: TFLint
@@ -52,10 +84,10 @@ jobs:
         timeout-minutes: 5
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup TFLint
-              uses: terraform-linters/setup-tflint@v4
+              uses: terraform-linters/setup-tflint@v5
               with:
                   tflint_version: v0.57.0
 

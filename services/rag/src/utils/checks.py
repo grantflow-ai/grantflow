@@ -5,9 +5,9 @@ from uuid import UUID
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagSource,
 )
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
@@ -28,33 +28,38 @@ async def verify_rag_sources_indexed(
     entity_type: type[GrantApplication | GrantTemplate],
     total_sleep_duration: int = 0,
 ) -> None:
+    logger.debug("Verifying rag sources indexed", parent_id=str(parent_id))
     async with session_maker() as session:
         try:
             if entity_type == GrantApplication:
                 rag_sources = list(
                     await session.scalars(
                         select(RagSource)
-                        .join(GrantApplicationRagSource)
+                        .join(GrantApplicationSource)
                         .join(GrantApplication)
-                        .where(GrantApplicationRagSource.grant_application_id == parent_id)
+                        .where(GrantApplicationSource.grant_application_id == parent_id)
                     )
                 )
             else:
                 rag_sources = list(
                     await session.scalars(
                         select(RagSource)
-                        .join(GrantTemplateRagSource)
+                        .join(GrantTemplateSource)
                         .join(GrantTemplate)
-                        .where(GrantTemplateRagSource.grant_template_id == parent_id)
+                        .where(GrantTemplateSource.grant_template_id == parent_id)
                     )
                 )
-
+        except SQLAlchemyError as e:
+            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
+        else:
             if any(
                 source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
                 for source in rag_sources
             ):
+                logger.debug(
+                    "Rag sources indexing", parent_id=str(parent_id), total_sleep_duration=total_sleep_duration
+                )
                 await publish_notification(
-                    logger=logger,
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_IN_PROGRESS,
                     data=RagProcessingStatus(
@@ -74,8 +79,14 @@ async def verify_rag_sources_indexed(
                 ]
                 total_sources = len(list(rag_sources))
 
+                logger.debug(
+                    "Rag sources indexing failed",
+                    parent_id=str(parent_id),
+                    failed_sources=len(failed_sources),
+                    total_sources=total_sources,
+                )
+
                 await publish_notification(
-                    logger=logger,
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_FAILED,
                     data=RagProcessingStatus(
@@ -99,6 +110,3 @@ async def verify_rag_sources_indexed(
                         "error_type": "indexing_failure",
                     },
                 )
-
-        except SQLAlchemyError as e:
-            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e

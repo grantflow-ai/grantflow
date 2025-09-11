@@ -4,24 +4,24 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+from packages.db.src.tables import GrantApplication, GrantApplicationSource
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.INDEXER)
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_index_chunks(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings from %s", data_file.name)
 

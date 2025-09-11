@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/server";
 
 const execAsync = promisify(exec);
 
@@ -18,7 +18,7 @@ async function resetShadcnComponents() {
 		existingComponents = files
 			.filter((file) => file.endsWith(".tsx"))
 			.map((file) => file.replace(".tsx", ""))
-			.sort((a: string, b: string) => a.localeCompare(b));
+			.toSorted((a: string, b: string) => a.localeCompare(b));
 		log.info(`✅ Found ${existingComponents.length} components: ${existingComponents.join(", ")}\n`);
 	} catch {
 		log.info("⚠️  UI directory doesn't exist or couldn't be read\n");

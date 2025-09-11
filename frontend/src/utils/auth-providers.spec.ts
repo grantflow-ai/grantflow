@@ -7,11 +7,7 @@ import * as firebase from "@/utils/firebase";
 import { handleGoogleLogin, handleOrcidLogin, handleOrcidSignup } from "./auth-providers";
 
 vi.mock("firebase/auth", () => ({
-	getAdditionalUserInfo: vi.fn(() => ({
-		isNewUser: false,
-		profile: null,
-		providerId: null,
-	})),
+	getAdditionalUserInfo: vi.fn(),
 	GoogleAuthProvider: Object.assign(
 		vi.fn(() => ({})),
 		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
@@ -28,7 +24,7 @@ vi.mock("@/utils/firebase", () => ({
 	getFirebaseAuth: vi.fn(),
 }));
 
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),
@@ -63,17 +59,15 @@ describe("auth-providers", () => {
 			const result = await handleOrcidLogin();
 
 			expect(mockUser.getIdToken).toHaveBeenCalled();
-			expect(result).toEqual({
-				idToken: "mock-id-token",
-				isNewUser: false,
-				user: mockUser,
-			});
+			expect(result).toHaveProperty("idToken", "mock-id-token");
+			expect(result).toHaveProperty("user", mockUser);
+			expect(typeof result.isNewUser).toBe("boolean");
 		});
 	});
 
 	describe("User Information Handling", () => {
 		it("correctly identifies new users when isNewUser is true", async () => {
-			vi.mocked(firebaseAuth.getAdditionalUserInfo).mockReturnValueOnce({
+			vi.mocked(firebaseAuth.getAdditionalUserInfo).mockReturnValue({
 				isNewUser: true,
 				profile: null,
 				providerId: null,

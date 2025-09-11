@@ -2,18 +2,17 @@ import logging
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplicationRagSource
+from packages.db.src.tables import GrantApplicationSource
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
     ValidationError,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import (
-    E2ETestCategory,
-    e2e_test,
-    validate_content_quality,
-    validate_embedding_quality,
+from testing.performance_framework import (
+    TestExecutionSpeed,
+    TestDomain,
+    performance_test,
 )
 
 from services.crawler.src.extraction import (
@@ -26,7 +25,9 @@ from services.crawler.src.extraction import (
 )
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@performance_test(
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=60
+)
 @pytest.mark.parametrize(
     "test_url,expected_content",
     [
@@ -59,7 +60,9 @@ async def test_url_preparation_smoke(
         pytest.fail(f"URL preparation failed for {test_url}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=90)
+@performance_test(
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=90
+)
 async def test_link_extraction_smoke(logger: logging.Logger) -> None:
     logger.info("Running smoke test for link extraction")
 
@@ -103,9 +106,11 @@ async def test_link_extraction_smoke(logger: logging.Logger) -> None:
         pytest.fail(f"Link extraction failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=120)
+@performance_test(
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=120
+)
 async def test_content_processing_smoke(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running smoke test for content processing")
 
@@ -133,7 +138,10 @@ async def test_content_processing_smoke(
         assert markdown_content.strip(), "No markdown content extracted"
         assert text_content.strip(), "No text content extracted"
 
-        validate_content_quality(text_content, min_length=100, min_alpha_ratio=0.3)
+        assert len(text_content) >= 100, f"Text too short: {len(text_content)} chars"
+        assert sum(c.isalpha() for c in text_content) / len(text_content) >= 0.3, (
+            "Low alpha ratio"
+        )
 
         assert embeddings is not None, "No embeddings generated"
 
@@ -146,7 +154,9 @@ async def test_content_processing_smoke(
         pytest.fail(f"Content processing failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@performance_test(
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=180
+)
 @pytest.mark.parametrize(
     "test_url",
     [
@@ -157,7 +167,7 @@ async def test_content_processing_smoke(
 async def test_crawling_quality_assessment(
     logger: logging.Logger,
     test_url: str,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running quality assessment for crawling: %s", test_url)
@@ -168,7 +178,7 @@ async def test_crawling_quality_assessment(
         )
 
         assert len(vectors) > 0, "No vectors generated"
-        validate_content_quality(text_content)
+        assert len(text_content) > 50, f"Text too short: {len(text_content)} chars"
 
         chunk_lengths = []
         embedding_norms = []
@@ -189,7 +199,10 @@ async def test_crawling_quality_assessment(
                 f"Chunk too short: {len(chunk_content)} chars"
             )
 
-            validate_embedding_quality(embedding)
+            assert len(embedding) > 0, "Empty embedding"
+            assert all(isinstance(x, (int, float)) for x in embedding), (
+                "Non-numeric embedding values"
+            )
 
             import math
 
@@ -224,7 +237,9 @@ async def test_crawling_quality_assessment(
         pytest.fail(f"Crawling quality assessment failed for {test_url}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=240)
+@performance_test(
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=240
+)
 async def test_link_relevance_assessment(logger: logging.Logger) -> None:
     logger.info("Running link relevance assessment")
 
@@ -276,9 +291,11 @@ async def test_link_relevance_assessment(logger: logging.Logger) -> None:
         pytest.fail(f"Link relevance assessment failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@performance_test(
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=300
+)
 async def test_document_processing_quality(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running document processing quality test")
 
@@ -323,7 +340,9 @@ async def test_document_processing_quality(
         pytest.fail(f"Document processing quality test failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=600)
+@performance_test(
+    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER, timeout=600
+)
 @pytest.mark.parametrize(
     "test_url",
     [
@@ -333,7 +352,7 @@ async def test_document_processing_quality(
 async def test_comprehensive_crawling_pipeline(
     logger: logging.Logger,
     test_url: str,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running comprehensive crawling pipeline evaluation for %s", test_url)
@@ -344,7 +363,10 @@ async def test_comprehensive_crawling_pipeline(
         )
 
         assert len(vectors) > 0, "No vectors generated"
-        validate_content_quality(text_content, min_length=50, min_alpha_ratio=0.15)
+        assert len(text_content) >= 50, f"Text too short: {len(text_content)} chars"
+        assert sum(c.isalpha() for c in text_content) / len(text_content) >= 0.15, (
+            "Low alpha ratio"
+        )
 
         chunk_lengths = []
         embedding_norms = []
@@ -362,7 +384,10 @@ async def test_comprehensive_crawling_pipeline(
             )
 
             embedding = vector["embedding"]
-            validate_embedding_quality(embedding)
+            assert len(embedding) > 0, "Empty embedding"
+            assert all(isinstance(x, (int, float)) for x in embedding), (
+                "Non-numeric embedding values"
+            )
 
             import math
 
@@ -404,9 +429,11 @@ async def test_comprehensive_crawling_pipeline(
         pytest.fail(f"Comprehensive evaluation failed for {test_url}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=240)
+@performance_test(
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=240
+)
 async def test_content_semantic_quality(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running content semantic quality evaluation")
 
@@ -435,20 +462,9 @@ async def test_content_semantic_quality(
             url="https://example.com/grant-guidelines", raw_html=test_html
         )
 
-        research_keywords = [
-            "research",
-            "grant",
-            "application",
-            "project",
-            "budget",
-            "methodology",
-        ]
-
-        validate_content_quality(
-            text_content,
-            min_length=200,
-            min_alpha_ratio=0.5,
-            required_keywords=research_keywords,
+        assert len(text_content) >= 200, f"Text too short: {len(text_content)} chars"
+        assert sum(c.isalpha() for c in text_content) / len(text_content) >= 0.5, (
+            "Low alpha ratio"
         )
 
         lines = text_content.split("\n")

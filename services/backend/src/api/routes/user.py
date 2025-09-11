@@ -3,8 +3,9 @@ from typing import Any, NotRequired, TypedDict
 from litestar import delete, get
 from litestar.exceptions import HTTPException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project
-from packages.db.src.tables import ProjectUser as ProjectMember
+from packages.db.src.tables import Organization
+from packages.db.src.tables import OrganizationUser as ProjectMember
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -18,12 +19,8 @@ from services.backend.src.utils.firebase import (
 logger = get_logger(__name__)
 
 
-USER_DELETION_GRACE_PERIOD_DAYS = 10
-
-
 class DeleteUserResponse(TypedDict):
     message: str
-    scheduled_deletion_date: str
     grace_period_days: int
     restoration_info: str
 
@@ -44,13 +41,18 @@ class GetSoleOwnedProjectsResponse(TypedDict):
     count: int
 
 
+class SoleOwnedOrganization(TypedDict):
+    id: str
+    name: str
+
+
+class GetSoleOwnedOrganizationsResponse(TypedDict):
+    organizations: list[SoleOwnedOrganization]
+    count: int
+
+
 @delete("/user", operation_id="DeleteUser", status_code=200)
 async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any]) -> DeleteUserResponse:
-    """
-    Schedule user account for deletion with grace period.
-    User will be removed from all projects immediately.
-    Account will be permanently deleted after grace period.
-    """
     firebase_uid = request.auth
     if not firebase_uid:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -64,70 +66,70 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
             )
 
         async with session_maker() as session:
-            owner_projects = (
-                select(ProjectMember.project_id)
+            owned_organizations = (
+                select(ProjectMember.organization_id)
                 .where(ProjectMember.firebase_uid == firebase_uid)
                 .where(ProjectMember.role == UserRoleEnum.OWNER)
+                .where(ProjectMember.deleted_at.is_(None))
                 .subquery()
             )
 
             sole_owned_query = (
-                select(Project)
-                .join(owner_projects, Project.id == owner_projects.c.project_id)
+                select(Organization)
+                .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+                .where(Organization.deleted_at.is_(None))
                 .outerjoin(
                     ProjectMember,
-                    (Project.id == ProjectMember.project_id)
+                    (Organization.id == ProjectMember.organization_id)
                     & (ProjectMember.role == UserRoleEnum.OWNER)
-                    & (ProjectMember.firebase_uid != firebase_uid),
+                    & (ProjectMember.firebase_uid != firebase_uid)
+                    & (ProjectMember.deleted_at.is_(None)),
                 )
-                .group_by(Project.id)
+                .group_by(Organization.id)
                 .having(func.count(ProjectMember.firebase_uid) == 0)
             )
 
             result = await session.execute(sole_owned_query)
-            sole_owned_projects = result.scalars().all()
+            sole_owned_organizations = result.scalars().all()
 
-            if sole_owned_projects:
+            if sole_owned_organizations:
                 raise HTTPException(
                     status_code=400,
-                    detail="You must transfer ownership of projects before deleting your account",
+                    detail="You must transfer ownership of organizations before deleting your account",
                     extra={
                         "error": "ownership_transfer_required",
-                        "projects": [{"id": str(p.id), "name": p.name} for p in sole_owned_projects],
+                        "organizations": [{"id": str(o.id), "name": o.name} for o in sole_owned_organizations],
                     },
                 )
 
         async with session_maker() as session, session.begin():
             result = await session.execute(
-                text("DELETE FROM project_users WHERE firebase_uid = :uid"),
+                text(
+                    "UPDATE organization_users SET deleted_at = NOW() WHERE firebase_uid = :uid AND deleted_at IS NULL"
+                ),
                 {"uid": firebase_uid},
             )
-            projects_removed = result.rowcount
-
-            await session.execute(
-                text("DELETE FROM notifications WHERE firebase_uid = :uid"),
-                {"uid": firebase_uid},
-            )
+            organizations_soft_deleted = result.rowcount
 
             logger.info(
-                "Removed user from projects",
+                "Soft deleted user from organizations",
                 firebase_uid=firebase_uid,
-                projects_removed=projects_removed,
+                organizations_soft_deleted=organizations_soft_deleted,
             )
 
-        deletion_data = await schedule_user_deletion(firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS)
+        grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
+        await schedule_user_deletion(firebase_uid, grace_period_days)
 
         logger.info(
             "User deletion scheduled successfully",
             firebase_uid=firebase_uid,
-            deletion_date=deletion_data["deletion_date"].isoformat(),
+            grace_period_days=grace_period_days,
         )
 
         return {
             "message": "Account scheduled for deletion. You will be removed from all projects immediately.",
-            "scheduled_deletion_date": deletion_data["deletion_date"].isoformat() + "Z",
-            "grace_period_days": deletion_data["grace_period_days"],
-            "restoration_info": f"Contact support within {deletion_data['grace_period_days']} days to restore your account",
+            "grace_period_days": grace_period_days,
+            "restoration_info": f"Contact support within {grace_period_days} days to restore your account",
         }
 
     except HTTPException:
@@ -148,39 +150,79 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
 async def get_sole_owned_projects(
     request: APIRequest, session_maker: async_sessionmaker[Any]
 ) -> GetSoleOwnedProjectsResponse:
-    """
-    Get list of projects where the user is the sole owner.
-    These projects must be handled before account deletion.
-    """
     firebase_uid = request.auth
     if not firebase_uid:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     async with session_maker() as session:
-        owner_projects = (
-            select(ProjectMember.project_id)
+        owned_organizations = (
+            select(ProjectMember.organization_id)
             .where(ProjectMember.firebase_uid == firebase_uid)
             .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .where(ProjectMember.deleted_at.is_(None))
             .subquery()
         )
 
         sole_owned_query = (
-            select(Project)
-            .join(owner_projects, Project.id == owner_projects.c.project_id)
+            select(Organization)
+            .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+            .where(Organization.deleted_at.is_(None))
             .outerjoin(
                 ProjectMember,
-                (Project.id == ProjectMember.project_id)
+                (Organization.id == ProjectMember.organization_id)
                 & (ProjectMember.role == UserRoleEnum.OWNER)
-                & (ProjectMember.firebase_uid != firebase_uid),
+                & (ProjectMember.firebase_uid != firebase_uid)
+                & (ProjectMember.deleted_at.is_(None)),
             )
-            .group_by(Project.id)
+            .group_by(Organization.id)
             .having(func.count(ProjectMember.firebase_uid) == 0)
         )
 
         result = await session.execute(sole_owned_query)
-        sole_owned_projects = result.scalars().all()
+        sole_owned_organizations = result.scalars().all()
 
         return {
-            "projects": [{"id": str(p.id), "name": p.name} for p in sole_owned_projects],
-            "count": len(sole_owned_projects),
+            "projects": [{"id": str(o.id), "name": o.name} for o in sole_owned_organizations],
+            "count": len(sole_owned_organizations),
+        }
+
+
+@get("/user/sole-owned-organizations", operation_id="GetSoleOwnedOrganizations")
+async def get_sole_owned_organizations(
+    request: APIRequest, session_maker: async_sessionmaker[Any]
+) -> GetSoleOwnedOrganizationsResponse:
+    firebase_uid = request.auth
+    if not firebase_uid:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    async with session_maker() as session:
+        owned_organizations = (
+            select(ProjectMember.organization_id)
+            .where(ProjectMember.firebase_uid == firebase_uid)
+            .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .where(ProjectMember.deleted_at.is_(None))
+            .subquery()
+        )
+
+        sole_owned_query = (
+            select(Organization)
+            .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+            .where(Organization.deleted_at.is_(None))
+            .outerjoin(
+                ProjectMember,
+                (Organization.id == ProjectMember.organization_id)
+                & (ProjectMember.role == UserRoleEnum.OWNER)
+                & (ProjectMember.firebase_uid != firebase_uid)
+                & (ProjectMember.deleted_at.is_(None)),
+            )
+            .group_by(Organization.id)
+            .having(func.count(ProjectMember.firebase_uid) == 0)
+        )
+
+        result = await session.execute(sole_owned_query)
+        sole_owned_organizations = result.scalars().all()
+
+        return {
+            "organizations": [{"id": str(o.id), "name": o.name} for o in sole_owned_organizations],
+            "count": len(sole_owned_organizations),
         }

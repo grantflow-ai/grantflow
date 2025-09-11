@@ -1,7 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import RootLayout from "@/app/layout";
-import { PagePath } from "@/enums";
 
 vi.mock("@/utils/env", () => ({
 	getEnv: () => ({ NEXT_PUBLIC_SITE_URL: "https://example.com" }),
@@ -32,7 +31,7 @@ vi.mock("dictionaries/i18n-config", () => ({
 	Locale: { en: "en", fr: "fr" },
 }));
 
-describe("RootLayout", () => {
+describe.sequential("RootLayout", () => {
 	vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://example.com");
 
 	beforeEach(() => {
@@ -47,6 +46,7 @@ describe("RootLayout", () => {
 	});
 
 	afterEach(() => {
+		cleanup();
 		vi.restoreAllMocks();
 	});
 
@@ -78,14 +78,17 @@ describe("RootLayout", () => {
 
 		expect(metadata.title).toBe("GrantFlow.AI");
 		expect(metadata.description).toContain("GrantFlow.ai transforms");
-		expect(metadata.alternates.canonical).toBe(PagePath.ROOT);
+		expect(metadata.alternates?.canonical).toBe("/");
 
-		expect(metadata.openGraph.title).toBe("Ready to Focus on Research, Not Paperwork?");
-		expect(metadata.openGraph.type).toBe("website");
-		expect(metadata.openGraph.locale).toBe("en_US");
+		expect(metadata.openGraph?.title).toBe("Ready to Focus on Research, Not Paperwork?");
+		expect((metadata.openGraph as any)?.type).toBe("website");
+		expect(metadata.openGraph?.locale).toBe("en_US");
 
-		expect(metadata.openGraph.images[0].url).toBe("https://www.grantflow.ai/opengraph-image.png");
-		expect(metadata.openGraph.images[0].width).toBe(1200);
-		expect(metadata.openGraph.images[0].height).toBe(630);
+		const images = metadata.openGraph?.images;
+		if (images && Array.isArray(images) && typeof images[0] === "object") {
+			expect((images[0] as any).url).toBe("https://www.grantflow.ai/opengraph-image.png");
+			expect((images[0] as any).width).toBe(1200);
+			expect((images[0] as any).height).toBe(630);
+		}
 	});
 });

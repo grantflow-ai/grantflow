@@ -1,5 +1,3 @@
-"""OpenTelemetry configuration for GrantFlow services."""
-
 import os
 
 from opentelemetry import metrics, trace
@@ -15,11 +13,6 @@ from .env import get_env
 
 
 def configure_otel(service_name: str) -> None:
-    """Configure OpenTelemetry for a service.
-
-    Args:
-        service_name: Name of the service for identification in traces
-    """
     project_id = get_env("GOOGLE_CLOUD_PROJECT", fallback="grantflow")
     environment = get_env("ENVIRONMENT", fallback="development")
 
@@ -49,24 +42,8 @@ def configure_otel(service_name: str) -> None:
 
 
 def get_tracer(name: str | None = None) -> trace.Tracer:
-    """Get a tracer instance.
-
-    Args:
-        name: Optional name for the tracer, defaults to __name__
-
-    Returns:
-        Configured tracer instance
-    """
     return trace.get_tracer(name or __name__)
 
 
 def get_meter(name: str | None = None) -> metrics.Meter:
-    """Get a meter instance for metrics.
-
-    Args:
-        name: Optional name for the meter, defaults to __name__
-
-    Returns:
-        Configured meter instance
-    """
     return metrics.get_meter(name or __name__)

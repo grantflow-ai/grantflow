@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
-from packages.db.src.tables import FundingOrganization
+from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -643,7 +643,7 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: list[Content], cfp_subject: str, organization: FundingOrganization | None = None
+    cfp_content: list[Content], cfp_subject: str, organization: GrantingInstitution | None = None
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(

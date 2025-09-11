@@ -9,40 +9,7 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The project ID to deploy to"
-  type        = string
-}
 
-variable "region" {
-  description = "The region for the Cloud Scheduler job"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "scraper_url" {
-  description = "The URL of the scraper Cloud Run service"
-  type        = string
-}
-
-variable "scheduler_invoker_service_account_email" {
-  description = "Email of the service account used by Cloud Scheduler"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment (staging, prod)"
-  type        = string
-  default     = "staging"
-}
-
-variable "timezone" {
-  description = "Timezone for scheduled jobs"
-  type        = string
-  default     = "Europe/Berlin"
-}
-
-# Enable Cloud Scheduler API
 resource "google_project_service" "scheduler" {
   project = var.project_id
   service = "cloudscheduler.googleapis.com"
@@ -51,13 +18,12 @@ resource "google_project_service" "scheduler" {
   disable_on_destroy         = false
 }
 
-# Daily NIH grant scraper job
 resource "google_cloud_scheduler_job" "scraper_daily" {
   count = var.scraper_url != "" ? 1 : 0
 
   name      = "scraper-daily"
   region    = var.region
-  schedule  = "0 2 * * *" # Daily at 2 AM UTC
+  schedule  = "0 2 * * *"
   time_zone = "UTC"
 
   description = "Daily NIH grant scraping job"
@@ -83,11 +49,47 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 
   retry_config {
     retry_count          = 3
-    max_retry_duration   = "900s" # 15 minutes max retry
-    min_backoff_duration = "60s"  # 1 minute min backoff
-    max_backoff_duration = "300s" # 5 minutes max backoff
+    max_retry_duration   = "900s"
+    min_backoff_duration = "60s"
+    max_backoff_duration = "300s"
     max_doublings        = 3
   }
+
+  depends_on = [google_project_service.scheduler]
+}
+
+resource "google_cloud_scheduler_job" "grant_matcher" {
+  name      = "grant-matcher-${var.environment}"
+  region    = var.region
+  schedule  = "0 9 * * *"
+  time_zone = "UTC"
+
+  description = "Daily grant matching and notification job"
+
+  http_target {
+    uri         = "${var.backend_url}/webhooks/scheduler/grant-matcher"
+    http_method = "POST"
+
+    headers = {
+      "Content-Type"  = "application/json"
+      "Authorization" = var.pubsub_webhook_token
+    }
+
+    oidc_token {
+      service_account_email = var.scheduler_invoker_service_account_email
+      audience              = var.backend_url
+    }
+  }
+
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "900s"
+    min_backoff_duration = "60s"
+    max_backoff_duration = "300s"
+    max_doublings        = 3
+  }
+
+  attempt_deadline = "600s"
 
   depends_on = [google_project_service.scheduler]
 }
