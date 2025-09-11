@@ -8,9 +8,10 @@ import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationDetailsStep } from "./application-details-step";
 
 vi.mock("@/components/organizations/project/applications/wizard/template-file-uploader", () => ({
-	TemplateFileUploader: vi.fn(({ parentId }) => (
+	TemplateFileUploader: vi.fn(({ parentId, sourceType }) => (
 		<div data-testid="template-file-uploader">
 			<span data-testid="uploader-parent-id">{parentId}</span>
+			<span data-testid="uploader-source-type">{sourceType}</span>
 		</div>
 	)),
 }));
@@ -91,6 +92,18 @@ describe("ApplicationDetailsStep", () => {
 		expect(screen.getByTestId("preview-parent-id")).toHaveTextContent(mockTemplate.id);
 		expect(screen.getByTestId("uploader-parent-id")).toHaveTextContent(mockTemplate.id);
 		expect(screen.getByTestId("url-input-parent-id")).toHaveTextContent(mockTemplate.id);
+	});
+
+	it("passes correct sourceType to TemplateFileUploader", () => {
+		const mockTemplate = GrantTemplateFactory.build();
+		const mockApplication = ApplicationFactory.build({
+			grant_template: mockTemplate,
+		});
+		useApplicationStore.setState({ application: mockApplication });
+
+		render(<ApplicationDetailsStep />);
+
+		expect(screen.getByTestId("uploader-source-type")).toHaveTextContent("template");
 	});
 
 	it("updates title in wizard store on input change", async () => {
