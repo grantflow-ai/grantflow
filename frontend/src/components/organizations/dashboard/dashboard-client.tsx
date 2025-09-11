@@ -132,14 +132,15 @@ export function DashboardClient({
 
 	const confirmDeleteProject = async () => {
 		if (projectToDelete && currentOrganizationId) {
+			const toastId = toast.loading("Deleting research project...");
 			try {
 				await deleteProjectAction(currentOrganizationId, projectToDelete);
 				await mutate();
 
-				toast.success("Project deleted successfully");
+				toast.success("Project deleted successfully",{id: toastId});
 			} catch (error) {
 				log.error("delete-project", error);
-				toast.error("Failed to delete project");
+				toast.error("Failed to delete project",{id: toastId});
 			} finally {
 				closeDeleteModal();
 			}
