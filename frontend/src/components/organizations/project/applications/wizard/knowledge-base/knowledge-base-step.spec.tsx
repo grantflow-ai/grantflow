@@ -29,9 +29,9 @@ vi.mock("@/components/organizations/project/applications/wizard/url-input", () =
 }));
 
 vi.mock("@/components/organizations/project/applications/wizard/template-file-uploader", () => ({
-	TemplateFileUploader: () => (
+	TemplateFileUploader: ({ sourceType }: { sourceType: string }) => (
 		<button data-testid="template-file-uploader" type="button">
-			Template File Uploader
+			Template File Uploader - {sourceType}
 		</button>
 	),
 }));
@@ -65,6 +65,10 @@ describe.sequential("KnowledgeBaseStep", () => {
 			addUrl: vi.fn(),
 			application: ApplicationFactory.build({ id: "test-app-id", project_id: "test-project" }),
 			getApplication: vi.fn(),
+			pendingUploads: {
+				application: new Set(),
+				template: new Set(),
+			},
 			removeFile: vi.fn(),
 			removeUrl: vi.fn(),
 		});
@@ -96,6 +100,12 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 			expect(screen.getByTestId("documents-title")).toBeInTheDocument();
 			expect(screen.getByTestId("template-file-uploader")).toBeInTheDocument();
+		});
+
+		it("passes correct sourceType to TemplateFileUploader", () => {
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.getByText("Template File Uploader - application")).toBeInTheDocument();
 		});
 
 		it("renders links section with correct subtitle", () => {
