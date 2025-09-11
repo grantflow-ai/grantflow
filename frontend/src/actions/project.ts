@@ -60,7 +60,7 @@ export async function duplicateProject(organizationId: string, projectId: string
 				headers: await createAuthHeaders(),
 				json: {},
 			})
-			.json<API.GetProject.Http200.ResponseBody>(),
+			.json<API.DuplicateProject.Http201.ResponseBody>(),
 	);
 }
 

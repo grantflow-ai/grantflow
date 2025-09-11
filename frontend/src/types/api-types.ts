@@ -811,6 +811,56 @@ export namespace API {
 };
 };
 
+	export namespace DuplicateProject {
+	export namespace Http201 {
+	export type ResponseBody = {
+	created_at: string;
+	description?: string;
+	grant_applications: {
+		completed_at?: string;
+		id: string;
+		title: string;
+	}[];
+	id: string;
+	logo_url?: string;
+	members: {
+		display_name?: string;
+		email: string;
+		firebase_uid: string;
+		photo_url?: string;
+		role: "ADMIN" | "COLLABORATOR" | "OWNER";
+	}[];
+	name: string;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export namespace Http404 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	title?: string;
+};
+};
+
 	export namespace GenerateApplication {
 	export namespace Http201 {
 	export type ResponseBody = undefined;
