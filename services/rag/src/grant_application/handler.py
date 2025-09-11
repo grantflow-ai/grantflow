@@ -327,20 +327,35 @@ async def grant_application_text_generation_pipeline_handler(
         # Load CFP analysis if available
         cfp_analysis: CFPSectionAnalysis | None = None
         if grant_template:
-            cfp_analysis_result = await session.scalar(
-                select(CFPAnalysis.analysis_data).where(CFPAnalysis.grant_template_id == grant_template.id)
-            )
-            cfp_analysis = cfp_analysis_result
+            try:
+                cfp_analysis_result = await session.scalar(
+                    select(CFPAnalysis.analysis_data).where(CFPAnalysis.grant_template_id == grant_template.id)
+                )
+                cfp_analysis = cfp_analysis_result
 
-            if cfp_analysis:
-                logger.info(
-                    "CFP analysis found for grant template",
+                if cfp_analysis:
+                    logger.info(
+                        "CFP analysis found for grant template",
+                        application_id=application_id,
+                        template_id=str(grant_template.id),
+                        sections_count=len(cfp_analysis.get("section_requirements", [])),
+                        constraints_count=len(cfp_analysis.get("length_constraints", [])),
+                        criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
+                    )
+                else:
+                    logger.debug(
+                        "No CFP analysis found for grant template",
+                        application_id=application_id,
+                        template_id=str(grant_template.id),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "Failed to retrieve CFP analysis - proceeding without CFP requirements",
                     application_id=application_id,
                     template_id=str(grant_template.id),
-                    sections_count=len(cfp_analysis.get("section_requirements", [])),
-                    constraints_count=len(cfp_analysis.get("length_constraints", [])),
-                    criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
+                    error=str(e),
                 )
+                cfp_analysis = None
 
         if not grant_application.grant_template or not grant_application.research_objectives:
             missing_parts = []
