@@ -317,7 +317,7 @@ async def test_evaluation_optimization_performance(
 
             for content in test_contents.values():
                 start_time = time.time()
-                result1, analysis1 = await smart_evaluate_output(
+                _result1, _analysis1 = await smart_evaluate_output(
                     criteria=criteria,
                     prompt="Evaluate this grant proposal for funding",
                     model_output=content,
@@ -329,7 +329,7 @@ async def test_evaluation_optimization_performance(
                 performance_context.add_llm_call()
 
                 start_time = time.time()
-                result2, analysis2 = await smart_evaluate_output(
+                _result2, _analysis2 = await smart_evaluate_output(
                     criteria=criteria,
                     prompt="Evaluate this grant proposal for funding",
                     model_output=content,
@@ -365,7 +365,7 @@ async def test_evaluation_optimization_performance(
                 complexity_analysis = analyze_content_complexity(content, criteria)
 
                 start_time = time.time()
-                result, analysis = await smart_evaluate_output(
+                _result, _analysis = await smart_evaluate_output(
                     criteria=criteria,
                     prompt="Evaluate this grant proposal",
                     model_output=content,

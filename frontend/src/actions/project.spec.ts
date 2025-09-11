@@ -1,5 +1,6 @@
 import {
 	CreateProjectRequestFactory,
+	DuplicateProjectResponseFactory,
 	IdResponseFactory,
 	ProjectFactory,
 	ProjectListItemFactory,
@@ -7,7 +8,7 @@ import {
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { HTTPError } from "ky";
-import { createProject, deleteProject, getProject, getProjects, updateProject } from "./project";
+import { createProject, deleteProject, duplicateProject, getProject, getProjects, updateProject } from "./project";
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();
@@ -80,6 +81,29 @@ const mockUpdateProjectResponse = ProjectListItemFactory.build({
 	id: mockProjectId,
 	logo_url: "https://example.com/updated-logo.png",
 	name: "Updated Project",
+});
+
+const mockDuplicateProjectResponse = DuplicateProjectResponseFactory.build({
+	description: "Test Description",
+	grant_applications: [
+		{
+			completed_at: undefined,
+			id: "duplicated-app-1",
+			title: "Application 1",
+		},
+	],
+	id: "duplicated-project-id",
+	logo_url: "https://example.com/logo.png",
+	members: [
+		{
+			display_name: "Test User",
+			email: "test@example.com",
+			firebase_uid: "test-uid",
+			photo_url: "https://example.com/photo.png",
+			role: "OWNER",
+		},
+	],
+	name: "Copy of Test Project",
 });
 
 beforeEach(() => {
@@ -182,6 +206,65 @@ describe("Project Actions", () => {
 			});
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+	});
+
+	describe("duplicateProject", () => {
+		it("should call the API with correct parameters", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockDuplicateProjectResponse),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/duplicate`,
+				{
+					headers: mockAuthHeaders,
+					json: {},
+				},
+			);
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(mockDuplicateProjectResponse);
+		});
+
+		it("should return a project with copied name", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockDuplicateProjectResponse),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(result.name).toBe("Copy of Test Project");
+		});
+
+		it("should preserve all grant applications", async () => {
+			const responseWithMultipleApps = DuplicateProjectResponseFactory.build({
+				...mockDuplicateProjectResponse,
+				grant_applications: [
+					{
+						completed_at: undefined,
+						id: "duplicated-app-1",
+						title: "Application 1",
+					},
+					{
+						completed_at: "2024-01-01T00:00:00Z",
+						id: "duplicated-app-2",
+						title: "Application 2",
+					},
+				],
+			});
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(responseWithMultipleApps),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(result.grant_applications).toHaveLength(2);
+			expect(result.grant_applications[0].title).toBe("Application 1");
+			expect(result.grant_applications[1].title).toBe("Application 2");
 		});
 	});
 

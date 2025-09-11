@@ -137,10 +137,10 @@ export function DashboardClient({
 				await deleteProjectAction(currentOrganizationId, projectToDelete);
 				await mutate();
 
-				toast.success("Project deleted successfully",{id: toastId});
+				toast.success("Project deleted successfully", { id: toastId });
 			} catch (error) {
 				log.error("delete-project", error);
-				toast.error("Failed to delete project",{id: toastId});
+				toast.error("Failed to delete project", { id: toastId });
 			} finally {
 				closeDeleteModal();
 			}
