@@ -486,6 +486,7 @@ describe("Application Store", () => {
 			expect(crawlTemplateUrl).toHaveBeenCalledWith(
 				"mock-org-id",
 				application.project_id,
+				application.id,
 				application.grant_template?.id,
 				"https://example.com",
 			);
@@ -507,6 +508,7 @@ describe("Application Store", () => {
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
 					"mock-org-id",
 					application.project_id,
+					application.id,
 					application.grant_template.id,
 					"1",
 				);
@@ -534,6 +536,7 @@ describe("Application Store", () => {
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
 					"mock-org-id",
 					application.project_id,
+					application.id,
 					application.grant_template.id,
 					"source-1",
 				);
