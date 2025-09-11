@@ -15,6 +15,9 @@ vi.mock("@/actions/project", () => ({
 	createProject: vi.fn(),
 	getProjects: vi.fn(),
 }));
+vi.mock("@/actions/grant-applications", () => ({
+	createApplication: vi.fn(),
+}));
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
@@ -39,7 +42,20 @@ vi.mock("@/stores/user-store", () => ({
 vi.mock("@/stores/new-application-modal-store", () => ({
 	useNewApplicationModalStore: vi.fn(),
 }));
-vi.mock("@/utils/navigation");
+vi.mock("@/utils/navigation", () => ({
+	routes: {
+		organization: {
+			project: {
+				application: {
+					wizard: vi.fn(() => "/organization/project/application/wizard"),
+				},
+			},
+		},
+	},
+}));
+vi.mock("@/constants", () => ({
+	DEFAULT_APPLICATION_TITLE: "Untitled Application",
+}));
 vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
@@ -111,6 +127,7 @@ const mockUseNewApplicationModalStore = vi.mocked(
 	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
 );
 const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
+const mockCreateApplication = vi.mocked(await import("@/actions/grant-applications").then((m) => m.createApplication));
 
 const MockDashboardStats = vi.mocked(await import("./dashboard-stats").then((m) => m.DashboardStats));
 const MockDashboardProjectCard = vi.mocked(
@@ -169,6 +186,20 @@ describe("DashboardClient", () => {
 			isLoading: false,
 			isValidating: false,
 			mutate: mockMutate,
+		});
+		mockCreateProject.mockResolvedValue(
+			ProjectListItemFactory.build({ id: "new-project-id", name: "New Project 1" }),
+		);
+		mockCreateApplication.mockResolvedValue({
+			created_at: "2023-01-01T00:00:00Z",
+			editor_document_id: null,
+			editor_document_init: false,
+			id: "app-123",
+			project_id: "project-123",
+			rag_sources: [],
+			status: "WORKING_DRAFT",
+			title: "Untitled Application",
+			updated_at: "2023-01-01T00:00:00Z",
 		});
 	});
 
@@ -374,5 +405,105 @@ describe("DashboardClient", () => {
 			title: "Error creating project",
 			type: "warning",
 		});
+	});
+
+	it("should handle application creation with existing project", async () => {
+		const mockNavigateToApplication = vi.fn();
+		const mockPush = vi.fn();
+
+		mockUseNavigation.mockReturnValue({
+			navigateToApplication: mockNavigateToApplication,
+			navigateToProject: vi.fn(),
+		});
+
+		mockUseRouter.mockReturnValue({
+			back: vi.fn(),
+			forward: vi.fn(),
+			prefetch: vi.fn(),
+			push: mockPush,
+			refresh: vi.fn(),
+			replace: vi.fn(),
+		});
+
+		render(<DashboardClient {...defaultProps} />);
+
+		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
+		await createFunction("project-123", "Test Project", false);
+
+		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-123", {
+			title: "Untitled Application",
+		});
+		expect(mockNavigateToApplication).toHaveBeenCalledWith(
+			"project-123",
+			"Test Project",
+			"app-123",
+			"Untitled Application",
+		);
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
+	});
+
+	it("should handle application creation with new project", async () => {
+		const mockNavigateToApplication = vi.fn();
+		const mockPush = vi.fn();
+		const mockMutate = vi.fn();
+
+		mockUseNavigation.mockReturnValue({
+			navigateToApplication: mockNavigateToApplication,
+			navigateToProject: vi.fn(),
+		});
+
+		mockUseRouter.mockReturnValue({
+			back: vi.fn(),
+			forward: vi.fn(),
+			prefetch: vi.fn(),
+			push: mockPush,
+			refresh: vi.fn(),
+			replace: vi.fn(),
+		});
+
+		mockUseSWR.mockReturnValue({
+			data: defaultProps.initialProjects,
+			error: undefined,
+			isLoading: false,
+			isValidating: false,
+			mutate: mockMutate,
+		});
+
+		mockCreateProject.mockResolvedValueOnce({
+			id: "project-456",
+		});
+
+		mockCreateApplication.mockResolvedValueOnce({
+			created_at: "2023-01-01T00:00:00Z",
+			editor_document_id: null,
+			editor_document_init: false,
+			id: "app-456",
+			project_id: "project-456",
+			rag_sources: [],
+			status: "WORKING_DRAFT",
+			title: "Untitled Application",
+			updated_at: "2023-01-01T00:00:00Z",
+		});
+
+		render(<DashboardClient {...defaultProps} />);
+
+		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
+		await createFunction(null, "New Test Project", true);
+
+		expect(mockCreateProject).toHaveBeenCalledWith("org-123", {
+			description: "",
+			name: "New Test Project",
+		});
+		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-456", {
+			title: "Untitled Application",
+		});
+		expect(mockNavigateToApplication).toHaveBeenCalledWith(
+			"project-456",
+			"New Test Project",
+			"app-456",
+			"Untitled Application",
+		);
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
+		expect(mockMutate).toHaveBeenCalled();
 	});
 });

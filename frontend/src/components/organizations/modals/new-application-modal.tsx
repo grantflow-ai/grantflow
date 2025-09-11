@@ -16,7 +16,7 @@ import type { API } from "@/types/api-types";
 interface NewApplicationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onCreate: (title: string, description: string) => void;
+	onCreate: (projectId: null | string, projectName: string, isNewProject: boolean) => Promise<void>;
 	projects: Project[];
 }
 
@@ -24,10 +24,10 @@ type Project = API.ListProjects.Http200.ResponseBody[number];
 
 export default function NewApplicationModal({ isOpen, onClose, onCreate, projects }: NewApplicationModalProps) {
 	const [title, setTitle] = useState("");
-	const [description] = useState("");
 	const [showNewProjectInput, setShowNewProjectInput] = useState(false);
 	const [isSelectOpen, setIsSelectOpen] = useState(false);
 	const [selectedValue, setSelectedValue] = useState("");
+	const [isCreating, setIsCreating] = useState(false);
 
 	let modalHeight = "h-[330px]";
 	if (isSelectOpen) {
@@ -36,9 +36,24 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 		modalHeight = "h-[392px]";
 	}
 
-	const handleCreate = () => {
-		onCreate(title, description);
-		handleClose();
+	const handleCreate = async () => {
+		if (!(selectedValue || showNewProjectInput)) return;
+
+		setIsCreating(true);
+		try {
+			if (showNewProjectInput) {
+				await onCreate(null, title, true);
+			} else {
+				const selectedProject = projects.find((p) => p.id === selectedValue);
+				if (selectedProject) {
+					await onCreate(selectedProject.id, selectedProject.name, false);
+				}
+			}
+			handleClose();
+		} catch {
+		} finally {
+			setIsCreating(false);
+		}
 	};
 
 	const handleOpenChange = (open: boolean) => {
@@ -48,12 +63,15 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 	};
 
 	const handleClose = () => {
-		setTitle("");
-		setShowNewProjectInput(false);
-		setSelectedValue("");
-
-		onClose();
+		if (!isCreating) {
+			setTitle("");
+			setShowNewProjectInput(false);
+			setSelectedValue("");
+			setIsCreating(false);
+			onClose();
+		}
 	};
+
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
@@ -176,10 +194,19 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 						<AppButton
 							className="rounded px-4 py-2"
 							data-testid="select-button"
+							disabled={
+								isCreating ||
+								!(selectedValue || showNewProjectInput) ||
+								(showNewProjectInput && !title.trim())
+							}
 							onClick={handleCreate}
 							variant="primary"
 						>
-							{selectedValue ? "Create and Start" : "Select"}
+							{(() => {
+								if (isCreating) return "Creating...";
+								if (selectedValue) return "Create and Start";
+								return "Select";
+							})()}
 						</AppButton>
 					</div>
 				</DialogFooter>
