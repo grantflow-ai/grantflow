@@ -58,25 +58,27 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 				<header className="flex flex-col gap-2">
 					<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
 						<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
-							<div className="flex items-center gap-2">
-								<div className="size-[31px] shrink-0">
+							<div>
+								<Link className="flex items-center gap-2" href={routes.organization.root()}>
+									<div className="size-[31px] shrink-0">
+										<Image
+											alt="logo"
+											className="w-full h-full object-contain"
+											data-testid="sidebar-logo"
+											height={31}
+											src="/assets/logo-horizontal.svg"
+											width={31}
+										/>
+									</div>
 									<Image
 										alt="logo"
-										className="w-full h-full object-contain"
+										className="w-full h-full object-contain group-data-[collapsible=icon]:hidden"
 										data-testid="sidebar-logo"
 										height={31}
-										src="/assets/logo-horizontal.svg"
+										src="/assets/grantflow.svg"
 										width={31}
 									/>
-								</div>
-								<Image
-									alt="logo"
-									className="w-full h-full object-contain group-data-[collapsible=icon]:hidden"
-									data-testid="sidebar-logo"
-									height={31}
-									src="/assets/grantflow.svg"
-									width={31}
-								/>
+								</Link>
 							</div>
 							<div className="group-data-[collapsible=icon]:hidden">
 								<CustomSidebarTrigger data-testid="sidebar-trigger" />

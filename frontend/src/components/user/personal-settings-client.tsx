@@ -1,23 +1,23 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { X } from "lucide-react";
+import { RefreshCw, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { deleteAccount, getSoleOwnedOrganizations, getSoleOwnedProjects } from "@/actions/user";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DeleteAccountModal } from "@/components/user/delete-account-modal";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 
 export function PersonalSettingsClient() {
-	const { clearUser, user } = useUserStore();
+	const { clearUser, deleteProfilePhoto, updateDisplayName, updateProfilePhoto, user } = useUserStore();
 	const { addNotification } = useNotificationStore();
 	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-	const [isUpdating, setIsUpdating] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +31,7 @@ export function PersonalSettingsClient() {
 		}
 	}, [user]);
 
-	const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
 
@@ -47,7 +47,8 @@ export function PersonalSettingsClient() {
 
 		setIsUploading(true);
 		try {
-			toast.success("Avatar upload functionality coming soon");
+			await updateProfilePhoto(file);
+			toast.success("Avatar upload successful");
 		} catch {
 			toast.error("Failed to upload avatar");
 		} finally {
@@ -59,16 +60,14 @@ export function PersonalSettingsClient() {
 		}
 	};
 
-	const handleSave = () => {
-		if (!user) return;
+	const handleSave = async () => {
+		if (!user || user.displayName === displayName) return;
 
-		setIsUpdating(true);
 		try {
-			toast.info("User profile update coming soon");
+			await updateDisplayName(displayName);
+			toast.info("User profile updated");
 		} catch {
 			toast.error("Failed to update profile");
-		} finally {
-			setIsUpdating(false);
 		}
 	};
 
@@ -117,7 +116,44 @@ export function PersonalSettingsClient() {
 		}
 	};
 
+	const handleDeletePhoto = async () => {
+		setIsUploading(true);
+		try {
+			await deleteProfilePhoto();
+			toast.success("Avatar removed successfully");
+		} catch {
+			toast.error("Failed to remove avatar");
+		} finally {
+			setIsUploading(false);
+		}
+	};
+
+	useAutoSave(handleSave, [displayName]);
 	const userInitials = generateInitials(user?.displayName ?? undefined, user?.email ?? undefined);
+
+	const logoButtonClasses = [
+		"group",
+		"w-[93px]",
+		"h-[95px]",
+		"rounded",
+		"bg-preview-bg",
+		"flex",
+		"items-center",
+		"justify-center",
+		"relative",
+		"overflow-hidden",
+		"transition-colors",
+	];
+
+	if (!user?.photoURL) {
+		logoButtonClasses.push(
+			"border",
+			"border-dashed",
+			"border-app-gray-100",
+			"cursor-pointer",
+			"hover:border-primary",
+		);
+	}
 
 	return (
 		<div className="flex flex-col gap-10 max-w-[607px]" data-testid="personal-settings">
@@ -127,20 +163,52 @@ export function PersonalSettingsClient() {
 						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Profile Image</h3>
 						<div className="flex flex-col gap-3">
 							<button
-								className="size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors cursor-pointer hover:border-primary"
+								className={logoButtonClasses.join(" ")}
 								data-testid="user-avatar-container"
-								onClick={() => fileInputRef.current?.click()}
-								style={{
-									backgroundColor: user?.uid ? generateBackgroundColor(user.uid) : "#cccccc",
+								onClick={() => {
+									if (!user?.photoURL) {
+										fileInputRef.current?.click();
+									}
 								}}
 								type="button"
 							>
 								{user?.photoURL ? (
-									<Image alt="User Avatar" className="object-cover" fill src={user.photoURL} />
+									<>
+										<Image alt="User Avatar" className="object-cover" fill src={user.photoURL} />
+										<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
+											<button
+												className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												onClick={(e) => {
+													e.stopPropagation();
+													fileInputRef.current?.click();
+												}}
+												type="button"
+											>
+												<RefreshCw className="text-white size-4" />
+											</button>
+											<button
+												className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												onClick={(e) => {
+													e.stopPropagation();
+													handleDeletePhoto();
+												}}
+												type="button"
+											>
+												<Trash2 className="text-white size-4" />
+											</button>
+										</div>
+									</>
 								) : (
-									<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
-										{userInitials}
-									</span>
+									<div
+										className="size-full flex items-center justify-center"
+										style={{
+											backgroundColor: user?.uid ? generateBackgroundColor(user.uid) : "#cccccc",
+										}}
+									>
+										<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
+											{userInitials}
+										</span>
+									</div>
 								)}
 							</button>
 							<input
@@ -194,8 +262,9 @@ export function PersonalSettingsClient() {
 						</div>
 						<div className="relative">
 							<input
-								className="w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary"
+								className="w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary cursor-not-allowed"
 								data-testid="user-email-input"
+								disabled
 								onChange={(e) => {
 									setEmail(e.target.value);
 								}}
@@ -266,18 +335,6 @@ export function PersonalSettingsClient() {
 						</button>
 					</div>
 				</div>
-			</div>
-
-			<div className="flex justify-end">
-				<button
-					className="cursor-pointer px-4 py-2 bg-primary text-white rounded font-button text-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					data-testid="user-save-button"
-					disabled={isUpdating}
-					onClick={handleSave}
-					type="button"
-				>
-					{isUpdating ? "Saving..." : "Save Changes"}
-				</button>
 			</div>
 
 			<DeleteAccountModal
