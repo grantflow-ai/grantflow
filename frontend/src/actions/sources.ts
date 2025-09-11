@@ -26,13 +26,14 @@ export async function crawlApplicationUrl(
 export async function crawlTemplateUrl(
 	organizationId: string,
 	projectId: string,
+	applicationId: string,
 	templateId: string,
 	url: string,
 ): Promise<API.CrawlGrantTemplateUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
 			.post(
-				`organizations/${organizationId}/projects/${projectId}/grant_templates/${templateId}/sources/crawl-url`,
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources/crawl-url`,
 				{
 					headers: await createAuthHeaders(),
 					json: { url } satisfies API.CrawlGrantTemplateUrl.RequestBody,
@@ -98,12 +99,13 @@ export async function deleteApplicationSource(
 export async function deleteTemplateSource(
 	organizationId: string,
 	projectId: string,
+	applicationId: string,
 	templateId: string,
 	sourceId: string,
 ) {
 	await withAuthRedirect(
 		getClient().delete(
-			`organizations/${organizationId}/projects/${projectId}/grant_templates/${templateId}/sources/${sourceId}`,
+			`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources/${sourceId}`,
 			{
 				headers: await createAuthHeaders(),
 			},
@@ -121,12 +123,20 @@ export async function getApplicationSources(organizationId: string, projectId: s
 	);
 }
 
-export async function getTemplateSources(organizationId: string, projectId: string, templateId: string) {
+export async function getTemplateSources(
+	organizationId: string,
+	projectId: string,
+	applicationId: string,
+	templateId: string,
+) {
 	return withAuthRedirect(
 		getClient()
-			.get(`organizations/${organizationId}/projects/${projectId}/grant_templates/${templateId}/sources`, {
-				headers: await createAuthHeaders(),
-			})
+			.get(
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources`,
+				{
+					headers: await createAuthHeaders(),
+				},
+			)
 			.json<API.RetrieveGrantTemplateRagSources.Http200.ResponseBody[]>(),
 	);
 }

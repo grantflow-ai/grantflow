@@ -72,3 +72,6 @@ storybook-static/
 terraform.rc
 testing/test_data/results/
 openapi.json
+
+# AI Rules generated files
+.claude/agents/
