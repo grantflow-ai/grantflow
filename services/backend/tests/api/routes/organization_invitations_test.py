@@ -933,28 +933,30 @@ async def test_get_invitation_excludes_soft_deleted(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that soft-deleted invitations cannot be retrieved."""
-    # First verify the invitation can be found normally
+    """Test that soft-deleted invitations are not included in list results."""
+    # First verify the invitation is in the list
     response = await test_client.get(
-        f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
+        f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
     )
-    # This should work (assuming the endpoint exists - if not, this test may need adjustment)
+    assert response.status_code == HTTPStatus.OK
+    initial_invitations = response.json()["invitations"]
+    assert any(inv["id"] == str(existing_invitation.id) for inv in initial_invitations)
 
     # Soft-delete the invitation
-    async with async_session_maker() as session:
+    async with async_session_maker() as session, session.begin():
         existing_invitation.soft_delete()
         session.add(existing_invitation)
-        await session.commit()
 
-    # Now try to get the invitation - should fail
+    # Try to retrieve the list again
     response = await test_client.get(
-        f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
+        f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
     )
-
-    # Should fail because the invitation is soft-deleted
-    assert response.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.BAD_REQUEST]
+    assert response.status_code == HTTPStatus.OK
+    new_invitations = response.json()["invitations"]
+    # Should not find the soft-deleted invitation
+    assert not any(inv["id"] == str(existing_invitation.id) for inv in new_invitations)
 
 
 async def test_list_invitations_excludes_soft_deleted(

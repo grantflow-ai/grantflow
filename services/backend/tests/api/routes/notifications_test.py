@@ -333,10 +333,9 @@ async def test_list_notifications_excludes_soft_deleted(
     assert initial_count == 3
 
     # Soft-delete one notification
-    async with async_session_maker() as session:
+    async with async_session_maker() as session, session.begin():
         notifications[0].soft_delete()
         session.add(notifications[0])
-        await session.commit()
 
     # Get count again - should be one less
     response = await test_client.get(
@@ -394,11 +393,10 @@ async def test_mark_notification_as_read_ignores_soft_deleted(
     assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT]
 
     # Reset the notification to unread and soft-delete it
-    async with async_session_maker() as session:
+    async with async_session_maker() as session, session.begin():
         notification.read = False
         notification.soft_delete()
         session.add(notification)
-        await session.commit()
 
     # Try to mark the soft-deleted notification as read
     response = await test_client.patch(
