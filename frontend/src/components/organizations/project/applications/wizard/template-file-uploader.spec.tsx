@@ -42,7 +42,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("renders upload button correctly", () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
 		expect(screen.getByTestId("upload-files-button")).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("accepts correct file types", () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const fileInput = screen.getByTestId("file-input");
 		const acceptAttribute = fileInput.getAttribute("accept");
@@ -65,14 +65,14 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("allows multiple file selection", () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const fileInput = screen.getByTestId("file-input");
 		expect(fileInput).toHaveAttribute("multiple");
 	});
 
 	it("uploads valid file successfully", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const fileInput = screen.getByTestId("file-input");
@@ -92,7 +92,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("uploads multiple files successfully", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const files = [
 			new File(["content 1"], "doc1.pdf", { type: "application/pdf" }),
@@ -112,7 +112,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("rejects files that are too large", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const largeSize = 101 * 1024 * 1024;
 
@@ -129,7 +129,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("does not upload if parentId is missing", async () => {
-		render(<TemplateFileUploader parentId={undefined} />);
+		render(<TemplateFileUploader parentId={undefined} sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const fileInput = screen.getByTestId("file-input");
@@ -142,7 +142,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("clears file input after selection", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const fileInput = screen.getByTestId("file-input");
@@ -155,7 +155,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("validates all files before uploading any", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const validFile = new File(["content 1"], "valid.pdf", { type: "application/pdf" });
 		const largeFile = new File(["test"], "large.pdf", { type: "application/pdf" });
@@ -178,7 +178,7 @@ describe("TemplateFileUploader", () => {
 			randomUUID: vi.fn(() => `test-uuid-${++callCount}`),
 		});
 
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const files = [
 			new File(["content 1"], "doc1.pdf", { type: "application/pdf" }),
@@ -195,7 +195,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("button label acts as clickable area for file input", async () => {
-		render(<TemplateFileUploader parentId="parent-123" />);
+		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const label = screen.getByText("Upload Documents");
 		expect(label.tagName).toBe("LABEL");
