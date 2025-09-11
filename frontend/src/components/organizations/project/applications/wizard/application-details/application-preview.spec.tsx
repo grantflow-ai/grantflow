@@ -51,6 +51,11 @@ vi.mock("@/components/organizations/project/applications/wizard/wizard-right-pan
 	)),
 }));
 
+const createMockFile = (id: string, name: string) => {
+	const file = new File(["mock content"], name, { type: "application/pdf" });
+	return Object.assign(file, { id });
+};
+
 describe("ApplicationPreview", () => {
 	beforeEach(() => {
 		resetAllStores();
@@ -58,10 +63,19 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders empty state when no data is provided", () => {
+		useApplicationStore.setState({
+			application: null,
+			pendingUploads: {
+				application: new Set(),
+				template: new Set(),
+			},
+		});
+
 		render(<ApplicationPreview draftTitle="" />);
 
 		expect(screen.getByTestId("empty-state-preview")).toBeInTheDocument();
 		expect(screen.queryByTestId("application-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
 	});
 
 	it("renders application title when provided", () => {
@@ -288,5 +302,237 @@ describe("ApplicationPreview", () => {
 
 		expect(screen.getByTestId("file-source-status")).toHaveTextContent(SourceIndexingStatus.INDEXING);
 		expect(screen.getByTestId("link-source-status")).toHaveTextContent(SourceIndexingStatus.FINISHED);
+	});
+
+	describe("Pending Files Logic", () => {
+		it("renders documents card when only pending files are present", () => {
+			const pendingFile = createMockFile("pending-1", "pending-doc.pdf");
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set(),
+					template: new Set([pendingFile]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("application-documents")).toBeInTheDocument();
+			expect(screen.getByText("Application Documents")).toBeInTheDocument();
+			expect(screen.getByTestId("pending-file-preview-card")).toBeInTheDocument();
+			expect(screen.getByText("pending-doc.pdf")).toBeInTheDocument();
+		});
+
+		it("renders pending files after uploaded documents", () => {
+			const uploadedSource = RagSourceFactory.build({
+				filename: "uploaded-doc.pdf",
+				status: SourceIndexingStatus.FINISHED,
+				url: undefined,
+			});
+			const pendingFile = createMockFile("pending-1", "pending-doc.pdf");
+
+			const mockTemplate = GrantTemplateFactory.build({ rag_sources: [uploadedSource] });
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({
+				application: mockApplication,
+				pendingUploads: {
+					application: new Set(),
+					template: new Set([pendingFile]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			const allFiles = screen.getAllByTestId(/file-preview-card|pending-file-preview-card/);
+
+			expect(allFiles).toHaveLength(2);
+			expect(screen.getByTestId("file-preview-card")).toBeInTheDocument();
+			expect(screen.getByTestId("pending-file-preview-card")).toBeInTheDocument();
+
+			expect(screen.getByText("uploaded-doc.pdf")).toBeInTheDocument();
+			expect(screen.getByText("pending-doc.pdf")).toBeInTheDocument();
+		});
+
+		it("does not render documents card when both sources and pending uploads are empty", () => {
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set(),
+					template: new Set(),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="" />);
+
+			expect(screen.getByTestId("empty-state-preview")).toBeInTheDocument();
+			expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
+		});
+
+		it("does not render documents card when both sources and pending uploads are empty but title exists", () => {
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set(),
+					template: new Set(),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="My App" />);
+
+			expect(screen.queryByTestId("empty-state-preview")).not.toBeInTheDocument();
+			expect(screen.getByText("My App")).toBeInTheDocument();
+			expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
+		});
+
+		it("renders multiple pending files correctly", () => {
+			const pendingFile1 = createMockFile("pending-1", "doc1.pdf");
+			const pendingFile2 = createMockFile("pending-2", "doc2.docx");
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set(),
+					template: new Set([pendingFile1, pendingFile2]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			const pendingCards = screen.getAllByTestId("pending-file-preview-card");
+			expect(pendingCards).toHaveLength(2);
+
+			expect(screen.getByText("doc1.pdf")).toBeInTheDocument();
+			expect(screen.getByText("doc2.docx")).toBeInTheDocument();
+		});
+
+		it("only shows template pending files, not application pending files", () => {
+			const templatePendingFile = createMockFile("template-pending", "template-doc.pdf");
+			const applicationPendingFile = createMockFile("app-pending", "app-doc.pdf");
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set([applicationPendingFile]),
+					template: new Set([templatePendingFile]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByText("template-doc.pdf")).toBeInTheDocument();
+			expect(screen.queryByText("app-doc.pdf")).not.toBeInTheDocument();
+
+			const pendingCards = screen.getAllByTestId("pending-file-preview-card");
+			expect(pendingCards).toHaveLength(1);
+		});
+
+		it("correctly handles empty state with title when no sources or pending files", () => {
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ rag_sources: [] }),
+				}),
+				pendingUploads: {
+					application: new Set(),
+					template: new Set(),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test Application" />);
+
+			expect(screen.getByText("Test Application")).toBeInTheDocument();
+			expect(screen.queryByTestId("empty-state-preview")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("application-links")).not.toBeInTheDocument();
+		});
+
+		it("renders documents card with mixed uploaded and pending files in correct order", () => {
+			const uploadedSource1 = RagSourceFactory.build({
+				filename: "uploaded1.pdf",
+				status: SourceIndexingStatus.FINISHED,
+				url: undefined,
+			});
+			const uploadedSource2 = RagSourceFactory.build({
+				filename: "uploaded2.docx",
+				status: SourceIndexingStatus.INDEXING,
+				url: undefined,
+			});
+			const pendingFile1 = createMockFile("pending-1", "pending1.pdf");
+			const pendingFile2 = createMockFile("pending-2", "pending2.txt");
+
+			const mockTemplate = GrantTemplateFactory.build({ rag_sources: [uploadedSource1, uploadedSource2] });
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({
+				application: mockApplication,
+				pendingUploads: {
+					application: new Set(),
+					template: new Set([pendingFile1, pendingFile2]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Mixed Files App" />);
+
+			expect(screen.getByTestId("application-documents")).toBeInTheDocument();
+
+			const uploadedCards = screen.getAllByTestId("file-preview-card");
+			const pendingCards = screen.getAllByTestId("pending-file-preview-card");
+
+			expect(uploadedCards).toHaveLength(2);
+			expect(pendingCards).toHaveLength(2);
+
+			expect(screen.getByText("uploaded1.pdf")).toBeInTheDocument();
+			expect(screen.getByText("uploaded2.docx")).toBeInTheDocument();
+			expect(screen.getByText("pending1.pdf")).toBeInTheDocument();
+			expect(screen.getByText("pending2.txt")).toBeInTheDocument();
+		});
+
+		it("filters out failed sources but shows all pending files", () => {
+			const goodSource = RagSourceFactory.build({
+				filename: "good.pdf",
+				status: SourceIndexingStatus.FINISHED,
+				url: undefined,
+			});
+			const failedSource = RagSourceFactory.build({
+				filename: "failed.pdf",
+				status: SourceIndexingStatus.FAILED,
+				url: undefined,
+			});
+			const pendingFile = createMockFile("pending-1", "pending.pdf");
+
+			const mockTemplate = GrantTemplateFactory.build({ rag_sources: [goodSource, failedSource] });
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({
+				application: mockApplication,
+				pendingUploads: {
+					application: new Set(),
+					template: new Set([pendingFile]),
+				},
+			});
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByText("good.pdf")).toBeInTheDocument();
+			expect(screen.queryByText("failed.pdf")).not.toBeInTheDocument();
+			expect(screen.getByText("pending.pdf")).toBeInTheDocument();
+
+			const uploadedCards = screen.getAllByTestId("file-preview-card");
+			const pendingCards = screen.getAllByTestId("pending-file-preview-card");
+
+			expect(uploadedCards).toHaveLength(1);
+			expect(pendingCards).toHaveLength(1);
+		});
 	});
 });
