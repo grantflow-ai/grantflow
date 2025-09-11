@@ -1,3 +1,5 @@
+import asyncio
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
@@ -16,8 +18,9 @@ from packages.db.src.json_objects import (
     ResearchObjective,
 )
 from packages.db.src.tables import (
+    EditorDocument,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
     RagFile,
     RagSource,
@@ -31,14 +34,15 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
-from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
+from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
 
 logger = get_logger(__name__)
 
@@ -74,7 +78,7 @@ class AutofillResponse(TypedDict):
     field_name: NotRequired[str]
 
 
-class FundingOrganizationResponse(TypedDict):
+class GrantingInstitutionResponse(TypedDict):
     id: str
     full_name: str
     abbreviation: NotRequired[str]
@@ -92,8 +96,8 @@ class SourceResponse(TypedDict):
 class GrantTemplateResponse(TypedDict):
     id: str
     grant_application_id: str
-    funding_organization_id: NotRequired[str]
-    funding_organization: NotRequired[FundingOrganizationResponse]
+    granting_institution_id: NotRequired[str]
+    granting_institution: NotRequired[GrantingInstitutionResponse]
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
@@ -117,6 +121,8 @@ class ApplicationResponse(TypedDict):
     rag_job_id: NotRequired[str]
     parent_id: NotRequired[str]
     deadline: NotRequired[str]
+    editor_document_id: str | None
+    editor_document_init: bool
     created_at: str
     updated_at: str
 
@@ -170,10 +176,11 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 
 
 async def _handle_retrieve_application(
-    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
     logger.info(
         "Retrieving application",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
     )
@@ -194,6 +201,12 @@ async def _handle_retrieve_application(
             "rag_sources": [],
             "created_at": grant_application.created_at.isoformat(),
             "updated_at": grant_application.updated_at.isoformat(),
+            "editor_document_id": str(grant_application.editor_documents[0].id)
+            if grant_application.editor_documents
+            else None,
+            "editor_document_init": grant_application.editor_documents[0].crdt is not None
+            if grant_application.editor_documents
+            else False,
         }
 
         if grant_application.description:
@@ -228,8 +241,8 @@ async def _handle_retrieve_application(
                 "updated_at": template.updated_at.isoformat(),
             }
 
-            if template.funding_organization_id:
-                template_response["funding_organization_id"] = str(template.funding_organization_id)
+            if template.granting_institution_id:
+                template_response["granting_institution_id"] = str(template.granting_institution_id)
 
             if template.submission_date:
                 template_response["submission_date"] = template.submission_date.isoformat()
@@ -239,17 +252,17 @@ async def _handle_retrieve_application(
             if template.rag_job_id:
                 template_response["rag_job_id"] = str(template.rag_job_id)
 
-            if template.funding_organization:
-                org = template.funding_organization
-                funding_org_response: FundingOrganizationResponse = {
+            if template.granting_institution:
+                org = template.granting_institution
+                granting_institution_response: GrantingInstitutionResponse = {
                     "id": str(org.id),
                     "full_name": org.full_name,
                     "created_at": org.created_at.isoformat(),
                     "updated_at": org.updated_at.isoformat(),
                 }
                 if org.abbreviation:
-                    funding_org_response["abbreviation"] = org.abbreviation
-                template_response["funding_organization"] = funding_org_response
+                    granting_institution_response["abbreviation"] = org.abbreviation
+                template_response["granting_institution"] = granting_institution_response
 
             if hasattr(template, "rag_sources") and template.rag_sources:
                 for template_rag_source in template.rag_sources:
@@ -267,16 +280,17 @@ async def _handle_retrieve_application(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="CreateApplication",
 )
 async def handle_create_application(
+    organization_id: UUID,
     project_id: UUID,
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Creating application", project_id=project_id, title=data["title"])
+    logger.info("Creating application", organization_id=organization_id, project_id=project_id, title=data["title"])
 
     async with session_maker() as session, session.begin():
         try:
@@ -287,10 +301,18 @@ async def handle_create_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": data.get("description") or None,
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                     }
                 )
                 .returning(GrantApplication)
+            )
+
+            await session.execute(
+                insert(EditorDocument).values(
+                    {
+                        "grant_application_id": application.id,
+                    }
+                )
             )
 
             await session.scalar(
@@ -311,6 +333,7 @@ async def handle_create_application(
             raise DatabaseError("Error creating application and template", context=str(e)) from e
 
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application.id,
         session_maker=session_maker,
@@ -318,17 +341,20 @@ async def handle_create_application(
 
 
 @patch(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="UpdateApplication",
 )
 async def handle_update_application(
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Updating application", project_id=project_id, application_id=application_id)
+    logger.info(
+        "Updating application", organization_id=organization_id, project_id=project_id, application_id=application_id
+    )
 
     async with session_maker() as session, session.begin():
         try:
@@ -336,12 +362,17 @@ async def handle_update_application(
                 select(GrantApplication)
                 .where(GrantApplication.id == application_id)
                 .where(GrantApplication.project_id == project_id)
+                .where(GrantApplication.deleted_at.is_(None))
             )
 
             if not application:
                 raise ValidationException("Application not found")
 
-            await session.execute(update(GrantApplication).where(GrantApplication.id == application_id).values(**data))
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id, GrantApplication.deleted_at.is_(None))
+                .values(**data)
+            )
             await session.commit()
         except ValidationException:
             await session.rollback()
@@ -352,6 +383,7 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         session_maker=session_maker,
@@ -359,33 +391,66 @@ async def handle_update_application(
 
 
 @delete(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DeleteApplication",
 )
-async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
-    logger.info("Deleting application", application_id=application_id)
+async def handle_delete_application(
+    request: APIRequest,
+    organization_id: UUID,
+    project_id: UUID,
+    application_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    logger.info("Deleting application", organization_id=organization_id, application_id=application_id)
 
     async with session_maker() as session, session.begin():
         try:
+            application = await session.scalar(
+                select(GrantApplication)
+                .where(
+                    GrantApplication.id == application_id,
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
+                )
+                .options(selectinload(GrantApplication.project))
+            )
+            if not application:
+                raise ValidationException("Application not found")
+
+            await log_organization_audit_from_request(
+                session=session,
+                request=request,
+                organization_id=application.project.organization_id,
+                action=DELETE_APPLICATION,
+                details={
+                    "application_id": str(application_id),
+                    "application_title": application.title,
+                    "project_id": str(application.project_id),
+                },
+            )
+
             template_result = await session.execute(
-                select(GrantTemplate.id).where(GrantTemplate.grant_application_id == application_id)
+                select(GrantTemplate.id).where(
+                    GrantTemplate.grant_application_id == application_id,
+                    GrantTemplate.deleted_at.is_(None),
+                )
             )
             template_ids = template_result.scalars().all()
 
             if template_ids:
                 logger.debug(
-                    "Grant templates will be deleted due to CASCADE",
+                    "Grant templates will be soft deleted due to CASCADE",
                     application_id=str(application_id),
                     template_ids=[str(t_id) for t_id in template_ids],
                 )
 
-            await session.execute(sa_delete(GrantApplication).where(GrantApplication.id == application_id))
+            application.soft_delete()
             await session.commit()
 
             if template_ids:
                 logger.debug(
-                    "Application and associated templates deleted successfully",
+                    "Application and associated templates soft deleted successfully",
                     application_id=str(application_id),
                     deleted_template_ids=[str(t_id) for t_id in template_ids],
                 )
@@ -396,15 +461,17 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="GenerateApplication",
 )
 async def handle_generate_application(
-    application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
+    organization_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
 ) -> None:
     trace_id = get_trace_id(request)
-    logger.info("Generating application", application_id=application_id, trace_id=trace_id)
+    logger.info(
+        "Generating application", organization_id=organization_id, application_id=application_id, trace_id=trace_id
+    )
     async with session_maker() as session:
         try:
             application = await retrieve_application(application_id=application_id, session=session)
@@ -421,10 +488,12 @@ async def handle_generate_application(
 
         rag_sources_count = await session.scalar(
             select(count())
-            .select_from(GrantApplicationRagSource)
+            .select_from(GrantApplicationSource)
             .join(RagSource)
             .where(
-                GrantApplicationRagSource.grant_application_id == application.id,
+                GrantApplicationSource.grant_application_id == application.id,
+                GrantApplicationSource.deleted_at.is_(None),
+                RagSource.deleted_at.is_(None),
                 RagSource.indexing_status.in_(
                     (
                         SourceIndexingStatusEnum.INDEXING,
@@ -446,7 +515,6 @@ async def handle_generate_application(
 
         try:
             await publish_rag_task(
-                logger=logger,
                 parent_type="grant_application",
                 parent_id=application.id,
                 trace_id=trace_id,
@@ -460,22 +528,23 @@ async def handle_generate_application(
 
 
 @get(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveApplication",
 )
 async def handle_retrieve_application(
-    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    return await _handle_retrieve_application(project_id, application_id, session_maker)
+    return await _handle_retrieve_application(organization_id, project_id, application_id, session_maker)
 
 
 @get(
-    "/projects/{project_id:uuid}/applications",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="ListApplications",
 )
 async def handle_list_applications(
+    organization_id: UUID,
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
     search: str | None = Parameter(
@@ -507,6 +576,7 @@ async def handle_list_applications(
 ) -> ApplicationListResponse:
     logger.info(
         "Listing applications",
+        organization_id=organization_id,
         project_id=project_id,
         search=search,
         status=status,
@@ -519,7 +589,10 @@ async def handle_list_applications(
     async with session_maker() as session:
         query = (
             select(GrantApplication, GrantTemplate.submission_date)
-            .where(GrantApplication.project_id == project_id)
+            .where(
+                GrantApplication.project_id == project_id,
+                GrantApplication.deleted_at.is_(None),
+            )
             .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
         )
 
@@ -583,22 +656,23 @@ async def handle_list_applications(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="TriggerAutofill",
 )
 async def handle_trigger_autofill(
     request: APIRequest,
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: AutofillRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> AutofillResponse:
-    """Trigger autofill for a grant application"""
     trace_id = get_trace_id(request)
 
     logger.info(
         "Triggering autofill",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         autofill_type=data["autofill_type"],
@@ -616,7 +690,6 @@ async def handle_trigger_autofill(
             raise NotFoundException("Application not found")
 
     message_id = await publish_autofill_task(
-        logger=logger,
         parent_id=application_id,
         autofill_type=data["autofill_type"],
         field_name=data.get("field_name"),
@@ -645,37 +718,45 @@ async def handle_trigger_autofill(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DuplicateApplication",
 )
 async def handle_duplicate_application(
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: DuplicateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    """Duplicate an existing grant application with forking model"""
     logger.info(
         "Duplicating application",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         new_title=data["title"],
     )
 
+    new_app_id = None
+
     async with session_maker() as session, session.begin():
         try:
             original_app = await session.scalar(
-                select(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .where(GrantApplication.project_id == project_id)
+                select(GrantApplication).where(
+                    GrantApplication.id == application_id,
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
+                )
             )
 
             if not original_app:
                 raise NotFoundException("Application not found")
 
             template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
+                select(GrantTemplate).where(
+                    GrantTemplate.grant_application_id == application_id,
+                    GrantTemplate.deleted_at.is_(None),
+                )
             )
 
             new_app = await session.scalar(
@@ -685,7 +766,7 @@ async def handle_duplicate_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": original_app.description,
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
                         "text": original_app.text,
@@ -695,34 +776,54 @@ async def handle_duplicate_application(
                 .returning(GrantApplication)
             )
 
+            await session.execute(
+                insert(EditorDocument).values(
+                    {
+                        "grant_application_id": new_app.id,
+                    }
+                )
+            )
+
             new_app_id = new_app.id
 
             if template:
-                await session.scalar(
+                new_template = await session.scalar(
                     insert(GrantTemplate)
                     .values(
                         {
                             "grant_application_id": new_app.id,
                             "grant_sections": template.grant_sections,
-                            "funding_organization_id": template.funding_organization_id,
+                            "granting_institution_id": template.granting_institution_id,
                             "submission_date": template.submission_date,
                         }
                     )
                     .returning(GrantTemplate)
                 )
+                logger.info(
+                    "Grant template duplicated",
+                    original_template_id=str(template.id),
+                    new_template_id=str(new_template.id),
+                    new_app_id=str(new_app.id),
+                )
 
-            rag_sources = await session.execute(
-                select(GrantApplicationRagSource).where(
-                    GrantApplicationRagSource.grant_application_id == application_id
+            rag_sources_result = await session.execute(
+                select(GrantApplicationSource.rag_source_id).where(
+                    GrantApplicationSource.grant_application_id == application_id,
+                    GrantApplicationSource.deleted_at.is_(None),
                 )
             )
-            for rag_source in rag_sources.scalars():
+            rag_source_ids = list(rag_sources_result.scalars())
+
+            if rag_source_ids:
                 await session.execute(
-                    insert(GrantApplicationRagSource).values(
-                        {
-                            "grant_application_id": new_app.id,
-                            "rag_source_id": rag_source.rag_source_id,
-                        }
+                    insert(GrantApplicationSource).values(
+                        [
+                            {
+                                "grant_application_id": new_app.id,
+                                "rag_source_id": source_id,
+                            }
+                            for source_id in rag_source_ids
+                        ]
                     )
                 )
 
@@ -740,8 +841,85 @@ async def handle_duplicate_application(
             logger.error("Error duplicating application", exc_info=e)
             raise DatabaseError("Error duplicating application", context=str(e)) from e
 
+    await asyncio.sleep(0.2)
+
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=new_app_id,
         session_maker=session_maker,
     )
+
+
+@get(
+    "/organizations/{organization_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    operation_id="ListOrganizationApplications",
+)
+async def handle_list_organization_applications(
+    organization_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> ApplicationListResponse:
+    logger.info(
+        "Listing organization applications",
+        organization_id=organization_id,
+        limit=5,
+    )
+
+    async with session_maker() as session:
+        ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
+
+        query = (
+            select(GrantApplication, GrantTemplate.submission_date)
+            .join(
+                GrantApplication.project,
+            )
+            .where(
+                GrantApplication.project.has(organization_id=organization_id),
+                GrantApplication.deleted_at.is_(None),
+                GrantApplication.updated_at >= ninety_days_ago,
+            )
+            .outerjoin(
+                GrantTemplate,
+                (GrantTemplate.grant_application_id == GrantApplication.id) & (GrantTemplate.deleted_at.is_(None)),
+            )
+        )
+
+        query = query.order_by(GrantApplication.updated_at.desc()).limit(5)
+
+        results = await session.execute(query)
+        rows = results.all()
+
+        application_items: list[ApplicationListItemResponse] = []
+        for row in rows:
+            app = row[0]
+            submission_date = row[1]
+
+            item: ApplicationListItemResponse = {
+                "id": str(app.id),
+                "project_id": str(app.project_id),
+                "title": app.title,
+                "status": app.status,
+                "created_at": app.created_at.isoformat(),
+                "updated_at": app.updated_at.isoformat(),
+            }
+            if app.description:
+                item["description"] = app.description
+            if submission_date:
+                item["submission_date"] = submission_date.isoformat()
+                item["deadline"] = submission_date.isoformat()
+            if app.completed_at:
+                item["completed_at"] = app.completed_at.isoformat()
+            if app.parent_id:
+                item["parent_id"] = str(app.parent_id)
+            application_items.append(item)
+
+        return ApplicationListResponse(
+            applications=application_items,
+            pagination=PaginationMetadata(
+                total=len(application_items),
+                limit=5,
+                offset=0,
+                has_more=False,
+            ),
+        )

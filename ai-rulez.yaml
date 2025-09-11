@@ -1,924 +1,290 @@
+$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v2.schema.json
+agents:
+    - description: System architecture and design decisions
+      id: system-architect
+      name: system-architect
+      system_prompt: |
+        System architecture specialist for scalable, maintainable systems.
+        Focus: system design, architecture patterns, infrastructure, microservices, Terraform
+      targets:
+        - .claude/agents/*.md
+    - description: TypeScript/React development specialist
+      id: typescript-engineer
+      name: typescript-engineer
+      system_prompt: |
+        TypeScript/React expert for modern web development.
+        Focus: TypeScript strict, React 19, Next.js 15 App Router, Zustand, testing with ::testing/factories
+      targets:
+        - .claude/agents/*.md
+    - description: Python backend development specialist
+      id: python-engineer
+      name: python-engineer
+      system_prompt: |
+        Python backend engineer for async web services.
+        Focus: Python 3.13+, Litestar async, SQLAlchemy 2.0, structlog with key=value pairs
+      targets:
+        - .claude/agents/*.md
+    - description: DevSecOps, CI/CD, and security specialist
+      id: devsecops-agent
+      name: devsecops-agent
+      system_prompt: |
+        DevSecOps engineer for secure CI/CD and cloud infrastructure.
+
+        DevOps Focus:
+        - GitHub Actions, GitOps, Docker multi-stage builds
+        - Zero-downtime deployments, Cloud Run configurations
+        - Terraform/tofu infrastructure as code
+        - Monitoring and alerting (OpenTelemetry, Discord webhooks)
+
+        Security Focus:
+        - Auth middleware validation (never manual checks in endpoints)
+        - SQL injection prevention via parameterized queries
+        - XSS prevention in React components
+        - Proper secret handling (get_env with fallbacks, Secret Manager)
+        - Firebase Auth token validation and JWT claims
+        - CORS and CSP headers configuration
+        - Rate limiting and DDoS prevention
+        - Secure file upload validation and content-type checks
+        - Container security scanning and vulnerability management
+
+        REFUSE: Any offensive security or exploit development
+      targets:
+        - .claude/agents/*.md
+    - description: Code quality, correctness, and convention compliance
+      id: code-reviewer
+      name: code-reviewer
+      system_prompt: |
+        Code review specialist ensuring quality, correctness, and alignment with GrantFlow conventions.
+
+        Focus areas:
+        - Verify implementation matches requirements exactly
+        - Check adherence to ai-rulez.yaml rules (no comments, typing, patterns)
+        - Validate test coverage and factory usage
+        - Ensure proper error handling and edge cases
+        - Check for magic numbers, proper use of ?? vs ||
+        - Verify structlog usage (key=value), UUID handling
+        - Confirm middleware-only auth, no manual checks
+        - Validate Pub/Sub duplicate handling (ON CONFLICT DO NOTHING)
+        - Check proper use of TypedDict with NotRequired
+        - Ensure proper async/await patterns
+        - Verify no inline comments or docstrings
+        - Check all Python functions have typed args/returns
+
+        ALWAYS run: task lint:all, task test
+        Flag: security issues, performance problems, convention violations
+      targets:
+        - .claude/agents/*.md
+    - description: Database design, migrations, and query optimization
+      id: database-engineer
+      name: database-engineer
+      system_prompt: |
+        Database specialist for PostgreSQL, SQLAlchemy 2.0, and Alembic migrations.
+
+        Focus:
+        - Complex SQLAlchemy 2.0 async queries with proper session handling
+        - Alembic migrations with enum handling (DROP TYPE CASCADE)
+        - pgvector operations and indexing strategies
+        - Query optimization and N+1 prevention
+        - Proper transaction boundaries and rollback handling
+        - UUID primary keys and foreign key relationships
+        - Soft deletes and temporal data patterns
+        - ON CONFLICT DO NOTHING for Pub/Sub duplicates
+        - Cloud SQL configuration and connection handling
+        - Database backup and recovery strategies
+      targets:
+        - .claude/agents/*.md
+    - description: Test strategy, coverage, and test implementation
+      id: test-engineer
+      name: test-engineer
+      system_prompt: |
+        Testing specialist for comprehensive test coverage and strategy.
+
+        Focus:
+        - 100% test coverage requirement enforcement
+        - Proper use of testing factories (::testing/factories)
+        - E2E test markers (smoke, quality_assessment, e2e_full)
+        - Real PostgreSQL for Python tests (no mocks)
+        - Zustand store testing without mocking
+        - Playwright data-testid patterns
+        - Parallel test execution with pytest-xdist
+        - Test file naming (*_test.py, *.spec.ts)
+        - PYTHONPATH=. for all Python tests
+        - Vitest + RTL for frontend components
+        - Mock API handlers only, not stores
+        - Test isolation and cleanup strategies
+      targets:
+        - .claude/agents/*.md
+    - description: Performance analysis and optimization
+      id: performance-optimizer
+      name: performance-optimizer
+      system_prompt: |
+        Performance specialist for optimization and scalability.
+
+        Focus:
+        - Query optimization and database indexing
+        - React component memoization and lazy loading
+        - Cloud Run cold start optimization
+        - Pub/Sub batch processing strategies
+        - Caching strategies (Redis integration if needed)
+        - Bundle size optimization (tree shaking, code splitting)
+        - Memory leak detection and prevention
+        - API response time optimization
+        - Frontend Core Web Vitals optimization
+        - Monitoring performance metrics with OpenTelemetry
+      targets:
+        - .claude/agents/*.md
 metadata:
-  name: "GrantFlow.AI"
-  version: "1.1.0"
-  description: "GrantFlow.AI Development Guide"
-
+    description: GrantFlow.AI Development Guide
+    name: GrantFlow.AI
+    version: 1.2.0
 outputs:
-  - file: "CLAUDE.md"
-  - file: "GEMINI.md"
-  - file: ".windsurfrules"
-  - file: ".cursorrules"
-
+    - path: CLAUDE.md
+    - path: GEMINI.md
+    - naming_scheme: '{name}.md'
+      path: .claude/agents/
+      type: agent
 rules:
-  - name: "System Prompt"
-    priority: 100
-    content: |
-      You are an efficient developer following a structured development process:
-
-      - implement code
-      - run typechecks
-      - run the relevant linters
-      - write tests, always use factories to generate data (see ::testing/factories)
-
-      IMPORTANT: Always use the Taskfile for running commands. Check available tasks by:
-
-      1. First checking your memory for task names
-      2. If needed, read the Taskfile.yaml to see all available commands
-      3. Use `task --list` to see available commands with descriptions
-
-  - name: "Comment Preservation (~keep)"
-    priority: 95
-    content: |
-      ### ~keep Convention
-      
-      Comments marked with `~keep` are important documentation that should be preserved during:
-      - Code refactoring
-      - Automated updates
-      - AI-assisted modifications
-      - Linting or formatting
-      
-      Examples:
-      ```python
-      # ~keep This calculation must happen before validation due to race condition
-      result = calculate_important_value()
-      ```
-      
-      ```yaml
-      # ~keep Max instances limited by us-central1 CPU quota: 50 instances × 4 CPUs = 200 CPUs
-      maxInstances: 50
-      ```
-      
-      When you see a `~keep` comment, treat it as critical documentation that explains non-obvious constraints or decisions.
-
-  - name: "Stack"
-    priority: 90
-    content: |
-      - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
-      - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
-      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants)
-      - **Cloud Functions**: app_hosting_alerts, budget_alerts, user_cleanup (monitoring/alerting)
-      - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
-      - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
-      - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
-      - **Linting**: Biome (formatting/style), ESLint (TS/React), MyPy (Python types), Ruff (Python), Codespell
-
-  - name: "Core Rules"
-    priority: 85
-    content: |
-      - NO inline comments/docstrings
-      - Type all Python args/returns (3.13+ syntax)
-      - Use `uv run`, `tofu`, SCREAMING_SNAKE_CASE constants
-      - Use `??` not `||`, extract magic numbers
-      - 100% test coverage, real PostgreSQL
-      - Use `pnpm`
-      - Use `task`
-      - Run linters after code changes: `task lint:frontend` for JS/TS, `task lint:python` for Python
-
-  - name: "Commands"
-    priority: 80
-    content: |
-      Always use the Taskfile for commands. Common tasks:
-
-      ```bash
-      # Development workflow
-      task setup              # Install dependencies and git hooks (lefthook)
-      task dev                # Start full dev environment (checks deps, migrates DB, inits emulators)
-      task dev:stop           # Stop all services
-      task test               # Run all tests
-      task lint               # Run all linters (equivalent to task lint:all)
-
-      # Linting commands (organized by scope)
-      task lint:all           # Run all linters on all files
-      task lint:frontend      # Run frontend linters (Biome, ESLint, and TypeScript)
-      task lint:python        # Run Python linters (Ruff and MyPy)
-
-      # Specific linters (use these during development)
-      task lint:biome         # Format and lint JS/TS/JSON/CSS with Biome
-      task lint:eslint        # Lint JavaScript/TypeScript with ESLint
-      task lint:typescript    # Type check TypeScript code
-      task lint:ruff          # Lint and format Python code with Ruff
-      task lint:mypy          # Type check Python code with MyPy
-      task lint:codespell     # Check for common misspellings across all files
-
-      # Terraform linters (specialized - not included in lint:all)
-      task lint:terraform     # Run all Terraform linters (validate, tflint, trivy)
-      task lint:terraform:validate  # Validate Terraform configuration
-      task lint:terraform:fmt       # Format Terraform code
-      task lint:terraform:tflint    # Lint Terraform code with tflint
-      task lint:terraform:trivy     # Security scan Terraform code
-
-      # Database
-      task db:migrate         # Run migrations (local)
-      task db:drop            # Drop and recreate DB (WARNING: destroys data)
-      task db:reset           # Drop DB and re-run migrations
-      task db:up              # Start PostgreSQL database container if not running
-      task db:down            # Stop and remove database container
-      task db:create-migration # Generate new database migration from schema changes
-      task db:seed            # Populate database with initial seed data
-
-      # Remote Database (Cloud SQL)
-      task db:proxy:start     # Start Cloud SQL Proxy
-      task db:proxy:stop      # Stop Cloud SQL Proxy
-      task db:proxy:status    # Check proxy status
-      task db:proxy:restart   # Restart Cloud SQL Proxy
-      task db:migrate:remote  # Run migrations on Cloud SQL (auto-starts proxy)
-
-      # Testing variations
-      task test:serial        # Run all tests in serial mode (no parallelization)
-      task test:ci            # Run tests in CI mode (serial execution)
-      task test:e2e           # Run all end-to-end tests
-
-      # Cloud Functions
-      task cloud-functions:generate-requirements # Generate requirements.txt from pyproject.toml
-      task cloud-functions:sync                  # Sync dependencies for cloud functions
-      task cloud-functions:test                  # Run tests for cloud functions
-
-      # GitHub Actions deployment
-      task gh:deploy:backend  # Deploy backend service via GitHub Actions
-      task gh:deploy:crawler  # Deploy crawler service via GitHub Actions
-      task gh:deploy:indexer  # Deploy indexer service via GitHub Actions
-      task gh:deploy:rag      # Deploy RAG service via GitHub Actions
-      task gh:deploy:scraper  # Deploy scraper service via GitHub Actions
-
-      # Emulators
-      task emulator:pubsub:up # Start Pub/Sub emulator for local development
-      task emulator:gcs:up    # Start GCS emulator for local development
-
-      # Service-specific E2E testing (granular)
-      task service:indexer:test:e2e:smoke    # Indexer smoke tests (< 1 min)
-      task service:indexer:test:e2e:quality  # Indexer quality assessment (2-5 min)
-      task service:indexer:test:e2e:full     # Complete indexer E2E suite (10+ min)
-      task service:indexer:test:e2e:semantic # Indexer semantic evaluation tests
-      task service:indexer:test:e2e:ai       # Indexer AI-powered evaluation tests
-
-      task service:rag:test:e2e:smoke        # RAG smoke tests (< 1 min)
-      task service:rag:test:e2e:quality      # RAG quality assessment (2-5 min)
-      task service:rag:test:e2e:full         # Complete RAG E2E suite (10+ min)
-      task service:rag:test:e2e:semantic     # RAG semantic evaluation tests
-      task service:rag:test:e2e:ai           # RAG AI evaluation tests
-      task service:rag:test:serial           # RAG tests in serial mode
-
-      # Other
-      task generate:api-types # Generate TypeScript types from backend
-      task generate:ai-rules  # Generate AI assistant configuration files
-      task --list             # Show all available tasks
-      ```
-
-      IMPORTANT: Always check the Taskfile.yaml for the most up-to-date commands and their exact implementations.
-
-  - name: "Testing"
-    priority: 75
-    content: |
-      ### Test Organization and Markers
-
-      The project uses pytest markers to organize tests by duration and purpose across multiple services (indexer, crawler, rag):
-
-      ```bash
-      # Quick unit tests (default - no marker needed)
-      pytest services/indexer/tests/          # Runs unit tests only (~8s)
-
-      # Smoke tests - Essential functionality checks (< 1 min)
-      E2E_TESTS=1 pytest -m "smoke"          # Quick e2e validation
-
-      # Quality assessment tests (2-5 min)
-      E2E_TESTS=1 pytest -m "quality_assessment"  # Moderate quality checks
-
-      # Full e2e test suite (10+ min)
-      E2E_TESTS=1 pytest -m "e2e_full"       # Complete integration testing
-
-      # Specialized evaluation tests
-      E2E_TESTS=1 pytest -m "semantic_evaluation"  # Semantic similarity tests
-      E2E_TESTS=1 pytest -m "ai_eval"        # AI-powered evaluation tests
-
-      # All slow tests
-      E2E_TESTS=1 pytest -m "slow"           # Any time-intensive tests
-      ```
-
-      ### Test Categories
-
-      **Unit Tests** (no markers):
-      - Fast, mocked tests
-      - Run by default in CI
-      - Cover core logic and error paths
-      - ~8-10 seconds total runtime per service
-
-      **E2E Tests** (require `E2E_TESTS=1`):
-      - Test real functionality with actual files/URLs
-      - Use pytest markers for duration control
-      - Include quality validation and semantic checks
-      - Support for indexer (file processing) and crawler (web content) pipelines
-      - Range from 1 min (smoke) to 10+ min (full)
-
-      ### Running Tests
-
-      **IMPORTANT**: Always run tests from the repository root with PYTHONPATH set:
-
-      ```bash
-      # Development workflow
-      task test                                    # Run all unit tests
-      E2E_TESTS=1 task test                       # Run all tests including e2e
-
-      # Running tests manually (always from root directory)
-      PYTHONPATH=. uv run pytest services/indexer/tests/             # Just indexer unit tests
-      PYTHONPATH=. uv run pytest services/crawler/tests/             # Just crawler unit tests
-      PYTHONPATH=. uv run pytest services/rag/tests/                 # Just RAG unit tests
-      PYTHONPATH=. uv run pytest services/scraper/tests/             # Just scraper unit tests
-
-      # Running specific test files or tests
-      PYTHONPATH=. uv run pytest services/rag/tests/e2e/retrieval_test.py::test_document_retrieval
-
-      # With E2E tests enabled
-      PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/e2e/ -m "smoke"
-
-      # Running with specific markers
-      PYTHONPATH=. E2E_TESTS=1 uv run pytest -m "quality_assessment" services/rag/tests/
-      E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
-      E2E_TESTS=1 pytest services/crawler/tests/ # Crawler unit + e2e tests
-      E2E_TESTS=1 pytest services/scraper/tests/ # Scraper unit + e2e tests
-
-      # CI-friendly patterns
-      pytest                                      # Fast unit tests only
-      E2E_TESTS=1 pytest -m "smoke"             # Essential e2e validation
-      E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)" # Skip expensive AI tests
-      ```
-
-      ### Timeout Configuration
-
-      - Default timeout: 120 seconds (set in `pyproject.toml`)
-      - Individual tests can override with `@pytest.mark.timeout(300)`
-      - E2E tests have longer timeouts based on complexity
-      - Smoke tests: 60-120s, Quality: 180-300s, Full: 600s+
-
-      ### Parallel Test Execution (pytest-xdist)
-
-      The project uses pytest-xdist for parallel test execution to improve CI performance:
-
-      **Configuration:**
-      - **Auto-enabled**: Tests run with `-n auto` by default (configured in `pyproject.toml`)
-      - **Worker limits**: Max 4 workers locally, 2 in CI (GitHub Actions)
-      - **Load balancing**: Uses `worksteal` distribution for optimal performance
-      - **Fail-fast**: Stops on first failure (`-x` flag) for faster feedback
-
-      **xdist Groups:**
-      Tests that conflict when run in parallel are automatically grouped using `@pytest.mark.xdist_group()`:
-
-      ```python
-      # Automatic grouping for database tests (configured in services/conftest.py)
-      # Tests using these fixtures are automatically grouped by service:
-      async def test_with_database(async_session_maker, project): ...
-      # -> Grouped as "db_rag", "db_indexer", etc.
-
-      # Manual grouping for tests that need specific isolation:
-      @pytest.mark.xdist_group("ai_completion")
-      async def test_llm_call(): ...
-
-      @pytest.mark.xdist_group("model_loading")
-      async def test_embedding_model(): ...
-      ```
-
-      **Automatic Database Grouping:**
-      - Tests using database fixtures are automatically grouped by service module
-      - Prevents Docker container conflicts between parallel workers
-      - Configured in `services/conftest.py` - modifies test items during collection
-
-      **Disabling xdist:**
-      - Local development: `pytest -n 0` or `PYTEST_XDIST_WORKERS=0`
-      - Single test debugging: Use `-n 0` to run sequentially
-
-      **Model Preloading:**
-      - SentenceTransformer and spaCy models are preloaded in session fixtures
-      - Prevents timeouts during parallel test execution
-      - Configured in `services/rag/tests/conftest.py`
-
-      ### Writing E2E Tests
-
-      **Unit Tests**: No markers needed - they run by default
-
-      **E2E Tests**: Use the `@e2e_test` decorator from `testing.e2e_utils`:
-
-      ```python
-      from testing.e2e_utils import E2ETestCategory, e2e_test
-
-      # Quick smoke test (< 1 min)
-      @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
-      async def test_basic_extraction(logger: logging.Logger) -> None:
-          ...
-
-      # Quality assessment (2-5 min)
-      @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
-      async def test_extraction_quality(logger: logging.Logger) -> None:
-          ...
-
-      # Full e2e test (10+ min)
-      @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=600)
-      async def test_comprehensive_pipeline(logger: logging.Logger) -> None:
-          ...
-
-      # Semantic evaluation
-      @e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION)
-      async def test_embedding_similarity(logger: logging.Logger) -> None:
-          ...
-
-      # AI-powered evaluation
-      @e2e_test(category=E2ETestCategory.AI_EVAL)
-      async def test_llm_quality_assessment(logger: logging.Logger) -> None:
-          ...
-      ```
-
-      The decorator handles:
-      - `E2E_TESTS` environment variable checking
-      - pytest markers (smoke, quality_assessment, etc.)
-      - timeout configuration
-      - performance tracking and result persistence
-
-      **Guidelines**:
-      - Always use functional pytest patterns (no class-based tests)
-      - Set appropriate timeouts based on test complexity
-      - Unit tests should complete in seconds, not need markers
-
-  - name: "Git Hooks (Lefthook)"
-    priority: 70
-    content: |
-      The project uses lefthook for git hooks. It's automatically installed during `task setup`.
-
-      - **pre-commit**: Runs linters on staged files and auto-fixes issues
-      - **commit-msg**: Validates commit messages follow conventional commits format
-
-      To manually install/update hooks: `uv run lefthook install`
-
-  - name: "Patterns"
-    priority: 65
-    content: |
-      ### Backend Endpoint
-
-      ```python
-      @post("/items", allowed_roles=[UserRoleEnum.MEMBER])
-      async def create_item(data: TypedDict, session_maker: async_sessionmaker[Any]) -> dict:
-          async with session_maker() as session, session.begin():
-              # operations
-              await session.commit()
-              return {"id": str(item.id)}
-      ```
-
-      ### Response Building Pattern
-
-      ```python
-      response: ItemResponse = {
-          "id": str(item.id),
-          "name": item.name,
-          "created_at": item.created_at.isoformat(),
-      }
-
-      # Add optional fields conditionally
-      if item.description:
-          response["description"] = item.description
-      ```
-
-      ### Frontend API
-
-      ```typescript
-      export async function createItem(data: API.CreateItem.RequestBody) {
-      	return withAuthRedirect(
-      		getClient()
-      			.post(`items`, {
-      				headers: await createAuthHeaders(),
-      				json: data,
-      			})
-      			.json<API.CreateItem.ResponseBody>(),
-      	);
-      }
-      ```
-
-  - name: "TypeScript Guidelines"
-    priority: 60
-    content: |
-      - Next.js App Router, TypeScript strict, Vitest
-      - Ky client with generated types from `@/types/api-types`
-      - Wrap API calls with `withAuthRedirect`
-      - Backend returns 400 for validation errors
-      - Use `getEnv()` for typed environment variables
-      - Use object or array destructuring wherever possible
-      - Prefer early returns and guard clauses
-      - Use `NotRequired` in TypedDict for optional fields
-
-      ### Important Conventions
-
-      - never use `any` as a type.
-      - search for types, including from 3rd party libraries, to determine the correct type to use.
-      - use nullish coalescing and optional chaining whenever required.
-      - use type-guards and type predicates (use "@tool-belt/type-predicates" package as required)
-      - use factories for testings (see: frontend/testing/factories.ts, which s aliased as "::testing/factories")
-
-  - name: "Python Guidelines"
-    priority: 55
-    content: |
-      - Litestar + msgspec serialization
-      - TypedDict: Use `NotRequired[type]` not `type | None`
-      - Check entity exists before updates
-      - Use `logger.exception()` not `logger.error(..., exc_info=True)`
-      - **Logging**: Use structlog with key=value pairs, not f-strings (e.g. `logger.info("Created job", job_id=str(job.id))`)
-      - Avoid `global` - use singleton classes
-      - Use `get_env()` with fallbacks
-      - Always use UUIDs as strings in responses (convert with `str()`)
-      - Use `.isoformat()` for datetime serialization
-      - Polymorphic SQLAlchemy models for flexible schemas
-      - **Database**: Handle unique constraint violations gracefully with existence checks
-
-  - name: "GitHub Workflows and Actions"
-    priority: 53
-    content: |
-      ### Workflow Architecture
-
-      The project uses an **Actions-first architecture** with reusable composite actions to reduce duplication and ensure consistency across all workflows.
-
-      ### Workflow Types and Naming Conventions
-
-      **Build Workflows** (`build-service-*.yaml`):
-      - `build-service-backend.yaml` - Builds and pushes backend Docker image
-      - `build-service-crawler.yaml` - Builds and pushes crawler Docker image
-      - `build-service-indexer.yaml` - Builds and pushes indexer Docker image
-      - `build-service-rag.yaml` - Builds and pushes RAG Docker image
-      - `build-service-scraper.yaml` - Builds and pushes scraper Docker image
-      - **Triggers**: Push to main/development branches, release events, manual dispatch
-      - **Auto-trigger**: When workflow files or actions change
-
-      **CI Workflows** (`ci-*.yaml`):
-      - `ci-service-*.yaml` - Run tests and linting for each service
-      - `ci-package-*.yaml` - Run tests for shared packages
-      - `ci-frontend.yaml` - Frontend testing and linting
-      - `ci-terraform.yaml` - Terraform validation and security scanning
-      - `ci-cloud-functions.yaml` - Cloud Functions testing
-
-      **Deployment Workflows**:
-      - `deploy-services.yaml` - **Unified deployment** for all services to Cloud Run
-      - **Triggers**: After successful build workflows, manual dispatch
-      - **Strategy**: Matrix deployment for parallel service deployments
-
-      **E2E Workflows** (`e2e-service-*.yaml`):
-      - Long-running integration tests for each service
-      - **Triggers**: Manual dispatch, scheduled runs
-
-      **Other Workflows**:
-      - `pr-title.yaml` - Validates PR titles follow conventional commits
-      - `validate.yaml` - General validation workflows
-      - `scheduled-smoke-tests.yaml` - Automated health checks
-
-      ### Reusable Actions
-
-      **Setup Actions**:
-      - `.github/actions/setup-gcp/` - Standardized GCP authentication and Cloud SDK setup
-      - `.github/actions/setup-task/` - Task runner installation and configuration
-
-      **Build and Deploy Actions**:
-      - `.github/actions/build-service/` - Docker build and push for services
-      - `.github/actions/deploy-cloud-run/` - Cloud Run deployment with health checks
-
-      ### CI/CD Pipeline Flow
-
-      1. **Code Push** → Triggers build workflows for affected services
-      2. **Build Success** → Triggers `deploy-services.yaml` workflow
-      3. **Deployment** → Matrix deployment to Cloud Run services
-      4. **Notifications** → Discord notifications on success/failure
-
-      ### Key Features
-
-      **Image Tagging Strategy**:
-      - **Development branch**: `staging-{commit-sha}`, `staging-latest`
-      - **Main branch**: `{commit-sha}`, `latest`
-      - **Releases**: `{release-tag}`
-
-      **Zero-Downtime Deployments**:
-      - Deploy with `--no-traffic` flag first
-      - Health checks on new revision
-      - Gradual traffic migration
-      - Automatic rollback on failures
-
-      **Manual Triggers**:
-      - All workflows support `workflow_dispatch` for manual testing
-      - Deployment workflow allows environment and service selection
-
-      **Self-Triggering**:
-      - Workflows run when their own files change
-      - Actions trigger workflows when modified
-      - Ensures CI/CD pipeline stays current
-
-      ### Workflow Variables and Secrets
-
-      **GitHub Variables**:
-      - `WIF_PROVIDER` - Workload Identity Federation provider
-      - `WIF_SERVICE_ACCOUNT` - Service account for GCP authentication
-
-      **GitHub Secrets**:
-      - `DISCORD_WEBHOOK_URL` - Discord notifications webhook
-
-      **Environment Variables**:
-      - `PROJECT_ID` - GCP project (grantflow for staging, grantflow-prod for production)
-      - `REGION` - us-central1 (Cloud Run region)
-      - `GAR_LOCATION` - us-east1 (Artifact Registry location)
-
-      ### Best Practices
-
-      1. **Use Actions**: Prefer composite actions over inline scripts
-      2. **Naming Convention**: Follow `{category}-{entity}.yaml` pattern
-      3. **Matrix Builds**: Use matrix strategy for parallel deployments
-      4. **Health Checks**: Always verify deployments before traffic migration
-      5. **Fail-Fast**: Set `fail-fast: false` for independent deployments
-      6. **Manual Testing**: Include `workflow_dispatch` triggers for all workflows
-
-  - name: "GitOps and Deployment"
-    priority: 52
-    content: |
-      ### Branch Strategy
-
-      - **development**: Staging environment (auto-deploys)
-      - **main**: Production environment (when ready)
-      - All CI/CD workflows run on both branches
-
-      ### Frontend Deployment Environments
-
-      - **Staging**:
-        - URL: `https://staging--grantflow-staging.us-central1.hosted.app`
-        - Project: `grantflow-staging`
-        - Branch: `development`
-        - Config: `apphosting.staging.yaml`
-        - Mock API/Auth enabled by default
-      - **Production**:
-        - URL: `https://grantflow.ai`
-        - Project: `grantflow`
-        - Branch: `main`
-        - Config: `apphosting.production.yaml`
-        - Mock features disabled
-
-      ### Firebase App Hosting Configuration
-
-      - Environment-specific configs: `apphosting.{environment}.yaml`
-      - Set environment name in Firebase Console (Settings → Environment)
-      - Secrets use environment suffixes (e.g., `NEXT_PUBLIC_SITE_URL_STAGING`)
-      - Deploy with: `firebase deploy --project {project}`
-
-      ### Docker Image Tagging
-
-      - **Development branch**: `staging-{sha}`, `staging-latest`
-      - **Main branch**: `{sha}`, `latest`
-      - **Releases**: `{release-tag}`
-
-      ### Deployment Architecture
-
-      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag, scraper)
-      - **Frontend**: Firebase App Hosting (branch-based deployments)
-      - **Database**: Cloud SQL PostgreSQL
-      - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)
-
-      ### Terraform Management
-
-      - Currently single environment (staging)
-      - Use `tofu` instead of `terraform` command
-      - Environment variable in `variables.tf` set to "staging"
-      - Services pull from `staging-latest` Docker tags
-      - Infrastructure as Code for all GCP resources
-
-      ### Cloud SQL Remote Access
-
-      - Use Cloud SQL Proxy for local connections
-      - Connection string conversion: Unix socket → TCP (127.0.0.1:5432)
-      - Always drop ENUMs and tables when resetting database
-      - Use `task db:migrate:remote` for remote migrations
-
-  - name: "Key Learnings"
-    priority: 50
-    content: |
-      ### Wizard Patterns
-
-      Create draft entities early for file uploads. Applications start as "Untitled Application", debounced title updates (500ms), validate title + documents before proceeding. **For detailed wizard implementation, see [WIZARD_FEATURE.md](./WIZARD_FEATURE.md)**.
-
-      ### Pub/Sub Handling
-
-      Handle duplicates gracefully in consumers. Check existence before insert, use `ON CONFLICT DO NOTHING`, return 200 for processed messages.
-
-      **Topics**: `url-crawling`, `frontend-notifications`, `file-indexing`, `rag-processing`
-
-      ### State Management Patterns
-
-      - Use Zustand for complex multi-step flows
-      - Separate UI state from domain state
-      - Create focused actions for specific operations
-      - Use polling sparingly with proper cleanup
-
-      ### WebSocket Integration
-
-      Extract to custom hooks, use `react-use-websocket`, convert HTTP→WS URLs, handle null IDs gracefully. Endpoint: `/projects/{id}/applications/{id}/notifications`
-
-      ### Environment Variables
-
-      - **Frontend**: `getEnv()` throws if missing required vars
-      - **Backend**: `get_env()` with fallback values
-      - **Build-time**: `process.env.NODE_ENV` in Next.js
-      - **Services**: Need both `GOOGLE_CLOUD_PROJECT` and `GCP_PROJECT_ID`
-      - **Bucket names**: Use environment-specific names (e.g., `grantflow-staging-uploads`)
-
-  - name: "Monitoring and Observability"
-    priority: 48
-    content: |
-      ### OpenTelemetry Integration
-
-      The project uses OpenTelemetry for distributed tracing and monitoring across all services:
-
-      - **Trace ID System**: Uses `trace_id` (renamed from correlation_id) for request correlation
-      - **Structured Logging**: All logs include trace_id and span_id automatically via structlog
-      - **Distributed Tracing**: Full request traces from frontend → backend → services
-      - **Custom Metrics**: Business and infrastructure metrics using OpenTelemetry meters
-
-      ### Implementation
-
-      **Services Configuration**:
-      ```python
-      # All services call this on startup
-      from packages.shared_utils.src.otel import configure_otel
-      configure_otel("service-name")
-      ```
-
-      **Span Creation**:
-      ```python
-      from packages.shared_utils.src.tracing import start_span_with_trace_id
-
-      with start_span_with_trace_id("operation_name", trace_id=trace_id) as span:
-          span.set_attribute("key", "value")
-          # operation logic
-      ```
-
-      **Pub/Sub Tracing**:
-      - All Pub/Sub messages include trace context propagation
-      - Uses OpenTelemetry TraceContextTextMapPropagator
-      - Child spans automatically continue parent traces
-
-      ### Discord Alerting
-
-      **Alert Policies** (Terraform-managed):
-      - Service completely down (zero 2xx responses for 5+ minutes)
-      - Database disconnected (no connections for 3+ minutes)
-      - Scraper not running (no activity for 48+ hours)
-      - Pub/Sub dead (high undelivered messages for 20+ minutes)
-      - High error rate (>50% errors for 10+ minutes)
-
-      **Discord Webhook**: Set via `DISCORD_WEBHOOK_URL` environment variable in all services
-
-      ### Environment Variables
-
-      ```bash
-      # OpenTelemetry configuration
-      GOOGLE_CLOUD_PROJECT=grantflow
-      ENABLE_CLOUD_TRACE=1  # Optional: enable Cloud Trace export in development
-      DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...  # For monitoring alerts
-      ```
-
-      ### Key Files
-
-      - `packages/shared_utils/src/otel.py` - OpenTelemetry configuration
-      - `packages/shared_utils/src/tracing.py` - Span utilities and trace_id integration
-      - `packages/shared_utils/src/logger.py` - Enhanced with OTEL context
-      - `packages/shared_utils/src/metrics.py` - Custom business metrics
-      - `terraform/modules/monitoring/` - Alert policies and notification channels
-
-  - name: "Security"
-    priority: 45
-    content: |
-      Firebase auth + JWT, environment variables for secrets, never commit credentials.
-
-  - name: "Testing Conventions"
-    priority: 40
-    content: |
-      ### Test File Naming Conventions
-
-      - **Python**: Test files must end with `_test.py` (e.g., `user_service_test.py`, `auth_test.py`)
-        - NOT `test_user_service.py` - this format is not allowed
-      - **TypeScript**: Test files must use `.spec.ts` or `.spec.tsx` (e.g., `Button.spec.tsx`, `auth.spec.ts`)
-        - NOT `.test.ts` or `.test.tsx` - only `.spec` extension is allowed
-
-      ### Frontend Testing
-
-      - Use Vitest with React Testing Library
-      - **NO mocking stores** - use real Zustand stores with setState
-      - Mock server actions and API calls, not state management
-      - Always use factories from `::testing/factories` (alias for `frontend/testing/factories`)
-      - Place shared utils and fixtures in the testing module
-      - Use `vi.fn()` for mocking functions you need to spy on
-      - Test behavior and user interactions, not implementation details
-
-      ### Frontend Vitest Performance Configuration
-
-      Optimized for maximum performance and concurrency:
-
-      **Configuration**:
-      ```typescript
-      // vitest.config.mts
-      cacheDir: "node_modules/.vite",
-      test: {
-        isolate: false,           // Disable isolation for speed (no database needed)
-        pool: "threads",          // Use thread pool for parallelization
-        poolOptions: {
-          threads: {
-            maxThreads: 8,        // Maximum concurrent threads
-            minThreads: 2,        // Minimum threads maintained
-            singleThread: false,  // Enable multi-threading
-          },
-        },
-        sequence: {
-          concurrent: true,       // Enable concurrent test execution
-          shuffle: false,         // Deterministic test order
-        },
-      }
-      ```
-
-      **Benefits**:
-      - Thread-based parallelization (up to 8 concurrent threads)
-      - Disabled test isolation for faster execution
-      - Efficient caching with Vite cache directory
-      - Concurrent test execution within suites
-      - Optimized for frontend tests that don't need database isolation
-
-      ### Backend Testing
-
-      - pytest async, focus on API behavior
-      - Use real PostgreSQL for all tests (local PostgreSQL, not Docker)
-      - Database isolation: Tests create unique databases per worker (`grantflow_test_{worker_id}_{process_id}`)
-      - Fast cleanup: Uses TRUNCATE instead of DROP/CREATE for better performance
-      - Mock external services, not internal components
-      - Verify WebSocket integration with proper test clients
-
-      ### Database Test Setup
-
-      The project uses local PostgreSQL instead of Docker containers for better performance and isolation:
-
-      **Setup Requirements**:
-      - PostgreSQL 17 with pgvector extension installed locally
-      - Each test worker gets its own isolated database
-      - Automatic cleanup with connection termination before database drop
-
-      **Configuration**:
-      ```python
-      # Database plugin creates unique databases per worker
-      DATABASE_URL = f"postgresql://username:password@localhost:5432/grantflow_test_{worker_id}_{process_id}"
-      ```
-
-      **Benefits**:
-      - No Docker container overhead
-      - Better parallelization (each worker has dedicated database)
-      - Faster test execution with TRUNCATE-based cleanup
-      - Consistent with CI environment (PostgreSQL 17 + pgvector)
-
-      ### E2E Testing
-
-      - **Framework**: Playwright for browser automation
-      - **Mock Environment**: Use mock API/auth for predictable testing
-      - **Selectors**: Use `data-testid` attributes exclusively
-      - **Focus**: API interactions and happy paths
-      - **Configuration**: 
-        - `playwright.config.ts` - main configuration
-        - `playwright.mock.config.ts` - mock environment configuration
-      
-      **Key Practices**:
-      ```typescript
-      // Always use data-testid selectors
-      await page.locator('[data-testid="dashboard-header"]').click();
-      
-      // NOT role or text selectors for key elements
-      await page.getByRole('button', { name: 'Submit' }); // Avoid
-      ```
-      
-      **Running E2E Tests**:
-      ```bash
-      task frontend:test:e2e        # Run e2e tests
-      task frontend:test:e2e:mock   # Run with mock API
-      task frontend:test:e2e:ui     # Run with Playwright UI
-      ```
-      
-      **Test Organization**:
-      - `frontend/tests/e2e/` - E2E test files
-      - Focus on user journeys and critical paths
-      - Mock API responses for predictability
-      - Test happy paths first, edge cases second
-
-  - name: "Common Pitfalls and Solutions"
-    priority: 37
-    content: |
-      ### YAML Syntax in Taskfile
-
-      - Colons in echo statements need quotes: `- 'echo "Key: value"'`
-      - Multi-line shell scripts use pipe: `|` after the command
-      - Environment variables with `sh:` need proper YAML formatting
-
-      ### Cloud SQL Connection Strings
-
-      - Cloud Run uses Unix socket: `/cloudsql/project:region:instance`
-      - Local development needs TCP: `127.0.0.1:5432`
-      - Always strip socket path and replace with TCP for local connections
-
-      ### Terraform State Issues
-
-      - Authentication errors: Run `gcloud auth application-default login`
-      - State lock issues: Check if another process is running
-      - Use `tofu` command, not `terraform`
-
-      ### Docker Build Failures
-
-      - Frontend needs build args for environment variables
-      - Use multi-stage builds to minimize image size
-      - Always use `lifecycle.ignore_changes` for image tags in Terraform
-
-      ### Database Migration Issues
-
-      - Drop ENUMs before dropping tables: `DROP TYPE IF EXISTS typename CASCADE`
-      - Check for existing alembic_version table
-      - Use `CASCADE` when dropping tables with foreign keys
-
-  - name: "User @naaman Instructions"
-    priority: 36
-    content: |
-      ### Special Instructions for User @naaman
-
-      User @naaman is the primary developer and decision maker for this project. When working with @naaman:
-
-      1. **Communication Style**:
-         - Be direct and to the point - avoid excessive preamble
-         - Use informal, conversational tone when appropriate
-         - It's okay to use humor and personality (including the occasional "dude" or "my dude")
-         - When explaining complex topics, break them down in digestible chunks
-
-      2. **Technical Preferences**:
-         - @naaman prefers pragmatic solutions over perfect ones
-         - Values clear, working code over theoretical discussions
-         - Appreciates when you proactively run linters and tests
-         - Likes comprehensive but concise summaries at the end of tasks
-
-      3. **Workflow Patterns**:
-         - Often works in long sessions with multiple related tasks
-         - May ask for explanations "as if very stoned" - provide simplified, metaphorical explanations
-         - Values seeing the big picture and understanding what's left to do
-         - Appreciates when you track progress and remind about pending tasks
-
-      4. **Decision Making**:
-         - Has final say on architectural decisions
-         - May choose to "ponder and return" on complex decisions
-         - Trust their judgment when they override standard patterns
-         - They know the business context better than documented
-
-  - name: "Important Instruction Reminders"
-    priority: 35
-    content: |
-      Do what has been asked; nothing more, nothing less.
-      NEVER create files unless they're absolutely necessary for achieving your goal.
-      ALWAYS prefer editing an existing file to creating a new one.
-      NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
-
-  - name: "Linting and Code Quality"
-    priority: 30
-    content: |
-      ### Biome Configuration
-
-      Biome is the primary formatter and linter for JS/TS/JSON/CSS:
-
-      - Configuration: `biome.json` in frontend directory
-      - Integrates with ESLint via `eslint-config-biome`
-      - Handles formatting, import sorting, and many style rules
-      - Run with: `task lint:biome` or from frontend directory: `pnpm biome check --write .`
-
-      ### Common Linting Patterns
-
-      1. **Cognitive Complexity**: Extract helper functions and components to reduce complexity
-
-          - Extract repeated logic into named functions
-          - Use early returns to reduce nesting
-          - Break complex components into smaller ones
-
-      2. **Type Safety**: Always provide proper types for function parameters
-
-          - Import types explicitly when needed
-          - Use type guards from `@tool-belt/type-predicates`
-          - Avoid `any` - find the correct type from libraries or create interfaces
-
-      3. **Accessibility**: Follow ARIA guidelines
-
-          - Remove unnecessary `aria-label` on semantic elements (like `<footer>`)
-          - Use semantic HTML elements when possible (`<button>` instead of `<div role="button">`)
-          - Interactive elements must be keyboard accessible
-
-      4. **React Best Practices**:
-          - Always add `type="button"` to non-submit buttons
-          - Use proper event handlers for keyboard accessibility
-          - Extract complex logic into custom hooks
-
-      ### Linting Workflow
-
-      1. After code changes, run: `task lint`
-      2. Fix any errors shown by Biome first
-      3. Then fix ESLint errors (usually type-related)
-      4. For Python: `task lint:python` runs mypy, ruff, and codespell
-      5. Commit with conventional commit messages
-
-      ### Common Fixes
-
-      - **Button type warnings**: Add `type="button"` to all non-form buttons
-      - **Excessive complexity**: Extract functions, use early returns, create helper components
-      - **Type safety**: Import and use proper types, avoid `any`
-      - **ARIA issues**: Use semantic HTML, remove redundant attributes
-      - **Static element interactions**: Add proper roles and keyboard handlers
+    - content: |
+        Efficient developer following structured process: implement → typecheck → lint → test (use factories)
+
+        **ALWAYS use Taskfile**: `task --list` for commands, check Taskfile.yaml if needed
+      name: System Prompt
+      priority: critical
+    - content: "**\U0001F4CC CLAUDE ASSISTANTS ONLY - This section applies ONLY to Claude AI**\n\n**ALWAYS use specialized agents via Task tool for domain-specific work:**\n\n**When to delegate to agents:**\n- **code-reviewer**: After ANY implementation, before committing code\n- **typescript-engineer**: React components, Next.js routes, Zustand stores, frontend tests\n- **python-engineer**: API endpoints, async handlers, service implementations\n- **database-engineer**: Migrations, complex queries, schema design, indexing\n- **devsecops-agent**: CI/CD changes, Docker configs, security reviews, infrastructure\n- **test-engineer**: Test strategy, coverage gaps, test implementation\n- **performance-optimizer**: Slow queries, bundle size issues, memory leaks\n- **system-architect**: New features, architecture decisions, service boundaries\n\n**Examples:**\n```\nUser: \"Add a new API endpoint for user profile\"\n→ Use python-engineer for implementation\n→ Use database-engineer if schema changes needed\n→ Use test-engineer for test coverage\n→ Use code-reviewer to validate before completion\n\nUser: \"Fix the slow dashboard loading\"\n→ Use performance-optimizer to analyze\n→ Use database-engineer for query optimization\n→ Use typescript-engineer for React optimization\n\nUser: \"Deploy the new service to staging\"\n→ Use devsecops-agent for CI/CD and deployment\n```\n\n**Agent invocation pattern:**\n1. Identify the domain from user request\n2. Delegate to appropriate specialist agent(s)\n3. Always finish with code-reviewer agent\n4. Run `task lint:all` and `task test` after changes\n\n**Note for other AI assistants:** This section uses Claude's Task tool with specialized agents. Other assistants should focus on the domain expertise described but won't have access to these specific agent files.\n"
+      name: Claude Agent Delegation
+      priority: critical
+      targets:
+        - CLAUDE.md
+        - .claude/**/*.md
+    - content: |
+        **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
+        **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
+        **Services**: backend, indexer, crawler, rag, scraper, crdt (Hocuspocus CRDT)
+        **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
+        **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
+        **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip
+      name: Stack
+      priority: critical
+    - content: |
+        - NO inline comments/docstrings
+        - Type all Python args/returns
+        - Use `??` not `||`, extract magic numbers
+        - 100% test coverage, real PostgreSQL
+        - Run linters after changes
+      name: Core Rules
+      priority: high
+    - content: |
+        ```bash
+        # Core workflow
+        task setup dev test lint format build
+
+        # Linting
+        task lint:all lint:frontend lint:python lint:terraform
+
+        # Database
+        task db:migrate db:reset db:migrate:remote
+
+        # Testing
+        task test:e2e test:serial
+        E2E_TESTS=1 pytest -m "smoke|quality_assessment|e2e_full"
+
+        # Services
+        task service:{indexer|rag}:test:e2e:{smoke|quality|full}
+
+        # Deployment
+        task gh:deploy:{backend|crawler|indexer|rag|scraper}
+        ```
+      name: Key Commands
+      priority: high
+    - content: |
+        **File naming**: Python `*_test.py`, TypeScript `*.spec.ts(x)`
+
+        **Python**: pytest async, real PostgreSQL, PYTHONPATH=. required
+        **Frontend**: Vitest + RTL, real Zustand stores, mock APIs only
+        **E2E**: Playwright with data-testid, mock environment
+
+        **Markers**: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min)
+        **Parallel**: pytest-xdist auto-enabled, use `-n 0` to disable
+
+        ```python
+        @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+        async def test_basic(logger: logging.Logger) -> None: ...
+        ```
+      name: Testing
+      priority: high
+    - content: "**Backend**:\n```python\n@post(\"/organizations/{organization_id:uuid}/items\", \n      allowed_roles=[UserRoleEnum.COLLABORATOR])\nasync def create_item(organization_id: UUID, data: TypedDict, \n                    session_maker: async_sessionmaker[Any]) -> dict:\n    async with session_maker() as session, session.begin():\n        # Middleware validated access - just business logic\n        item = await session.scalar(\n            insert(Item).values(**data, organization_id=organization_id).returning(Item)\n        )\n        return {\"id\": str(item.id)}\n```\n\n**Frontend**:\n```typescript\nexport async function createItem(organizationId: string, data: API.CreateItem.RequestBody) {\n    return withAuthRedirect(\n        getClient().post(`organizations/${organizationId}/items`, {\n            headers: await createAuthHeaders(),\n            json: data,\n        }).json<API.CreateItem.ResponseBody>(),\n    );\n}\n```\n"
+      name: Patterns
+      priority: medium
+    - content: |
+        - Never use `any`, use type guards from `@tool-belt/type-predicates`
+        - Use `??` and `?.`, early returns, destructuring
+        - Wrap API calls with `withAuthRedirect`
+        - Use factories from `::testing/factories`
+      name: TypeScript Guidelines
+      priority: medium
+    - content: |
+        - TypedDict with `NotRequired[type]`, not `type | None`
+        - structlog with key=value: `logger.info("Created", id=str(id))`
+        - UUIDs as strings, datetime as `.isoformat()`
+        - Handle unique constraints gracefully
+      name: Python Guidelines
+      priority: medium
+    - content: |
+        **Workflows**: `build-service-*.yaml`, `ci-*.yaml`, `deploy-services.yaml`
+        **Actions**: Reusable composites in `.github/actions/`
+        **Branches**: development→staging, main→production
+        **Tags**: staging-{sha}, staging-latest, {sha}, latest
+      name: CI/CD
+      priority: medium
+    - content: |
+        **Firebase App Hosting**: Terraform-managed, NOT apphosting.yaml
+        **Cloud Run**: All backend services
+        **Database**: Cloud SQL with proxy for local
+        **Storage**: Environment-specific buckets (grantflow-staging-uploads)
+      name: Deployment
+      priority: low
+    - content: |
+        - Create draft entities early for uploads
+        - Handle Pub/Sub duplicates with `ON CONFLICT DO NOTHING`
+        - WebSocket endpoint: `/projects/{id}/applications/{id}/notifications`
+        - Environment vars: Frontend `getEnv()` throws, Backend `get_env()` with fallback
+        - Topics: url-crawling, frontend-notifications, file-indexing, rag-processing
+        - CRDT Server: Hocuspocus extensions pattern, health checks at `/health` + `/ready`
+      name: Key Learnings
+      priority: low
+    - content: |
+        **OpenTelemetry**: trace_id correlation, structlog integration
+        ```python
+        configure_otel("service-name")
+        with start_span_with_trace_id("op", trace_id=trace_id) as span: ...
+        ```
+        **Alerts**: Service down, DB disconnected, high errors → Discord webhook
+      name: Monitoring
+      priority: low
+    - content: |
+        **Firebase Auth** + JWT with organization_id/role claims
+        **URL pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
+        **Roles**: OWNER > ADMIN > COLLABORATOR
+        **Middleware handles all auth** - never check manually in endpoints
+      name: Auth
+      priority: minimal
+    - content: |
+        - YAML colons need quotes: `- 'echo "Key: value"'`
+        - Cloud SQL: Unix socket→TCP for local (127.0.0.1:5432)
+        - Drop ENUMs before tables: `DROP TYPE IF EXISTS name CASCADE`
+        - Frontend Docker needs build args for env vars
+      name: Common Issues
+      priority: minimal
+    - content: |
+        **Biome**: Primary JS/TS formatter/linter
+        **Workflow**: `task lint` → fix Biome → fix ESLint → fix Python
+        **Common fixes**: Extract complex functions, add button types, remove `any`
+      name: Linting
+      priority: minimal
+    - content: |-
+        - Do only what's asked, nothing more
+        - NEVER create files unless necessary
+        - NEVER create docs/README unless requested
+        - Preserve `~keep` comments during refactoring
+      name: Important Reminders
+      priority: minimal

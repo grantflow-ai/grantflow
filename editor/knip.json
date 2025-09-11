@@ -1,0 +1,6 @@
+{
+	"$schema": "https://unpkg.com/knip/dist/schema.json",
+	"entry": ["src/index.ts"],
+	"ignore": ["dist/**", "build/**", "coverage/**", "storybook-static/**", "eslint.config.*"],
+	"ignoreBinaries": ["only-allow", "biome", "cross-env", "storybook", "eslint", "playwright", "vitest", "tsc", "vite"]
+}

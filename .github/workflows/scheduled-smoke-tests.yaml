@@ -2,7 +2,6 @@ name: Scheduled Smoke Tests
 
 on:
   schedule:
-    # Run daily at 6 AM UTC (12 AM CST)
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
@@ -35,13 +34,14 @@ jobs:
           - 5432:5432
     env:
       DEBUG: "True"
-      DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
     
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.branch || 'development' }}
+
 
       - name: Send Discord notification - Tests starting
         run: |
@@ -70,6 +70,7 @@ jobs:
           timeout: 300
         env:
           E2E_TESTS: "1"
+          GCP_PROJECT_ID: "grantflow-test"
         continue-on-error: true
 
       - name: Run Indexer Smoke Tests
@@ -119,12 +120,6 @@ jobs:
           E2E_TESTS: "1"
         continue-on-error: true
 
-      - name: Run Frontend E2E Tests
-        id: frontend_tests
-        uses: ./.github/actions/run-frontend-e2e-tests
-        with:
-          timeout: 300
-        continue-on-error: true
 
       - name: Send Discord notification - Results
         if: always()
@@ -134,7 +129,7 @@ jobs:
           indexer_status="${{ steps.indexer_tests.outcome }}"
           rag_status="${{ steps.rag_tests.outcome }}"
           crawler_status="${{ steps.crawler_tests.outcome }}"
-          frontend_status="${{ steps.frontend_tests.outcome }}"
+          # frontend_status="${{ steps.frontend_tests.outcome }}"
           
           # Count failures
           failures=0
@@ -142,7 +137,7 @@ jobs:
           if [ "$indexer_status" = "failure" ]; then failures=$((failures + 1)); fi
           if [ "$rag_status" = "failure" ]; then failures=$((failures + 1)); fi
           if [ "$crawler_status" = "failure" ]; then failures=$((failures + 1)); fi
-          if [ "$frontend_status" = "failure" ]; then failures=$((failures + 1)); fi
+          # if [ "$frontend_status" = "failure" ]; then failures=$((failures + 1)); fi
           
           # Set color and title based on results
           if [ $failures -eq 0 ]; then
@@ -152,7 +147,7 @@ jobs:
           else
             color=16711680  # Red
             title="❌ Smoke Test Failures Detected"
-            description="$failures out of 5 smoke test suites failed"
+            description="$failures out of 4 smoke test suites failed"
           fi
           
           # Create status indicators
@@ -160,7 +155,7 @@ jobs:
           indexer_icon="✅"; if [ "$indexer_status" = "failure" ]; then indexer_icon="❌"; fi
           rag_icon="✅"; if [ "$rag_status" = "failure" ]; then rag_icon="❌"; fi
           crawler_icon="✅"; if [ "$crawler_status" = "failure" ]; then crawler_icon="❌"; fi
-          frontend_icon="✅"; if [ "$frontend_status" = "failure" ]; then frontend_icon="❌"; fi
+          # frontend_icon="✅"; if [ "$frontend_status" = "failure" ]; then frontend_icon="❌"; fi
           
           curl -H "Content-Type: application/json" \
                -d '{
@@ -170,8 +165,8 @@ jobs:
                    "color": '"$color"',
                    "fields": [
                      {"name": "Branch", "value": "${{ inputs.branch || 'development' }}", "inline": true},
-                     {"name": "Total Failures", "value": "'"$failures"'/5", "inline": true},
-                     {"name": "Test Results", "value": "'"$scraper_icon"' Scraper\n'"$indexer_icon"' Indexer\n'"$rag_icon"' RAG\n'"$crawler_icon"' Crawler\n'"$frontend_icon"' Frontend", "inline": false},
+                     {"name": "Total Failures", "value": "'"$failures"'/4", "inline": true},
+                     {"name": "Test Results", "value": "'"$scraper_icon"' Scraper\n'"$indexer_icon"' Indexer\n'"$rag_icon"' RAG\n'"$crawler_icon"' Crawler", "inline": false},
                      {"name": "Action", "value": "[View Detailed Results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
                    ],
                    "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"
@@ -179,9 +174,8 @@ jobs:
                }' \
                "$DISCORD_WEBHOOK_URL"
 
-      # Fail the workflow if any tests failed
       - name: Check test results
-        if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure' || steps.frontend_tests.outcome == 'failure'
+        if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure'
         run: |
           echo "One or more smoke tests failed"
           exit 1

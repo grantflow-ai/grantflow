@@ -23,3 +23,27 @@ class EnrichObjectiveInputDTO(TypedDict):
     retrieval_context: str
     keywords: list[str]
     topics: list[str]
+
+
+class EnrichmentDataDTO(TypedDict):
+    enriched_objective: str
+    search_queries: list[str]
+    core_scientific_terms: list[str]
+    scientific_context: str
+    instructions: NotRequired[str]
+    description: NotRequired[str]
+    guiding_questions: NotRequired[list[str]]
+
+
+class WikidataExpansionResult(TypedDict):
+    term: str
+    expanded_terms: list[str]
+    scientific_context: str
+    confidence_score: float
+
+
+class WikidataBatchResponse(TypedDict):
+    results: list[WikidataExpansionResult]
+    total_terms_processed: int
+    successful_expansions: int
+    failed_expansions: int

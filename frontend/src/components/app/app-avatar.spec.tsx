@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import { AppAvatar, AvatarGroup } from "./app-avatar";
 
-describe("AppAvatar", () => {
+describe.sequential("AppAvatar", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with initials and default size", () => {
 		render(<AppAvatar initials="JD" />);
 
@@ -67,7 +71,10 @@ describe("AppAvatar", () => {
 	});
 });
 
-describe("AvatarGroup", () => {
+describe.sequential("AvatarGroup", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockUsers = [
 		{ imageUrl: "https://example.com/jd.jpg", initials: "JD" },
 		{ backgroundColor: "#ff0000", initials: "AB" },

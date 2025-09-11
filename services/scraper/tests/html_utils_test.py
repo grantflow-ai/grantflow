@@ -1,8 +1,7 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from bs4 import BeautifulSoup
-from services.scraper.src.html_utils import download_page_html, sanitize_html
+from services.scraper.src.html_utils import download_page_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
 
 
@@ -15,21 +14,13 @@ async def test_download_page_html() -> None:
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "text/html"}
         mock_response.content = b"<html><body>Test Page</body></html>"
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         html = await download_page_html(url)
 
         assert html == "<html><body>Test Page</body></html>"
         mock_get.assert_called_once_with(url, follow_redirects=True)
-
-
-def test_sanitize_html() -> None:
-    soup = BeautifulSoup("<html><body><script>alert('Test');</script><p>Hello World</p></body></html>", "html.parser")
-
-    sanitized = sanitize_html(soup)
-
-    assert "<script>" not in sanitized
-    assert "<p>\n   Hello World\n  </p>" in sanitized
 
 
 def test_extract_result_name_from_url() -> None:

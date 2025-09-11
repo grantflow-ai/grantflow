@@ -1,8 +1,3 @@
-"""
-TTL-aware LRU cache utility using functional programming.
-Provides a decorator for adding time-based expiration to Python's lru_cache.
-"""
-
 import time
 from functools import lru_cache, wraps
 from typing import Any, Callable, TypeVar, Awaitable, cast
@@ -24,21 +19,6 @@ def ttl_lru_cache(
     ttl_seconds: int = 300,
     typed: bool = False,
 ) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
-    """
-    Decorator that combines LRU cache with TTL (time-to-live) functionality.
-
-    Args:
-        maxsize: Maximum size of cache (default: 128)
-        ttl_seconds: Time-to-live in seconds (default: 300)
-        typed: If True, arguments of different types will be cached separately
-
-    Example:
-        @ttl_lru_cache(maxsize=100, ttl_seconds=600)
-        async def expensive_operation(param: str) -> dict:
-            # Expensive operation here
-            return result
-    """
-
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         @lru_cache(maxsize=maxsize, typed=typed)
         def sync_cached_func(*args: Any, **kwargs: Any) -> Awaitable[T]:
@@ -114,16 +94,6 @@ def ttl_lru_cache(
 
 
 def create_content_hash(*args: Any, **kwargs: Any) -> str:
-    """
-    Create a stable hash from function arguments for cache key generation.
-
-    Args:
-        *args: Positional arguments
-        **kwargs: Keyword arguments
-
-    Returns:
-        A stable hash string
-    """
     import hashlib
     import json
 
@@ -140,18 +110,6 @@ def cached_with_ttl(
     ttl_seconds: int = 300,
     cache_key: str | None = None,
 ) -> Callable[..., Awaitable[T]]:
-    """
-    Create a cached version of a function with TTL.
-
-    Args:
-        func: The function to cache
-        ttl_seconds: Time-to-live in seconds
-        cache_key: Optional custom cache key prefix
-
-    Returns:
-        A cached version of the function
-    """
-
     cache_storage: dict[str, tuple[Any, float]] = {}
 
     @wraps(func)

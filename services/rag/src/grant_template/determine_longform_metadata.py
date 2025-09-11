@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Final, NotRequired, TypedDict
 
-from packages.db.src.tables import FundingOrganization
+from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
@@ -376,7 +376,7 @@ async def handle_generate_grant_template(
     *,
     cfp_content: str,
     cfp_subject: str,
-    organization: FundingOrganization | None,
+    organization: GrantingInstitution | None,
     long_form_sections: list[ExtractedSectionDTO],
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(

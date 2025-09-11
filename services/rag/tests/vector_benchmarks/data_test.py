@@ -1,18 +1,3 @@
-"""
-Test Data Generation for Vector Benchmarking
-
-This module generates realistic test data for vector benchmarking.
-Since we're using the real production schema, we need to create
-proper entities (users, projects, rag_sources) to test with.
-
-Key functions:
-- create_test_entities: Creates users, projects, and rag_sources
-- generate_test_chunks: Creates realistic text chunks for indexing
-- create_test_vectors: Uses production embedding service to generate vectors
-
-The beauty of this approach: we test with real data structures!
-"""
-
 import hashlib
 import random
 import uuid
@@ -26,50 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = get_logger(__name__)
 
 
-class TestDataGenerator:
-    """
-    Generates realistic test data for vector benchmarking.
-
-    This creates proper database entities using production models,
-    so we can test the real RAG pipeline with different vector configurations.
-
-    Example:
-        generator = TestDataGenerator(session)
-
-        # Create base entities
-        user, project, rag_source = await generator.create_test_entities()
-
-        # Create test chunks
-        chunks = await generator.generate_test_chunks(1000, rag_source.id)
-
-        # Generate vectors using production code
-        vectors = await generator.create_test_vectors(chunks, dimension=256)
-    """
-
+class BenchmarkDataGenerator:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def generate_test_chunks(
         self, chunk_count: int, rag_source_id: uuid.UUID, categories: list[str] | None = None
     ) -> list[Chunk]:
-        """
-        Generates realistic text chunks for vector testing.
-
-        These chunks simulate real grant documents, research papers, etc.
-        They're structured like your production data but with predictable content.
-
-        Args:
-            chunk_count: Number of chunks to generate
-            rag_source_id: ID of RAG source these chunks belong to
-            categories: List of content categories (defaults to grant-related)
-
-        Returns:
-            List of Chunk objects ready for vector generation
-
-        Example:
-            chunks = await generator.generate_test_chunks(1000, rag_source.id)
-            # Creates 1000 realistic chunks with grant-related content
-        """
         if categories is None:
             categories = [
                 "grant_proposal",
@@ -190,25 +138,6 @@ class TestDataGenerator:
     async def create_test_vectors(
         self, chunks: list[Chunk], rag_source_id: uuid.UUID, dimension: int = 384
     ) -> list[VectorDTO]:
-        """
-        Creates realistic vector embeddings for chunks.
-
-        For benchmarking, we create deterministic embeddings based on content hash.
-        This ensures consistent vectors across test runs while maintaining realistic
-        embedding properties (normalized, diverse).
-
-        Args:
-            chunks: List of chunks to create vectors for
-            rag_source_id: RAG source ID for the vectors
-            dimension: Vector dimension (must match current table dimension)
-
-        Returns:
-            List of VectorDTO objects ready for database insertion
-
-        Example:
-            vectors = await generator.create_test_vectors(chunks, rag_source.id, 256)
-            # Creates 256-dimensional vectors for all chunks
-        """
         logger.info("Creating test vectors", chunks_count=len(chunks), dimension=dimension)
 
         vectors = []
@@ -239,25 +168,10 @@ class TestDataGenerator:
         return vectors
 
     async def generate_query_vectors(self, count: int, dimension: int = 384) -> list[list[float]]:
-        """
-        Generate normalized query vectors for testing.
-
-        Args:
-            count: Number of query vectors to generate
-            dimension: Dimension of each query vector
-
-        Returns:
-            List of normalized vectors for similarity testing
-
-        Example:
-            query_vectors = await generator.generate_query_vectors(50, 384)
-            # Creates 50 test query vectors with 384 dimensions
-        """
         query_vectors = []
         for i in range(count):
-            # Create a query vector with predictable pattern
             query_vector = [0.1 * ((i + 1) % 10)] * dimension
-            # Normalize vector
+
             norm = sum(x * x for x in query_vector) ** 0.5
             if norm > 0:
                 query_vector = [x / norm for x in query_vector]
@@ -267,20 +181,26 @@ class TestDataGenerator:
         return query_vectors
 
     async def insert_vectors_to_database(self, vectors: list[VectorDTO]) -> None:
-        """
-        Inserts vectors into the database using production models.
-
-        This tests the real database insertion code with your test vectors.
-
-        Args:
-            vectors: List of VectorDTO objects to insert
-
-        Example:
-            await generator.insert_vectors_to_database(vectors)
-            # Vectors are now in the text_vectors table
-        """
         logger.info("Inserting vectors into database", vectors_count=len(vectors))
 
+        if not vectors:
+            return
+
+        await self._ensure_rag_sources_exist(vectors)
+
+        first_vector_dim = len(vectors[0]["embedding"])
+        use_raw_sql = first_vector_dim != 384
+
+        if use_raw_sql:
+            logger.info("Using raw SQL insertion for non-standard dimensions", dimension=first_vector_dim)
+            await self._insert_vectors_raw_sql(vectors)
+        else:
+            logger.info("Using SQLAlchemy ORM insertion for standard dimensions")
+            await self._insert_vectors_orm(vectors)
+
+        logger.info("Successfully inserted vectors", vectors_count=len(vectors))
+
+    async def _insert_vectors_orm(self, vectors: list[VectorDTO]) -> None:
         batch_size = 1000
         for i in range(0, len(vectors), batch_size):
             batch = vectors[i : i + batch_size]
@@ -298,9 +218,68 @@ class TestDataGenerator:
             await self.session.commit()
 
             logger.info(
-                "Inserted batch",
+                "Inserted ORM batch",
                 batch_num=i // batch_size + 1,
                 total_batches=(len(vectors) + batch_size - 1) // batch_size,
             )
 
-        logger.info("Successfully inserted vectors", vectors_count=len(vectors))
+    async def _insert_vectors_raw_sql(self, vectors: list[VectorDTO]) -> None:
+        import json
+
+        from sqlalchemy import text
+
+        batch_size = 1000
+        for i in range(0, len(vectors), batch_size):
+            batch = vectors[i : i + batch_size]
+
+            values_list = []
+            params = {}
+
+            for idx, vector_dto in enumerate(batch):
+                param_prefix = f"v{i}_{idx}"
+                values_list.append(
+                    f"(gen_random_uuid(), :{param_prefix}_chunk, :{param_prefix}_embedding, :{param_prefix}_rag_source_id, now(), now())"
+                )
+
+                params[f"{param_prefix}_chunk"] = json.dumps(vector_dto["chunk"])
+
+                vector_str = "[" + ",".join(str(float(x)) for x in vector_dto["embedding"]) + "]"
+                params[f"{param_prefix}_embedding"] = vector_str
+                params[f"{param_prefix}_rag_source_id"] = vector_dto["rag_source_id"]
+
+            insert_sql = f"""
+            INSERT INTO text_vectors (id, chunk, embedding, rag_source_id, created_at, updated_at)
+            VALUES {", ".join(values_list)}
+            """
+
+            await self.session.execute(text(insert_sql), params)
+            await self.session.commit()
+
+            logger.info(
+                "Inserted raw SQL batch",
+                batch_num=i // batch_size + 1,
+                total_batches=(len(vectors) + batch_size - 1) // batch_size,
+            )
+
+    async def _ensure_rag_sources_exist(self, vectors: list[VectorDTO]) -> None:
+        import uuid
+
+        from packages.db.src.enums import SourceIndexingStatusEnum
+        from packages.db.src.tables import RagSource
+        from sqlalchemy import select
+
+        rag_source_ids = {uuid.UUID(vector["rag_source_id"]) for vector in vectors}
+
+        for rag_source_id in rag_source_ids:
+            result = await self.session.execute(select(RagSource).filter_by(id=rag_source_id))
+            existing_source = result.scalar_one_or_none()
+
+            if not existing_source:
+                rag_source = RagSource(
+                    id=rag_source_id,
+                    indexing_status=SourceIndexingStatusEnum.CREATED,
+                    text_content="Synthetic benchmark data",
+                )
+                self.session.add(rag_source)
+                await self.session.commit()
+                logger.info("Created RagSource for benchmarks", rag_source_id=str(rag_source_id))

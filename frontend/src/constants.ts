@@ -1,6 +1,7 @@
 export const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 export const SESSION_COOKIE = "grantflow_session";
-export const WIZARD_STORAGE_KEY = "grantflow-wizard-state";
+export const SELECTED_ORGANIZATION_COOKIE = "grantflow_selected_organization";
+export const COOKIE_CONSENT = "grantflow_cookie_consent";
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 export enum WizardStep {
@@ -11,15 +12,6 @@ export enum WizardStep {
 	RESEARCH_DEEP_DIVE = "Research Deep Dive",
 	RESEARCH_PLAN = "Research Plan",
 }
-
-export const WIZARD_STEP_TITLES = [
-	WizardStep.APPLICATION_DETAILS,
-	WizardStep.APPLICATION_STRUCTURE,
-	WizardStep.KNOWLEDGE_BASE,
-	WizardStep.RESEARCH_PLAN,
-	WizardStep.RESEARCH_DEEP_DIVE,
-	WizardStep.GENERATE_AND_COMPLETE,
-] as const;
 
 export const PROGRESS_BAR_STEPS = [
 	WizardStep.APPLICATION_DETAILS,

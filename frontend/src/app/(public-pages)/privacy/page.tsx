@@ -3,7 +3,7 @@ import {
 	LegalPageContainer,
 	TitledLegalSection,
 	UntitledLegalSection,
-} from "@/components/shared/info-legal-page-components";
+} from "@/components/public-pages/info-legal-page-components";
 
 const terms = [
 	{
@@ -51,16 +51,54 @@ const terms = [
 	},
 	{
 		clause: (
-			<p>
-				We do not sell, rent, or trade your personal information. We may utilize trusted third-party services
-				for analytics or email communications. These third parties are obligated to protect your data and are
-				prohibited from using it for any other purposes.
+			<div>
+				<p>
+					We do not sell, rent, or trade your personal information. We may utilize trusted third-party
+					services for analytics, performance monitoring, and email communications. These third parties are
+					obligated to protect your data and are prohibited from using it for any other purposes.
+				</p>
 				<br />
-				We currently use Google Analytics to collect information about how visitors use our website. Google
-				Analytics helps us understand website traffic and usage patterns so we can improve our services. Google
-				may collect data such as your IP address and browsing behavior on our site. For more information on how
-				Google collects and processes data, please visit Google&apos;s Privacy & Terms.
-			</p>
+				<p>
+					We currently use Segment to manage and route analytics and event data to our analytics platforms.
+					Segment allows us to integrate multiple tools in a privacy-conscious way.
+				</p>
+				<p>
+					For product analytics, we use Mixpanel and Google Analytics. These tools help us understand how
+					users interact with our product and website, so we can continuously improve our services. They may
+					collect data such as IP address, device information, and usage patterns.
+				</p>
+				<br />
+				<p>
+					For more information on how Google collects and processes data, please visit{" "}
+					<a
+						className="underline"
+						href="https://policies.google.com/privacy"
+						rel="noopener noreferrer"
+						target="_blank"
+					>
+						Google&apos;s Privacy & Terms
+					</a>
+					. For Mixpanel&apos;s privacy practices, see{" "}
+					<a
+						className="underline"
+						href="https://mixpanel.com/legal/privacy-policy/"
+						rel="noopener noreferrer"
+						target="_blank"
+					>
+						Mixpanel Privacy Policy
+					</a>
+					. For Segment&apos;s practices, visit{" "}
+					<a
+						className="underline"
+						href="https://www.twilio.com/en-us/legal/privacy"
+						rel="noopener noreferrer"
+						target="_blank"
+					>
+						Segment Privacy Policy
+					</a>
+					.
+				</p>
+			</div>
 		),
 		title: "Third-Party Services",
 	},

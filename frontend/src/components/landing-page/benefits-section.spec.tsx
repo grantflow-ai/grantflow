@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
-import { BenefitsSection } from "@/components/landing-page/benefits-section";
+import { BenefitsSection } from "./benefits-section";
 
 vi.mock("./scroll-fade-element", () => ({
 	ScrollFadeElement: vi.fn().mockImplementation(({ children, className, delay }) => (
@@ -45,7 +45,12 @@ vi.mock("@/lib/utils", () => ({
 	cn: (...inputs: any[]) => inputs.filter(Boolean).join(" "),
 }));
 
-describe("BenefitsSection", () => {
+describe.sequential("BenefitsSection", () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
 	it("renders the section with correct structure", () => {
 		const { container } = render(<BenefitsSection />);
 

@@ -1,0 +1,5 @@
+packages:
+  - "editor"
+  - "frontend"
+  - "frontend/packages/*"
+  - "crdt"

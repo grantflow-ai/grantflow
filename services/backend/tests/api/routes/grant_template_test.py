@@ -8,7 +8,7 @@ from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
     RagFile,
 )
@@ -63,7 +63,7 @@ async def test_update_grant_template_success(
     }
 
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -99,7 +99,7 @@ async def test_update_grant_template_not_found(
 ) -> None:
     non_existent_template_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{non_existent_template_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{non_existent_template_id}",
         json={"submission_date": "2024-12-31"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -140,7 +140,7 @@ async def test_generate_grant_template_success(
         session.add(grant_template)
         await session.flush()
 
-        template_source = GrantTemplateRagSource(
+        template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
         )
@@ -149,13 +149,65 @@ async def test_generate_grant_template_success(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY,
+        parent_type="grant_template",
+        parent_id=grant_template_id,
+        trace_id=ANY,
+    )
+
+
+@patch(
+    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    new_callable=AsyncMock,
+)
+async def test_generate_grant_template_with_created_status(
+    mock_publish_rag_task: AsyncMock,
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    grant_template_id = None
+    async with async_session_maker() as session, session.begin():
+        rag_source = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path",
+            filename="test.pdf",
+            mime_type="application/pdf",
+            size=1000,
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+        )
+        session.add(rag_source)
+        await session.flush()
+
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[],
+        )
+        session.add(grant_template)
+        await session.flush()
+
+        template_source = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(template_source)
+        await session.commit()
+        grant_template_id = grant_template.id
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_template",
         parent_id=grant_template_id,
         trace_id=ANY,
@@ -180,7 +232,7 @@ async def test_generate_grant_template_no_sources(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -215,7 +267,7 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(grant_template)
         await session.flush()
 
-        template_source = GrantTemplateRagSource(
+        template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
         )
@@ -224,7 +276,7 @@ async def test_generate_grant_template_failed_sources_only(
         grant_template_id = grant_template.id
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -250,7 +302,7 @@ async def test_update_grant_template_unauthorized(
 
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
     response = await test_client.patch(
-        f"/projects/{different_project_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        f"/organizations/{project.organization_id}/projects/{different_project_id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
         json={"submission_date": "2024-12-31"},
         headers={"Authorization": "Bearer some_token"},
     )

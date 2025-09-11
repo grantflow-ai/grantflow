@@ -2,11 +2,11 @@ import logging
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+from packages.db.src.tables import GrantApplication, GrantApplicationSource
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.indexer.src.processing import process_source
 
@@ -14,12 +14,12 @@ FILENAME = "PIC seq.pdf"
 SMALL_PDF_TEST_FILE = SOURCES_FOLDER / "application_sources" / "43b4aed5-8549-461f-9290-5ee9a630ac9a" / FILENAME
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.INDEXER)
 async def test_parse_application_file(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 

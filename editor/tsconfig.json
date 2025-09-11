@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"jsx": "react-jsx",
+		"outDir": "./dist",
+		"paths": {
+			"::testing/*": ["testing/*"],
+			"@/*": ["src/*"]
+		}
+	},
+	"extends": "../tsconfig.json",
+	"include": ["src", "src/**/*.json", "testing"]
+}

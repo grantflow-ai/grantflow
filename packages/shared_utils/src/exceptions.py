@@ -2,8 +2,6 @@ from typing import Any
 
 
 class BackendError(Exception):
-    """Raised when an internal error occurs."""
-
     context: Any
 
     def __init__(self, message: str, context: Any = None) -> None:
@@ -22,40 +20,40 @@ class BackendError(Exception):
 
 
 class FileParsingError(BackendError):
-    """Raised when an error occurs during parsing."""
+    pass
 
 
 class UrlParsingError(BackendError):
-    """Raised when an error occurs during parsing."""
+    pass
 
 
 class ExternalOperationError(BackendError):
-    """Raised when an HTTP request to a remote system fails."""
+    pass
 
 
 class ValidationError(BackendError):
-    """Raised when a validation error occurs."""
+    pass
 
 
 class InsufficientContextError(BackendError):
-    """Raised when an insufficient input error occurs."""
+    pass
 
 
 class EvaluationError(BackendError):
-    """Raised when an LLM response's evaluation fails."""
+    pass
 
 
 class SerializationError(BackendError):
-    """Raised when an error occurs during serialization."""
+    pass
 
 
 class DeserializationError(BackendError):
-    """Raised when an error occurs during deserialization."""
+    pass
 
 
 class DatabaseError(BackendError):
-    """Raised when an error occurs during database operations."""
+    pass
 
 
 class RagError(BackendError):
-    """Raised when an error occurs during RAG operations."""
+    pass

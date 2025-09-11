@@ -1,10 +1,3 @@
-"""
-Load Testing Component for Vector Benchmarks
-
-This module provides concurrent load testing capabilities to measure
-performance under realistic multi-user scenarios.
-"""
-
 import asyncio
 import time
 from contextlib import suppress
@@ -14,7 +7,7 @@ from typing import Any
 
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import BenchmarkCategory, benchmark
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from .enhanced_metrics import EnhancedPerformanceTracker
 from .framework import VectorBenchmarkFramework
@@ -24,8 +17,6 @@ logger = get_logger(__name__)
 
 @dataclass
 class LoadTestConfiguration:
-    """Configuration for load testing scenarios."""
-
     name: str
     description: str
 
@@ -47,8 +38,6 @@ class LoadTestConfiguration:
 
 @dataclass
 class LoadTestResult:
-    """Results from a load test execution."""
-
     configuration: LoadTestConfiguration
 
     total_requests: int
@@ -78,12 +67,6 @@ class LoadTestResult:
 
 
 class LoadTestExecutor:
-    """
-    Executes load tests with various concurrency patterns.
-
-    Provides realistic multi-user simulation for vector operations.
-    """
-
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]) -> None:
         self.session_maker = session_maker
         self.framework = VectorBenchmarkFramework(session_maker)
@@ -101,11 +84,6 @@ class LoadTestExecutor:
     async def execute_search_load_test(
         self, config: LoadTestConfiguration, query_vectors: list[list[float]]
     ) -> LoadTestResult:
-        """
-        Execute a search-focused load test.
-
-        Simulates multiple users performing concurrent similarity searches.
-        """
         logger.info("Starting search load test", config_name=config.name)
         logger.info("Config", concurrent_users=config.concurrent_users, requests_per_user=config.requests_per_user)
 
@@ -141,7 +119,6 @@ class LoadTestExecutor:
     async def _create_user_tasks(
         self, config: LoadTestConfiguration, query_vectors: list[list[float]]
     ) -> list[asyncio.Task[None]]:
-        """Create user simulation tasks based on load pattern."""
         tasks = []
 
         if config.load_pattern == "constant":
@@ -174,14 +151,12 @@ class LoadTestExecutor:
     async def _simulate_user_with_delay(
         self, user_id: int, config: LoadTestConfiguration, query_vectors: list[list[float]], delay: float
     ) -> None:
-        """Simulate a user with initial delay."""
         await asyncio.sleep(delay)
         await self._simulate_user(user_id, config, query_vectors)
 
     async def _simulate_user(
         self, user_id: int, config: LoadTestConfiguration, query_vectors: list[list[float]]
     ) -> None:
-        """Simulate a single user's request pattern."""
         try:
             await asyncio.sleep(config.warm_up_duration_seconds)
 
@@ -219,8 +194,6 @@ class LoadTestExecutor:
     async def _execute_search_request(
         self, query_vector: list[float], k: int
     ) -> list[tuple[str, list[float], str, str]]:
-        """Execute a single search request."""
-
         async with self.session_maker() as session:
             from sqlalchemy import text
 
@@ -239,7 +212,6 @@ class LoadTestExecutor:
             return [(str(row[0]), list(row[1]), str(row[2]), str(row[3])) for row in result.fetchall()]
 
     async def _monitor_concurrency(self) -> None:
-        """Monitor concurrency levels during test execution."""
         try:
             while self.monitoring_active:
                 if self.resource_tracker:
@@ -250,7 +222,6 @@ class LoadTestExecutor:
             pass
 
     def _calculate_load_test_results(self, config: LoadTestConfiguration, total_duration: float) -> LoadTestResult:
-        """Calculate comprehensive load test results."""
         total_requests = len(self.request_times) + len(self.errors)
         successful_requests = len(self.request_times)
         failed_requests = len(self.errors)
@@ -368,7 +339,6 @@ LOAD_TEST_CONFIGURATIONS = [
 
 
 def format_load_test_results(result: LoadTestResult) -> str:
-    """Format load test results into a readable summary."""
     config = result.configuration
 
     summary = f"""
@@ -387,18 +357,13 @@ def format_load_test_results(result: LoadTestResult) -> str:
     return summary
 
 
-@benchmark(category=BenchmarkCategory.VECTOR, timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 async def benchmark_load_test(
     config: LoadTestConfiguration,
     session_maker: async_sessionmaker[AsyncSession],
     query_vectors: list[list[float]],
     logger: Any,
 ) -> LoadTestResult:
-    """
-    Execute a load test with the given configuration.
-
-    This is the main entry point for load testing benchmarks.
-    """
     logger.info("Starting load test benchmark", description=config.description)
 
     executor = LoadTestExecutor(session_maker)

@@ -24,6 +24,38 @@ else:
     client = None
 
 
+def parse_json_from_ai_response(text: str) -> dict[str, Any]:
+    try:
+        result: dict[str, Any] = json.loads(text)
+        return result
+    except json.JSONDecodeError:
+        try:
+            text = text.strip()
+
+            start_idx = text.find("{")
+            if start_idx == -1:
+                raise ValueError("No JSON object found in response")
+
+            brace_count = 0
+            end_idx = start_idx
+            for i, char in enumerate(text[start_idx:], start_idx):
+                if char == "{":
+                    brace_count += 1
+                elif char == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i
+                        break
+
+            json_text = text[start_idx : end_idx + 1]
+            parsed_result: dict[str, Any] = json.loads(json_text)
+            return parsed_result
+
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.warning("Failed to parse JSON from AI response: %s. Response text: %s", e, text[:200])
+            return {}
+
+
 async def evaluate_retrieval_relevance(
     query: str,
     retrieved_documents: list[str],
@@ -67,7 +99,7 @@ async def evaluate_retrieval_relevance(
 
         content_block = response.content[0]
         if hasattr(content_block, "text"):
-            result = json.loads(content_block.text)
+            result = parse_json_from_ai_response(content_block.text)
         else:
             raise ValueError("Response content block has no text attribute")
 
@@ -128,7 +160,7 @@ async def evaluate_grant_application_quality(application_content: str) -> dict[s
 
         content_block = response.content[0]
         if hasattr(content_block, "text"):
-            result = json.loads(content_block.text)
+            result = parse_json_from_ai_response(content_block.text)
         else:
             raise ValueError("Response content block has no text attribute")
 
@@ -191,7 +223,7 @@ async def evaluate_cfp_extraction_accuracy(
 
         content_block = response.content[0]
         if hasattr(content_block, "text"):
-            result = json.loads(content_block.text)
+            result = parse_json_from_ai_response(content_block.text)
         else:
             raise ValueError("Response content block has no text attribute")
 
@@ -253,7 +285,7 @@ async def evaluate_query_generation_quality(
 
         content_block = response.content[0]
         if hasattr(content_block, "text"):
-            result = json.loads(content_block.text)
+            result = parse_json_from_ai_response(content_block.text)
         else:
             raise ValueError("Response content block has no text attribute")
 

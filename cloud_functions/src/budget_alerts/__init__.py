@@ -1,1 +1,0 @@
-"""Budget alerts Cloud Function."""

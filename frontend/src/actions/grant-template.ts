@@ -1,11 +1,12 @@
 "use server";
 
 import type { API } from "@/types/api-types";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { createTraceHeaders, generateTraceId, logTraceEvent } from "@/utils/tracing";
 
 export async function generateGrantTemplate(
+	organizationId: string,
 	projectId: string,
 	applicationId: string,
 	templateId: string,
@@ -16,18 +17,22 @@ export async function generateGrantTemplate(
 	logTraceEvent(traceId, operation, "action_start", {
 		application_id: applicationId,
 		initiated_by: "user_action",
+		organization_id: organizationId,
 		project_id: projectId,
 		template_id: templateId,
 	});
 
 	try {
 		await withAuthRedirect(
-			getClient().post(`projects/${projectId}/applications/${applicationId}/grant-template/${templateId}`, {
-				headers: {
-					...(await createAuthHeaders()),
-					...createTraceHeaders(traceId, operation),
+			getClient().post(
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant-template/${templateId}`,
+				{
+					headers: {
+						...(await createAuthHeaders()),
+						...createTraceHeaders(traceId, operation),
+					},
 				},
-			}),
+			),
 		);
 
 		logTraceEvent(traceId, operation, "action_success");
@@ -42,15 +47,19 @@ export async function generateGrantTemplate(
 }
 
 export async function updateGrantTemplate(
+	organizationId: string,
 	projectId: string,
 	applicationId: string,
 	templateId: string,
 	data: Partial<API.UpdateGrantTemplate.RequestBody>,
 ): Promise<void> {
 	await withAuthRedirect(
-		getClient().patch(`projects/${projectId}/applications/${applicationId}/grant-template/${templateId}`, {
-			headers: await createAuthHeaders(),
-			json: data,
-		}),
+		getClient().patch(
+			`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant-template/${templateId}`,
+			{
+				headers: await createAuthHeaders(),
+				json: data,
+			},
+		),
 	);
 }

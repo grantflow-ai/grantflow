@@ -1,11 +1,8 @@
-"""Tests for OpenTelemetry metrics."""
-
 import sys
 from unittest.mock import Mock, patch
 
 
 def test_http_requests_total_metric() -> None:
-    """Test HTTP requests counter metric."""
     with patch("packages.shared_utils.src.otel.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_counter = Mock()
@@ -25,7 +22,6 @@ def test_http_requests_total_metric() -> None:
 
 
 def test_http_request_duration_metric() -> None:
-    """Test HTTP request duration histogram metric."""
     with patch("packages.shared_utils.src.otel.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_histogram = Mock()
@@ -46,7 +42,6 @@ def test_http_request_duration_metric() -> None:
 
 
 def test_business_metrics_creation() -> None:
-    """Test business metrics are created with correct parameters."""
     with patch("packages.shared_utils.src.otel.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_get_meter.return_value = mock_meter
@@ -73,7 +68,6 @@ def test_business_metrics_creation() -> None:
 
 
 def test_processing_duration_histogram() -> None:
-    """Test processing duration histogram metric."""
     with patch("packages.shared_utils.src.otel.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_get_meter.return_value = mock_meter
@@ -92,7 +86,6 @@ def test_processing_duration_histogram() -> None:
 
 
 def test_metric_usage_pattern() -> None:
-    """Test typical metric usage pattern."""
     mock_counter = Mock()
 
     mock_counter.add(
@@ -117,7 +110,6 @@ def test_metric_usage_pattern() -> None:
 
 
 def test_histogram_usage_pattern() -> None:
-    """Test typical histogram metric usage pattern."""
     mock_histogram = Mock()
 
     duration = 0.123
@@ -131,7 +123,6 @@ def test_histogram_usage_pattern() -> None:
 
 
 def test_pubsub_metric_usage() -> None:
-    """Test Pub/Sub metric usage pattern."""
     mock_counter = Mock()
 
     mock_counter.add(
@@ -154,7 +145,6 @@ def test_pubsub_metric_usage() -> None:
 
 
 def test_database_metric_usage() -> None:
-    """Test database operations metric usage pattern."""
     mock_counter = Mock()
 
     mock_counter.add(

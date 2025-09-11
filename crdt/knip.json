@@ -1,0 +1,16 @@
+{
+	"$schema": "https://unpkg.com/knip/dist/schema.json",
+	"ignore": [
+		"dist/**",
+		"build/**",
+		"vite.config.ts",
+		"vite.config.js",
+		"eslint.config.mjs",
+		"tsconfig.json",
+		"src/db/relations.ts",
+		"src/db/schema.ts",
+		"testing/**"
+	],
+	"ignoreBinaries": ["biome", "vitest"],
+	"ignoreDependencies": ["pino-pretty", "biome"]
+}

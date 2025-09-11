@@ -71,7 +71,6 @@ def mock_grant_application_handler(mocker: MockerFixture) -> AsyncMock:
 
 @pytest.fixture(autouse=True)
 def mock_llm_initialization(mocker: MockerFixture) -> None:
-    """Mock LLM initialization to prevent credential errors in tests."""
     mocker.patch("services.rag.src.main.init_llm_connection", return_value=None)
 
 
@@ -210,6 +209,10 @@ async def test_handle_rag_request_invalid_base64() -> None:
 
 
 def test_handle_pubsub_message_valid() -> None:
+    from typing import cast
+
+    from packages.shared_utils.src.pubsub import RagRequest
+
     from services.rag.src.main import handle_pubsub_message
 
     data = {
@@ -219,9 +222,10 @@ def test_handle_pubsub_message_valid() -> None:
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
+    rag_result = cast("RagRequest", result)
 
-    assert result["parent_type"] == "grant_template"
-    assert isinstance(result["parent_id"], UUID)
+    assert rag_result["parent_type"] == "grant_template"
+    assert isinstance(rag_result["parent_id"], UUID)
 
 
 def test_handle_pubsub_message_invalid() -> None:

@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
-import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
+import { CoreFeaturesSection } from "./core-features-section";
 
 vi.mock("motion/react", async () => {
 	const actual = vi.importActual("motion/react");
@@ -23,9 +23,13 @@ vi.mock("./scroll-fade-element", () => ({
 	)),
 }));
 
-describe("CoreFeaturesSection", () => {
+describe.sequential("CoreFeaturesSection", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the section with correct aria label", () => {
@@ -71,10 +75,10 @@ describe("CoreFeaturesSection", () => {
 		expect(projectTitles).toHaveLength(2);
 		expect(proposalTitles).toHaveLength(2);
 
-		platformTitles.forEach((title) => expect(title).toBeInTheDocument());
-		studioTitles.forEach((title) => expect(title).toBeInTheDocument());
-		projectTitles.forEach((title) => expect(title).toBeInTheDocument());
-		proposalTitles.forEach((title) => expect(title).toBeInTheDocument());
+		for (const title of platformTitles) expect(title).toBeInTheDocument();
+		for (const title of studioTitles) expect(title).toBeInTheDocument();
+		for (const title of projectTitles) expect(title).toBeInTheDocument();
+		for (const title of proposalTitles) expect(title).toBeInTheDocument();
 	});
 
 	it("renders all feature descriptions", () => {
@@ -90,10 +94,10 @@ describe("CoreFeaturesSection", () => {
 		expect(projectDescriptions).toHaveLength(2);
 		expect(proposalDescriptions).toHaveLength(2);
 
-		platformDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		studioDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		projectDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		proposalDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
+		for (const desc of platformDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of studioDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of projectDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of proposalDescriptions) expect(desc).toBeInTheDocument();
 	});
 
 	it("renders both mobile and desktop feature containers", () => {

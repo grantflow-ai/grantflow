@@ -1,0 +1,108 @@
+European Research Council Starting Grant 2025
+Call for Proposals
+
+HORIZON-ERC-2025-STG
+
+1. Objectives
+The ERC Starting Grant (STG) supports excellent Principal Investigators who are at the career stage at which they are starting their own independent research team or programme. The scheme targets promising researchers who have the proven potential to be research leaders.
+
+2. Funding
+Up to EUR 1.5 million for up to 5 years
+Additional EUR 1 million available for equipment, large instruments, access to large facilities, computing resources, and other major experimental and field work costs.
+
+3. Principal Investigator Eligibility
+The Principal Investigator must:
+• Be of any nationality
+• Have been awarded their first PhD at least 2 and at most 7 years prior to the call deadline
+• Demonstrate scientific independence
+• Show evidence of research maturity and potential for research leadership
+
+Career breaks and other circumstances affecting research careers will be taken into account according to the ERC guidelines.
+
+4. Host Institution Requirements
+• Must be established in an EU Member State or Associated Country
+• Must provide written confirmation of hosting arrangements
+• Must guarantee scientific independence to the PI
+• Must have a Gender Equality Plan in place (for public bodies, research organizations, and higher education institutions)
+
+5. Proposal Structure
+Applications must not exceed the following page limits:
+
+Part A: Administrative forms (no page limit)
+
+Part B1: Extended Synopsis (5 pages maximum)
+- Summary of proposed research
+- Principal Investigator information
+- Early achievements track record
+
+Part B2: Scientific Proposal (15 pages maximum including references)
+Section a: State-of-the-art and objectives (4 pages)
+Section b: Methodology (6 pages) 
+Section c: Resources and project management (3 pages)
+Section d: Ethical and safety issues (2 pages)
+
+6. Evaluation Criteria
+Proposals are evaluated solely on the criterion of scientific excellence, assessed through:
+
+Ground-breaking nature and potential impact (50%)
+- Novelty and ambition of the research
+- Potential to advance the state-of-the-art
+- Interdisciplinary potential
+
+Methodology (30%)
+- Appropriateness and feasibility of methodology
+- Quality of objectives and research approach
+- Handling of risks and contingency plans
+
+Principal Investigator (20%)
+- Intellectual capacity and creativity
+- Commitment and motivation
+- Scientific independence
+
+7. Submission Deadlines
+The call has one submission deadline:
+4 October 2025, 17:00:00 Brussels local time
+
+Late applications will not be accepted under any circumstances.
+
+8. Application Process
+Step 1: Submit Part A (administrative information)
+Step 2: Submit Part B1 (Extended Synopsis) - evaluated first
+Step 3: Submit Part B2 (Scientific Proposal) - only if invited after Step 2
+
+All submissions must be made through the EU Funding & Tenders Portal.
+
+9. Evaluation Process
+Two-step evaluation:
+- Step 1: Remote evaluation of Part B1 by expert panels
+- Step 2: Remote evaluation and interviews for Part B2 (shortlisted candidates only)
+
+Results expected by July 2026.
+
+10. Restrictions
+• Maximum one application per PI to ERC-2025-STG
+• PIs cannot hold other ERC grants simultaneously
+• No resubmission of identical or substantially similar proposals within the same call
+• Proposals must comply with EU research integrity standards
+
+11. Ethics Requirements
+All research activities must comply with:
+• National legislation and international conventions
+• EU Charter of Fundamental Rights
+• Ethical principles of the Helsinki Declaration
+• Good research practice standards
+
+Special attention required for:
+• Research involving human participants
+• Research involving animals
+• Research involving genetic engineering
+• Research in developing countries
+
+12. Open Science Practices
+Grant holders are expected to:
+• Ensure open access to peer-reviewed publications
+• Develop data management plans
+• Consider open access to research data when appropriate
+• Follow responsible research and innovation principles
+
+For detailed guidance, consult the ERC Work Programme 2025 and Application Guidelines available at: https://erc.europa.eu/funding/starting-grants

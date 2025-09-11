@@ -9,63 +9,6 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The project ID to deploy monitoring resources to"
-  type        = string
-}
-
-variable "discord_webhook_url" {
-  description = "Discord webhook URL for alert notifications"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment (staging, prod)"
-  type        = string
-  default     = "staging"
-}
-
-variable "discord_role_alerts" {
-  description = "Discord role ID for alert mentions"
-  type        = string
-  default     = ""
-}
-
-variable "enable_kms_encryption" {
-  description = "Enable KMS encryption for storage buckets (recommended for production)"
-  type        = bool
-  default     = false
-}
-
-variable "enable_uptime_checks" {
-  description = "Enable external uptime monitoring"
-  type        = bool
-  default     = false
-}
-
-variable "enable_error_reporting" {
-  description = "Enable enhanced error tracking"
-  type        = bool
-  default     = false
-}
-
-variable "alert_thresholds" {
-  description = "Alert threshold configuration"
-  type = object({
-    error_rate_threshold = number
-    latency_threshold    = number
-    memory_threshold     = number
-    cpu_threshold        = number
-  })
-  default = {
-    error_rate_threshold = 0.05 # 5%
-    latency_threshold    = 5000 # 5s
-    memory_threshold     = 0.90 # 90%
-    cpu_threshold        = 0.85 # 85%
-  }
-}
-
-# KMS resources for storage encryption (production only)
 resource "google_kms_key_ring" "monitoring_keyring" {
   count    = var.enable_kms_encryption ? 1 : 0
   name     = "monitoring-keyring-${var.environment}"
@@ -83,7 +26,6 @@ resource "google_kms_crypto_key" "monitoring_bucket_key" {
   }
 }
 
-# Discord notification channel
 resource "google_monitoring_notification_channel" "discord" {
   display_name = "Discord Alerts - ${title(var.environment)}"
   type         = "webhook_tokenauth"
@@ -98,7 +40,6 @@ resource "google_monitoring_notification_channel" "discord" {
   }
 }
 
-# Alert Policy: Service Completely Down
 resource "google_monitoring_alert_policy" "service_down" {
   for_each = toset(["backend", "crawler", "indexer", "rag", "scraper"])
 
@@ -121,9 +62,9 @@ resource "google_monitoring_alert_policy" "service_down" {
         "metric.label.response_code_class=\"2xx\""
       ])
 
-      duration        = "300s" # 5 minutes
+      duration        = "300s"
       comparison      = "COMPARISON_LT"
-      threshold_value = 1 # Less than 1 successful response (i.e., zero)
+      threshold_value = 1
 
       aggregations {
         alignment_period     = "300s"
@@ -137,11 +78,10 @@ resource "google_monitoring_alert_policy" "service_down" {
   notification_channels = [google_monitoring_notification_channel.discord.name]
 
   alert_strategy {
-    auto_close = "1800s" # 30 minutes
+    auto_close = "1800s"
   }
 }
 
-# Alert Policy: Database Connection Failure
 resource "google_monitoring_alert_policy" "database_disconnected" {
   display_name = "Database Connection Failure"
   combiner     = "OR"
@@ -161,7 +101,7 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
         "metric.type=\"cloudsql.googleapis.com/database/network/connections\""
       ])
 
-      duration        = "180s" # 3 minutes
+      duration        = "180s"
       comparison      = "COMPARISON_LT"
       threshold_value = 1
 
@@ -180,7 +120,6 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
   }
 }
 
-# Alert Policy: Critical Job Failure (Scraper)
 resource "google_monitoring_alert_policy" "scraper_not_running" {
   display_name = "Scraper Service Not Running for 24+ Hours"
   combiner     = "OR"
@@ -201,12 +140,12 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
         "metric.label.response_code_class=\"2xx\""
       ])
 
-      duration        = "86400s" # 24 hours
+      duration        = "86400s"
       comparison      = "COMPARISON_LT"
       threshold_value = 1
 
       aggregations {
-        alignment_period     = "3600s" # 1 hour
+        alignment_period     = "3600s"
         per_series_aligner   = "ALIGN_RATE"
         cross_series_reducer = "REDUCE_SUM"
       }
@@ -216,11 +155,10 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
   notification_channels = [google_monitoring_notification_channel.discord.name]
 
   alert_strategy {
-    auto_close = "3600s" # 1 hour
+    auto_close = "3600s"
   }
 }
 
-# Alert Policy: Pub/Sub Subscription Failures
 resource "google_monitoring_alert_policy" "pubsub_dead" {
   display_name = "Pub/Sub Subscriptions Failing"
   combiner     = "OR"
@@ -239,12 +177,12 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
         "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\""
       ])
 
-      duration        = "1200s" # 20 minutes
+      duration        = "1200s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 100 # More than 100 undelivered messages
+      threshold_value = 100
 
       aggregations {
-        alignment_period     = "300s" # 5 minutes
+        alignment_period     = "300s"
         per_series_aligner   = "ALIGN_MEAN"
         cross_series_reducer = "REDUCE_SUM"
         group_by_fields      = ["resource.label.subscription_id"]
@@ -259,7 +197,43 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
   }
 }
 
-# Alert Policy: High Error Rate
+resource "google_pubsub_topic" "monitoring_dlq" {
+  name = "monitoring-dlq-${var.environment}"
+
+  message_retention_duration = "604800s"
+
+  labels = {
+    environment = var.environment
+    purpose     = "centralized-monitoring-dlq"
+  }
+}
+
+resource "google_pubsub_subscription" "monitoring_dlq_subscription" {
+  name  = "monitoring-dlq-subscription-${var.environment}"
+  topic = google_pubsub_topic.monitoring_dlq.name
+
+  ack_deadline_seconds = 60
+
+  message_retention_duration = "604800s"
+
+  retain_acked_messages = true
+
+  labels = {
+    environment = var.environment
+    purpose     = "centralized-monitoring-dlq"
+  }
+}
+
+data "google_project" "monitoring_project" {
+  project_id = var.project_id
+}
+
+resource "google_pubsub_topic_iam_member" "monitoring_dlq_publisher" {
+  topic  = google_pubsub_topic.monitoring_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.monitoring_project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
 resource "google_monitoring_alert_policy" "high_error_rate" {
   for_each = toset(["backend", "crawler", "indexer", "rag"])
 
@@ -282,12 +256,12 @@ resource "google_monitoring_alert_policy" "high_error_rate" {
         "metric.label.response_code_class!=\"2xx\""
       ])
 
-      duration        = "600s" # 10 minutes
+      duration        = "600s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 0.5 # 50% error rate
+      threshold_value = 0.5
 
       aggregations {
-        alignment_period     = "300s" # 5 minutes
+        alignment_period     = "300s"
         per_series_aligner   = "ALIGN_RATE"
         cross_series_reducer = "REDUCE_SUM"
         group_by_fields      = ["resource.label.service_name"]

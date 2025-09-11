@@ -32,7 +32,6 @@ resource "google_iam_workload_identity_pool_provider" "github_actions" {
   }
 }
 
-# Bind the GitHub Actions service account to the workload identity pool
 resource "google_service_account_iam_binding" "github_actions_workload_identity" {
   service_account_id = google_service_account.github_actions.name
   role               = "roles/iam.workloadIdentityUser"
@@ -42,7 +41,6 @@ resource "google_service_account_iam_binding" "github_actions_workload_identity"
   ]
 }
 
-# Data source to get the project number
 data "google_project" "project" {
   project_id = "grantflow"
 }

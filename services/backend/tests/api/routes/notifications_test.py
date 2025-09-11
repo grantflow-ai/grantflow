@@ -15,7 +15,6 @@ async def test_list_notifications_empty(
     test_client: TestingClientType,
     project_member_user: None,
 ) -> None:
-    """Test listing notifications when none exist."""
     response = await test_client.get(
         "/notifications",
         headers={"Authorization": "Bearer some_token"},
@@ -36,7 +35,6 @@ async def test_list_notifications_with_data(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test listing notifications with sample data."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -83,7 +81,7 @@ async def test_list_notifications_with_data(
     assert len(data["notifications"]) == 1
     assert data["total"] == 1
     assert data["notifications"][0]["title"] == "Grant Deadline Approaching"
-    assert data["notifications"][0]["type"] == "deadline"
+    assert data["notifications"][0]["type"] == NotificationTypeEnum.DEADLINE.value
     assert data["notifications"][0]["read"] is False
     assert data["notifications"][0]["dismissed"] is False
     assert "project_id" in data["notifications"][0]
@@ -111,7 +109,6 @@ async def test_list_notifications_excludes_expired(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test that expired notifications are excluded."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -153,7 +150,6 @@ async def test_list_notifications_excludes_expired(
 async def test_list_notifications_unauthorized(
     test_client: TestingClientType,
 ) -> None:
-    """Test that unauthorized requests are rejected."""
     response = await test_client.get("/notifications")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -164,7 +160,6 @@ async def test_dismiss_notification_success(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test successfully dismissing a notification."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -201,7 +196,6 @@ async def test_dismiss_notification_not_found(
     test_client: TestingClientType,
     project_member_user: None,
 ) -> None:
-    """Test dismissing a non-existent notification."""
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
@@ -216,7 +210,6 @@ async def test_dismiss_notification_not_found(
 async def test_dismiss_notification_unauthorized(
     test_client: TestingClientType,
 ) -> None:
-    """Test that unauthorized requests are rejected."""
     notification_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(f"/notifications/{notification_id}/dismiss")
@@ -229,7 +222,6 @@ async def test_dismiss_notification_already_dismissed(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test dismissing an already dismissed notification."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -260,7 +252,6 @@ async def test_notification_with_extra_data(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test notification with extra metadata."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -290,8 +281,187 @@ async def test_notification_with_extra_data(
 
     assert len(data["notifications"]) == 1
     notification = data["notifications"][0]
-    assert notification["type"] == "warning"
+    assert notification["type"] == "WARNING"
     assert "extra_data" in notification
     assert notification["extra_data"]["action_url"] == "/projects/123/applications/456"
     assert notification["extra_data"]["priority"] == "high"
     assert notification["extra_data"]["category"] == "deadline_reminder"
+
+
+# SOFT-DELETE FILTERING TESTS - Critical security tests for notifications
+
+
+async def test_list_notifications_excludes_soft_deleted(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    """Test that soft-deleted notifications are not included in list results."""
+    firebase_uid = "a" * 128
+
+    # Create multiple notifications
+    notifications = []
+    async with async_session_maker() as session, session.begin():
+        for i in range(3):
+            notification = Notification(
+                firebase_uid=firebase_uid,
+                project_id=project.id,
+                type=NotificationTypeEnum.DEADLINE,
+                title=f"Test Notification {i}",
+                message=f"Test message {i}",
+                project_name=project.name,
+                read=False,
+                dismissed=False,
+            )
+            session.add(notification)
+            notifications.append(notification)
+        await session.commit()
+
+        for notification in notifications:
+            await session.refresh(notification)
+
+    # Get initial count
+    response = await test_client.get(
+        "/notifications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    initial_data = response.json()
+    initial_count = len(initial_data["notifications"])
+    assert initial_count == 3
+
+    # Soft-delete one notification
+    async with async_session_maker() as session:
+        notifications[0].soft_delete()
+        session.add(notifications[0])
+        await session.commit()
+
+    # Get count again - should be one less
+    response = await test_client.get(
+        "/notifications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    new_data = response.json()
+    new_count = len(new_data["notifications"])
+    assert new_count == initial_count - 1
+
+    # Verify the soft-deleted notification is not in the results
+    notification_ids = {notif["id"] for notif in new_data["notifications"]}
+    assert str(notifications[0].id) not in notification_ids
+
+    # Verify the other notifications are still there
+    assert str(notifications[1].id) in notification_ids
+    assert str(notifications[2].id) in notification_ids
+
+
+async def test_mark_notification_as_read_ignores_soft_deleted(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    """Test that marking soft-deleted notifications as read fails appropriately."""
+    firebase_uid = "a" * 128
+
+    # Create a notification
+    async with async_session_maker() as session, session.begin():
+        notification = Notification(
+            firebase_uid=firebase_uid,
+            project_id=project.id,
+            type=NotificationTypeEnum.DEADLINE,
+            title="Test Notification",
+            message="Test message",
+            project_name=project.name,
+            read=False,
+            dismissed=False,
+        )
+        session.add(notification)
+        await session.commit()
+        await session.refresh(notification)
+
+    # First verify we can mark it as read normally
+    response = await test_client.patch(
+        f"/notifications/{notification.id}",
+        headers={"Authorization": "Bearer some_token"},
+        json={"read": True},
+    )
+
+    # This might be 200 or 204 depending on implementation
+    assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT]
+
+    # Reset the notification to unread and soft-delete it
+    async with async_session_maker() as session:
+        notification.read = False
+        notification.soft_delete()
+        session.add(notification)
+        await session.commit()
+
+    # Try to mark the soft-deleted notification as read
+    response = await test_client.patch(
+        f"/notifications/{notification.id}",
+        headers={"Authorization": "Bearer some_token"},
+        json={"read": True},
+    )
+
+    # Should fail because the notification is soft-deleted
+    assert response.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.BAD_REQUEST]
+
+
+async def test_expired_notifications_excludes_soft_deleted(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    """Test that expired but soft-deleted notifications are not included."""
+    firebase_uid = "a" * 128
+
+    # Create notifications with different expiration states
+    async with async_session_maker() as session, session.begin():
+        # Active, non-expired notification
+        active_notification = Notification(
+            firebase_uid=firebase_uid,
+            project_id=project.id,
+            type=NotificationTypeEnum.DEADLINE,
+            title="Active Notification",
+            message="Active message",
+            project_name=project.name,
+            read=False,
+            dismissed=False,
+            expires_at=datetime.now(UTC) + timedelta(days=1),  # Future expiration
+        )
+
+        # Soft-deleted, non-expired notification
+        deleted_notification = Notification(
+            firebase_uid=firebase_uid,
+            project_id=project.id,
+            type=NotificationTypeEnum.WARNING,
+            title="Deleted Notification",
+            message="Deleted message",
+            project_name=project.name,
+            read=False,
+            dismissed=False,
+            expires_at=datetime.now(UTC) + timedelta(days=1),  # Future expiration but soft-deleted
+        )
+        deleted_notification.soft_delete()
+
+        session.add(active_notification)
+        session.add(deleted_notification)
+        await session.commit()
+
+    # Get notifications
+    response = await test_client.get(
+        "/notifications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+
+    # Should only return the active notification
+    assert len(data["notifications"]) == 1
+    assert data["notifications"][0]["title"] == "Active Notification"

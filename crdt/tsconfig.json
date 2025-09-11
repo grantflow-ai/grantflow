@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"incremental": false,
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"outDir": "dist",
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		"rootDir": ".",
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "ESNext",
+		"types": ["vitest/globals"]
+	},
+	"exclude": ["node_modules", "dist"],
+	"extends": "../tsconfig.json",
+	"include": ["src/**/*.ts", "testing/**/*.ts", "drizzle.config.ts", "vite.config.ts"]
+}

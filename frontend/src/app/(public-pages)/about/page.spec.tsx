@@ -1,19 +1,27 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import AboutPage from "@/app/(public-pages)/about/page";
+import AboutPage from "./page";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
 }));
 
-vi.mock("@/components/about/icons", () => ({
+vi.mock("@/components/landing-page/nav-header", () => ({
+	NavHeader: vi.fn().mockImplementation(() => <div data-testid="mock-nav-header" />),
+}));
+
+vi.mock("next/navigation", () => ({
+	usePathname: () => "/about",
+}));
+
+vi.mock("@/components/public-pages/icons/icons", () => ({
 	IconDraft: vi.fn().mockImplementation(() => <div data-testid="mock-icon-draft" />),
 	IconHourglass: vi.fn().mockImplementation(() => <div data-testid="mock-icon-hourglass" />),
 	IconOrganize: vi.fn().mockImplementation(() => <div data-testid="mock-icon-organize" />),
 	IconRefine: vi.fn().mockImplementation(() => <div data-testid="mock-icon-refine" />),
 }));
 
-vi.mock("@/components/shared/info-legal-page-components", () => ({
+vi.mock("@/components/public-pages/info-legal-page-components", () => ({
 	LegalPageContainer: vi.fn().mockImplementation(({ backgroundStack, children, ...props }) => (
 		<div
 			data-background={props.background}
@@ -64,11 +72,14 @@ vi.mock("next/image", () => ({
 	)),
 }));
 
-describe("AboutPage", () => {
+describe.sequential("AboutPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		cleanup();
 		render(<AboutPage />);
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the main content section correctly", () => {

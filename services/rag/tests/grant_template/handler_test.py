@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING, Any, cast
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
-    FundingOrganization,
     GrantApplication,
+    GrantingInstitution,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
 )
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from sqlalchemy import select
@@ -110,7 +111,7 @@ def mock_section_metadata() -> list[SectionMetadata]:
 
 @pytest.fixture
 def mock_extracted_cfp_data(
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
 ) -> dict[str, Any]:
     return {
         "organization_id": str(nih_organization.id),
@@ -157,6 +158,17 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Chunk 2: Application submission requirements",
                 "Chunk 3: Budget guidelines and restrictions",
             ],
+            "nlp_analysis": {
+                "orders": ["Funding eligibility criteria", "Application submission requirements"],
+                "money": ["Budget guidelines and restrictions"],
+                "date_time": [],
+                "writing_related": [],
+                "other_numbers": [],
+                "recommendations": [],
+                "positive_instructions": ["Application submission requirements"],
+                "negative_instructions": [],
+                "evaluation_criteria": ["Funding eligibility criteria"],
+            },
         },
         {
             "source_id": "source-2-id",
@@ -166,6 +178,17 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Web chunk 1: Organization mission and values",
                 "Web chunk 2: Past funded projects examples",
             ],
+            "nlp_analysis": {
+                "orders": [],
+                "money": [],
+                "date_time": [],
+                "writing_related": [],
+                "other_numbers": [],
+                "recommendations": ["Organization mission and values"],
+                "positive_instructions": [],
+                "negative_instructions": [],
+                "evaluation_criteria": ["Past funded projects examples"],
+            },
         },
     ]
 
@@ -173,11 +196,11 @@ def mock_rag_sources() -> list[RagSourceData]:
 @pytest.fixture
 async def test_grant_template(
     async_session_maker: async_sessionmaker[Any],
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     grant_application: GrantApplication,
 ) -> GrantTemplate:
     template = GrantTemplateFactory.build(
-        funding_organization_id=nih_organization.id,
+        granting_institution_id=nih_organization.id,
         grant_application_id=grant_application.id,
         grant_sections=None,
         submission_date=None,
@@ -261,7 +284,7 @@ async def grant_template_with_sources(
 async def test_extract_and_enrich_sections_with_mocked_llm(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
@@ -283,7 +306,7 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
         result = await extract_and_enrich_sections(
             cfp_content=sample_cfp_content,
             cfp_subject=cfp_subject,
-            organization=funding_organization,
+            organization=nih_organization,
             parent_id=parent_id,
             job_manager=mock_job_manager,
         )
@@ -328,8 +351,7 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
 async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     grant_template_with_sources: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
     mock_extracted_cfp_data: dict[str, Any],
@@ -366,6 +388,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
 
     assert mock_job_manager.add_notification.call_count > 0
 
+    assert result is not None
     assert result.id == grant_template_with_sources.id
     assert result.grant_sections is not None
     assert len(result.grant_sections) == 3
@@ -396,8 +419,8 @@ async def test_get_rag_sources_data(
     grant_template_with_sources: GrantTemplate,
 ) -> None:
     async with async_session_maker() as session:
-        stmt = select(GrantTemplateRagSource.rag_source_id).where(
-            GrantTemplateRagSource.grant_template_id == grant_template_with_sources.id
+        stmt = select(GrantTemplateSource.rag_source_id).where(
+            GrantTemplateSource.grant_template_id == grant_template_with_sources.id
         )
         result = await session.execute(stmt)
         source_ids = [str(row[0]) for row in result.fetchall()]
@@ -476,31 +499,41 @@ async def test_grant_template_generation_pipeline_missing_sources(
     async_session_maker: async_sessionmaker[Any],
     test_grant_template: GrantTemplate,
 ) -> None:
-    """Test that the pipeline fails gracefully when grant template has no sources."""
     mock_job_manager = AsyncMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
-    with (
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
-        pytest.raises(ValidationError) as exc_info,
-    ):
-        await grant_template_generation_pipeline_handler(
+    with patch(
+        "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
+    ) as mock_verify:
+        mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
+
+        result = await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
-    assert "no rag sources found" in str(exc_info.value).lower()
+    assert result is None
+    mock_job_manager.update_job_status.assert_called_with(
+        status=RagGenerationStatusEnum.FAILED,
+        error_message=ANY,
+        error_details=ANY,
+    )
+    mock_job_manager.add_notification.assert_any_call(
+        parent_id=test_grant_template.grant_application_id,
+        event=NotificationEvents.INDEXING_TIMEOUT,
+        message=ANY,
+        notification_type="error",
+        data=ANY,
+    )
 
 
 async def test_grant_template_generation_pipeline_unindexed_sources(
     async_session_maker: async_sessionmaker[Any],
     test_grant_template: GrantTemplate,
 ) -> None:
-    """Test that the pipeline fails when sources are not properly indexed."""
-
     source = RagFileFactory.build(
         text_content="Test content",
         source_type="rag_file",
@@ -525,28 +558,36 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
-    mock_verify = AsyncMock(side_effect=ValidationError("No rag sources found"))
+    mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
 
-    with (
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify),
-        pytest.raises(ValidationError) as exc_info,
-    ):
-        await grant_template_generation_pipeline_handler(
+    with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):
+        result = await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
-    assert "no rag sources found" in str(exc_info.value).lower()
+    assert result is None
+    mock_job_manager.update_job_status.assert_called_with(
+        status=RagGenerationStatusEnum.FAILED,
+        error_message=ANY,
+        error_details=ANY,
+    )
+    mock_job_manager.add_notification.assert_any_call(
+        parent_id=test_grant_template.grant_application_id,
+        event=NotificationEvents.INDEXING_FAILED,
+        message=ANY,
+        notification_type="error",
+        data=ANY,
+    )
 
 
 async def test_extract_and_enrich_sections_empty_cfp_content(
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
-    """Test extract_and_enrich_sections with empty CFP content."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -565,7 +606,7 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
         result = await extract_and_enrich_sections(
             cfp_content=[],
             cfp_subject=cfp_subject,
-            organization=funding_organization,
+            organization=nih_organization,
             parent_id=parent_id,
             job_manager=mock_job_manager,
         )
@@ -576,9 +617,8 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
 async def test_extract_and_enrich_sections_validation_error(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
 ) -> None:
-    """Test that extract_and_enrich_sections handles validation errors properly."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -592,7 +632,7 @@ async def test_extract_and_enrich_sections_validation_error(
             await extract_and_enrich_sections(
                 cfp_content=sample_cfp_content,
                 cfp_subject=cfp_subject,
-                organization=funding_organization,
+                organization=nih_organization,
                 parent_id=parent_id,
                 job_manager=mock_job_manager,
             )
@@ -603,10 +643,9 @@ async def test_extract_and_enrich_sections_validation_error(
 async def test_extract_and_enrich_sections_backend_error(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
 ) -> None:
-    """Test that extract_and_enrich_sections handles backend errors properly."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -626,9 +665,73 @@ async def test_extract_and_enrich_sections_backend_error(
             await extract_and_enrich_sections(
                 cfp_content=sample_cfp_content,
                 cfp_subject=cfp_subject,
-                organization=funding_organization,
+                organization=nih_organization,
                 parent_id=parent_id,
                 job_manager=mock_job_manager,
             )
 
         assert "LLM service unavailable" in str(exc_info.value)
+
+
+async def test_get_rag_sources_data_with_nlp_analysis(
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sources: GrantTemplate,
+) -> None:
+    async with async_session_maker() as session:
+        stmt = select(GrantTemplateSource.rag_source_id).where(
+            GrantTemplateSource.grant_template_id == grant_template_with_sources.id
+        )
+        result = await session.execute(stmt)
+        source_ids = [str(row[0]) for row in result.fetchall()]
+
+    with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text_async") as mock_categorize:
+        mock_categorize.return_value = {
+            "orders": ["Application must include detailed budget"],
+            "money": ["Budget should not exceed $100,000"],
+            "date_time": ["Deadline is March 15, 2025"],
+            "writing_related": ["Proposal should be 10 pages maximum"],
+            "other_numbers": [],
+            "recommendations": ["Consider including preliminary data"],
+            "evaluation_criteria": ["Proposals will be evaluated on merit"],
+            "positive_instructions": [],
+            "negative_instructions": [],
+        }
+
+        result = await get_rag_sources_data(
+            source_ids=source_ids,
+            session_maker=async_session_maker,
+        )
+
+    assert len(result) == 2
+
+    for source_data in result:
+        assert "nlp_analysis" in source_data
+        nlp_analysis = source_data["nlp_analysis"]
+
+        assert isinstance(nlp_analysis, dict)
+        assert "orders" in nlp_analysis
+        assert "money" in nlp_analysis
+        assert "date_time" in nlp_analysis
+
+        assert "Application must include detailed budget" in nlp_analysis["orders"]
+        assert "Budget should not exceed $100,000" in nlp_analysis["money"]
+        assert "Deadline is March 15, 2025" in nlp_analysis["date_time"]
+
+    assert mock_categorize.call_count == 2
+
+
+def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSourceData]) -> None:
+    formatted = format_rag_sources_for_prompt(mock_rag_sources)
+
+    assert "NLP Analysis:" in formatted
+    assert "NLP Analysis" in formatted
+    assert "orders" in formatted
+    assert "money" in formatted
+    assert "evaluation_criteria" in formatted
+
+    assert "Funding eligibility criteria" in formatted
+    assert "Budget guidelines and restrictions" in formatted
+    assert "Organization mission and values" in formatted
+
+    assert "Source 0: RAG_FILE" in formatted
+    assert "Source 1: RAG_URL" in formatted

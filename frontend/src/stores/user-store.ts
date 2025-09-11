@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import type { UserInfo } from "@/types/user";
 import { deleteProfilePhoto, getFirebaseAuth, uploadProfilePhoto } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 interface UserStore {
 	clearUser: () => void;
@@ -135,7 +135,7 @@ export const useUserStore = create<UserStore>()(
 				user: null,
 			}),
 			{
-				name: "user-store",
+				name: "user-storage",
 			},
 		),
 		{

@@ -10,12 +10,13 @@ from litestar.testing import AsyncTestClient
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
+    Project,
     RagFile,
     RagSource,
 )
@@ -83,7 +84,7 @@ def create_pubsub_event(object_path: str, event_type: str = "OBJECT_FINALIZE") -
 
 async def test_get_gcs_notification_data() -> None:
     valid_event = create_pubsub_event("test/path")
-    notification, trace_id = get_gcs_notification_data(valid_event)
+    notification, _trace_id = get_gcs_notification_data(valid_event)
     assert notification is not None
     assert notification["bucket_name"] == "test-bucket"
     assert notification["object_name"] == "test/path"
@@ -97,26 +98,26 @@ async def test_get_gcs_notification_data() -> None:
             attributes={},
         )
     )
-    notification, trace_id = get_gcs_notification_data(invalid_event)
+    notification, _trace_id = get_gcs_notification_data(invalid_event)
     assert notification is None
 
 
 async def test_handle_pubsub_message(mock_parse_object_uri: MagicMock) -> None:
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": UUID("987e4567-e89b-12d3-a456-426614174000"),
+        "entity_type": "grant_application",
+        "entity_id": UUID("987e4567-e89b-12d3-a456-426614174000"),
         "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
         "blob_name": "test.pdf",
     }
 
-    object_path = "123e4567-e89b-12d3-a456-426614174000/987e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/test.pdf"
+    object_path = "grant_application/987e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/test.pdf"
     event = create_pubsub_event(object_path)
 
-    result, obj_path, trace_id = await handle_pubsub_message(event)
+    result, obj_path, _trace_id = await handle_pubsub_message(event)
 
     assert isinstance(result, dict)
-    assert result["project_id"] == UUID("123e4567-e89b-12d3-a456-426614174000")
-    assert result["parent_id"] == UUID("987e4567-e89b-12d3-a456-426614174000")
+    assert result["entity_type"] == "grant_application"
+    assert result["entity_id"] == UUID("987e4567-e89b-12d3-a456-426614174000")
     assert result["source_id"] == UUID("550e8400-e29b-41d4-a716-446655440000")
     assert result["blob_name"] == "test.pdf"
     assert obj_path == object_path
@@ -131,6 +132,7 @@ async def test_handle_file_indexing_grant_application(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -153,12 +155,12 @@ async def test_handle_file_indexing_grant_application(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"123e4567-e89b-12d3-a456-426614174000/{grant_application.id}/{source_id}/document.pdf",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/document.pdf",
                 }
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -167,13 +169,13 @@ async def test_handle_file_indexing_grant_application(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
-    file_path = f"123e4567-e89b-12d3-a456-426614174000/{grant_application.id}/{source_id}/document.pdf"
+    file_path = f"grant_application/{grant_application.id}/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -191,7 +193,7 @@ async def test_handle_file_indexing_grant_application(
         assert rag_file.mime_type == "application/pdf"
 
         app_file = await session.scalar(
-            select(GrantApplicationRagSource).where(GrantApplicationRagSource.rag_source_id == source_id)
+            select(GrantApplicationSource).where(GrantApplicationSource.rag_source_id == source_id)
         )
         assert app_file is not None
         assert app_file.grant_application_id == grant_application.id
@@ -217,7 +219,7 @@ async def test_handle_file_indexing_funding_organization(
     mock_process_source: AsyncMock,
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
     mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -240,27 +242,27 @@ async def test_handle_file_indexing_funding_organization(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"{funding_organization.id}/{funding_organization.id}/{source_id}/guidelines.pdf",
+                    "object_path": f"granting_institution/{granting_institution.id}/{source_id}/guidelines.pdf",
                 }
             )
         )
         await session.execute(
-            insert(FundingOrganizationRagSource).values(
+            insert(GrantingInstitutionSource).values(
                 {
                     "rag_source_id": source_id,
-                    "funding_organization_id": funding_organization.id,
+                    "granting_institution_id": granting_institution.id,
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": funding_organization.id,
-        "parent_id": funding_organization.id,
+        "entity_type": "granting_institution",
+        "entity_id": granting_institution.id,
         "source_id": source_id,
         "blob_name": "guidelines.pdf",
     }
 
-    file_path = f"{funding_organization.id}/{funding_organization.id}/{source_id}/guidelines.pdf"
+    file_path = f"granting_institution/{granting_institution.id}/{source_id}/guidelines.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -273,21 +275,16 @@ async def test_handle_file_indexing_funding_organization(
         assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
 
         org_file = await session.scalars(
-            select(FundingOrganizationRagSource).where(FundingOrganizationRagSource.rag_source_id == source.id)
+            select(GrantingInstitutionSource).where(GrantingInstitutionSource.rag_source_id == source.id)
         )
         org_file_record = org_file.first()
         assert org_file_record is not None
-        assert org_file_record.funding_organization_id == funding_organization.id
+        assert org_file_record.granting_institution_id == granting_institution.id
 
     mock_download_blob.assert_awaited_once_with(file_path)
     mock_process_source.assert_awaited_once()
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(funding_organization.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["data"]["identifier"] == "guidelines.pdf"
+    mock_publish_notification.assert_not_called()
 
 
 async def test_handle_file_indexing_grant_template(
@@ -297,10 +294,9 @@ async def test_handle_file_indexing_grant_template(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
+    project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
-    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -321,12 +317,12 @@ async def test_handle_file_indexing_grant_template(
                     "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"{project_id}/{grant_template.id}/{source_id}/template.docx",
+                    "object_path": f"grant_template/{grant_template.id}/{source_id}/template.docx",
                 }
             )
         )
         await session.execute(
-            insert(GrantTemplateRagSource).values(
+            insert(GrantTemplateSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_template_id": grant_template.id,
@@ -335,13 +331,13 @@ async def test_handle_file_indexing_grant_template(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": project_id,
-        "parent_id": grant_template.id,
+        "entity_type": "grant_template",
+        "entity_id": grant_template.id,
         "source_id": source_id,
         "blob_name": "template.docx",
     }
 
-    file_path = f"{project_id}/{grant_template.id}/{source_id}/template.docx"
+    file_path = f"grant_template/{grant_template.id}/{source_id}/template.docx"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -360,7 +356,7 @@ async def test_handle_file_indexing_grant_template(
         assert file.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
         template_file = await session.scalars(
-            select(GrantTemplateRagSource).where(GrantTemplateRagSource.rag_source_id == source.id)
+            select(GrantTemplateSource).where(GrantTemplateSource.rag_source_id == source.id)
         )
         template_file_record = template_file.first()
         assert template_file_record is not None
@@ -371,7 +367,7 @@ async def test_handle_file_indexing_grant_template(
 
     mock_publish_notification.assert_called_once()
     call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_template.id)
+    assert str(call_kwargs["parent_id"]) == str(grant_template.grant_application_id)
     assert call_kwargs["event"] == "source_processing"
     assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
     assert call_kwargs["data"]["identifier"] == "template.docx"
@@ -399,14 +395,16 @@ async def test_handle_file_indexing_unsupported_extension(
     grant_application: GrantApplication,
     mock_publish_notification: AsyncMock,
 ) -> None:
+    source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
-        "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
+        "source_id": source_id,
         "blob_name": "document.unsupported",
     }
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.unsupported"
+    file_path = f"grant_application/{grant_application.id}/{source_id}/document.unsupported"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -422,16 +420,18 @@ async def test_handle_file_indexing_download_error(
     grant_application: GrantApplication,
     mock_publish_notification: AsyncMock,
 ) -> None:
+    source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
-        "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
+        "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
     mock_download_blob.side_effect = Exception("Download error")
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = f"grant_application/{grant_application.id}/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -449,7 +449,6 @@ async def test_handle_file_indexing_processing_error(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    project_id = UUID("123e4567-e89b-12d3-a456-426614174000")
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     async with async_session_maker() as session, session.begin():
@@ -471,12 +470,12 @@ async def test_handle_file_indexing_processing_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/document.pdf",
                 }
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -485,15 +484,15 @@ async def test_handle_file_indexing_processing_error(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": project_id,
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
     mock_process_source.side_effect = Exception("Processing error")
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = f"grant_application/{grant_application.id}/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -543,14 +542,14 @@ async def test_handle_database_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/document.pdf",
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
@@ -558,7 +557,7 @@ async def test_handle_database_error(
     with patch("services.indexer.src.main.update_source_indexing_status") as mock_update:
         mock_update.side_effect = Exception("Database error")
 
-        file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+        file_path = f"grant_application/{grant_application.id}/{source_id}/document.pdf"
         pubsub_event = create_pubsub_event(file_path)
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -596,7 +595,8 @@ async def test_handle_file_indexing_existing_file(
     grant_application: GrantApplication,
     mock_publish_notification: AsyncMock,
 ) -> None:
-    object_path = f"project/ws-123/grant_application/{grant_application.id}/existing.pdf"
+    source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
+    object_path = f"grant_application/{grant_application.id}/{source_id_placeholder}/existing.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -622,7 +622,7 @@ async def test_handle_file_indexing_existing_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -631,8 +631,8 @@ async def test_handle_file_indexing_existing_file(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "existing.pdf",
     }
@@ -684,21 +684,29 @@ async def test_handle_file_indexing_file_parsing_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/document.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
     mock_process_source.side_effect = FileParsingError("Failed to parse file", context={"filename": "document.pdf"})
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = f"grant_application/{grant_application.id}/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -728,7 +736,8 @@ async def test_handle_file_indexing_retry_failed_file(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    object_path = f"project/ws-123/grant_application/{grant_application.id}/failed.pdf"
+    source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
+    object_path = f"grant_application/{grant_application.id}/{source_id_placeholder}/failed.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -754,7 +763,7 @@ async def test_handle_file_indexing_retry_failed_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -763,8 +772,8 @@ async def test_handle_file_indexing_retry_failed_file(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
         "source_id": source_id,
         "blob_name": "failed.pdf",
     }

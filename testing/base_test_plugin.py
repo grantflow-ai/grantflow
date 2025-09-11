@@ -1,6 +1,5 @@
 import os
 from logging import Logger, getLogger
-from typing import Any
 
 import pytest
 from dotenv import load_dotenv
@@ -24,8 +23,8 @@ def stub_env() -> None:
     os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
     os.environ.setdefault("ADMIN_ACCESS_CODE", "123456")
     os.environ.setdefault("ANTHROPIC_API_KEY", "sd-ant-api03-ABC123")
-    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow")
-    os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
+
+    os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-key")
 
 
 @pytest.fixture(scope="session")
@@ -46,12 +45,3 @@ def configure_structlog(log_output: LogCapture) -> None:
 @pytest.fixture(scope="session")
 def logger() -> Logger:
     return getLogger("e2e")
-
-
-def pytest_configure(config: Any) -> None:
-    """Configure pytest-xdist based on environment."""
-    if os.environ.get("CI") == "true" and config.getoption("-n") == "auto":
-        config.option.numprocesses = 2
-
-    if num_workers := os.environ.get("PYTEST_XDIST_WORKERS"):
-        config.option.numprocesses = int(num_workers)

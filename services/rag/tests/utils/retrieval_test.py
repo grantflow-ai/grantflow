@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from packages.db.src.tables import FundingOrganizationRagSource, TextVector
+from packages.db.src.tables import GrantingInstitutionSource, TextVector
 from packages.shared_utils.src.exceptions import EvaluationError
 from pytest_mock import MockFixture
 
@@ -52,7 +52,7 @@ async def test_handle_retrieval_with_organization_id(mock_text_vectors: list[Tex
 
     assert result == mock_text_vectors
     mock_retrieve_vectors.assert_called_once()
-    assert mock_retrieve_vectors.call_args[1]["file_table_cls"] == FundingOrganizationRagSource
+    assert mock_retrieve_vectors.call_args[1]["file_table_cls"] == GrantingInstitutionSource
 
 
 async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], mocker: MockFixture) -> None:

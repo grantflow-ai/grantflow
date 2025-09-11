@@ -1,12 +1,10 @@
 version: "3"
 
 vars:
-  FRONTEND_DIR: frontend
   PYTHON_PATH: "."
 
 tasks:
   # ==============================================================================
-  # MAIN COMMANDS - Primary developer workflows
   # ==============================================================================
 
   setup:
@@ -14,16 +12,26 @@ tasks:
     cmds:
       - task: frontend:install
       - task: backend:install
-      - uv run lefthook install
       - task: generate:ai-rules
+      - uv run lefthook install
+
+  setup:claude:
+    desc: Setup Claude MCP integrations (Model Context Protocol)
+    preconditions:
+      - sh: command -v claude
+        msg: "Claude CLI is not installed or not in PATH. Please install Claude Desktop first."
+    cmds:
+      - claude mcp add --transport sse linear-server https://mcp.linear.app/sse
+      - claude mcp add playwright "npx -y @playwright/mcp@latest"
+      - claude mcp add ai-rulez "npx -y @ai-rulez/mcp@latest mcp"
 
   dev:
-    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
+    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)
     deps:
       - task: _dev:check
-      - task: db:migrate
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
+      - task: db:migrate
     cmds:
       - echo "📝 Service URLs:"
       - echo "  - Backend API{{":"}} http://localhost:8000"
@@ -31,6 +39,7 @@ tasks:
       - echo "  - Indexer{{":"}} http://localhost:8001"
       - echo "  - Crawler{{":"}} http://localhost:8002"
       - echo "  - RAG{{":"}} http://localhost:8003"
+      - echo "  - CRDT Server{{":"}} ws://localhost:8090"
       - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
       - echo "  - GCS Emulator{{":"}} http://localhost:4443"
       - echo ""
@@ -67,19 +76,56 @@ tasks:
       - task: service:indexer:test:e2e
       - task: service:crawler:test:e2e
       - task: service:rag:test:e2e
+      - task: service:scraper:test:e2e
 
   lint:
     desc: Run all linters and formatters
     cmds:
       - task: lint:all
 
+  format:
+    desc: Format code in all packages (frontend and editor)
+    cmds:
+      - pnpm --parallel --filter './frontend' --filter './editor' format
+
+  build:
+    desc: Build both frontend and editor packages
+    cmds:
+      - pnpm --filter './frontend' --filter './editor' build
+
+  knip:
+    desc: Check for unused dependencies and dead code in frontend/editor packages
+    cmds:
+      - task: knip:crdt
+      - task: knip:frontend
+      - task: knip:editor
+
+  knip:frontend:
+    desc: Check frontend package only for unused dependencies and dead code
+    dir: frontend
+    cmds:
+      - pnpm knip
+
+  knip:editor:
+    desc: Check editor package only for unused dependencies and dead code
+    dir: editor
+    cmds:
+      - pnpm knip
+
+  knip:crdt:
+    desc: Check crdt package only for unused dependencies and dead code
+    dir: crdt
+    cmds:
+      - pnpm knip
+
   update:
     desc: Update all dependencies (frontend and backend) to latest versions
     cmds:
+      - corepack up
       - task: frontend:update
       - task: backend:update
-      - echo "Ensuring cloud_functions requirements.txt is up to date..."
-      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
+      - echo "Ensuring functions requirements.txt is up to date..."
+      - uv pip compile functions/pyproject.toml -o functions/requirements.txt
 
   generate:api-types:
     desc: Generate TypeScript from backend API
@@ -89,14 +135,18 @@ tasks:
       - uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
       - task: lint:frontend
 
+  generate:openapi-schema:
+    desc: Generate the OpenAPI schema from backend API
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run litestar --app services.backend.src.main:app schema openapi --output openapi.json
+      - pnpm biome format --write openapi.json
+
   generate:ai-rules:
     desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
     cmds:
-      - uv run ai-rulez generate --recursive
-
-  # ==============================================================================
-  # DATABASE COMMANDS
-  # ==============================================================================
+      - uvx ai-rulez generate --recursive
 
   db:up:
     desc: Start the local PostgreSQL database container if not already running
@@ -222,7 +272,6 @@ tasks:
         vars:
           SECONDS: "2"
       - echo "Dropping the development database..."
-      # Terminate existing connections
       - cmd: |
           docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "
             SELECT pg_terminate_backend(pid)
@@ -230,11 +279,8 @@ tasks:
             WHERE datname = '{{.DB_NAME}}' AND pid <> pg_backend_pid();
           " || true
         ignore_error: true
-      # Drop the database
       - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "DROP DATABASE IF EXISTS {{.DB_NAME}};"
-      # Recreate the database
       - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "CREATE DATABASE {{.DB_NAME}} OWNER {{.DB_USER}};"
-      # Create required extensions
       - echo "Creating database extensions..."
       - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
       - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
@@ -247,86 +293,154 @@ tasks:
       - task: db:migrate
       - echo "✅ Database reset complete!"
 
-  # ==============================================================================
-  # FRONTEND COMMANDS
-  # ==============================================================================
-
   frontend:install:
-    desc: Install frontend dependencies using pnpm
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Install dependencies for both frontend folders using pnpm workspace
     cmds:
-      - pnpm install
+      - pnpm install -r
 
   frontend:update:
-    desc: Update frontend dependencies to latest versions
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Update dependencies for both frontend folders to latest versions
     cmds:
-      - pnpm up --latest
-
-  frontend:dev:
-    desc: Start the frontend development server
-    dir: "{{.FRONTEND_DIR}}"
-    dotenv: [".env"]
-    cmds:
-      - pnpm dev
-
-  frontend:build:
-    desc: Build the frontend application for production
-    dir: "{{.FRONTEND_DIR}}"
-    cmds:
-      - pnpm build
-
-  frontend:test:
-    desc: Run frontend tests (non-interactive mode)
-    dir: "{{.FRONTEND_DIR}}"
-    dotenv: [".env"]
-    cmds:
-      - pnpm test
+      - pnpm up --latest -r
 
   frontend:test:watch:
-    desc: Run frontend tests (interactive mode)
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Run frontend tests (interactive mode) - main frontend only
+    dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test:watch
 
-  frontend:test:coverage:
-    desc: Run frontend tests with coverage reporting
-    dir: "{{.FRONTEND_DIR}}"
-    dotenv: [".env"]
-    cmds:
-      - pnpm test:coverage
-
   frontend:storybook:
-    desc: Start the frontend Storybook server
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Start the main frontend Storybook server
+    dir: frontend
     cmds:
       - pnpm run storybook
 
   frontend:test:e2e:
     desc: Run frontend end-to-end tests with Playwright
-    dir: "{{.FRONTEND_DIR}}"
+    dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test:e2e
 
   frontend:test:e2e:mock:
     desc: Run frontend e2e tests with mock API
-    dir: "{{.FRONTEND_DIR}}"
+    dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test:e2e:mock
 
   frontend:test:e2e:ui:
     desc: Run frontend e2e tests with Playwright UI
-    dir: "{{.FRONTEND_DIR}}"
+    dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test:e2e:ui
 
-  # ==============================================================================
-  # BACKEND COMMANDS
-  # ==============================================================================
+  frontend:dev:
+    desc: Start the main frontend development server
+    dir: frontend
+    dotenv: [".env"]
+    cmds:
+      - pnpm dev
+
+  frontend:build:
+    desc: Build the main frontend application for production
+    dir: frontend
+    cmds:
+      - pnpm build
+
+  frontend:test:
+    desc: Run main frontend tests (non-interactive mode)
+    dir: frontend
+    dotenv: [".env"]
+    cmds:
+      - pnpm test
+
+  frontend:test:coverage:
+    desc: Run main frontend tests with coverage reporting
+    dir: frontend
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:coverage
+
+  editor:dev:
+    desc: Start the editor development server
+    dir: editor
+    cmds:
+      - pnpm dev
+
+  editor:build:
+    desc: Build the editor application for production
+    dir: editor
+    cmds:
+      - pnpm build
+
+  editor:test:
+    desc: Run editor tests (non-interactive mode)
+    dir: editor
+    cmds:
+      - pnpm test
+
+  editor:test:watch:
+    desc: Run editor tests (interactive mode)
+    dir: editor
+    cmds:
+      - pnpm test:watch
+
+  editor:test:coverage:
+    desc: Run editor tests with coverage reporting
+    dir: editor
+    cmds:
+      - pnpm test:coverage
+
+  editor:storybook:
+    desc: Start the editor Storybook server
+    dir: editor
+    cmds:
+      - pnpm run storybook
+
+  crdt:dev:
+    desc: Start the CRDT server in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dir: crdt
+    dotenv: [".env"]
+    cmds:
+      - pnpm run dev
+
+  crdt:build:
+    desc: Build CRDT server for production
+    dir: crdt
+    cmds:
+      - pnpm run build
+
+  crdt:test:
+    desc: Run CRDT server tests (non-interactive mode)
+    dir: crdt
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test
+
+  crdt:test:watch:
+    desc: Run CRDT server tests (interactive mode)
+    dir: crdt
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test:watch
+
+  crdt:test:coverage:
+    desc: Run CRDT server tests with coverage reporting
+    dir: crdt
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test:coverage
+
+  crdt:lint:
+    desc: Lint CRDT server code with Biome and ESLint
+    dir: crdt
+    cmds:
+      - pnpm run lint
 
   backend:install:
     desc: Install services dependencies using uv
@@ -345,9 +459,9 @@ tasks:
       - uv run uv-bump --pyproject-toml ./services/scraper/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./cloud_functions/pyproject.toml
-      - echo "Regenerating cloud_functions requirements.txt for deployment..."
-      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
+      - uv run uv-bump --pyproject-toml ./functions/pyproject.toml
+      - echo "Regenerating functions requirements.txt for deployment..."
+      - uv pip compile functions/pyproject.toml -o functions/requirements.txt
       - task: backend:install
 
   backend:test:
@@ -357,11 +471,8 @@ tasks:
       - task: service:indexer:test
       - task: service:crawler:test
       - task: service:rag:test
+      - task: crdt:test
       - task: _packages:test
-
-  # ==============================================================================
-  # SERVICE COMMANDS - Individual service management
-  # ==============================================================================
 
   service:backend:dev:
     desc: Start the backend API service in development mode with hot-reloading
@@ -569,9 +680,58 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
-  # ==============================================================================
-  # EMULATOR COMMANDS - Standalone emulator management
-  # ==============================================================================
+
+  service:scraper:test:
+    desc: Run scraper service tests with detailed output (parallel execution)
+    dotenv: [".env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests -v
+
+  service:scraper:test:serial:
+    desc: Run scraper service tests in serial mode (no parallelization)
+    dotenv: [".env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests -v -n0
+
+  service:scraper:test:e2e:
+    desc: Run scraper service end-to-end tests
+    dotenv: [".env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests/e2e/ -v
+
+  service:scraper:test:e2e:smoke:
+    desc: Run scraper e2e smoke tests (< 5 min)
+    dotenv: [".env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests/e2e/ -m smoke -v
+
+  service:scraper:test:e2e:quality:
+    desc: Run scraper e2e quality assessment tests (< 10 min)
+    dotenv: [".env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests/e2e/ -m quality_assessment -v
+
+  service:scraper:test:e2e:full:
+    desc: Run complete scraper e2e test suite (10+ min)
+    dotenv: [".env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/scraper/tests/e2e/ -m e2e_full -v
 
   emulator:pubsub:up:
     desc: Start the Google Cloud Pub/Sub emulator for local development
@@ -583,16 +743,13 @@ tasks:
     cmds:
       - docker compose --profile gcs up
 
-  # ==============================================================================
-  # LINTING COMMANDS - Code quality and formatting
-  # ==============================================================================
-
   lint:all:
     desc: Run all linters and formatters on all files
     deps:
       - task: lint:frontend
       - task: lint:python
       - task: lint:codespell
+      - task: lint:terraform
 
   lint:frontend:
     desc: Run all frontend linters (Biome, ESLint, and TypeScript)
@@ -608,15 +765,55 @@ tasks:
       - task: lint:mypy
 
   lint:biome:
-    desc: Format and lint code with Biome
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Format and lint code with Biome for frontend folders and crdt
+    deps:
+      - task: lint:biome:frontend
+      - task: lint:biome:editor
+      - task: lint:biome:crdt
+
+  lint:biome:frontend:
+    desc: Format and lint frontend code with Biome
+    dir: frontend
+    cmds:
+      - pnpm biome check --write .
+      - pnpm biome format --write .
+
+  lint:biome:editor:
+    desc: Format and lint editor code with Biome
+    dir: editor
+    cmds:
+      - pnpm biome check --write .
+      - pnpm biome format --write .
+
+  lint:biome:crdt:
+    desc: Format and lint crdt code with Biome
+    dir: crdt
     cmds:
       - pnpm biome check --write .
       - pnpm biome format --write .
 
   lint:eslint:
-    desc: Lint JavaScript/TypeScript with ESLint
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Lint JavaScript/TypeScript with ESLint for both frontend folders
+    deps:
+      - task: lint:eslint:frontend
+      - task: lint:eslint:editor
+      - task: lint:eslint:crdt
+
+  lint:eslint:frontend:
+    desc: Lint frontend JavaScript/TypeScript with ESLint
+    dir: frontend
+    cmds:
+      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
+
+  lint:eslint:editor:
+    desc: Lint editor JavaScript/TypeScript with ESLint
+    dir: editor
+    cmds:
+      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
+
+  lint:eslint:crdt:
+    desc: Lint crdt JavaScript/TypeScript with ESLint
+    dir: crdt
     cmds:
       - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 
@@ -637,24 +834,42 @@ tasks:
       - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js,playwright-report,test-results"
 
   lint:typescript:
-    desc: Type check TypeScript code
-    dir: "{{.FRONTEND_DIR}}"
+    desc: Type check TypeScript code for frontend, editor, and crdt
+    deps:
+      - task: lint:typescript:frontend
+      - task: lint:typescript:editor
+      - task: lint:typescript:crdt
+
+  lint:typescript:frontend:
+    desc: Type check frontend TypeScript code
+    dir: frontend
     cmds:
       - pnpm typecheck
 
-  # Terraform linting tasks (specialized - not included in lint:all)
+  lint:typescript:editor:
+    desc: Type check editor TypeScript code
+    dir: editor
+    cmds:
+      - pnpm typecheck
+
+  lint:typescript:crdt:
+    desc: Type check crdt TypeScript code
+    dir: crdt
+    cmds:
+      - pnpm typecheck
+
   lint:terraform:
     desc: Run all Terraform linters (tofu validate, tflint, trivy)
     deps:
+      - task: lint:terraform:fmt
       - task: lint:terraform:validate
       - task: lint:terraform:tflint
       - task: lint:terraform:trivy
 
   lint:terraform:validate:
     desc: Validate Terraform configuration using tofu validate
-    preconditions:
-      - sh: command -v tofu
-        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    status:
+      - '! command -v tofu'
     cmds:
       - echo "Validating terraform configuration..."
       - tofu -chdir=terraform init -backend=false
@@ -662,34 +877,27 @@ tasks:
 
   lint:terraform:fmt:
     desc: Format Terraform code using tofu fmt
-    preconditions:
-      - sh: command -v tofu
-        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    status:
+      - '! command -v tofu'
     cmds:
       - echo "Formatting terraform code..."
       - tofu fmt -recursive ./terraform
 
   lint:terraform:tflint:
     desc: Lint Terraform code with tflint
-    preconditions:
-      - sh: command -v tflint
-        msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
+    status:
+      - '! command -v tflint'
     cmds:
       - echo "Running tflint on terraform directory..."
       - tflint --chdir=terraform
 
   lint:terraform:trivy:
     desc: Security scan Terraform code with trivy
-    preconditions:
-      - sh: command -v trivy
-        msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
+    status:
+      - '! command -v trivy'
     cmds:
       - echo "Running trivy on terraform directory..."
       - trivy config ./terraform
-
-  # ==============================================================================
-  # GITHUB ACTIONS - GitHub workflow commands
-  # ==============================================================================
 
   gh:deploy:backend:
     desc: Deploy backend service to Cloud Run via GitHub Actions
@@ -716,23 +924,21 @@ tasks:
     cmds:
       - gh workflow run "Deploy to Cloud Run" --ref development -f service=scraper -f use_latest=true
 
-  # ==============================================================================
-  # CLOUD FUNCTIONS - Cloud Functions development and deployment
-  # ==============================================================================
-
   cloud-functions:generate-requirements:
     desc: Generate requirements.txt files from pyproject.toml for cloud functions
     cmds:
       - echo "📦 Generating requirements.txt for root cloud functions..."
-      - cd cloud_functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
+      - cd functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
+      - echo "🔧 Removing local file references from requirements.txt..."
+      - cd functions && sed -i.bak -e '/-e file:\/\//d' -e '/^\.\/packages\//d' requirements.txt && rm requirements.txt.bak
       - echo "✅ All requirements.txt files generated successfully!"
 
   cloud-functions:sync:
     desc: Sync dependencies for cloud functions
     cmds:
       - echo "🔄 Syncing cloud functions dependencies..."
-      - cd cloud_functions && uv sync
-      - cd cloud_functions/user_cleanup && uv sync
+      - cd functions && uv sync
+      - cd functions/user_cleanup && uv sync
       - echo "✅ Cloud functions dependencies synced!"
 
   cloud-functions:test:
@@ -741,12 +947,40 @@ tasks:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - echo "🧪 Running cloud functions tests..."
-      - uv run pytest cloud_functions/tests -v
+      - uv run pytest functions/tests -v
       - echo "✅ Cloud functions tests completed!"
 
-  # ==============================================================================
-  # INTERNAL TASKS - Not intended for direct use
-  # ==============================================================================
+  cloud-functions:deploy:
+    desc: Deploy Firebase Cloud Functions (auth blocking functions)
+    deps:
+      - task: cloud-functions:generate-requirements
+    cmds:
+      - echo "🚀 Deploying Firebase Cloud Functions..."
+      - echo "📦 Creating virtual environment..."
+      - cd functions && python3.12 -m venv venv
+      - echo "📚 Installing dependencies..."
+      - cd functions && ./venv/bin/pip install -r requirements.txt
+      - echo "🔥 Deploying to Firebase..."
+      - firebase deploy --only functions:beforeCreate,functions:beforeSignIn --project grantflow
+      - echo "✅ Firebase Cloud Functions deployed successfully!"
+
+  cloud-functions:deploy:staging:
+    desc: Deploy Firebase Cloud Functions to staging environment
+    deps:
+      - task: cloud-functions:deploy
+    vars:
+      PROJECT: grantflow
+
+  cloud-functions:deploy:production:
+    desc: Deploy Firebase Cloud Functions to production environment
+    deps:
+      - task: cloud-functions:generate-requirements
+    cmds:
+      - echo "⚠️  Production deployment requires manual confirmation"
+      - echo "🚀 Deploying Firebase Cloud Functions to PRODUCTION..."
+      - echo "🔥 Deploying to Firebase PRODUCTION..."
+      - firebase deploy --only functions:beforeCreate,functions:beforeSignIn --project grantflow-production
+      - echo "✅ Firebase Cloud Functions deployed to PRODUCTION successfully!"
 
   _dev:check:
     internal: true

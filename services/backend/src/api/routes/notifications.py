@@ -49,22 +49,13 @@ async def list_notifications(
     session_maker: async_sessionmaker[Any],
     include_read: bool = False,
 ) -> ListNotificationsResponse:
-    """List user's active notifications.
-
-    Args:
-        request: API request with authenticated user
-        session_maker: Database session maker
-        include_read: Whether to include read notifications (default: False)
-
-    Returns:
-        List of active notifications with metadata
-    """
     logger.info("Listing notifications", firebase_uid=request.auth, include_read=include_read)
 
     async with session_maker() as session:
         filters = [
             Notification.firebase_uid == request.auth,
             Notification.dismissed == False,  # noqa: E712
+            Notification.deleted_at.is_(None),
         ]
 
         if not include_read:
@@ -121,19 +112,6 @@ async def dismiss_notification(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
 ) -> DismissNotificationResponse:
-    """Dismiss a notification.
-
-    Args:
-        notification_id: UUID of the notification to dismiss
-        request: API request with authenticated user
-        session_maker: Database session maker
-
-    Returns:
-        Success response with notification ID
-
-    Raises:
-        HTTPException: If notification not found or doesn't belong to user
-    """
     logger.info(
         "Dismissing notification",
         notification_id=str(notification_id),
@@ -146,6 +124,7 @@ async def dismiss_notification(
                 and_(
                     Notification.id == notification_id,
                     Notification.firebase_uid == request.auth,
+                    Notification.deleted_at.is_(None),
                 )
             )
         )

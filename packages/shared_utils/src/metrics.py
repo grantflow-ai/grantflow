@@ -1,5 +1,3 @@
-"""OpenTelemetry metrics for GrantFlow services."""
-
 from .otel import get_meter
 
 

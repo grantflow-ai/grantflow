@@ -39,8 +39,8 @@ async def create_rag_sources_from_cfp_file(
         }
 
         application = await retrieve_application(application_id=grant_application_id, session=session)
-        if application.grant_template and application.grant_template.funding_organization_id:
-            template_values["funding_organization_id"] = application.grant_template.funding_organization_id
+        if application.grant_template and application.grant_template.granting_institution_id:
+            template_values["granting_institution_id"] = application.grant_template.granting_institution_id
 
         await session.execute(
             insert(GrantTemplate).values(template_values).on_conflict_do_nothing(index_elements=["id"])

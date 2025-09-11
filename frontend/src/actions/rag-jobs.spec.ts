@@ -8,8 +8,8 @@ const mockGet = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) })
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
-vi.mock("@/utils/api", async () => {
-	const actual = await vi.importActual("@/utils/api");
+vi.mock("@/utils/api/server", async () => {
+	const actual = await vi.importActual("@/utils/api/server");
 	return {
 		...actual,
 		getClient: () => ({
@@ -28,6 +28,8 @@ vi.mock("@/utils/server-side", async () => {
 });
 
 describe("rag-jobs server actions", () => {
+	const mockOrganizationId = "mock-organization-id";
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -49,10 +51,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockProjectId, mockJobId);
+			const result = await retrieveRagJob(mockOrganizationId, mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -84,10 +86,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockProjectId, mockJobId);
+			const result = await retrieveRagJob(mockOrganizationId, mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -117,10 +119,10 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			const result = await retrieveRagJob(mockProjectId, mockJobId);
+			const result = await retrieveRagJob(mockOrganizationId, mockProjectId, mockJobId);
 
 			expect(mockGet).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/rag-jobs/${mockJobId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/rag-jobs/${mockJobId}`,
 				expect.objectContaining({
 					headers: undefined,
 				}),
@@ -153,7 +155,7 @@ describe("rag-jobs server actions", () => {
 			mockGet.mockReturnValue({ json: vi.fn().mockRejectedValue(error) });
 			mockWithAuthRedirect.mockImplementation((promise) => promise);
 
-			await expect(retrieveRagJob(mockProjectId, mockJobId)).rejects.toThrow(HTTPError);
+			await expect(retrieveRagJob(mockOrganizationId, mockProjectId, mockJobId)).rejects.toThrow(HTTPError);
 		});
 	});
 });
