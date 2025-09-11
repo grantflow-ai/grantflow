@@ -27,6 +27,15 @@ async def test_delete_user_success(
         "services.backend.src.api.routes.user.get_user_deletion_status",
         return_value=None,
     )
+    mocker.patch(
+        "services.backend.src.api.routes.user.schedule_user_deletion",
+        return_value={
+            "firebase_uid": firebase_uid,
+            "status": "scheduled",
+            "deletion_date": datetime.now(UTC) + timedelta(days=10),
+            "grace_period_days": 10,
+        },
+    )
 
     deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=10)
     mocker.patch(
