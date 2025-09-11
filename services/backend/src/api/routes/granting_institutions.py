@@ -83,7 +83,7 @@ async def handle_update_organization(
                 update(GrantingInstitution)
                 .values(data)
                 .returning(GrantingInstitution)
-                .where(GrantingInstitution.id == organization_id)
+                .where(GrantingInstitution.id == organization_id, GrantingInstitution.deleted_at.is_(None))
             )
             await session.commit()
         except SQLAlchemyError as e:

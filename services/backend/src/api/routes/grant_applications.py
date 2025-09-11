@@ -368,7 +368,11 @@ async def handle_update_application(
             if not application:
                 raise ValidationException("Application not found")
 
-            await session.execute(update(GrantApplication).where(GrantApplication.id == application_id).values(**data))
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id, GrantApplication.deleted_at.is_(None))
+                .values(**data)
+            )
             await session.commit()
         except ValidationException:
             await session.rollback()
@@ -875,7 +879,10 @@ async def handle_list_organization_applications(
                 GrantApplication.deleted_at.is_(None),
                 GrantApplication.updated_at >= ninety_days_ago,
             )
-            .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
+            .outerjoin(
+                GrantTemplate,
+                (GrantTemplate.grant_application_id == GrantApplication.id) & (GrantTemplate.deleted_at.is_(None)),
+            )
         )
 
         query = query.order_by(GrantApplication.updated_at.desc()).limit(5)
