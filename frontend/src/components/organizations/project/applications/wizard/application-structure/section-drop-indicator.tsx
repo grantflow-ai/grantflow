@@ -17,14 +17,15 @@ interface SectionWithDropIndicatorsProps {
 }
 
 export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }: SectionDropIndicatorProps) {
-	const marginClass = position === "above" ? " mb-1" : " mt-1";
+	const marginClass = position === "above" ? "mb-1" : "mt-1";
+	const positionClass = position === "above" ? "-top-2" : "-bottom-2";
 	const visibilityClasses = isVisible
-		? `h-2 opacity-100 scale-y-100${marginClass}`
-		: "h-0 opacity-0 scale-y-0 mb-0 mt-0";
+		? `h-2 opacity-100 scale-y-100 ${marginClass} ${positionClass}`
+		: `h-0 opacity-0 scale-y-0 mb-0 mt-0 ${positionClass}`;
 
 	return (
 		<div
-			className={`bg-primary rounded-xs transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
+			className={`absolute right-0 bg-primary rounded-xs transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
 			data-testid={`drop-indicator-${position}`}
 		/>
 	);
