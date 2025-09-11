@@ -49,6 +49,15 @@ venv/
 AI_EVALUATION_BENCHMARK_REPORT.md
 build/
 CLAUDE.md
+
+# CFP Analyzer test outputs and temporary files
+cfp_analysis_results/
+cfp_analyzer_test_results/
+real_cfp_analysis_results/
+sample_cfp_analysis_report.md
+*_cfp_analysis*.md
+*_cfp_analysis*.json
+cfp_analyzer_outputs/
 coverage.*
 coverage/
 htmlcov/

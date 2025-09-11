@@ -4,22 +4,131 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
+from packages.db.src.tables import CFPAnalysis, GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import select, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES, NotificationEvents
+from services.rag.src.grant_template.cfp_section_analyzer import analyze_cfp_sections_with_gemini
 from services.rag.src.grant_template.determine_application_sections import handle_extract_sections
 from services.rag.src.grant_template.determine_longform_metadata import handle_generate_grant_template
 from services.rag.src.grant_template.extract_cfp_data import Content, handle_extract_cfp_data_from_rag_sources
+from services.rag.src.grant_template.nlp_categorizer import categorize_text_async
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
+
+
+async def enhanced_cfp_analysis(
+    cfp_content: list[Content],
+    parent_id: UUID,
+    job_manager: JobManager,
+) -> dict[str, Any]:
+    """
+    Perform enhanced CFP analysis using Gemini 2.5 Flash and NLP categorization.
+
+    This function integrates the new CFP section analyzer into the template generation pipeline,
+    providing detailed analysis of section requirements, length constraints, and evaluation criteria.
+    """
+    await job_manager.add_notification(
+        parent_id=parent_id,
+        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
+        message="Running enhanced CFP analysis with Gemini 2.5 Flash and NLP...",
+        notification_type="info",
+        current_pipeline_stage=3,
+        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+    )
+
+    # Concatenate CFP content for analysis
+    content_strings = [f"{content['title']}: {' '.join(content['subtitles'])}" for content in cfp_content]
+    full_cfp_text = concat_extracted_cfp_content(content_strings)
+
+    try:
+        # Run NLP analysis first
+        logger.info("Starting NLP analysis for CFP content", content_length=len(full_cfp_text))
+        nlp_analysis = await categorize_text_async(full_cfp_text)
+
+        categories_found = sum(1 for v in nlp_analysis.values() if v)
+        total_sentences = sum(len(sentences) for sentences in nlp_analysis.values() if isinstance(sentences, list))
+
+        logger.info(
+            "NLP analysis completed",
+            categories_found=categories_found,
+            total_sentences=total_sentences,
+        )
+
+        # Run enhanced CFP analysis with Gemini 2.5 Flash
+        logger.info("Starting enhanced CFP analysis with Gemini 2.5 Flash")
+        cfp_analysis = await analyze_cfp_sections_with_gemini(full_cfp_text, nlp_analysis)
+
+        logger.info(
+            "Enhanced CFP analysis completed",
+            sections_identified=cfp_analysis["sections_count"],
+            length_constraints=cfp_analysis["length_constraints_found"],
+            evaluation_criteria=cfp_analysis["evaluation_criteria_count"],
+        )
+
+        # Notify completion with analysis results
+        await job_manager.add_notification(
+            parent_id=parent_id,
+            event=NotificationEvents.CFP_DATA_EXTRACTED,
+            message="Enhanced CFP analysis completed successfully",
+            notification_type="info",
+            data={
+                "analysis_type": "Enhanced CFP Analysis with Gemini 2.5 Flash",
+                "sections_identified": cfp_analysis["sections_count"],
+                "length_constraints_found": cfp_analysis["length_constraints_found"],
+                "evaluation_criteria_count": cfp_analysis["evaluation_criteria_count"],
+                "nlp_categories_detected": categories_found,
+                "total_sentences_analyzed": total_sentences,
+                "gemini_model_used": "gemini-2.5-flash",
+            },
+            current_pipeline_stage=3,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        )
+
+        return {
+            "cfp_analysis": cfp_analysis,
+            "nlp_analysis": nlp_analysis,
+            "analysis_metadata": {
+                "content_length": len(full_cfp_text),
+                "categories_found": categories_found,
+                "total_sentences": total_sentences,
+            },
+        }
+
+    except Exception as e:
+        logger.error(
+            "Enhanced CFP analysis failed",
+            error=str(e),
+            content_length=len(full_cfp_text),
+        )
+
+        # Fallback notification
+        await job_manager.add_notification(
+            parent_id=parent_id,
+            event=NotificationEvents.CFP_DATA_EXTRACTED,
+            message="CFP analysis completed with fallback method",
+            notification_type="warning",
+            data={"analysis_type": "Fallback analysis", "error": str(e)},
+            current_pipeline_stage=3,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        )
+
+        # Return minimal analysis data for pipeline continuation
+        return {
+            "cfp_analysis": None,
+            "nlp_analysis": None,
+            "analysis_metadata": {
+                "content_length": len(full_cfp_text),
+                "error": str(e),
+            },
+        }
 
 
 async def extract_and_enrich_sections(
@@ -34,7 +143,7 @@ async def extract_and_enrich_sections(
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
         message="Extracting grant application sections from CFP content...",
         notification_type="info",
-        current_pipeline_stage=4,
+        current_pipeline_stage=7,
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
     sections = await handle_extract_sections(
@@ -52,7 +161,7 @@ async def extract_and_enrich_sections(
             "section_count": len(sections),
             "organization": organization.full_name if organization else None,
         },
-        current_pipeline_stage=4,
+        current_pipeline_stage=7,
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
@@ -67,7 +176,7 @@ async def extract_and_enrich_sections(
         event=NotificationEvents.GRANT_TEMPLATE_METADATA,
         message="Generating metadata for grant template sections...",
         notification_type="info",
-        current_pipeline_stage=5,
+        current_pipeline_stage=7,
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
@@ -86,7 +195,7 @@ async def extract_and_enrich_sections(
         data={
             "metadata_count": len(section_metadata),
         },
-        current_pipeline_stage=5,
+        current_pipeline_stage=7,
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
@@ -255,6 +364,49 @@ async def grant_template_generation_pipeline_handler(
             await job_manager.handle_cancellation(grant_application_id)
             return None
 
+        # Run enhanced CFP analysis with Gemini 2.5 Flash and NLP
+        await job_manager.add_notification(
+            parent_id=grant_application_id,
+            event=NotificationEvents.CFP_ANALYSIS_STARTED,
+            message="Running enhanced CFP analysis with AI models...",
+            notification_type="info",
+            current_pipeline_stage=7,
+            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        )
+
+        try:
+            cfp_analysis_result = await enhanced_cfp_analysis(
+                cfp_content=extraction_result["content"],
+                parent_id=grant_application_id,
+                job_manager=job_manager,
+            )
+
+            await job_manager.add_notification(
+                parent_id=grant_application_id,
+                event=NotificationEvents.CFP_ANALYSIS_COMPLETED,
+                message="Enhanced CFP analysis completed successfully",
+                notification_type="info",
+                data={
+                    "sections_identified": cfp_analysis_result.get("sections_count", 0),
+                    "length_constraints": cfp_analysis_result.get("length_constraints_found", 0),
+                    "evaluation_criteria": cfp_analysis_result.get("evaluation_criteria_count", 0),
+                    "nlp_categories": cfp_analysis_result.get("nlp_categories_found", 0),
+                },
+                current_pipeline_stage=7,
+                total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+            )
+
+            logger.info(
+                "Enhanced CFP analysis completed",
+                sections_identified=cfp_analysis_result.get("sections_count", 0),
+                length_constraints=cfp_analysis_result.get("length_constraints_found", 0),
+                evaluation_criteria=cfp_analysis_result.get("evaluation_criteria_count", 0),
+            )
+
+        except Exception as e:
+            logger.warning("Enhanced CFP analysis failed, continuing with standard analysis", error=str(e))
+            cfp_analysis_result = None
+
         grant_sections = await extract_and_enrich_sections(
             cfp_content=extraction_result["content"],
             cfp_subject=extraction_result["cfp_subject"],
@@ -270,7 +422,7 @@ async def grant_template_generation_pipeline_handler(
             event=NotificationEvents.SAVING_GRANT_TEMPLATE,
             message="Saving grant template to database...",
             notification_type="info",
-            current_pipeline_stage=6,
+            current_pipeline_stage=7,
             total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
 
@@ -329,6 +481,20 @@ async def grant_template_generation_pipeline_handler(
                 )
                 .returning(GrantTemplate)
             )
+
+            # Save CFP analysis if available
+            if cfp_analysis_result and cfp_analysis_result.get("cfp_analysis"):
+                await session.execute(
+                    insert(CFPAnalysis).values(
+                        grant_template_id=grant_template_id,
+                        analysis_data=cfp_analysis_result["cfp_analysis"],
+                    )
+                )
+                logger.info(
+                    "CFP analysis saved successfully",
+                    template_id=str(grant_template_id),
+                )
+
             await session.commit()
 
             await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
