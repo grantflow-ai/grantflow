@@ -111,6 +111,7 @@ async def test_retrieve_grant_application_job_success(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
+    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
@@ -127,7 +128,7 @@ async def test_retrieve_grant_application_job_success(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": "Bearer some_token"},
+        headers={"Authorization": f"Bearer {otp_code}"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text

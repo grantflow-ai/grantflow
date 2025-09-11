@@ -88,3 +88,9 @@ variable "backup_location" {
   type        = string
   default     = "europe-west3"
 }
+
+variable "image_tag" {
+  description = "Docker image tag for deployments"
+  type        = string
+  default     = "latest"
+}

@@ -1,290 +1,257 @@
 $schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v2.schema.json
-agents:
-    - description: System architecture and design decisions
-      id: system-architect
-      name: system-architect
-      system_prompt: |
-        System architecture specialist for scalable, maintainable systems.
-        Focus: system design, architecture patterns, infrastructure, microservices, Terraform
-      targets:
-        - .claude/agents/*.md
-    - description: TypeScript/React development specialist
-      id: typescript-engineer
-      name: typescript-engineer
-      system_prompt: |
-        TypeScript/React expert for modern web development.
-        Focus: TypeScript strict, React 19, Next.js 15 App Router, Zustand, testing with ::testing/factories
-      targets:
-        - .claude/agents/*.md
-    - description: Python backend development specialist
-      id: python-engineer
-      name: python-engineer
-      system_prompt: |
-        Python backend engineer for async web services.
-        Focus: Python 3.13+, Litestar async, SQLAlchemy 2.0, structlog with key=value pairs
-      targets:
-        - .claude/agents/*.md
-    - description: DevSecOps, CI/CD, and security specialist
-      id: devsecops-agent
-      name: devsecops-agent
-      system_prompt: |
-        DevSecOps engineer for secure CI/CD and cloud infrastructure.
-
-        DevOps Focus:
-        - GitHub Actions, GitOps, Docker multi-stage builds
-        - Zero-downtime deployments, Cloud Run configurations
-        - Terraform/tofu infrastructure as code
-        - Monitoring and alerting (OpenTelemetry, Discord webhooks)
-
-        Security Focus:
-        - Auth middleware validation (never manual checks in endpoints)
-        - SQL injection prevention via parameterized queries
-        - XSS prevention in React components
-        - Proper secret handling (get_env with fallbacks, Secret Manager)
-        - Firebase Auth token validation and JWT claims
-        - CORS and CSP headers configuration
-        - Rate limiting and DDoS prevention
-        - Secure file upload validation and content-type checks
-        - Container security scanning and vulnerability management
-
-        REFUSE: Any offensive security or exploit development
-      targets:
-        - .claude/agents/*.md
-    - description: Code quality, correctness, and convention compliance
-      id: code-reviewer
-      name: code-reviewer
-      system_prompt: |
-        Code review specialist ensuring quality, correctness, and alignment with GrantFlow conventions.
-
-        Focus areas:
-        - Verify implementation matches requirements exactly
-        - Check adherence to ai-rulez.yaml rules (no comments, typing, patterns)
-        - Validate test coverage and factory usage
-        - Ensure proper error handling and edge cases
-        - Check for magic numbers, proper use of ?? vs ||
-        - Verify structlog usage (key=value), UUID handling
-        - Confirm middleware-only auth, no manual checks
-        - Validate Pub/Sub duplicate handling (ON CONFLICT DO NOTHING)
-        - Check proper use of TypedDict with NotRequired
-        - Ensure proper async/await patterns
-        - Verify no inline comments or docstrings
-        - Check all Python functions have typed args/returns
-
-        ALWAYS run: task lint:all, task test
-        Flag: security issues, performance problems, convention violations
-      targets:
-        - .claude/agents/*.md
-    - description: Database design, migrations, and query optimization
-      id: database-engineer
-      name: database-engineer
-      system_prompt: |
-        Database specialist for PostgreSQL, SQLAlchemy 2.0, and Alembic migrations.
-
-        Focus:
-        - Complex SQLAlchemy 2.0 async queries with proper session handling
-        - Alembic migrations with enum handling (DROP TYPE CASCADE)
-        - pgvector operations and indexing strategies
-        - Query optimization and N+1 prevention
-        - Proper transaction boundaries and rollback handling
-        - UUID primary keys and foreign key relationships
-        - Soft deletes and temporal data patterns
-        - ON CONFLICT DO NOTHING for Pub/Sub duplicates
-        - Cloud SQL configuration and connection handling
-        - Database backup and recovery strategies
-      targets:
-        - .claude/agents/*.md
-    - description: Test strategy, coverage, and test implementation
-      id: test-engineer
-      name: test-engineer
-      system_prompt: |
-        Testing specialist for comprehensive test coverage and strategy.
-
-        Focus:
-        - 100% test coverage requirement enforcement
-        - Proper use of testing factories (::testing/factories)
-        - E2E test markers (smoke, quality_assessment, e2e_full)
-        - Real PostgreSQL for Python tests (no mocks)
-        - Zustand store testing without mocking
-        - Playwright data-testid patterns
-        - Parallel test execution with pytest-xdist
-        - Test file naming (*_test.py, *.spec.ts)
-        - PYTHONPATH=. for all Python tests
-        - Vitest + RTL for frontend components
-        - Mock API handlers only, not stores
-        - Test isolation and cleanup strategies
-      targets:
-        - .claude/agents/*.md
-    - description: Performance analysis and optimization
-      id: performance-optimizer
-      name: performance-optimizer
-      system_prompt: |
-        Performance specialist for optimization and scalability.
-
-        Focus:
-        - Query optimization and database indexing
-        - React component memoization and lazy loading
-        - Cloud Run cold start optimization
-        - Pub/Sub batch processing strategies
-        - Caching strategies (Redis integration if needed)
-        - Bundle size optimization (tree shaking, code splitting)
-        - Memory leak detection and prevention
-        - API response time optimization
-        - Frontend Core Web Vitals optimization
-        - Monitoring performance metrics with OpenTelemetry
-      targets:
-        - .claude/agents/*.md
+agents: []
+commands: []
+mcp_servers:
+    - args:
+        - mcp
+      command: ai-rulez
+      description: AI-Rulez MCP server for configuration management
+      name: ai-rulez
 metadata:
-    description: GrantFlow.AI Development Guide
-    name: GrantFlow.AI
-    version: 1.2.0
-outputs:
-    - path: CLAUDE.md
-    - path: GEMINI.md
-    - naming_scheme: '{name}.md'
-      path: .claude/agents/
-      type: agent
+    description: GrantFlow.AI is a comprehensive grant management platform built as a monorepo with Next.js 15/React 19 frontend and Python microservices backend. Features include collaborative document editing with CRDT, intelligent document processing (indexing, crawling, RAG), Firebase authentication, and multi-tenant organization management. Uses GCP infrastructure with Cloud Run, PostgreSQL with pgvector, and implements real-time WebSocket collaboration.
+    name: grantflow
+    version: 1.0.0
+presets:
+    - popular
 rules:
-    - content: |
-        Efficient developer following structured process: implement → typecheck → lint → test (use factories)
-
-        **ALWAYS use Taskfile**: `task --list` for commands, check Taskfile.yaml if needed
-      name: System Prompt
+    - content: Always use select_active() helper from packages.db.src.query_helpers for queries. Never query deleted_at IS NULL directly. Test soft-delete filtering in integration tests for all new endpoints.
+      name: Soft Delete Integrity
       priority: critical
-    - content: "**\U0001F4CC CLAUDE ASSISTANTS ONLY - This section applies ONLY to Claude AI**\n\n**ALWAYS use specialized agents via Task tool for domain-specific work:**\n\n**When to delegate to agents:**\n- **code-reviewer**: After ANY implementation, before committing code\n- **typescript-engineer**: React components, Next.js routes, Zustand stores, frontend tests\n- **python-engineer**: API endpoints, async handlers, service implementations\n- **database-engineer**: Migrations, complex queries, schema design, indexing\n- **devsecops-agent**: CI/CD changes, Docker configs, security reviews, infrastructure\n- **test-engineer**: Test strategy, coverage gaps, test implementation\n- **performance-optimizer**: Slow queries, bundle size issues, memory leaks\n- **system-architect**: New features, architecture decisions, service boundaries\n\n**Examples:**\n```\nUser: \"Add a new API endpoint for user profile\"\n→ Use python-engineer for implementation\n→ Use database-engineer if schema changes needed\n→ Use test-engineer for test coverage\n→ Use code-reviewer to validate before completion\n\nUser: \"Fix the slow dashboard loading\"\n→ Use performance-optimizer to analyze\n→ Use database-engineer for query optimization\n→ Use typescript-engineer for React optimization\n\nUser: \"Deploy the new service to staging\"\n→ Use devsecops-agent for CI/CD and deployment\n```\n\n**Agent invocation pattern:**\n1. Identify the domain from user request\n2. Delegate to appropriate specialist agent(s)\n3. Always finish with code-reviewer agent\n4. Run `task lint:all` and `task test` after changes\n\n**Note for other AI assistants:** This section uses Claude's Task tool with specialized agents. Other assistants should focus on the domain expertise described but won't have access to these specific agent files.\n"
-      name: Claude Agent Delegation
+    - content: Use real PostgreSQL via db_test_plugin for all tests. Never mock SQLAlchemy sessions. Use factories from testing/factories.py. Run 'task test:e2e' for integration tests before merging.
+      name: Testing with Real Infrastructure
       priority: critical
-      targets:
-        - CLAUDE.md
-        - .claude/**/*.md
-    - content: |
-        **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
-        **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
-        **Services**: backend, indexer, crawler, rag, scraper, crdt (Hocuspocus CRDT)
-        **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
-        **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
-        **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip
-      name: Stack
+    - content: 'Follow strict workflow: task lint:all → task test → task build. Never run raw commands. Check Taskfile.yaml for available tasks. Use ''task gh:deploy:{service}'' for deployments.'
+      name: Task-Based Development Flow
+      priority: high
+    - content: 'Python: Use msgspec TypedDict with NotRequired[], never Optional. TypeScript: Ban ''any'', use type guards from @tool-belt/type-predicates. All API responses must use msgspec models.'
+      name: Type Safety and Validation
+      priority: high
+    - content: All endpoints must include organization_id in URL path. Use @allowed_roles decorator from services.backend.src.auth. Never check auth manually. Firebase JWT claims must include organization_id.
+      name: Multi-tenant Security
       priority: critical
-    - content: |
-        - NO inline comments/docstrings
-        - Type all Python args/returns
-        - Use `??` not `||`, extract magic numbers
-        - 100% test coverage, real PostgreSQL
-        - Run linters after changes
-      name: Core Rules
-      priority: high
-    - content: |
-        ```bash
-        # Core workflow
-        task setup dev test lint format build
-
-        # Linting
-        task lint:all lint:frontend lint:python lint:terraform
-
-        # Database
-        task db:migrate db:reset db:migrate:remote
-
-        # Testing
-        task test:e2e test:serial
-        E2E_TESTS=1 pytest -m "smoke|quality_assessment|e2e_full"
-
-        # Services
-        task service:{indexer|rag}:test:e2e:{smoke|quality|full}
-
-        # Deployment
-        task gh:deploy:{backend|crawler|indexer|rag|scraper}
-        ```
-      name: Key Commands
-      priority: high
-    - content: |
-        **File naming**: Python `*_test.py`, TypeScript `*.spec.ts(x)`
-
-        **Python**: pytest async, real PostgreSQL, PYTHONPATH=. required
-        **Frontend**: Vitest + RTL, real Zustand stores, mock APIs only
-        **E2E**: Playwright with data-testid, mock environment
-
-        **Markers**: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min)
-        **Parallel**: pytest-xdist auto-enabled, use `-n 0` to disable
-
-        ```python
-        @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
-        async def test_basic(logger: logging.Logger) -> None: ...
-        ```
-      name: Testing
-      priority: high
-    - content: "**Backend**:\n```python\n@post(\"/organizations/{organization_id:uuid}/items\", \n      allowed_roles=[UserRoleEnum.COLLABORATOR])\nasync def create_item(organization_id: UUID, data: TypedDict, \n                    session_maker: async_sessionmaker[Any]) -> dict:\n    async with session_maker() as session, session.begin():\n        # Middleware validated access - just business logic\n        item = await session.scalar(\n            insert(Item).values(**data, organization_id=organization_id).returning(Item)\n        )\n        return {\"id\": str(item.id)}\n```\n\n**Frontend**:\n```typescript\nexport async function createItem(organizationId: string, data: API.CreateItem.RequestBody) {\n    return withAuthRedirect(\n        getClient().post(`organizations/${organizationId}/items`, {\n            headers: await createAuthHeaders(),\n            json: data,\n        }).json<API.CreateItem.ResponseBody>(),\n    );\n}\n```\n"
-      name: Patterns
+    - content: 'Use async with session.begin() for transactions. Batch Pub/Sub messages with ON CONFLICT DO NOTHING for duplicates. Frontend: Use withAuthRedirect() wrapper for all API calls.'
+      name: Async Performance Patterns
       priority: medium
-    - content: |
-        - Never use `any`, use type guards from `@tool-belt/type-predicates`
-        - Use `??` and `?.`, early returns, destructuring
-        - Wrap API calls with `withAuthRedirect`
-        - Use factories from `::testing/factories`
-      name: TypeScript Guidelines
-      priority: medium
-    - content: |
-        - TypedDict with `NotRequired[type]`, not `type | None`
-        - structlog with key=value: `logger.info("Created", id=str(id))`
-        - UUIDs as strings, datetime as `.isoformat()`
-        - Handle unique constraints gracefully
-      name: Python Guidelines
-      priority: medium
-    - content: |
-        **Workflows**: `build-service-*.yaml`, `ci-*.yaml`, `deploy-services.yaml`
-        **Actions**: Reusable composites in `.github/actions/`
-        **Branches**: development→staging, main→production
-        **Tags**: staging-{sha}, staging-latest, {sha}, latest
-      name: CI/CD
-      priority: medium
-    - content: |
-        **Firebase App Hosting**: Terraform-managed, NOT apphosting.yaml
-        **Cloud Run**: All backend services
-        **Database**: Cloud SQL with proxy for local
-        **Storage**: Environment-specific buckets (grantflow-staging-uploads)
-      name: Deployment
+    - content: 'Use structlog with key=value pairs: logger.info(''Created grant'', grant_id=str(id)). Convert UUIDs to strings, datetime to .isoformat(). Never use f-strings in log messages.'
+      name: Structured Logging
       priority: low
-    - content: |
-        - Create draft entities early for uploads
-        - Handle Pub/Sub duplicates with `ON CONFLICT DO NOTHING`
-        - WebSocket endpoint: `/projects/{id}/applications/{id}/notifications`
-        - Environment vars: Frontend `getEnv()` throws, Backend `get_env()` with fallback
-        - Topics: url-crawling, frontend-notifications, file-indexing, rag-processing
-        - CRDT Server: Hocuspocus extensions pattern, health checks at `/health` + `/ready`
-      name: Key Learnings
-      priority: low
-    - content: |
-        **OpenTelemetry**: trace_id correlation, structlog integration
-        ```python
-        configure_otel("service-name")
-        with start_span_with_trace_id("op", trace_id=trace_id) as span: ...
-        ```
-        **Alerts**: Service down, DB disconnected, high errors → Discord webhook
-      name: Monitoring
-      priority: low
-    - content: |
-        **Firebase Auth** + JWT with organization_id/role claims
-        **URL pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
-        **Roles**: OWNER > ADMIN > COLLABORATOR
-        **Middleware handles all auth** - never check manually in endpoints
-      name: Auth
-      priority: minimal
-    - content: |
-        - YAML colons need quotes: `- 'echo "Key: value"'`
-        - Cloud SQL: Unix socket→TCP for local (127.0.0.1:5432)
-        - Drop ENUMs before tables: `DROP TYPE IF EXISTS name CASCADE`
-        - Frontend Docker needs build args for env vars
-      name: Common Issues
-      priority: minimal
-    - content: |
-        **Biome**: Primary JS/TS formatter/linter
-        **Workflow**: `task lint` → fix Biome → fix ESLint → fix Python
-        **Common fixes**: Extract complex functions, add button types, remove `any`
-      name: Linting
-      priority: minimal
+    - content: All database queries must use select_active() helper from packages.db.src.query_helpers for soft-delete filtering. Never query deleted_at IS NULL directly. Tables with is_deleted/deleted_at fields require this pattern to prevent exposing deleted data.
+      name: Soft Delete Pattern
+      priority: critical
+    - content: 'Use testing/factories.py for Python tests and testing/factories.ts for TypeScript tests. Real PostgreSQL instances required for backend tests. Run PYTHONPATH=. uv run pytest for Python, pnpm test for frontend. E2E tests use markers: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min).'
+      name: Test Factories
+      priority: high
+    - content: 'Use Taskfile commands exclusively: task lint:all before commits, task test for testing, task db:migrate for migrations. Never run raw commands. Check available tasks with task --list. CI validates via these commands.'
+      name: Task Commands
+      priority: critical
+    - content: Backend endpoints must use @post/@get decorators with allowed_roles parameter. Firebase Auth JWT claims provide organization_id/role. Never check auth manually - middleware handles it. Use withAuthRedirect() wrapper for all frontend API calls.
+      name: API Security
+      priority: critical
+    - content: 'Python: Type all args/returns, use TypedDict with NotRequired[type]. TypeScript: Never use ''any'', leverage API namespace types, use ?? operator. Run task lint:python and task lint:frontend to validate. msgspec for Python serialization.'
+      name: Type Safety
+      priority: high
+    - content: 'Use Pub/Sub topics (url-crawling, file-indexing, rag-processing) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only.'
+      name: Service Communication
+      priority: medium
+    - content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint:all and task test locally before pushing. Docker builds require --build-arg for frontend env vars.
+      name: CI/CD Patterns
+      priority: high
+    - content: 'Always use async session context managers with explicit transaction boundaries. Pattern: `async with session_maker() as session, session.begin():`. Never reuse sessions across requests. Use `select_active()` from packages.db.src.query_helpers for soft-delete filtering.'
+      name: SQLAlchemy Async Session Management
+      priority: critical
+    - content: Use real PostgreSQL for all tests via testing.db_test_plugin. Mark integration tests with @pytest.mark.integration, E2E with @pytest.mark.e2e_full. Always set PYTHONPATH=. when running pytest. Use factories from testing.factories for test data generation.
+      name: Test Database Isolation
+      priority: critical
+    - content: 'Never check auth manually in endpoints - middleware handles all auth via JWT claims (organization_id/role). Use UserRoleEnum from packages.db for role checks. Pattern: `@post(''/path'', allowed_roles=[UserRoleEnum.COLLABORATOR])`. Always wrap frontend API calls with withAuthRedirect().'
+      name: Firebase Auth Security
+      priority: high
+    - content: 'Always use task commands instead of direct package managers. Core workflow: `task setup dev test lint format build`. Run `task lint:all` after changes, `task test:e2e` for E2E tests with E2E_TESTS=1 env var. Check available commands with `task --list`.'
+      name: Taskfile Command Execution
+      priority: high
+    - content: Never use 'any' type. Use type guards from @tool-belt/type-predicates. Always use nullish coalescing (??) over logical OR (||). Extract magic numbers to constants. Use factories from frontend/testing/factories and editor/testing/factories for test data.
+      name: TypeScript Type Safety
+      priority: high
+    - content: 'Handle Pub/Sub message duplicates with `ON CONFLICT DO NOTHING` in database operations. Topics: url-crawling, frontend-notifications, file-indexing, rag-processing. Use structlog with key=value logging: `logger.info(''Created'', id=str(id))`.'
+      name: Pub/Sub Duplicate Handling
+      priority: medium
+    - content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt. Deploy via `task gh:deploy:{service}` commands.
+      name: Monorepo Service Boundaries
+      priority: medium
+sections:
     - content: |-
-        - Do only what's asked, nothing more
-        - NEVER create files unless necessary
-        - NEVER create docs/README unless requested
-        - Preserve `~keep` comments during refactoring
-      name: Important Reminders
-      priority: minimal
+        ## Prerequisites
+        - Node.js 22+
+        - Python 3.13
+        - Docker and Docker Compose
+        - PostgreSQL 17 with pgvector extension
+        - [UV](https://github.com/astral-sh/uv) for Python dependencies
+        - [PNPM](https://pnpm.io/) for JavaScript dependencies
+        - [Task](https://taskfile.dev) for command automation
+
+        ## Initial Setup
+        ```bash
+        # Install all dependencies and set up git hooks
+        task setup
+
+        # Copy environment configuration
+        cp .env.example .env
+        # Update .env with actual values (reach out to team for secrets)
+
+        # Start database and apply migrations
+        task db:up
+        task db:migrate
+
+        # Seed the database
+        task db:seed
+        ```
+
+        ## Running Services
+        ```bash
+        # Start all services in development mode
+        task dev
+
+        # Or start specific services
+        task service:backend:dev  # API service on port 8000
+        task service:indexer:dev  # Document processing
+        task frontend:dev         # Next.js app on port 3000
+        ```
+
+        ## Common Issues
+        - **PostgreSQL**: Each test creates isolated database `grantflow_test_{worker_id}_{process_id}`
+        - **Cloud SQL**: Use TCP (127.0.0.1:5432) instead of Unix socket for local
+        - **Frontend Docker**: Requires build args for env vars
+      name: Local Development Setup
+      priority: high
+    - content: |-
+        ## Test Commands
+        ```bash
+        # Run all tests (parallel by default)
+        task test
+
+        # Run specific test suites
+        PYTHONPATH=. uv run pytest services/backend/tests/
+        cd frontend && pnpm test
+
+        # E2E tests with markers
+        E2E_TESTS=1 pytest -m "smoke"              # <1 min
+        E2E_TESTS=1 pytest -m "quality_assessment" # 2-5 min
+        E2E_TESTS=1 pytest -m "e2e_full"          # 10+ min
+
+        # Disable parallel execution for debugging
+        pytest -n 0
+        ```
+
+        ## Test Structure
+        - **Python**: `*_test.py` files, async pytest with real PostgreSQL
+        - **TypeScript**: `*.spec.ts(x)` files, Vitest with React Testing Library
+        - **E2E**: Playwright tests with `data-testid` attributes
+
+        ## Test Data
+        - Use factories from `testing/factories.py` (Python)
+        - Use factories from `frontend/testing/factories.ts` (TypeScript)
+        - Test scenarios in `testing/test_data/scenarios/` with metadata.yaml configs
+
+        ## Coverage Requirements
+        - Target 100% test coverage
+        - Real PostgreSQL for backend tests (no mocks)
+        - Mock only external APIs in frontend tests
+      name: Testing Strategy
+      priority: medium
+    - content: |-
+        ## Microservices Overview
+
+        ### Backend API (`services/backend`)
+        - **Framework**: Litestar async with msgspec
+        - **Auth**: Firebase JWT + organization claims
+        - **Database**: PostgreSQL with SQLAlchemy 2.0
+        - **Pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
+
+        ### Document Processing Pipeline
+        1. **Indexer** (`services/indexer`): PDF/DOC/HTML extraction → chunks → embeddings
+        2. **Crawler** (`services/crawler`): Web scraping with rate limiting
+        3. **RAG** (`services/rag`): AI content generation with OpenAI/Anthropic/Vertex
+        4. **Scraper** (`services/scraper`): Grant opportunity discovery from NIH/grants.gov
+
+        ### Real-time Collaboration
+        - **CRDT Server** (`crdt/`): Hocuspocus WebSocket server with Y.js
+        - **Editor** (`editor/`): TipTap collaborative editor package
+
+        ### Message Flow
+        ```
+        User Upload → GCS → Pub/Sub → Indexer → PostgreSQL
+                        ↓
+                 file-indexing topic
+                        ↓
+                 RAG Processing → frontend-notifications
+        ```
+
+        ### Key Technologies
+        - **Pub/Sub Topics**: file-indexing, url-crawling, rag-processing, frontend-notifications
+        - **Cloud Run**: All services with fanout pattern (concurrency=1 in staging)
+        - **pgvector**: Vector similarity search for RAG
+      name: Service Architecture
+      priority: medium
+    - content: |-
+        ## Development Workflow
+
+        ### Quick Start
+        ```bash
+        # Install dependencies and setup
+        task setup
+
+        # Start all services in dev mode
+        task dev
+
+        # Or start specific services
+        task service:backend:dev
+        task frontend:dev
+        ```
+
+        ### Daily Development Tasks
+
+        #### Running Tests
+        ```bash
+        # Run all tests (parallel by default)
+        task test
+
+        # Python service tests with real PostgreSQL
+        PYTHONPATH=. uv run pytest services/backend/tests/
+        PYTHONPATH=. uv run pytest services/indexer/tests/
+
+        # Frontend tests with Vitest
+        cd frontend && pnpm test
+        ```
+
+        #### Linting & Formatting
+        ```bash
+        # Run all linters
+        task lint:all
+
+        # Specific linters
+        task lint:frontend  # Biome, ESLint, TypeScript
+        task lint:python    # Ruff, MyPy
+        ```
+
+        #### Database Operations
+        ```bash
+        # Apply migrations locally
+        task db:migrate
+
+        # Create new migration
+        task db:create-migration -- <migration_name>
+
+        # Reset database (WARNING: destroys data)
+        task db:reset
+
+        # Connect to Cloud SQL staging
+        task db:proxy:start
+        task db:migrate:remote
+        ```
+
+        ### Git Workflow
+        - Branch from `development` for features
+        - `development` → auto-deploys to staging
+        - `main` → auto-deploys to production
+        - Commits use conventional format: `fix:`, `feat:`, `chore:`
+      name: Development Workflow
+      priority: high
