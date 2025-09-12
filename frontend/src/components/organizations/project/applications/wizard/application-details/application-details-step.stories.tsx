@@ -1,4 +1,9 @@
-import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory } from "::testing/factories";
+import {
+	ApplicationWithTemplateFactory,
+	FileWithIdFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
@@ -28,6 +33,9 @@ export const EmptyState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const grantTemplate = GrantTemplateFactory.build({
 					rag_sources: [],
 				});
@@ -53,6 +61,9 @@ export const WithTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const grantTemplate = GrantTemplateFactory.build({
 					rag_sources: [],
 				});
@@ -78,6 +89,9 @@ export const OnlyDocuments: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const ragSources = [
 					RagSourceFactory.build({
 						filename: "call-for-proposals.pdf",
@@ -118,6 +132,9 @@ export const OnlyUrls: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const ragSources = [
 					RagSourceFactory.build({
 						sourceId: "1",
@@ -158,6 +175,9 @@ export const WithAllContent: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const ragSources = [
 					RagSourceFactory.build({
 						filename: "call-for-proposals.pdf",
@@ -208,6 +228,9 @@ export const NoTitleWithDocuments: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const { reset } = useApplicationStore.getState();
+				reset();
+
 				const ragSources = [
 					RagSourceFactory.build({
 						filename: "call-for-proposals.pdf",
@@ -242,6 +265,291 @@ export const NoTitleWithDocuments: Story = {
 		},
 	],
 	name: "No Title but with Documents and URLs",
+};
+
+export const PendingUploads: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						sourceId: "3",
+						status: "FINISHED",
+						url: "https://example.com/funding-guidelines",
+					}),
+				];
+
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: ragSources,
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Climate Change Research Grant Application",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(FileWithIdFactory.build({ name: "research-proposal.pdf" }), "template");
+				addPendingUpload(FileWithIdFactory.build({ name: "budget-breakdown.xlsx" }), "template");
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Pending File Uploads - Mixed Status",
+};
+
+export const AllPendingUploads: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: [],
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Research Grant Application with All Pending Files",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(FileWithIdFactory.build({ name: "application-form.pdf" }), "template");
+				addPendingUpload(FileWithIdFactory.build({ name: "supporting-documents.docx" }), "template");
+				addPendingUpload(FileWithIdFactory.build({ name: "financial-data.xlsx" }), "template");
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "All Pending File Uploads",
+};
+
+export const PendingWithProcessing: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "guidelines.docx",
+						sourceId: "2",
+						status: "INDEXING",
+					}),
+					RagSourceFactory.build({
+						filename: "completed-doc.pdf",
+						sourceId: "3",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						filename: "failed-upload.txt",
+						sourceId: "4",
+						status: "FAILED",
+					}),
+				];
+
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: ragSources,
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "All Status Types with Pending Files",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(FileWithIdFactory.build({ name: "requirements.pdf" }), "template");
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Pending with All Processing States",
+};
+
+export const PendingLargeFiles: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: [],
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Pending Large Files with Long Names",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(
+					FileWithIdFactory.build({
+						name: "large-research-dataset-with-extensive-methodology-and-findings.pdf",
+					}),
+					"template",
+				);
+				addPendingUpload(
+					FileWithIdFactory.build({ name: "comprehensive-budget-analysis-and-financial-projections.xlsx" }),
+					"template",
+				);
+				addPendingUpload(
+					FileWithIdFactory.build({ name: "detailed-project-timeline-and-milestone-documentation.docx" }),
+					"template",
+				);
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Pending Large Files - Name Truncation",
+};
+
+export const LoadingState: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: [],
+				});
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Loading Application Data",
+				});
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: true,
+				});
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Loading State - Operations in Progress",
+};
+
+export const ErrorStatesWithRetry: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "corrupted-file.pdf",
+						sourceId: "1",
+						status: "FAILED",
+					}),
+					RagSourceFactory.build({
+						filename: "timeout-file.docx",
+						sourceId: "2",
+						status: "FAILED",
+					}),
+				];
+
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: ragSources,
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Error Recovery and Retry Scenarios",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(FileWithIdFactory.build({ name: "retry-pending.xlsx" }), "template");
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Error States - Failed with Retry",
+};
+
+export const MixedFileTypes: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "presentation.pptx",
+						sourceId: "3",
+						status: "INDEXING",
+					}),
+					RagSourceFactory.build({
+						filename: "notes.txt",
+						sourceId: "4",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						filename: "image.png",
+						sourceId: "5",
+						status: "FAILED",
+					}),
+				];
+
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: ragSources,
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Mixed File Types and Statuses",
+				});
+
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+
+				const { addPendingUpload } = useApplicationStore.getState();
+				addPendingUpload(FileWithIdFactory.build({ name: "proposal.pdf" }), "template");
+				addPendingUpload(FileWithIdFactory.build({ name: "spreadsheet.xlsx" }), "template");
+
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Mixed File Types - All Formats",
 };
 
 export const LargeDatasetsWithTruncation: Story = {

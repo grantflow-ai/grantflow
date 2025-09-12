@@ -4,13 +4,14 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
 import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
+import { PendingFilePreviewCard } from "@/components/organizations/project/applications/wizard/pending-file-preview-card";
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
 import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithSource, UrlWithSource } from "@/types/files";
+import type { FileWithId, FileWithSource, UrlWithSource } from "@/types/files";
 
 export function ApplicationPreview({
 	connectionStatus,
@@ -24,6 +25,7 @@ export function ApplicationPreview({
 	parentId?: string;
 }) {
 	const templateSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
+	const pendingUploads = useApplicationStore((state) => state.pendingUploads.template);
 
 	const templateFiles: FileWithSource[] = useMemo(
 		() =>
@@ -52,7 +54,8 @@ export function ApplicationPreview({
 		[templateSources],
 	);
 
-	const isEmpty = !draftTitle && templateFiles.length === 0 && templateUrls.length === 0;
+	const pendingFiles = useMemo(() => [...pendingUploads], [pendingUploads]);
+	const isEmpty = !draftTitle && templateFiles.length === 0 && templateUrls.length === 0 && pendingFiles.length === 0;
 
 	if (isEmpty) {
 		return (
@@ -95,8 +98,12 @@ export function ApplicationPreview({
 				<div className="flex-1 min-h-0 relative">
 					<div className="overflow-y-auto h-full">
 						<div className="space-y-5">
-							{templateFiles.length > 0 && (
-								<DocumentsCard parentId={parentId} templateFiles={templateFiles} />
+							{(templateFiles.length > 0 || pendingFiles.length > 0) && (
+								<DocumentsCard
+									parentId={parentId}
+									pendingFiles={pendingFiles}
+									templateFiles={templateFiles}
+								/>
 							)}
 
 							{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
@@ -108,7 +115,15 @@ export function ApplicationPreview({
 	);
 }
 
-function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithSource[] }) {
+function DocumentsCard({
+	parentId,
+	pendingFiles,
+	templateFiles,
+}: {
+	parentId?: string;
+	pendingFiles: FileWithId[];
+	templateFiles: FileWithSource[];
+}) {
 	return (
 		<PreviewCard data-testid="application-documents">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
@@ -120,6 +135,9 @@ function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templat
 						parentId={parentId}
 						sourceStatus={file.sourceStatus}
 					/>
+				))}
+				{pendingFiles.map((file) => (
+					<PendingFilePreviewCard file={file} key={`pending-${file.id}`} />
 				))}
 			</div>
 		</PreviewCard>
