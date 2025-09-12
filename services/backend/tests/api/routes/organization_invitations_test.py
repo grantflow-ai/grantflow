@@ -940,7 +940,7 @@ async def test_get_invitation_excludes_soft_deleted(
         headers={"Authorization": f"Bearer {otp_code}"},
     )
     assert response.status_code == HTTPStatus.OK
-    initial_invitations = response.json()["invitations"]
+    initial_invitations = response.json()
     assert any(inv["id"] == str(existing_invitation.id) for inv in initial_invitations)
 
     # Soft-delete the invitation
@@ -954,7 +954,7 @@ async def test_get_invitation_excludes_soft_deleted(
         headers={"Authorization": f"Bearer {otp_code}"},
     )
     assert response.status_code == HTTPStatus.OK
-    new_invitations = response.json()["invitations"]
+    new_invitations = response.json()
     # Should not find the soft-deleted invitation
     assert not any(inv["id"] == str(existing_invitation.id) for inv in new_invitations)
 
