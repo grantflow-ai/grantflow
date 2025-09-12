@@ -142,7 +142,7 @@ function UploadPane({
 						Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll analyze
 						these to extract key requirements for your application.
 					</p>
-					<TemplateFileUploader parentId={grantTemplateId} />
+					<TemplateFileUploader parentId={grantTemplateId} sourceType="template" />
 				</div>
 
 				<div>

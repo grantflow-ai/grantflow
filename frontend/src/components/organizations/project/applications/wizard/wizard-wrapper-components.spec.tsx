@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { getStepIcon, StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
+import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -17,26 +17,6 @@ vi.mock("next/navigation", () => ({
 		push: mockPush,
 	}),
 }));
-
-describe.sequential("getStepIcon", () => {
-	it("returns done icon for done status", () => {
-		const icon = getStepIcon("done");
-		expect(icon.props.alt).toBe("Step done");
-		expect(icon.props.src).toBe("/icons/application-step-done.svg");
-	});
-
-	it("returns active icon for active status", () => {
-		const icon = getStepIcon("active");
-		expect(icon.props.alt).toBe("Step active");
-		expect(icon.props.src).toBe("/icons/application-step-active.svg");
-	});
-
-	it("returns inactive icon for inactive status", () => {
-		const icon = getStepIcon("inactive");
-		expect(icon.props.alt).toBe("Step inactive");
-		expect(icon.props.src).toBe("/icons/application-step-inactive.svg");
-	});
-});
 
 describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	afterEach(() => {

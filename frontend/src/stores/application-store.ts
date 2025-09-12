@@ -76,11 +76,17 @@ const formatApplicationRagSources = (application: ApplicationType): string => {
 interface ApplicationState {
 	application: ApplicationType;
 	areAppOperationsInProgress: boolean;
+	pendingUploads: {
+		application: Set<FileWithId>;
+		template: Set<FileWithId>;
+	};
 	ragJobState: {
 		isRestoring: boolean;
 		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
 	};
 }
+
+type SourceType = "application" | "template";
 
 function handleRagJobDataResponse(
 	jobData: API.RetrieveRagJob.Http200.ResponseBody,
@@ -154,6 +160,10 @@ function validateJobRestoration(application: ApplicationType): {
 const initialState: ApplicationState = {
 	application: null,
 	areAppOperationsInProgress: false,
+	pendingUploads: {
+		application: new Set(),
+		template: new Set(),
+	},
 	ragJobState: {
 		isRestoring: false,
 		restoredJob: null,
@@ -203,14 +213,17 @@ const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise
 
 interface ApplicationActions {
 	addFile: (file: FileWithId, parentId: string) => Promise<void>;
+	addPendingUpload: (file: FileWithId, sourceType: SourceType) => void;
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	checkAndRestoreJobState: () => Promise<void>;
+	clearPendingUploads: (sourceType?: SourceType) => void;
 	clearRestoredJobState: () => void;
 	createApplication: (organizationId: string, projectId: string) => Promise<void>;
 	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<boolean>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
+	removePendingUpload: (fileId: string, sourceType: SourceType) => void;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
@@ -463,6 +476,23 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
 	},
 
+	addPendingUpload: (file: FileWithId, sourceType: SourceType) => {
+		set((state) => ({
+			...state,
+			pendingUploads: {
+				...state.pendingUploads,
+				[sourceType]: new Set([file, ...state.pendingUploads[sourceType]]),
+			},
+		}));
+
+		log.info("[pending-upload] File added to pending uploads", {
+			fileId: file.id,
+			fileName: file.name,
+			pendingCount: get().pendingUploads[sourceType].size + 1,
+			sourceType,
+		});
+	},
+
 	addUrl: async (url: string, parentId: string) => {
 		const { application } = get();
 
@@ -548,6 +578,36 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.error("checkAndRestoreJobState: Failed to restore job state", error, {
 				projectId,
 				ragJobId,
+			});
+		}
+	},
+
+	clearPendingUploads: (sourceType?: SourceType) => {
+		if (sourceType) {
+			const pendingCount = get().pendingUploads[sourceType].size;
+			set((state) => ({
+				...state,
+				pendingUploads: {
+					...state.pendingUploads,
+					[sourceType]: new Set(),
+				},
+			}));
+			log.info("[pending-upload] Cleared pending uploads for source type", {
+				clearedCount: pendingCount,
+				sourceType,
+			});
+		} else {
+			const templateCount = get().pendingUploads.template.size;
+			const applicationCount = get().pendingUploads.application.size;
+			set((state) => ({
+				...state,
+				pendingUploads: {
+					application: new Set(),
+					template: new Set(),
+				},
+			}));
+			log.info("[pending-upload] Cleared all pending uploads", {
+				clearedCount: templateCount + applicationCount,
 			});
 		}
 	},
@@ -687,9 +747,51 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				template_rag_sources: formatRagSources(response),
 				templateId: response.grant_template?.id,
 			});
+
+			const { pendingUploads } = get();
+			const newTemplatePending = new Set(pendingUploads.template);
+			const newApplicationPending = new Set(pendingUploads.application);
+			let removedCount = 0;
+
+			const templateFilenames = new Set<string>();
+			response.grant_template?.rag_sources.forEach((source) => {
+				if (source.filename) templateFilenames.add(source.filename);
+			});
+
+			const applicationFilenames = new Set<string>();
+			response.rag_sources.forEach((source) => {
+				if (source.filename) applicationFilenames.add(source.filename);
+			});
+
+			for (const pendingFile of pendingUploads.template) {
+				if (templateFilenames.has(pendingFile.name)) {
+					newTemplatePending.delete(pendingFile);
+					removedCount++;
+				}
+			}
+
+			for (const pendingFile of pendingUploads.application) {
+				if (applicationFilenames.has(pendingFile.name)) {
+					newApplicationPending.delete(pendingFile);
+					removedCount++;
+				}
+			}
+
+			if (removedCount > 0) {
+				log.info("[pending-upload] Cleaned up pending uploads found in API", {
+					remainingApplicationCount: newApplicationPending.size,
+					remainingTemplateCount: newTemplatePending.size,
+					removedCount,
+				});
+			}
+
 			set({
 				application: response,
 				areAppOperationsInProgress: false,
+				pendingUploads: {
+					application: newApplicationPending,
+					template: newTemplatePending,
+				},
 			});
 		} catch (e: unknown) {
 			log.error("getApplication", e);
@@ -742,6 +844,30 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
+		}
+	},
+
+	removePendingUpload: (fileId: string, sourceType: SourceType) => {
+		const { pendingUploads } = get();
+		const fileToRemove = [...pendingUploads[sourceType]].find((file) => file.id === fileId);
+
+		if (fileToRemove) {
+			const newPendingUploads = new Set([...pendingUploads[sourceType]].filter((file) => file.id !== fileId));
+
+			set((state) => ({
+				...state,
+				pendingUploads: {
+					...state.pendingUploads,
+					[sourceType]: newPendingUploads,
+				},
+			}));
+
+			log.info("[pending-upload] File removed from pending uploads", {
+				fileId,
+				fileName: fileToRemove.name,
+				remainingCount: newPendingUploads.size,
+				sourceType,
+			});
 		}
 	},
 

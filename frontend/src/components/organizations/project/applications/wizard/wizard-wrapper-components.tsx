@@ -16,7 +16,7 @@ import { Deadline } from "./deadline";
 const APPLICATION_DETAILS_TOOLTIP_MESSAGES = {
 	[ApplicationDetailsValidationReason.RAG_SOURCES_MISSING]: "Please upload at least one document or URL",
 	[ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING]: (processingCount: number, totalCount: number) =>
-		`Processing ${processingCount} of ${totalCount} documents...`,
+		`Processing ${processingCount} of ${totalCount} sources...`,
 	[ApplicationDetailsValidationReason.TITLE_INVALID]: "Title must be at least 10 characters long",
 } as const;
 
@@ -31,21 +31,17 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 type IndicatorStatus = "active" | "done" | "inactive";
 
-export function getStepIcon(type: IndicatorStatus) {
-	if (type === "done") {
-		return <Image alt="Step done" height={15} src="/icons/application-step-done.svg" width={15} />;
-	}
-	if (type === "active") {
-		return <Image alt="Step active" height={15} src="/icons/application-step-active.svg" width={15} />;
-	}
-	return <Image alt="Step inactive" height={15} src="/icons/application-step-inactive.svg" width={15} />;
-}
+const STEP_ICONS: Record<IndicatorStatus, React.ReactElement> = {
+	active: <Image alt="Step active" height={15} src="/icons/application-step-active.svg" width={15} />,
+	done: <Image alt="Step done" height={15} src="/icons/application-step-done.svg" width={15} />,
+	inactive: <Image alt="Step inactive" height={15} src="/icons/application-step-inactive.svg" width={15} />,
+};
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: IndicatorStatus }) {
 	if (isLastStep) {
 		return (
 			<div className="relative flex flex-row items-start justify-start" data-testid={`step-${type}`}>
-				{getStepIcon(type)}
+				{STEP_ICONS[type]}
 			</div>
 		);
 	}
@@ -54,7 +50,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 
 	return (
 		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
-			<div className="relative flex justify-center">{getStepIcon(type)}</div>
+			<div className="relative flex justify-center">{STEP_ICONS[type]}</div>
 			<div className={`flex-1 ${lineClass} h-px`} />
 		</div>
 	);

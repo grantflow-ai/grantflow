@@ -2,6 +2,7 @@
 
 import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
 import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
+import { PendingFilePreviewCard } from "@/components/organizations/project/applications/wizard/pending-file-preview-card";
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
 import { TemplateFileUploader } from "@/components/organizations/project/applications/wizard/template-file-uploader";
 import { UrlInput } from "@/components/organizations/project/applications/wizard/url-input";
@@ -42,7 +43,7 @@ export function KnowledgeBaseStep() {
 						>
 							Documents
 						</h3>
-						<TemplateFileUploader parentId={applicationId} />
+						<TemplateFileUploader parentId={applicationId} sourceType="application" />
 					</div>
 
 					<div>
@@ -69,6 +70,7 @@ export function KnowledgeBaseStep() {
 function KnowledgeBasePreview() {
 	const applicationId = useApplicationStore((state) => state.application?.id);
 	const applicationRagSources = useApplicationStore((state) => state.application?.rag_sources);
+	const pendingUploads = useApplicationStore((state) => state.pendingUploads.application);
 
 	const knowledgeBaseFiles: FileWithSource[] = (applicationRagSources ?? [])
 		.filter((source) => source.filename && source.status !== SourceIndexingStatus.FAILED)
@@ -89,7 +91,8 @@ function KnowledgeBasePreview() {
 			url: source.url!,
 		}));
 
-	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
+	const pendingFiles = [...pendingUploads];
+	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0 || pendingFiles.length > 0;
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
 
 	if (!hasFilesOrUrls) {
@@ -105,7 +108,7 @@ function KnowledgeBasePreview() {
 			<div className="flex-1 min-h-0 overflow-y-auto h-full">
 				<div className="space-y-5">
 					<PreviewCard data-testid="knowledge-base-container">
-						{knowledgeBaseFiles.length > 0 && (
+						{(knowledgeBaseFiles.length > 0 || pendingFiles.length > 0) && (
 							<>
 								<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
 									Documents
@@ -118,6 +121,9 @@ function KnowledgeBasePreview() {
 											parentId={applicationId}
 											sourceStatus={file.sourceStatus}
 										/>
+									))}
+									{pendingFiles.map((file) => (
+										<PendingFilePreviewCard file={file} key={`pending-${file.id}`} />
 									))}
 								</div>
 							</>
