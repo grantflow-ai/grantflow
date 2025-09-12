@@ -318,8 +318,8 @@ async def test_list_notifications_excludes_soft_deleted(
             notifications.append(notification)
         await session.commit()
 
-        for notification in notifications:
-            await session.refresh(notification)
+    # Get notification IDs for later use
+    notification_ids = [notification.id for notification in notifications]
 
     # Get initial count
     response = await test_client.get(
@@ -334,8 +334,14 @@ async def test_list_notifications_excludes_soft_deleted(
 
     # Soft-delete one notification
     async with async_session_maker() as session, session.begin():
-        notifications[0].soft_delete()
-        session.add(notifications[0])
+        # Get the notification from the database in this session
+        notification_to_delete = await session.scalar(
+            select(Notification).where(Notification.id == notification_ids[0])
+        )
+        if notification_to_delete:
+            notification_to_delete.soft_delete()
+            session.add(notification_to_delete)
+            await session.commit()
 
     # Get count again - should be one less
     response = await test_client.get(
@@ -349,21 +355,21 @@ async def test_list_notifications_excludes_soft_deleted(
     assert new_count == initial_count - 1
 
     # Verify the soft-deleted notification is not in the results
-    notification_ids = {notif["id"] for notif in new_data["notifications"]}
-    assert str(notifications[0].id) not in notification_ids
+    response_notification_ids = {notif["id"] for notif in new_data["notifications"]}
+    assert str(notification_ids[0]) not in response_notification_ids
 
     # Verify the other notifications are still there
-    assert str(notifications[1].id) in notification_ids
-    assert str(notifications[2].id) in notification_ids
+    assert str(notification_ids[1]) in response_notification_ids
+    assert str(notification_ids[2]) in response_notification_ids
 
 
-async def test_mark_notification_as_read_ignores_soft_deleted(
+async def test_dismiss_notification_ignores_soft_deleted(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test that marking soft-deleted notifications as read fails appropriately."""
+    """Test that dismissing soft-deleted notifications fails appropriately."""
     firebase_uid = "a" * 128
 
     # Create a notification
@@ -380,33 +386,57 @@ async def test_mark_notification_as_read_ignores_soft_deleted(
         )
         session.add(notification)
         await session.commit()
-        await session.refresh(notification)
+        notification_id = notification.id
 
-    # First verify we can mark it as read normally
-    response = await test_client.patch(
-        f"/notifications/{notification.id}",
+    # Get the notification fresh from the database
+    async with async_session_maker() as session:
+        notification = await session.scalar(select(Notification).where(Notification.id == notification_id))
+
+    # First verify we can dismiss it normally
+    response = await test_client.post(
+        f"/notifications/{notification.id}/dismiss",
         headers={"Authorization": "Bearer some_token"},
-        json={"read": True},
     )
 
-    # This might be 200 or 204 depending on implementation
-    assert response.status_code in [HTTPStatus.OK, HTTPStatus.NO_CONTENT]
+    # Should work normally
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data["success"] is True
 
-    # Reset the notification to unread and soft-delete it
+    # Create another notification and soft-delete it
     async with async_session_maker() as session, session.begin():
-        notification.read = False
-        notification.soft_delete()
-        session.add(notification)
+        notification2 = Notification(
+            firebase_uid=firebase_uid,
+            project_id=project.id,
+            type=NotificationTypeEnum.WARNING,
+            title="Test Notification 2",
+            message="Test message 2",
+            project_name=project.name,
+            read=False,
+            dismissed=False,
+        )
+        session.add(notification2)
+        await session.commit()
+        notification2_id = notification2.id
 
-    # Try to mark the soft-deleted notification as read
-    response = await test_client.patch(
-        f"/notifications/{notification.id}",
+    # Soft-delete the second notification
+    async with async_session_maker() as session, session.begin():
+        # Get the notification from the database in this session
+        notification_to_delete = await session.scalar(select(Notification).where(Notification.id == notification2_id))
+        if notification_to_delete:
+            notification_to_delete.soft_delete()
+            session.add(notification_to_delete)
+            await session.commit()
+
+    # Try to dismiss the soft-deleted notification
+    response = await test_client.post(
+        f"/notifications/{notification2_id}/dismiss",
         headers={"Authorization": "Bearer some_token"},
-        json={"read": True},
     )
 
     # Should fail because the notification is soft-deleted
-    assert response.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.BAD_REQUEST]
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "Notification not found" in response.text
 
 
 async def test_expired_notifications_excludes_soft_deleted(
