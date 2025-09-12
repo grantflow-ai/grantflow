@@ -104,6 +104,17 @@ export function useApplicationNotifications({
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 	const reconnectAttemptRef = useRef(0);
 
+	useEffect(() => {
+		log.info("[useApplicationNotifications] Application ID changed, clearing notifications", {
+			applicationId,
+			organizationId,
+			previousNotificationCount: notifications.length,
+			projectId,
+		});
+		setNotifications([]);
+		reconnectAttemptRef.current = 0;
+	}, [applicationId, organizationId, projectId, notifications.length]);
+
 	const getSocketUrl = useCallback(async () => {
 		log.info("[useApplicationNotifications] Generating WebSocket URL", {
 			applicationId,
@@ -271,6 +282,10 @@ export function useApplicationNotifications({
 				traceId: message.trace_id,
 				type: message.type,
 			});
+
+			if (message.parent_id !== applicationId) {
+				return;
+			}
 
 			setNotifications((prev) => {
 				const newNotifications = [...prev, message];
