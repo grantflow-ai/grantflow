@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { createApplication } from "@/actions/grant-applications";
 import {
 	createProject,
 	deleteProject as deleteProjectAction,
@@ -18,6 +19,7 @@ import { WelcomeModal } from "@/components/organizations/dashboard/welcome/welco
 import { DeleteProjectModal } from "@/components/organizations/modals/delete-project-modal";
 import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import PaymentLink from "@/components/organizations/payment/payment-link";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
@@ -40,7 +42,7 @@ export function DashboardClient({
 	initialSelectedOrganizationId,
 }: DashboardClientProps) {
 	const router = useRouter();
-	const { navigateToProject } = useNavigationStore();
+	const { navigateToApplication, navigateToProject } = useNavigationStore();
 	const { selectedOrganizationId, switchOrganization } = useOrganization();
 	const { selectOrganization, setOrganizations } = useOrganizationStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
@@ -191,8 +193,60 @@ export function DashboardClient({
 		navigateToProject(defaultProject.id, defaultProject.name);
 		router.push(routes.organization.project.application.new());
 	};
-	const handleCreateApplication = () => {
-		closeModal();
+
+	const handleCreateApplication = async (projectId: null | string, projectName: string, isNewProject: boolean) => {
+		if (!currentOrganizationId) {
+			toast.error("No organization selected");
+			return;
+		}
+
+		try {
+			let targetProjectId = projectId;
+			const targetProjectName = projectName;
+
+			if (isNewProject) {
+				const newProject = await createProject(currentOrganizationId, {
+					description: "",
+					name: projectName,
+				});
+				targetProjectId = newProject.id;
+
+				mutate();
+
+				toast.success(`Project "${projectName}" created successfully`);
+			}
+
+			if (!targetProjectId) {
+				toast.error("Project ID is required");
+				return;
+			}
+
+			const application = await createApplication(currentOrganizationId, targetProjectId, {
+				title: DEFAULT_APPLICATION_TITLE,
+			});
+
+			navigateToApplication(
+				targetProjectId,
+				targetProjectName,
+				application.id,
+				application.title || DEFAULT_APPLICATION_TITLE,
+			);
+
+			const wizardPath = routes.organization.project.application.wizard();
+			router.push(wizardPath);
+
+			toast.success("Application created successfully");
+		} catch (error) {
+			log.error("dashboard-create-application", {
+				currentOrganizationId,
+				error,
+				isNewProject,
+				projectId,
+				projectName,
+			});
+
+			toast.error("Failed to create application");
+		}
 	};
 
 	return (
