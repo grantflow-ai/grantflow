@@ -1,7 +1,6 @@
 "use client";
 
 import { ExternalLink, Trash2 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import {
 	AppDropdownMenu,
@@ -9,27 +8,12 @@ import {
 	AppDropdownMenuItem,
 	AppDropdownMenuTrigger,
 } from "@/components/app/app-dropdown";
+import { FILE_ICON_MAP } from "@/components/shared/file-icon-map";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
+import { getFileExtension } from "@/utils/file-extensions";
 import { log } from "@/utils/logger/client";
-
-const FILE_ICON_MAP = {
-	csv: <Image alt="CSV file" className="block" height={56} src="/icons/file-csv.svg" width={48} />,
-	doc: <Image alt="DOC file" className="block" height={56} src="/icons/file-doc.svg" width={48} />,
-	docx: <Image alt="DOCX file" className="block" height={56} src="/icons/file-docx.svg" width={48} />,
-	latex: <Image alt="LaTeX file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-	markdown: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
-	md: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
-	odt: <Image alt="ODT file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-	pdf: <Image alt="PDF file" className="block" height={56} src="/icons/file-pdf.svg" width={48} />,
-	ppt: <Image alt="PPT file" className="block" height={56} src="/icons/file-ppt.svg" width={48} />,
-	pptx: <Image alt="PPTX file" className="block" height={56} src="/icons/file-pptx.svg" width={48} />,
-	rst: <Image alt="RST file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-	rtf: <Image alt="RTF file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-	txt: <Image alt="TXT file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-	xlsx: <Image alt="XLSX file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
-} as const;
 
 export function FilePreviewCard({
 	file,
@@ -43,7 +27,7 @@ export function FilePreviewCard({
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const removeFile = useApplicationStore((state) => state.removeFile);
 
-	const extension = getFileExtension(file.name) ?? "";
+	const extension = getFileExtension(file.name);
 
 	const canOpenInBrowser = ["md", "pdf"].includes(extension);
 	const hasAccessibleContent = file instanceof File && file.size > 0;
@@ -147,9 +131,4 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 			</span>
 		</div>
 	);
-}
-
-function getFileExtension(filename: string) {
-	const parts = filename.split(".");
-	return parts.length > 1 ? parts.at(-1)?.toLowerCase() : "";
 }

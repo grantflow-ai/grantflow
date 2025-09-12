@@ -12,10 +12,16 @@ import { updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
 import { crawlTemplateUrl, createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
 import type { API } from "@/types/api-types";
+import type { FileWithId } from "@/types/files";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { getEnv } from "@/utils/env";
 
 import { useApplicationStore } from "./application-store";
+
+const createMockFileWithId = (name: string, id?: string): FileWithId => {
+	const file = new File(["test content"], name, { type: "application/pdf" });
+	return Object.assign(file, { id: id ?? crypto.randomUUID() });
+};
 
 vi.mock("@/actions/grant-applications", () => ({
 	createApplication: vi.fn(),
@@ -110,6 +116,10 @@ describe("Application Store", () => {
 			const state = useApplicationStore.getState();
 			expect(state.application).toBeNull();
 			expect(state.areAppOperationsInProgress).toBe(false);
+			expect(state.pendingUploads).toEqual({
+				application: new Set(),
+				template: new Set(),
+			});
 		});
 	});
 
@@ -855,6 +865,422 @@ describe("Application Store", () => {
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 				expect(state.ragJobState.isRestoring).toBe(false);
+			});
+		});
+	});
+
+	describe("Pending Uploads Management", () => {
+		beforeEach(() => {
+			useApplicationStore.getState().reset();
+			vi.stubGlobal("crypto", {
+				randomUUID: vi.fn(() => "test-uuid-123"),
+			});
+		});
+
+		describe("addPendingUpload", () => {
+			it("should add file to template pending uploads", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.has(file)).toBe(true);
+				expect(state.pendingUploads.application.has(file)).toBe(false);
+				expect(state.pendingUploads.template.size).toBe(1);
+			});
+
+			it("should add file to application pending uploads", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "application");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.application.has(file)).toBe(true);
+				expect(state.pendingUploads.template.has(file)).toBe(false);
+				expect(state.pendingUploads.application.size).toBe(1);
+			});
+
+			it("should maintain separate sets for template and application", () => {
+				const templateFile = createMockFileWithId("template.pdf", "template-file-1");
+				const appFile = createMockFileWithId("app.pdf", "app-file-1");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(templateFile, "template");
+				addPendingUpload(appFile, "application");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.has(templateFile)).toBe(true);
+				expect(state.pendingUploads.template.has(appFile)).toBe(false);
+				expect(state.pendingUploads.application.has(appFile)).toBe(true);
+				expect(state.pendingUploads.application.has(templateFile)).toBe(false);
+			});
+
+			it("should add multiple files to same sourceType", () => {
+				const file1 = createMockFileWithId("test1.pdf", "file-1");
+				const file2 = createMockFileWithId("test2.pdf", "file-2");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(2);
+				expect(state.pendingUploads.template.has(file1)).toBe(true);
+				expect(state.pendingUploads.template.has(file2)).toBe(true);
+			});
+
+			it("should preserve existing files when adding new ones", () => {
+				const existingFile = createMockFileWithId("existing.pdf", "existing-file");
+				const newFile = createMockFileWithId("new.pdf", "new-file");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(existingFile, "template");
+				addPendingUpload(newFile, "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.has(existingFile)).toBe(true);
+				expect(state.pendingUploads.template.has(newFile)).toBe(true);
+				expect(state.pendingUploads.template.size).toBe(2);
+			});
+		});
+
+		describe("removePendingUpload", () => {
+			it("should remove file from template pending uploads by ID", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload, removePendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "template");
+				expect(useApplicationStore.getState().pendingUploads.template.size).toBe(1);
+
+				removePendingUpload("file-1", "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(0);
+				expect(state.pendingUploads.template.has(file)).toBe(false);
+			});
+
+			it("should remove file from application pending uploads by ID", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload, removePendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "application");
+				expect(useApplicationStore.getState().pendingUploads.application.size).toBe(1);
+
+				removePendingUpload("file-1", "application");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.application.size).toBe(0);
+				expect(state.pendingUploads.application.has(file)).toBe(false);
+			});
+
+			it("should only remove from specified sourceType", () => {
+				const templateFile = createMockFileWithId("template.pdf", "template-file");
+				const appFile = createMockFileWithId("app.pdf", "app-file");
+				const { addPendingUpload, removePendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(templateFile, "template");
+				addPendingUpload(appFile, "application");
+
+				removePendingUpload("template-file", "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(0);
+				expect(state.pendingUploads.application.size).toBe(1);
+				expect(state.pendingUploads.application.has(appFile)).toBe(true);
+			});
+
+			it("should handle non-existent file ID gracefully", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload, removePendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "template");
+				removePendingUpload("non-existent-id", "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect(state.pendingUploads.template.has(file)).toBe(true);
+			});
+
+			it("should remove only the specified file when multiple exist", () => {
+				const file1 = createMockFileWithId("test1.pdf", "file-1");
+				const file2 = createMockFileWithId("test2.pdf", "file-2");
+				const file3 = createMockFileWithId("test3.pdf", "file-3");
+				const { addPendingUpload, removePendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "template");
+				addPendingUpload(file3, "template");
+
+				removePendingUpload("file-2", "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(2);
+				expect(state.pendingUploads.template.has(file1)).toBe(true);
+				expect(state.pendingUploads.template.has(file2)).toBe(false);
+				expect(state.pendingUploads.template.has(file3)).toBe(true);
+			});
+		});
+
+		describe("clearPendingUploads", () => {
+			it("should clear template pending uploads when template sourceType specified", () => {
+				const file1 = createMockFileWithId("template1.pdf", "template-1");
+				const file2 = createMockFileWithId("app1.pdf", "app-1");
+				const { addPendingUpload, clearPendingUploads } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "application");
+
+				clearPendingUploads("template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(0);
+				expect(state.pendingUploads.application.size).toBe(1);
+				expect(state.pendingUploads.application.has(file2)).toBe(true);
+			});
+
+			it("should clear application pending uploads when application sourceType specified", () => {
+				const file1 = createMockFileWithId("template1.pdf", "template-1");
+				const file2 = createMockFileWithId("app1.pdf", "app-1");
+				const { addPendingUpload, clearPendingUploads } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "application");
+
+				clearPendingUploads("application");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect(state.pendingUploads.application.size).toBe(0);
+				expect(state.pendingUploads.template.has(file1)).toBe(true);
+			});
+
+			it("should clear all pending uploads when no sourceType specified", () => {
+				const file1 = createMockFileWithId("template1.pdf", "template-1");
+				const file2 = createMockFileWithId("app1.pdf", "app-1");
+				const { addPendingUpload, clearPendingUploads } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "application");
+
+				clearPendingUploads();
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(0);
+				expect(state.pendingUploads.application.size).toBe(0);
+			});
+
+			it("should handle clearing empty pending uploads", () => {
+				const { clearPendingUploads } = useApplicationStore.getState();
+
+				clearPendingUploads("template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(0);
+				expect(state.pendingUploads.application.size).toBe(0);
+			});
+		});
+
+		describe("getApplication cleanup integration", () => {
+			it("should remove pending uploads when files appear in API response - template", async () => {
+				const pendingFile1 = createMockFileWithId("existing.pdf", "pending-1");
+				const pendingFile2 = createMockFileWithId("notyet.pdf", "pending-2");
+
+				// Add pending uploads
+				useApplicationStore.getState().addPendingUpload(pendingFile1, "template");
+				useApplicationStore.getState().addPendingUpload(pendingFile2, "template");
+
+				// Mock application response with one of the files now present
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: {
+						...GrantTemplateFactory.build(),
+						rag_sources: [
+							{
+								filename: "existing.pdf", // This file should be removed from pending
+								sourceId: "source-1",
+								status: "FINISHED",
+								url: undefined,
+							},
+						],
+					},
+				});
+
+				vi.mocked(getApplication).mockResolvedValue(application);
+
+				const { getApplication: getApp } = useApplicationStore.getState();
+				await getApp("org-id", "project-id", "app-id");
+
+				const state = useApplicationStore.getState();
+				// existing.pdf should be removed from pending, notyet.pdf should remain
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect([...state.pendingUploads.template][0].name).toBe("notyet.pdf");
+			});
+
+			it("should remove pending uploads when files appear in API response - application", async () => {
+				const pendingFile1 = createMockFileWithId("existing-app.pdf", "app-pending-1");
+				const pendingFile2 = createMockFileWithId("notyet-app.pdf", "app-pending-2");
+
+				// Add pending uploads to application scope
+				useApplicationStore.getState().addPendingUpload(pendingFile1, "application");
+				useApplicationStore.getState().addPendingUpload(pendingFile2, "application");
+
+				// Mock application response with one of the files now present in application rag_sources
+				const application = ApplicationFactory.build({
+					rag_sources: [
+						{
+							filename: "existing-app.pdf", // This file should be removed from pending
+							sourceId: "app-source-1",
+							status: "FINISHED",
+							url: undefined,
+						},
+					],
+				});
+
+				vi.mocked(getApplication).mockResolvedValue(application);
+
+				const { getApplication: getApp } = useApplicationStore.getState();
+				await getApp("org-id", "project-id", "app-id");
+
+				const state = useApplicationStore.getState();
+				// existing-app.pdf should be removed from pending, notyet-app.pdf should remain
+				expect(state.pendingUploads.application.size).toBe(1);
+				expect([...state.pendingUploads.application][0].name).toBe("notyet-app.pdf");
+			});
+
+			it("should handle cleanup for both template and application scopes simultaneously", async () => {
+				const templateFile = createMockFileWithId("template-existing.pdf", "template-1");
+				const appFile = createMockFileWithId("app-existing.pdf", "app-1");
+				const templatePending = createMockFileWithId("template-pending.pdf", "template-2");
+				const appPending = createMockFileWithId("app-pending.pdf", "app-2");
+
+				// Add pending uploads to both scopes
+				useApplicationStore.getState().addPendingUpload(templateFile, "template");
+				useApplicationStore.getState().addPendingUpload(appFile, "application");
+				useApplicationStore.getState().addPendingUpload(templatePending, "template");
+				useApplicationStore.getState().addPendingUpload(appPending, "application");
+
+				// Mock application response with files present in both scopes
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: {
+						...GrantTemplateFactory.build(),
+						rag_sources: [
+							{
+								filename: "template-existing.pdf",
+								sourceId: "template-source-1",
+								status: "FINISHED",
+								url: undefined,
+							},
+						],
+					},
+					rag_sources: [
+						{
+							filename: "app-existing.pdf",
+							sourceId: "app-source-1",
+							status: "FINISHED",
+							url: undefined,
+						},
+					],
+				});
+
+				vi.mocked(getApplication).mockResolvedValue(application);
+
+				const { getApplication: getApp } = useApplicationStore.getState();
+				await getApp("org-id", "project-id", "app-id");
+
+				const state = useApplicationStore.getState();
+				// Each scope should have only 1 pending file remaining
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect(state.pendingUploads.application.size).toBe(1);
+				expect([...state.pendingUploads.template][0].name).toBe("template-pending.pdf");
+				expect([...state.pendingUploads.application][0].name).toBe("app-pending.pdf");
+			});
+
+			it("should not affect pending uploads when no matching files found in API response", async () => {
+				const pendingFile1 = createMockFileWithId("pending1.pdf", "pending-1");
+				const pendingFile2 = createMockFileWithId("pending2.pdf", "pending-2");
+
+				useApplicationStore.getState().addPendingUpload(pendingFile1, "template");
+				useApplicationStore.getState().addPendingUpload(pendingFile2, "application");
+
+				// Mock application response with different files
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: {
+						...GrantTemplateFactory.build(),
+						rag_sources: [
+							{
+								filename: "different-file.pdf",
+								sourceId: "source-1",
+								status: "FINISHED",
+								url: undefined,
+							},
+						],
+					},
+					rag_sources: [
+						{
+							filename: "another-different-file.pdf",
+							sourceId: "app-source-1",
+							status: "FINISHED",
+							url: undefined,
+						},
+					],
+				});
+
+				vi.mocked(getApplication).mockResolvedValue(application);
+
+				const { getApplication: getApp } = useApplicationStore.getState();
+				await getApp("org-id", "project-id", "app-id");
+
+				const state = useApplicationStore.getState();
+				// All pending uploads should remain
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect(state.pendingUploads.application.size).toBe(1);
+				expect([...state.pendingUploads.template][0].name).toBe("pending1.pdf");
+				expect([...state.pendingUploads.application][0].name).toBe("pending2.pdf");
+			});
+		});
+
+		describe("edge cases and error handling", () => {
+			it("should handle duplicate file additions", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file, "template");
+				addPendingUpload(file, "template"); // Same file object
+
+				const state = useApplicationStore.getState();
+				// Set should deduplicate
+				expect(state.pendingUploads.template.size).toBe(1);
+				expect(state.pendingUploads.template.has(file)).toBe(true);
+			});
+
+			it("should handle files with same name but different IDs", () => {
+				const file1 = createMockFileWithId("test.pdf", "file-1");
+				const file2 = createMockFileWithId("test.pdf", "file-2");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				addPendingUpload(file1, "template");
+				addPendingUpload(file2, "template");
+
+				const state = useApplicationStore.getState();
+				expect(state.pendingUploads.template.size).toBe(2);
+				expect(state.pendingUploads.template.has(file1)).toBe(true);
+				expect(state.pendingUploads.template.has(file2)).toBe(true);
+			});
+
+			it("should maintain state immutability", () => {
+				const file = createMockFileWithId("test.pdf", "file-1");
+				const { addPendingUpload } = useApplicationStore.getState();
+
+				const initialState = useApplicationStore.getState();
+				const initialPendingUploads = initialState.pendingUploads;
+
+				addPendingUpload(file, "template");
+
+				const newState = useApplicationStore.getState();
+				// Should be a new object reference (immutable update)
+				expect(newState.pendingUploads).not.toBe(initialPendingUploads);
+				expect(newState.pendingUploads.template).not.toBe(initialPendingUploads.template);
 			});
 		});
 	});
