@@ -75,3 +75,8 @@ openapi.json
 
 # AI Rules generated files
 .claude/agents/
+
+# IDE specific
+.windsurf/
+.mcp.json
+.github/copilot-instructions.md

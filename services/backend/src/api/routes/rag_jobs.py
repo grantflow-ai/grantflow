@@ -1,11 +1,13 @@
+from datetime import UTC, datetime
 from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
-from litestar import get
+from litestar import delete, get
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationGenerationJob,
     GrantTemplate,
@@ -15,6 +17,8 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.rag.src.constants import NotificationEvents
 
 logger = get_logger(__name__)
 
@@ -144,3 +148,86 @@ async def handle_retrieve_rag_job(
                     response["validation_results"] = app_job.validation_results
 
         return response
+
+
+@delete(
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    operation_id="CancelRagJob",
+)
+async def handle_cancel_rag_job(
+    *,
+    project_id: UUID,
+    job_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    logger.info("Cancelling RAG job", project_id=project_id, job_id=job_id)
+
+    async with session_maker() as session, session.begin():
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+
+        if not job:
+            raise NotFoundException("RAG job not found")
+
+        # Verify job belongs to project (same logic as retrieve)
+        project_match = False
+        if job.job_type == "grant_template_generation":
+            template_job = await session.scalar(
+                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
+            )
+            if template_job:
+                template = await session.scalar(
+                    select(GrantTemplate)
+                    .join(GrantApplication)
+                    .where(
+                        GrantTemplate.id == template_job.grant_template_id,
+                        GrantTemplate.deleted_at.is_(None),
+                        GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
+                    )
+                )
+                project_match = template is not None
+        elif job.job_type == "grant_application_generation":
+            app_job = await session.scalar(
+                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
+            )
+            if app_job:
+                application = await session.scalar(
+                    select(GrantApplication).where(
+                        GrantApplication.id == app_job.grant_application_id,
+                        GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
+                    )
+                )
+                project_match = application is not None
+
+        if not project_match:
+            raise NotFoundException("RAG job not found")
+
+        # Only cancel if job is in cancellable state
+        if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
+            previous_status = job.status
+            job.status = RagGenerationStatusEnum.CANCELLED
+            job.failed_at = datetime.now(UTC)
+            job.error_message = "Cancelled by user request"
+
+            # Add cancellation notification
+            notification = GenerationNotification(
+                rag_job_id=job_id,
+                event=NotificationEvents.JOB_CANCELLED,
+                message="Generation cancelled by user",
+                notification_type="warning",
+            )
+            session.add(notification)
+
+            logger.info(
+                "RAG job cancelled successfully",
+                job_id=str(job_id),
+                previous_status=previous_status.value,
+            )
+        else:
+            logger.info(
+                "RAG job not in cancellable state",
+                job_id=str(job_id),
+                current_status=job.status.value,
+            )
