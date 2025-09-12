@@ -20,6 +20,7 @@ from testing.factories import (
 )
 
 from services.backend.tests.conftest import TestingClientType
+from services.rag.src.constants import NotificationEvents
 
 
 @pytest.fixture
@@ -494,6 +495,178 @@ async def test_retrieve_application_job_no_subclass(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_cancel_rag_job_pending_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test cancelling a RAG job that is in PENDING status."""
+    async with async_session_maker() as session, session.begin():
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=grant_application.id,
+            status=RagGenerationStatusEnum.PENDING,
+            current_stage=0,
+            total_stages=10,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Verify job was actually cancelled in DB
+    async with async_session_maker() as session:
+        from packages.db.src.tables import RagGenerationJob
+        from sqlalchemy import select
+
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        assert job.status == RagGenerationStatusEnum.CANCELLED
+        assert job.error_message == "Cancelled by user request"
+        assert job.failed_at is not None
+
+
+async def test_cancel_rag_job_processing_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test cancelling a RAG job that is in PROCESSING status."""
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJobFactory.build(
+            grant_template_id=grant_template.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=3,
+            total_stages=6,
+            started_at=datetime.now(UTC),
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Verify notification was created
+    async with async_session_maker() as session:
+        from packages.db.src.tables import GenerationNotification
+        from sqlalchemy import select
+
+        notification = await session.scalar(
+            select(GenerationNotification)
+            .where(GenerationNotification.rag_job_id == job_id)
+            .where(GenerationNotification.event == NotificationEvents.JOB_CANCELLED)
+        )
+        assert notification is not None
+        assert notification.message == "Generation cancelled by user"
+        assert notification.notification_type == "warning"
+
+
+async def test_cancel_rag_job_completed_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test attempting to cancel a completed job (should not change status)."""
+    async with async_session_maker() as session, session.begin():
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=grant_application.id,
+            status=RagGenerationStatusEnum.COMPLETED,
+            current_stage=10,
+            total_stages=10,
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Verify job status unchanged in DB
+    async with async_session_maker() as session:
+        from packages.db.src.tables import RagGenerationJob
+        from sqlalchemy import select
+
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        assert job.status == RagGenerationStatusEnum.COMPLETED
+
+
+async def test_cancel_rag_job_wrong_project(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test cancelling a job from wrong project returns 404."""
+    # Create another project and application
+    async with async_session_maker() as session, session.begin():
+        other_project = ProjectFactory.build(
+            organization_id=project.organization_id,
+            name="Other Project",
+        )
+        session.add(other_project)
+        await session.flush()
+
+        other_app = GrantApplication(
+            title="Other App",
+            project_id=other_project.id,
+        )
+        session.add(other_app)
+        await session.flush()
+
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=other_app.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    # Try to cancel job using wrong project ID
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_cancel_nonexistent_job(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test cancelling a non-existent job returns 404."""
+    fake_job_id = str(uuid4())
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{fake_job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
