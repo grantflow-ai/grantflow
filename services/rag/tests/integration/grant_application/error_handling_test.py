@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from sqlalchemy import select
@@ -33,7 +34,6 @@ async def test_pipeline_missing_grant_template(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Remove the grant template from the existing application
     async with async_session_maker() as session:
         result = await session.execute(
             select(GrantApplication)
@@ -43,7 +43,6 @@ async def test_pipeline_missing_grant_template(
         app = result.scalar_one()
 
         assert app is not None
-        # Remove the grant template relationship
         app.grant_template = None
         await session.commit()
 
@@ -61,7 +60,6 @@ async def test_pipeline_missing_research_objectives(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Modify the existing application to remove research objectives
     async with async_session_maker() as session:
         result = await session.execute(
             select(GrantApplication)
@@ -71,7 +69,6 @@ async def test_pipeline_missing_research_objectives(
         app = result.scalar_one()
 
         assert app is not None
-        # Remove research objectives
         app.research_objectives = []
         await session.commit()
 
@@ -90,34 +87,52 @@ async def test_pipeline_missing_work_plan_section(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     test_application = test_application_with_template
-    with (
-        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
-    ):
-        async with async_session_maker() as session:
-            result = await session.execute(
-                select(GrantApplication)
-                .options(selectinload(GrantApplication.grant_template))
-                .where(GrantApplication.id == test_application.id)
-            )
-            app = result.scalar_one()
 
-            assert app is not None
-            assert app.grant_template is not None
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(GrantApplication)
+            .options(selectinload(GrantApplication.grant_template))
+            .where(GrantApplication.id == test_application.id)
+        )
+        app = result.scalar_one()
 
-            app.grant_template.grant_sections = [
-                s for s in app.grant_template.grant_sections if not s.get("is_detailed_research_plan")
-            ]
-            await session.commit()
+        assert app is not None
+        assert app.grant_template is not None
 
-        with pytest.raises(ValidationError) as exc_info:
-            await grant_application_text_generation_pipeline_handler(
-                grant_application_id=test_application.id,
-                session_maker=async_session_maker,
-                job_manager=create_mock_job_manager(),
-            )
+        app.grant_template.grant_sections = [
+            s for s in app.grant_template.grant_sections if not s.get("is_detailed_research_plan")
+        ]
+        await session.commit()
 
-        assert "work plan section" in str(exc_info.value).lower()
+    mock_job_manager = create_mock_job_manager()
+
+    with patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock):
+        result = await grant_application_text_generation_pipeline_handler(
+            grant_application_id=test_application.id,
+            session_maker=async_session_maker,
+            job_manager=mock_job_manager,
+        )
+
+    assert result is None
+
+    mock_job_manager.update_job_status.assert_called_once()
+    update_call = mock_job_manager.update_job_status.call_args
+    assert update_call.kwargs["status"] == RagGenerationStatusEnum.FAILED
+    assert "unexpected error occurred" in update_call.kwargs["error_message"].lower()
+
+    notification_calls = list(mock_job_manager.add_notification.call_args_list)
+    error_notifications = [call for call in notification_calls if call.kwargs.get("notification_type") == "error"]
+    assert len(error_notifications) >= 1
+
+    template_error_found = False
+    for call in notification_calls:
+        message = call.kwargs.get("message", "")
+        if "work plan section" in message.lower():
+            template_error_found = True
+            break
+    assert template_error_found, (
+        f"Expected 'work plan section' notification not found in calls: {[call.kwargs.get('message', '') for call in notification_calls]}"
+    )
 
 
 async def test_pipeline_database_error_during_save(
@@ -178,11 +193,16 @@ async def test_pipeline_backend_error_during_generation(
         ),
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
     ):
-        with pytest.raises(BackendError) as exc_info:
-            await grant_application_text_generation_pipeline_handler(
-                grant_application_id=test_application_with_template.id,
-                session_maker=async_session_maker,
-                job_manager=mock_job_manager,
-            )
+        result = await grant_application_text_generation_pipeline_handler(
+            grant_application_id=test_application_with_template.id,
+            session_maker=async_session_maker,
+            job_manager=mock_job_manager,
+        )
 
-        assert "llm service unavailable" in str(exc_info.value).lower()
+    assert result is None
+
+    mock_job_manager.update_job_status.assert_called_once()
+    update_call = mock_job_manager.update_job_status.call_args
+    assert update_call.kwargs["status"] == RagGenerationStatusEnum.FAILED
+    error_message = update_call.kwargs["error_message"].lower()
+    assert "unexpected error occurred" in error_message or "llm service unavailable" in error_message

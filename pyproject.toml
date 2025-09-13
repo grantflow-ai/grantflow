@@ -149,6 +149,7 @@ timeout = 600
 markers = [
   "smoke: Quick smoke tests (< 1 min)",
   "quality_assessment: Quality assessment tests (2-5 min)",
+  "e2e: End-to-end tests that make real external API calls",
   "e2e_full: Complete e2e tests (10+ min)",
   "slow: All slow tests",
   "semantic_evaluation: Semantic similarity evaluation tests",

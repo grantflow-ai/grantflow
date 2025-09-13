@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from services.scraper.src.db_utils import get_existing_grant_identifiers
 from services.scraper.src.main import run_scraper
 from testing.performance_framework import Domain, ExecutionSpeed, performance_test
@@ -68,6 +69,7 @@ async def _verify_postgresql_changes(
 
 
 @performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.SCRAPER, timeout=600)
+@pytest.mark.e2e
 async def test_scraper_smoke(logger: logging.Logger) -> None:
     _setup_test_environment("smoke-test")
 
@@ -93,6 +95,7 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
 
 
 @performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.SCRAPER, timeout=1800)
+@pytest.mark.e2e
 async def test_scraper_full_e2e(logger: logging.Logger) -> None:
     _setup_test_environment("full-e2e-test")
 
