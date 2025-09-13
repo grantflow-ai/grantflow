@@ -3,18 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.json_objects import ResearchObjective, ResearchTask
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
-from testing.factories import (
-    GrantApplicationFactory,
-    OrganizationFactory,
-    ProjectFactory,
-)
 
 from services.rag.src.grant_application.handler import (
     grant_application_text_generation_pipeline_handler,
@@ -36,33 +30,26 @@ def create_mock_job_manager() -> MagicMock:
 
 
 async def test_pipeline_missing_grant_template(
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    # Remove the grant template from the existing application
     async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-
-        application = GrantApplicationFactory.build(
-            title="Test Application",
-            project_id=project.id,
-            research_objectives=[
-                ResearchObjective(
-                    number=1, title="Test Objective", research_tasks=[ResearchTask(number=1, title="Test Task")]
-                )
-            ],
+        result = await session.execute(
+            select(GrantApplication)
+            .options(selectinload(GrantApplication.grant_template))
+            .where(GrantApplication.id == test_application_with_template.id)
         )
-        session.add(application)
+        app = result.scalar_one()
+
+        assert app is not None
+        # Remove the grant template relationship
+        app.grant_template = None
         await session.commit()
-        await session.refresh(application)
 
     with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
-            grant_application_id=application.id,
+            grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=create_mock_job_manager(),
         )

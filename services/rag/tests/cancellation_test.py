@@ -180,14 +180,10 @@ async def test_template_extraction_stops_when_cancelled(
 
 @pytest.mark.asyncio
 async def test_application_generation_stops_at_verification_when_cancelled(
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    test_grant_application: GrantApplication,
-    test_grant_template: GrantTemplate,
 ) -> None:
-    async with async_session_maker() as session:
-        application = await session.get(GrantApplication, test_grant_application.id)
-        application.grant_template_id = test_grant_template.id
-        await session.commit()
+    # Use the application with template already set up from the fixture
 
     mock_job_manager = MagicMock()
     mock_job_manager.create_grant_application_job = AsyncMock()
@@ -198,13 +194,13 @@ async def test_application_generation_stops_at_verification_when_cancelled(
 
     with patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed"):
         result = await grant_application_text_generation_pipeline_handler(
-            grant_application_id=test_grant_application.id,
+            grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
     assert result is None
-    mock_job_manager.handle_cancellation.assert_called_once_with(test_grant_application.id)
+    mock_job_manager.handle_cancellation.assert_called_once_with(test_application_with_template.id)
 
 
 @pytest.mark.asyncio
