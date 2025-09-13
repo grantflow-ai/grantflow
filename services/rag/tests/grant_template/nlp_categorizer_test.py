@@ -125,7 +125,7 @@ def sample_cfp_texts() -> list[str]:
 
 @performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.NLP_CATEGORIZATION, timeout=60)
 async def test_nlp_categorizer_smoke(logger: Any) -> None:
-    test_data_dir = Path(__file__).parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
+    test_data_dir = Path(__file__).parent.parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
     txt_files = list(test_data_dir.glob("*.txt"))
 
     if not txt_files:
@@ -206,7 +206,7 @@ async def test_nlp_categorization_accuracy_benchmark() -> None:
 
 @performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.NLP_CATEGORIZATION, timeout=300)
 async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
-    test_data_dir = Path(__file__).parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
+    test_data_dir = Path(__file__).parent.parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
     results_dir = Path(__file__).parent / "benchmark_results"
     results_dir.mkdir(exist_ok=True)
 

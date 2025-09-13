@@ -123,9 +123,6 @@ def mock_extracted_cfp_data(
     }
 
 
-# Using fixtures from conftest: sample_cfp_content, cfp_subject
-
-
 @pytest.fixture
 async def cfp_file_content() -> str:
     cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
@@ -180,13 +177,10 @@ def mock_rag_sources() -> list[RagSourceData]:
     ]
 
 
-# Using test_grant_template fixture from conftest
-
-
 @pytest.fixture
 async def grant_template_with_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> GrantTemplate:
     source1 = RagFileFactory.build(
         text_content="This is the full content of the first source document about funding opportunities.",
@@ -235,11 +229,11 @@ async def grant_template_with_sources(
         await session.commit()
 
     template_source1 = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source1.id,
     )
     template_source2 = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source2.id,
     )
 
@@ -247,7 +241,7 @@ async def grant_template_with_sources(
         session.add_all([template_source1, template_source2])
         await session.commit()
 
-    return test_grant_template
+    return grant_template_with_sections
 
 
 async def test_extract_and_enrich_sections_with_mocked_llm(
@@ -470,7 +464,7 @@ async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceDat
 
 async def test_grant_template_generation_pipeline_missing_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     mock_job_manager = AsyncMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
@@ -485,7 +479,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
         mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
 
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
@@ -497,7 +491,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
         error_details=ANY,
     )
     mock_job_manager.add_notification.assert_any_call(
-        parent_id=test_grant_template.grant_application_id,
+        parent_id=grant_template_with_sections.grant_application_id,
         event=NotificationEvents.INDEXING_TIMEOUT,
         message=ANY,
         notification_type="error",
@@ -507,7 +501,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
 
 async def test_grant_template_generation_pipeline_unindexed_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     source = RagFileFactory.build(
         text_content="Test content",
@@ -520,7 +514,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         await session.commit()
 
     template_source = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source.id,
     )
 
@@ -539,7 +533,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
 
     with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
@@ -551,7 +545,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         error_details=ANY,
     )
     mock_job_manager.add_notification.assert_any_call(
-        parent_id=test_grant_template.grant_application_id,
+        parent_id=grant_template_with_sections.grant_application_id,
         event=NotificationEvents.INDEXING_FAILED,
         message=ANY,
         notification_type="error",

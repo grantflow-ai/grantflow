@@ -132,7 +132,7 @@ async def test_handle_cancellation_adds_notification(
 @pytest.mark.asyncio
 async def test_template_generation_stops_at_verification_when_cancelled(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     mock_job_manager = MagicMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
@@ -143,13 +143,13 @@ async def test_template_generation_stops_at_verification_when_cancelled(
 
     with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed"):
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
     assert result is None
-    mock_job_manager.handle_cancellation.assert_called_once_with(test_grant_template.grant_application_id)
+    mock_job_manager.handle_cancellation.assert_called_once_with(grant_template_with_sections.grant_application_id)
 
 
 @pytest.mark.asyncio
@@ -183,8 +183,6 @@ async def test_application_generation_stops_at_verification_when_cancelled(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Use the application with template already set up from the fixture
-
     mock_job_manager = MagicMock()
     mock_job_manager.create_grant_application_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
@@ -261,12 +259,12 @@ async def test_work_plan_generation_checks_cancellation_between_objectives(
 @pytest.mark.asyncio
 async def test_cancel_endpoint_cancels_pending_job(
     async_session_maker: async_sessionmaker[Any],
-    test_project: Project,
-    test_grant_template: GrantTemplate,
+    project: Project,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PENDING,
             current_stage=0,
             total_stages=5,
@@ -311,12 +309,12 @@ async def test_cancel_endpoint_cancels_pending_job(
 @pytest.mark.asyncio
 async def test_cancel_endpoint_does_not_cancel_completed_job(
     async_session_maker: async_sessionmaker[Any],
-    test_project: Project,
-    test_grant_template: GrantTemplate,
+    project: Project,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.COMPLETED,
             current_stage=5,
             total_stages=5,
@@ -345,13 +343,13 @@ async def test_cancel_endpoint_does_not_cancel_completed_job(
 @pytest.mark.asyncio
 async def test_deleting_template_source_cancels_template_job(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
-    test_template_source: RagSource,
-    test_organization: Organization,
+    grant_template_with_sections: GrantTemplate,
+    template_rag_source: RagSource,
+    organization: Organization,
 ) -> None:
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
             current_stage=2,
             total_stages=5,
@@ -359,7 +357,7 @@ async def test_deleting_template_source_cancels_template_job(
         )
         session.add(job)
 
-        template = await session.get(GrantTemplate, test_grant_template.id)
+        template = await session.get(GrantTemplate, grant_template_with_sections.id)
         template.rag_job_id = job.id
 
         await session.commit()
@@ -382,21 +380,21 @@ async def test_deleting_template_source_cancels_template_job(
 @pytest.mark.asyncio
 async def test_deleting_application_source_cancels_application_job_only(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_application: GrantApplication,
-    test_grant_template: GrantTemplate,
-    test_application_source: RagSource,
-    test_organization: Organization,
+    grant_application: GrantApplication,
+    grant_template_with_sections: GrantTemplate,
+    application_rag_source: RagSource,
+    organization: Organization,
 ) -> None:
     async with async_session_maker() as session:
         template_job = GrantTemplateGenerationJob(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
             current_stage=2,
             total_stages=5,
             retry_count=0,
         )
         app_job = GrantApplicationGenerationJob(
-            grant_application_id=test_grant_application.id,
+            grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PROCESSING,
             current_stage=3,
             total_stages=6,
@@ -404,10 +402,10 @@ async def test_deleting_application_source_cancels_application_job_only(
         )
         session.add_all([template_job, app_job])
 
-        template = await session.get(GrantTemplate, test_grant_template.id)
+        template = await session.get(GrantTemplate, grant_template_with_sections.id)
         template.rag_job_id = template_job.id
 
-        application = await session.get(GrantApplication, test_grant_application.id)
+        application = await session.get(GrantApplication, grant_application.id)
         application.rag_job_id = app_job.id
 
         await session.commit()

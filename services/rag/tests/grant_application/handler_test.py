@@ -156,7 +156,6 @@ def mock_section_text() -> str:
     return "This is a mocked section text for testing."
 
 
-@pytest.mark.skip(reason="Test hangs - needs investigation")
 async def test_generate_work_plan_text_with_mocked_llm(
     mock_research_objectives: list[ResearchObjective],
     mock_enrichment_response: ObjectiveEnrichmentDTO,
@@ -173,6 +172,11 @@ async def test_generate_work_plan_text_with_mocked_llm(
     mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
     mock_job_manager.handle_cancellation = AsyncMock()
 
+    mock_wikidata_enrichment = {
+        "core_scientific_terms": ["biomarkers", "proteomics", "machine learning"],
+        "scientific_context": "Cancer biomarker discovery using AI-driven proteomics",
+    }
+
     with (
         patch(
             "services.rag.src.grant_application.handler.handle_extract_relationships",
@@ -183,6 +187,11 @@ async def test_generate_work_plan_text_with_mocked_llm(
             "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
             new_callable=AsyncMock,
             return_value=[mock_enrichment_response, mock_enrichment_response],
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.enrich_objective_with_wikidata",
+            new_callable=AsyncMock,
+            return_value=mock_wikidata_enrichment,
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_work_plan_component_text",
@@ -258,7 +267,6 @@ async def test_generate_grant_section_texts_with_mocked_llm(
         assert len(text) > 0
 
 
-@pytest.mark.skip(reason="Test hangs - needs investigation")
 async def test_generate_work_plan_text_normalizes_markdown(
     mock_research_objectives: list[ResearchObjective],
     mock_enrichment_response: ObjectiveEnrichmentDTO,
@@ -286,6 +294,11 @@ More text with formatting."""
     mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
     mock_job_manager.handle_cancellation = AsyncMock()
 
+    mock_wikidata_enrichment = {
+        "core_scientific_terms": ["biomarkers", "proteomics", "machine learning"],
+        "scientific_context": "Cancer biomarker discovery using AI-driven proteomics",
+    }
+
     with (
         patch(
             "services.rag.src.grant_application.handler.handle_extract_relationships",
@@ -296,6 +309,11 @@ More text with formatting."""
             "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
             new_callable=AsyncMock,
             return_value=[mock_enrichment_response, mock_enrichment_response],
+        ),
+        patch(
+            "services.rag.src.grant_application.handler.enrich_objective_with_wikidata",
+            new_callable=AsyncMock,
+            return_value=mock_wikidata_enrichment,
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_work_plan_component_text",
