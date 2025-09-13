@@ -466,9 +466,7 @@ async def handle_delete_rag_source(
                         error=str(e),
                     )
 
-            # Cancel related RAG jobs before deleting source
             if template_id:
-                # Cancel template generation job if active
                 template = await session.scalar(
                     select(GrantTemplate).where(
                         GrantTemplate.id == template_id,
@@ -483,7 +481,6 @@ async def handle_delete_rag_source(
                     )
 
             elif application_id:
-                # Cancel application generation job if active
                 application = await session.scalar(
                     select(GrantApplication).where(
                         GrantApplication.id == application_id,
@@ -656,7 +653,6 @@ async def _cancel_job_if_active(
     job_id: UUID,
     reason: str,
 ) -> None:
-    """Cancel a job if it's in PENDING or PROCESSING state."""
     job = await session.get(RagGenerationJob, job_id)
     if job and job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
         job.status = RagGenerationStatusEnum.CANCELLED

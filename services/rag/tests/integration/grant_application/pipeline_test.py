@@ -131,7 +131,6 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
         session.add(application)
         await session.flush()
 
-        # Set up the relationship between template and application
         application.grant_template = template
 
         await session.commit()
@@ -244,7 +243,6 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
         session.add(application)
         await session.flush()
 
-        # Set up the relationship between template and application
         application.grant_template = template
 
         await session.commit()
