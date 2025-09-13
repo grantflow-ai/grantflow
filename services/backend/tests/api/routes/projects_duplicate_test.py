@@ -218,7 +218,7 @@ async def test_duplicate_project_preserves_rag_sources(
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/duplicate",
-        json={},
+        json={"title": "Test Duplicate Project"},
         headers={"Authorization": "Bearer some_token"},
     )
 

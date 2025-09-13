@@ -25,7 +25,7 @@ async def test_login_new_user_creates_organization_and_project(
         "services.backend.src.api.routes.auth.verify_id_token",
         verify_mock,
     )
-    get_user_mock = AsyncMock(return_value={"uid": firebase_uid, "email": "test@example.com"})
+    get_user_mock = AsyncMock(return_value={"uid": firebase_uid, "email": f"test-{firebase_uid}@example.com"})
     mocker.patch(
         "services.backend.src.api.routes.auth.get_user",
         get_user_mock,
@@ -62,7 +62,7 @@ async def test_login_existing_user_keeps_organization(
         "services.backend.src.api.routes.auth.verify_id_token",
         verify_mock,
     )
-    get_user_mock = AsyncMock(return_value={"uid": firebase_uid, "email": "test@example.com"})
+    get_user_mock = AsyncMock(return_value={"uid": firebase_uid, "email": f"test-{firebase_uid}@example.com"})
     mocker.patch(
         "services.backend.src.api.routes.auth.get_user",
         get_user_mock,
@@ -92,7 +92,7 @@ async def test_login_user_with_pending_invitation_accepts_invitation(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
 ) -> None:
-    email = "invited@example.com"
+    email = "invitation-test@example.com"
 
     async with async_session_maker() as session, session.begin():
         org = Organization(name="Existing Organization")
@@ -153,7 +153,7 @@ async def test_login_user_with_multiple_pending_invitations(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
 ) -> None:
-    email = "multi-invited@example.com"
+    email = "invitation-test@example.com"
 
     async with async_session_maker() as session, session.begin():
         org1 = Organization(name="Organization 1")
