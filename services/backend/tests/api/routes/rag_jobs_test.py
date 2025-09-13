@@ -404,7 +404,6 @@ async def test_retrieve_template_job_minimal_data(
     data = response.json()
 
     assert data["grant_template_id"] == str(grant_template.id)
-    # These fields may be present with None/empty values from factory
     if "extracted_sections" in data:
         assert data["extracted_sections"] is None or data["extracted_sections"] == []
     if "extracted_metadata" in data:
@@ -436,7 +435,6 @@ async def test_retrieve_application_job_minimal_data(
     data = response.json()
 
     assert data["grant_application_id"] == str(grant_application.id)
-    # These fields may be present with None/empty values from factory
     if "generated_sections" in data:
         assert data["generated_sections"] is None or data["generated_sections"] == {}
     if "validation_results" in data:
@@ -508,7 +506,6 @@ async def test_cancel_rag_job_pending_status(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test cancelling a RAG job that is in PENDING status."""
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
             grant_application_id=grant_application.id,
@@ -527,7 +524,6 @@ async def test_cancel_rag_job_pending_status(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Verify job was actually cancelled in DB
     async with async_session_maker() as session:
         from packages.db.src.tables import RagGenerationJob
         from sqlalchemy import select
@@ -545,7 +541,6 @@ async def test_cancel_rag_job_processing_status(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test cancelling a RAG job that is in PROCESSING status."""
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
             grant_template_id=grant_template.id,
@@ -565,7 +560,6 @@ async def test_cancel_rag_job_processing_status(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Verify notification was created
     async with async_session_maker() as session:
         from packages.db.src.tables import GenerationNotification
         from sqlalchemy import select
@@ -587,7 +581,6 @@ async def test_cancel_rag_job_completed_status(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test attempting to cancel a completed job (should not change status)."""
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
             grant_application_id=grant_application.id,
@@ -608,7 +601,6 @@ async def test_cancel_rag_job_completed_status(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Verify job status unchanged in DB
     async with async_session_maker() as session:
         from packages.db.src.tables import RagGenerationJob
         from sqlalchemy import select
@@ -623,8 +615,6 @@ async def test_cancel_rag_job_wrong_project(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test cancelling a job from wrong project returns 404."""
-    # Create another project and application
     async with async_session_maker() as session, session.begin():
         other_project = ProjectFactory.build(
             organization_id=project.organization_id,
@@ -648,7 +638,6 @@ async def test_cancel_rag_job_wrong_project(
         await session.commit()
         job_id = job.id
 
-    # Try to cancel job using wrong project ID
     response = await test_client.delete(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
@@ -662,7 +651,6 @@ async def test_cancel_nonexistent_job(
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test cancelling a non-existent job returns 404."""
     fake_job_id = str(uuid4())
 
     response = await test_client.delete(

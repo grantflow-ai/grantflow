@@ -7,7 +7,7 @@ from uuid import uuid4
 from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
-from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
+from testing.performance_framework import Domain, ExecutionSpeed, performance_test
 from testing.rag_ai_evaluation import (
     evaluate_query_generation_quality,
     evaluate_retrieval_relevance,
@@ -24,7 +24,7 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 from services.rag.tests.e2e.utils_test import create_rag_sources_from_cfp_file
 
 
-@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.RETRIEVAL, timeout=180)
+@performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.RETRIEVAL, timeout=180)
 async def test_retrieval_smoke(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -57,7 +57,7 @@ async def test_retrieval_smoke(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=600)
 async def test_retrieval_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -103,7 +103,7 @@ async def test_retrieval_quality_assessment(
     logger.info("Retrieval quality assessment completed with diversity score: %.2f", diversity_score)
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=600)
 async def test_retrieval_semantic_evaluation(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -155,7 +155,7 @@ async def test_retrieval_semantic_evaluation(
     logger.info("Semantic evaluation completed with AI relevance: %.2f", ai_evaluation.get("avg_relevance", 0))
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=300)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=300)
 async def test_retrieval_with_custom_queries(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -203,7 +203,7 @@ async def test_retrieval_with_custom_queries(
     logger.info("Custom query retrieval completed in %.2fs", total_time)
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=300)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=300)
 async def test_search_query_generation_basic(
     logger: logging.Logger,
 ) -> None:
@@ -244,7 +244,7 @@ async def test_search_query_generation_basic(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=600)
 async def test_search_query_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -296,7 +296,7 @@ async def test_search_query_quality_assessment(
     logger.info("Query quality assessment completed with %d queries", len(queries))
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=300)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.RETRIEVAL, timeout=300)
 async def test_search_query_context_sensitivity(
     logger: logging.Logger,
 ) -> None:
@@ -334,7 +334,7 @@ async def test_search_query_context_sensitivity(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.RETRIEVAL, timeout=900)
+@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.RETRIEVAL, timeout=900)
 async def test_search_and_retrieval_integration(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
