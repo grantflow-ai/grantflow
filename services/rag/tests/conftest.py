@@ -483,7 +483,6 @@ async def melanoma_alliance_full_application_id(
 
 @pytest.fixture
 async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
-    """Create a test organization for testing."""
     from testing.factories import OrganizationFactory
 
     async with async_session_maker() as session:
@@ -496,7 +495,6 @@ async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Org
 
 @pytest.fixture
 async def test_project(test_organization: Organization, async_session_maker: async_sessionmaker[Any]) -> Project:
-    """Create a test project for testing."""
     from testing.factories import ProjectFactory
 
     async with async_session_maker() as session:
@@ -513,7 +511,6 @@ async def test_grant_application(
     research_objectives: list[ResearchObjective],
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantApplication:
-    """Create a test grant application for testing."""
     from testing.factories import GrantApplicationFactory
 
     async with async_session_maker() as session:
@@ -533,19 +530,17 @@ async def test_grant_template(
     grant_sections: list[GrantLongFormSection],
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantTemplate:
-    """Create a test grant template for testing."""
     from testing.factories import GrantTemplateFactory
 
     async with async_session_maker() as session:
         template = GrantTemplateFactory.build(
             grant_application_id=test_grant_application.id,
             grant_sections=grant_sections,
-            granting_institution_id=None,  # Don't auto-generate FK
+            granting_institution_id=None,
         )
         session.add(template)
         await session.commit()
 
-        # Update the grant application to reference this template
         application = await session.get(GrantApplication, test_grant_application.id)
         application.grant_template_id = template.id
         await session.commit()
@@ -559,18 +554,15 @@ async def test_template_source(
     test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
 ) -> RagSource:
-    """Create a test template source for testing."""
     from testing.factories import RagUrlFactory
 
     async with async_session_maker() as session:
-        # Create a RagUrl source
         source = RagUrlFactory.build(
             url="https://example.com/grant-template.pdf",
         )
         session.add(source)
         await session.flush()
 
-        # Create the association
         template_source = GrantTemplateSource(
             rag_source_id=source.id,
             grant_template_id=test_grant_template.id,
@@ -587,18 +579,15 @@ async def test_application_source(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> RagSource:
-    """Create a test application source for testing."""
     from testing.factories import RagUrlFactory
 
     async with async_session_maker() as session:
-        # Create a RagUrl source
         source = RagUrlFactory.build(
             url="https://example.com/application-doc.pdf",
         )
         session.add(source)
         await session.flush()
 
-        # Create the association
         application_source = GrantApplicationSource(
             rag_source_id=source.id,
             grant_application_id=test_grant_application.id,
@@ -612,7 +601,6 @@ async def test_application_source(
 
 @pytest.fixture
 def sample_cfp_content() -> list[dict[str, Any]]:
-    """Sample CFP content for testing."""
     return [
         {"title": "Introduction", "subtitles": ["Background", "Purpose"]},
         {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
@@ -622,13 +610,11 @@ def sample_cfp_content() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def cfp_subject() -> str:
-    """Sample CFP subject for testing."""
     return "Test grant for researching innovative approaches to healthcare"
 
 
 @pytest.fixture
 def mock_research_objectives() -> list[dict[str, Any]]:
-    """Mock research objectives for testing."""
     return [
         {
             "id": "obj-1",
@@ -663,7 +649,6 @@ def mock_research_objectives() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def mock_enrichment_response() -> dict[str, Any]:
-    """Mock enrichment response for testing."""
     return {
         "enriched_objective": "Enhanced objective text",
         "search_queries": ["query1", "query2"],
@@ -674,7 +659,6 @@ def mock_enrichment_response() -> dict[str, Any]:
 
 @pytest.fixture
 def mock_grant_sections() -> list[dict[str, Any]]:
-    """Mock grant sections for testing."""
     return [
         {
             "id": "section1",

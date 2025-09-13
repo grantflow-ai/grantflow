@@ -282,7 +282,6 @@ class JobManager:
             return list(result.scalars().all())
 
     async def check_if_cancelled(self) -> bool:
-        """Check if the current job has been cancelled."""
         if not self.job_id:
             return False
 
@@ -294,7 +293,6 @@ class JobManager:
         return False
 
     async def handle_cancellation(self, parent_id: UUID) -> None:
-        """Handle cancellation notification."""
         await self.add_notification(
             parent_id=parent_id,
             event=NotificationEvents.CANCELLATION_ACKNOWLEDGED,

@@ -408,7 +408,6 @@ def performance_test[F: Callable[..., Any]](
                 )
             )
 
-        # Use existing markers based on execution speed
         if execution_speed == ExecutionSpeed.SMOKE:
             marks.append(pytest.mark.smoke)
         elif execution_speed == ExecutionSpeed.QUALITY:

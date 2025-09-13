@@ -56,7 +56,6 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Check for cancellation before expensive relationship extraction
     if await job_manager.check_if_cancelled():
         await job_manager.handle_cancellation(UUID(application_id))
         return ""
@@ -77,7 +76,6 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Check for cancellation before enrichment
     if await job_manager.check_if_cancelled():
         await job_manager.handle_cancellation(UUID(application_id))
         return ""
@@ -228,7 +226,6 @@ async def generate_work_plan_text(
     )
 
     for objective, objective_text, task_results in objective_results:
-        # Check for cancellation between objectives
         if await job_manager.check_if_cancelled():
             await job_manager.handle_cancellation(UUID(application_id))
             return ""
@@ -361,7 +358,6 @@ async def grant_application_text_generation_pipeline_handler(
     try:
         await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
 
-        # Check for cancellation after verification
         if await job_manager.check_if_cancelled():
             await job_manager.handle_cancellation(application_id)
             return None
@@ -434,7 +430,6 @@ async def grant_application_text_generation_pipeline_handler(
             total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        # Check for cancellation before section generation
         if await job_manager.check_if_cancelled():
             await job_manager.handle_cancellation(application_id)
             return None
