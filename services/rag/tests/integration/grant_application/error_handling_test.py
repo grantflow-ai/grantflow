@@ -8,6 +8,7 @@ from packages.shared_utils.src.exceptions import BackendError, DatabaseError, Va
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 from testing.factories import (
     GrantApplicationFactory,
     OrganizationFactory,
@@ -96,15 +97,20 @@ async def test_pipeline_missing_research_objectives(
 
 
 async def test_pipeline_missing_work_plan_section(
-    test_application: GrantApplication,
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    test_application = test_application_with_template
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
         patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
         async with async_session_maker() as session:
-            result = await session.execute(select(GrantApplication).where(GrantApplication.id == test_application.id))
+            result = await session.execute(
+                select(GrantApplication)
+                .options(selectinload(GrantApplication.grant_template))
+                .where(GrantApplication.id == test_application.id)
+            )
             app = result.scalar_one()
 
             assert app is not None
@@ -126,7 +132,7 @@ async def test_pipeline_missing_work_plan_section(
 
 
 async def test_pipeline_database_error_during_save(
-    test_application: GrantApplication,
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     mocked_section_texts = {
@@ -158,7 +164,7 @@ async def test_pipeline_database_error_during_save(
     ):
         with pytest.raises(DatabaseError) as exc_info:
             await grant_application_text_generation_pipeline_handler(
-                grant_application_id=test_application.id,
+                grant_application_id=test_application_with_template.id,
                 session_maker=async_session_maker,
                 job_manager=mock_job_manager,
             )
@@ -167,32 +173,9 @@ async def test_pipeline_database_error_during_save(
 
 
 async def test_pipeline_backend_error_during_generation(
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-
-        application = GrantApplicationFactory.build(
-            title="Test Application",
-            project_id=project.id,
-            research_objectives=[
-                {
-                    "number": 1,
-                    "title": "Test Objective",
-                    "research_tasks": [{"number": 1, "title": "Test Task"}],
-                }
-            ],
-        )
-        session.add(application)
-        await session.commit()
-        await session.refresh(application)
-
     mock_job_manager = create_mock_job_manager()
 
     with (
@@ -208,7 +191,7 @@ async def test_pipeline_backend_error_during_generation(
     ):
         with pytest.raises(BackendError) as exc_info:
             await grant_application_text_generation_pipeline_handler(
-                grant_application_id=application.id,
+                grant_application_id=test_application_with_template.id,
                 session_maker=async_session_maker,
                 job_manager=mock_job_manager,
             )
