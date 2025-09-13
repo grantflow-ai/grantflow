@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
+import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import Domain, ExecutionSpeed, PerformanceTestContext, performance_test
 from testing.scenarios.base import load_scenario
@@ -90,6 +91,7 @@ async def test_application_generation_performance_baseline(
 
 
 @performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.GRANT_APPLICATION, timeout=120)
+@pytest.mark.e2e
 async def test_generation_smoke_test(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,

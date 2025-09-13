@@ -3,6 +3,7 @@ import time
 from typing import Any
 from unittest.mock import patch
 
+import pytest
 from testing.performance_framework import Domain, ExecutionSpeed, PerformanceTestContext, performance_test
 
 from services.rag.src.utils.evaluation import (
@@ -734,6 +735,7 @@ async def test_smart_evaluation_routing(
 
 
 @performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.AI_EVALUATION, timeout=120)
+@pytest.mark.e2e
 async def test_complexity_analysis_edge_cases(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
