@@ -32,7 +32,7 @@ def create_mock_job_manager() -> MagicMock:
 
 
 @pytest.fixture
-async def test_application(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
+async def test_application_original(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -139,11 +139,10 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
 
 
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
-    test_grant_application: GrantApplication,
-    test_grant_template: GrantTemplate,
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    application = test_grant_application
+    application = test_application_with_template
 
     mocked_section_texts = {
         "abstract": "This is the abstract text.",

@@ -5,7 +5,6 @@ from uuid import UUID
 import pytest
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
-    GrantApplication,
     GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
@@ -15,7 +14,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import (
-    GrantTemplateFactory,
     GrantTemplateSourceFactory,
     RagFileFactory,
     TextVectorFactory,
@@ -125,18 +123,7 @@ def mock_extracted_cfp_data(
     }
 
 
-@pytest.fixture
-def sample_cfp_content() -> list[Content]:
-    return [
-        {"title": "Introduction", "subtitles": ["Background", "Purpose"]},
-        {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
-        {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
-    ]
-
-
-@pytest.fixture
-def cfp_subject() -> str:
-    return "Test grant for researching innovative approaches to healthcare"
+# Using fixtures from conftest: sample_cfp_content, cfp_subject
 
 
 @pytest.fixture
@@ -193,25 +180,7 @@ def mock_rag_sources() -> list[RagSourceData]:
     ]
 
 
-@pytest.fixture
-async def test_grant_template(
-    async_session_maker: async_sessionmaker[Any],
-    nih_organization: GrantingInstitution,
-    grant_application: GrantApplication,
-) -> GrantTemplate:
-    template = GrantTemplateFactory.build(
-        granting_institution_id=nih_organization.id,
-        grant_application_id=grant_application.id,
-        grant_sections=None,
-        submission_date=None,
-    )
-
-    async with async_session_maker() as session:
-        session.add(template)
-        await session.commit()
-        await session.refresh(template)
-
-    return template
+# Using test_grant_template fixture from conftest
 
 
 @pytest.fixture
