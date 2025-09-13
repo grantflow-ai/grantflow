@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.json_objects import ResearchObjective, ResearchTask
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from sqlalchemy import select
@@ -49,7 +50,11 @@ async def test_pipeline_missing_grant_template(
         application = GrantApplicationFactory.build(
             title="Test Application",
             project_id=project.id,
-            research_objectives=[{"number": 1, "title": "Test Objective", "research_tasks": []}],
+            research_objectives=[
+                ResearchObjective(
+                    number=1, title="Test Objective", research_tasks=[ResearchTask(number=1, title="Test Task")]
+                )
+            ],
         )
         session.add(application)
         await session.commit()
