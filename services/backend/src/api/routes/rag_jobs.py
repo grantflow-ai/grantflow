@@ -155,7 +155,6 @@ async def cancel_rag_job_by_id(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Core logic for cancelling a RAG job. Used by both the API endpoint and tests."""
     logger.info("Cancelling RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session, session.begin():
@@ -164,7 +163,6 @@ async def cancel_rag_job_by_id(
         if not job:
             raise NotFoundException("RAG job not found")
 
-        # Verify job belongs to project (same logic as retrieve)
         project_match = False
         if job.job_type == "grant_template_generation":
             template_job = await session.scalar(
@@ -199,14 +197,12 @@ async def cancel_rag_job_by_id(
         if not project_match:
             raise NotFoundException("RAG job not found")
 
-        # Only cancel if job is in cancellable state
         if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
             previous_status = job.status
             job.status = RagGenerationStatusEnum.CANCELLED
             job.failed_at = datetime.now(UTC)
             job.error_message = "Cancelled by user request"
 
-            # Add cancellation notification
             notification = GenerationNotification(
                 rag_job_id=job_id,
                 event=NotificationEvents.JOB_CANCELLED,
