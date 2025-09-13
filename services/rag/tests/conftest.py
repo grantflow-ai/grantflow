@@ -12,7 +12,6 @@ from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
-    Organization,
     Project,
     RagSource,
 )
@@ -482,51 +481,8 @@ async def melanoma_alliance_full_application_id(
 
 
 @pytest.fixture
-async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
-    from testing.factories import OrganizationFactory
-
-    async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.commit()
-        await session.refresh(organization)
-        return organization
-
-
-@pytest.fixture
-async def test_project(test_organization: Organization, async_session_maker: async_sessionmaker[Any]) -> Project:
-    from testing.factories import ProjectFactory
-
-    async with async_session_maker() as session:
-        project = ProjectFactory.build(organization_id=test_organization.id)
-        session.add(project)
-        await session.commit()
-        await session.refresh(project)
-        return project
-
-
-@pytest.fixture
-async def test_grant_application(
-    test_project: Project,
-    research_objectives: list[ResearchObjective],
-    async_session_maker: async_sessionmaker[Any],
-) -> GrantApplication:
-    from testing.factories import GrantApplicationFactory
-
-    async with async_session_maker() as session:
-        application = GrantApplicationFactory.build(
-            project_id=test_project.id,
-            research_objectives=research_objectives,
-        )
-        session.add(application)
-        await session.commit()
-        await session.refresh(application)
-        return application
-
-
-@pytest.fixture
-async def test_grant_template(
-    test_grant_application: GrantApplication,
+async def grant_template_with_sections(
+    grant_application: GrantApplication,
     grant_sections: list[GrantLongFormSection],
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantTemplate:
@@ -534,14 +490,14 @@ async def test_grant_template(
 
     async with async_session_maker() as session:
         template = GrantTemplateFactory.build(
-            grant_application_id=test_grant_application.id,
+            grant_application_id=grant_application.id,
             grant_sections=grant_sections,
             granting_institution_id=None,
         )
         session.add(template)
         await session.commit()
 
-        application = await session.get(GrantApplication, test_grant_application.id)
+        application = await session.get(GrantApplication, grant_application.id)
         application.grant_template_id = template.id
         await session.commit()
 
@@ -550,8 +506,8 @@ async def test_grant_template(
 
 
 @pytest.fixture
-async def test_template_source(
-    test_grant_template: GrantTemplate,
+async def template_rag_source(
+    grant_template_with_sections: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
 ) -> RagSource:
     from testing.factories import RagUrlFactory
@@ -565,7 +521,7 @@ async def test_template_source(
 
         template_source = GrantTemplateSource(
             rag_source_id=source.id,
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
         )
         session.add(template_source)
 
@@ -575,8 +531,8 @@ async def test_template_source(
 
 
 @pytest.fixture
-async def test_application_source(
-    test_grant_application: GrantApplication,
+async def application_rag_source(
+    grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> RagSource:
     from testing.factories import RagUrlFactory
@@ -590,7 +546,7 @@ async def test_application_source(
 
         application_source = GrantApplicationSource(
             rag_source_id=source.id,
-            grant_application_id=test_grant_application.id,
+            grant_application_id=grant_application.id,
         )
         session.add(application_source)
 
@@ -679,7 +635,6 @@ def mock_grant_sections() -> list[dict[str, Any]]:
 
 @pytest.fixture
 async def test_application_with_template(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
-    """Create a test application with an embedded grant template for integration tests."""
     from packages.db.src.json_objects import ResearchObjective, ResearchTask
     from testing.factories import OrganizationFactory, ProjectFactory
 
@@ -692,7 +647,6 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
         session.add(project)
         await session.flush()
 
-        # Create application first
         application = GrantApplication(
             id=UUID("00000000-0000-0000-0000-000000000002"),
             title="Test Grant Application",
@@ -717,12 +671,11 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
             ],
         )
         session.add(application)
-        await session.flush()  # Persist application so it has an ID
+        await session.flush()
 
-        # Now create template with the application's ID
         template = GrantTemplate(
             id=UUID("00000000-0000-0000-0000-000000000001"),
-            grant_application_id=application.id,  # Use the actual application ID
+            grant_application_id=application.id,
             granting_institution_id=None,
             grant_sections=[
                 {
@@ -799,7 +752,6 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
         )
         session.add(template)
 
-        # Link template to application
         application.grant_template = template
 
         await session.commit()
