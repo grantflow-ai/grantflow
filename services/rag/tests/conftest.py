@@ -6,7 +6,16 @@ from uuid import UUID
 import pytest
 from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
-from packages.db.src.tables import GrantingInstitution, Project
+from packages.db.src.tables import (
+    GrantApplication,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantTemplate,
+    GrantTemplateSource,
+    Organization,
+    Project,
+    RagSource,
+)
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -470,3 +479,215 @@ async def melanoma_alliance_full_application_id(
         cfp_markdown_file_name="melanoma_alliance.md",
         source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
+
+
+@pytest.fixture
+async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
+    """Create a test organization for testing."""
+    from testing.factories import OrganizationFactory
+
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.commit()
+        await session.refresh(organization)
+        return organization
+
+
+@pytest.fixture
+async def test_project(test_organization: Organization, async_session_maker: async_sessionmaker[Any]) -> Project:
+    """Create a test project for testing."""
+    from testing.factories import ProjectFactory
+
+    async with async_session_maker() as session:
+        project = ProjectFactory.build(organization_id=test_organization.id)
+        session.add(project)
+        await session.commit()
+        await session.refresh(project)
+        return project
+
+
+@pytest.fixture
+async def test_grant_application(
+    test_project: Project,
+    research_objectives: list[ResearchObjective],
+    async_session_maker: async_sessionmaker[Any],
+) -> GrantApplication:
+    """Create a test grant application for testing."""
+    from testing.factories import GrantApplicationFactory
+
+    async with async_session_maker() as session:
+        application = GrantApplicationFactory.build(
+            project_id=test_project.id,
+            research_objectives=research_objectives,
+        )
+        session.add(application)
+        await session.commit()
+        await session.refresh(application)
+        return application
+
+
+@pytest.fixture
+async def test_grant_template(
+    test_grant_application: GrantApplication,
+    grant_sections: list[GrantLongFormSection],
+    async_session_maker: async_sessionmaker[Any],
+) -> GrantTemplate:
+    """Create a test grant template for testing."""
+    from testing.factories import GrantTemplateFactory
+
+    async with async_session_maker() as session:
+        template = GrantTemplateFactory.build(
+            grant_application_id=test_grant_application.id,
+            grant_sections=grant_sections,
+            granting_institution_id=None,  # Don't auto-generate FK
+        )
+        session.add(template)
+        await session.commit()
+
+        # Update the grant application to reference this template
+        application = await session.get(GrantApplication, test_grant_application.id)
+        application.grant_template_id = template.id
+        await session.commit()
+
+        await session.refresh(template)
+        return template
+
+
+@pytest.fixture
+async def test_template_source(
+    test_grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+) -> RagSource:
+    """Create a test template source for testing."""
+    from testing.factories import RagUrlFactory
+
+    async with async_session_maker() as session:
+        # Create a RagUrl source
+        source = RagUrlFactory.build(
+            url="https://example.com/grant-template.pdf",
+        )
+        session.add(source)
+        await session.flush()
+
+        # Create the association
+        template_source = GrantTemplateSource(
+            rag_source_id=source.id,
+            grant_template_id=test_grant_template.id,
+        )
+        session.add(template_source)
+
+        await session.commit()
+        await session.refresh(source)
+        return source
+
+
+@pytest.fixture
+async def test_application_source(
+    test_grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> RagSource:
+    """Create a test application source for testing."""
+    from testing.factories import RagUrlFactory
+
+    async with async_session_maker() as session:
+        # Create a RagUrl source
+        source = RagUrlFactory.build(
+            url="https://example.com/application-doc.pdf",
+        )
+        session.add(source)
+        await session.flush()
+
+        # Create the association
+        application_source = GrantApplicationSource(
+            rag_source_id=source.id,
+            grant_application_id=test_grant_application.id,
+        )
+        session.add(application_source)
+
+        await session.commit()
+        await session.refresh(source)
+        return source
+
+
+@pytest.fixture
+def sample_cfp_content() -> list[dict[str, Any]]:
+    """Sample CFP content for testing."""
+    return [
+        {"title": "Introduction", "subtitles": ["Background", "Purpose"]},
+        {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
+        {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
+    ]
+
+
+@pytest.fixture
+def cfp_subject() -> str:
+    """Sample CFP subject for testing."""
+    return "Test grant for researching innovative approaches to healthcare"
+
+
+@pytest.fixture
+def mock_research_objectives() -> list[dict[str, Any]]:
+    """Mock research objectives for testing."""
+    return [
+        {
+            "id": "obj-1",
+            "number": 1,
+            "title": "Develop immunotherapy approach",
+            "description": "Create and validate new CAR-T cell therapy",
+            "research_tasks": [
+                {
+                    "id": "task-1-1",
+                    "number": 1,
+                    "title": "Design CAR construct",
+                    "description": "Engineer CAR targeting melanoma antigens",
+                }
+            ],
+        },
+        {
+            "id": "obj-2",
+            "number": 2,
+            "title": "Evaluate treatment efficacy",
+            "description": "Assess therapeutic potential in models",
+            "research_tasks": [
+                {
+                    "id": "task-2-1",
+                    "number": 1,
+                    "title": "Mouse model studies",
+                    "description": "Test therapy in xenograft models",
+                }
+            ],
+        },
+    ]
+
+
+@pytest.fixture
+def mock_enrichment_response() -> dict[str, Any]:
+    """Mock enrichment response for testing."""
+    return {
+        "enriched_objective": "Enhanced objective text",
+        "search_queries": ["query1", "query2"],
+        "core_scientific_terms": ["term1", "term2"],
+        "scientific_context": "Test scientific context",
+    }
+
+
+@pytest.fixture
+def mock_grant_sections() -> list[dict[str, Any]]:
+    """Mock grant sections for testing."""
+    return [
+        {
+            "id": "section1",
+            "title": "Research Plan",
+            "is_detailed_research_plan": True,
+            "type": "section",
+            "order": 1,
+        },
+        {
+            "id": "section2",
+            "title": "Background",
+            "is_detailed_research_plan": False,
+            "type": "section",
+            "order": 2,
+        },
+    ]

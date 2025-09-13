@@ -27,6 +27,8 @@ def create_mock_job_manager() -> MagicMock:
     mock_job_manager.create_grant_application_job = AsyncMock(return_value=mock_job)
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     return mock_job_manager
 

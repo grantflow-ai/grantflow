@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
+from testing.performance_framework import Domain, ExecutionSpeed, PerformanceTestContext, performance_test
 from testing.scenarios.base import load_scenario
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
@@ -19,7 +19,7 @@ def create_mock_job_manager() -> AsyncMock:
     return mock_job_manager
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_APPLICATION, timeout=600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.GRANT_APPLICATION, timeout=600)
 async def test_application_generation_performance_baseline(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,
@@ -89,7 +89,7 @@ async def test_application_generation_performance_baseline(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.GRANT_APPLICATION, timeout=120)
+@performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.GRANT_APPLICATION, timeout=120)
 async def test_generation_smoke_test(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,

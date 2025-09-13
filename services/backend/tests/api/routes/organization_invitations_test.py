@@ -893,9 +893,6 @@ async def test_update_invitation_admin_checking_role(
     assert "admin cannot invite users as owner" in response.json()["detail"].lower()
 
 
-# SOFT-DELETE FILTERING TESTS - Critical security tests for invitations
-
-
 async def test_update_invitation_ignores_soft_deleted(
     test_client: TestingClientType,
     organization: Organization,
@@ -904,14 +901,11 @@ async def test_update_invitation_ignores_soft_deleted(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that updating soft-deleted invitations fails appropriately."""
-    # Soft-delete the invitation
     async with async_session_maker() as session:
         existing_invitation.soft_delete()
         session.add(existing_invitation)
         await session.commit()
 
-    # Try to update the soft-deleted invitation
     response = await test_client.patch(
         f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -920,7 +914,6 @@ async def test_update_invitation_ignores_soft_deleted(
         },
     )
 
-    # Should fail because the invitation is soft-deleted
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "invitation not found" in response.json()["detail"].lower()
 
@@ -933,8 +926,6 @@ async def test_get_invitation_excludes_soft_deleted(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that soft-deleted invitations are not included in list results."""
-    # First verify the invitation is in the list
     response = await test_client.get(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -943,19 +934,16 @@ async def test_get_invitation_excludes_soft_deleted(
     initial_invitations = response.json()
     assert any(inv["id"] == str(existing_invitation.id) for inv in initial_invitations)
 
-    # Soft-delete the invitation
     async with async_session_maker() as session, session.begin():
         existing_invitation.soft_delete()
         session.add(existing_invitation)
 
-    # Try to retrieve the list again
     response = await test_client.get(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
     )
     assert response.status_code == HTTPStatus.OK
     new_invitations = response.json()
-    # Should not find the soft-deleted invitation
     assert not any(inv["id"] == str(existing_invitation.id) for inv in new_invitations)
 
 
@@ -966,8 +954,6 @@ async def test_list_invitations_excludes_soft_deleted(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that soft-deleted invitations are not included in list results."""
-    # Create multiple invitations
     invitations = []
     async with async_session_maker() as session:
         for i in range(3):
@@ -984,7 +970,6 @@ async def test_list_invitations_excludes_soft_deleted(
         for invitation in invitations:
             await session.refresh(invitation)
 
-    # Get initial count
     response = await test_client.get(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -993,13 +978,11 @@ async def test_list_invitations_excludes_soft_deleted(
     if response.status_code == HTTPStatus.OK:
         initial_count = len(response.json())
 
-        # Soft-delete one invitation
         async with async_session_maker() as session:
             invitations[0].soft_delete()
             session.add(invitations[0])
             await session.commit()
 
-        # Get count again - should be one less
         response = await test_client.get(
             f"/organizations/{organization.id}/invitations",
             headers={"Authorization": f"Bearer {otp_code}"},
@@ -1009,6 +992,5 @@ async def test_list_invitations_excludes_soft_deleted(
         new_count = len(response.json())
         assert new_count == initial_count - 1
 
-        # Verify the soft-deleted invitation is not in the results
         invitation_ids = {inv["id"] for inv in response.json()}
         assert str(invitations[0].id) not in invitation_ids

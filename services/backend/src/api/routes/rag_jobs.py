@@ -73,7 +73,7 @@ async def handle_retrieve_rag_job(
             if template_job:
                 template = await session.scalar(
                     select(GrantTemplate)
-                    .join(GrantApplication)
+                    .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
                     .where(
                         GrantTemplate.id == template_job.grant_template_id,
                         GrantTemplate.deleted_at.is_(None),
@@ -150,17 +150,12 @@ async def handle_retrieve_rag_job(
         return response
 
 
-@delete(
-    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
-    operation_id="CancelRagJob",
-)
-async def handle_cancel_rag_job(
-    *,
+async def cancel_rag_job_by_id(
     project_id: UUID,
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
+    """Core logic for cancelling a RAG job. Used by both the API endpoint and tests."""
     logger.info("Cancelling RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session, session.begin():
@@ -178,7 +173,7 @@ async def handle_cancel_rag_job(
             if template_job:
                 template = await session.scalar(
                     select(GrantTemplate)
-                    .join(GrantApplication)
+                    .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
                     .where(
                         GrantTemplate.id == template_job.grant_template_id,
                         GrantTemplate.deleted_at.is_(None),
@@ -231,3 +226,17 @@ async def handle_cancel_rag_job(
                 job_id=str(job_id),
                 current_status=job.status.value,
             )
+
+
+@delete(
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    operation_id="CancelRagJob",
+)
+async def handle_cancel_rag_job(
+    *,
+    project_id: UUID,
+    job_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    await cancel_rag_job_by_id(project_id, job_id, session_maker)
