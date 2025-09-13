@@ -91,7 +91,7 @@ async def test_create_organization_invitation_success(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    new_email = "newuser@example.com"
+    new_email = "invite-newuser@example.com"
 
     response = await test_client.post(
         f"/organizations/{organization.id}/invitations",
@@ -152,7 +152,7 @@ async def test_create_organization_invitation_admin_cannot_invite_owner(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
         json={
-            "email": "owner@example.com",
+            "email": "invite-owner@example.com",
             "role": UserRoleEnum.OWNER.value,
         },
     )
@@ -171,7 +171,7 @@ async def test_create_organization_invitation_organization_not_found(
         f"/organizations/{non_existent_org_id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
         json={
-            "email": "test@example.com",
+            "email": "invite-test@example.com",
             "role": UserRoleEnum.COLLABORATOR.value,
         },
     )
@@ -482,7 +482,7 @@ async def test_create_invitation_inviter_not_found(
         f"/organizations/{other_org_id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
         json={
-            "email": "test@example.com",
+            "email": "invite-test@example.com",
             "role": UserRoleEnum.COLLABORATOR.value,
         },
     )
@@ -706,7 +706,7 @@ async def test_create_invitation_deleted_organization(
         f"/organizations/{deleted_org_id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
         json={
-            "email": "test@example.com",
+            "email": "invite-test@example.com",
             "role": UserRoleEnum.COLLABORATOR.value,
         },
     )
@@ -788,7 +788,7 @@ async def test_create_invitation_deleted_inviter(
         f"/organizations/{new_org_id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
         json={
-            "email": "test@example.com",
+            "email": "invite-test@example.com",
             "role": UserRoleEnum.COLLABORATOR.value,
         },
     )
