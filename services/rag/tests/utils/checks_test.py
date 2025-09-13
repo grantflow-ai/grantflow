@@ -13,70 +13,11 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.exceptions import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
-    GrantApplicationFactory,
-    GrantTemplateFactory,
-    OrganizationFactory,
-    ProjectFactory,
     RagSourceFactory,
 )
 
 from services.rag.src.constants import NotificationEvents
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-
-
-@pytest.fixture
-async def test_project(async_session_maker: async_sessionmaker[Any]) -> tuple[Any, Any]:
-    async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-        return project, session
-
-
-@pytest.fixture
-async def test_grant_application(
-    async_session_maker: async_sessionmaker[Any],
-) -> GrantApplication:
-    async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-
-        application = GrantApplicationFactory.build(project_id=project.id)
-        session.add(application)
-        await session.commit()
-        return application
-
-
-@pytest.fixture
-async def test_grant_template(
-    async_session_maker: async_sessionmaker[Any],
-) -> GrantTemplate:
-    async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-
-        application = GrantApplicationFactory.build(project_id=project.id)
-        session.add(application)
-        await session.flush()
-
-        template = GrantTemplateFactory.build(grant_application_id=application.id, granting_institution_id=None)
-        session.add(template)
-        await session.commit()
-        return template
 
 
 @pytest.fixture
