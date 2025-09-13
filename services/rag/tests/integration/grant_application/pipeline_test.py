@@ -44,8 +44,8 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
 
         template = GrantTemplate(
             id=UUID("00000000-0000-0000-0000-000000000001"),
-            title="Test Template",
-            granting_institution_id=UUID("00000000-0000-0000-0000-000000000003"),
+            grant_application_id=UUID("00000000-0000-0000-0000-000000000002"),
+            granting_institution_id=None,
             grant_sections=[
                 {
                     "id": "abstract",
@@ -94,9 +94,9 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
         session.add(template)
 
         application = GrantApplicationFactory.build(
+            id=UUID("00000000-0000-0000-0000-000000000002"),
             title="Test Application",
             project_id=project.id,
-            grant_template_id=template.id,
             research_objectives=[
                 {
                     "number": 1,
@@ -129,14 +129,23 @@ async def test_application(async_session_maker: async_sessionmaker[Any]) -> Gran
             ],
         )
         session.add(application)
+        await session.flush()
+
+        # Set up the relationship between template and application
+        application.grant_template = template
+
         await session.commit()
         await session.refresh(application)
         return application
 
 
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
+    test_grant_application: GrantApplication,
+    test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    application = test_grant_application
+    template = test_grant_template
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -148,8 +157,8 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
 
         template = GrantTemplate(
             id=UUID("00000000-0000-0000-0000-000000000001"),
-            title="Test Template",
-            granting_institution_id=UUID("00000000-0000-0000-0000-000000000003"),
+            grant_application_id=UUID("00000000-0000-0000-0000-000000000002"),
+            granting_institution_id=None,
             grant_sections=[
                 {
                     "id": "abstract",
@@ -198,9 +207,9 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
         session.add(template)
 
         application = GrantApplicationFactory.build(
+            id=UUID("00000000-0000-0000-0000-000000000002"),
             title="Test Application",
             project_id=project.id,
-            grant_template_id=template.id,
             research_objectives=[
                 {
                     "number": 1,
@@ -233,6 +242,11 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
             ],
         )
         session.add(application)
+        await session.flush()
+
+        # Set up the relationship between template and application
+        application.grant_template = template
+
         await session.commit()
         await session.refresh(application)
 
