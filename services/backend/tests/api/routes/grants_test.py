@@ -257,7 +257,7 @@ async def test_create_subscription_success(test_client: TestingClientType) -> No
     response = await test_client.post(
         "/grants/subscribe",
         json={
-            "email": "test@example.com",
+            "email": "grants-test@example.com",
             "frequency": "daily",
             "search_params": {"category": "Research", "min_amount": 10000},
         },
@@ -274,14 +274,14 @@ async def test_create_subscription_duplicate_email(
 ) -> None:
     async with async_session_maker() as session:
         subscription = GrantMatchingSubscription(
-            email="duplicate@example.com", search_params={"category": "Research"}, frequency="weekly"
+            email="grants-duplicate@example.com", search_params={"category": "Research"}, frequency="weekly"
         )
         session.add(subscription)
         await session.commit()
 
     response = await test_client.post(
         "/grants/subscribe",
-        json={"email": "duplicate@example.com", "frequency": "daily", "search_params": {"category": "Health"}},
+        json={"email": "grants-duplicate@example.com", "frequency": "daily", "search_params": {"category": "Health"}},
     )
 
     assert response.status_code == HTTP_400_BAD_REQUEST
@@ -372,7 +372,7 @@ async def test_subscription_excludes_soft_deleted_grants(
     response = await test_client.post(
         "/grants/subscribe",
         json={
-            "email": "soft-delete-test@example.com",
+            "email": "grants-soft-delete@example.com",
             "frequency": "daily",
             "search_params": {"category": "Research"},
         },
@@ -381,14 +381,14 @@ async def test_subscription_excludes_soft_deleted_grants(
 
     async with async_session_maker() as session:
         subscription = await session.scalar(
-            select(GrantMatchingSubscription).where(GrantMatchingSubscription.email == "soft-delete-test@example.com")
+            select(GrantMatchingSubscription).where(GrantMatchingSubscription.email == "grants-soft-delete@example.com")
         )
         assert subscription is not None
         subscription.soft_delete()
         session.add(subscription)
         await session.commit()
 
-    response = await test_client.post("/grants/unsubscribe", json={"email": "soft-delete-test@example.com"})
+    response = await test_client.post("/grants/unsubscribe", json={"email": "grants-soft-delete@example.com"})
     assert response.status_code == HTTP_404_NOT_FOUND
     data = response.json()
     assert "No active subscription found" in data["detail"]
@@ -399,12 +399,12 @@ async def test_unsubscribe_success(
 ) -> None:
     async with async_session_maker() as session:
         subscription = GrantMatchingSubscription(
-            email="unsubscribe@example.com", search_params={"category": "Research"}, frequency="weekly"
+            email="grants-unsubscribe@example.com", search_params={"category": "Research"}, frequency="weekly"
         )
         session.add(subscription)
         await session.commit()
 
-    response = await test_client.post("/grants/unsubscribe", json={"email": "unsubscribe@example.com"})
+    response = await test_client.post("/grants/unsubscribe", json={"email": "grants-unsubscribe@example.com"})
 
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
@@ -412,7 +412,7 @@ async def test_unsubscribe_success(
 
 
 async def test_unsubscribe_nonexistent_email(test_client: TestingClientType) -> None:
-    response = await test_client.post("/grants/unsubscribe", json={"email": "nonexistent@example.com"})
+    response = await test_client.post("/grants/unsubscribe", json={"email": "grants-nonexistent@example.com"})
 
     assert response.status_code == HTTP_404_NOT_FOUND
     data = response.json()
@@ -427,7 +427,7 @@ async def test_unsubscribe_invalid_email(test_client: TestingClientType) -> None
 
 async def test_create_subscription_edge_cases(test_client: TestingClientType) -> None:
     response = await test_client.post(
-        "/grants/subscribe", json={"email": "minimal@example.com", "frequency": "monthly", "search_params": {}}
+        "/grants/subscribe", json={"email": "grants-minimal@example.com", "frequency": "monthly", "search_params": {}}
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -435,7 +435,7 @@ async def test_create_subscription_edge_cases(test_client: TestingClientType) ->
     response = await test_client.post(
         "/grants/subscribe",
         json={
-            "email": "maximal@example.com",
+            "email": "grants-maximal@example.com",
             "frequency": "daily",
             "search_params": {
                 "search_query": "AI research",
