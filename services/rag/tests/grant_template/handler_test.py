@@ -292,6 +292,8 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -363,6 +365,8 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     mock_job_manager.create_grant_template_job = AsyncMock(return_value=mock_job)
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -503,6 +507,8 @@ async def test_grant_template_generation_pipeline_missing_sources(
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with patch(
         "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
@@ -557,6 +563,8 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
 
@@ -592,6 +600,8 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -623,6 +633,8 @@ async def test_extract_and_enrich_sections_validation_error(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with patch(
         "services.rag.src.grant_template.handler.handle_extract_sections",
@@ -650,6 +662,8 @@ async def test_extract_and_enrich_sections_backend_error(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
