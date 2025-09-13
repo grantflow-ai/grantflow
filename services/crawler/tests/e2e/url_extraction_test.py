@@ -7,8 +7,8 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from testing.performance_framework import (
-    TestExecutionSpeed,
-    TestDomain,
+    ExecutionSpeed,
+    Domain,
     performance_test,
 )
 
@@ -16,7 +16,7 @@ from services.crawler.src.extraction import extract_links, prepare_url_data
 
 
 @performance_test(
-    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER, timeout=120
+    execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.CRAWLER, timeout=120
 )
 @pytest.mark.parametrize(
     "test_url,expected_content",
@@ -63,9 +63,7 @@ async def test_url_content_extraction(
         pytest.fail(f"Unexpected URL extraction error for {test_url}: {e}")
 
 
-@performance_test(
-    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER
-)
+@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.CRAWLER)
 async def test_link_extraction_comprehensive(logger: logging.Logger) -> None:
     logger.info("Running comprehensive link extraction test")
 
