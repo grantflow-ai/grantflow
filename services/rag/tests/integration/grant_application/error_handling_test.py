@@ -66,29 +66,26 @@ async def test_pipeline_missing_grant_template(
 
 
 async def test_pipeline_missing_research_objectives(
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    # Modify the existing application to remove research objectives
     async with async_session_maker() as session:
-        organization = OrganizationFactory.build()
-        session.add(organization)
-        await session.flush()
-
-        project = ProjectFactory.build(organization_id=organization.id)
-        session.add(project)
-        await session.flush()
-
-        application = GrantApplicationFactory.build(
-            title="Test Application",
-            project_id=project.id,
-            research_objectives=[],
+        result = await session.execute(
+            select(GrantApplication)
+            .options(selectinload(GrantApplication.grant_template))
+            .where(GrantApplication.id == test_application_with_template.id)
         )
-        session.add(application)
+        app = result.scalar_one()
+
+        assert app is not None
+        # Remove research objectives
+        app.research_objectives = []
         await session.commit()
-        await session.refresh(application)
 
     with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
-            grant_application_id=application.id,
+            grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=create_mock_job_manager(),
         )
