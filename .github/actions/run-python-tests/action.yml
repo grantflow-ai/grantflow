@@ -63,6 +63,12 @@ runs:
           # TODO: temporary fix, we need to handle dependencies for each target better ~keep
           run: uv sync --all-packages --all-extras --dev --upgrade
 
+        - name: Install Playwright Browsers (for Scraper)
+          shell: bash
+          if: inputs.target == 'scraper'
+          run: |
+              uv run playwright install chromium
+
         - name: Run Tests
           shell: bash
           run: |

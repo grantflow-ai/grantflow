@@ -5,7 +5,6 @@ from uuid import UUID
 from litestar import delete, get
 from litestar.exceptions import NotFoundException
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
-from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -60,7 +59,7 @@ async def handle_retrieve_rag_job(
     logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session:
-        job = await session.scalar(select_active(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
         if not job:
             raise NotFoundException("RAG job not found")
