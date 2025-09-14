@@ -154,9 +154,9 @@ async def test_retrieve_projects(
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
-            "email": "user@example.com",
-            "displayName": "Test User",
-            "photoURL": "https://example.com/photo.jpg",
+            "email": f"test-{firebase_uid}@example.com",
+            "displayName": f"Test User {firebase_uid}",
+            "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
         }
     }
     mocker.patch(
@@ -186,7 +186,7 @@ async def test_retrieve_projects(
         assert len(project_response["members"]) > 0
 
         user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
-        assert user_member["email"] == "user@example.com"
+        assert user_member["email"] == f"test-{firebase_uid}@example.com"
         assert user_member["role"] == UserRoleEnum.OWNER.value
 
         members = project_response["members"]
@@ -194,9 +194,9 @@ async def test_retrieve_projects(
 
         member = members[0]
         assert member["firebase_uid"] == firebase_uid
-        assert member["email"] == "user@example.com"
-        assert member["display_name"] == "Test User"
-        assert member["photo_url"] == "https://example.com/photo.jpg"
+        assert member["email"] == f"test-{firebase_uid}@example.com"
+        assert member["display_name"] == f"Test User {firebase_uid}"
+        assert member["photo_url"] == f"https://example.com/photo-{firebase_uid}.jpg"
 
 
 async def test_retrieve_projects_excludes_deleted_applications(
@@ -271,9 +271,9 @@ async def test_retrieve_projects_excludes_deleted_applications(
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
-            "email": "user@example.com",
-            "displayName": "Test User",
-            "photoURL": "https://example.com/photo.jpg",
+            "email": f"test-{firebase_uid}@example.com",
+            "displayName": f"Test User {firebase_uid}",
+            "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
         }
     }
     mocker.patch(
@@ -560,7 +560,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.OWNER)
+    request_body = CreateInvitationRedirectUrlRequestBody(email="invitation-test@example.com", role=UserRoleEnum.OWNER)
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
@@ -580,7 +580,7 @@ async def test_create_invitation_redirect_url_user_already_member(
 ) -> None:
     mocker.patch(
         "services.backend.src.api.routes.projects.get_user_by_email",
-        return_value={"uid": "existing_user_uid", "email": "test@example.com"},
+        return_value={"uid": "existing_user_uid", "email": "invitation-test@example.com"},
     )
 
     async with async_session_maker() as session, session.begin():
@@ -613,7 +613,9 @@ async def test_create_invitation_redirect_url_user_already_member(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.COLLABORATOR)
+    request_body = CreateInvitationRedirectUrlRequestBody(
+        email="invitation-test@example.com", role=UserRoleEnum.COLLABORATOR
+    )
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
@@ -634,7 +636,7 @@ async def test_create_invitation_redirect_url_success(
 ) -> None:
     mocker.patch(
         "services.backend.src.api.routes.projects.get_user_by_email",
-        return_value={"uid": "new_user_uid", "email": "new_user@example.com"},
+        return_value={"uid": "new_user_uid", "email": "invitation-test@example.com"},
     )
 
     async with async_session_maker() as session, session.begin():
@@ -652,7 +654,9 @@ async def test_create_invitation_redirect_url_success(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.COLLABORATOR)
+    request_body = CreateInvitationRedirectUrlRequestBody(
+        email="invitation-test@example.com", role=UserRoleEnum.COLLABORATOR
+    )
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
@@ -669,7 +673,7 @@ async def test_create_invitation_redirect_url_success(
         invitation = await session.scalar(
             select(OrganizationInvitation)
             .where(OrganizationInvitation.organization_id == project.organization_id)
-            .where(OrganizationInvitation.email == "new_user@example.com")
+            .where(OrganizationInvitation.email == "invitation-test@example.com")
         )
         assert invitation is not None
         assert invitation.role == UserRoleEnum.COLLABORATOR
@@ -702,7 +706,7 @@ async def test_delete_invitation_success(
                 .values(
                     {
                         "organization_id": project.organization_id,
-                        "email": "test@example.com",
+                        "email": "invitation-test@example.com",
                         "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
                     }
@@ -742,7 +746,7 @@ async def test_delete_invitation_not_project_member(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR.value,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -810,7 +814,7 @@ async def test_delete_invitation_unauthorized_role(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -851,7 +855,7 @@ async def test_update_invitation_role_success(
                 .values(
                     {
                         "organization_id": project.organization_id,
-                        "email": "test@example.com",
+                        "email": "invitation-test@example.com",
                         "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
                     }
@@ -898,7 +902,7 @@ async def test_update_invitation_role_not_project_member(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -972,7 +976,7 @@ async def test_update_invitation_role_unauthorized_role(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -1013,7 +1017,7 @@ async def test_update_invitation_role_already_accepted(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                     "accepted_at": datetime.now(UTC),
@@ -1056,7 +1060,7 @@ async def test_update_invitation_role_higher_than_inviter(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -1086,7 +1090,7 @@ async def test_accept_invitation_success(
 ) -> None:
     mocker.patch(
         "services.backend.src.api.routes.projects.get_user_by_email",
-        return_value={"uid": firebase_uid, "email": "test@example.com"},
+        return_value={"uid": firebase_uid, "email": "invitation-test@example.com"},
     )
 
     async with async_session_maker() as session, session.begin():
@@ -1095,7 +1099,7 @@ async def test_accept_invitation_success(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -1154,7 +1158,7 @@ async def test_accept_invitation_already_accepted(
 ) -> None:
     mocker.patch(
         "services.backend.src.api.routes.projects.get_user_by_email",
-        return_value={"uid": firebase_uid, "email": "test@example.com"},
+        return_value={"uid": firebase_uid, "email": "invitation-test@example.com"},
     )
 
     async with async_session_maker() as session, session.begin():
@@ -1163,7 +1167,7 @@ async def test_accept_invitation_already_accepted(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                     "accepted_at": datetime.now(UTC),
@@ -1199,7 +1203,7 @@ async def test_accept_invitation_user_not_found(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -1226,7 +1230,7 @@ async def test_accept_invitation_wrong_user(
 ) -> None:
     mocker.patch(
         "services.backend.src.api.routes.projects.get_user_by_email",
-        return_value={"uid": "different_user_uid", "email": "test@example.com"},
+        return_value={"uid": "different_user_uid", "email": "invitation-test@example.com"},
     )
 
     async with async_session_maker() as session, session.begin():
@@ -1235,7 +1239,7 @@ async def test_accept_invitation_wrong_user(
             .values(
                 {
                     "organization_id": project.organization_id,
-                    "email": "test@example.com",
+                    "email": "invitation-test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
@@ -1263,21 +1267,19 @@ async def test_list_project_members_success(
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
-            "email": "owner@example.com",
-            "displayName": "Project Owner",
-            "photoURL": "https://example.com/photo1.jpg",
+            "email": f"test-{firebase_uid}@example.com",
+            "displayName": f"Test User {firebase_uid}",
+            "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
         },
         "admin_uid": {
             "uid": "admin_uid",
-            "email": "admin@example.com",
-            "displayName": "Admin User",
-            "photoURL": "https://example.com/photo2.jpg",
+            "email": "test-admin_uid@example.com",
+            "displayName": "Test User admin_uid",
+            "photoURL": "https://example.com/photo-admin_uid.jpg",
         },
         "member_uid": {
             "uid": "member_uid",
-            "email": "member@example.com",
-            "displayName": None,
-            "photoURL": None,
+            "email": "test-member_uid@example.com",
         },
     }
     mocker.patch(
@@ -1325,18 +1327,19 @@ async def test_list_project_members_success(
     assert len(members) == 3
 
     owner = next(m for m in members if m["firebase_uid"] == firebase_uid)
-    assert owner["email"] == "owner@example.com"
-    assert owner["display_name"] == "Project Owner"
-    assert owner["photo_url"] == "https://example.com/photo1.jpg"
+    assert owner["email"] == f"test-{firebase_uid}@example.com"
+    assert owner["display_name"] == f"Test User {firebase_uid}"
+    assert owner["photo_url"] == f"https://example.com/photo-{firebase_uid}.jpg"
     assert owner["role"] == UserRoleEnum.OWNER.value
 
     admin = next(m for m in members if m["firebase_uid"] == "admin_uid")
-    assert admin["email"] == "admin@example.com"
-    assert admin["display_name"] == "Admin User"
+    assert admin["email"] == "test-admin_uid@example.com"
+    assert admin["display_name"] == "Test User admin_uid"
+    assert admin["photo_url"] == "https://example.com/photo-admin_uid.jpg"
     assert admin["role"] == UserRoleEnum.ADMIN.value
 
     member = next(m for m in members if m["firebase_uid"] == "member_uid")
-    assert member["email"] == "member@example.com"
+    assert member["email"] == "test-member_uid@example.com"
     assert member["display_name"] is None
     assert member["photo_url"] is None
     assert member["role"] == UserRoleEnum.COLLABORATOR.value

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import UUID
 
@@ -8,8 +9,9 @@ from litestar.handlers import HTTPRouteHandler
 from litestar.types import Method, OperationIDCreator
 from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.constants import RAG_FILE, RAG_URL
-from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationSource,
     GrantingInstitutionSource,
@@ -17,6 +19,7 @@ from packages.db.src.tables import (
     GrantTemplateSource,
     Project,
     RagFile,
+    RagGenerationJob,
     RagSource,
     RagUrl,
 )
@@ -31,12 +34,13 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased, with_polymorphic
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_SOURCE, log_organization_audit_from_request
+from services.rag.src.constants import NotificationEvents
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import EntityType
@@ -462,6 +466,34 @@ async def handle_delete_rag_source(
                         error=str(e),
                     )
 
+            if template_id:
+                template = await session.scalar(
+                    select(GrantTemplate).where(
+                        GrantTemplate.id == template_id,
+                        GrantTemplate.deleted_at.is_(None),
+                    )
+                )
+                if template and template.rag_job_id:
+                    await _cancel_job_if_active(
+                        session=session,
+                        job_id=template.rag_job_id,
+                        reason="Template source deleted",
+                    )
+
+            elif application_id:
+                application = await session.scalar(
+                    select(GrantApplication).where(
+                        GrantApplication.id == application_id,
+                        GrantApplication.deleted_at.is_(None),
+                    )
+                )
+                if application and application.rag_job_id:
+                    await _cancel_job_if_active(
+                        session=session,
+                        job_id=application.rag_job_id,
+                        reason="Application source deleted",
+                    )
+
             source.soft_delete()
             await session.commit()
 
@@ -614,3 +646,29 @@ async def handle_crawl_url(
     return UrlCrawlingResponse(
         source_id=str(source_id),
     )
+
+
+async def _cancel_job_if_active(
+    session: AsyncSession,
+    job_id: UUID,
+    reason: str,
+) -> None:
+    job = await session.get(RagGenerationJob, job_id)
+    if job and job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
+        job.status = RagGenerationStatusEnum.CANCELLED
+        job.failed_at = datetime.now(UTC)
+        job.error_message = reason
+
+        notification = GenerationNotification(
+            rag_job_id=job_id,
+            event=NotificationEvents.AUTO_CANCELLED,
+            message=f"Job cancelled: {reason}",
+            notification_type="warning",
+        )
+        session.add(notification)
+
+        logger.info(
+            "Cancelled job due to source deletion",
+            job_id=str(job_id),
+            reason=reason,
+        )

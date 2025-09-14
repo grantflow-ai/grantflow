@@ -147,7 +147,7 @@ runs:
           # Other services require authentication, just check if revision is ready
           echo "Checking revision status..."
           
-          for i in {1..20}; do
+          for i in {1..60}; do
             STATUS=$(gcloud run revisions describe ${{ steps.get-revision.outputs.revision }} \
               --region=${{ inputs.region }} \
               --project=${{ inputs.project_id }} \
@@ -159,11 +159,25 @@ runs:
               exit 0
             fi
             
-            echo "Revision status: ${STATUS}, waiting..."
+            # Get more detailed status on certain intervals
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Detailed status at attempt $i/60:"
+              gcloud run revisions describe ${{ steps.get-revision.outputs.revision }} \
+                --region=${{ inputs.region }} \
+                --project=${{ inputs.project_id }} \
+                --format="value(status.conditions[].message)" || true
+            else
+              echo "Revision status: ${STATUS}, waiting... (attempt $i/60)"
+            fi
             sleep 10
           done
           
-          echo "Revision failed to become ready after 200 seconds"
+          echo "Revision failed to become ready after 600 seconds"
+          echo "Final revision status:"
+          gcloud run revisions describe ${{ steps.get-revision.outputs.revision }} \
+            --region=${{ inputs.region }} \
+            --project=${{ inputs.project_id }} \
+            --format="yaml(status)" || true
           echo "healthy=false" >> $GITHUB_OUTPUT
           exit 1
         fi

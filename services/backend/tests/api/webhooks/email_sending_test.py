@@ -91,7 +91,7 @@ class TestSendEmailToUser:
             patch("services.backend.src.api.webhooks.email_sending.get_user", mock_get_user),
             patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email", mock_send_email),
         ):
-            mock_get_user.return_value = {"email": "admin@example.com", "display_name": "Admin User"}
+            mock_get_user.return_value = {"email": "webhook-admin@example.com", "display_name": "Admin User"}
             mock_send_email.return_value = None
 
             user = OrganizationUser(firebase_uid="test-uid", organization_id=uuid4(), role="admin")
@@ -142,7 +142,7 @@ class TestSendEmailToUser:
             patch("services.backend.src.api.webhooks.email_sending.get_user", mock_get_user),
             patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email", mock_send_email),
         ):
-            mock_get_user.return_value = {"email": "admin@example.com", "display_name": "Admin"}
+            mock_get_user.return_value = {"email": "webhook-admin@example.com", "display_name": "Admin"}
             mock_send_email.side_effect = Exception("SMTP error")
 
             user = OrganizationUser(firebase_uid="test-uid", organization_id=uuid4(), role="admin")
@@ -168,7 +168,7 @@ class TestEmailNotificationWebhook:
             patch("services.backend.src.api.webhooks.email_sending.get_user") as mock_get_user,
             patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email") as mock_send_email,
         ):
-            mock_get_user.return_value = {"email": "owner@example.com", "display_name": "Owner User"}
+            mock_get_user.return_value = {"email": "webhook-owner@example.com", "display_name": "Owner User"}
             mock_send_email.return_value = None
 
             with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
