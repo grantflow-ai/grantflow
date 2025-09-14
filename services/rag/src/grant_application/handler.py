@@ -3,7 +3,13 @@ from typing import Any
 from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    CFPSectionAnalysis,
+    GrantElement,
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+)
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import (
@@ -269,6 +275,7 @@ async def generate_grant_section_texts(
     grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
     job_manager: JobManager,  # noqa: ARG001
+    cfp_analysis: CFPSectionAnalysis | None = None,
 ) -> dict[str, str]:
     long_form_sections: list[GrantLongFormSection] = [
         s  # type: ignore[misc]
@@ -280,6 +287,7 @@ async def generate_grant_section_texts(
         sections=long_form_sections,
         research_deep_dives=research_objectives,
         application_id=application_id,
+        cfp_analysis=cfp_analysis,
     )
 
 
@@ -315,6 +323,18 @@ async def grant_application_text_generation_pipeline_handler(
     async with session_maker() as session:
         grant_application = await retrieve_application(application_id=application_id, session=session)
         grant_template = grant_application.grant_template
+
+        cfp_analysis: CFPSectionAnalysis | None = None
+        if grant_template and grant_template.cfp_section_analysis:
+            cfp_analysis = grant_template.cfp_section_analysis
+            logger.info(
+                "CFP analysis found for grant template",
+                application_id=application_id,
+                template_id=str(grant_template.id),
+                sections_count=len(cfp_analysis.get("section_requirements", [])),
+                constraints_count=len(cfp_analysis.get("length_constraints", [])),
+                criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
+            )
 
         if not grant_application.grant_template or not grant_application.research_objectives:
             missing_parts = []
@@ -447,6 +467,7 @@ async def grant_application_text_generation_pipeline_handler(
             application_id=str(application_id),
             sections=grant_template.grant_sections,  # type: ignore[arg-type]
             research_deep_dives=grant_application.research_objectives or [],
+            cfp_analysis=cfp_analysis,
         )
 
         await job_manager.add_notification(

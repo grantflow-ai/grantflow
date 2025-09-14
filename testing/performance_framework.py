@@ -28,13 +28,15 @@ class StageTimer:
         self.context.end_stage()
 
 
-class ExecutionSpeed(str, Enum):
+class TestExecutionSpeed(str, Enum):
+    __test__ = False
     SMOKE = "smoke"
     QUALITY = "quality"
     E2E_FULL = "e2e_full"
 
 
-class Domain(str, Enum):
+class TestDomain(str, Enum):
+    __test__ = False
     GRANT_TEMPLATE = "grant_template"
     GRANT_APPLICATION = "grant_application"
     OPTIMIZATION = "optimization"
@@ -62,8 +64,8 @@ class PerformanceGrade(Enum):
 class TestScenario:
     name: str
     description: str
-    execution_speed: ExecutionSpeed
-    domain: Domain | None = None
+    execution_speed: TestExecutionSpeed
+    domain: TestDomain | None = None
     timeout: int = 300
     expected_duration: str = "< 5 minutes"
     warm_up_runs: int = 0
@@ -153,8 +155,8 @@ class PerformanceResult:
     test_name: str
     test_id: str
     timestamp: datetime
-    execution_speed: ExecutionSpeed
-    domain: Domain | None
+    execution_speed: TestExecutionSpeed
+    domain: TestDomain | None
     total_time: float
     stage_times: dict[str, float]
     passed: bool
@@ -190,8 +192,8 @@ class PerformanceTestContext:
     def __init__(
         self,
         test_name: str,
-        execution_speed: ExecutionSpeed = ExecutionSpeed.QUALITY,
-        domain: Domain | None = None,
+        execution_speed: TestExecutionSpeed = TestExecutionSpeed.QUALITY,
+        domain: TestDomain | None = None,
         performance_targets: PerformanceTargets | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -363,24 +365,24 @@ def save_performance_results(result: PerformanceResult, results_dir: Path | None
 
 
 TEST_SCENARIOS = {
-    ExecutionSpeed.SMOKE: TestScenario(
+    TestExecutionSpeed.SMOKE: TestScenario(
         name="smoke",
         description="Quick validation tests",
-        execution_speed=ExecutionSpeed.SMOKE,
+        execution_speed=TestExecutionSpeed.SMOKE,
         timeout=60,
         expected_duration="< 1 minute",
     ),
-    ExecutionSpeed.QUALITY: TestScenario(
+    TestExecutionSpeed.QUALITY: TestScenario(
         name="quality",
         description="Quality validation tests",
-        execution_speed=ExecutionSpeed.QUALITY,
+        execution_speed=TestExecutionSpeed.QUALITY,
         timeout=300,
         expected_duration="2-5 minutes",
     ),
-    ExecutionSpeed.E2E_FULL: TestScenario(
+    TestExecutionSpeed.E2E_FULL: TestScenario(
         name="e2e_full",
         description="Complete end-to-end tests",
-        execution_speed=ExecutionSpeed.E2E_FULL,
+        execution_speed=TestExecutionSpeed.E2E_FULL,
         timeout=1800,
         expected_duration="10+ minutes",
     ),
@@ -388,19 +390,19 @@ TEST_SCENARIOS = {
 
 
 def performance_test[F: Callable[..., Any]](
-    execution_speed: ExecutionSpeed = ExecutionSpeed.QUALITY,
-    domain: Domain | None = None,
+    execution_speed: TestExecutionSpeed = TestExecutionSpeed.QUALITY,
+    domain: TestDomain | None = None,
     timeout: int | None = None,
     save_results: bool = True,
     warm_up_runs: int = 0,
 ) -> Callable[[F], F]:
     def decorator(func: F) -> F:
-        scenario = TEST_SCENARIOS.get(execution_speed, TEST_SCENARIOS[ExecutionSpeed.QUALITY])
+        scenario = TEST_SCENARIOS.get(execution_speed, TEST_SCENARIOS[TestExecutionSpeed.QUALITY])
         test_timeout = timeout or scenario.timeout
 
         marks = []
 
-        if execution_speed != ExecutionSpeed.SMOKE:
+        if execution_speed != TestExecutionSpeed.SMOKE:
             marks.append(
                 pytest.mark.skipif(
                     not os.environ.get("E2E_TESTS"),
@@ -408,11 +410,11 @@ def performance_test[F: Callable[..., Any]](
                 )
             )
 
-        if execution_speed == ExecutionSpeed.SMOKE:
+        if execution_speed == TestExecutionSpeed.SMOKE:
             marks.append(pytest.mark.smoke)
-        elif execution_speed == ExecutionSpeed.QUALITY:
+        elif execution_speed == TestExecutionSpeed.QUALITY:
             marks.append(pytest.mark.quality_assessment)
-        elif execution_speed == ExecutionSpeed.E2E_FULL:
+        elif execution_speed == TestExecutionSpeed.E2E_FULL:
             marks.append(pytest.mark.e2e_full)
 
         marks.append(pytest.mark.timeout(test_timeout))
@@ -462,21 +464,21 @@ e2e_test = performance_test
 
 
 def benchmark(
-    category: Domain | None = Domain.VECTOR_BENCHMARK,
+    category: TestDomain | None = TestDomain.VECTOR_BENCHMARK,
     timeout: int | None = None,
     save_results: bool = True,
     warm_up: bool = False,
 ) -> Callable[[Any], Any]:
     domain_map = {
-        "vector": Domain.VECTOR_BENCHMARK,
-        "database": Domain.DATABASE_BENCHMARK,
-        "api": Domain.API_BENCHMARK,
+        "vector": TestDomain.VECTOR_BENCHMARK,
+        "database": TestDomain.DATABASE_BENCHMARK,
+        "api": TestDomain.API_BENCHMARK,
     }
 
-    domain = domain_map.get(category, Domain.VECTOR_BENCHMARK) if isinstance(category, str) else category
+    domain = domain_map.get(category, TestDomain.VECTOR_BENCHMARK) if isinstance(category, str) else category
 
     return performance_test(
-        execution_speed=ExecutionSpeed.QUALITY,
+        execution_speed=TestExecutionSpeed.QUALITY,
         domain=domain,
         timeout=timeout,
         save_results=save_results,

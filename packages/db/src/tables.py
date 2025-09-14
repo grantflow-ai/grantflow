@@ -40,7 +40,14 @@ from packages.db.src.enums import (
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
-from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    CFPSectionAnalysis,
+    Chunk,
+    GrantElement,
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+)
 
 
 class Base(DeclarativeBase):
@@ -471,6 +478,10 @@ class GrantTemplate(BaseWithUUIDPK):
         uselist=False,
         foreign_keys="[GrantTemplate.rag_job_id]",
     )
+
+    cfp_section_analysis: Mapped[CFPSectionAnalysis | None] = mapped_column(JSON, nullable=True)
+    cfp_analysis_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    cfp_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class GrantTemplateSource(Base):

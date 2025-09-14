@@ -8,7 +8,7 @@ MAX_CHUNK_SIZE: Final[int] = 800
 
 
 GRANT_APPLICATION_PIPELINE_STAGES: Final[int] = 10
-GRANT_TEMPLATE_PIPELINE_STAGES: Final[int] = 6
+GRANT_TEMPLATE_PIPELINE_STAGES: Final[int] = 7
 
 
 class NotificationEvents(StrEnum):
@@ -55,3 +55,6 @@ class NotificationEvents(StrEnum):
     TEMPLATE_VALIDATED = "template_validated"
     VALIDATING_TEMPLATE = "validating_template"
     WIKIDATA_ENHANCEMENT_COMPLETE = "wikidata_enhancement_complete"
+
+    CFP_ANALYSIS_STARTED = "cfp_analysis_started"
+    CFP_ANALYSIS_COMPLETED = "cfp_analysis_completed"
