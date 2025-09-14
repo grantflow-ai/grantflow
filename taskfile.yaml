@@ -223,9 +223,9 @@ tasks:
           # Get the connection string and replace socket path with TCP connection
           CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
           if [ -n "$CONNECTION" ]; then
-            # Extract user and password from the connection string
-            # Format: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
-            echo "$CONNECTION" | sed 's|@/|@127.0.0.1:5432/|' | sed 's|?host=/cloudsql/[^&]*||'
+            # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+            # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
+            echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
           fi
     cmds:
       - |
