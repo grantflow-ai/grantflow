@@ -38,4 +38,4 @@ ENV PYTHONUNBUFFERED=1 \
     APP="services.backend.src.main:app"
 
 USER appuser
-CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]
+CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --port ${PORT:-8000} --log-level info --timeout-keep-alive 1800"]
