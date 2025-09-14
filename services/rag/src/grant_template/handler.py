@@ -1,13 +1,13 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-from packages.db.src.tables import CFPAnalysis, GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
+from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -29,12 +29,6 @@ async def enhanced_cfp_analysis(
     parent_id: UUID,
     job_manager: JobManager,
 ) -> dict[str, Any]:
-    """
-    Perform enhanced CFP analysis using Gemini 2.5 Flash and NLP categorization.
-
-    This function integrates the new CFP section analyzer into the template generation pipeline,
-    providing detailed analysis of section requirements, length constraints, and evaluation criteria.
-    """
     await job_manager.add_notification(
         parent_id=parent_id,
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
@@ -44,12 +38,10 @@ async def enhanced_cfp_analysis(
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
-    # Concatenate CFP content for analysis
     content_strings = [f"{content['title']}: {' '.join(content['subtitles'])}" for content in cfp_content]
     full_cfp_text = concat_extracted_cfp_content(content_strings)
 
     try:
-        # Run NLP analysis first
         logger.info("Starting NLP analysis for CFP content", content_length=len(full_cfp_text))
         nlp_analysis = await categorize_text_async(full_cfp_text)
 
@@ -62,7 +54,6 @@ async def enhanced_cfp_analysis(
             total_sentences=total_sentences,
         )
 
-        # Run enhanced CFP analysis with Gemini 2.5 Flash
         logger.info("Starting enhanced CFP analysis with Gemini 2.5 Flash")
         cfp_analysis = await analyze_cfp_sections_with_gemini(full_cfp_text, nlp_analysis)
 
@@ -73,7 +64,6 @@ async def enhanced_cfp_analysis(
             evaluation_criteria=cfp_analysis["evaluation_criteria_count"],
         )
 
-        # Notify completion with analysis results
         await job_manager.add_notification(
             parent_id=parent_id,
             event=NotificationEvents.CFP_DATA_EXTRACTED,
@@ -109,7 +99,6 @@ async def enhanced_cfp_analysis(
             content_length=len(full_cfp_text),
         )
 
-        # Fallback notification
         await job_manager.add_notification(
             parent_id=parent_id,
             event=NotificationEvents.CFP_DATA_EXTRACTED,
@@ -120,7 +109,6 @@ async def enhanced_cfp_analysis(
             total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
 
-        # Return minimal analysis data for pipeline continuation
         return {
             "cfp_analysis": None,
             "nlp_analysis": None,
@@ -364,7 +352,6 @@ async def grant_template_generation_pipeline_handler(
             await job_manager.handle_cancellation(grant_application_id)
             return None
 
-        # Run enhanced CFP analysis with Gemini 2.5 Flash and NLP
         await job_manager.add_notification(
             parent_id=grant_application_id,
             event=NotificationEvents.CFP_ANALYSIS_STARTED,
@@ -467,33 +454,36 @@ async def grant_template_generation_pipeline_handler(
 
     async with session_maker() as session, session.begin():
         try:
+            # Prepare update values
+            update_values = {
+                "granting_institution_id": UUID(extraction_result["organization_id"])
+                if extraction_result["organization_id"]
+                else None,
+                "submission_date": submission_date,
+                "grant_sections": grant_sections,
+            }
+
+            # Add CFP analysis data if available
+            if cfp_analysis_result and cfp_analysis_result.get("cfp_analysis"):
+                update_values.update(
+                    {
+                        "cfp_section_analysis": cfp_analysis_result["cfp_analysis"],
+                        "cfp_analysis_metadata": cfp_analysis_result.get("analysis_metadata"),
+                        "cfp_analyzed_at": datetime.now(UTC),
+                    }
+                )
+                logger.info(
+                    "Including CFP analysis in template update",
+                    template_id=str(grant_template_id),
+                )
+
+            # Single atomic update operation
             grant_template = await session.scalar(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template_id)
-                .values(
-                    {
-                        "granting_institution_id": UUID(extraction_result["organization_id"])
-                        if extraction_result["organization_id"]
-                        else None,
-                        "submission_date": submission_date,
-                        "grant_sections": grant_sections,
-                    }
-                )
+                .values(update_values)
                 .returning(GrantTemplate)
             )
-
-            # Save CFP analysis if available
-            if cfp_analysis_result and cfp_analysis_result.get("cfp_analysis"):
-                await session.execute(
-                    insert(CFPAnalysis).values(
-                        grant_template_id=grant_template_id,
-                        analysis_data=cfp_analysis_result["cfp_analysis"],
-                    )
-                )
-                logger.info(
-                    "CFP analysis saved successfully",
-                    template_id=str(grant_template_id),
-                )
 
             await session.commit()
 

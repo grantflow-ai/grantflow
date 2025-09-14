@@ -1087,17 +1087,15 @@ describe("Application Store", () => {
 				const pendingFile1 = createMockFileWithId("existing.pdf", "pending-1");
 				const pendingFile2 = createMockFileWithId("notyet.pdf", "pending-2");
 
-				// Add pending uploads
 				useApplicationStore.getState().addPendingUpload(pendingFile1, "template");
 				useApplicationStore.getState().addPendingUpload(pendingFile2, "template");
 
-				// Mock application response with one of the files now present
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: {
 						...GrantTemplateFactory.build(),
 						rag_sources: [
 							{
-								filename: "existing.pdf", // This file should be removed from pending
+								filename: "existing.pdf",
 								sourceId: "source-1",
 								status: "FINISHED",
 								url: undefined,
@@ -1112,7 +1110,6 @@ describe("Application Store", () => {
 				await getApp("org-id", "project-id", "app-id");
 
 				const state = useApplicationStore.getState();
-				// existing.pdf should be removed from pending, notyet.pdf should remain
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect([...state.pendingUploads.template][0].name).toBe("notyet.pdf");
 			});
@@ -1121,15 +1118,13 @@ describe("Application Store", () => {
 				const pendingFile1 = createMockFileWithId("existing-app.pdf", "app-pending-1");
 				const pendingFile2 = createMockFileWithId("notyet-app.pdf", "app-pending-2");
 
-				// Add pending uploads to application scope
 				useApplicationStore.getState().addPendingUpload(pendingFile1, "application");
 				useApplicationStore.getState().addPendingUpload(pendingFile2, "application");
 
-				// Mock application response with one of the files now present in application rag_sources
 				const application = ApplicationFactory.build({
 					rag_sources: [
 						{
-							filename: "existing-app.pdf", // This file should be removed from pending
+							filename: "existing-app.pdf",
 							sourceId: "app-source-1",
 							status: "FINISHED",
 							url: undefined,
@@ -1143,7 +1138,6 @@ describe("Application Store", () => {
 				await getApp("org-id", "project-id", "app-id");
 
 				const state = useApplicationStore.getState();
-				// existing-app.pdf should be removed from pending, notyet-app.pdf should remain
 				expect(state.pendingUploads.application.size).toBe(1);
 				expect([...state.pendingUploads.application][0].name).toBe("notyet-app.pdf");
 			});
@@ -1154,13 +1148,11 @@ describe("Application Store", () => {
 				const templatePending = createMockFileWithId("template-pending.pdf", "template-2");
 				const appPending = createMockFileWithId("app-pending.pdf", "app-2");
 
-				// Add pending uploads to both scopes
 				useApplicationStore.getState().addPendingUpload(templateFile, "template");
 				useApplicationStore.getState().addPendingUpload(appFile, "application");
 				useApplicationStore.getState().addPendingUpload(templatePending, "template");
 				useApplicationStore.getState().addPendingUpload(appPending, "application");
 
-				// Mock application response with files present in both scopes
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: {
 						...GrantTemplateFactory.build(),
@@ -1189,7 +1181,6 @@ describe("Application Store", () => {
 				await getApp("org-id", "project-id", "app-id");
 
 				const state = useApplicationStore.getState();
-				// Each scope should have only 1 pending file remaining
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect(state.pendingUploads.application.size).toBe(1);
 				expect([...state.pendingUploads.template][0].name).toBe("template-pending.pdf");
@@ -1203,7 +1194,6 @@ describe("Application Store", () => {
 				useApplicationStore.getState().addPendingUpload(pendingFile1, "template");
 				useApplicationStore.getState().addPendingUpload(pendingFile2, "application");
 
-				// Mock application response with different files
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: {
 						...GrantTemplateFactory.build(),
@@ -1232,7 +1222,6 @@ describe("Application Store", () => {
 				await getApp("org-id", "project-id", "app-id");
 
 				const state = useApplicationStore.getState();
-				// All pending uploads should remain
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect(state.pendingUploads.application.size).toBe(1);
 				expect([...state.pendingUploads.template][0].name).toBe("pending1.pdf");
@@ -1246,10 +1235,9 @@ describe("Application Store", () => {
 				const { addPendingUpload } = useApplicationStore.getState();
 
 				addPendingUpload(file, "template");
-				addPendingUpload(file, "template"); // Same file object
+				addPendingUpload(file, "template");
 
 				const state = useApplicationStore.getState();
-				// Set should deduplicate
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect(state.pendingUploads.template.has(file)).toBe(true);
 			});
@@ -1278,7 +1266,6 @@ describe("Application Store", () => {
 				addPendingUpload(file, "template");
 
 				const newState = useApplicationStore.getState();
-				// Should be a new object reference (immutable update)
 				expect(newState.pendingUploads).not.toBe(initialPendingUploads);
 				expect(newState.pendingUploads.template).not.toBe(initialPendingUploads.template);
 			});

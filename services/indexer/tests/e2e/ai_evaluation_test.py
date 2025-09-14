@@ -9,7 +9,7 @@ from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from testing import TEST_DATA_SOURCES
 from testing.evaluation_utils import comprehensive_quality_assessment, cosine_similarity
-from testing.performance_framework import Domain, ExecutionSpeed, performance_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.indexer.src.processing import process_source
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import Chunk
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_content_relevance_evaluation(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
@@ -98,7 +98,7 @@ async def test_content_relevance_evaluation(
         pytest.fail(f"AI content relevance evaluation failed: {e}")
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=240)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=240)
 async def test_hallucination_detection(logger: logging.Logger, grant_application_file: GrantApplicationSource) -> None:
     logger.info("Running AI hallucination detection test")
 
@@ -169,7 +169,7 @@ async def test_hallucination_detection(logger: logging.Logger, grant_application
         pytest.fail(f"AI hallucination detection failed: {e}")
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=120)
 async def test_semantic_similarity_thresholds(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
@@ -219,7 +219,7 @@ async def test_semantic_similarity_thresholds(
         pytest.fail(f"Semantic similarity threshold evaluation failed: {e}")
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 @pytest.mark.parametrize("data_file", TEST_DATA_SOURCES[:3])
 async def test_comprehensive_quality_with_ai_validation(
     logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationSource
@@ -311,7 +311,7 @@ async def test_comprehensive_quality_with_ai_validation(
         pytest.fail(f"Comprehensive quality assessment failed for {data_file.name}: {e}")
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=200)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=200)
 async def test_citation_accuracy_validation(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:

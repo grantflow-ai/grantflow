@@ -7,10 +7,10 @@ import pytest
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
 from testing import TEST_DATA_SOURCES
-from testing.performance_framework import Domain, ExecutionSpeed, performance_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.INDEXER)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.INDEXER)
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running end-to-end test for extracting text from %s", data_file.name)
