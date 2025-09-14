@@ -5,7 +5,6 @@ from uuid import UUID
 import pytest
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
-    GrantApplication,
     GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
@@ -15,7 +14,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import (
-    GrantTemplateFactory,
     GrantTemplateSourceFactory,
     RagFileFactory,
     TextVectorFactory,
@@ -126,20 +124,6 @@ def mock_extracted_cfp_data(
 
 
 @pytest.fixture
-def sample_cfp_content() -> list[Content]:
-    return [
-        {"title": "Introduction", "subtitles": ["Background", "Purpose"]},
-        {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
-        {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
-    ]
-
-
-@pytest.fixture
-def cfp_subject() -> str:
-    return "Test grant for researching innovative approaches to healthcare"
-
-
-@pytest.fixture
 async def cfp_file_content() -> str:
     cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
     assert cfp_content_file.exists(), f"File {cfp_content_file} does not exist"
@@ -194,30 +178,9 @@ def mock_rag_sources() -> list[RagSourceData]:
 
 
 @pytest.fixture
-async def test_grant_template(
-    async_session_maker: async_sessionmaker[Any],
-    nih_organization: GrantingInstitution,
-    grant_application: GrantApplication,
-) -> GrantTemplate:
-    template = GrantTemplateFactory.build(
-        granting_institution_id=nih_organization.id,
-        grant_application_id=grant_application.id,
-        grant_sections=None,
-        submission_date=None,
-    )
-
-    async with async_session_maker() as session:
-        session.add(template)
-        await session.commit()
-        await session.refresh(template)
-
-    return template
-
-
-@pytest.fixture
 async def grant_template_with_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> GrantTemplate:
     source1 = RagFileFactory.build(
         text_content="This is the full content of the first source document about funding opportunities.",
@@ -266,11 +229,11 @@ async def grant_template_with_sources(
         await session.commit()
 
     template_source1 = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source1.id,
     )
     template_source2 = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source2.id,
     )
 
@@ -278,7 +241,7 @@ async def grant_template_with_sources(
         session.add_all([template_source1, template_source2])
         await session.commit()
 
-    return test_grant_template
+    return grant_template_with_sections
 
 
 async def test_extract_and_enrich_sections_with_mocked_llm(
@@ -292,6 +255,8 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -363,6 +328,8 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     mock_job_manager.create_grant_template_job = AsyncMock(return_value=mock_job)
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -497,12 +464,14 @@ async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceDat
 
 async def test_grant_template_generation_pipeline_missing_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     mock_job_manager = AsyncMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with patch(
         "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
@@ -510,7 +479,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
         mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
 
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
@@ -522,7 +491,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
         error_details=ANY,
     )
     mock_job_manager.add_notification.assert_any_call(
-        parent_id=test_grant_template.grant_application_id,
+        parent_id=grant_template_with_sections.grant_application_id,
         event=NotificationEvents.INDEXING_TIMEOUT,
         message=ANY,
         notification_type="error",
@@ -532,7 +501,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
 
 async def test_grant_template_generation_pipeline_unindexed_sources(
     async_session_maker: async_sessionmaker[Any],
-    test_grant_template: GrantTemplate,
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
     source = RagFileFactory.build(
         text_content="Test content",
@@ -545,7 +514,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         await session.commit()
 
     template_source = GrantTemplateSourceFactory.build(
-        grant_template_id=test_grant_template.id,
+        grant_template_id=grant_template_with_sections.id,
         rag_source_id=source.id,
     )
 
@@ -557,12 +526,14 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
 
     with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=test_grant_template.id,
+            grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
@@ -574,7 +545,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         error_details=ANY,
     )
     mock_job_manager.add_notification.assert_any_call(
-        parent_id=test_grant_template.grant_application_id,
+        parent_id=grant_template_with_sections.grant_application_id,
         event=NotificationEvents.INDEXING_FAILED,
         message=ANY,
         notification_type="error",
@@ -592,6 +563,8 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(
@@ -623,6 +596,8 @@ async def test_extract_and_enrich_sections_validation_error(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with patch(
         "services.rag.src.grant_template.handler.handle_extract_sections",
@@ -650,6 +625,8 @@ async def test_extract_and_enrich_sections_backend_error(
 
     mock_job_manager = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
+    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
+    mock_job_manager.handle_cancellation = AsyncMock()
 
     with (
         patch(

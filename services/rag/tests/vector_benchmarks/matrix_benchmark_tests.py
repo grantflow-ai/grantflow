@@ -4,7 +4,7 @@ import pytest
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
+from testing.performance_framework import Domain, ExecutionSpeed, performance_test
 
 from .data_test import BenchmarkDataGenerator
 from .framework import VectorBenchmarkFramework
@@ -23,7 +23,7 @@ from .synthetic_migrations import VectorTableModifier
 logger = get_logger(__name__)
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=1800)
 @pytest.mark.parametrize("params", DIMENSION_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_dimension_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -97,7 +97,7 @@ async def test_dimension_optimization_matrix(
     assert search_result.throughput > 50, f"Search performance too low: {search_result.throughput:.1f}"
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=2400)
 @pytest.mark.parametrize("params", HNSW_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_hnsw_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -175,7 +175,7 @@ async def test_hnsw_optimization_matrix(
     assert search_result.throughput > min_search_threshold, f"Search too slow for ef={params.ef_construction}"
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=3600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=3600)
 @pytest.mark.parametrize("params", SCALE_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_scale_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -254,7 +254,7 @@ async def test_scale_optimization_matrix(
     assert search_result.throughput > min_search_threshold, f"Search scaling poor at {params.dataset_size}"
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=900)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=900)
 @pytest.mark.parametrize("params", BATCH_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_batch_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -316,7 +316,7 @@ async def test_batch_optimization_matrix(
     assert insertion_result.memory_usage_mb < 500, f"Batch size {params.batch_size} uses too much memory"
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=600)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=600)
 @pytest.mark.parametrize("params", SEARCH_OPTIMIZATION_MATRIX, ids=lambda p: p.name)
 async def test_search_optimization_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -388,7 +388,7 @@ async def test_search_optimization_matrix(
     assert search_result.throughput > min_threshold, f"Search k={params.search_k} too slow"
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=4800)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.VECTOR_BENCHMARK, timeout=4800)
 @pytest.mark.parametrize("params", PRODUCTION_CANDIDATES_MATRIX, ids=lambda p: p.name)
 async def test_production_candidates_matrix(
     async_session_maker: async_sessionmaker[AsyncSession],

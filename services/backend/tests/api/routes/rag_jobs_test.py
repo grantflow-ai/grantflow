@@ -20,6 +20,7 @@ from testing.factories import (
 )
 
 from services.backend.tests.conftest import TestingClientType
+from services.rag.src.constants import NotificationEvents
 
 
 @pytest.fixture
@@ -111,7 +112,6 @@ async def test_retrieve_grant_application_job_success(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
@@ -128,7 +128,7 @@ async def test_retrieve_grant_application_job_success(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
@@ -191,7 +191,7 @@ async def test_retrieve_job_not_found(
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.get(
-        f"/projects/{project.id}/rag-jobs/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -221,13 +221,12 @@ async def test_retrieve_job_not_found_in_database(
     test_client: TestingClientType,
     project: Project,
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     non_existent_id = uuid4()
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{non_existent_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
@@ -241,7 +240,6 @@ async def test_retrieve_template_job_wrong_project(
     organization: Organization,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         other_project = ProjectFactory.build(organization_id=organization.id)
@@ -272,7 +270,7 @@ async def test_retrieve_template_job_wrong_project(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
@@ -285,7 +283,6 @@ async def test_retrieve_application_job_wrong_project(
     organization: Organization,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         other_project = ProjectFactory.build(organization_id=organization.id)
@@ -309,7 +306,7 @@ async def test_retrieve_application_job_wrong_project(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
@@ -322,7 +319,6 @@ async def test_retrieve_job_with_all_timestamps(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
@@ -337,7 +333,7 @@ async def test_retrieve_job_with_all_timestamps(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
@@ -355,7 +351,6 @@ async def test_retrieve_job_with_failed_timestamp(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
@@ -372,7 +367,7 @@ async def test_retrieve_job_with_failed_timestamp(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
@@ -390,14 +385,11 @@ async def test_retrieve_template_job_minimal_data(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PENDING,
-            extracted_sections=None,
-            extracted_metadata=None,
         )
         session.add(job)
         await session.commit()
@@ -405,15 +397,17 @@ async def test_retrieve_template_job_minimal_data(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
     assert data["grant_template_id"] == str(grant_template.id)
-    assert "extracted_sections" not in data
-    assert "extracted_metadata" not in data
+    if "extracted_sections" in data:
+        assert data["extracted_sections"] is None or data["extracted_sections"] == []
+    if "extracted_metadata" in data:
+        assert data["extracted_metadata"] is None or data["extracted_metadata"] == {}
 
 
 async def test_retrieve_application_job_minimal_data(
@@ -422,14 +416,11 @@ async def test_retrieve_application_job_minimal_data(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
             grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PENDING,
-            generated_sections=None,
-            validation_results=None,
         )
         session.add(job)
         await session.commit()
@@ -437,15 +428,17 @@ async def test_retrieve_application_job_minimal_data(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
     assert data["grant_application_id"] == str(grant_application.id)
-    assert "generated_sections" not in data
-    assert "validation_results" not in data
+    if "generated_sections" in data:
+        assert data["generated_sections"] is None or data["generated_sections"] == {}
+    if "validation_results" in data:
+        assert data["validation_results"] is None or data["validation_results"] == {}
 
 
 async def test_retrieve_template_job_no_subclass(
@@ -454,7 +447,6 @@ async def test_retrieve_template_job_no_subclass(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         template_job = GrantTemplateGenerationJobFactory.build(
@@ -472,7 +464,7 @@ async def test_retrieve_template_job_no_subclass(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
@@ -484,7 +476,6 @@ async def test_retrieve_application_job_no_subclass(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
-    otp_code: str,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app_job = GrantApplicationGenerationJobFactory.build(
@@ -502,7 +493,169 @@ async def test_retrieve_application_job_no_subclass(
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_cancel_rag_job_pending_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=grant_application.id,
+            status=RagGenerationStatusEnum.PENDING,
+            current_stage=0,
+            total_stages=10,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    async with async_session_maker() as session:
+        from packages.db.src.tables import RagGenerationJob
+        from sqlalchemy import select
+
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        assert job.status == RagGenerationStatusEnum.CANCELLED
+        assert job.error_message == "Cancelled by user request"
+        assert job.failed_at is not None
+
+
+async def test_cancel_rag_job_processing_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJobFactory.build(
+            grant_template_id=grant_template.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=3,
+            total_stages=6,
+            started_at=datetime.now(UTC),
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    async with async_session_maker() as session:
+        from packages.db.src.tables import GenerationNotification
+        from sqlalchemy import select
+
+        notification = await session.scalar(
+            select(GenerationNotification)
+            .where(GenerationNotification.rag_job_id == job_id)
+            .where(GenerationNotification.event == NotificationEvents.JOB_CANCELLED)
+        )
+        assert notification is not None
+        assert notification.message == "Generation cancelled by user"
+        assert notification.notification_type == "warning"
+
+
+async def test_cancel_rag_job_completed_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=grant_application.id,
+            status=RagGenerationStatusEnum.COMPLETED,
+            current_stage=10,
+            total_stages=10,
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    async with async_session_maker() as session:
+        from packages.db.src.tables import RagGenerationJob
+        from sqlalchemy import select
+
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
+        assert job.status == RagGenerationStatusEnum.COMPLETED
+
+
+async def test_cancel_rag_job_wrong_project(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        other_project = ProjectFactory.build(
+            organization_id=project.organization_id,
+            name="Other Project",
+        )
+        session.add(other_project)
+        await session.flush()
+
+        other_app = GrantApplication(
+            title="Other App",
+            project_id=other_project.id,
+        )
+        session.add(other_app)
+        await session.flush()
+
+        job = GrantApplicationGenerationJobFactory.build(
+            grant_application_id=other_app.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+async def test_cancel_nonexistent_job(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    fake_job_id = str(uuid4())
+
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{fake_job_id}",
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text

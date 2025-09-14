@@ -6,7 +6,15 @@ from uuid import UUID
 import pytest
 from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
-from packages.db.src.tables import GrantingInstitution, Project
+from packages.db.src.tables import (
+    GrantApplication,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantTemplate,
+    GrantTemplateSource,
+    Project,
+    RagSource,
+)
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -470,3 +478,283 @@ async def melanoma_alliance_full_application_id(
         cfp_markdown_file_name="melanoma_alliance.md",
         source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
+
+
+@pytest.fixture
+async def grant_template_with_sections(
+    grant_application: GrantApplication,
+    grant_sections: list[GrantLongFormSection],
+    async_session_maker: async_sessionmaker[Any],
+) -> GrantTemplate:
+    from testing.factories import GrantTemplateFactory
+
+    async with async_session_maker() as session:
+        template = GrantTemplateFactory.build(
+            grant_application_id=grant_application.id,
+            grant_sections=grant_sections,
+            granting_institution_id=None,
+        )
+        session.add(template)
+        await session.commit()
+
+        application = await session.get(GrantApplication, grant_application.id)
+        application.grant_template_id = template.id
+        await session.commit()
+
+        await session.refresh(template)
+        return template
+
+
+@pytest.fixture
+async def template_rag_source(
+    grant_template_with_sections: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+) -> RagSource:
+    from testing.factories import RagUrlFactory
+
+    async with async_session_maker() as session:
+        source = RagUrlFactory.build(
+            url="https://example.com/grant-template.pdf",
+        )
+        session.add(source)
+        await session.flush()
+
+        template_source = GrantTemplateSource(
+            rag_source_id=source.id,
+            grant_template_id=grant_template_with_sections.id,
+        )
+        session.add(template_source)
+
+        await session.commit()
+        await session.refresh(source)
+        return source
+
+
+@pytest.fixture
+async def application_rag_source(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> RagSource:
+    from testing.factories import RagUrlFactory
+
+    async with async_session_maker() as session:
+        source = RagUrlFactory.build(
+            url="https://example.com/application-doc.pdf",
+        )
+        session.add(source)
+        await session.flush()
+
+        application_source = GrantApplicationSource(
+            rag_source_id=source.id,
+            grant_application_id=grant_application.id,
+        )
+        session.add(application_source)
+
+        await session.commit()
+        await session.refresh(source)
+        return source
+
+
+@pytest.fixture
+def sample_cfp_content() -> list[dict[str, Any]]:
+    return [
+        {"title": "Introduction", "subtitles": ["Background", "Purpose"]},
+        {"title": "Research Plan", "subtitles": ["Methods", "Analysis"]},
+        {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
+    ]
+
+
+@pytest.fixture
+def cfp_subject() -> str:
+    return "Test grant for researching innovative approaches to healthcare"
+
+
+@pytest.fixture
+def mock_research_objectives() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "obj-1",
+            "number": 1,
+            "title": "Develop immunotherapy approach",
+            "description": "Create and validate new CAR-T cell therapy",
+            "research_tasks": [
+                {
+                    "id": "task-1-1",
+                    "number": 1,
+                    "title": "Design CAR construct",
+                    "description": "Engineer CAR targeting melanoma antigens",
+                }
+            ],
+        },
+        {
+            "id": "obj-2",
+            "number": 2,
+            "title": "Evaluate treatment efficacy",
+            "description": "Assess therapeutic potential in models",
+            "research_tasks": [
+                {
+                    "id": "task-2-1",
+                    "number": 1,
+                    "title": "Mouse model studies",
+                    "description": "Test therapy in xenograft models",
+                }
+            ],
+        },
+    ]
+
+
+@pytest.fixture
+def mock_enrichment_response() -> dict[str, Any]:
+    return {
+        "enriched_objective": "Enhanced objective text",
+        "search_queries": ["query1", "query2"],
+        "core_scientific_terms": ["term1", "term2"],
+        "scientific_context": "Test scientific context",
+    }
+
+
+@pytest.fixture
+def mock_grant_sections() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "section1",
+            "title": "Research Plan",
+            "is_detailed_research_plan": True,
+            "type": "section",
+            "order": 1,
+        },
+        {
+            "id": "section2",
+            "title": "Background",
+            "is_detailed_research_plan": False,
+            "type": "section",
+            "order": 2,
+        },
+    ]
+
+
+@pytest.fixture
+async def test_application_with_template(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
+    from packages.db.src.json_objects import ResearchObjective, ResearchTask
+    from testing.factories import OrganizationFactory, ProjectFactory
+
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplication(
+            id=UUID("00000000-0000-0000-0000-000000000002"),
+            title="Test Grant Application",
+            project_id=project.id,
+            research_objectives=[
+                ResearchObjective(
+                    number=1,
+                    title="Test Objective 1",
+                    research_tasks=[
+                        ResearchTask(number=1, title="Task 1.1"),
+                        ResearchTask(number=2, title="Task 1.2"),
+                    ],
+                ),
+                ResearchObjective(
+                    number=2,
+                    title="Test Objective 2",
+                    research_tasks=[
+                        ResearchTask(number=1, title="Task 2.1"),
+                        ResearchTask(number=2, title="Task 2.2"),
+                    ],
+                ),
+            ],
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            id=UUID("00000000-0000-0000-0000-000000000001"),
+            grant_application_id=application.id,
+            granting_institution_id=None,
+            grant_sections=[
+                {
+                    "id": "abstract",
+                    "title": "Abstract",
+                    "order": 1,
+                    "parent_id": None,
+                    "keywords": ["summary", "overview"],
+                    "topics": ["project_overview"],
+                    "generation_instructions": "Write a clear abstract.",
+                    "depends_on": [],
+                    "max_words": 250,
+                    "search_queries": ["project abstract"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "research_plan",
+                    "title": "Research Plan",
+                    "order": 2,
+                    "parent_id": None,
+                    "keywords": ["methodology", "design", "procedures"],
+                    "topics": ["methods", "experimental_design"],
+                    "generation_instructions": "Describe the detailed methodology for the research project.",
+                    "depends_on": [],
+                    "max_words": 1500,
+                    "search_queries": ["research methodology", "experimental design"],
+                    "is_detailed_research_plan": True,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "impact",
+                    "title": "Impact",
+                    "order": 3,
+                    "parent_id": None,
+                    "keywords": ["outcomes", "benefits", "significance"],
+                    "topics": ["project_impact", "societal_benefits"],
+                    "generation_instructions": "Describe the potential impact and significance of this research.",
+                    "depends_on": [],
+                    "max_words": 500,
+                    "search_queries": ["research impact", "project significance"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "preliminary_results",
+                    "title": "Preliminary Results",
+                    "order": 4,
+                    "parent_id": None,
+                    "keywords": ["preliminary", "findings", "data"],
+                    "topics": ["preliminary_data", "initial_results"],
+                    "generation_instructions": "Present any preliminary data or results.",
+                    "depends_on": [],
+                    "max_words": 500,
+                    "search_queries": ["preliminary results", "initial findings"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "risks_and_mitigations",
+                    "title": "Risks and Mitigations",
+                    "order": 5,
+                    "parent_id": None,
+                    "keywords": ["risks", "challenges", "mitigation"],
+                    "topics": ["project_risks", "risk_management"],
+                    "generation_instructions": "Identify potential risks and describe mitigation strategies.",
+                    "depends_on": [],
+                    "max_words": 400,
+                    "search_queries": ["project risks", "risk mitigation"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+            ],
+        )
+        session.add(template)
+
+        application.grant_template = template
+
+        await session.commit()
+        await session.refresh(application)
+
+        return application

@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import pytest
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
-from packages.db.src.tables import GrantApplication, Organization, Project
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.utils.firebase import firebase_app_ref
@@ -15,32 +14,6 @@ pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 
 TestingClientType = AsyncTestClient[Litestar]
-
-
-@pytest.fixture
-async def isolated_grant_application(
-    async_session_maker: async_sessionmaker[Any], project: Project
-) -> GrantApplication:
-    from testing.factories import GrantApplicationFactory
-
-    async with async_session_maker() as session, session.begin():
-        app_data = GrantApplicationFactory.build(project_id=project.id)
-        session.add(app_data)
-        await session.commit()
-        await session.refresh(app_data)
-        return app_data
-
-
-@pytest.fixture
-async def isolated_project(async_session_maker: async_sessionmaker[Any], organization: Organization) -> Project:
-    from testing.factories import ProjectFactory
-
-    async with async_session_maker() as session, session.begin():
-        project_data = ProjectFactory.build(organization_id=organization.id)
-        session.add(project_data)
-        await session.commit()
-        await session.refresh(project_data)
-        return project_data
 
 
 @pytest.fixture

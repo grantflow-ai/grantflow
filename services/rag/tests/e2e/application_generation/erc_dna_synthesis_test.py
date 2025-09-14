@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
+from testing.performance_framework import Domain, ExecutionSpeed, PerformanceTestContext, performance_test
 from testing.scenarios.base import load_scenario
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
@@ -18,7 +18,7 @@ def create_mock_job_manager() -> AsyncMock:
     return mock_job_manager
 
 
-@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
+@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.GRANT_APPLICATION, timeout=1800)
 async def test_generate_erc_application_for_dna_synthesis(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,
@@ -111,7 +111,7 @@ async def test_generate_erc_application_for_dna_synthesis(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_APPLICATION, timeout=900)
+@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.GRANT_APPLICATION, timeout=900)
 async def test_validate_dna_synthesis_scenario_structure(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,

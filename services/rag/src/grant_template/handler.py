@@ -58,6 +58,10 @@ async def extract_and_enrich_sections(
 
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
+    if await job_manager.check_if_cancelled():
+        await job_manager.handle_cancellation(parent_id)
+        return []
+
     await job_manager.add_notification(
         parent_id=parent_id,
         event=NotificationEvents.GRANT_TEMPLATE_METADATA,
@@ -175,6 +179,10 @@ async def grant_template_generation_pipeline_handler(
     try:
         await verify_rag_sources_indexed(grant_template_id, session_maker, GrantTemplate)
 
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(grant_application_id)
+            return None
+
         async with session_maker() as session:
             source_ids = [
                 str(source_id)
@@ -201,6 +209,11 @@ async def grant_template_generation_pipeline_handler(
             current_pipeline_stage=2,
             total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
         )
+
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(grant_application_id)
+            return None
+
         extraction_result = await handle_extract_cfp_data_from_rag_sources(
             source_ids=source_ids,
             organization_mapping=organization_mapping,
@@ -237,6 +250,10 @@ async def grant_template_generation_pipeline_handler(
         )
 
         logger.info("Extracted CFP data")
+
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(grant_application_id)
+            return None
 
         grant_sections = await extract_and_enrich_sections(
             cfp_content=extraction_result["content"],

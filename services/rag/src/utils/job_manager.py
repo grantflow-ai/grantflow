@@ -16,6 +16,8 @@ from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notifi
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.constants import NotificationEvents
+
 logger = get_logger(__name__)
 
 
@@ -278,3 +280,22 @@ class JobManager:
 
             result = await session.execute(query)
             return list(result.scalars().all())
+
+    async def check_if_cancelled(self) -> bool:
+        if not self.job_id:
+            return False
+
+        async with self.session_maker() as session:
+            job = await session.get(RagGenerationJob, self.job_id)
+            if job and job.status == RagGenerationStatusEnum.CANCELLED:
+                logger.info("Job has been cancelled", job_id=str(self.job_id))
+                return True
+        return False
+
+    async def handle_cancellation(self, parent_id: UUID) -> None:
+        await self.add_notification(
+            parent_id=parent_id,
+            event=NotificationEvents.CANCELLATION_ACKNOWLEDGED,
+            message="Processing stopped due to cancellation",
+            notification_type="warning",
+        )
