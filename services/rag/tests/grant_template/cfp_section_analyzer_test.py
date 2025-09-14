@@ -226,7 +226,6 @@ async def test_generates_markdown_report_with_structured_analysis_data(
             cfp_content=sample_cfp_content, nlp_analysis=nlp_result, output_file=str(output_file)
         )
 
-    # Verify report structure
     assert "# CFP Analysis Report" in report
     assert "**Sections Identified**: 3" in report
     assert "**Length Constraints**: 3" in report
@@ -235,7 +234,6 @@ async def test_generates_markdown_report_with_structured_analysis_data(
     assert "NLP Analysis Summary" in report
     assert "This analysis was generated using Gemini 2.5 Flash" in report
 
-    # Verify file was saved
     assert output_file.exists()
     saved_content = output_file.read_text()
     assert saved_content == report
@@ -315,7 +313,6 @@ async def test_categorizes_cfp_content_using_nlp_semantic_analysis() -> None:
     ):
         report = await generate_cfp_analysis_report(test_cfp, nlp_result)
 
-    # Verify integration worked
     assert "# CFP Analysis Report" in report
     assert "Innovation: 40%" in report or "innovation" in report.lower()
     assert "NLP Analysis Summary" in report
@@ -374,7 +371,6 @@ def test_json_schema_enforces_required_fields_and_data_types() -> None:
     ],
 )
 async def test_processes_various_cfp_formats_with_nlp_categorization(cfp_file: str) -> None:
-    # Load actual test data
     samples_dir = Path("testing/test_data/nlp_cfp_samples")
     cfp_path = samples_dir / cfp_file
 
@@ -383,16 +379,13 @@ async def test_processes_various_cfp_formats_with_nlp_categorization(cfp_file: s
 
     cfp_content = cfp_path.read_text(encoding="utf-8")
 
-    # Run NLP analysis on real content
     nlp_result = await categorize_text_async(cfp_content)
 
-    # Verify NLP found some categories
     categories_found = sum(1 for v in nlp_result.values() if v)
     assert categories_found >= 3, f"Expected at least 3 NLP categories, got {categories_found}"
 
-    # Mock realistic response based on content
     content_length = len(cfp_content)
-    estimated_sections = min(12, max(4, content_length // 1000))  # Scale with content
+    estimated_sections = min(12, max(4, content_length // 1000))
     estimated_constraints = min(15, max(2, content_length // 2000))
     estimated_criteria = min(8, max(1, categories_found // 2))
 
@@ -442,7 +435,6 @@ async def test_processes_various_cfp_formats_with_nlp_categorization(cfp_file: s
         "evaluation_criteria_count": estimated_criteria,
     }
 
-    # Test the analyzer
     with patch(
         "services.rag.src.grant_template.cfp_section_analyzer.handle_completions_request", return_value=mock_response
     ):
@@ -465,13 +457,11 @@ async def test_nlp_integration_without_external_api_calls() -> None:
     Deadline: June 15, 2025.
     """
 
-    # Test NLP analysis works
     nlp_result = await categorize_text_async(test_content)
 
-    # Verify we get expected categories
-    assert len(nlp_result["writing_related"]) > 0  # Page limits
-    assert len(nlp_result["money"]) > 0  # Budget
-    assert len(nlp_result["date_time"]) > 0  # Deadline
+    assert len(nlp_result["writing_related"]) > 0
+    assert len(nlp_result["money"]) > 0
+    assert len(nlp_result["date_time"]) > 0
 
     mock_response = {
         "required_sections": [
@@ -524,10 +514,8 @@ async def test_nlp_integration_without_external_api_calls() -> None:
     with patch(
         "services.rag.src.grant_template.cfp_section_analyzer.handle_completions_request", return_value=mock_response
     ):
-        # Test report generation
         report = await generate_cfp_analysis_report(cfp_content=test_content, nlp_analysis=nlp_result)
 
-        # Verify comprehensive report structure
         assert "# CFP Analysis Report" in report
         assert "**Sections Identified**: 5" in report
         assert "**Length Constraints**: 3" in report
@@ -605,7 +593,6 @@ def test_transforms_analysis_data_for_database_storage(mock_gemini_response: CFP
 
 
 def test_formats_cfp_requirements_for_section_correctly() -> None:
-    """Test that CFP requirements are properly formatted for section generation."""
     cfp_analysis = {
         "section_requirements": [
             {
@@ -640,7 +627,6 @@ def test_formats_cfp_requirements_for_section_correctly() -> None:
 
 
 def test_formats_cfp_requirements_returns_empty_when_no_match() -> None:
-    """Test that no CFP requirements are returned when section doesn't match."""
     cfp_analysis = {
         "section_requirements": [
             {
@@ -660,7 +646,6 @@ def test_formats_cfp_requirements_returns_empty_when_no_match() -> None:
 
 
 def test_formats_cfp_requirements_handles_none_analysis() -> None:
-    """Test that function handles None CFP analysis gracefully."""
     result = _format_cfp_requirements_for_section("Project Summary", None)
 
     assert result == ""

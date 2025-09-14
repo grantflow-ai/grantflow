@@ -4,7 +4,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from testing.performance_framework import Domain, ExecutionSpeed, PerformanceTestContext, performance_test
+from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.utils.evaluation import (
     ContentComplexity,
@@ -19,7 +19,7 @@ from services.rag.src.utils.evaluation import (
 )
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_evaluation_framework_baseline(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
@@ -131,7 +131,7 @@ async def test_evaluation_framework_baseline(
         raise
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_evaluation_consistency(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
@@ -217,7 +217,7 @@ async def test_evaluation_consistency(
         raise
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.AI_EVALUATION, timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.AI_EVALUATION, timeout=600)
 async def test_evaluation_optimization_performance(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
@@ -473,7 +473,7 @@ async def test_evaluation_optimization_performance(
     logger.info("Adaptive learning: %d evaluations processed", final_stats.get("total_evaluations", 0))
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_content_complexity_analysis(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
@@ -587,7 +587,7 @@ async def test_content_complexity_analysis(
     logger.info("Content complexity analysis validation completed successfully")
 
 
-@performance_test(execution_speed=ExecutionSpeed.QUALITY, domain=Domain.AI_EVALUATION, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_smart_evaluation_routing(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
@@ -734,7 +734,7 @@ async def test_smart_evaluation_routing(
     logger.info("Smart evaluation routing validation completed successfully")
 
 
-@performance_test(execution_speed=ExecutionSpeed.SMOKE, domain=Domain.AI_EVALUATION, timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.AI_EVALUATION, timeout=120)
 @pytest.mark.e2e
 async def test_complexity_analysis_edge_cases(
     logger: logging.Logger,

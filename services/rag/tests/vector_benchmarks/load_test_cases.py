@@ -4,7 +4,7 @@ import pytest
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.performance_framework import Domain, ExecutionSpeed, performance_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from .data_test import BenchmarkDataGenerator
 from .load_testing import (
@@ -19,7 +19,7 @@ from .synthetic_migrations import VectorTableModifier
 logger = get_logger(__name__)
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.VECTOR_BENCHMARK, timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 @pytest.mark.parametrize("config", LOAD_TEST_CONFIGURATIONS, ids=lambda c: c.name)
 async def test_vector_search_load(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -123,7 +123,7 @@ async def test_vector_search_load(
     logger.info("Load test passed all requirements", config_name=config.name)
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.VECTOR_BENCHMARK, timeout=2400)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
 async def test_dimension_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
@@ -203,7 +203,7 @@ async def test_dimension_load_comparison(
     logger.info("✅ All dimensions passed load testing requirements")
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.VECTOR_BENCHMARK, timeout=2400)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
 async def test_index_parameter_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:

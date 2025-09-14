@@ -2,8 +2,8 @@ from typing import Final
 
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
-from weasyprint import CSS, HTML  # type: ignore[import-not-found]
-from weasyprint.text.fonts import FontConfiguration  # type: ignore[import-not-found]
+from weasyprint import CSS, HTML
+from weasyprint.text.fonts import FontConfiguration
 
 logger = get_logger(__name__)
 

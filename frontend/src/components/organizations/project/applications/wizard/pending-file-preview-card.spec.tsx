@@ -138,7 +138,6 @@ describe("PendingFilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "README" });
 			render(<PendingFilePreviewCard file={file} />);
 
-			// Should not crash and should still render the component
 			expect(screen.getByTestId("pending-file-preview-card")).toBeInTheDocument();
 			expect(screen.getByTestId("pending-file-icon")).toBeInTheDocument();
 		});
@@ -147,7 +146,6 @@ describe("PendingFilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "data.xyz" });
 			render(<PendingFilePreviewCard file={file} />);
 
-			// Should not crash and should still render the component
 			expect(screen.getByTestId("pending-file-preview-card")).toBeInTheDocument();
 			expect(screen.getByTestId("pending-file-icon")).toBeInTheDocument();
 		});
