@@ -1,13 +1,9 @@
 from pathlib import Path
 from typing import Final, NotRequired, TypedDict
-from uuid import UUID
 
 from packages.db.src.json_objects import CFPSectionAnalysis as CFPSectionAnalysisDB
-from packages.db.src.tables import CFPAnalysis
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.rag.src.grant_template.nlp_categorizer import (
     NLPCategorizationResult,
@@ -386,31 +382,6 @@ def transform_analysis_for_database(analysis: CFPSectionAnalysis) -> CFPSectionA
             for ar in analysis["additional_requirements"]
         ],
     )
-
-
-async def save_cfp_analysis_to_database(
-    session: AsyncSession,
-    grant_template_id: UUID,
-    analysis: CFPSectionAnalysis,
-) -> None:
-    logger.info(
-        "Saving CFP analysis to database",
-        grant_template_id=str(grant_template_id),
-        sections_count=analysis["sections_count"],
-        length_constraints=analysis["length_constraints_found"],
-        evaluation_criteria=analysis["evaluation_criteria_count"],
-    )
-
-    db_analysis = transform_analysis_for_database(analysis)
-
-    await session.execute(
-        insert(CFPAnalysis).values(
-            grant_template_id=grant_template_id,
-            analysis_data=db_analysis,
-        )
-    )
-
-    logger.info("CFP analysis saved successfully", grant_template_id=str(grant_template_id))
 
 
 async def analyze_cfp_sections_with_gemini(

@@ -276,15 +276,12 @@ describe("TemplateFileUploader", () => {
 			const testError = new Error("Upload failed");
 			mockAddFile.mockRejectedValueOnce(testError);
 
-			// Handle expected unhandled rejection
 			const originalHandler = process.listeners("unhandledRejection");
 			process.removeAllListeners("unhandledRejection");
 			process.on("unhandledRejection", (reason) => {
 				if (reason instanceof Error && reason.message === "Upload failed") {
-					// This is the expected error, ignore it
 					return;
 				}
-				// Re-throw any other unexpected errors
 				throw reason;
 			});
 
@@ -304,7 +301,6 @@ describe("TemplateFileUploader", () => {
 				expect(mockRemovePendingUpload).toHaveBeenCalledWith("test-uuid-123", "template");
 			});
 
-			// Restore original handlers
 			process.removeAllListeners("unhandledRejection");
 			for (const handler of originalHandler) {
 				process.on("unhandledRejection", handler);
@@ -315,15 +311,12 @@ describe("TemplateFileUploader", () => {
 			const testError = new Error("Upload failed");
 			mockAddFile.mockRejectedValueOnce(testError);
 
-			// Handle expected unhandled rejection
 			const originalHandler = process.listeners("unhandledRejection");
 			process.removeAllListeners("unhandledRejection");
 			process.on("unhandledRejection", (reason) => {
 				if (reason instanceof Error && reason.message === "Upload failed") {
-					// This is the expected error, ignore it
 					return;
 				}
-				// Re-throw any other unexpected errors
 				throw reason;
 			});
 
@@ -338,7 +331,6 @@ describe("TemplateFileUploader", () => {
 				expect(mockRemovePendingUpload).toHaveBeenCalledWith("test-uuid-123", "application");
 			});
 
-			// Restore original handlers
 			process.removeAllListeners("unhandledRejection");
 			for (const handler of originalHandler) {
 				process.on("unhandledRejection", handler);

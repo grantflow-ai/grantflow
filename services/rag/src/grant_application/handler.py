@@ -10,7 +10,7 @@ from packages.db.src.json_objects import (
     ResearchDeepDive,
     ResearchObjective,
 )
-from packages.db.src.tables import CFPAnalysis, GrantApplication, GrantTemplate
+from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -21,7 +21,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -324,38 +324,17 @@ async def grant_application_text_generation_pipeline_handler(
         grant_application = await retrieve_application(application_id=application_id, session=session)
         grant_template = grant_application.grant_template
 
-        # Load CFP analysis if available
         cfp_analysis: CFPSectionAnalysis | None = None
-        if grant_template:
-            try:
-                cfp_analysis_result = await session.scalar(
-                    select(CFPAnalysis.analysis_data).where(CFPAnalysis.grant_template_id == grant_template.id)
-                )
-                cfp_analysis = cfp_analysis_result
-
-                if cfp_analysis:
-                    logger.info(
-                        "CFP analysis found for grant template",
-                        application_id=application_id,
-                        template_id=str(grant_template.id),
-                        sections_count=len(cfp_analysis.get("section_requirements", [])),
-                        constraints_count=len(cfp_analysis.get("length_constraints", [])),
-                        criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
-                    )
-                else:
-                    logger.debug(
-                        "No CFP analysis found for grant template",
-                        application_id=application_id,
-                        template_id=str(grant_template.id),
-                    )
-            except Exception as e:
-                logger.warning(
-                    "Failed to retrieve CFP analysis - proceeding without CFP requirements",
-                    application_id=application_id,
-                    template_id=str(grant_template.id),
-                    error=str(e),
-                )
-                cfp_analysis = None
+        if grant_template and grant_template.cfp_section_analysis:
+            cfp_analysis = grant_template.cfp_section_analysis
+            logger.info(
+                "CFP analysis found for grant template",
+                application_id=application_id,
+                template_id=str(grant_template.id),
+                sections_count=len(cfp_analysis.get("section_requirements", [])),
+                constraints_count=len(cfp_analysis.get("length_constraints", [])),
+                criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
+            )
 
         if not grant_application.grant_template or not grant_application.research_objectives:
             missing_parts = []
