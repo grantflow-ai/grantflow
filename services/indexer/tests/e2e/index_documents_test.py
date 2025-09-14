@@ -11,10 +11,10 @@ from packages.shared_utils.src.exceptions import ExternalOperationError, FilePar
 from packages.shared_utils.src.extraction import extract_file_content
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import TEST_DATA_SOURCES
-from testing.performance_framework import Domain, ExecutionSpeed, performance_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 
-@performance_test(execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.INDEXER)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.INDEXER)
 @pytest.mark.parametrize("data_file", list(TEST_DATA_SOURCES))
 async def test_index_chunks(
     logger: logging.Logger,

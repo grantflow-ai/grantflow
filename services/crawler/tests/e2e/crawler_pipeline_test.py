@@ -10,8 +10,8 @@ from packages.shared_utils.src.exceptions import (
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import (
-    ExecutionSpeed,
-    Domain,
+    TestExecutionSpeed,
+    TestDomain,
     performance_test,
 )
 
@@ -26,7 +26,7 @@ from services.crawler.src.extraction import (
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.SMOKE, domain=Domain.CRAWLER, timeout=60
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=60
 )
 @pytest.mark.parametrize(
     "test_url,expected_content",
@@ -61,7 +61,7 @@ async def test_url_preparation_smoke(
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.SMOKE, domain=Domain.CRAWLER, timeout=90
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=90
 )
 async def test_link_extraction_smoke(logger: logging.Logger) -> None:
     logger.info("Running smoke test for link extraction")
@@ -107,7 +107,7 @@ async def test_link_extraction_smoke(logger: logging.Logger) -> None:
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.SMOKE, domain=Domain.CRAWLER, timeout=120
+    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.CRAWLER, timeout=120
 )
 async def test_content_processing_smoke(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
@@ -155,7 +155,7 @@ async def test_content_processing_smoke(
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.QUALITY, domain=Domain.CRAWLER, timeout=180
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=180
 )
 @pytest.mark.parametrize(
     "test_url",
@@ -238,7 +238,7 @@ async def test_crawling_quality_assessment(
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.QUALITY, domain=Domain.CRAWLER, timeout=240
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=240
 )
 async def test_link_relevance_assessment(logger: logging.Logger) -> None:
     logger.info("Running link relevance assessment")
@@ -292,7 +292,7 @@ async def test_link_relevance_assessment(logger: logging.Logger) -> None:
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.QUALITY, domain=Domain.CRAWLER, timeout=300
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=300
 )
 async def test_document_processing_quality(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
@@ -341,7 +341,7 @@ async def test_document_processing_quality(
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.E2E_FULL, domain=Domain.CRAWLER, timeout=600
+    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER, timeout=600
 )
 @pytest.mark.parametrize(
     "test_url",
@@ -430,7 +430,7 @@ async def test_comprehensive_crawling_pipeline(
 
 
 @performance_test(
-    execution_speed=ExecutionSpeed.QUALITY, domain=Domain.CRAWLER, timeout=240
+    execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.CRAWLER, timeout=240
 )
 async def test_content_semantic_quality(
     logger: logging.Logger, grant_application_file: GrantApplicationSource

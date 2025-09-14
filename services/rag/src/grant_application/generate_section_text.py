@@ -1,7 +1,7 @@
 import time
 from typing import Final
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
@@ -15,6 +15,60 @@ from services.rag.src.utils.source_validation import handle_source_validation
 logger = get_logger(__name__)
 
 
+def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSectionAnalysis | None) -> str:
+    if not cfp_analysis:
+        return ""
+
+    section_title_lower = section_title.lower()
+    relevant_requirements = [
+        section_req
+        for section_req in cfp_analysis.get("section_requirements", [])
+        if section_req["section"].lower() in section_title_lower
+        or section_title_lower in section_req["section"].lower()
+    ]
+
+    relevant_constraints = [
+        constraint
+        for constraint in cfp_analysis.get("length_constraints", [])
+        if section_title_lower in constraint["description"].lower()
+        or any(word in constraint["description"].lower() for word in section_title_lower.split())
+    ]
+
+    relevant_criteria = [
+        criterion
+        for criterion in cfp_analysis.get("evaluation_criteria", [])
+        if section_title_lower in criterion["criterion"].lower()
+        or any(word in criterion["criterion"].lower() for word in section_title_lower.split())
+    ]
+
+    if not relevant_requirements and not relevant_constraints and not relevant_criteria:
+        return ""
+
+    cfp_text = "## CFP Requirements\n\n"
+
+    if relevant_requirements:
+        cfp_text += "### Section Requirements\n"
+        for req_section in relevant_requirements:
+            cfp_text += f"**{req_section['section']}:**\n"
+            for req in req_section["requirements"]:
+                cfp_text += f"- {req['requirement']}\n"
+                cfp_text += f'  > *Quote: "{req["quote"]}"*\n\n'
+
+    if relevant_constraints:
+        cfp_text += "### Length Constraints\n"
+        for constraint in relevant_constraints:
+            cfp_text += f"- **{constraint['description']}**\n"
+            cfp_text += f'  > *Quote: "{constraint["quote"]}"*\n\n'
+
+    if relevant_criteria:
+        cfp_text += "### Evaluation Criteria\n"
+        for criterion in relevant_criteria:
+            cfp_text += f"- **{criterion['criterion']}**\n"
+            cfp_text += f'  > *Quote: "{criterion["quote"]}"*\n\n'
+
+    return cfp_text
+
+
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="optimized_section_generation",
     template="""
@@ -22,6 +76,8 @@ SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Instructions
     ${instructions}
+
+    ${cfp_requirements}
 
     ## Research Context
     ${context}
@@ -51,6 +107,7 @@ async def _generate_single_section_with_context(
     section: GrantLongFormSection,
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
+    cfp_analysis: CFPSectionAnalysis | None = None,
 ) -> str:
     section_title = section.get("title", "Section")
 
@@ -120,9 +177,12 @@ async def _generate_single_section_with_context(
 
     validated_context = combined_context
 
+    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis)
+
     prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         instructions=section.get("generation_instructions", f"Write the {section_title} section"),
+        cfp_requirements=cfp_requirements_text,
         context=validated_context,
     )
 
@@ -219,6 +279,7 @@ async def generate_section_text(
     sections: list[GrantLongFormSection],
     research_deep_dives: list[ResearchObjective],
     application_id: str,
+    cfp_analysis: CFPSectionAnalysis | None = None,
 ) -> dict[str, str]:
     if not sections:
         return {}
@@ -270,7 +331,8 @@ async def generate_section_text(
     )
 
     generation_coroutines = [
-        _generate_single_section_with_context(section, research_deep_dives, shared_context) for section in sections
+        _generate_single_section_with_context(section, research_deep_dives, shared_context, cfp_analysis)
+        for section in sections
     ]
 
     section_results = await batched_gather(*generation_coroutines, batch_size=3)
