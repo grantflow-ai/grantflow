@@ -232,6 +232,8 @@ class GrantTemplateGenerationJobFactory(SQLAlchemyFactory[GrantTemplateGeneratio
     retry_count = 0
     status = RagGenerationStatusEnum.PENDING
     job_type = GRANT_TEMPLATE_GENERATION
+    extracted_sections = None
+    extracted_metadata = None
 
 
 class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGenerationJob]):
@@ -244,6 +246,8 @@ class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGen
     retry_count = 0
     status = RagGenerationStatusEnum.PENDING
     job_type = GRANT_APPLICATION_GENERATION
+    generated_sections = None
+    validation_results = None
 
 
 class GenerationNotificationFactory(SQLAlchemyFactory[GenerationNotification]):

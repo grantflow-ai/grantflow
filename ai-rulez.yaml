@@ -1,84 +1,89 @@
-$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v2.schema.json
-agents: []
-commands: []
-mcp_servers:
-    - args:
-        - mcp
-      command: ai-rulez
-      description: AI-Rulez MCP server for configuration management
-      name: ai-rulez
 metadata:
-    description: GrantFlow.AI is a comprehensive grant management platform built as a monorepo with Next.js 15/React 19 frontend and Python microservices backend. Features include collaborative document editing with CRDT, intelligent document processing (indexing, crawling, RAG), Firebase authentication, and multi-tenant organization management. Uses GCP infrastructure with Cloud Run, PostgreSQL with pgvector, and implements real-time WebSocket collaboration.
     name: grantflow
     version: 1.0.0
+    description: GrantFlow.AI is a comprehensive grant management platform built as a monorepo with Next.js 15/React 19 frontend and Python microservices backend. Features include collaborative document editing with CRDT, intelligent document processing (indexing, crawling, RAG), Firebase authentication, and multi-tenant organization management. Uses GCP infrastructure with Cloud Run, PostgreSQL with pgvector, and implements real-time WebSocket collaboration.
+outputs:
+    - path: .cursor/rules/
+      type: rule
+      naming_scheme: '{name}.mdc'
+    - path: .github/copilot-instructions.md
+    - path: .windsurf/
+      type: rule
+      naming_scheme: '{name}.md'
+    - path: CLAUDE.md
 presets:
     - popular
 rules:
-    - content: Always use select_active() helper from packages.db.src.query_helpers for queries. Never query deleted_at IS NULL directly. Test soft-delete filtering in integration tests for all new endpoints.
-      name: Soft Delete Integrity
+    - name: Soft Delete Integrity
       priority: critical
-    - content: Use real PostgreSQL via db_test_plugin for all tests. Never mock SQLAlchemy sessions. Use factories from testing/factories.py. Run 'task test:e2e' for integration tests before merging.
-      name: Testing with Real Infrastructure
+      content: Always use select_active() helper from packages.db.src.query_helpers for queries. Never query deleted_at IS NULL directly. Test soft-delete filtering in integration tests for all new endpoints.
+    - name: Testing with Real Infrastructure
       priority: critical
-    - content: 'Follow strict workflow: task lint:all → task test → task build. Never run raw commands. Check Taskfile.yaml for available tasks. Use ''task gh:deploy:{service}'' for deployments.'
-      name: Task-Based Development Flow
+      content: Use real PostgreSQL via db_test_plugin for all tests. Never mock SQLAlchemy sessions. Use factories from testing/factories.py. Run 'task test:e2e' for integration tests before merging.
+    - name: Task-Based Development Flow
       priority: high
-    - content: 'Python: Use msgspec TypedDict with NotRequired[], never Optional. TypeScript: Ban ''any'', use type guards from @tool-belt/type-predicates. All API responses must use msgspec models.'
-      name: Type Safety and Validation
+      content: 'Follow strict workflow: task lint:all → task test → task build. Never run raw commands. Check Taskfile.yaml for available tasks. Use ''task gh:deploy:{service}'' for deployments.'
+    - name: Type Safety and Validation
       priority: high
-    - content: All endpoints must include organization_id in URL path. Use @allowed_roles decorator from services.backend.src.auth. Never check auth manually. Firebase JWT claims must include organization_id.
-      name: Multi-tenant Security
+      content: 'Python: Use msgspec TypedDict with NotRequired[], never Optional. TypeScript: Ban ''any'', use type guards from @tool-belt/type-predicates. All API responses must use msgspec models.'
+    - name: Multi-tenant Security
       priority: critical
-    - content: 'Use async with session.begin() for transactions. Batch Pub/Sub messages with ON CONFLICT DO NOTHING for duplicates. Frontend: Use withAuthRedirect() wrapper for all API calls.'
-      name: Async Performance Patterns
+      content: All endpoints must include organization_id in URL path. Use @allowed_roles decorator from services.backend.src.auth. Never check auth manually. Firebase JWT claims must include organization_id.
+    - name: Async Performance Patterns
       priority: medium
-    - content: 'Use structlog with key=value pairs: logger.info(''Created grant'', grant_id=str(id)). Convert UUIDs to strings, datetime to .isoformat(). Never use f-strings in log messages.'
-      name: Structured Logging
+      content: 'Use async with session.begin() for transactions. Batch Pub/Sub messages with ON CONFLICT DO NOTHING for duplicates. Frontend: Use withAuthRedirect() wrapper for all API calls.'
+    - name: Structured Logging
       priority: low
-    - content: All database queries must use select_active() helper from packages.db.src.query_helpers for soft-delete filtering. Never query deleted_at IS NULL directly. Tables with is_deleted/deleted_at fields require this pattern to prevent exposing deleted data.
-      name: Soft Delete Pattern
+      content: 'Use structlog with key=value pairs: logger.info(''Created grant'', grant_id=str(id)). Convert UUIDs to strings, datetime to .isoformat(). Never use f-strings in log messages.'
+    - name: Soft Delete Pattern
       priority: critical
-    - content: 'Use testing/factories.py for Python tests and testing/factories.ts for TypeScript tests. Real PostgreSQL instances required for backend tests. Run PYTHONPATH=. uv run pytest for Python, pnpm test for frontend. E2E tests use markers: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min).'
-      name: Test Factories
+      content: All database queries must use select_active() helper from packages.db.src.query_helpers for soft-delete filtering. Never query deleted_at IS NULL directly. Tables with is_deleted/deleted_at fields require this pattern to prevent exposing deleted data.
+    - name: Test Factories
       priority: high
-    - content: 'Use Taskfile commands exclusively: task lint:all before commits, task test for testing, task db:migrate for migrations. Never run raw commands. Check available tasks with task --list. CI validates via these commands.'
-      name: Task Commands
+      content: 'Use testing/factories.py for Python tests and testing/factories.ts for TypeScript tests. Real PostgreSQL instances required for backend tests. Run PYTHONPATH=. uv run pytest for Python, pnpm test for frontend. E2E tests use markers: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min).'
+    - name: Task Commands
       priority: critical
-    - content: Backend endpoints must use @post/@get decorators with allowed_roles parameter. Firebase Auth JWT claims provide organization_id/role. Never check auth manually - middleware handles it. Use withAuthRedirect() wrapper for all frontend API calls.
-      name: API Security
+      content: 'Use Taskfile commands exclusively: task lint:all before commits, task test for testing, task db:migrate for migrations. Never run raw commands. Check available tasks with task --list. CI validates via these commands.'
+    - name: API Security
       priority: critical
-    - content: 'Python: Type all args/returns, use TypedDict with NotRequired[type]. TypeScript: Never use ''any'', leverage API namespace types, use ?? operator. Run task lint:python and task lint:frontend to validate. msgspec for Python serialization.'
-      name: Type Safety
+      content: Backend endpoints must use @post/@get decorators with allowed_roles parameter. Firebase Auth JWT claims provide organization_id/role. Never check auth manually - middleware handles it. Use withAuthRedirect() wrapper for all frontend API calls.
+    - name: Type Safety
       priority: high
-    - content: 'Use Pub/Sub topics (url-crawling, file-indexing, rag-processing) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only.'
-      name: Service Communication
+      content: 'Python: Type all args/returns, use TypedDict with NotRequired[type]. TypeScript: Never use ''any'', leverage API namespace types, use ?? operator. Run task lint:python and task lint:frontend to validate. msgspec for Python serialization.'
+    - name: Service Communication
       priority: medium
-    - content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint:all and task test locally before pushing. Docker builds require --build-arg for frontend env vars.
-      name: CI/CD Patterns
+      content: 'Use Pub/Sub topics (url-crawling, file-indexing, rag-processing) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only.'
+    - name: CI/CD Patterns
       priority: high
-    - content: 'Always use async session context managers with explicit transaction boundaries. Pattern: `async with session_maker() as session, session.begin():`. Never reuse sessions across requests. Use `select_active()` from packages.db.src.query_helpers for soft-delete filtering.'
-      name: SQLAlchemy Async Session Management
+      content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint:all and task test locally before pushing. Docker builds require --build-arg for frontend env vars.
+    - name: SQLAlchemy Async Session Management
       priority: critical
-    - content: Use real PostgreSQL for all tests via testing.db_test_plugin. Mark integration tests with @pytest.mark.integration, E2E with @pytest.mark.e2e_full. Always set PYTHONPATH=. when running pytest. Use factories from testing.factories for test data generation.
-      name: Test Database Isolation
+      content: 'Always use async session context managers with explicit transaction boundaries. Pattern: `async with session_maker() as session, session.begin():`. Never reuse sessions across requests. Use `select_active()` from packages.db.src.query_helpers for soft-delete filtering.'
+    - name: Test Database Isolation
       priority: critical
-    - content: 'Never check auth manually in endpoints - middleware handles all auth via JWT claims (organization_id/role). Use UserRoleEnum from packages.db for role checks. Pattern: `@post(''/path'', allowed_roles=[UserRoleEnum.COLLABORATOR])`. Always wrap frontend API calls with withAuthRedirect().'
-      name: Firebase Auth Security
+      content: Use real PostgreSQL for all tests via testing.db_test_plugin. Mark integration tests with @pytest.mark.integration, E2E with @pytest.mark.e2e_full. Always set PYTHONPATH=. when running pytest. Use factories from testing.factories for test data generation.
+    - name: Firebase Auth Security
       priority: high
-    - content: 'Always use task commands instead of direct package managers. Core workflow: `task setup dev test lint format build`. Run `task lint:all` after changes, `task test:e2e` for E2E tests with E2E_TESTS=1 env var. Check available commands with `task --list`.'
-      name: Taskfile Command Execution
+      content: 'Never check auth manually in endpoints - middleware handles all auth via JWT claims (organization_id/role). Use UserRoleEnum from packages.db for role checks. Pattern: `@post(''/path'', allowed_roles=[UserRoleEnum.COLLABORATOR])`. Always wrap frontend API calls with withAuthRedirect().'
+    - name: Taskfile Command Execution
       priority: high
-    - content: Never use 'any' type. Use type guards from @tool-belt/type-predicates. Always use nullish coalescing (??) over logical OR (||). Extract magic numbers to constants. Use factories from frontend/testing/factories and editor/testing/factories for test data.
-      name: TypeScript Type Safety
+      content: 'Always use task commands instead of direct package managers. Core workflow: `task setup dev test lint format build`. Run `task lint:all` after changes, `task test:e2e` for E2E tests with E2E_TESTS=1 env var. Check available commands with `task --list`.'
+    - name: TypeScript Type Safety
       priority: high
-    - content: 'Handle Pub/Sub message duplicates with `ON CONFLICT DO NOTHING` in database operations. Topics: url-crawling, frontend-notifications, file-indexing, rag-processing. Use structlog with key=value logging: `logger.info(''Created'', id=str(id))`.'
-      name: Pub/Sub Duplicate Handling
+      content: Never use 'any' type. Use type guards from @tool-belt/type-predicates. Always use nullish coalescing (??) over logical OR (||). Extract magic numbers to constants. Use factories from frontend/testing/factories and editor/testing/factories for test data.
+    - name: Pub/Sub Duplicate Handling
       priority: medium
-    - content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt. Deploy via `task gh:deploy:{service}` commands.
-      name: Monorepo Service Boundaries
+      content: 'Handle Pub/Sub message duplicates with `ON CONFLICT DO NOTHING` in database operations. Topics: url-crawling, frontend-notifications, file-indexing, rag-processing. Use structlog with key=value logging: `logger.info(''Created'', id=str(id))`.'
+    - name: Monorepo Service Boundaries
       priority: medium
+      content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt. Deploy via `task gh:deploy:{service}` commands.
+    - name: Python Testing Standards
+      priority: critical
+      content: Test files must end with _test.py. Use TypedDict constructors for creating test data (e.g., ResearchTask(number=1, title="Test")). All tests must be functional with proper type annotations. Avoid redundant/duplicate tests. Mock async functions with new_callable=AsyncMock. Always add check_if_cancelled and handle_cancellation mocks to JobManager. Use real PostgreSQL via async_sessionmaker fixture.
 sections:
-    - content: |-
+    - name: Local Development Setup
+      priority: high
+      content: |-
         ## Prerequisites
         - Node.js 22+
         - Python 3.13
@@ -120,9 +125,9 @@ sections:
         - **PostgreSQL**: Each test creates isolated database `grantflow_test_{worker_id}_{process_id}`
         - **Cloud SQL**: Use TCP (127.0.0.1:5432) instead of Unix socket for local
         - **Frontend Docker**: Requires build args for env vars
-      name: Local Development Setup
-      priority: high
-    - content: |-
+    - name: Testing Strategy
+      priority: medium
+      content: |-
         ## Test Commands
         ```bash
         # Run all tests (parallel by default)
@@ -155,9 +160,9 @@ sections:
         - Target 100% test coverage
         - Real PostgreSQL for backend tests (no mocks)
         - Mock only external APIs in frontend tests
-      name: Testing Strategy
+    - name: Service Architecture
       priority: medium
-    - content: |-
+      content: |-
         ## Microservices Overview
 
         ### Backend API (`services/backend`)
@@ -189,9 +194,9 @@ sections:
         - **Pub/Sub Topics**: file-indexing, url-crawling, rag-processing, frontend-notifications
         - **Cloud Run**: All services with fanout pattern (concurrency=1 in staging)
         - **pgvector**: Vector similarity search for RAG
-      name: Service Architecture
-      priority: medium
-    - content: |-
+    - name: Development Workflow
+      priority: high
+      content: |-
         ## Development Workflow
 
         ### Quick Start
@@ -253,5 +258,9 @@ sections:
         - `development` → auto-deploys to staging
         - `main` → auto-deploys to production
         - Commits use conventional format: `fix:`, `feat:`, `chore:`
-      name: Development Workflow
-      priority: high
+mcp_servers:
+    - name: ai-rulez
+      description: AI-Rulez MCP server for configuration management
+      command: ai-rulez
+      args:
+        - mcp

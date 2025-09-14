@@ -1,10 +1,3 @@
-"""
-Comprehensive integration tests for soft-delete filtering across the entire application.
-
-These tests validate that our soft-delete fixes work correctly across all endpoints
-and that deleted data is never exposed to users.
-"""
-
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from http import HTTPStatus
@@ -32,9 +25,7 @@ async def comprehensive_test_data(
     async_session_maker: async_sessionmaker[Any],
     organization: Organization,
 ) -> dict[str, Any]:
-    """Create comprehensive test data with some records soft-deleted."""
     async with async_session_maker() as session, session.begin():
-        # Create granting institution
         institution = GrantingInstitution(
             full_name="Test Research Institute",
             abbreviation="TRI",
@@ -42,7 +33,6 @@ async def comprehensive_test_data(
         session.add(institution)
         await session.flush()
 
-        # Create projects
         active_project = Project(
             organization_id=organization.id,
             name="Active Project",
@@ -59,7 +49,6 @@ async def comprehensive_test_data(
         session.add(deleted_project)
         await session.flush()
 
-        # Create grant applications
         active_application = GrantApplication(
             project_id=active_project.id,
             title="Active Grant Application",
@@ -76,7 +65,6 @@ async def comprehensive_test_data(
         session.add(deleted_application)
         await session.flush()
 
-        # Create public grants
         active_grant = Grant(
             granting_institution_id=institution.id,
             title="Active Public Grant",
@@ -123,7 +111,6 @@ async def comprehensive_test_data(
         session.add(deleted_grant)
         await session.flush()
 
-        # Create notifications
         firebase_uid = "test_user_123"
         active_notification = Notification(
             firebase_uid=firebase_uid,
@@ -151,7 +138,6 @@ async def comprehensive_test_data(
         session.add(deleted_notification)
         await session.flush()
 
-        # Create organization invitations
         active_invitation = OrganizationInvitation(
             organization_id=organization.id,
             email="active@example.com",
@@ -170,7 +156,6 @@ async def comprehensive_test_data(
         session.add(deleted_invitation)
         await session.flush()
 
-        # Create subscriptions
         active_subscription = GrantMatchingSubscription(
             email="active-subscriber@example.com",
             search_params={"category": "Research"},
@@ -186,10 +171,8 @@ async def comprehensive_test_data(
         session.add(active_subscription)
         session.add(deleted_subscription)
 
-        # Flush to get IDs before committing
         await session.flush()
 
-        # Refresh all objects to ensure they have their IDs
         for obj in [
             institution,
             active_project,
@@ -229,7 +212,6 @@ async def comprehensive_test_data(
 
 @pytest.fixture
 async def public_grants_client(async_session_maker: async_sessionmaker[Any]) -> AsyncIterator[Any]:
-    """Create a client for public grants endpoints."""
     from litestar import Litestar
     from litestar.di import Provide
     from litestar.testing import AsyncTestClient
@@ -260,17 +242,13 @@ async def public_grants_client(async_session_maker: async_sessionmaker[Any]) -> 
 
 
 class TestSoftDeleteIntegration:
-    """Comprehensive integration tests for soft-delete functionality."""
-
     async def test_public_grant_endpoints_security(
         self,
         public_grants_client: Any,
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that public grant endpoints never expose deleted grants."""
         data = comprehensive_test_data
 
-        # Test grant search - should only return active grants
         response = await public_grants_client.get("/grants")
         assert response.status_code == HTTPStatus.OK
         grants = response.json()
@@ -279,23 +257,19 @@ class TestSoftDeleteIntegration:
         assert str(data["active_grant"].id) in grant_ids
         assert str(data["deleted_grant"].id) not in grant_ids
 
-        # Test grant details - active grant should be accessible
         response = await public_grants_client.get(f"/grants/{data['active_grant'].document_number}")
         assert response.status_code == HTTPStatus.OK
         grant_detail = response.json()
         assert grant_detail["title"] == "Active Public Grant"
 
-        # Test grant details - deleted grant should not be accessible
         response = await public_grants_client.get(f"/grants/{data['deleted_grant'].document_number}")
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-        # Test subscription unsubscribe - should only work with active subscriptions
         response = await public_grants_client.post(
             "/grants/unsubscribe", json={"email": "active-subscriber@example.com"}
         )
         assert response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED]
 
-        # Test with deleted subscription - should fail
         response = await public_grants_client.post(
             "/grants/unsubscribe", json={"email": "deleted-subscriber@example.com"}
         )
@@ -307,17 +281,14 @@ class TestSoftDeleteIntegration:
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that soft-delete filtering is consistent across all entities."""
         data = comprehensive_test_data
 
         async with async_session_maker() as session:
-            # Test projects - should only return active projects
             projects = list(await session.scalars(select(Project).where(Project.deleted_at.is_(None))))
             project_ids = {p.id for p in projects}
             assert data["active_project"].id in project_ids
             assert data["deleted_project"].id not in project_ids
 
-            # Test applications - should only return active applications
             applications = list(
                 await session.scalars(select(GrantApplication).where(GrantApplication.deleted_at.is_(None)))
             )
@@ -325,19 +296,16 @@ class TestSoftDeleteIntegration:
             assert data["active_application"].id in app_ids
             assert data["deleted_application"].id not in app_ids
 
-            # Test grants - should only return active grants
             grants = list(await session.scalars(select(Grant).where(Grant.deleted_at.is_(None))))
             grant_ids = {g.id for g in grants}
             assert data["active_grant"].id in grant_ids
             assert data["deleted_grant"].id not in grant_ids
 
-            # Test notifications - should only return active notifications
             notifications = list(await session.scalars(select(Notification).where(Notification.deleted_at.is_(None))))
             notif_ids = {n.id for n in notifications}
             assert data["active_notification"].id in notif_ids
             assert data["deleted_notification"].id not in notif_ids
 
-            # Test invitations - should only return active invitations
             invitations = list(
                 await session.scalars(select(OrganizationInvitation).where(OrganizationInvitation.deleted_at.is_(None)))
             )
@@ -345,7 +313,6 @@ class TestSoftDeleteIntegration:
             assert data["active_invitation"].id in inv_ids
             assert data["deleted_invitation"].id not in inv_ids
 
-            # Test subscriptions - should only return active subscriptions
             subscriptions = list(
                 await session.scalars(
                     select(GrantMatchingSubscription).where(GrantMatchingSubscription.deleted_at.is_(None))
@@ -360,11 +327,9 @@ class TestSoftDeleteIntegration:
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that relationship loading properly handles soft-deleted records."""
         data = comprehensive_test_data
 
         async with async_session_maker() as session:
-            # Load project with applications - should only load active applications
             project = await session.scalar(
                 select(Project)
                 .where(Project.id == data["active_project"].id)
@@ -372,8 +337,6 @@ class TestSoftDeleteIntegration:
             )
 
             assert project is not None
-            # The relationship will load all applications, so we need to filter manually
-            # (This is the expected pattern for relationship loading)
             active_applications = [app for app in project.grant_applications if app.deleted_at is None]
             app_ids = {app.id for app in active_applications}
 
@@ -385,42 +348,34 @@ class TestSoftDeleteIntegration:
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that update operations do not affect soft-deleted records."""
         from sqlalchemy import update
 
         data = comprehensive_test_data
 
         async with async_session_maker() as session:
-            # Try to update all grants with new organization
             result = await session.execute(
-                update(Grant)
-                .where(Grant.deleted_at.is_(None))  # Only update active grants
-                .values(organization="Updated NIH")
+                update(Grant).where(Grant.deleted_at.is_(None)).values(organization="Updated NIH")
             )
 
-            # Should only update 1 row (the active grant)
             assert result.rowcount == 1
             await session.commit()
 
-            # Verify only the active grant was updated by querying fresh from DB
             active_grant = await session.scalar(select(Grant).where(Grant.id == data["active_grant"].id))
             deleted_grant = await session.scalar(select(Grant).where(Grant.id == data["deleted_grant"].id))
 
             assert active_grant is not None
             assert deleted_grant is not None
             assert active_grant.organization == "Updated NIH"
-            assert deleted_grant.organization == "NIH"  # Unchanged
+            assert deleted_grant.organization == "NIH"
 
     async def test_join_queries_filter_all_tables(
         self,
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that join queries properly filter soft-deleted records from all joined tables."""
         data = comprehensive_test_data
 
         async with async_session_maker() as session:
-            # Query applications with their projects
             results = list(
                 await session.scalars(
                     select(GrantApplication)
@@ -432,7 +387,6 @@ class TestSoftDeleteIntegration:
                 )
             )
 
-            # Should only return applications from active projects that are themselves active
             app_ids = {app.id for app in results}
             assert data["active_application"].id in app_ids
             assert data["deleted_application"].id not in app_ids
@@ -442,25 +396,19 @@ class TestSoftDeleteIntegration:
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that count queries properly exclude soft-deleted records."""
         from sqlalchemy import func
 
         async with async_session_maker() as session:
-            # Count active projects
             active_project_count = await session.scalar(
                 select(func.count(Project.id)).where(Project.deleted_at.is_(None))
             )
 
-            # Should be 1 (only the active project)
             assert active_project_count == 1
 
-            # Count all projects (including deleted)
             total_project_count = await session.scalar(select(func.count(Project.id)))
 
-            # Should be 2 (active + deleted)
             assert total_project_count == 2
 
-            # Verify the difference
             assert total_project_count > active_project_count
 
     async def test_audit_trail_preserved_for_soft_deleted(
@@ -468,17 +416,14 @@ class TestSoftDeleteIntegration:
         async_session_maker: async_sessionmaker[Any],
         comprehensive_test_data: dict[str, Any],
     ) -> None:
-        """Test that soft-deleted records are preserved for audit purposes."""
         data = comprehensive_test_data
 
         async with async_session_maker() as session:
-            # Verify that soft-deleted records still exist in the database
             deleted_grant = await session.scalar(select(Grant).where(Grant.id == data["deleted_grant"].id))
 
             assert deleted_grant is not None
             assert deleted_grant.deleted_at is not None
             assert deleted_grant.title == "Deleted Public Grant"
 
-            # Verify we can still access the data for audit purposes
             assert deleted_grant.document_number == "PA-24-DELETED"
             assert deleted_grant.category == "Research"

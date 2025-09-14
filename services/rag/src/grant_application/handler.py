@@ -55,6 +55,11 @@ async def generate_work_plan_text(
         current_pipeline_stage=4,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
+
+    if await job_manager.check_if_cancelled():
+        await job_manager.handle_cancellation(UUID(application_id))
+        return ""
+
     relationships = await handle_extract_relationships(
         application_id=application_id,
         research_objectives=research_objectives,
@@ -70,6 +75,10 @@ async def generate_work_plan_text(
         current_pipeline_stage=5,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
+
+    if await job_manager.check_if_cancelled():
+        await job_manager.handle_cancellation(UUID(application_id))
+        return ""
 
     enrichment_responses = await handle_batch_enrich_objectives(
         application_id=application_id,
@@ -217,6 +226,10 @@ async def generate_work_plan_text(
     )
 
     for objective, objective_text, task_results in objective_results:
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(UUID(application_id))
+            return ""
+
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
 
         for research_task, research_task_text in task_results:
@@ -345,6 +358,10 @@ async def grant_application_text_generation_pipeline_handler(
     try:
         await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
 
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(application_id)
+            return None
+
         await job_manager.add_notification(
             parent_id=application_id,
             event=NotificationEvents.VALIDATING_TEMPLATE,
@@ -412,6 +429,10 @@ async def grant_application_text_generation_pipeline_handler(
             current_pipeline_stage=3,
             total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
+
+        if await job_manager.check_if_cancelled():
+            await job_manager.handle_cancellation(application_id)
+            return None
 
         await job_manager.add_notification(
             parent_id=application_id,

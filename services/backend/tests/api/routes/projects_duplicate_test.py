@@ -31,9 +31,9 @@ async def test_duplicate_project_success(
         return_value={
             project_owner_user.firebase_uid: {
                 "uid": project_owner_user.firebase_uid,
-                "email": "owner@example.com",
-                "displayName": "Project Owner",
-                "photoURL": "https://example.com/photo.jpg",
+                "email": f"test-{project_owner_user.firebase_uid}@example.com",
+                "displayName": f"Test User {project_owner_user.firebase_uid}",
+                "photoURL": f"https://example.com/photo-{project_owner_user.firebase_uid}.jpg",
             }
         },
     )
@@ -137,9 +137,9 @@ async def test_duplicate_project_with_custom_title(
         return_value={
             project_owner_user.firebase_uid: {
                 "uid": project_owner_user.firebase_uid,
-                "email": "owner@example.com",
-                "displayName": "Project Owner",
-                "photoURL": None,
+                "email": f"test-{project_owner_user.firebase_uid}@example.com",
+                "displayName": f"Test User {project_owner_user.firebase_uid}",
+                "photoURL": f"https://example.com/photo-{project_owner_user.firebase_uid}.jpg",
             }
         },
     )
@@ -167,9 +167,9 @@ async def test_duplicate_project_preserves_rag_sources(
         return_value={
             project_owner_user.firebase_uid: {
                 "uid": project_owner_user.firebase_uid,
-                "email": "owner@example.com",
-                "displayName": "Project Owner",
-                "photoURL": None,
+                "email": f"test-{project_owner_user.firebase_uid}@example.com",
+                "displayName": f"Test User {project_owner_user.firebase_uid}",
+                "photoURL": f"https://example.com/photo-{project_owner_user.firebase_uid}.jpg",
             }
         },
     )
@@ -218,7 +218,7 @@ async def test_duplicate_project_preserves_rag_sources(
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/duplicate",
-        json={},
+        json={"title": "Test Duplicate Project"},
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -308,9 +308,9 @@ async def test_duplicate_project_excludes_deleted_applications(
         return_value={
             project_owner_user.firebase_uid: {
                 "uid": project_owner_user.firebase_uid,
-                "email": "owner@example.com",
-                "displayName": "Project Owner",
-                "photoURL": None,
+                "email": f"test-{project_owner_user.firebase_uid}@example.com",
+                "displayName": f"Test User {project_owner_user.firebase_uid}",
+                "photoURL": f"https://example.com/photo-{project_owner_user.firebase_uid}.jpg",
             }
         },
     )
