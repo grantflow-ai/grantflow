@@ -205,7 +205,7 @@ describe.sequential("WizardClientComponent", () => {
 	});
 
 	describe("Store Initialization", () => {
-		it("resets stores on component mount", () => {
+		it("does not reset stores on component mount", () => {
 			const mockApplicationReset = vi.fn();
 			const mockWizardReset = vi.fn();
 
@@ -214,21 +214,19 @@ describe.sequential("WizardClientComponent", () => {
 
 			renderWizardClient();
 
-			expect(mockApplicationReset).toHaveBeenCalled();
-			expect(mockWizardReset).toHaveBeenCalled();
+			expect(mockApplicationReset).not.toHaveBeenCalled();
+			expect(mockWizardReset).not.toHaveBeenCalled();
 		});
 
-		it("sets initial application state from props", () => {
-			const application = ApplicationWithTemplateFactory.build({ id: "test-app-id" });
+		it("uses applicationId prop instead of application object", () => {
+			const testApplicationId = "test-app-id-123";
 
-			renderWizardClient({ application });
+			renderWizardClient({ applicationId: testApplicationId });
 
-			const currentApplication = useApplicationStore.getState().application;
-			expect(currentApplication).toEqual(application);
-			expect(useApplicationStore.getState().areAppOperationsInProgress).toBe(false);
+			expect(screen.getByTestId("wizard-page")).toBeInTheDocument();
 		});
 
-		it("calls checkAndRestoreJobState after initialization", async () => {
+		it("does not handle store initialization or job state", async () => {
 			const mockCheckAndRestoreJobState = vi.fn();
 
 			useApplicationStore.setState({
@@ -239,12 +237,12 @@ describe.sequential("WizardClientComponent", () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 10));
 
-			expect(mockCheckAndRestoreJobState).toHaveBeenCalled();
+			expect(mockCheckAndRestoreJobState).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("Cleanup on Unmount", () => {
-		it("resets stores and clears job state on unmount", () => {
+		it("does not handle cleanup on unmount", () => {
 			const mockWizardReset = vi.fn();
 			const mockApplicationReset = vi.fn();
 			const mockClearRestoredJobState = vi.fn();
@@ -259,9 +257,9 @@ describe.sequential("WizardClientComponent", () => {
 
 			unmount();
 
-			expect(mockWizardReset).toHaveBeenCalled();
-			expect(mockApplicationReset).toHaveBeenCalled();
-			expect(mockClearRestoredJobState).toHaveBeenCalled();
+			expect(mockWizardReset).not.toHaveBeenCalled();
+			expect(mockApplicationReset).not.toHaveBeenCalled();
+			expect(mockClearRestoredJobState).not.toHaveBeenCalled();
 		});
 	});
 
