@@ -51,7 +51,10 @@ export function ApplicationWizardPageClient() {
 	if (!applicationId) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
-				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
+				<div
+					className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary"
+					role="status"
+				/>
 				<p className="text-gray-600 font-medium">Loading application...</p>
 			</div>
 		);
