@@ -47,7 +47,7 @@ runs:
         service_account: ${{ inputs.service_account }}
 
     - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
+      uses: google-github-actions/setup-gcloud@v2
 
     - name: Check if old images need cleanup
       shell: bash
