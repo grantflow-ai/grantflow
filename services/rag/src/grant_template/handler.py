@@ -5,13 +5,14 @@ from uuid import UUID
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
+from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES, NotificationEvents
+from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.cfp_section_analyzer import analyze_cfp_sections_with_gemini
 from services.rag.src.grant_template.determine_application_sections import handle_extract_sections
 from services.rag.src.grant_template.determine_longform_metadata import handle_generate_grant_template

@@ -11,12 +11,11 @@ from packages.db.src.tables import (
     GrantTemplateGenerationJob,
     RagGenerationJob,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from services.rag.src.constants import NotificationEvents
 
 logger = get_logger(__name__)
 

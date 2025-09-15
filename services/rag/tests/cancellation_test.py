@@ -16,11 +16,11 @@ from packages.db.src.tables import (
     RagGenerationJob,
     RagSource,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.sources import _cancel_job_if_active
-from services.rag.src.constants import NotificationEvents
 from services.rag.src.grant_application.handler import (
     generate_work_plan_text,
     grant_application_text_generation_pipeline_handler,
