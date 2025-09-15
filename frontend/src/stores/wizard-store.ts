@@ -114,7 +114,13 @@ interface WizardState {
 	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
-export function determineAppropriateStep(application: API.RetrieveApplication.Http200.ResponseBody): WizardStep {
+export function determineAppropriateStep(applicationId: string): null | WizardStep {
+	const { application } = useApplicationStore.getState();
+
+	if (!application || application.id !== applicationId) {
+		return null;
+	}
+
 	if (application.text && application.text.trim().length > 0) {
 		return WizardStep.GENERATE_AND_COMPLETE;
 	}
@@ -132,7 +138,7 @@ export function determineAppropriateStep(application: API.RetrieveApplication.Ht
 			"preliminary_data",
 		] as const;
 
-		const allFieldsFilled = requiredFields.every(
+		const allFieldsFilled = requiredFields.some(
 			(field) => formInputs[field] && formInputs[field].trim().length > 0,
 		);
 		if (allFieldsFilled) {
@@ -144,7 +150,7 @@ export function determineAppropriateStep(application: API.RetrieveApplication.Ht
 		return WizardStep.RESEARCH_PLAN;
 	}
 
-	if (application.rag_sources && application.rag_sources.length > 0) {
+	if (application.rag_sources.length > 0) {
 		return WizardStep.KNOWLEDGE_BASE;
 	}
 
@@ -849,30 +855,24 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 			switch (currentStep) {
 				case WizardStep.APPLICATION_DETAILS: {
-					console.log("step 1 validation inquired");
 					return validateApplicationDetails(application);
 				}
 				case WizardStep.APPLICATION_STRUCTURE: {
-					console.log("step 2 validation inquired");
 					return {
 						isValid: !!application.grant_template?.grant_sections.length,
 						reason: "There are no grant sections.",
 					};
 				}
 				case WizardStep.GENERATE_AND_COMPLETE: {
-					console.log("step 6 validation inquired");
 					return { isValid: true, reason: "No validation needed" };
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					console.log("step 3 validation inquired");
 					return { isValid: !!application.rag_sources.length, reason: "There are no RAG sources." };
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
-					console.log("step 5 validation inquired");
 					return validateResearchDeepDive(application);
 				}
 				case WizardStep.RESEARCH_PLAN: {
-					console.log("step 4 validation inquired");
 					return validateResearchPlan(application);
 				}
 				default: {

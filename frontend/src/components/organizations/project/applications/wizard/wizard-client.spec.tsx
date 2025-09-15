@@ -71,7 +71,7 @@ const sharedApplication = ApplicationWithTemplateFactory.build();
 
 function renderWizardClient(overrides = {}) {
 	const defaultProps = {
-		application: sharedApplication,
+		applicationId: sharedApplication.id,
 		organizationId: "org-123",
 		projectId: "project-456",
 		...overrides,
