@@ -328,7 +328,6 @@ async def handle_create_application(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error creating application and template", exc_info=e)
             raise DatabaseError("Error creating application and template", context=str(e)) from e
 
@@ -375,10 +374,8 @@ async def handle_update_application(
             )
             await session.commit()
         except ValidationException:
-            await session.rollback()
             raise
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
 
@@ -455,7 +452,6 @@ async def handle_delete_application(
                     deleted_template_ids=[str(t_id) for t_id in template_ids],
                 )
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error deleting application", exc_info=e)
             raise DatabaseError("Error deleting application", context=str(e)) from e
 
@@ -837,7 +833,6 @@ async def handle_duplicate_application(
             )
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error duplicating application", exc_info=e)
             raise DatabaseError("Error duplicating application", context=str(e)) from e
 

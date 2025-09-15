@@ -165,13 +165,7 @@ Performance results are automatically saved to `testing/test_data/results/perfor
 
 ## Known Issues
 
-### Flaky Tests
-
-Several tests in `grant_application/handler_test.py` are marked with `@pytest.mark.xfail` due to database transaction isolation issues. These need to be fixed by:
-
-1. Ensuring proper async context management
-2. Using appropriate transaction isolation levels
-3. Adding proper cleanup in fixtures
+None currently. All tests should be passing and stable.
 
 ## Best Practices
 

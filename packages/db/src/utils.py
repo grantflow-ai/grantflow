@@ -146,7 +146,6 @@ async def update_source_indexing_status(
                 identifier=identifier,
                 error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
             )
-            await session.rollback()
             if should_send_notifications:
                 await publish_notification(
                     parent_id=parent_id,
