@@ -89,6 +89,12 @@ runs:
           done
         fi
 
+    - name: Debug gcloud
+      shell: bash
+      run: |
+        echo "PATH: $PATH"
+        which gcloud
+
     - name: Deploy to Cloud Run
       id: deploy
       shell: bash
