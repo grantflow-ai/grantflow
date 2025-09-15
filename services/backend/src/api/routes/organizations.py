@@ -99,7 +99,6 @@ async def handle_create_organization(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error creating organization", exc_info=e)
             raise DatabaseError("Error creating organization", context=str(e)) from e
 
@@ -223,7 +222,6 @@ async def handle_update_organization(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating organization", exc_info=e)
             raise DatabaseError("Error updating organization", context=str(e)) from e
 
@@ -273,7 +271,6 @@ async def handle_delete_organization(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error deleting organization", exc_info=e)
             raise DatabaseError("Error deleting organization", context=str(e)) from e
 
@@ -350,7 +347,6 @@ async def handle_restore_organization(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error restoring organization", exc_info=e)
             raise DatabaseError("Error restoring organization", context=str(e)) from e
 

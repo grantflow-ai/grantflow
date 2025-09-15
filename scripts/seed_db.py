@@ -41,7 +41,6 @@ async def seed_db() -> None:
             logger.info(f"Seeding complete: {rows_inserted} new granting institutions added")
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error(f"Error seeding database: {e}")
             raise e
 

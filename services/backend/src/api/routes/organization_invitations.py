@@ -168,7 +168,6 @@ async def handle_create_organization_invitation(
             )
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error creating organization invitation", exc_info=e)
             raise DatabaseError("Error creating organization invitation", context=str(e)) from e
 
@@ -258,7 +257,6 @@ async def handle_update_organization_invitation(
             )
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating organization invitation", exc_info=e)
             raise DatabaseError("Error updating organization invitation", context=str(e)) from e
 
@@ -315,6 +313,5 @@ async def handle_delete_organization_invitation(
             await session.commit()
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error deleting organization invitation", exc_info=e)
             raise DatabaseError("Error deleting organization invitation", context=str(e)) from e

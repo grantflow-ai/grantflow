@@ -505,7 +505,6 @@ async def grant_template_generation_pipeline_handler(
             return cast("GrantTemplate", grant_template)
         except SQLAlchemyError as e:
             logger.error("Database error generating grant template", error=e)
-            await session.rollback()
 
             await job_manager.update_job_status(
                 status=RagGenerationStatusEnum.FAILED,

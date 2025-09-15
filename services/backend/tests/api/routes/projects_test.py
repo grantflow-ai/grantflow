@@ -295,7 +295,6 @@ async def test_retrieve_projects_excludes_deleted_applications(
     assert project_response["applications_count"] == 2
 
 
-@pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR))
 async def test_retrieve_project_success(
     test_client: TestingClientType,
@@ -421,7 +420,6 @@ async def test_retrieve_project_unauthorized(
         ),
     ),
 )
-@pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)
 async def test_update_project_success(
     test_client: TestingClientType,
     project: Project,
@@ -557,7 +555,6 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
             )
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(email="invitation-test@example.com", role=UserRoleEnum.OWNER)
@@ -595,7 +592,6 @@ async def test_create_invitation_redirect_url_user_already_member(
             )
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise e
 
     async with async_session_maker() as session, session.begin():
@@ -610,7 +606,6 @@ async def test_create_invitation_redirect_url_user_already_member(
             )
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(
@@ -626,7 +621,6 @@ async def test_create_invitation_redirect_url_user_already_member(
     assert "user is already a member of this organization" in response.json()["detail"].lower()
 
 
-@pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)
 async def test_create_invitation_redirect_url_success(
     test_client: TestingClientType,
     project: Project,
@@ -651,7 +645,6 @@ async def test_create_invitation_redirect_url_success(
             )
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise e
 
     request_body = CreateInvitationRedirectUrlRequestBody(
@@ -716,7 +709,6 @@ async def test_delete_invitation_success(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
     response = await test_client.delete(
         f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
@@ -865,7 +857,6 @@ async def test_update_invitation_role_success(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             raise e
 
     request_body = {"role": UserRoleEnum.ADMIN}
@@ -1520,7 +1511,6 @@ async def test_remove_project_member_success(
         assert removed_member is None
 
 
-@pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)
 async def test_remove_project_member_cannot_remove_owner(
     test_client: TestingClientType,
     project: Project,
@@ -1587,7 +1577,6 @@ async def test_remove_project_member_only_owner_can_remove_admin(
     assert "only owner can remove admin" in response.json()["detail"].lower()
 
 
-@pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)
 async def test_remove_project_member_not_found(
     test_client: TestingClientType,
     project: Project,
