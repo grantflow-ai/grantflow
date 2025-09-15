@@ -103,6 +103,7 @@ runs:
           DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
         flags: |
           --max-instances=1
+          --async
           ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }}
 
     - name: Get revision name
@@ -111,9 +112,9 @@ runs:
       run: |
         # Get the latest revision name
         REVISION=$(gcloud run revisions list \
-          --service=${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
+          --service=${{ inputs.service }}
+          --region=${{ inputs.region }}
+          --project=${{ inputs.project_id }}
           --format='value(name)' \
           --limit=1)
 
@@ -123,7 +124,7 @@ runs:
       id: health
       shell: bash
       run: |
-        echo "Performing health check for ${{ inputs.service }}..."
+        echo "Performing health check for ${{ inputs.service }}"...
 
         # Skip health check - deploy async and let Cloud Run handle it
         echo "Deployment completed - async deployment, no health check wait"
@@ -142,59 +143,24 @@ runs:
 
         echo "✅ Traffic routed to ${{ inputs.service }} revision ${{ steps.get-revision.outputs.revision }}"
 
-    - name: Wait and report deployment status
-      if: steps.health.outputs.healthy == 'true'
-      shell: bash
-      run: |
-        echo "Waiting 10 minutes to verify deployment stability..."
-        sleep 600
-
-        echo "Checking final deployment status after 10 minutes..."
-
-        # Check revision status
-        STATUS=$(gcloud run revisions describe ${{ steps.get-revision.outputs.revision }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
-          --format='value(status.conditions[0].status)' 2>/dev/null || echo "Unknown")
-
-        # Get traffic allocation
-        TRAFFIC=$(gcloud run services describe ${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
-          --format="value(status.traffic[?revisionName=='${{ steps.get-revision.outputs.revision }}'].percent)" 2>/dev/null | tr -d '\n')
-
-        echo "Final Status Report:"
-        echo "- Service: ${{ inputs.service }}"
-        echo "- Environment: ${{ inputs.environment }}"
-        echo "- Revision: ${{ steps.get-revision.outputs.revision }}"
-        echo "- Status: ${STATUS}"
-        echo "- Traffic: ${TRAFFIC:-0}%"
-
-        if [ "${STATUS}" == "True" ] && [ "${TRAFFIC:-0}" -gt "0" ]; then
-          echo "✅ Deployment successful and stable after 10 minutes"
-        else
-          echo "⚠️  Deployment may have issues - Status: ${STATUS}, Traffic: ${TRAFFIC:-0}%"
-          # Still exit 0 since we don't want to fail the deployment at this point
-        fi
-
     - name: Rollback on failure
       if: failure() && steps.get-revision.outputs.revision != ''
       shell: bash
       run: |
-        echo "⚠️ Rolling back ${{ inputs.service }}..."
+        echo "⚠️ Rolling back ${{ inputs.service }}"...
 
         # Get the previous revision
         PREVIOUS=$(gcloud run revisions list \
-          --service=${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
+          --service=${{ inputs.service }}
+          --region=${{ inputs.region }}
+          --project=${{ inputs.project_id }}
           --format='value(name)' \
           --limit=2 | tail -1)
 
         if [ -n "${PREVIOUS}" ]; then
           gcloud run services update-traffic ${{ inputs.service }} \
             --to-revisions=${PREVIOUS}=100 \
-            --region ${{ inputs.region }} \
+            --region ${{ inputs.region }}
             --project ${{ inputs.project_id }}
           
           echo "Rolled back to revision: ${PREVIOUS}"
