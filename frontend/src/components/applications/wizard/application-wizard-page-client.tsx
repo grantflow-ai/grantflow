@@ -1,26 +1,42 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { WizardClientComponent } from "@/components/organizations/project/applications/wizard/wizard-client";
+import type { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { determineAppropriateStep, useWizardStore } from "@/stores/wizard-store";
 
 export function ApplicationWizardPageClient() {
+	useEffect(() => {
+		return () => {
+			useWizardStore.getState().reset();
+			useApplicationStore.getState().reset();
+		};
+	}, []);
+
+	const userSelectedStepRef = useRef<null | WizardStep>(null);
+
 	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
 
-	const application = useApplicationStore((state) => state.application);
+	const applicationId = useApplicationStore((state) => state.application?.id);
 
 	useEffect(() => {
-		if (!application) return;
+		if (!applicationId) return;
 
 		useWizardStore.getState().reset();
 		useApplicationStore.getState().softReset();
 
-		const appropriateStep = determineAppropriateStep(application);
-		useWizardStore.setState({ currentStep: appropriateStep });
+		if (userSelectedStepRef.current === null) {
+			const appropriateStep = determineAppropriateStep(applicationId);
+
+			if (appropriateStep === null) return;
+
+			useWizardStore.setState({ currentStep: appropriateStep });
+			userSelectedStepRef.current = appropriateStep;
+		}
 
 		const timeoutId = setTimeout(() => {
 			void useApplicationStore.getState().checkAndRestoreJobState();
@@ -28,12 +44,11 @@ export function ApplicationWizardPageClient() {
 
 		return () => {
 			clearTimeout(timeoutId);
-			useWizardStore.getState().reset();
-			useApplicationStore.getState().clearRestoredJobState();
+			userSelectedStepRef.current = null;
 		};
-	}, [application]);
+	}, [applicationId]);
 
-	if (!application) {
+	if (!applicationId) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
 				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
@@ -48,7 +63,7 @@ export function ApplicationWizardPageClient() {
 
 	return (
 		<WizardClientComponent
-			application={application}
+			applicationId={applicationId}
 			organizationId={selectedOrganizationId}
 			projectId={project.id}
 		/>
