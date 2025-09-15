@@ -45,6 +45,16 @@ export interface TemplateGenerationStatus {
 	message: string;
 }
 
+export interface ValidationResult {
+	isValid: boolean;
+	metadata?: {
+		[key: string]: unknown;
+		processingCount?: number;
+		totalCount?: number;
+	};
+	reason: ApplicationDetailsValidationReason | string;
+}
+
 interface PollingActions {
 	start: (apiFunction: () => Promise<void>, duration: number, callImmediately?: boolean) => void;
 	stop: () => void;
@@ -87,7 +97,7 @@ interface WizardActions {
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: Objective[]) => Promise<void>;
 	updateTasksForObjective: (objectiveNumber: number, tasks: Objective["research_tasks"]) => Promise<void>;
-	validateStepNext: () => boolean;
+	validateStepNext: () => ValidationResult;
 }
 
 interface WizardState {
@@ -102,6 +112,47 @@ interface WizardState {
 	polling: PollingState;
 	showResearchPlanInfoBanner: boolean;
 	templateGenerationStatus: null | TemplateGenerationStatus;
+}
+
+export function determineAppropriateStep(application: API.RetrieveApplication.Http200.ResponseBody): WizardStep {
+	if (application.text && application.text.trim().length > 0) {
+		return WizardStep.GENERATE_AND_COMPLETE;
+	}
+
+	const formInputs = application.form_inputs;
+	if (formInputs) {
+		const requiredFields = [
+			"background_context",
+			"hypothesis",
+			"rationale",
+			"novelty_and_innovation",
+			"impact",
+			"team_excellence",
+			"research_feasibility",
+			"preliminary_data",
+		] as const;
+
+		const allFieldsFilled = requiredFields.every(
+			(field) => formInputs[field] && formInputs[field].trim().length > 0,
+		);
+		if (allFieldsFilled) {
+			return WizardStep.RESEARCH_DEEP_DIVE;
+		}
+	}
+
+	if (application.research_objectives?.some((obj) => obj.research_tasks.length > 0)) {
+		return WizardStep.RESEARCH_PLAN;
+	}
+
+	if (application.rag_sources && application.rag_sources.length > 0) {
+		return WizardStep.KNOWLEDGE_BASE;
+	}
+
+	if (application.grant_template?.grant_sections && application.grant_template.grant_sections.length > 0) {
+		return WizardStep.APPLICATION_STRUCTURE;
+	}
+
+	return WizardStep.APPLICATION_DETAILS;
 }
 
 const initialWizardState: WizardState = {
@@ -162,11 +213,13 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 	}));
 };
 
-function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
 	const ragSources = application.grant_template?.rag_sources ?? [];
 	const validation = validateApplicationDetailsStep(application.title, ragSources);
 
 	let reasonMessage: string;
+	const metadata: ValidationResult["metadata"] = {};
+
 	switch (validation.reason) {
 		case ApplicationDetailsValidationReason.RAG_SOURCES_MISSING: {
 			reasonMessage = "No RAG sources (count: 0)";
@@ -174,6 +227,8 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 		}
 		case ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING: {
 			reasonMessage = `RAG sources still processing (${validation.processingCount} of ${validation.totalCount})`;
+			metadata.processingCount = validation.processingCount;
+			metadata.totalCount = validation.totalCount;
 			break;
 		}
 		case ApplicationDetailsValidationReason.TITLE_INVALID: {
@@ -196,17 +251,21 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 		titleLength: application.title ? application.title.length : 0,
 	});
 
-	return validation.isValid;
+	return {
+		isValid: validation.isValid,
+		metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+		reason: validation.reason,
+	};
 }
 
-function validateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+function validateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
 	const formInputs = application.form_inputs;
 	if (!formInputs) {
 		log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
 			reason: "No form inputs",
 			result: false,
 		});
-		return false;
+		return { isValid: false, reason: "There are no form inputs to validate." };
 	}
 
 	const requiredFields = [
@@ -235,10 +294,10 @@ function validateResearchDeepDive(application: API.RetrieveApplication.Http200.R
 		totalFields: requiredFields.length,
 	});
 
-	return result;
+	return { isValid: result, reason: "Not all fields are populated properly." };
 }
 
-function validateResearchPlan(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+function validateResearchPlan(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
 	const objectives = application.research_objectives ?? [];
 	const result = objectives.some((obj) => obj.research_tasks.length > 0);
 
@@ -248,7 +307,7 @@ function validateResearchPlan(application: API.RetrieveApplication.Http200.Respo
 		result,
 	});
 
-	return result;
+	return { isValid: result, reason: "Some Research objectives do not have tasks." };
 }
 
 export const useWizardStore = create<WizardActions & WizardState>()((set, get) => {
@@ -779,36 +838,45 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}, "Update tasks for research objective");
 		},
 
-		validateStepNext: (): boolean => {
+		validateStepNext: (): ValidationResult => {
 			const { currentStep } = get();
 			const { application } = useApplicationStore.getState();
 
 			if (!application) {
 				log.warn("[Wizard Store] validateStepNext: No application", { currentStep });
-				return false;
+				return { isValid: false, reason: "application is not yet ready" };
 			}
 
 			switch (currentStep) {
 				case WizardStep.APPLICATION_DETAILS: {
+					console.log("step 1 validation inquired");
 					return validateApplicationDetails(application);
 				}
 				case WizardStep.APPLICATION_STRUCTURE: {
-					return !!application.grant_template?.grant_sections.length;
+					console.log("step 2 validation inquired");
+					return {
+						isValid: !!application.grant_template?.grant_sections.length,
+						reason: "There are no grant sections.",
+					};
 				}
 				case WizardStep.GENERATE_AND_COMPLETE: {
-					return true;
+					console.log("step 6 validation inquired");
+					return { isValid: true, reason: "No validation needed" };
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					return !!application.rag_sources.length;
+					console.log("step 3 validation inquired");
+					return { isValid: !!application.rag_sources.length, reason: "There are no RAG sources." };
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
+					console.log("step 5 validation inquired");
 					return validateResearchDeepDive(application);
 				}
 				case WizardStep.RESEARCH_PLAN: {
+					console.log("step 4 validation inquired");
 					return validateResearchPlan(application);
 				}
 				default: {
-					return false;
+					return { isValid: false, reason: "Invalid step" };
 				}
 			}
 		},
