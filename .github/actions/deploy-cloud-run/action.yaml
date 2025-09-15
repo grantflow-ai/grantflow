@@ -51,47 +51,6 @@ runs:
       with:
         project_id: ${{ inputs.project_id }}
 
-    - name: Check if old images need cleanup
-      shell: bash
-      run: |
-        echo "Checking for stale revisions..."
-
-        # Get all revisions
-        REVISIONS=$(gcloud run revisions list \
-          --service=${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
-          --format='value(name)' \
-          --limit=10)
-
-        # Count revisions
-        REVISION_COUNT=$(echo "$REVISIONS" | wc -l)
-        echo "Found $REVISION_COUNT revisions"
-
-        # If more than 10 revisions, delete oldest ones that have no traffic
-        # Keep at least 10 revisions to avoid issues with Cloud Run
-        if [ $REVISION_COUNT -gt 10 ]; then
-          echo "Cleaning up old revisions..."
-          OLD_REVISIONS=$(echo "$REVISIONS" | tail -n +11)
-          for rev in $OLD_REVISIONS;
-          do
-            TRAFFIC=$(gcloud run services describe ${{ inputs.service }} \
-              --region=${{ inputs.region }} \
-              --project=${{ inputs.project_id }} \
-              --format="value(status.traffic[?revisionName=='$rev'].percent)" | tr -d '\n')
-            
-            if [ -z "$TRAFFIC" ] || [ "$TRAFFIC" = "0" ]; then
-              echo "Deleting revision: $rev"
-              gcloud run revisions delete $rev \
-                --region=${{ inputs.region }} \
-                --project=${{ inputs.project_id }} \
-                --quiet || true
-            else
-              echo "Keeping revision $rev (has traffic: ${TRAFFIC}%)"
-            fi
-          done
-        fi
-
     - name: Debug gcloud
       shell: bash
       run: |
