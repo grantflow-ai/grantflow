@@ -152,20 +152,30 @@ async def handle_create_rag_source(
 
     async with session_maker() as session, session.begin():
         try:
-            rag_url_alias = aliased(RagUrl)
-            if rag_source := await session.scalar(
-                select(RagSource)
-                .join(rag_url_alias)
-                .where(
-                    rag_url_alias.url == url,
-                    RagSource.deleted_at.is_(None),
-                )
-            ):
-                if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                    return UUID(str(rag_source.id))
+            # Check for existing source by URL (with proper handling for duplicates)
+            if url:
+                rag_url_alias = aliased(RagUrl)
+                if rag_source := await session.scalar(
+                    select(RagSource)
+                    .join(rag_url_alias)
+                    .where(
+                        rag_url_alias.url == url,
+                        RagSource.deleted_at.is_(None),
+                    )
+                ):
+                    if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
+                        logger.info(
+                            "Found existing rag source for URL",
+                            source_id=rag_source.id,
+                            url=url,
+                            status=rag_source.indexing_status,
+                        )
+                        return UUID(str(rag_source.id))
 
-                rag_source.soft_delete()
+                    logger.info("Soft-deleting failed rag source", source_id=rag_source.id, url=url)
+                    rag_source.soft_delete()
 
+            # Create the RagSource
             source_id = await session.scalar(
                 insert(RagSource)
                 .values(
@@ -180,6 +190,9 @@ async def handle_create_rag_source(
                 .returning(RagSource.id)
             )
 
+            logger.info("Created rag source", source_id=source_id, parent_type=parent_type, entity_id=entity_id)
+
+            # Create the specific source type (RagUrl or RagFile)
             if url:
                 await session.execute(
                     insert(RagUrl)
@@ -193,6 +206,7 @@ async def handle_create_rag_source(
                     )
                     .returning(RagUrl.id)
                 )
+                logger.info("Created rag url", source_id=source_id, url=url)
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
@@ -216,51 +230,80 @@ async def handle_create_rag_source(
                         ]
                     )
                 )
+                logger.info("Created rag file", source_id=source_id, filename=blob_name)
 
-            if parent_type == "grant_application":
-                await session.execute(
-                    insert(GrantApplicationSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_application_id": entity_id,
-                        }
-                    )
-                )
-            elif parent_type == "grant_template":
-                await session.execute(
-                    insert(GrantTemplateSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_template_id": entity_id,
-                        }
-                    )
-                )
-            else:
-                await session.execute(
-                    insert(GrantingInstitutionSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "granting_institution_id": entity_id,
-                        }
-                    )
-                )
+            # Create the junction table entry - this is critical and must succeed
+            await _create_junction_table_entry(session, parent_type, entity_id, source_id)
 
             logger.info(
-                "Created new rag source",
+                "Successfully created complete rag source with junction table entry",
                 source_id=source_id,
                 parent_type=parent_type,
-                parent_id=parent_id,
+                entity_id=entity_id,
             )
             return UUID(str(source_id))
+
         except SQLAlchemyError as e:
             logger.exception(
                 "Error creating rag source",
                 url=url,
+                blob_name=blob_name,
                 parent_type=parent_type,
                 parent_id=parent_id,
+                entity_id=entity_id,
+                error_type=type(e).__name__,
             )
-            await session.rollback()
+            # Don't call rollback explicitly - session.begin() context manager handles it
             raise DatabaseError("Error creating rag source", context=str(e)) from e
+
+
+async def _create_junction_table_entry(
+    session: AsyncSession,
+    parent_type: str,
+    entity_id: UUID,
+    source_id: UUID,
+) -> None:
+    """Create junction table entry with proper error handling."""
+    try:
+        if parent_type == "grant_application":
+            await session.execute(
+                insert(GrantApplicationSource).values(
+                    {
+                        "rag_source_id": source_id,
+                        "grant_application_id": entity_id,
+                    }
+                )
+            )
+            logger.info("Created grant application source link", source_id=source_id, application_id=entity_id)
+        elif parent_type == "grant_template":
+            await session.execute(
+                insert(GrantTemplateSource).values(
+                    {
+                        "rag_source_id": source_id,
+                        "grant_template_id": entity_id,
+                    }
+                )
+            )
+            logger.info("Created grant template source link", source_id=source_id, template_id=entity_id)
+        else:
+            await session.execute(
+                insert(GrantingInstitutionSource).values(
+                    {
+                        "rag_source_id": source_id,
+                        "granting_institution_id": entity_id,
+                    }
+                )
+            )
+            logger.info("Created granting institution source link", source_id=source_id, institution_id=entity_id)
+    except SQLAlchemyError as e:
+        logger.exception(
+            "Critical error creating junction table entry",
+            parent_type=parent_type,
+            entity_id=entity_id,
+            source_id=source_id,
+            error_type=type(e).__name__,
+        )
+        raise
 
 
 @get(
@@ -503,7 +546,6 @@ async def handle_delete_rag_source(
             raise NotFoundException from e
         except SQLAlchemyError as e:
             logger.error("Error deleting RAG source", source_id=source_id, exc_info=e)
-            await session.rollback()
             raise DatabaseError("Error deleting RAG source", context=str(e)) from e
 
 

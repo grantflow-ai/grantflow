@@ -62,6 +62,7 @@ class ProjectListItemResponse(ProjectBaseResponse):
 
 
 class ProjectResponse(ProjectBaseResponse):
+    role: UserRoleEnum
     grant_applications: list["BaseApplicationResponse"]
     members: list["ProjectMemberInfo"]
 
@@ -120,7 +121,6 @@ async def handle_create_project(
             project = await session.scalar(insert(Project).values(**project_data).returning(Project))
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error creating project", exc_info=e)
             raise DatabaseError("Error creating project", context=str(e)) from e
 
@@ -230,7 +230,6 @@ async def handle_update_project(
             )
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating project", exc_info=e)
             raise DatabaseError("Error updating project", context=str(e)) from e
 
@@ -301,11 +300,22 @@ async def handle_retrieve_project(
 
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
+    # Find the current user's role
+    current_user_role = None
+    for ou in organization_users:
+        if ou.firebase_uid == request.auth:
+            current_user_role = ou.role
+            break
+
+    if current_user_role is None:
+        raise ValidationException("User does not have access to this project")
+
     return ProjectResponse(
         id=str(project.id),
         name=project.name,
         description=project.description,
         logo_url=project.logo_url,
+        role=current_user_role,
         grant_applications=[
             BaseApplicationResponse(
                 id=str(grant_application.id),
@@ -358,7 +368,6 @@ async def handle_delete_project(
             project.soft_delete()
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error deleting project", exc_info=e)
             raise DatabaseError("Error deleting project", context=str(e)) from e
 
@@ -449,7 +458,6 @@ async def handle_create_invitation_redirect_url(
             return InvitationRedirectUrlResponse(token=jwt_token)
 
         except (SQLAlchemyError, ValidationException) as e:
-            await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error creating invitation", exc_info=e)
                 raise DatabaseError("Error creating invitation", context=str(e)) from e
@@ -504,7 +512,6 @@ async def handle_delete_invitation(
             invitation.soft_delete()
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error deleting invitation", exc_info=e)
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
 
@@ -588,7 +595,6 @@ async def handle_update_invitation_role(
             return InvitationRedirectUrlResponse(token=jwt_token)
 
         except (SQLAlchemyError, ValidationException) as e:
-            await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error updating invitation role", exc_info=e)
                 raise DatabaseError("Error updating invitation role", context=str(e)) from e
@@ -707,7 +713,6 @@ async def handle_accept_invitation(
             return InvitationRedirectUrlResponse(token=jwt_token)
 
         except (SQLAlchemyError, ValidationException) as e:
-            await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error accepting invitation", exc_info=e)
                 raise DatabaseError("Error accepting invitation", context=str(e)) from e
@@ -854,7 +859,6 @@ async def handle_update_member_role(
             )
 
         except (SQLAlchemyError, ValidationException) as e:
-            await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error updating member role", exc_info=e)
                 raise DatabaseError("Error updating member role", context=str(e)) from e
@@ -926,7 +930,6 @@ async def handle_remove_project_member(
             await session.commit()
 
         except (SQLAlchemyError, ValidationException) as e:
-            await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error removing project member", exc_info=e)
                 raise DatabaseError("Error removing project member", context=str(e)) from e
@@ -1103,7 +1106,6 @@ async def handle_duplicate_project(
             )
 
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error duplicating project", exc_info=e)
             raise DatabaseError("Error duplicating project", context=str(e)) from e
 
@@ -1154,11 +1156,22 @@ async def handle_duplicate_project(
 
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
+    # Find the current user's role
+    current_user_role = None
+    for ou in organization_users:
+        if ou.firebase_uid == request.auth:
+            current_user_role = ou.role
+            break
+
+    if current_user_role is None:
+        raise ValidationException("User does not have access to this project")
+
     return ProjectResponse(
         id=str(project.id),
         name=project.name,
         description=project.description,
         logo_url=project.logo_url,
+        role=current_user_role,
         grant_applications=[
             BaseApplicationResponse(
                 id=str(grant_application.id),

@@ -140,7 +140,6 @@ async def handle_gcs_file_upload(
             )
         except SQLAlchemyError as e:
             logger.error("Failed to create RagFile entry in DB", exc_info=e)
-            await session.rollback()
             raise DatabaseError(
                 "Failed to create RagFile entry in DB", context=str(e)
             ) from e

@@ -172,9 +172,7 @@ async def handle_update_grant_template(
             )
             await session.commit()
         except ValidationException:
-            await session.rollback()
             raise
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating grant template", exc_info=e)
             raise DatabaseError("Error updating grant template", context=str(e)) from e

@@ -187,7 +187,6 @@ async def handle_add_organization_member(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error adding organization member", exc_info=e)
             raise DatabaseError("Error adding organization member", context=str(e)) from e
 
@@ -319,7 +318,6 @@ async def handle_update_member_role(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error updating member role", exc_info=e)
             raise DatabaseError("Error updating member role", context=str(e)) from e
 
@@ -390,6 +388,5 @@ async def handle_remove_member(
 
             await session.commit()
         except SQLAlchemyError as e:
-            await session.rollback()
             logger.error("Error removing organization member", exc_info=e)
             raise DatabaseError("Error removing organization member", context=str(e)) from e
