@@ -460,7 +460,7 @@ def analyze_content_complexity(content: str, criteria: list[EvaluationCriterion]
         technical_terms_count += len(re.findall(pattern, content, re.IGNORECASE))
 
     avg_sentence_length = word_count / max(sentence_count, 1)
-    avg_syllables = sum(_count_syllables(word) for word in words[:100]) / min(len(words), 100)
+    avg_syllables = sum(_count_syllables(word) for word in words[:100]) / max(min(len(words), 100), 1)
     readability_score = 206.835 - (1.015 * avg_sentence_length) - (84.6 * avg_syllables)
     readability_score = max(0, min(100, readability_score))
 
