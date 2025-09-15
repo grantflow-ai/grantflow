@@ -46,6 +46,9 @@ runs:
         workload_identity_provider: ${{ inputs.workload_identity_provider }}
         service_account: ${{ inputs.service_account }}
 
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
     - name: Check if old images need cleanup
       shell: bash
       run: |
