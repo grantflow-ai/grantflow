@@ -83,9 +83,9 @@ runs:
       run: |
         # Get the latest revision name
         REVISION=$(gcloud run revisions list \
-          --service=${{ inputs.service }}
-          --region=${{ inputs.region }}
-          --project=${{ inputs.project_id }}
+          --service=${{ inputs.service }} \
+          --region=${{ inputs.region }} \
+          --project=${{ inputs.project_id }} \
           --format='value(name)' \
           --limit=1)
 
@@ -122,16 +122,16 @@ runs:
 
         # Get the previous revision
         PREVIOUS=$(gcloud run revisions list \
-          --service=${{ inputs.service }}
-          --region=${{ inputs.region }}
-          --project=${{ inputs.project_id }}
+          --service=${{ inputs.service }} \
+          --region=${{ inputs.region }} \
+          --project=${{ inputs.project_id }} \
           --format='value(name)' \
           --limit=2 | tail -1)
 
         if [ -n "${PREVIOUS}" ]; then
           gcloud run services update-traffic ${{ inputs.service }} \
             --to-revisions=${PREVIOUS}=100 \
-            --region ${{ inputs.region }}
+            --region ${{ inputs.region }} \
             --project ${{ inputs.project_id }}
           
           echo "Rolled back to revision: ${PREVIOUS}"
