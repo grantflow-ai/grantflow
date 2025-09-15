@@ -299,30 +299,33 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const appRagSources = useApplicationStore((state) => state.application?.rag_sources);
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
 	const researchObjectives = useApplicationStore((state) => state.application?.research_objectives);
-
-	// const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
-
-	// const validation = isApplicationDetailsStep ? validateApplicationDetailsStep(title, ragSources) : null;
-	// const localValidation = validation ? validation.isValid : true;
+	const formInputs = useApplicationStore((state) => state.application?.form_inputs);
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: need validationResult to run granularly
 	const validationResult = useMemo((): ValidationResult => {
 		const validated = validateStepNext();
-		console.log("validationResult:", validated);
 		return validated;
-	}, [appRagSources, currentStep, title, ragSources, grantSections, researchObjectives, validateStepNext]);
+	}, [
+		applicationText,
+		appRagSources,
+		currentStep,
+		title,
+		ragSources,
+		grantSections,
+		researchObjectives,
+		formInputs,
+		validateStepNext,
+	]);
 
 	const disabled = useMemo(() => {
 		const { isValid } = validationResult;
-		console.log("disabled called: validationResult:", isValid);
 
 		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
 			return isGeneratingApplication || !isValid;
 		}
 
-		console.log("disabled:", !isValid);
 		return !isValid;
 	}, [validationResult, currentStep, isGeneratingApplication]);
 
@@ -388,8 +391,6 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		);
 	}
 
-	console.log("detailsValidationReason:", detailsValidationReason);
-
 	const tooltipMessage =
 		detailsValidationReason === ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
 			? APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason](
@@ -397,8 +398,6 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 					validationResult.metadata?.totalCount ?? 0,
 				)
 			: APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason];
-
-	console.log(tooltipMessage);
 
 	return (
 		<Tooltip>
