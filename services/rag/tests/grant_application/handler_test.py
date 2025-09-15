@@ -8,8 +8,8 @@ from packages.db.src.json_objects import (
     ResearchObjective,
     ResearchTask,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 
-from services.rag.src.constants import NotificationEvents
 from services.rag.src.grant_application.dto import EnrichmentDataDTO
 from services.rag.src.grant_application.enrich_research_objective import ObjectiveEnrichmentDTO
 from services.rag.src.grant_application.handler import (

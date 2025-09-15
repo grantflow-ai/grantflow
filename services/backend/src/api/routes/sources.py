@@ -23,7 +23,7 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
+from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS, NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
     construct_object_uri,
@@ -40,7 +40,6 @@ from sqlalchemy.orm import aliased, with_polymorphic
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_SOURCE, log_organization_audit_from_request
-from services.rag.src.constants import NotificationEvents
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import EntityType

@@ -9,6 +9,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateSource,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -19,7 +20,6 @@ from testing.factories import (
     TextVectorFactory,
 )
 
-from services.rag.src.constants import NotificationEvents
 from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
 from services.rag.src.grant_template.extract_cfp_data import (
