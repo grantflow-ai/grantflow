@@ -89,26 +89,11 @@ runs:
           done
         fi
 
-    - name: Debug gcloud
-      shell: bash
-      run: |
-        echo "PATH: $PATH"
-        which gcloud
-
     - name: Deploy to Cloud Run
       id: deploy
-      shell: bash
+      shell: gcloud beta run deploy ${{ inputs.service }} --image us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }} --region ${{ inputs.region }} --project ${{ inputs.project_id }} --no-traffic --update-labels "commit-sha=${{ github.sha }},deployed-by=github-actions,environment=${{ inputs.environment }}" --update-env-vars "DEPLOYMENT_TIMESTAMP=${{ github.run_id }}" --max-instances=1 ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }} --async
       run: |
-        gcloud run deploy ${{ inputs.service }} \
-          --image us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }} \
-          --region ${{ inputs.region }} \
-          --project ${{ inputs.project_id }} \
-          --no-traffic \
-          --update-labels "commit-sha=${{ github.sha }},deployed-by=github-actions,environment=${{ inputs.environment }}" \
-          --update-env-vars "DEPLOYMENT_TIMESTAMP=${{ github.run_id }}" \
-          --max-instances=1 \
-          ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }} \
-          --async
+        echo "Deployment started..."
 
     - name: Get revision name
       id: get-revision
