@@ -88,23 +88,18 @@ runs:
 
     - name: Deploy to Cloud Run
       id: deploy
-      uses: google-github-actions/deploy-cloudrun@v2
-      with:
-        service: ${{ inputs.service }}
-        image: us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
-        region: ${{ inputs.region }}
-        project_id: ${{ inputs.project_id }}
-        no_traffic: true
-        labels: |
-          commit-sha=${{ github.sha }}
-          deployed-by=github-actions
-          environment=${{ inputs.environment }}
-        env_vars: |
-          DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
-        flags: |
-          --max-instances=1
+      shell: bash
+      run: |
+        gcloud run deploy ${{ inputs.service }} \
+          --image us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }} \
+          --region ${{ inputs.region }} \
+          --project ${{ inputs.project_id }} \
+          --no-traffic \
+          --update-labels "commit-sha=${{ github.sha }},deployed-by=github-actions,environment=${{ inputs.environment }}" \
+          --update-env-vars "DEPLOYMENT_TIMESTAMP=${{ github.run_id }}" \
+          --max-instances=1 \
+          ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }} \
           --async
-          ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }}
 
     - name: Get revision name
       id: get-revision
