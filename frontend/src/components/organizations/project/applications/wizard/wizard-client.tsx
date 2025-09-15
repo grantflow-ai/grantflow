@@ -81,27 +81,6 @@ export function WizardClientComponent({
 		});
 	}, [notifications, organizationId, projectId]);
 
-	useEffect(() => {
-		useApplicationStore.getState().reset();
-		useWizardStore.getState().reset();
-
-		useApplicationStore.setState({
-			application: initialApplication,
-			areAppOperationsInProgress: false,
-		});
-
-		const timeoutId = setTimeout(() => {
-			void useApplicationStore.getState().checkAndRestoreJobState();
-		}, 0);
-
-		return () => {
-			clearTimeout(timeoutId);
-			useWizardStore.getState().reset();
-			useApplicationStore.getState().clearRestoredJobState();
-			useApplicationStore.getState().reset();
-		};
-	}, [initialApplication]);
-
 	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
 		const { identifier, indexing_status } = notification.data;
 

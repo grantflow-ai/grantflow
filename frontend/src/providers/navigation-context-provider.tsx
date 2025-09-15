@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
 import { useApplicationStore } from "@/stores/application-store";
@@ -24,7 +24,6 @@ export function NavigationContextProvider({
 	requireProject = false,
 }: NavigationContextProviderProps) {
 	const router = useRouter();
-	const [error, setError] = useState<null | string>(null);
 
 	const { activeApplicationId, activeProjectId, clearActiveApplication, clearActiveProject } = useNavigationStore();
 	const { selectedOrganizationId } = useOrganizationStore();
@@ -67,8 +66,6 @@ export function NavigationContextProvider({
 		}
 
 		const loadData = async () => {
-			setError(null);
-
 			if (activeProjectId && !(await loadProjectData()) && requireProject) {
 				router.replace(redirectTo);
 				return;
@@ -91,23 +88,6 @@ export function NavigationContextProvider({
 		loadProjectData,
 		loadApplicationData,
 	]);
-
-	if (error) {
-		return (
-			<div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-				<p className="text-red-600">{error}</p>
-				<button
-					className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-					onClick={() => {
-						router.push(redirectTo);
-					}}
-					type="button"
-				>
-					Go Back
-				</button>
-			</div>
-		);
-	}
 
 	return <>{children}</>;
 }
