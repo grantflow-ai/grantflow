@@ -10,13 +10,13 @@ from packages.db.src.tables import (
     GrantTemplateSource,
     RagSource,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     RagSourceFactory,
 )
 
-from services.rag.src.constants import NotificationEvents
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 
 

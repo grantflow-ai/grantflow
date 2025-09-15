@@ -12,6 +12,7 @@ from packages.db.src.json_objects import (
 )
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.db.src.utils import retrieve_application
+from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
     DatabaseError,
@@ -25,7 +26,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
+from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import (

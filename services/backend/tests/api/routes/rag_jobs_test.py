@@ -12,6 +12,7 @@ from packages.db.src.tables import (
     OrganizationUser,
     Project,
 )
+from packages.shared_utils.src.constants import NotificationEvents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationGenerationJobFactory,
@@ -20,7 +21,6 @@ from testing.factories import (
 )
 
 from services.backend.tests.conftest import TestingClientType
-from services.rag.src.constants import NotificationEvents
 
 
 @pytest.fixture
