@@ -7,8 +7,10 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { WizardStep } from "@/constants";
+import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { routes } from "@/utils/navigation";
 import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
 import { Deadline } from "./deadline";
@@ -230,9 +232,15 @@ function getStepTitleClass(index: number, currentStepIndex: number) {
 function LeftButton({ currentStep }: { currentStep: WizardStep }) {
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const { trackNavigation } = useWizardAnalytics();
 
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
+
+	const handleBack = useCallback(async () => {
+		await trackNavigation("back");
+		toPreviousStep();
+	}, [trackNavigation, toPreviousStep]);
 
 	if (!showBack) {
 		return <div />;
@@ -243,7 +251,7 @@ function LeftButton({ currentStep }: { currentStep: WizardStep }) {
 			data-testid="back-button"
 			disabled={backDisabled}
 			leftIcon={styledIcon(<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />, backDisabled)}
-			onClick={toPreviousStep}
+			onClick={handleBack}
 			size="lg"
 			theme="dark"
 			variant="secondary"
@@ -300,6 +308,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
 	const researchObjectives = useApplicationStore((state) => state.application?.research_objectives);
 	const formInputs = useApplicationStore((state) => state.application?.form_inputs);
+	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
+
+	const { trackEvent, trackNavigation } = useWizardAnalytics();
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
@@ -334,28 +345,84 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		[currentStep, disabled, hasApplicationText],
 	);
 
-	const handleRightButtonClick = useCallback(async () => {
-		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-			if (hasApplicationText) {
-				useWizardStore.getState().toNextStep();
-				return;
+	const handleValidationError = useCallback(
+		async (validation: ValidationResult) => {
+			const errorDetails: string[] = [];
+			if (!validation.isValid) {
+				// Convert enum values to kebab-case for analytics
+				const reasonString = validation.reason.toString().toLowerCase().replaceAll("_", "-");
+				errorDetails.push(reasonString);
 			}
+			await trackNavigation("next", true, errorDetails);
+		},
+		[trackNavigation],
+	);
 
-			const success = await useWizardStore.getState().generateApplication();
-			if (success) {
-				useWizardStore.getState().toNextStep();
-			}
-			return;
+	const handleStructureStep = useCallback(async () => {
+		if (grantTemplate) {
+			await trackEvent(WizardAnalyticsEvent.STEP_2_APPROVE, {
+				sectionsCount: grantTemplate.grant_sections.length,
+				templateId: grantTemplate.id,
+			});
 		}
-
-		if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
-			router.push(routes.organization.root());
-			useWizardStore.getState().reset();
-			return;
-		}
-
+		await trackNavigation("next");
 		useWizardStore.getState().toNextStep();
-	}, [currentStep, hasApplicationText, router]);
+	}, [grantTemplate, trackEvent, trackNavigation]);
+
+	const handleDeepDiveStep = useCallback(async () => {
+		if (hasApplicationText) {
+			await trackNavigation("next");
+			useWizardStore.getState().toNextStep();
+			return;
+		}
+
+		await trackEvent(WizardAnalyticsEvent.STEP_5_GENERATE, {
+			generationType: "application",
+		});
+		const success = await useWizardStore.getState().generateApplication();
+		if (success) {
+			useWizardStore.getState().toNextStep();
+		}
+	}, [hasApplicationText, trackEvent, trackNavigation]);
+
+	const handleCompleteStep = useCallback(() => {
+		router.push(routes.organization.root());
+		useWizardStore.getState().reset();
+	}, [router]);
+
+	const handleRightButtonClick = useCallback(async () => {
+		if (!validationResult.isValid) {
+			await handleValidationError(validationResult);
+			return;
+		}
+
+		switch (currentStep) {
+			case WizardStep.APPLICATION_STRUCTURE: {
+				await handleStructureStep();
+				break;
+			}
+			case WizardStep.GENERATE_AND_COMPLETE: {
+				handleCompleteStep();
+				break;
+			}
+			case WizardStep.RESEARCH_DEEP_DIVE: {
+				await handleDeepDiveStep();
+				break;
+			}
+			default: {
+				await trackNavigation("next");
+				useWizardStore.getState().toNextStep();
+			}
+		}
+	}, [
+		currentStep,
+		validationResult,
+		handleValidationError,
+		handleStructureStep,
+		handleDeepDiveStep,
+		handleCompleteStep,
+		trackNavigation,
+	]);
 
 	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled) {
 		return (
