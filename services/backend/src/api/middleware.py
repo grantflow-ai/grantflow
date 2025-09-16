@@ -106,9 +106,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             logger.debug(
                 "Trying webhook token auth: %s, auth_header contains token: %s",
                 bool(webhook_token),
-                webhook_token in auth_header if webhook_token else False,
+                webhook_token in auth_header if webhook_token and auth_header else False,
             )
-            if webhook_token and webhook_token in auth_header:
+            if webhook_token and auth_header and webhook_token in auth_header:
                 return AuthenticationResult(user=None, auth=None)
             raise NotAuthorizedException
 
