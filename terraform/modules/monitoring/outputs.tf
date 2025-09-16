@@ -56,10 +56,7 @@ output "monthly_budget_amount" {
   value       = var.monthly_budget_amount
 }
 
-output "entity_cleanup_schedule" {
-  description = "Schedule for entity cleanup job"
-  value       = google_cloud_scheduler_job.entity_cleanup_daily.schedule
-}
+# Entity cleanup scheduler job moved to terraform/modules/scheduler/main.tf
 
 output "user_deletion_grace_period" {
   description = "Grace period for user deletion in days"

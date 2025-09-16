@@ -1,40 +1,6 @@
 
-resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
-  name             = "entity-cleanup-daily"
-  description      = "Daily cleanup of users and organizations with expired soft deletes"
-  schedule         = "0 2 * * *"
-  time_zone        = "UTC"
-  attempt_deadline = "600s"
-  region           = "us-central1"
-
-  http_target {
-    uri         = "https://backend-zqiconmjeq-uc.a.run.app/webhooks/scheduler/entity-cleanup"
-    http_method = "POST"
-
-    headers = {
-      "Content-Type" = "application/json"
-    }
-
-    body = base64encode(jsonencode({
-      action    = "cleanup_expired_entities"
-      timestamp = "scheduled"
-    }))
-
-    oidc_token {
-      service_account_email = "scheduler-invoker@grantflow.iam.gserviceaccount.com"
-      audience              = "https://backend-zqiconmjeq-uc.a.run.app/webhooks/scheduler/entity-cleanup"
-    }
-  }
-
-  # ~keep The scheduler job continues below
-
-  retry_config {
-    retry_count          = 3
-    max_retry_duration   = "60s"
-    max_backoff_duration = "30s"
-    min_backoff_duration = "5s"
-  }
-}
+# Entity cleanup job has been moved to terraform/modules/scheduler/main.tf
+# to consolidate all scheduler jobs in one place and use proper variables
 
 resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
   display_name = "Entity Cleanup Webhook Failures"
