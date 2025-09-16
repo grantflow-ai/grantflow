@@ -47,7 +47,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 
 	return (
 		<div className="flex size-full" data-testid="research-plan-step">
-			<WizardLeftPane testId="research-plan-left-pane">
+			<WizardLeftPane className="relative" innerClassName="pb-5" testId="research-plan-left-pane">
 				<div className="space-y-1">
 					<div className="flex items-center justify-between gap-4">
 						<h2
@@ -64,27 +64,29 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 					</p>
 				</div>
 
-				{showResearchPlanInfoBanner && objectives.length >= MAX_OBJECTIVES && (
-					<ResearchPlanInfoBanner
-						onClose={() => {
-							setShowResearchPlanInfoBanner(false);
-						}}
-					/>
-				)}
-
 				<div className="space-y-4">
 					{!showObjectiveForm && (
-						<AppButton
-							data-testid="add-objective-button"
-							disabled={objectives.length >= MAX_OBJECTIVES}
-							leftIcon={<Plus size={16} />}
-							onClick={() => {
-								setShowObjectiveForm(true);
-							}}
-							variant="secondary"
-						>
-							{objectives.length === 0 ? "Add First Objective" : "Add Objective"}
-						</AppButton>
+						<>
+							<AppButton
+								data-testid="new-objective-button"
+								disabled={objectives.length >= MAX_OBJECTIVES}
+								leftIcon={<Plus size={16} />}
+								onClick={() => {
+									setShowObjectiveForm(true);
+								}}
+								variant="secondary"
+							>
+								New Objective
+							</AppButton>
+
+							{showResearchPlanInfoBanner && objectives.length >= MAX_OBJECTIVES && (
+								<ResearchPlanInfoBanner
+									onClose={() => {
+										setShowResearchPlanInfoBanner(false);
+									}}
+								/>
+							)}
+						</>
 					)}
 
 					{showObjectiveForm && (
