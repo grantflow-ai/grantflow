@@ -350,7 +350,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 			const errorDetails: string[] = [];
 			if (!validation.isValid) {
 				// Convert enum values to kebab-case for analytics
-				const reasonString = validation.reason.toString().toLowerCase().replaceAll("_", "-");
+				const reasonString = validation.reason.toLowerCase().replaceAll("_", "-");
 				errorDetails.push(reasonString);
 			}
 			await trackNavigation("next", true, errorDetails);
