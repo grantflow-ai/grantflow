@@ -19,6 +19,7 @@ from sqlalchemy import select
 
 from services.backend.src.common_types import APIRequestState
 from services.backend.src.utils.jwt import verify_jwt_token
+from services.backend.src.utils.oidc_auth import verify_pubsub_oidc_token
 
 logger = get_logger(__name__)
 
@@ -84,8 +85,30 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=None)
 
         if self._is_webhook_path(path):
+            logger.debug("Processing webhook path: %s, auth_header: %s", path, auth_header)
+
+            # First try OIDC token verification for PubSub webhooks
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.removeprefix("Bearer ").strip()
+
+                # For email notifications, verify against the specific webhook endpoint
+                if path == "/webhooks/pubsub/email-notifications":
+                    expected_audience = f"{connection.url.scheme}://{connection.url.netloc}{path}"
+                    expected_email = "pubsub-invoker@grantflow.iam.gserviceaccount.com"
+
+                    logger.debug("Verifying OIDC token for audience: %s", expected_audience)
+
+                    if verify_pubsub_oidc_token(token, expected_audience, expected_email):
+                        return AuthenticationResult(user=None, auth=None)
+
+            # Fallback to token-based authentication for legacy webhooks (scheduler, etc.)
             webhook_token = get_env("PUBSUB_WEBHOOK_TOKEN")
-            if webhook_token in auth_header:
+            logger.debug(
+                "Trying webhook token auth: %s, auth_header contains token: %s",
+                bool(webhook_token),
+                webhook_token in auth_header if webhook_token else False,
+            )
+            if webhook_token and webhook_token in auth_header:
                 return AuthenticationResult(user=None, auth=None)
             raise NotAuthorizedException
 
