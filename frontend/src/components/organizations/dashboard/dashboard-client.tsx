@@ -160,11 +160,12 @@ export function DashboardClient({
 		setIsCreatingProject(true);
 		try {
 			const newProjectName = `New Project ${projects.length + 1}`;
-			await createProject(currentOrganizationId, {
+			const newproject = await createProject(currentOrganizationId, {
 				description: "",
 				name: newProjectName,
 			});
 			await mutate();
+			handleProjectNavigation(newproject.id, newProjectName);
 		} catch {
 			addNotification({
 				message: "Failed to create project. Please try again.",

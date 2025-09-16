@@ -1,7 +1,7 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -29,17 +29,19 @@ function SelectContent({
 				position={position}
 				{...props}
 			>
-				<SelectScrollUpButton />
 				<SelectPrimitive.Viewport
 					className={cn(
 						"p-1",
 						position === "popper" &&
 							"h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
 					)}
+					onFocus={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+					}}
 				>
 					{children}
 				</SelectPrimitive.Viewport>
-				<SelectScrollDownButton />
 			</SelectPrimitive.Content>
 		</SelectPrimitive.Portal>
 	);
@@ -76,33 +78,6 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Select
 			data-slot="select-label"
 			{...props}
 		/>
-	);
-}
-
-function SelectScrollDownButton({
-	className,
-	...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-	return (
-		<SelectPrimitive.ScrollDownButton
-			className={cn("flex cursor-default items-center justify-center py-1", className)}
-			data-slot="select-scroll-down-button"
-			{...props}
-		>
-			<ChevronDownIcon className="size-4" />
-		</SelectPrimitive.ScrollDownButton>
-	);
-}
-
-function SelectScrollUpButton({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-	return (
-		<SelectPrimitive.ScrollUpButton
-			className={cn("flex cursor-default items-center justify-center py-1", className)}
-			data-slot="select-scroll-up-button"
-			{...props}
-		>
-			<ChevronUpIcon className="size-4 text-app-black" />
-		</SelectPrimitive.ScrollUpButton>
 	);
 }
 
@@ -146,15 +121,4 @@ function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.V
 	return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
-export {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectScrollDownButton,
-	SelectScrollUpButton,
-	SelectSeparator,
-	SelectTrigger,
-	SelectValue,
-};
+export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue };

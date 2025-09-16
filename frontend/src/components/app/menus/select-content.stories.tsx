@@ -6,8 +6,6 @@ import {
 	SelectGroup,
 	SelectItem,
 	SelectLabel,
-	SelectScrollDownButton,
-	SelectScrollUpButton,
 	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
@@ -48,7 +46,6 @@ export const WithScrollButtons: Story = {
 				</SelectTrigger>
 
 				<SelectContent className="max-h-[200px]">
-					<SelectScrollUpButton />
 					<SelectItem value="1">One</SelectItem>
 					<SelectItem value="2">Two</SelectItem>
 					<SelectItem value="3">Three</SelectItem>
@@ -74,7 +71,6 @@ export const WithScrollButtons: Story = {
 					<SelectItem value="23">Twenty-three</SelectItem>
 					<SelectItem value="24">Twenty-four</SelectItem>
 					<SelectItem value="25">Twenty-five</SelectItem>
-					<SelectScrollDownButton />
 				</SelectContent>
 			</>
 		),
