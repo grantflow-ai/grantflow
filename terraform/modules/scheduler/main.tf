@@ -92,3 +92,42 @@ resource "google_cloud_scheduler_job" "grant_matcher" {
 
   depends_on = [google_project_service.scheduler]
 }
+
+resource "google_cloud_scheduler_job" "entity_cleanup" {
+  name      = "entity-cleanup-${var.environment}"
+  region    = var.region
+  schedule  = "0 2 * * *"
+  time_zone = "UTC"
+
+  description = "Daily cleanup of users and organizations with expired soft deletes"
+
+  http_target {
+    uri         = "${var.backend_url}/webhooks/scheduler/entity-cleanup"
+    http_method = "POST"
+
+    headers = {
+      "Content-Type" = "application/json"
+    }
+
+    body = base64encode(jsonencode({
+      action    = "cleanup_expired_entities"
+      timestamp = "scheduled"
+    }))
+
+    oidc_token {
+      service_account_email = var.scheduler_invoker_service_account_email
+      audience              = "${var.backend_url}/webhooks/scheduler/entity-cleanup"
+    }
+  }
+
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "60s"
+    max_backoff_duration = "30s"
+    min_backoff_duration = "5s"
+  }
+
+  attempt_deadline = "600s"
+
+  depends_on = [google_project_service.scheduler]
+}
