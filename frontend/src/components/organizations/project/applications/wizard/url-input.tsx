@@ -60,10 +60,19 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 		}
 
 		setUrlError(null);
-		await addUrl(trimmedUrl, parentId!);
 		const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
+
+		// Track the URL add attempt before calling addUrl so analytics is captured even if it fails
 		await trackLinkAdd(trimmedUrl, step);
-		setUrlInput("");
+
+		try {
+			await addUrl(trimmedUrl, parentId!);
+			setUrlInput("");
+		} catch (error) {
+			// Still clear input even if addUrl fails
+			setUrlInput("");
+			throw error;
+		}
 	};
 
 	return (

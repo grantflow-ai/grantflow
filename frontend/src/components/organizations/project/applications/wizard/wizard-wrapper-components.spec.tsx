@@ -956,8 +956,13 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks back navigation", async () => {
+			const toPreviousStepSpy = vi.fn(() => {
+				useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
+			});
+
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				toPreviousStep: toPreviousStepSpy,
 			});
 
 			render(<WizardFooter />);
@@ -966,6 +971,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(backButton);
 
 			await waitFor(() => {
+				expect(toPreviousStepSpy).toHaveBeenCalled();
 				expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			});
 		});

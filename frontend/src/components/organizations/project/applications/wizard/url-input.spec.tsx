@@ -10,6 +10,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import * as segment from "@/utils/segment";
 import * as validation from "@/utils/validation";
 
 import { UrlInput } from "./url-input";
@@ -665,11 +666,19 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_LINK, {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(2);
+
+				// Check first URL tracking
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[0][1]).toMatchObject({
 					domain: "first.com",
 					url: "https://first.com/doc",
 				});
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_LINK, {
+
+				// Check second URL tracking
+				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[1][1]).toMatchObject({
 					domain: "second.com",
 					url: "https://second.com/paper",
 				});
@@ -797,7 +806,10 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expect(mockAddUrl).toHaveBeenCalledWith("template-123", "http://[invalid]:3000");
+				// addUrl is called with (url, parentId) not (parentId, url)
+				expect(mockAddUrl).toHaveBeenCalledWith("http://[invalid]:3000", "template-123");
+				// Analytics tracking should not happen for malformed URL due to URL parsing error
+				expectNoEventsTracked();
 			});
 		});
 	});
