@@ -8,9 +8,9 @@ import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
 import { routes } from "@/utils/navigation";
-import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
+import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
 import { Deadline } from "./deadline";
 
 const APPLICATION_DETAILS_TOOLTIP_MESSAGES = {
@@ -296,21 +296,38 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const title = useApplicationStore((state) => state.application?.title);
 	const applicationText = useApplicationStore((state) => state.application?.text);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
-
-	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
-
-	const validation = isApplicationDetailsStep ? validateApplicationDetailsStep(title, ragSources) : null;
-	const localValidation = validation ? validation.isValid : true;
+	const appRagSources = useApplicationStore((state) => state.application?.rag_sources);
+	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
+	const researchObjectives = useApplicationStore((state) => state.application?.research_objectives);
+	const formInputs = useApplicationStore((state) => state.application?.form_inputs);
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: need validationResult to run granularly
+	const validationResult = useMemo((): ValidationResult => {
+		const validated = validateStepNext();
+		return validated;
+	}, [
+		applicationText,
+		appRagSources,
+		currentStep,
+		title,
+		ragSources,
+		grantSections,
+		researchObjectives,
+		formInputs,
+		validateStepNext,
+	]);
+
 	const disabled = useMemo(() => {
+		const { isValid } = validationResult;
+
 		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-			return isGeneratingApplication || !(validateStepNext() && localValidation);
+			return isGeneratingApplication || !isValid;
 		}
 
-		return !(validateStepNext() && localValidation);
-	}, [currentStep, isGeneratingApplication, validateStepNext, localValidation]);
+		return !isValid;
+	}, [validationResult, currentStep, isGeneratingApplication]);
 
 	const { leftIcon, rightButtonText, rightIcon } = useMemo(
 		() => generateFooterRightButtonProps(currentStep, disabled, hasApplicationText),
@@ -340,7 +357,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		useWizardStore.getState().toNextStep();
 	}, [currentStep, hasApplicationText, router]);
 
-	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled || !validation) {
+	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled) {
 		return (
 			<AppButton
 				data-testid="continue-button"
@@ -356,7 +373,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		);
 	}
 
-	if (validation.reason === ApplicationDetailsValidationReason.VALID) {
+	const detailsValidationReason = validationResult.reason as ApplicationDetailsValidationReason;
+
+	if (detailsValidationReason === ApplicationDetailsValidationReason.VALID) {
 		return (
 			<AppButton
 				data-testid="continue-button"
@@ -373,12 +392,12 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	}
 
 	const tooltipMessage =
-		validation.reason === ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
-			? APPLICATION_DETAILS_TOOLTIP_MESSAGES[validation.reason](
-					validation.processingCount!,
-					validation.totalCount!,
+		detailsValidationReason === ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
+			? APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason](
+					validationResult.metadata?.processingCount ?? 0,
+					validationResult.metadata?.totalCount ?? 0,
 				)
-			: APPLICATION_DETAILS_TOOLTIP_MESSAGES[validation.reason];
+			: APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason];
 
 	return (
 		<Tooltip>

@@ -137,7 +137,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 	describe.sequential("Button State Management", () => {
 		it("disables continue button when step validation fails", () => {
-			const mockValidateStepNext = vi.fn(() => false);
+			const mockValidateStepNext = vi.fn(() => ({ isValid: false, reason: "test validation failed" }));
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -165,7 +165,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("disables continue button when RAG sources are not processed (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -192,7 +192,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("enables continue button when RAG sources are processed (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -219,7 +219,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("enables continue button with mixed FINISHED and FAILED RAG sources (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -246,7 +246,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("disables continue button when RAG sources are CREATED (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -273,7 +273,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("handles edge cases with no RAG sources (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -297,7 +297,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("handles edge case with no grant template (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -318,7 +318,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("uses local validation only for APPLICATION_DETAILS step", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -349,7 +349,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -380,7 +380,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -419,7 +419,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -454,7 +454,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -488,7 +488,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
 			render(<WizardFooter />);
@@ -510,7 +510,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			render(<WizardFooter />);
@@ -531,7 +531,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -561,7 +561,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -587,7 +587,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 				reset: mockReset,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			render(<WizardFooter />);
@@ -627,7 +627,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => true),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({

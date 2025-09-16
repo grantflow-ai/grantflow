@@ -1,71 +1,72 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getApplication } from "@/actions/grant-applications";
+import { useEffect, useRef } from "react";
 import { WizardClientComponent } from "@/components/organizations/project/applications/wizard/wizard-client";
-import { useNavigationStore } from "@/stores/navigation-store";
+import type { WizardStep } from "@/constants";
+import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
-import { routes } from "@/utils/navigation";
+import { determineAppropriateStep, useWizardStore } from "@/stores/wizard-store";
 
 export function ApplicationWizardPageClient() {
-	const router = useRouter();
+	useEffect(() => {
+		return () => {
+			useWizardStore.getState().reset();
+			useApplicationStore.getState().reset();
+		};
+	}, []);
+
+	const userSelectedStepRef = useRef<null | WizardStep>(null);
+
 	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
-	const { activeApplicationId } = useNavigationStore();
-	const [application, setApplication] = useState<Awaited<ReturnType<typeof getApplication>> | null>(null);
-	const [error, setError] = useState<null | string>(null);
 
-	const isLoading = !(application ?? error);
+	const applicationId = useApplicationStore((state) => state.application?.id);
 
 	useEffect(() => {
-		async function loadApplication() {
-			if (!(project && activeApplicationId && selectedOrganizationId)) {
-				router.replace(routes.organization.root());
-				return;
-			}
+		if (!applicationId) return;
 
-			try {
-				const app = await getApplication(selectedOrganizationId, project.id, activeApplicationId);
-				setApplication(app);
-			} catch {
-				setError("Application not found");
+		useWizardStore.getState().reset();
+		useApplicationStore.getState().softReset();
 
-				setTimeout(() => {
-					router.replace(routes.organization.project.detail());
-				}, 2000);
-			}
+		if (userSelectedStepRef.current === null) {
+			const appropriateStep = determineAppropriateStep(applicationId);
+
+			if (appropriateStep === null) return;
+
+			useWizardStore.setState({ currentStep: appropriateStep });
+			userSelectedStepRef.current = appropriateStep;
 		}
 
-		void loadApplication();
-	}, [project, activeApplicationId, router, selectedOrganizationId]);
+		const timeoutId = setTimeout(() => {
+			void useApplicationStore.getState().checkAndRestoreJobState();
+		}, 0);
 
-	if (isLoading) {
+		return () => {
+			clearTimeout(timeoutId);
+			userSelectedStepRef.current = null;
+		};
+	}, [applicationId]);
+
+	if (!applicationId) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
-				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
+				<div
+					className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary"
+					role="status"
+				/>
 				<p className="text-gray-600 font-medium">Loading application...</p>
 			</div>
 		);
 	}
 
-	if (error) {
-		return (
-			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-				<p className="text-red-600 mb-4">{error}</p>
-				<p className="text-gray-600">Redirecting...</p>
-			</div>
-		);
-	}
-
-	if (!(application && project && selectedOrganizationId)) {
+	if (!(project && selectedOrganizationId)) {
 		return null;
 	}
 
 	return (
 		<WizardClientComponent
-			application={application}
+			applicationId={applicationId}
 			organizationId={selectedOrganizationId}
 			projectId={project.id}
 		/>
