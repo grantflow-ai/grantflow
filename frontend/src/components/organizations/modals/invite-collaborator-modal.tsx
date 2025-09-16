@@ -123,13 +123,14 @@ export function InviteCollaboratorModal({
 
 	const allProjectsSelected = projects.length > 0 && selectedProjects.length === projects.length;
 
-	const handleAllProjectsToggle = (checked: boolean) => {
-		if (checked) {
-			setSelectedProjects(projects.map((p) => p.id));
-		} else {
-			setSelectedProjects([]);
-		}
+	const selectAllProjects = () => {
+		setSelectedProjects(projects.map((p) => p.id));
 	};
+
+	const deselectAllProjects = () => {
+		setSelectedProjects([]);
+	};
+
 	const handleProjectToggle = (projectId: string) => {
 		setSelectedProjects((prevSelected) =>
 			prevSelected.includes(projectId)
@@ -314,11 +315,19 @@ export function InviteCollaboratorModal({
 													className=" relative flex w-full items-center text-sm  select-none outline-hidden
 focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-pointer hover:bg-primary hover:text-white rounded-sm"
 													onClick={() => {
-														handleAllProjectsToggle(!allProjectsSelected);
+														if (allProjectsSelected) {
+															deselectAllProjects();
+														} else {
+															selectAllProjects();
+														}
 													}}
 													onKeyDown={(e) => {
 														if (e.key === "Enter" || e.key === " ") {
-															handleAllProjectsToggle(!allProjectsSelected);
+															if (allProjectsSelected) {
+																deselectAllProjects();
+															} else {
+																selectAllProjects();
+															}
 														}
 													}}
 													role="button"
