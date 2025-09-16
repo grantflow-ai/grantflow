@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { API } from "@/types/api-types";
-import { project } from "::storybook/mocks/logger.mock";
 
 export interface InviteOptions {
 	email: string;
@@ -308,8 +307,6 @@ export function InviteCollaboratorModal({
 											</div>
 										</SelectTrigger>
 										<SelectContent className="border border-app-gray-200 bg-white">
-											
-											
 											<div
 												className={` ${projects.length >= 6 ? "h-[220px] overflow-y-auto" : ""} scroll-box`}
 											>
@@ -332,7 +329,7 @@ focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-
 														className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state-checked]:text-primary group-hover:text-white group-hover:border-white"
 														id="all-projects"
 													/>
-													<label htmlFor="all-projects" className="text-sm font-normal">
+													<label className="text-sm font-normal" htmlFor="all-projects">
 														All
 													</label>
 												</div>
@@ -353,7 +350,7 @@ focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-
 																id={project.id}
 															/>
 
-															<label htmlFor={project.id} className="text-sm font-normal">
+															<label className="text-sm font-normal" htmlFor={project.id}>
 																{project.name}
 															</label>
 														</div>
