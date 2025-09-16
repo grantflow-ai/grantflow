@@ -1,6 +1,11 @@
 /* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
-import { ApplicationFactory } from "::testing/factories";
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
+import {
+	ApplicationFactory,
+	GetOrganizationResponseFactory,
+	ListOrganizationsResponseFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -47,7 +52,17 @@ describe("TemplateFileUploader", () => {
 
 	beforeEach(() => {
 		resetAllStores();
+		setupAuthenticatedTest();
 		vi.clearAllMocks();
+
+		const organization = GetOrganizationResponseFactory.build();
+		const organizations = ListOrganizationsResponseFactory.build();
+		useOrganizationStore.setState({
+			organization,
+			organizations,
+			selectedOrganizationId: organization.id,
+		});
+
 		useApplicationStore.setState({
 			addFile: mockAddFile,
 			addPendingUpload: mockAddPendingUpload,

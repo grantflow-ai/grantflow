@@ -1,6 +1,12 @@
 /* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
-import { ApplicationWithTemplateFactory, UrlResponseFactory } from "::testing/factories";
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
+import {
+	ApplicationWithTemplateFactory,
+	GetOrganizationResponseFactory,
+	ListOrganizationsResponseFactory,
+	UrlResponseFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -27,7 +33,16 @@ describe.sequential("UrlInput", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		resetAllStores();
+		setupAuthenticatedTest();
 		mockIsValidUrl.mockReturnValue(true);
+
+		const organization = GetOrganizationResponseFactory.build();
+		const organizations = ListOrganizationsResponseFactory.build();
+		useOrganizationStore.setState({
+			organization,
+			organizations,
+			selectedOrganizationId: organization.id,
+		});
 
 		useApplicationStore.setState({
 			addUrl: mockAddUrl,
