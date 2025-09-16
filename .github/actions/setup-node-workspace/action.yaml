@@ -13,13 +13,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install pnpm
+    - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
         package_json_file: ${{ inputs.package }}/package.json
         run_install: false
 
-    - name: Setup Node.js
+    - name: Setup Node.js with pnpm cache
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
@@ -28,13 +28,11 @@ runs:
           pnpm-lock.yaml
           ${{ inputs.package }}/pnpm-lock.yaml
 
-    - name: Install Root Dependencies
+    - name: Install dependencies
       shell: bash
-      run: pnpm install
-
-    - name: Install Package Dependencies
-      shell: bash
-      run: cd ${{ inputs.package }} && pnpm install
+      run: |
+        pnpm install
+        cd ${{ inputs.package }} && pnpm install
 
     - name: Build Editor (if frontend depends on it)
       if: inputs.package == 'frontend'

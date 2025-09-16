@@ -1,0 +1,64 @@
+name: "Setup PostgreSQL"
+description: "Set up PostgreSQL 17 with pgvector extension for testing"
+
+inputs:
+  port:
+    description: "PostgreSQL port to use"
+    required: false
+    default: "5433"
+  database:
+    description: "Database name"
+    required: false
+    default: "postgres"
+  username:
+    description: "Database username"
+    required: false
+    default: "runner"
+  password:
+    description: "Database password"
+    required: false
+    default: "testpass"
+
+outputs:
+  database_url:
+    description: "Complete database connection URL"
+    value: postgresql://${{ inputs.username }}:${{ inputs.password }}@localhost:${{ inputs.port }}/${{ inputs.database }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install PostgreSQL 17 with pgvector
+      shell: bash
+      run: |
+        # Install PostgreSQL 17 and pgvector
+        sudo apt-get update
+        sudo apt-get install -y wget ca-certificates
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+        sudo apt-get update
+        sudo apt-get install -y postgresql-17 postgresql-client-17 postgresql-contrib-17
+
+        # Install pgvector extension
+        sudo apt-get install -y postgresql-17-pgvector
+
+    - name: Configure PostgreSQL
+      shell: bash
+      run: |
+        # Configure PostgreSQL to use version 17 by default
+        sudo pg_createcluster 17 main --start
+        sudo systemctl start postgresql
+        sudo systemctl enable postgresql
+
+        # Create test user and set up database (using PostgreSQL 17 cluster)
+        sudo -u postgres createuser --superuser ${{ inputs.username }} --port=${{ inputs.port }}
+        sudo -u postgres psql --port=${{ inputs.port }} -c "ALTER USER ${{ inputs.username }} WITH PASSWORD '${{ inputs.password }}';"
+
+    - name: Test connection and setup extensions
+      shell: bash
+      run: |
+        # Set DATABASE_URL for tests
+        echo "DATABASE_URL=postgresql://${{ inputs.username }}:${{ inputs.password }}@localhost:${{ inputs.port }}/${{ inputs.database }}" >> $GITHUB_ENV
+
+        # Test connection and create vector extension
+        psql "postgresql://${{ inputs.username }}:${{ inputs.password }}@localhost:${{ inputs.port }}/${{ inputs.database }}" -c "SELECT version();"
+        psql "postgresql://${{ inputs.username }}:${{ inputs.password }}@localhost:${{ inputs.port }}/${{ inputs.database }}" -c "CREATE EXTENSION IF NOT EXISTS vector;"

@@ -21,47 +21,13 @@ inputs:
 runs:
     using: "composite"
     steps:
-        - name: Set up Python
-          uses: actions/setup-python@v5
+        - name: Setup Python workspace
+          uses: ./.github/actions/setup-python-workspace
           with:
-              python-version-file: "pyproject.toml"
+            install_playwright: ${{ inputs.service == 'scraper' }}
 
-        - name: Install uv
-          uses: astral-sh/setup-uv@v6
-          with:
-              enable-cache: true
-
-        - name: Cache Task Binary
-          uses: actions/cache@v4
-          with:
-              path: ~/.local/bin/task
-              key: task-${{ runner.os }}-3.x
-              restore-keys: |
-                  task-${{ runner.os }}-
-
-        - name: Install Task
-          uses: arduino/setup-task@v2
-          with:
-              version: 3.x
-              repo-token: ${{ github.token }}
-
-        - name: Cache and Install APT Packages
-          uses: awalsh128/cache-apt-pkgs-action@latest
-          with:
-              packages: tesseract-ocr pandoc
-              version: 1.0
-
-        - name: Install Dependencies
-          shell: bash
-          run: uv sync --all-packages --all-extras --dev --upgrade
-
-        - name: Install Playwright Browsers
-          if: ${{ inputs.service == 'scraper' }}
-          shell: bash
-          run: |
-              echo "Installing Playwright browsers for scraper service..."
-              uv run playwright install chromium chromium-headless-shell
-              uv run playwright install-deps chromium
+        - name: Setup Task
+          uses: ./.github/actions/setup-task
 
         - name: Cache Hugging Face models
           uses: actions/cache@v4
