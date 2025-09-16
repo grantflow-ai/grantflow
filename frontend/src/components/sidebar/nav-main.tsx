@@ -95,6 +95,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 			const fetchApplications = async () => {
 				try {
 					const response = await listOrganizationApplications(selectedOrganizationId);
+					console.log("listorganizationapplications", response);
 					setRecentApplications(response.applications);
 				} catch {
 					toast.error("Failed to fetch recent applications.");

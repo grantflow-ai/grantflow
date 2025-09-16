@@ -12,7 +12,7 @@ import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
-import { OrganizationAvatar } from "./organization-avatar";
+
 
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
@@ -180,15 +180,6 @@ export function OrganizationSettingsGeneral({
 						</div>
 					)}
 				</>
-			);
-		}
-		if (organization?.name) {
-			return (
-				<OrganizationAvatar
-					className="size-full"
-					organizationId={organization.id}
-					organizationName={organization.name}
-				/>
 			);
 		}
 		return <Plus className="size-4 text-app-gray-700" />;
