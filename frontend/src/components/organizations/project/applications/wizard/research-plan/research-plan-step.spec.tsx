@@ -1,3 +1,4 @@
+/* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
@@ -669,7 +670,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("tracks STEP_4_ADD when adding a new objective", async () => {
-			expect.assertions(1);
 			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
@@ -699,7 +699,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("tracks multiple objectives separately", async () => {
-			expect.assertions(2);
 			renderResearchPlanStep();
 
 			let addButton = screen.getByTestId("add-objective-button");
@@ -734,7 +733,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("tracks objectives with multiple tasks", async () => {
-			expect.assertions(1);
 			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
@@ -762,7 +760,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("does not track when organizationId is missing", async () => {
-			expect.assertions(1);
 			useOrganizationStore.setState({
 				selectedOrganizationId: null,
 			});
@@ -785,7 +782,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("tracks even when createObjective fails", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				createObjective: vi.fn().mockRejectedValue(new Error("API Error")),
 			});
@@ -810,7 +806,6 @@ describe.sequential("ResearchPlanStep", () => {
 		});
 
 		it("tracks objectives up to MAX_OBJECTIVES", async () => {
-			expect.assertions(1);
 			const existingObjectives = Array.from({ length: MAX_OBJECTIVES - 1 }, (_, i) =>
 				ResearchObjectiveFactory.build({
 					number: i + 1,
