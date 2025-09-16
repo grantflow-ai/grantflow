@@ -228,12 +228,36 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 				</div>
 
 				<div className="space-y-2">
-					<h3
-						className="font-heading leading-snug text-base font-semibold text-app-black"
-						data-testid="words-characters-label"
-					>
-						Words/Characters count
-					</h3>
+					<div className="flex items-center gap-1.5">
+						<h3
+							className="font-heading leading-snug text-base font-semibold text-app-black"
+							data-testid="words-characters-label"
+						>
+							Words/Characters count
+						</h3>
+						<TooltipProvider delayDuration={300}>
+							<TooltipPrimitive.Root>
+								<TooltipTrigger asChild>
+									<div className="flex items-start justify-center">
+										<Image
+											alt="Info"
+											className="cursor-help"
+											height={12}
+											src="/icons/info-blue.svg"
+											width={12}
+										/>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent className="max-w-xs" side="top" sideOffset={5}>
+									<p>
+										We&apos;ve converted the application&apos;s length limit into words or
+										characters (whichever is most precise); you can adjust this now or later in the
+										editor.
+									</p>
+								</TooltipContent>
+							</TooltipPrimitive.Root>
+						</TooltipProvider>
+					</div>
 					<p className="text-app-gray-600 text-base font-normal leading-tight">
 						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
