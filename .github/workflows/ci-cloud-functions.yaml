@@ -16,6 +16,10 @@ on:
       - ".github/workflows/ci-cloud-functions.yaml"
       - "../../cloud/**"
 
+
+concurrency:
+    group: "${{ github.workflow }}-${{ github.ref }}"
+    cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
