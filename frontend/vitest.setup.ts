@@ -1,6 +1,27 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
+
+// Suppress unhandled promise rejections from intentional test failures
+const suppressedRejections = [
+	"Network error",
+	"Upload failed",
+];
+
+beforeAll(() => {
+	const originalHandler = process.listeners('unhandledRejection');
+	process.removeAllListeners('unhandledRejection');
+
+	process.on('unhandledRejection', (reason, promise) => {
+		const reasonString = String(reason);
+		const shouldSuppress = suppressedRejections.some(msg => reasonString.includes(msg));
+
+		if (!shouldSuppress) {
+			// Call original handler if not suppressed
+			originalHandler.forEach(handler => handler(reason, promise));
+		}
+	});
+});
 
 globalThis.matchMedia = vi.fn().mockImplementation((query: string) => ({
 	addEventListener: vi.fn(),

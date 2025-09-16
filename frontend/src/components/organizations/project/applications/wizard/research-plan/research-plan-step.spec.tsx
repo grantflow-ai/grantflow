@@ -73,8 +73,10 @@ vi.mock("./objective-form", () => {
 			const handleSave = () => {
 				// Call onSaveAction with the current form data
 				onSaveAction({
-					description: description ?? "Test objective description",
-					name: name ?? "Test objective name",
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
+					description: description || "Test objective description",
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
+					name: name || "Test objective name",
 
 					tasks: (tasks as Task[]).map((task: Task) => ({
 						description: task.description || "Test task description",
