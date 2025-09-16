@@ -121,7 +121,7 @@ export function InviteCollaboratorModal({
 		return permission === "COLLABORATOR" && !projectId && selectedProjects.length === 0;
 	};
 
-	const allProjectsSelected = projects.length > 0 && selectedProjects.length == projects.length;
+	const allProjectsSelected = projects.length > 0 && selectedProjects.length === projects.length;
 
 	const handleAllProjectsToggle = (checked: boolean) => {
 		if (checked) {
