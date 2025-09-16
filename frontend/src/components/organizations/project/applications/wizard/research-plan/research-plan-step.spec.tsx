@@ -783,6 +783,9 @@ describe.sequential("ResearchPlanStep", () => {
 
 			vi.mocked(segment.trackWizardEvent).mockClear();
 
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
 			addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 

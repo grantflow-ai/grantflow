@@ -661,6 +661,9 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, "https://first.com/doc");
 			await user.keyboard("{Enter}");
 
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
 			await user.clear(input);
 			await user.type(input, "https://second.com/paper");
 			await user.keyboard("{Enter}");
@@ -802,12 +805,12 @@ describe.sequential("UrlInput", () => {
 			render(<UrlInput parentId="template-123" />);
 
 			const input = screen.getByLabelText("URL");
-			await user.type(input, "http://[invalid]:3000");
+			await user.type(input, "http://:3000");
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
 				// addUrl is called with (url, parentId) not (parentId, url)
-				expect(mockAddUrl).toHaveBeenCalledWith("http://[invalid]:3000", "template-123");
+				expect(mockAddUrl).toHaveBeenCalledWith("http://:3000", "template-123");
 				// Analytics tracking should not happen for malformed URL due to URL parsing error
 				expectNoEventsTracked();
 			});
