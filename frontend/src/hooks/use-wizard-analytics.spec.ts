@@ -110,7 +110,6 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
 			});
 
-			// Wait for debounce period to pass (500ms + buffer)
 			await act(async () => {
 				await new Promise((resolve) => setTimeout(resolve, 600));
 			});

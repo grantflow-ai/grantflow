@@ -349,7 +349,6 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		async (validation: ValidationResult) => {
 			const errorDetails: string[] = [];
 			if (!validation.isValid) {
-				// Convert enum values to kebab-case for analytics
 				const reasonString = validation.reason.toLowerCase().replaceAll("_", "-");
 				errorDetails.push(reasonString);
 			}
@@ -391,7 +390,6 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	}, [router]);
 
 	const handleRightButtonClick = useCallback(async () => {
-		// Re-evaluate validation at click time to handle race conditions
 		const currentValidation = validateStepNext();
 		if (!currentValidation.isValid) {
 			await handleValidationError(currentValidation);

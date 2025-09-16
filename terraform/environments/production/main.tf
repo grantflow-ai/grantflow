@@ -35,10 +35,6 @@ module "secrets" {
   environment = var.environment
 }
 
-data "google_secret_manager_secret_version" "pubsub_webhook_token" {
-  secret = "PUBSUB_WEBHOOK_TOKEN"
-}
-
 module "iam" {
   source = "../../modules/iam"
 }
@@ -134,7 +130,6 @@ module "pubsub" {
 
   backend_service_account_email    = module.iam.backend_service_account_email
   email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
-  pubsub_webhook_token             = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
 }
 
 module "scheduler" {
@@ -145,7 +140,6 @@ module "scheduler" {
   scraper_url                             = module.cloud_run.scraper_url
   backend_url                             = module.cloud_run.backend_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-  pubsub_webhook_token                    = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
   timezone                                = "Europe/Berlin"
 }
 

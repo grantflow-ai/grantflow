@@ -270,7 +270,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("shows loading state during submission", async () => {
 		const user = userEvent.setup();
-		const mockOnInvite = vi.fn().mockReturnValue(new Promise(() => {})); // Never resolves
+		const mockOnInvite = vi.fn().mockReturnValue(new Promise(() => {}));
 		const mockOnClose = vi.fn();
 		const mockProjects = [{ id: "1", name: "Project 1" }];
 

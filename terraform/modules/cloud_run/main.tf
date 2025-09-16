@@ -139,16 +139,6 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name = "PUBSUB_WEBHOOK_TOKEN"
-        value_source {
-          secret_key_ref {
-            secret  = "PUBSUB_WEBHOOK_TOKEN"
-            version = "latest"
-          }
-        }
-      }
-
-      env {
         name = "RESEND_API_KEY"
         value_source {
           secret_key_ref {
@@ -197,6 +187,13 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_backend" {
   name     = google_cloud_run_v2_service.backend.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.pubsub_invoker.email}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_backend" {
+  location = var.region
+  name     = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.scheduler_invoker.email}"
 }
 
 resource "google_cloud_run_v2_service" "crawler" {

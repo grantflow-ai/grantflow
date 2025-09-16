@@ -71,7 +71,6 @@ vi.mock("./objective-form", () => {
 			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }] as Task[]);
 
 			const handleSave = () => {
-				// Call onSaveAction with the current form data
 				onSaveAction({
 					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
 					description: description || "Test objective description",
@@ -785,7 +784,6 @@ describe.sequential("ResearchPlanStep", () => {
 
 			vi.mocked(segment.trackWizardEvent).mockClear();
 
-			// Wait longer than the 500ms debounce time
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			addButton = screen.getByTestId("add-objective-button");
