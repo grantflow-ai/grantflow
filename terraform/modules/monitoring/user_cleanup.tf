@@ -45,10 +45,10 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
     display_name = "Entity cleanup webhook failures"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"backend\" AND jsonPayload.path=\"/webhooks/scheduler/entity-cleanup\""
+      filter          = "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"backend\" AND metric.type=\"logging.googleapis.com/user/entity_cleanup_operations\""
       duration        = "300s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = 0
+      comparison      = "COMPARISON_LT"
+      threshold_value = 1
 
       aggregations {
         alignment_period     = "300s"
