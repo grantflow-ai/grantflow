@@ -125,12 +125,6 @@ export function NavHeader() {
 							Prices
 						</LandingPageScrollButton>
 					)}
-					<NavLink
-						href="/grant-finder"
-						isActive={pathname === "/grant-finder"}
-						label="Grant Finder"
-						theme="dark"
-					/>
 					<NavLink href="/about" isActive={pathname === "/about"} label="About us" theme="dark" />
 					{isHomePage && (
 						<LandingPageScrollButton
@@ -217,15 +211,6 @@ export function NavHeader() {
 						Prices
 					</LandingPageScrollButton>
 				)}
-				<NavLink
-					href="/grant-finder"
-					isActive={pathname === "/grant-finder"}
-					label="Grant Finder"
-					onClick={() => {
-						setIsMobileMenuOpen(false);
-					}}
-					theme="dark"
-				/>
 				<NavLink
 					href="/about"
 					isActive={pathname === "/about"}
