@@ -213,6 +213,20 @@ describe("SortableSection", () => {
 		expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
 	});
 
+	it("renders tooltip with info icon next to Words/Characters count label", () => {
+		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const label = screen.getByTestId("words-characters-label");
+		expect(label).toBeInTheDocument();
+
+		const infoIcon = screen.getByTestId("image-Info");
+		expect(infoIcon).toBeInTheDocument();
+
+		expect(screen.getByTestId("words-characters-label").parentElement).toBeInTheDocument();
+	});
+
 	it("limits max count input to 7 digits", async () => {
 		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
 
