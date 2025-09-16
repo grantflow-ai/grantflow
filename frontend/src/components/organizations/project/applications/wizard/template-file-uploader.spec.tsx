@@ -498,7 +498,6 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("tracks multiple file uploads", async () => {
-			// Mock addFile to resolve with a small delay to avoid debouncing
 			mockAddFile.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(undefined), 10)));
 
 			useOrganizationStore.setState({
@@ -518,19 +517,16 @@ describe("TemplateFileUploader", () => {
 
 			const fileInput = screen.getByTestId("file-input");
 
-			// Upload files one by one to avoid debouncing
 			const file1 = new File(["content1"], "doc1.pdf", { type: "application/pdf" });
 			Object.defineProperty(file1, "size", { value: 1_024_000 });
 			await user.upload(fileInput, file1);
 
-			// Wait longer than the 500ms debounce time
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			const file2 = new File(["content2"], "doc2.pdf", { type: "application/pdf" });
 			Object.defineProperty(file2, "size", { value: 2_048_000 });
 			await user.upload(fileInput, file2);
 
-			// Wait longer than the 500ms debounce time
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			const file3 = new File(["content3"], "doc3.pdf", { type: "application/pdf" });
@@ -541,7 +537,6 @@ describe("TemplateFileUploader", () => {
 				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
 				expect(calls).toHaveLength(3);
 
-				// Check each file upload was tracked correctly
 				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
 				expect(calls[0][1]).toMatchObject({
 					fileName: "doc1.pdf",

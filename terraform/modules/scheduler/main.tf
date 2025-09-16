@@ -71,13 +71,12 @@ resource "google_cloud_scheduler_job" "grant_matcher" {
     http_method = "POST"
 
     headers = {
-      "Content-Type"  = "application/json"
-      "Authorization" = var.pubsub_webhook_token
+      "Content-Type" = "application/json"
     }
 
     oidc_token {
       service_account_email = var.scheduler_invoker_service_account_email
-      audience              = var.backend_url
+      audience              = "${var.backend_url}/webhooks/scheduler/grant-matcher"
     }
   }
 

@@ -48,8 +48,8 @@ async def entity_cleanup_test_client(
     )
 
     async with AsyncTestClient(app=app, raise_server_exceptions=False) as client:
-        with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-            mock_get_env.return_value = "test-webhook-token"
+        with patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = True
             yield client
 
 
@@ -145,7 +145,7 @@ async def test_entity_cleanup_webhook_no_expired_entities(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -166,7 +166,7 @@ async def test_entity_cleanup_webhook_expired_user_success(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -194,7 +194,7 @@ async def test_entity_cleanup_webhook_expired_user_firebase_not_found(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -225,7 +225,7 @@ async def test_entity_cleanup_webhook_expired_user_firebase_error(
     ):
         response = await entity_cleanup_test_client.post(
             "/webhooks/scheduler/entity-cleanup",
-            headers={"Authorization": "test-webhook-token"},
+            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == HTTP_201_CREATED
@@ -250,7 +250,7 @@ async def test_entity_cleanup_webhook_recently_deleted_user_not_processed(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -268,7 +268,7 @@ async def test_entity_cleanup_webhook_expired_organization_success(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -292,7 +292,7 @@ async def test_entity_cleanup_webhook_recently_deleted_organization_not_processe
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -311,7 +311,7 @@ async def test_entity_cleanup_webhook_mixed_entities(
 ) -> None:
     response = await entity_cleanup_test_client.post(
         "/webhooks/scheduler/entity-cleanup",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -333,7 +333,7 @@ async def test_entity_cleanup_webhook_database_error(
     ):
         response = await entity_cleanup_test_client.post(
             "/webhooks/scheduler/entity-cleanup",
-            headers={"Authorization": "test-webhook-token"},
+            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == HTTP_500_INTERNAL_SERVER_ERROR
@@ -363,7 +363,7 @@ async def test_entity_cleanup_webhook_custom_user_grace_period(
 
         response = await entity_cleanup_test_client.post(
             "/webhooks/scheduler/entity-cleanup",
-            headers={"Authorization": "test-webhook-token"},
+            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == HTTP_201_CREATED
@@ -402,7 +402,7 @@ async def test_entity_cleanup_webhook_custom_organization_grace_period(
 
         response = await entity_cleanup_test_client.post(
             "/webhooks/scheduler/entity-cleanup",
-            headers={"Authorization": "test-webhook-token"},
+            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == HTTP_201_CREATED

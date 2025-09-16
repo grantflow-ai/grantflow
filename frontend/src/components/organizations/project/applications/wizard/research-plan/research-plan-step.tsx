@@ -43,16 +43,12 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 			title: data.name,
 		};
 
-		// Track the objective addition attempt before calling createObjective so analytics is captured even if it fails
 		await trackContentAdd("objective", data.name);
 
 		try {
 			await useWizardStore.getState().createObjective(objective);
-		} catch {
-			// Silently handle error - form will still be hidden
-		}
+		} catch {}
 
-		// Always hide form after save attempt
 		setShowObjectiveForm(false);
 	};
 

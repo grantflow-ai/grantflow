@@ -221,7 +221,6 @@ async def _make_anthropic_request(
     client: Any,
     **kwargs: Any,
 ) -> Any:
-    """Make Anthropic API request with retry logic for transient errors."""
     return await client.messages.create(**kwargs)
 
 

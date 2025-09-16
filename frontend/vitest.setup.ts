@@ -2,7 +2,6 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
-// Suppress unhandled promise rejections from intentional test failures
 const suppressedRejections = ["Network error", "Upload failed"];
 
 beforeAll(() => {
@@ -14,7 +13,6 @@ beforeAll(() => {
 		const shouldSuppress = suppressedRejections.some((msg) => reasonString.includes(msg));
 
 		if (!shouldSuppress) {
-			// Call original handler if not suppressed
 			originalHandler.forEach((handler) => {
 				handler(reason, promise);
 			});
