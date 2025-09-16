@@ -122,6 +122,16 @@ vi.mock("./objective-form", () => {
 					<button data-testid="save-objective" onClick={handleSave} type="button">
 						Save Mock Objective
 					</button>
+					{/* Mock the floating Add Objective button from the real component */}
+					<div data-testid="floating-action-button">
+						<button
+							data-testid="add-objective-button"
+							onClick={handleSave}
+							type="button"
+						>
+							Add Objective
+						</button>
+					</div>
 				</div>
 			);
 		},
@@ -223,7 +233,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
+			expect(screen.getByTestId("new-objective-button")).toBeInTheDocument();
 			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
 		});
 
@@ -237,10 +247,10 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
-			expect(screen.queryByTestId("add-objective-button")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("new-objective-button")).not.toBeInTheDocument();
 			expect(screen.getByTestId("objective-form-mock")).toBeInTheDocument();
 		});
 
@@ -254,7 +264,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			expect(screen.getByTestId("objective-form-mock")).toBeInTheDocument();
@@ -270,42 +280,18 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
-			expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
+			expect(screen.getByTestId("new-objective-button")).toBeInTheDocument();
 		});
 	});
 
 	describe("Add Objective Button Behavior", () => {
-		it("shows 'Add First Objective' text when no objectives exist", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				research_objectives: [],
-			});
-
-			useApplicationStore.setState({ application });
-
-			renderResearchPlanStep();
-
-			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add First Objective");
-		});
-
-		it("shows 'Add Objective' text when objectives exist", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				research_objectives: [ResearchObjectiveFactory.build()],
-			});
-
-			useApplicationStore.setState({ application });
-
-			renderResearchPlanStep();
-
-			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add Objective");
-		});
-
 		it("enables add objective button when below maximum", () => {
 			const objectives = Array.from({ length: MAX_OBJECTIVES - 1 }, () => ResearchObjectiveFactory.build());
 			const application = ApplicationWithTemplateFactory.build({
@@ -316,7 +302,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			expect(screen.getByTestId("add-objective-button")).toBeEnabled();
+			expect(screen.getByTestId("new-objective-button")).toBeEnabled();
 		});
 
 		it("disables add objective button when at maximum objectives", () => {
@@ -329,7 +315,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			expect(screen.getByTestId("add-objective-button")).toBeDisabled();
+			expect(screen.getByTestId("new-objective-button")).toBeDisabled();
 		});
 
 		it("disables add objective button when exceeding maximum objectives", () => {
@@ -342,7 +328,78 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			expect(screen.getByTestId("add-objective-button")).toBeDisabled();
+			expect(screen.getByTestId("new-objective-button")).toBeDisabled();
+		});
+	});
+
+	describe("Floating Add Objective Button Behavior", () => {
+		it("shows floating Add Objective button when form is not visible", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: [],
+			});
+
+			useApplicationStore.setState({ application });
+
+			renderResearchPlanStep();
+
+			expect(screen.getByTestId("new-objective-button")).toBeInTheDocument();
+			expect(screen.queryByTestId("add-objective-button")).not.toBeInTheDocument();
+		});
+
+		it("shows floating Add Objective button when form is visible", async () => {
+			const user = userEvent.setup();
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: [],
+			});
+
+			useApplicationStore.setState({ application });
+
+			renderResearchPlanStep();
+
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
+
+			expect(screen.queryByTestId("new-objective-button")).not.toBeInTheDocument();
+			expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
+			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add Objective");
+		});
+
+		it("floating Add Objective button always renders when form is shown regardless of existing objectives", async () => {
+			const user = userEvent.setup();
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: [ResearchObjectiveFactory.build(), ResearchObjectiveFactory.build()],
+			});
+
+			useApplicationStore.setState({ application });
+
+			renderResearchPlanStep();
+
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
+
+			expect(screen.getByTestId("objective-form-mock")).toBeInTheDocument();
+			expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
+			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add Objective");
+		});
+
+		it("floating Add Objective button functionality works correctly", async () => {
+			const user = userEvent.setup();
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: [],
+			});
+
+			useApplicationStore.setState({ application });
+
+			renderResearchPlanStep();
+
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
+
+			const addObjectiveButton = screen.getByTestId("add-objective-button");
+			await user.click(addObjectiveButton);
+
+			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
+			expect(screen.getByTestId("new-objective-button")).toBeInTheDocument();
 		});
 	});
 
@@ -549,7 +606,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			expect(screen.getByTestId("objective-number")).toHaveTextContent("Objective 3");
@@ -569,7 +626,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			const saveButton = screen.getByTestId("save-objective");
@@ -608,7 +665,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			const saveButton = screen.getByTestId("save-objective");
@@ -637,7 +694,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
+			const addButton = screen.getByTestId("new-objective-button");
 			await user.click(addButton);
 
 			const saveButton = screen.getByTestId("save-objective");
@@ -669,8 +726,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add First Objective");
-			expect(screen.getByTestId("add-objective-button")).toBeEnabled();
+			expect(screen.getByTestId("new-objective-button")).toBeEnabled();
 		});
 
 		it("handles null application gracefully", () => {
