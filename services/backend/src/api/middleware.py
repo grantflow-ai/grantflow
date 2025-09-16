@@ -90,7 +90,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 raise NotAuthorizedException("Bearer token required for webhook authentication")
 
             token = auth_header.removeprefix("Bearer ").strip()
-            expected_audience = f"{connection.url.scheme}://{connection.url.netloc}{path}"
+            expected_audience = f"https://{connection.url.netloc}{path}"
 
             if verify_webhook_oidc_token(token, expected_audience):
                 return AuthenticationResult(user=None, auth=None)
