@@ -23,7 +23,7 @@ variable "domain" {
   type        = string
 }
 
-variable "crdt_server_domain" {
+variable "crdt_domain" {
   description = "Domain for the load balancer (e.g., staging-api.grantflow.ai)"
   type        = string
 }

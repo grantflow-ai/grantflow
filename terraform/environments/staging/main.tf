@@ -106,7 +106,7 @@ module "cloud_run" {
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
 
-  crdt_server_memory_limit = "2Gi"
+  crdt_memory_limit = "2Gi"
 
   discord_webhook_url   = var.discord_webhook_url
   enable_cpu_throttling = true
@@ -283,9 +283,9 @@ output "scraper_url" {
   value       = module.cloud_run.scraper_url
 }
 
-output "crdt_server_url" {
+output "crdt_url" {
   description = "CRDT server URL"
-  value       = module.cloud_run.crdt_server_url
+  value       = module.cloud_run.crdt_url
 }
 
 module "load_balancer" {
@@ -295,7 +295,7 @@ module "load_balancer" {
   environment        = var.environment
   backend_url        = module.cloud_run.backend_url
   domain             = "staging-api.grantflow.ai"
-  crdt_server_domain = "staging-crdt.grantflow.ai"
+  crdt_domain = "staging-crdt.grantflow.ai"
   enable_ssl         = true
   enable_cdn         = false
 }

@@ -30,4 +30,4 @@ jobs:
         uses: ./.github/workflows/build-and-deploy-service.yaml
         with:
             service: backend
-            timeout: 60
+            timeout: 30
