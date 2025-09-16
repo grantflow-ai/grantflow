@@ -1,10 +1,13 @@
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
@@ -856,5 +859,310 @@ describe.sequential("StepIndicator", () => {
 		render(<StepIndicator isLastStep={false} type="inactive" />);
 
 		expect(screen.getByTestId("step-inactive")).toBeInTheDocument();
+	});
+});
+
+describe("WizardFooter - Analytics Tracking", () => {
+	const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+	const user = userEvent.setup();
+
+	beforeEach(() => {
+		resetAnalyticsMocks();
+		vi.clearAllMocks();
+		useWizardStore.getState().reset();
+		useApplicationStore.getState().reset();
+
+		useOrganizationStore.setState({
+			selectedOrganizationId: "org-123",
+		});
+
+		const application = ApplicationFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				grant_sections: [
+					{ id: "section-1", order: 1, parent_id: null, title: "Section 1" },
+					{ id: "section-2", order: 2, parent_id: null, title: "Section 2" },
+				],
+				id: "template-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+			}),
+			id: "app-123",
+			project_id: "proj-123",
+			title: "Test Application Title",
+		});
+
+		useApplicationStore.setState({
+			application,
+			areAppOperationsInProgress: false,
+		});
+
+		useWizardStore.setState({
+			currentStep: WizardStep.APPLICATION_DETAILS,
+			validateStepNext: vi.fn(() => true),
+		});
+	});
+
+	describe("Navigation tracking", () => {
+		it("tracks STEP_1_NEXT when continuing from Application Details", async () => {
+			expect.assertions(1);
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_1_NEXT, {
+					applicationId: "app-123",
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					organizationId: "org-123",
+					projectId: "proj-123",
+				});
+			});
+		});
+
+		it("tracks STEP_3_NEXT when continuing from Knowledge Base", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_NEXT, {
+					currentStep: WizardStep.KNOWLEDGE_BASE,
+				});
+			});
+		});
+
+		it("tracks STEP_4_NEXT when continuing from Research Plan", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_PLAN,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_NEXT, {
+					currentStep: WizardStep.RESEARCH_PLAN,
+				});
+			});
+		});
+
+		it("tracks back navigation", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+			});
+
+			render(<WizardFooter />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			await waitFor(() => {
+				expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+			});
+		});
+	});
+
+	describe("Approval tracking", () => {
+		it("tracks STEP_2_APPROVE when approving application structure", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+			});
+
+			render(<WizardFooter />);
+
+			const approveButton = screen.getByTestId("continue-button");
+			await user.click(approveButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_2_APPROVE, {
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
+					sectionsCount: 2,
+					templateId: "template-123",
+				});
+			});
+		});
+	});
+
+	describe("Generation tracking", () => {
+		it("tracks STEP_5_GENERATE when generating application from Research Deep Dive", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				generateApplication: vi.fn().mockResolvedValue(true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					text: "",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const generateButton = screen.getByTestId("continue-button");
+			expect(generateButton).toHaveTextContent("Generate");
+
+			await user.click(generateButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_5_GENERATE, {
+					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+					generationType: "application",
+				});
+			});
+		});
+
+		it("does not track generation when application text already exists", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					text: "Existing application text",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toHaveTextContent("Next");
+
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				const events = vi.mocked(setupAnalyticsMocks().mockTrackWizardEvent).mock.calls;
+				const generationEvent = events.find(([event]) => event === WizardAnalyticsEvent.STEP_5_GENERATE);
+				expect(generationEvent).toBeUndefined();
+			});
+		});
+	});
+
+	describe("Error tracking", () => {
+		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				validateStepNext: vi.fn(() => false),
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					errorType: "validation",
+				});
+			});
+		});
+
+		it("tracks validation error details for missing title", async () => {
+			expect.assertions(1);
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					title: "",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["title-invalid"]),
+				});
+			});
+		});
+
+		it("tracks validation error for missing RAG sources", async () => {
+			expect.assertions(1);
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [],
+					},
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["rag-sources-missing"]),
+				});
+			});
+		});
+
+		it("tracks validation error for processing RAG sources", async () => {
+			expect.assertions(1);
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
+						],
+					},
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["rag-sources-processing"]),
+				});
+			});
+		});
+	});
+
+	describe("Context validation", () => {
+		it("does not track events when organizationId is missing", async () => {
+			expect.assertions(1);
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectNoEventsTracked();
+			});
+		});
 	});
 });

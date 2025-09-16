@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
+import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { ObjectiveForm, type ObjectiveFormData } from "./objective-form";
@@ -24,6 +25,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
 	const showResearchPlanInfoBanner = useWizardStore((state) => state.showResearchPlanInfoBanner);
 	const setShowResearchPlanInfoBanner = useWizardStore((state) => state.setShowResearchPlanInfoBanner);
+	const { trackContentAdd } = useWizardAnalytics();
 
 	const [showObjectiveForm, setShowObjectiveForm] = useState(false);
 
@@ -42,6 +44,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 		};
 
 		await useWizardStore.getState().createObjective(objective);
+		await trackContentAdd("objective", data.name);
 		setShowObjectiveForm(false);
 	};
 

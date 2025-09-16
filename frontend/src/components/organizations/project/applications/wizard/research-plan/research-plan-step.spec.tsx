@@ -1,3 +1,4 @@
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
 	ApplicationWithTemplateFactory,
@@ -6,13 +7,15 @@ import {
 	ResearchObjectiveFactory,
 } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 
@@ -613,6 +616,234 @@ describe.sequential("ResearchPlanStep", () => {
 
 			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
 			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("Analytics Tracking", () => {
+		const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+		const user = userEvent.setup();
+
+		beforeEach(() => {
+			resetAnalyticsMocks();
+			resetAllStores();
+			setupAuthenticatedTest();
+
+			useOrganizationStore.setState({
+				selectedOrganizationId: "org-123",
+			});
+
+			const application = ApplicationWithTemplateFactory.build({
+				id: "app-123",
+				project_id: "proj-123",
+				research_objectives: [],
+			});
+
+			useApplicationStore.setState({
+				application,
+			});
+
+			useWizardStore.setState({
+				createObjective: vi.fn().mockImplementation(async (objective) => {
+					const currentApp = useApplicationStore.getState().application;
+					if (currentApp) {
+						useApplicationStore.setState({
+							application: {
+								...currentApp,
+								research_objectives: [...(currentApp.research_objectives ?? []), objective],
+							},
+						});
+					}
+				}),
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_PLAN,
+				isAutofillLoading: { research_deep_dive: false, research_plan: false },
+				showResearchPlanInfoBanner: true,
+			});
+		});
+
+		afterEach(() => {
+			cleanup();
+			vi.clearAllMocks();
+		});
+
+		it("tracks STEP_4_ADD when adding a new objective", async () => {
+			expect.assertions(1);
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			const nameInput = screen.getByTestId("objective-name-input");
+			const descriptionInput = screen.getByTestId("objective-description-input");
+			const taskInput = screen.getByTestId("task-0-description");
+
+			await user.type(nameInput, "Test Objective");
+			await user.type(descriptionInput, "Test Description");
+			await user.type(taskInput, "Test Task");
+
+			const saveButton = screen.getByTestId("save-objective");
+			await user.click(saveButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					applicationId: "app-123",
+					contentType: "objective",
+					currentStep: WizardStep.RESEARCH_PLAN,
+					fieldName: "Test Objective",
+					organizationId: "org-123",
+					projectId: "proj-123",
+				});
+			});
+		});
+
+		it("tracks multiple objectives separately", async () => {
+			expect.assertions(2);
+			renderResearchPlanStep();
+
+			let addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "First Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "First Description");
+			await user.type(screen.getByTestId("task-0-description"), "First Task");
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "First Objective",
+				});
+			});
+
+			addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Second Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Second Description");
+			await user.type(screen.getByTestId("task-0-description"), "Second Task");
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Second Objective",
+				});
+			});
+		});
+
+		it("tracks objectives with multiple tasks", async () => {
+			expect.assertions(1);
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Multi-task Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task 1");
+
+			const addTaskButton = screen.getByTestId("add-task-button");
+			await user.click(addTaskButton);
+			await user.type(screen.getByTestId("task-1-description"), "Task 2");
+
+			await user.click(addTaskButton);
+			await user.type(screen.getByTestId("task-2-description"), "Task 3");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Multi-task Objective",
+				});
+			});
+		});
+
+		it("does not track when organizationId is missing", async () => {
+			expect.assertions(1);
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+			await user.type(screen.getByTestId("task-0-description"), "Test Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expect(useApplicationStore.getState().application?.research_objectives).toHaveLength(1);
+				expectNoEventsTracked();
+			});
+		});
+
+		it("tracks even when createObjective fails", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				createObjective: vi.fn().mockRejectedValue(new Error("API Error")),
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Failed Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Failed Objective",
+				});
+			});
+		});
+
+		it("tracks objectives up to MAX_OBJECTIVES", async () => {
+			expect.assertions(1);
+			const existingObjectives = Array.from({ length: MAX_OBJECTIVES - 1 }, (_, i) =>
+				ResearchObjectiveFactory.build({
+					number: i + 1,
+					title: `Existing Objective ${i + 1}`,
+				}),
+			);
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					research_objectives: existingObjectives,
+				},
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			expect(addButton).not.toBeDisabled();
+
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Final Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Final Objective",
+				});
+			});
 		});
 	});
 });

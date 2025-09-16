@@ -4,7 +4,10 @@ import Image from "next/image";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { WizardStep } from "@/constants";
+import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
 import { log } from "@/utils/logger/client";
@@ -37,6 +40,8 @@ export function TemplateFileUploader({ parentId, sourceType }: { parentId?: stri
 	const addFile = useApplicationStore((state) => state.addFile);
 	const addPendingUpload = useApplicationStore((state) => state.addPendingUpload);
 	const removePendingUpload = useApplicationStore((state) => state.removePendingUpload);
+	const currentStep = useWizardStore((state) => state.currentStep);
+	const { trackFileUpload } = useWizardAnalytics();
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
@@ -84,6 +89,9 @@ export function TemplateFileUploader({ parentId, sourceType }: { parentId?: stri
 					fileName: file.name,
 					parentId,
 				});
+
+				const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
+				await trackFileUpload(file.name, file.size, file.type, step);
 			} catch (error) {
 				removePendingUpload(fileWithId.id, sourceType);
 				log.error("[file-upload] addFile failed, removed from pending uploads", {
@@ -95,7 +103,7 @@ export function TemplateFileUploader({ parentId, sourceType }: { parentId?: stri
 				throw error;
 			}
 		},
-		[addFile, addPendingUpload, removePendingUpload, parentId, sourceType],
+		[addFile, addPendingUpload, removePendingUpload, parentId, sourceType, currentStep, trackFileUpload],
 	);
 
 	const handleFilesAdded = useCallback(
