@@ -17,6 +17,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import * as segment from "@/utils/segment";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 
@@ -43,7 +44,7 @@ vi.mock("./preview-loading", () => ({
 }));
 
 vi.mock("./objective-form", () => {
-	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	const React = require("react");
 
 	interface Task {
@@ -63,11 +64,10 @@ vi.mock("./objective-form", () => {
 				tasks: { description: string; id: string }[];
 			}) => void;
 		}) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			const [name, setName] = React.useState("");
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+
 			const [description, setDescription] = React.useState("");
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+
 			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }] as Task[]);
 
 			const handleSave = () => {
@@ -75,16 +75,15 @@ vi.mock("./objective-form", () => {
 				onSaveAction({
 					description: description ?? "Test objective description",
 					name: name ?? "Test objective name",
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+
 					tasks: (tasks as Task[]).map((task: Task) => ({
-						description: task.description ?? "Test task description",
+						description: task.description || "Test task description",
 						id: task.id,
 					})),
 				});
 			};
 
 			const addTask = () => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				setTasks((prev: Task[]) => [...prev, { description: "", id: `task-${prev.length}` }]);
 			};
 
@@ -557,7 +556,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 		it("calls createObjective with correctly formatted objective data", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -575,23 +574,25 @@ describe.sequential("ResearchPlanStep", () => {
 			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith({
-				description: "Test objective description",
-				number: 1,
-				research_tasks: [
-					{
-						description: "Test task description",
-						number: 1,
-						title: "",
-					},
-				],
-				title: "Test objective name",
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith({
+					description: "Test objective description",
+					number: 1,
+					research_tasks: [
+						{
+							description: "Test task description",
+							number: 1,
+							title: "",
+						},
+					],
+					title: "Test objective name",
+				});
 			});
 		});
 
 		it("calculates correct objective number based on existing objectives", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -612,16 +613,18 @@ describe.sequential("ResearchPlanStep", () => {
 			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith(
-				expect.objectContaining({
-					number: 4,
-				}),
-			);
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith(
+					expect.objectContaining({
+						number: 4,
+					}),
+				);
+			});
 		});
 
 		it("properly maps task data with correct numbering", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -639,17 +642,19 @@ describe.sequential("ResearchPlanStep", () => {
 			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith(
-				expect.objectContaining({
-					research_tasks: [
-						{
-							description: "Test task description",
-							number: 1,
-							title: "",
-						},
-					],
-				}),
-			);
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith(
+					expect.objectContaining({
+						research_tasks: [
+							{
+								description: "Test task description",
+								number: 1,
+								title: "",
+							},
+						],
+					}),
+				);
+			});
 		});
 	});
 
@@ -767,11 +772,16 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("save-objective"));
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(1);
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "First Objective",
 				});
 			});
+
+			vi.mocked(segment.trackWizardEvent).mockClear();
 
 			addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -782,7 +792,10 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("save-objective"));
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(1);
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "Second Objective",
 				});
