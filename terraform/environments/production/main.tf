@@ -35,6 +35,10 @@ module "secrets" {
   environment = var.environment
 }
 
+data "google_secret_manager_secret_version" "pubsub_webhook_token" {
+  secret = "PUBSUB_WEBHOOK_TOKEN"
+}
+
 module "iam" {
   source = "../../modules/iam"
 }
@@ -85,6 +89,7 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
+  rag_service_account_email     = module.iam.rag_service_account_email
   min_instances                 = var.min_instances
   max_instances                 = var.max_instances
   cpu_limit                     = var.cpu_limit
@@ -106,6 +111,7 @@ module "pubsub" {
   project_id                           = var.project_id
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
+  rag_service_account_email            = module.iam.rag_service_account_email
 
   message_retention_duration = "604800s"
   ack_deadline_seconds       = 600 # ~keep 10 minutes (maximum allowed by Google Cloud)
@@ -124,6 +130,11 @@ module "pubsub" {
   indexer_url = module.cloud_run.indexer_url
   crawler_url = module.cloud_run.crawler_url
   rag_url     = module.cloud_run.rag_url
+  backend_url = module.cloud_run.backend_url
+
+  backend_service_account_email    = module.iam.backend_service_account_email
+  email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
+  pubsub_webhook_token             = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
 }
 
 module "scheduler" {
@@ -132,9 +143,10 @@ module "scheduler" {
   region                                  = var.region
   environment                             = var.environment
   scraper_url                             = module.cloud_run.scraper_url
+  backend_url                             = module.cloud_run.backend_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-
-  timezone = "Europe/Berlin"
+  pubsub_webhook_token                    = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
+  timezone                                = "Europe/Berlin"
 }
 
 module "monitoring" {
