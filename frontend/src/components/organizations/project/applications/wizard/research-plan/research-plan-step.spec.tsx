@@ -122,13 +122,8 @@ vi.mock("./objective-form", () => {
 					<button data-testid="save-objective" onClick={handleSave} type="button">
 						Save Mock Objective
 					</button>
-					{/* Mock the floating Add Objective button from the real component */}
 					<div data-testid="floating-action-button">
-						<button
-							data-testid="add-objective-button"
-							onClick={handleSave}
-							type="button"
-						>
+						<button data-testid="add-objective-button" onClick={handleSave} type="button">
 							Add Objective
 						</button>
 					</div>
@@ -791,8 +786,8 @@ describe.sequential("ResearchPlanStep", () => {
 		it("tracks STEP_4_ADD when adding a new objective", async () => {
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			const nameInput = screen.getByTestId("objective-name-input");
 			const descriptionInput = screen.getByTestId("objective-description-input");
@@ -802,8 +797,8 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.type(descriptionInput, "Test Description");
 			await user.type(taskInput, "Test Task");
 
-			const saveButton = screen.getByTestId("save-objective");
-			await user.click(saveButton);
+			const addObjectiveButton = screen.getByTestId("add-objective-button");
+			await user.click(addObjectiveButton);
 
 			await waitFor(() => {
 				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
@@ -820,13 +815,13 @@ describe.sequential("ResearchPlanStep", () => {
 		it("tracks multiple objectives separately", async () => {
 			renderResearchPlanStep();
 
-			let addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			let newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "First Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "First Description");
 			await user.type(screen.getByTestId("task-0-description"), "First Task");
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
@@ -842,13 +837,13 @@ describe.sequential("ResearchPlanStep", () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
-			addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "Second Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Second Description");
 			await user.type(screen.getByTestId("task-0-description"), "Second Task");
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
@@ -864,8 +859,8 @@ describe.sequential("ResearchPlanStep", () => {
 		it("tracks objectives with multiple tasks", async () => {
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "Multi-task Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
@@ -878,7 +873,7 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(addTaskButton);
 			await user.type(screen.getByTestId("task-2-description"), "Task 3");
 
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
@@ -895,14 +890,14 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 			await user.type(screen.getByTestId("task-0-description"), "Test Task");
 
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				expect(useApplicationStore.getState().application?.research_objectives).toHaveLength(1);
@@ -917,14 +912,14 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
-			await user.click(addButton);
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "Failed Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
 			await user.type(screen.getByTestId("task-0-description"), "Task");
 
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
@@ -951,16 +946,16 @@ describe.sequential("ResearchPlanStep", () => {
 
 			renderResearchPlanStep();
 
-			const addButton = screen.getByTestId("add-objective-button");
-			expect(addButton).not.toBeDisabled();
+			const newObjectiveButton = screen.getByTestId("new-objective-button");
+			expect(newObjectiveButton).not.toBeDisabled();
 
-			await user.click(addButton);
+			await user.click(newObjectiveButton);
 
 			await user.type(screen.getByTestId("objective-name-input"), "Final Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
 			await user.type(screen.getByTestId("task-0-description"), "Task");
 
-			await user.click(screen.getByTestId("save-objective"));
+			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
 				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
