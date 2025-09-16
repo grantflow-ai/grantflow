@@ -167,23 +167,23 @@ class TestEmailNotificationWebhook:
         with (
             patch("services.backend.src.api.webhooks.email_sending.get_user") as mock_get_user,
             patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email") as mock_send_email,
+            patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token,
         ):
             mock_get_user.return_value = {"email": "webhook-owner@example.com", "display_name": "Owner User"}
             mock_send_email.return_value = None
+            mock_verify_token.return_value = True
 
-            with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-                mock_get_env.return_value = "test-webhook-token"
-                response = await test_client.post(
-                    "/webhooks/pubsub/email-notifications",
-                    json={
-                        "message": {
-                            "data": mock_pubsub_event.message.data,
-                            "message_id": mock_pubsub_event.message.message_id,
-                            "publish_time": mock_pubsub_event.message.publish_time,
-                        }
-                    },
-                    headers={"Authorization": "test-webhook-token"},
-                )
+            response = await test_client.post(
+                "/webhooks/pubsub/email-notifications",
+                json={
+                    "message": {
+                        "data": mock_pubsub_event.message.data,
+                        "message_id": mock_pubsub_event.message.message_id,
+                        "publish_time": mock_pubsub_event.message.publish_time,
+                    }
+                },
+                headers={"Authorization": "Bearer test-token"},
+            )
 
             assert response.status_code == 201
             result = response.json()
@@ -203,12 +203,12 @@ class TestEmailNotificationWebhook:
             }
         }
 
-        with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-            mock_get_env.return_value = "test-webhook-token"
+        with patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = True
             response = await test_client.post(
                 "/webhooks/pubsub/email-notifications",
                 json=event_data,
-                headers={"Authorization": "test-webhook-token"},
+                headers={"Authorization": "Bearer test-token"},
             )
 
         assert response.status_code == 400
@@ -222,12 +222,12 @@ class TestEmailNotificationWebhook:
             }
         }
 
-        with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-            mock_get_env.return_value = "test-webhook-token"
+        with patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = True
             response = await test_client.post(
                 "/webhooks/pubsub/email-notifications",
                 json=event_data,
-                headers={"Authorization": "test-webhook-token"},
+                headers={"Authorization": "Bearer test-token"},
             )
 
         assert response.status_code == 400
@@ -256,11 +256,11 @@ class TestEmailNotificationWebhook:
         with (
             patch("services.backend.src.api.webhooks.email_sending.get_user") as mock_get_user,
             patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email") as mock_send_email,
-            patch("services.backend.src.api.middleware.verify_pubsub_oidc_token") as mock_verify_token,
+            patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token,
         ):
             mock_get_user.return_value = {"email": "webhook-owner@example.com", "display_name": "Owner User"}
             mock_send_email.return_value = None
-            mock_verify_token.return_value = True  # Mock successful token verification
+            mock_verify_token.return_value = True
 
             response = await test_client.post(
                 "/webhooks/pubsub/email-notifications",
@@ -279,19 +279,17 @@ class TestEmailNotificationWebhook:
         assert result["status"] == "success"
         assert "1/1" in result["message"]
 
-        # Verify that OIDC token verification was called with correct parameters
         mock_verify_token.assert_called_once_with(
             "valid-oidc-jwt-token",
             "http://testserver.local/webhooks/pubsub/email-notifications",
-            "pubsub-invoker@grantflow.iam.gserviceaccount.com",
         )
 
     async def test_webhook_oidc_authentication_failure(
         self,
         test_client: TestingClientType,
     ) -> None:
-        with patch("services.backend.src.api.middleware.verify_pubsub_oidc_token") as mock_verify_token:
-            mock_verify_token.return_value = False  # Mock failed token verification
+        with patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = False
 
             response = await test_client.post(
                 "/webhooks/pubsub/email-notifications",
@@ -309,5 +307,4 @@ class TestEmailNotificationWebhook:
         mock_verify_token.assert_called_once_with(
             "invalid-oidc-jwt-token",
             "http://testserver.local/webhooks/pubsub/email-notifications",
-            "pubsub-invoker@grantflow.iam.gserviceaccount.com",
         )

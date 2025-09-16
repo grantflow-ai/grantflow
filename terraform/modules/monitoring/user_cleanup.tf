@@ -1,8 +1,4 @@
 
-data "google_secret_manager_secret_version" "webhook_auth_token" {
-  secret = "PUBSUB_WEBHOOK_TOKEN"
-}
-
 resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   name             = "entity-cleanup-daily"
   description      = "Daily cleanup of users and organizations with expired soft deletes"
@@ -16,14 +12,18 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
     http_method = "POST"
 
     headers = {
-      "Content-Type"  = "application/json"
-      "Authorization" = data.google_secret_manager_secret_version.webhook_auth_token.secret_data
+      "Content-Type" = "application/json"
     }
 
     body = base64encode(jsonencode({
       action    = "cleanup_expired_entities"
       timestamp = "scheduled"
     }))
+
+    oidc_token {
+      service_account_email = "scheduler-invoker@grantflow.iam.gserviceaccount.com"
+      audience              = "https://backend-zqiconmjeq-uc.a.run.app/webhooks/scheduler/entity-cleanup"
+    }
   }
 
   # ~keep The scheduler job continues below

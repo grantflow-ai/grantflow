@@ -43,8 +43,8 @@ async def grant_matcher_test_client(
     )
 
     async with AsyncTestClient(app=app, raise_server_exceptions=False) as client:
-        with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-            mock_get_env.return_value = "test-webhook-token"
+        with patch("services.backend.src.api.middleware.verify_webhook_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = True
             yield client
 
 
@@ -159,7 +159,7 @@ async def test_grant_matcher_webhook_with_matches(
 ) -> None:
     response = await grant_matcher_test_client.post(
         "/webhooks/scheduler/grant-matcher",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -184,7 +184,7 @@ async def test_grant_matcher_webhook_no_new_grants(
 ) -> None:
     response = await grant_matcher_test_client.post(
         "/webhooks/scheduler/grant-matcher",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -230,7 +230,7 @@ async def test_grant_matcher_webhook_old_grant(
 
     response = await grant_matcher_test_client.post(
         "/webhooks/scheduler/grant-matcher",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -262,7 +262,7 @@ async def test_grant_matcher_webhook_frequency_filtering(
 
     response = await grant_matcher_test_client.post(
         "/webhooks/scheduler/grant-matcher",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -284,7 +284,7 @@ async def test_grant_matcher_webhook_email_failure(
 
     response = await grant_matcher_test_client.post(
         "/webhooks/scheduler/grant-matcher",
-        headers={"Authorization": "test-webhook-token"},
+        headers={"Authorization": "Bearer test-token"},
     )
 
     assert response.status_code == HTTP_201_CREATED

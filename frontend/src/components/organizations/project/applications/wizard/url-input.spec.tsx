@@ -676,7 +676,6 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, "https://first.com/doc");
 			await user.keyboard("{Enter}");
 
-			// Wait longer than the 500ms debounce time
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			await user.clear(input);
@@ -687,14 +686,12 @@ describe.sequential("UrlInput", () => {
 				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
 				expect(calls).toHaveLength(2);
 
-				// Check first URL tracking
 				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
 				expect(calls[0][1]).toMatchObject({
 					domain: "first.com",
 					url: "https://first.com/doc",
 				});
 
-				// Check second URL tracking
 				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
 				expect(calls[1][1]).toMatchObject({
 					domain: "second.com",
@@ -824,9 +821,7 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				// addUrl is called with (url, parentId) not (parentId, url)
 				expect(mockAddUrl).toHaveBeenCalledWith("http://:3000", "template-123");
-				// Analytics tracking should not happen for malformed URL due to URL parsing error
 				expectNoEventsTracked();
 			});
 		});

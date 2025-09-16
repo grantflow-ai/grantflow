@@ -257,7 +257,6 @@ async def _create_junction_table_entry(
     entity_id: UUID,
     source_id: UUID,
 ) -> None:
-    """Create junction table entry with proper error handling."""
     try:
         if parent_type == "grant_application":
             await session.execute(

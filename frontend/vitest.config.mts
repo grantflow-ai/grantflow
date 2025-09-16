@@ -7,7 +7,6 @@ const suppressedErrors = [
 	"Error: Not implemented: HTMLFormElement.prototype.requestSubmit",
 	"(node:25503) [DEP0040]",
 	"React does not recognize the `whileInView`",
-	// Suppress intentional test error messages
 	"[file-upload] File validation failed",
 	"[file-upload] handleUploadFile failed - no parentId",
 	"[file-upload] addFile failed, removed from pending uploads",
