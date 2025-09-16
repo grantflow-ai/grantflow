@@ -1,9 +1,15 @@
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
+import { ApplicationFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useWizardStore } from "@/stores/wizard-store";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { TemplateFileUploader } from "./template-file-uploader";
 
 vi.mock("sonner", () => ({
@@ -393,6 +399,180 @@ describe("TemplateFileUploader", () => {
 			await waitFor(() => {
 				expect(mockAddPendingUpload).not.toHaveBeenCalled();
 				expect(mockAddFile).not.toHaveBeenCalled();
+			});
+		});
+	});
+
+	describe("Analytics tracking", () => {
+		const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+
+		beforeEach(() => {
+			resetAnalyticsMocks();
+			useOrganizationStore.setState({
+				selectedOrganizationId: "org-123",
+			});
+			const application = ApplicationFactory.build({
+				id: "app-123",
+				project_id: "proj-123",
+				title: "Test Application",
+			});
+			useApplicationStore.setState({
+				application,
+			});
+			mockAddFile.mockResolvedValue({
+				filename: "test.pdf",
+				sourceId: "source-123",
+				status: "CREATED",
+			});
+		});
+
+		it("tracks file upload for step 1 (Application Details)", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
+
+			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
+			Object.defineProperty(file, "size", { value: 1_024_000 });
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, file);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+					applicationId: "app-123",
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					fileName: "document.pdf",
+					fileSize: 1_024_000,
+					fileType: "application/pdf",
+					organizationId: "org-123",
+					projectId: "proj-123",
+				});
+			});
+		});
+
+		it("tracks file upload for step 3 (Knowledge Base)", async () => {
+			expect.assertions(1);
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="application" />);
+
+			const file = new File(["content"], "research.docx", {
+				type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			});
+			Object.defineProperty(file, "size", { value: 2_048_000 });
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, file);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_UPLOAD, {
+					currentStep: WizardStep.KNOWLEDGE_BASE,
+					fileName: "research.docx",
+					fileSize: 2_048_000,
+					fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+				});
+			});
+		});
+
+		it("tracks multiple file uploads", async () => {
+			expect.assertions(2);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
+
+			const files = [
+				new File(["content1"], "doc1.pdf", { type: "application/pdf" }),
+				new File(["content2"], "doc2.pdf", { type: "application/pdf" }),
+				new File(["content3"], "doc3.pdf", { type: "application/pdf" }),
+			];
+
+			files.forEach((file, index) => {
+				Object.defineProperty(file, "size", { value: 1_024_000 * (index + 1) });
+			});
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, files);
+
+			await waitFor(() => {
+				files.forEach((file, index) => {
+					expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+						fileName: file.name,
+						fileSize: 1_024_000 * (index + 1),
+						fileType: "application/pdf",
+					});
+				});
+			});
+		});
+
+		it("does not track file upload when file is too large", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
+
+			const file = new File(["content"], "huge.pdf", { type: "application/pdf" });
+			Object.defineProperty(file, "size", { value: 105 * 1024 * 1024 });
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, file);
+
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalled();
+				expectNoEventsTracked();
+			});
+		});
+
+		it("does not track file upload when organizationId is missing", async () => {
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
+
+			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
+			Object.defineProperty(file, "size", { value: 1_024_000 });
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, file);
+
+			await waitFor(() => {
+				expect(mockAddFile).toHaveBeenCalled();
+				expectNoEventsTracked();
+			});
+		});
+
+		it("does not track file upload when addFile fails", async () => {
+			mockAddFile.mockRejectedValue(new Error("Upload failed"));
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
+
+			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
+			Object.defineProperty(file, "size", { value: 1_024_000 });
+
+			const fileInput = screen.getByTestId("file-upload-input");
+			await user.upload(fileInput, file);
+
+			await waitFor(() => {
+				expect(mockRemovePendingUpload).toHaveBeenCalled();
+				expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+					fileName: "document.pdf",
+					fileSize: 1_024_000,
+					fileType: "application/pdf",
+				});
 			});
 		});
 	});
