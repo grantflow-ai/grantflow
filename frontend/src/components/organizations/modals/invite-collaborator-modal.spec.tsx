@@ -204,22 +204,29 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("calls onClose after successful invitation", async () => {
 		const user = userEvent.setup();
-		mockOnInvite.mockResolvedValue(undefined);
+		const mockOnInvite = vi.fn().mockResolvedValue(undefined);
+		const mockOnClose = vi.fn();
+		const mockProjects = [{ id: "1", name: "Project 1" }];
 
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={mockProjects}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
 
-		const emailInput = modalQueries.getByTestId("email-input");
-		await user.type(emailInput, "test@example.com");
+		await user.type(modalQueries.getByTestId("email-input"), "test@example.com");
 
-		const dropdown = modalQueries.getByTestId("permission-dropdown");
-		await user.click(dropdown);
-		await waitFor(() => {
-			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
-		});
-		await user.click(modalQueries.getByTestId("collaborator-option"));
+		await user.click(modalQueries.getByTestId("permission-dropdown"));
+		await user.click(await modalQueries.findByText("Collaborator"));
+
+		await user.click(modalQueries.getByTestId("project-access-dropdown"));
+		await user.click(await modalQueries.findByText("Project 1"));
 
 		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
@@ -263,26 +270,29 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("shows loading state during submission", async () => {
 		const user = userEvent.setup();
-		let resolvePromise: () => void;
-		const submitPromise = new Promise<void>((resolve) => {
-			resolvePromise = resolve;
-		});
-		mockOnInvite.mockReturnValue(submitPromise);
+		const mockOnInvite = vi.fn().mockReturnValue(new Promise(() => {})); // Never resolves
+		const mockOnClose = vi.fn();
+		const mockProjects = [{ id: "1", name: "Project 1" }];
 
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={mockProjects}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
 
-		const emailInput = modalQueries.getByTestId("email-input");
-		await user.type(emailInput, "test@example.com");
+		await user.type(modalQueries.getByTestId("email-input"), "test@example.com");
 
-		const dropdown = modalQueries.getByTestId("permission-dropdown");
-		await user.click(dropdown);
-		await waitFor(() => {
-			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
-		});
-		await user.click(modalQueries.getByTestId("collaborator-option"));
+		await user.click(modalQueries.getByTestId("permission-dropdown"));
+		await user.click(await modalQueries.findByText("Collaborator"));
+
+		await user.click(modalQueries.getByTestId("project-access-dropdown"));
+		await user.click(await modalQueries.findByText("Project 1"));
 
 		const sendButton = modalQueries.getByTestId("send-invitation-button");
 		await user.click(sendButton);
@@ -291,11 +301,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 			expect(sendButton).toBeDisabled();
 		});
 
-		resolvePromise!();
-
-		await waitFor(() => {
-			expect(mockOnClose).toHaveBeenCalled();
-		});
+		expect(modalQueries.getByText("Inviting...")).toBeInTheDocument();
 	});
 
 	it("handles invitation error gracefully", async () => {
