@@ -186,6 +186,7 @@ vi.mock("@/utils/segment", () => ({
 	analytics: { value: mockAnalyticsInstance },
 	analyticsIdentify: vi.fn().mockResolvedValue(undefined),
 	getAnalytics: vi.fn().mockReturnValue(mockAnalyticsInstance),
+	trackWizardEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 export {

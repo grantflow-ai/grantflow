@@ -10,6 +10,7 @@ import {
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -23,6 +24,8 @@ import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 vi.mock("@/actions/grant-applications", () => ({
 	updateApplication: vi.fn(),
 }));
+
+vi.mock("@/utils/segment");
 
 vi.mock("@/utils/logger", () => ({
 	log: {
@@ -51,24 +54,60 @@ vi.mock("./objective-form", () => ({
 			name: string;
 			tasks: { description: string; id: string }[];
 		}) => void;
-	}) => (
-		<div data-testid="objective-form-mock">
-			<span data-testid="objective-number">Objective {objectiveNumber}</span>
-			<button
-				data-testid="mock-save-objective"
-				onClick={() =>
-					onSaveAction({
-						description: "Test objective description",
-						name: "Test objective name",
-						tasks: [{ description: "Test task description", id: "test-id" }],
-					})
-				}
-				type="button"
-			>
-				Save Mock Objective
-			</button>
-		</div>
-	),
+	}) => {
+		const [name, setName] = React.useState("");
+		const [description, setDescription] = React.useState("");
+		const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }]);
+
+		const handleSave = () => {
+			onSaveAction({
+				description,
+				name,
+				tasks,
+			});
+		};
+
+		const addTask = () => {
+			setTasks((prev) => [...prev, { description: "", id: `task-${prev.length}` }]);
+		};
+
+		return (
+			<div data-testid="objective-form-mock">
+				<span data-testid="objective-number">Objective {objectiveNumber}</span>
+				<input
+					data-testid="objective-name-input"
+					onChange={(e) => setName(e.target.value)}
+					placeholder="Objective name"
+					value={name}
+				/>
+				<textarea
+					data-testid="objective-description-input"
+					onChange={(e) => setDescription(e.target.value)}
+					placeholder="Objective description"
+					value={description}
+				/>
+				{tasks.map((task, index) => (
+					<input
+						data-testid={`task-${index}-description`}
+						key={task.id}
+						onChange={(e) => {
+							const newTasks = [...tasks];
+							newTasks[index] = { ...task, description: e.target.value };
+							setTasks(newTasks);
+						}}
+						placeholder={`Task ${index + 1} description`}
+						value={task.description}
+					/>
+				))}
+				<button data-testid="add-task-button" onClick={addTask} type="button">
+					Add Task
+				</button>
+				<button data-testid="save-objective" onClick={handleSave} type="button">
+					Save Mock Objective
+				</button>
+			</div>
+		);
+	},
 }));
 
 function renderResearchPlanStep() {

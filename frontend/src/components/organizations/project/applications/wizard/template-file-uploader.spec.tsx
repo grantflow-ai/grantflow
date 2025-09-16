@@ -19,6 +19,8 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+vi.mock("@/utils/segment");
+
 vi.mock("@/components/app/buttons/app-button", () => ({
 	AppButton: vi.fn(({ children, leftIcon, ...props }) => (
 		<button {...props}>
@@ -437,7 +439,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -465,7 +467,7 @@ describe("TemplateFileUploader", () => {
 			});
 			Object.defineProperty(file, "size", { value: 2_048_000 });
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -495,7 +497,7 @@ describe("TemplateFileUploader", () => {
 				Object.defineProperty(file, "size", { value: 1_024_000 * (index + 1) });
 			});
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, files);
 
 			await waitFor(() => {
@@ -519,7 +521,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "huge.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 105 * 1024 * 1024 });
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -541,7 +543,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -561,7 +563,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-upload-input");
+			const fileInput = screen.getByTestId("file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
