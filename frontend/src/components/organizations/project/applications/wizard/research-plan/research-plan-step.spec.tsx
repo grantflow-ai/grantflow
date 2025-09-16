@@ -73,11 +73,11 @@ vi.mock("./objective-form", () => {
 			const handleSave = () => {
 				// Call onSaveAction with the current form data
 				onSaveAction({
-					description: description || "Test objective description",
-					name: name || "Test objective name",
+					description: description ?? "Test objective description",
+					name: name ?? "Test objective name",
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
 					tasks: (tasks as Task[]).map((task: Task) => ({
-						description: task.description || "Test task description",
+						description: task.description ?? "Test task description",
 						id: task.id,
 					})),
 				});
