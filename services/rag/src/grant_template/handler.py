@@ -455,7 +455,6 @@ async def grant_template_generation_pipeline_handler(
 
     async with session_maker() as session, session.begin():
         try:
-            # Prepare update values
             update_values = {
                 "granting_institution_id": UUID(extraction_result["organization_id"])
                 if extraction_result["organization_id"]
@@ -464,7 +463,6 @@ async def grant_template_generation_pipeline_handler(
                 "grant_sections": grant_sections,
             }
 
-            # Add CFP analysis data if available
             if cfp_analysis_result and cfp_analysis_result.get("cfp_analysis"):
                 update_values.update(
                     {
@@ -478,7 +476,6 @@ async def grant_template_generation_pipeline_handler(
                     template_id=str(grant_template_id),
                 )
 
-            # Single atomic update operation
             grant_template = await session.scalar(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template_id)

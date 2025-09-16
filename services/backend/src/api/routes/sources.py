@@ -151,7 +151,6 @@ async def handle_create_rag_source(
 
     async with session_maker() as session, session.begin():
         try:
-            # Check for existing source by URL (with proper handling for duplicates)
             if url:
                 rag_url_alias = aliased(RagUrl)
                 if rag_source := await session.scalar(
@@ -174,7 +173,6 @@ async def handle_create_rag_source(
                     logger.info("Soft-deleting failed rag source", source_id=rag_source.id, url=url)
                     rag_source.soft_delete()
 
-            # Create the RagSource
             source_id = await session.scalar(
                 insert(RagSource)
                 .values(
@@ -191,7 +189,6 @@ async def handle_create_rag_source(
 
             logger.info("Created rag source", source_id=source_id, parent_type=parent_type, entity_id=entity_id)
 
-            # Create the specific source type (RagUrl or RagFile)
             if url:
                 await session.execute(
                     insert(RagUrl)
@@ -231,7 +228,6 @@ async def handle_create_rag_source(
                 )
                 logger.info("Created rag file", source_id=source_id, filename=blob_name)
 
-            # Create the junction table entry - this is critical and must succeed
             await _create_junction_table_entry(session, parent_type, entity_id, source_id)
 
             logger.info(
@@ -252,7 +248,6 @@ async def handle_create_rag_source(
                 entity_id=entity_id,
                 error_type=type(e).__name__,
             )
-            # Don't call rollback explicitly - session.begin() context manager handles it
             raise DatabaseError("Error creating rag source", context=str(e)) from e
 
 

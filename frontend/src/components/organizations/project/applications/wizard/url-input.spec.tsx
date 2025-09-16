@@ -15,6 +15,7 @@ import * as validation from "@/utils/validation";
 import { UrlInput } from "./url-input";
 
 vi.mock("@/utils/validation");
+vi.mock("@/utils/segment");
 
 const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
