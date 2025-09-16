@@ -68,7 +68,7 @@ vi.mock("./objective-form", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			const [description, setDescription] = React.useState("");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-			const [tasks, setTasks] = React.useState<Task[]>([{ description: "", id: "task-0" }]);
+			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }] as Task[]);
 
 			const handleSave = () => {
 				// Call onSaveAction with the current form data
