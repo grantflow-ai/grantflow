@@ -45,24 +45,16 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Set image tag and environment
+            - name: Setup build configuration
               id: config
+              uses: ./.github/actions/setup-build-config
+
+            - name: Set additional frontend config
+              id: frontend_config
               run: |
-                  if [[ "${{ github.event_name }}" == "release" ]]; then
-                      echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-                  elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-                      echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-                  else
-                      echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
-                  fi
-                  
                   if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
-                      echo "environment=production" >> $GITHUB_OUTPUT
                       echo "apphosting_backend=production" >> $GITHUB_OUTPUT
                   else
-                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
-                      echo "environment=staging" >> $GITHUB_OUTPUT
                       echo "apphosting_backend=staging" >> $GITHUB_OUTPUT
                   fi
 
@@ -107,7 +99,7 @@ jobs:
             image_tag: ${{ steps.config.outputs.image_tag }}
             project_id: ${{ steps.config.outputs.project_id }}
             environment: ${{ steps.config.outputs.environment }}
-            apphosting_backend: ${{ steps.config.outputs.apphosting_backend }}
+            apphosting_backend: ${{ steps.frontend_config.outputs.apphosting_backend }}
 
     deploy:
         needs: build-and-push

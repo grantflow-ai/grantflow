@@ -35,7 +35,7 @@ outputs:
     value: ${{ steps.deploy.outputs.url }}
   revision:
     description: "Deployed revision name"
-    value: ${{ steps.get-revision.outputs.revision }}
+    value: ${{ steps.deploy.outputs.revision }}
 
 runs:
   using: "composite"
@@ -51,13 +51,7 @@ runs:
       with:
         project_id: ${{ inputs.project_id }}
 
-    - name: Debug gcloud
-      shell: bash
-      run: |
-        echo "PATH: $PATH"
-        which gcloud
-
-    - name: Deploy to Cloud Run
+    - name: Deploy to Cloud Run with health check
       id: deploy
       uses: google-github-actions/deploy-cloudrun@v2
       with:
@@ -65,7 +59,6 @@ runs:
         image: us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
         region: ${{ inputs.region }}
         project_id: ${{ inputs.project_id }}
-        no_traffic: true
         labels: |
           commit-sha=${{ github.sha }}
           deployed-by=github-actions
@@ -74,65 +67,31 @@ runs:
           DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
         flags: |
           --max-instances=1
-          --async
+          --timeout=600
           ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }}
 
-    - name: Get revision name
-      id: get-revision
+    - name: Wait for service readiness
       shell: bash
       run: |
-        # Get the latest revision name
-        REVISION=$(gcloud run revisions list \
-          --service=${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
-          --format='value(name)' \
-          --limit=1)
+        echo "Waiting for ${{ inputs.service }} to be ready..."
 
-        echo "revision=${REVISION}" >> $GITHUB_OUTPUT
+        # Wait up to 10 minutes for the service to be ready
+        for i in {1..60}; do
+          STATUS=$(gcloud run services describe ${{ inputs.service }} \
+            --region=${{ inputs.region }} \
+            --project=${{ inputs.project_id }} \
+            --format='value(status.conditions[0].status)')
 
-    - name: Health check
-      id: health
-      shell: bash
-      run: |
-        echo "Performing health check for ${{ inputs.service }}"...
+          if [ "$STATUS" = "True" ]; then
+            echo "✅ Service ${{ inputs.service }} is ready!"
+            break
+          fi
 
-        # Skip health check - deploy async and let Cloud Run handle it
-        echo "Deployment completed - async deployment, no health check wait"
-        echo "healthy=true" >> $GITHUB_OUTPUT
+          echo "Waiting for service readiness... ($i/60)"
+          sleep 10
+        done
 
-    - name: Route traffic
-      if: steps.health.outputs.healthy == 'true'
-      shell: bash
-      run: |
-        echo "Routing traffic to new revision..."
-
-        gcloud run services update-traffic ${{ inputs.service }} \
-          --to-latest \
-          --region ${{ inputs.region }} \
-          --project ${{ inputs.project_id }}
-
-        echo "✅ Traffic routed to ${{ inputs.service }} revision ${{ steps.get-revision.outputs.revision }}"
-
-    - name: Rollback on failure
-      if: failure() && steps.get-revision.outputs.revision != ''
-      shell: bash
-      run: |
-        echo "⚠️ Rolling back ${{ inputs.service }}"...
-
-        # Get the previous revision
-        PREVIOUS=$(gcloud run revisions list \
-          --service=${{ inputs.service }} \
-          --region=${{ inputs.region }} \
-          --project=${{ inputs.project_id }} \
-          --format='value(name)' \
-          --limit=2 | tail -1)
-
-        if [ -n "${PREVIOUS}" ]; then
-          gcloud run services update-traffic ${{ inputs.service }} \
-            --to-revisions=${PREVIOUS}=100 \
-            --region ${{ inputs.region }} \
-            --project ${{ inputs.project_id }}
-          
-          echo "Rolled back to revision: ${PREVIOUS}"
+        if [ "$STATUS" != "True" ]; then
+          echo "❌ Service failed to become ready within 10 minutes"
+          exit 1
         fi
