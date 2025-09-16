@@ -209,6 +209,60 @@ describe("Application Store", () => {
 		});
 	});
 
+	describe("softReset", () => {
+		it("should reset all state except the current application", () => {
+			const application = ApplicationFactory.build({ title: "Test App" });
+
+			useApplicationStore.setState({
+				application,
+				areAppOperationsInProgress: true,
+				pendingUploads: {
+					application: new Set([{ id: "file1", name: "test.pdf" } as any]),
+					template: new Set([{ id: "file2", name: "test2.pdf" } as any]),
+				},
+				ragJobState: {
+					isRestoring: true,
+					restoredJob: { id: "job-123" } as any,
+				},
+			});
+
+			const { softReset } = useApplicationStore.getState();
+			softReset();
+
+			const state = useApplicationStore.getState();
+
+			expect(state.application).toEqual(application);
+
+			expect(state.areAppOperationsInProgress).toBe(false);
+			expect(state.pendingUploads.application.size).toBe(0);
+			expect(state.pendingUploads.template.size).toBe(0);
+			expect(state.ragJobState.isRestoring).toBe(false);
+			expect(state.ragJobState.restoredJob).toBeNull();
+		});
+
+		it("should handle null application correctly", () => {
+			useApplicationStore.setState({
+				application: null,
+				areAppOperationsInProgress: true,
+				pendingUploads: {
+					application: new Set([{ id: "file1", name: "test.pdf" } as any]),
+					template: new Set([{ id: "file2", name: "test2.pdf" } as any]),
+				},
+			});
+
+			const { softReset } = useApplicationStore.getState();
+			softReset();
+
+			const state = useApplicationStore.getState();
+
+			expect(state.application).toBeNull();
+
+			expect(state.areAppOperationsInProgress).toBe(false);
+			expect(state.pendingUploads.application.size).toBe(0);
+			expect(state.pendingUploads.template.size).toBe(0);
+		});
+	});
+
 	describe.sequential("updateGrantSections", () => {
 		it("should update grant template sections", async () => {
 			useApplicationStore.getState().reset();

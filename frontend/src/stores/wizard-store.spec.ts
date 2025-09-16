@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 
-import { useWizardStore } from "./wizard-store";
+import { determineAppropriateStep, useWizardStore } from "./wizard-store";
 
 vi.mock("@/actions/grant-applications", () => ({
 	triggerAutofill: vi.fn(),
@@ -173,7 +173,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithShortTitle });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 			const applicationWithLongTitle = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
@@ -182,7 +182,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithLongTitle });
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 		});
 
 		it("should require RAG sources to exist for APPLICATION_DETAILS", () => {
@@ -196,7 +196,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 		});
 
 		it("should require RAG sources to be processed (FINISHED or FAILED) for APPLICATION_DETAILS", () => {
@@ -212,7 +212,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithCreatedSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 			const applicationWithIndexingSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -224,7 +224,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithIndexingSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 			const applicationWithFinishedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -236,7 +236,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithFinishedSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 			const applicationWithFailedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -248,7 +248,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithFailedSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -260,7 +260,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithMixedSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 		});
 
 		it("should handle edge cases for APPLICATION_DETAILS validation", () => {
@@ -271,7 +271,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutTemplate });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 			const applicationWithUndefinedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: undefined,
@@ -280,7 +280,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithUndefinedSources });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 		});
 
 		it("should require grant sections for APPLICATION_STRUCTURE", () => {
@@ -292,7 +292,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutSections });
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 			const applicationWithSections = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
@@ -300,7 +300,7 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithSections });
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 		});
 	});
 
@@ -414,7 +414,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithFormInputs });
 
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 		});
 
 		it("should fail RESEARCH_DEEP_DIVE validation with missing fields", () => {
@@ -436,7 +436,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithPartialInputs });
 
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 		});
 
 		it("should validate RESEARCH_PLAN step requires objectives with tasks", () => {
@@ -455,7 +455,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithObjectives });
 
-			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
 		});
 
 		it("should fail RESEARCH_PLAN validation with objectives but no tasks", () => {
@@ -474,7 +474,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithEmptyTasks });
 
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
 		});
 	});
 
@@ -847,6 +847,185 @@ describe.sequential("wizard store", () => {
 					autofill_type: "research_plan",
 				});
 			});
+		});
+	});
+
+	describe("determineAppropriateStep", () => {
+		it("should return null when application is null", () => {
+			useApplicationStore.setState({ application: null });
+			const result = determineAppropriateStep("any-id");
+			expect(result).toBeNull();
+		});
+
+		it("should return null when application ID doesn't match", () => {
+			const application = ApplicationWithTemplateFactory.build({ id: "different-id" });
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("requested-id");
+			expect(result).toBeNull();
+		});
+
+		it("should return GENERATE_AND_COMPLETE when application has text", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				id: "app-123",
+				text: "Some existing application text",
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
+		});
+
+		it("should return RESEARCH_DEEP_DIVE when form inputs are populated", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Background context filled",
+					hypothesis: "Hypothesis filled",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "Rationale filled",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
+				},
+				id: "app-123",
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
+		});
+
+		it("should return RESEARCH_PLAN when research objectives have tasks", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				id: "app-123",
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_PLAN);
+		});
+
+		it("should return KNOWLEDGE_BASE when application has rag sources", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
+		});
+
+		it("should return APPLICATION_STRUCTURE when grant template has sections", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [],
+				research_objectives: [],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
+		});
+
+		it("should return APPLICATION_DETAILS as fallback", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+				}),
+				id: "app-123",
+				rag_sources: [],
+				research_objectives: [],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+		});
+
+		it("should prioritize higher steps when multiple conditions are met", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Background context filled",
+					hypothesis: "Hypothesis filled",
+					impact: "Impact filled",
+					novelty_and_innovation: "Innovation filled",
+					preliminary_data: "Data filled",
+					rationale: "Rationale filled",
+					research_feasibility: "Feasibility filled",
+					scientific_infrastructure: "Infrastructure filled",
+					team_excellence: "Team filled",
+				},
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: "Application has text",
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
+		});
+
+		it("should handle empty research objectives array", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+				}),
+				id: "app-123",
+				rag_sources: [],
+				research_objectives: [],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+		});
+
+		it("should handle research objectives without tasks", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+				}),
+				id: "app-123",
+				rag_sources: [],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [],
+						title: "Objective 1",
+					},
+				],
+				text: undefined,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 	});
 });

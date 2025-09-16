@@ -27,13 +27,13 @@ import { ResearchPlanStep } from "./research-plan/research-plan-step";
 import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 interface WizardClientComponentProps {
-	application: API.RetrieveApplication.Http200.ResponseBody;
+	applicationId: API.RetrieveApplication.Http200.ResponseBody["id"];
 	organizationId: string;
 	projectId: string;
 }
 
 export function WizardClientComponent({
-	application: initialApplication,
+	applicationId: initialApplicationId,
 	organizationId,
 	projectId,
 }: WizardClientComponentProps) {
@@ -45,7 +45,7 @@ export function WizardClientComponent({
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
-		applicationId: initialApplication.id,
+		applicationId: initialApplicationId,
 		organizationId,
 		projectId,
 	});
@@ -81,27 +81,6 @@ export function WizardClientComponent({
 		});
 	}, [notifications, organizationId, projectId]);
 
-	useEffect(() => {
-		useApplicationStore.getState().reset();
-		useWizardStore.getState().reset();
-
-		useApplicationStore.setState({
-			application: initialApplication,
-			areAppOperationsInProgress: false,
-		});
-
-		const timeoutId = setTimeout(() => {
-			void useApplicationStore.getState().checkAndRestoreJobState();
-		}, 0);
-
-		return () => {
-			clearTimeout(timeoutId);
-			useWizardStore.getState().reset();
-			useApplicationStore.getState().clearRestoredJobState();
-			useApplicationStore.getState().reset();
-		};
-	}, [initialApplication]);
-
 	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
 		const { identifier, indexing_status } = notification.data;
 
@@ -123,7 +102,7 @@ export function WizardClientComponent({
 				case "autofill_completed": {
 					toast.success("Autofill completed successfully!");
 					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-					void getApplication(organizationId, projectId, initialApplication.id);
+					void getApplication(organizationId, projectId, initialApplicationId);
 
 					break;
 				}
@@ -149,7 +128,7 @@ export function WizardClientComponent({
 				}
 			}
 		},
-		[organizationId, projectId, initialApplication.id, getApplication],
+		[organizationId, projectId, initialApplicationId, getApplication],
 	);
 
 	useEffect(() => {
@@ -164,7 +143,7 @@ export function WizardClientComponent({
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
 		}
-		void getApplication(organizationId, projectId, initialApplication.id);
+		void getApplication(organizationId, projectId, initialApplicationId);
 	}, [
 		notifications,
 		handleSourceProcessingNotification,
@@ -172,7 +151,7 @@ export function WizardClientComponent({
 		getApplication,
 		organizationId,
 		projectId,
-		initialApplication.id,
+		initialApplicationId,
 	]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
@@ -212,20 +191,13 @@ export function WizardClientComponent({
 
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
-			void getApplication(organizationId, projectId, initialApplication.id);
+			void getApplication(organizationId, projectId, initialApplicationId);
 		}
 
 		if (event === "generation_error" || event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}
-	}, [
-		latestRagNotification,
-		setGeneratingTemplate,
-		getApplication,
-		organizationId,
-		projectId,
-		initialApplication.id,
-	]);
+	}, [latestRagNotification, setGeneratingTemplate, getApplication, organizationId, projectId, initialApplicationId]);
 
 	useEffect(() => {
 		if (isGeneratingTemplate && currentStep === WizardStep.APPLICATION_DETAILS) {
