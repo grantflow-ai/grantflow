@@ -30,4 +30,4 @@ jobs:
         uses: ./.github/workflows/build-and-deploy-service.yaml
         with:
             service: indexer
-            timeout: 30
+            timeout: 60
