@@ -966,6 +966,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				isGeneratingTemplate: false,
 				toPreviousStep: toPreviousStepSpy,
 			});
 
@@ -977,6 +978,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await waitFor(() => {
 				expect(toPreviousStepSpy).toHaveBeenCalled();
 				expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+				// Back navigation without errors should not track any analytics
+				expectNoEventsTracked();
 			});
 		});
 	});
@@ -1060,14 +1063,23 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Error tracking", () => {
 		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
+			// Start with valid state, then make it invalid during click
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: true,
+				reason: ApplicationDetailsValidationReason.VALID,
+			}));
+
 			useWizardStore.setState({
-				validateStepNext: vi.fn(() => ({
-					isValid: false,
-					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
-				})),
+				validateStepNext: validateStepNextSpy,
 			});
 
 			render(<WizardFooter />);
+
+			// Now change validation to fail before click
+			validateStepNextSpy.mockReturnValue({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+			});
 
 			const continueButton = screen.getByTestId("continue-button");
 			await user.click(continueButton);
@@ -1082,6 +1094,31 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error details for missing title", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.TITLE_INVALID,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1092,6 +1129,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
 			await user.click(continueButton);
 
 			await waitFor(() => {
@@ -1103,6 +1142,31 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error for missing RAG sources", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1116,6 +1180,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
 			await user.click(continueButton);
 
 			await waitFor(() => {
@@ -1127,6 +1193,31 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error for processing RAG sources", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1143,6 +1234,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
 			await user.click(continueButton);
 
 			await waitFor(() => {
