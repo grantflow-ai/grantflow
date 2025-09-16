@@ -39,7 +39,6 @@ class TestVerifyWebhookOIDCToken:
                 expected_audience="https://backend.example.com/webhooks/pubsub/email-notifications",
             )
 
-            # Any verified email from Google should work now
             assert result is True
 
     def test_email_not_verified_fails(self) -> None:

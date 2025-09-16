@@ -10,11 +10,22 @@ inputs:
 runs:
     using: "composite"
     steps:
-        - name: Setup Node.js workspace
-          uses: ./.github/actions/setup-node-workspace
+        - name: Install pnpm
+          uses: pnpm/action-setup@v4
           with:
-              package: frontend
-              node-version: "22"
+              package_json_file: frontend/package.json
+              run_install: false
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+              node-version: 22
+              cache: pnpm
+              cache-dependency-path: frontend/pnpm-lock.yaml
+
+        - name: Install Dependencies
+          shell: bash
+          run: cd frontend && pnpm install
 
         - name: Install Playwright browsers
           shell: bash

@@ -715,7 +715,7 @@ resource "google_cloud_run_v2_service" "scraper" {
 
 }
 
-resource "google_cloud_run_v2_service" "crdt_server" {
+resource "google_cloud_run_v2_service" "crdt" {
   name                = "crdt"
   location            = var.region
   deletion_protection = false
@@ -727,7 +727,7 @@ resource "google_cloud_run_v2_service" "crdt_server" {
       resources {
         limits = {
           cpu    = var.cpu_limit
-          memory = var.crdt_server_memory_limit != "" ? var.crdt_server_memory_limit : var.memory_limit
+          memory = var.crdt_memory_limit != "" ? var.crdt_memory_limit : var.memory_limit
         }
       }
 
@@ -797,9 +797,9 @@ resource "google_cloud_run_v2_service" "crdt_server" {
   }
 }
 
-resource "google_cloud_run_v2_service_iam_member" "crdt_server_public" {
+resource "google_cloud_run_v2_service_iam_member" "crdt_public" {
   location = var.region
-  name     = google_cloud_run_v2_service.crdt_server.name
+  name     = google_cloud_run_v2_service.crdt.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }

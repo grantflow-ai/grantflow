@@ -19,17 +19,14 @@ def verify_webhook_oidc_token(token: str, expected_audience: str) -> bool:
     try:
         request = google.auth.transport.requests.Request()  # type: ignore[no-untyped-call]
 
-        # Verify the token signature and audience
         claims = google.oauth2.id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
             token, request, audience=expected_audience
         )
 
-        # Ensure email is verified (all Google service accounts have verified emails)
         if not claims.get("email_verified", False):
             logger.warning("Token email not verified", email=claims.get("email"))
             return False
 
-        # Validate issuer is from Google
         expected_issuer = "https://accounts.google.com"
         if claims.get("iss") != expected_issuer:
             logger.warning("Token issuer mismatch", expected=expected_issuer, actual=claims.get("iss"))
