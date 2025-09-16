@@ -636,14 +636,11 @@ def mock_grant_sections() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def performance_context(request: pytest.FixtureRequest, logger: logging.Logger) -> Any:
-    """Performance test context fixture for performance-tagged tests."""
     from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed
 
-    # Extract test metadata from markers or use defaults
     execution_speed = TestExecutionSpeed.SMOKE
     domain = TestDomain.AI_EVALUATION
 
-    # Look for performance_test marker to get configuration
     for mark in request.node.iter_markers("performance_test"):
         if mark.kwargs:
             execution_speed = mark.kwargs.get("execution_speed", execution_speed)
