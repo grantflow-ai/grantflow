@@ -22,6 +22,8 @@ vi.mock("next/navigation", () => ({
 	}),
 }));
 
+vi.mock("@/utils/segment");
+
 describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	afterEach(() => {
 		cleanup();
