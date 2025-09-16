@@ -508,15 +508,15 @@ describe("TemplateFileUploader", () => {
 			Object.defineProperty(file1, "size", { value: 1_024_000 });
 			await user.upload(fileInput, file1);
 
-			// Wait a bit to avoid debouncing
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			const file2 = new File(["content2"], "doc2.pdf", { type: "application/pdf" });
 			Object.defineProperty(file2, "size", { value: 2_048_000 });
 			await user.upload(fileInput, file2);
 
-			// Wait a bit to avoid debouncing
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
 
 			const file3 = new File(["content3"], "doc3.pdf", { type: "application/pdf" });
 			Object.defineProperty(file3, "size", { value: 3_072_000 });

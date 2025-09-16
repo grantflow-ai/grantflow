@@ -391,8 +391,10 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	}, [router]);
 
 	const handleRightButtonClick = useCallback(async () => {
-		if (!validationResult.isValid) {
-			await handleValidationError(validationResult);
+		// Re-evaluate validation at click time to handle race conditions
+		const currentValidation = validateStepNext();
+		if (!currentValidation.isValid) {
+			await handleValidationError(currentValidation);
 			return;
 		}
 
@@ -416,12 +418,12 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		}
 	}, [
 		currentStep,
-		validationResult,
 		handleValidationError,
 		handleStructureStep,
 		handleDeepDiveStep,
 		handleCompleteStep,
 		trackNavigation,
+		validateStepNext,
 	]);
 
 	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled) {
