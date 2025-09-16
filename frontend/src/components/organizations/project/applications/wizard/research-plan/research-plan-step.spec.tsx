@@ -10,7 +10,6 @@ import {
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -43,72 +42,91 @@ vi.mock("./preview-loading", () => ({
 	PreviewLoadingComponent: () => <div data-testid="preview-loading-mock">PreviewLoading Mock</div>,
 }));
 
-vi.mock("./objective-form", () => ({
-	ObjectiveForm: ({
-		objectiveNumber,
-		onSaveAction,
-	}: {
-		objectiveNumber: number;
-		onSaveAction: (data: {
-			description: string;
-			name: string;
-			tasks: { description: string; id: string }[];
-		}) => void;
-	}) => {
-		const [name, setName] = React.useState("");
-		const [description, setDescription] = React.useState("");
-		const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }]);
+vi.mock("./objective-form", () => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+	const React = require("react");
 
-		const handleSave = () => {
-			onSaveAction({
-				description,
-				name,
-				tasks,
-			});
-		};
+	interface Task {
+		description: string;
+		id: string;
+	}
 
-		const addTask = () => {
-			setTasks((prev) => [...prev, { description: "", id: `task-${prev.length}` }]);
-		};
+	return {
+		ObjectiveForm: ({
+			objectiveNumber,
+			onSaveAction,
+		}: {
+			objectiveNumber: number;
+			onSaveAction: (data: {
+				description: string;
+				name: string;
+				tasks: { description: string; id: string }[];
+			}) => void;
+		}) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const [name, setName] = React.useState("");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const [description, setDescription] = React.useState("");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+			const [tasks, setTasks] = React.useState<Task[]>([{ description: "", id: "task-0" }]);
 
-		return (
-			<div data-testid="objective-form-mock">
-				<span data-testid="objective-number">Objective {objectiveNumber}</span>
-				<input
-					data-testid="objective-name-input"
-					onChange={(e) => setName(e.target.value)}
-					placeholder="Objective name"
-					value={name}
-				/>
-				<textarea
-					data-testid="objective-description-input"
-					onChange={(e) => setDescription(e.target.value)}
-					placeholder="Objective description"
-					value={description}
-				/>
-				{tasks.map((task, index) => (
+			const handleSave = () => {
+				// Call onSaveAction with the current form data
+				onSaveAction({
+					description: description || "Test objective description",
+					name: name || "Test objective name",
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+					tasks: (tasks as Task[]).map((task: Task) => ({
+						description: task.description || "Test task description",
+						id: task.id,
+					})),
+				});
+			};
+
+			const addTask = () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				setTasks((prev: Task[]) => [...prev, { description: "", id: `task-${prev.length}` }]);
+			};
+
+			return (
+				<div data-testid="objective-form-mock">
+					<span data-testid="objective-number">Objective {objectiveNumber}</span>
 					<input
-						data-testid={`task-${index}-description`}
-						key={task.id}
-						onChange={(e) => {
-							const newTasks = [...tasks];
-							newTasks[index] = { ...task, description: e.target.value };
-							setTasks(newTasks);
-						}}
-						placeholder={`Task ${index + 1} description`}
-						value={task.description}
+						data-testid="objective-name-input"
+						onChange={(e) => setName(e.target.value)}
+						placeholder="Objective name"
+						value={name}
 					/>
-				))}
-				<button data-testid="add-task-button" onClick={addTask} type="button">
-					Add Task
-				</button>
-				<button data-testid="save-objective" onClick={handleSave} type="button">
-					Save Mock Objective
-				</button>
-			</div>
-		);
-	},
-}));
+					<textarea
+						data-testid="objective-description-input"
+						onChange={(e) => setDescription(e.target.value)}
+						placeholder="Objective description"
+						value={description}
+					/>
+					{tasks.map((task: Task, index: number) => (
+						<input
+							data-testid={`task-${index}-description`}
+							key={task.id}
+							onChange={(e) => {
+								const newTasks = [...tasks];
+								newTasks[index] = { ...task, description: e.target.value };
+								setTasks(newTasks);
+							}}
+							placeholder={`Task ${index + 1} description`}
+							value={task.description}
+						/>
+					))}
+					<button data-testid="add-task-button" onClick={addTask} type="button">
+						Add Task
+					</button>
+					<button data-testid="save-objective" onClick={handleSave} type="button">
+						Save Mock Objective
+					</button>
+				</div>
+			);
+		},
+	};
+});
 
 function renderResearchPlanStep() {
 	const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
@@ -255,7 +273,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
@@ -554,7 +572,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(mockCreateObjective).toHaveBeenCalledWith({
@@ -591,7 +609,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(mockCreateObjective).toHaveBeenCalledWith(
@@ -618,7 +636,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(mockCreateObjective).toHaveBeenCalledWith(
