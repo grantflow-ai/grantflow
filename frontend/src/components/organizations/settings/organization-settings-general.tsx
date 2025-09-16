@@ -13,7 +13,6 @@ import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
 
-
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
 	userRole?: UserRole;
