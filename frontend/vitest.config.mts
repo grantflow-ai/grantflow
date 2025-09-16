@@ -7,6 +7,24 @@ const suppressedErrors = [
 	"Error: Not implemented: HTMLFormElement.prototype.requestSubmit",
 	"(node:25503) [DEP0040]",
 	"React does not recognize the `whileInView`",
+	// Suppress intentional test error messages
+	"[file-upload] File validation failed",
+	"[file-upload] handleUploadFile failed - no parentId",
+	"[file-upload] addFile failed, removed from pending uploads",
+	"[file-upload] One or more file uploads failed",
+	"Research objectives operation failed",
+	"Failed to parse URL for tracking",
+	"Skipping analytics - missing organizationId",
+	"waitlist-form: onSubmit",
+	"Failed to create project",
+	"Invalid operation: Cannot drop main section",
+	"create-application-button",
+	"Failed to accept invitation",
+	"No invitation token provided",
+	"Network error",
+	"Upload failed",
+	"Failed to parse URL",
+	"Invalid URL: not-a-valid-url",
 ];
 
 export default defineConfig({

@@ -1,3 +1,5 @@
+/* eslint-disable vitest/expect-expect */
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
 	ApplicationWithTemplateFactory,
@@ -6,19 +8,24 @@ import {
 	ResearchObjectiveFactory,
 } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import * as segment from "@/utils/segment";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 
 vi.mock("@/actions/grant-applications", () => ({
 	updateApplication: vi.fn(),
 }));
+
+vi.mock("@/utils/segment");
 
 vi.mock("@/utils/logger", () => ({
 	log: {
@@ -36,36 +43,91 @@ vi.mock("./preview-loading", () => ({
 	PreviewLoadingComponent: () => <div data-testid="preview-loading-mock">PreviewLoading Mock</div>,
 }));
 
-vi.mock("./objective-form", () => ({
-	ObjectiveForm: ({
-		objectiveNumber,
-		onSaveAction,
-	}: {
-		objectiveNumber: number;
-		onSaveAction: (data: {
-			description: string;
-			name: string;
-			tasks: { description: string; id: string }[];
-		}) => void;
-	}) => (
-		<div data-testid="objective-form-mock">
-			<span data-testid="objective-number">Objective {objectiveNumber}</span>
-			<button
-				data-testid="mock-save-objective"
-				onClick={() =>
-					onSaveAction({
-						description: "Test objective description",
-						name: "Test objective name",
-						tasks: [{ description: "Test task description", id: "test-id" }],
-					})
-				}
-				type="button"
-			>
-				Save Mock Objective
-			</button>
-		</div>
-	),
-}));
+vi.mock("./objective-form", () => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const React = require("react");
+
+	interface Task {
+		description: string;
+		id: string;
+	}
+
+	return {
+		ObjectiveForm: ({
+			objectiveNumber,
+			onSaveAction,
+		}: {
+			objectiveNumber: number;
+			onSaveAction: (data: {
+				description: string;
+				name: string;
+				tasks: { description: string; id: string }[];
+			}) => void;
+		}) => {
+			const [name, setName] = React.useState("");
+
+			const [description, setDescription] = React.useState("");
+
+			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }] as Task[]);
+
+			const handleSave = () => {
+				// Call onSaveAction with the current form data
+				onSaveAction({
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
+					description: description || "Test objective description",
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
+					name: name || "Test objective name",
+
+					tasks: (tasks as Task[]).map((task: Task) => ({
+						description: task.description || "Test task description",
+						id: task.id,
+					})),
+				});
+			};
+
+			const addTask = () => {
+				setTasks((prev: Task[]) => [...prev, { description: "", id: `task-${prev.length}` }]);
+			};
+
+			return (
+				<div data-testid="objective-form-mock">
+					<span data-testid="objective-number">Objective {objectiveNumber}</span>
+					<input
+						data-testid="objective-name-input"
+						onChange={(e) => setName(e.target.value)}
+						placeholder="Objective name"
+						value={name}
+					/>
+					<textarea
+						data-testid="objective-description-input"
+						onChange={(e) => setDescription(e.target.value)}
+						placeholder="Objective description"
+						value={description}
+					/>
+					{tasks.map((task: Task, index: number) => (
+						<input
+							data-testid={`task-${index}-description`}
+							key={task.id}
+							onChange={(e) => {
+								const newTasks = [...tasks];
+								newTasks[index] = { ...task, description: e.target.value };
+								setTasks(newTasks);
+							}}
+							placeholder={`Task ${index + 1} description`}
+							value={task.description}
+						/>
+					))}
+					<button data-testid="add-task-button" onClick={addTask} type="button">
+						Add Task
+					</button>
+					<button data-testid="save-objective" onClick={handleSave} type="button">
+						Save Mock Objective
+					</button>
+				</div>
+			);
+		},
+	};
+});
 
 function renderResearchPlanStep() {
 	const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
@@ -212,7 +274,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
 			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
@@ -496,7 +558,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 		it("calls createObjective with correctly formatted objective data", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -511,26 +573,28 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith({
-				description: "Test objective description",
-				number: 1,
-				research_tasks: [
-					{
-						description: "Test task description",
-						number: 1,
-						title: "",
-					},
-				],
-				title: "Test objective name",
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith({
+					description: "Test objective description",
+					number: 1,
+					research_tasks: [
+						{
+							description: "Test task description",
+							number: 1,
+							title: "",
+						},
+					],
+					title: "Test objective name",
+				});
 			});
 		});
 
 		it("calculates correct objective number based on existing objectives", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -548,19 +612,21 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith(
-				expect.objectContaining({
-					number: 4,
-				}),
-			);
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith(
+					expect.objectContaining({
+						number: 4,
+					}),
+				);
+			});
 		});
 
 		it("properly maps task data with correct numbering", async () => {
 			const user = userEvent.setup();
-			const mockCreateObjective = vi.fn();
+			const mockCreateObjective = vi.fn().mockResolvedValue(undefined);
 
 			useWizardStore.setState({ createObjective: mockCreateObjective });
 
@@ -575,20 +641,22 @@ describe.sequential("ResearchPlanStep", () => {
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
 
-			const saveButton = screen.getByTestId("mock-save-objective");
+			const saveButton = screen.getByTestId("save-objective");
 			await user.click(saveButton);
 
-			expect(mockCreateObjective).toHaveBeenCalledWith(
-				expect.objectContaining({
-					research_tasks: [
-						{
-							description: "Test task description",
-							number: 1,
-							title: "",
-						},
-					],
-				}),
-			);
+			await waitFor(() => {
+				expect(mockCreateObjective).toHaveBeenCalledWith(
+					expect.objectContaining({
+						research_tasks: [
+							{
+								description: "Test task description",
+								number: 1,
+								title: "",
+							},
+						],
+					}),
+				);
+			});
 		});
 	});
 
@@ -613,6 +681,239 @@ describe.sequential("ResearchPlanStep", () => {
 
 			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
 			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("Analytics Tracking", () => {
+		const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+		const user = userEvent.setup();
+
+		beforeEach(() => {
+			resetAnalyticsMocks();
+			resetAllStores();
+			setupAuthenticatedTest();
+
+			useOrganizationStore.setState({
+				selectedOrganizationId: "org-123",
+			});
+
+			const application = ApplicationWithTemplateFactory.build({
+				id: "app-123",
+				project_id: "proj-123",
+				research_objectives: [],
+			});
+
+			useApplicationStore.setState({
+				application,
+			});
+
+			useWizardStore.setState({
+				createObjective: vi.fn().mockImplementation(async (objective) => {
+					const currentApp = useApplicationStore.getState().application;
+					if (currentApp) {
+						useApplicationStore.setState({
+							application: {
+								...currentApp,
+								research_objectives: [...(currentApp.research_objectives ?? []), objective],
+							},
+						});
+					}
+				}),
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_PLAN,
+				isAutofillLoading: { research_deep_dive: false, research_plan: false },
+				showResearchPlanInfoBanner: true,
+			});
+		});
+
+		afterEach(() => {
+			cleanup();
+			vi.clearAllMocks();
+		});
+
+		it("tracks STEP_4_ADD when adding a new objective", async () => {
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			const nameInput = screen.getByTestId("objective-name-input");
+			const descriptionInput = screen.getByTestId("objective-description-input");
+			const taskInput = screen.getByTestId("task-0-description");
+
+			await user.type(nameInput, "Test Objective");
+			await user.type(descriptionInput, "Test Description");
+			await user.type(taskInput, "Test Task");
+
+			const saveButton = screen.getByTestId("save-objective");
+			await user.click(saveButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					applicationId: "app-123",
+					contentType: "objective",
+					currentStep: WizardStep.RESEARCH_PLAN,
+					fieldName: "Test Objective",
+					organizationId: "org-123",
+					projectId: "proj-123",
+				});
+			});
+		});
+
+		it("tracks multiple objectives separately", async () => {
+			renderResearchPlanStep();
+
+			let addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "First Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "First Description");
+			await user.type(screen.getByTestId("task-0-description"), "First Task");
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(1);
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][1]).toMatchObject({
+					contentType: "objective",
+					fieldName: "First Objective",
+				});
+			});
+
+			vi.mocked(segment.trackWizardEvent).mockClear();
+
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
+			addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Second Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Second Description");
+			await user.type(screen.getByTestId("task-0-description"), "Second Task");
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(1);
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][1]).toMatchObject({
+					contentType: "objective",
+					fieldName: "Second Objective",
+				});
+			});
+		});
+
+		it("tracks objectives with multiple tasks", async () => {
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Multi-task Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task 1");
+
+			const addTaskButton = screen.getByTestId("add-task-button");
+			await user.click(addTaskButton);
+			await user.type(screen.getByTestId("task-1-description"), "Task 2");
+
+			await user.click(addTaskButton);
+			await user.type(screen.getByTestId("task-2-description"), "Task 3");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Multi-task Objective",
+				});
+			});
+		});
+
+		it("does not track when organizationId is missing", async () => {
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+			await user.type(screen.getByTestId("task-0-description"), "Test Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expect(useApplicationStore.getState().application?.research_objectives).toHaveLength(1);
+				expectNoEventsTracked();
+			});
+		});
+
+		it("tracks even when createObjective fails", async () => {
+			useWizardStore.setState({
+				createObjective: vi.fn().mockRejectedValue(new Error("API Error")),
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Failed Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Failed Objective",
+				});
+			});
+		});
+
+		it("tracks objectives up to MAX_OBJECTIVES", async () => {
+			const existingObjectives = Array.from({ length: MAX_OBJECTIVES - 1 }, (_, i) =>
+				ResearchObjectiveFactory.build({
+					number: i + 1,
+					title: `Existing Objective ${i + 1}`,
+				}),
+			);
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					research_objectives: existingObjectives,
+				},
+			});
+
+			renderResearchPlanStep();
+
+			const addButton = screen.getByTestId("add-objective-button");
+			expect(addButton).not.toBeDisabled();
+
+			await user.click(addButton);
+
+			await user.type(screen.getByTestId("objective-name-input"), "Final Objective");
+			await user.type(screen.getByTestId("objective-description-input"), "Description");
+			await user.type(screen.getByTestId("task-0-description"), "Task");
+
+			await user.click(screen.getByTestId("save-objective"));
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+					contentType: "objective",
+					fieldName: "Final Objective",
+				});
+			});
 		});
 	});
 });
