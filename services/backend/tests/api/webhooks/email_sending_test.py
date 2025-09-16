@@ -281,7 +281,7 @@ class TestEmailNotificationWebhook:
 
         mock_verify_token.assert_called_once_with(
             "valid-oidc-jwt-token",
-            "http://testserver.local/webhooks/pubsub/email-notifications",
+            "https://testserver.local/webhooks/pubsub/email-notifications",
         )
 
     async def test_webhook_oidc_authentication_failure(
@@ -306,5 +306,5 @@ class TestEmailNotificationWebhook:
         assert response.status_code == 401
         mock_verify_token.assert_called_once_with(
             "invalid-oidc-jwt-token",
-            "http://testserver.local/webhooks/pubsub/email-notifications",
+            "https://testserver.local/webhooks/pubsub/email-notifications",
         )
