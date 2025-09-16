@@ -48,6 +48,11 @@ export function InviteCollaboratorModal({
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
+		if (isCOllaboratorAndNoprojectSelected()) {
+			toast.error("Please select at least one project for Collaborator role.");
+			return;
+		}
+
 		if (!(email && permission)) return;
 
 		setIsSubmitting(true);
@@ -111,6 +116,27 @@ export function InviteCollaboratorModal({
 		} else {
 			setEmailError(null);
 		}
+	};
+	const isCOllaboratorAndNoprojectSelected = () => {
+		return permission === "COLLABORATOR" && !projectId && selectedProjects.length === 0;
+	};
+
+	const allProjectsSelected = projects.length > 0 && selectedProjects.length === projects.length;
+
+	const selectAllProjects = () => {
+		setSelectedProjects(projects.map((p) => p.id));
+	};
+
+	const deselectAllProjects = () => {
+		setSelectedProjects([]);
+	};
+
+	const handleProjectToggle = (projectId: string) => {
+		setSelectedProjects((prevSelected) =>
+			prevSelected.includes(projectId)
+				? prevSelected.filter((id) => id !== projectId)
+				: [...prevSelected, projectId],
+		);
 	};
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
@@ -281,29 +307,65 @@ export function InviteCollaboratorModal({
 												</span>
 											</div>
 										</SelectTrigger>
-										<SelectContent
-											className={`border border-app-gray-200 bg-white scroll-box ${projects.length >= 6 ? "max-h-[266px] overflow-auto " : ""}`}
-										>
-											{projects.map((project) => (
-												<SelectItem
-													className=" group px-3 py-2 cursor-pointer text-app-black text-[14px]"
-													key={project.id}
-													onSelect={(e) => {
-														e.preventDefault();
+										<SelectContent className="border border-app-gray-200 bg-white">
+											<div
+												className={` ${projects.length >= 6 ? "h-[220px] overflow-y-auto" : ""} scroll-box`}
+											>
+												<div
+													className=" relative flex w-full items-center text-sm  select-none outline-hidden
+focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-pointer hover:bg-primary hover:text-white rounded-sm"
+													onClick={() => {
+														if (allProjectsSelected) {
+															deselectAllProjects();
+														} else {
+															selectAllProjects();
+														}
 													}}
-													value={project.id}
+													onKeyDown={(e) => {
+														if (e.key === "Enter" || e.key === " ") {
+															if (allProjectsSelected) {
+																deselectAllProjects();
+															} else {
+																selectAllProjects();
+															}
+														}
+													}}
+													role="button"
+													tabIndex={0}
 												>
-													<div className="flex gap-1 items-center">
-														<Checkbox
-															checked={selectedProjects.includes(project.id)}
-															className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state=checked]:text-primary"
-															id={project.id}
-														/>
+													<Checkbox
+														checked={allProjectsSelected}
+														className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state-checked]:text-primary group-hover:text-white group-hover:border-white"
+														id="all-projects"
+													/>
+													<label className="text-sm font-normal" htmlFor="all-projects">
+														All
+													</label>
+												</div>
+												{projects.map((project) => (
+													<SelectItem
+														className=" group px-3 py-2 cursor-pointer text-app-black text-[14px]"
+														key={project.id}
+														onClick={(e) => {
+															e.preventDefault();
+															handleProjectToggle(project.id);
+														}}
+														value={project.id}
+													>
+														<div className="flex gap-1 items-center">
+															<Checkbox
+																checked={selectedProjects.includes(project.id)}
+																className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state=checked]:text-primary"
+																id={project.id}
+															/>
 
-														<label htmlFor={project.id}>{project.name}</label>
-													</div>
-												</SelectItem>
-											))}
+															<label className="text-sm font-normal" htmlFor={project.id}>
+																{project.name}
+															</label>
+														</div>
+													</SelectItem>
+												))}
+											</div>
 										</SelectContent>
 									</Select>
 								</div>
