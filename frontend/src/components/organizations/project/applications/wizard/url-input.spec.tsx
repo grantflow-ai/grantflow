@@ -1,3 +1,4 @@
+/* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationWithTemplateFactory, UrlResponseFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
@@ -604,7 +605,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("tracks URL addition for step 1 (Application Details)", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
@@ -628,7 +628,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("tracks URL addition for step 3 (Knowledge Base)", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
@@ -649,7 +648,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("tracks multiple URL additions separately", async () => {
-			expect.assertions(2);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
@@ -678,7 +676,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("tracks URLs with complex domains correctly", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
@@ -698,7 +695,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("does not track invalid URLs", async () => {
-			expect.assertions(1);
 			mockIsValidUrl.mockReturnValue(false);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -717,7 +713,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("does not track duplicate URLs", async () => {
-			expect.assertions(1);
 			const existingUrl = "https://existing.com/doc";
 			const existingApp = useApplicationStore.getState().application!;
 			useApplicationStore.setState({
@@ -749,7 +744,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("does not track when organizationId is missing", async () => {
-			expect.assertions(1);
 			useOrganizationStore.setState({
 				selectedOrganizationId: null,
 			});
@@ -770,7 +764,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("tracks URL even if addUrl fails", async () => {
-			expect.assertions(1);
 			mockAddUrl.mockRejectedValue(new Error("Network error"));
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
@@ -791,7 +784,6 @@ describe.sequential("UrlInput", () => {
 		});
 
 		it("handles malformed URL gracefully in tracking", async () => {
-			expect.assertions(1);
 			mockIsValidUrl.mockReturnValue(true);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,

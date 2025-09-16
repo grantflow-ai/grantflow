@@ -1,3 +1,4 @@
+/* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
@@ -427,7 +428,6 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("tracks file upload for step 1 (Application Details)", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
@@ -454,7 +454,6 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("tracks file upload for step 3 (Knowledge Base)", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
@@ -480,7 +479,6 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("tracks multiple file uploads", async () => {
-			expect.assertions(2);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});

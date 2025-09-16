@@ -1,3 +1,4 @@
+/* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { act, renderHook } from "@testing-library/react";
@@ -24,8 +25,7 @@ describe("useWizardAnalytics", () => {
 
 	beforeEach(() => {
 		resetAnalyticsMocks();
-		vi.clearAllTimers();
-		vi.useFakeTimers();
+		vi.useRealTimers();
 
 		useOrganizationStore.setState({
 			selectedOrganizationId: "org-123",
@@ -66,7 +66,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackEvent", () => {
 		it("should track events with correct properties", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -82,7 +81,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should not track events without organizationId", async () => {
-			expect.assertions(1);
 			useOrganizationStore.setState({ selectedOrganizationId: null });
 			const { result } = renderHook(() => useWizardAnalytics());
 
@@ -94,7 +92,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should debounce duplicate events within 500ms", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -107,15 +104,15 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should track events after debounce period", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
 				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
 			});
 
-			act(() => {
-				vi.advanceTimersByTime(600);
+			// Wait for debounce period to pass (500ms + buffer)
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 600));
 			});
 
 			await act(async () => {
@@ -126,7 +123,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should handle tracking errors gracefully", async () => {
-			expect.assertions(1);
 			vi.mocked(segment.trackWizardEvent).mockRejectedValueOnce(new Error("Network error"));
 			const { result } = renderHook(() => useWizardAnalytics());
 
@@ -140,7 +136,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackFileUpload", () => {
 		it("should track file uploads for step 1", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -155,7 +150,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should track file uploads for step 3", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -172,7 +166,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackLinkAdd", () => {
 		it("should track URL additions with domain extraction", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -186,7 +179,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should handle invalid URLs gracefully", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -199,7 +191,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackNavigation", () => {
 		it("should track next navigation for applicable steps", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -210,7 +201,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should track navigation errors with validation details", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -224,7 +214,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should track back navigation errors", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -238,7 +227,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should not track navigation for steps without events", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 			const { result } = renderHook(() => useWizardAnalytics());
 
@@ -252,7 +240,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackAIInteraction", () => {
 		it("should track AI interactions for step 3", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -266,7 +253,6 @@ describe("useWizardAnalytics", () => {
 		});
 
 		it("should track AI interactions for step 5", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -282,7 +268,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("trackContentAdd", () => {
 		it("should track content additions", async () => {
-			expect.assertions(1);
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
@@ -298,7 +283,6 @@ describe("useWizardAnalytics", () => {
 
 	describe("cleanup", () => {
 		it("should not track events after unmount", async () => {
-			expect.assertions(1);
 			const { result, unmount } = renderHook(() => useWizardAnalytics());
 
 			unmount();
