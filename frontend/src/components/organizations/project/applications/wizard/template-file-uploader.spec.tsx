@@ -11,6 +11,8 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import * as segment from "@/utils/segment";
+
 import { TemplateFileUploader } from "./template-file-uploader";
 
 vi.mock("sonner", () => ({
@@ -501,8 +503,13 @@ describe("TemplateFileUploader", () => {
 			await user.upload(fileInput, files);
 
 			await waitFor(() => {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(3);
+
+				// Check each file upload was tracked correctly
 				files.forEach((file, index) => {
-					expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+					expect(calls[index][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+					expect(calls[index][1]).toMatchObject({
 						fileName: file.name,
 						fileSize: 1_024_000 * (index + 1),
 						fileType: "application/pdf",

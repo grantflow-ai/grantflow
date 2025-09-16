@@ -82,6 +82,10 @@ export function TemplateFileUploader({ parentId, sourceType }: { parentId?: stri
 				parentId,
 			});
 
+			// Track file upload attempt before calling addFile so analytics is captured even if it fails
+			const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
+			await trackFileUpload(file.name, file.size, file.type, step);
+
 			try {
 				await addFile(fileWithId, parentId);
 				log.info("[file-upload] addFile completed successfully", {
@@ -89,9 +93,6 @@ export function TemplateFileUploader({ parentId, sourceType }: { parentId?: stri
 					fileName: file.name,
 					parentId,
 				});
-
-				const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
-				await trackFileUpload(file.name, file.size, file.type, step);
 			} catch (error) {
 				removePendingUpload(fileWithId.id, sourceType);
 				log.error("[file-upload] addFile failed, removed from pending uploads", {
