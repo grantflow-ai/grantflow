@@ -1,14 +1,28 @@
-import { UrlResponseFactory } from "::testing/factories";
+/* eslint-disable vitest/expect-expect */
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
+import {
+	ApplicationWithTemplateFactory,
+	GetOrganizationResponseFactory,
+	ListOrganizationsResponseFactory,
+	UrlResponseFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useWizardStore } from "@/stores/wizard-store";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import * as segment from "@/utils/segment";
 import * as validation from "@/utils/validation";
 
 import { UrlInput } from "./url-input";
 
 vi.mock("@/utils/validation");
+vi.mock("@/utils/segment");
 
 const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
@@ -19,7 +33,16 @@ describe.sequential("UrlInput", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		resetAllStores();
+		setupAuthenticatedTest();
 		mockIsValidUrl.mockReturnValue(true);
+
+		const organization = GetOrganizationResponseFactory.build();
+		const organizations = ListOrganizationsResponseFactory.build();
+		useOrganizationStore.setState({
+			organization,
+			organizations,
+			selectedOrganizationId: organization.id,
+		});
 
 		useApplicationStore.setState({
 			addUrl: mockAddUrl,
@@ -566,6 +589,246 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			expect(mockAddUrl).toHaveBeenCalled();
+		});
+	});
+
+	describe("Analytics Tracking", () => {
+		const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+		const user = userEvent.setup();
+
+		beforeEach(() => {
+			resetAnalyticsMocks();
+			vi.clearAllMocks();
+			mockIsValidUrl.mockReturnValue(true);
+
+			useOrganizationStore.setState({
+				selectedOrganizationId: "org-123",
+			});
+
+			const application = ApplicationWithTemplateFactory.build({
+				id: "app-123",
+				project_id: "proj-123",
+			});
+			application.grant_template = {
+				...application.grant_template!,
+				id: "template-123",
+				rag_sources: [],
+			};
+
+			useApplicationStore.setState({
+				addUrl: mockAddUrl.mockResolvedValue(UrlResponseFactory.build()),
+				application,
+			});
+		});
+
+		it("tracks URL addition for step 1 (Application Details)", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "https://example.com/research-paper");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_1_LINK, {
+					applicationId: "app-123",
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					domain: "example.com",
+					organizationId: "org-123",
+					projectId: "proj-123",
+					url: "https://example.com/research-paper",
+				});
+			});
+		});
+
+		it("tracks URL addition for step 3 (Knowledge Base)", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<UrlInput parentId="app-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "https://research.org/publications/paper.pdf");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
+					currentStep: WizardStep.KNOWLEDGE_BASE,
+					domain: "research.org",
+					url: "https://research.org/publications/paper.pdf",
+				});
+			});
+		});
+
+		it("tracks multiple URL additions separately", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+
+			await user.type(input, "https://first.com/doc");
+			await user.keyboard("{Enter}");
+
+			// Wait longer than the 500ms debounce time
+			await new Promise((resolve) => setTimeout(resolve, 600));
+
+			await user.clear(input);
+			await user.type(input, "https://second.com/paper");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				expect(calls).toHaveLength(2);
+
+				// Check first URL tracking
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[0][1]).toMatchObject({
+					domain: "first.com",
+					url: "https://first.com/doc",
+				});
+
+				// Check second URL tracking
+				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[1][1]).toMatchObject({
+					domain: "second.com",
+					url: "https://second.com/paper",
+				});
+			});
+		});
+
+		it("tracks URLs with complex domains correctly", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<UrlInput parentId="app-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "https://sub.domain.example.co.uk/path/to/resource?query=param#hash");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
+					domain: "sub.domain.example.co.uk",
+					url: "https://sub.domain.example.co.uk/path/to/resource?query=param#hash",
+				});
+			});
+		});
+
+		it("does not track invalid URLs", async () => {
+			mockIsValidUrl.mockReturnValue(false);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "not-a-valid-url");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expect(mockAddUrl).not.toHaveBeenCalled();
+				expectNoEventsTracked();
+			});
+		});
+
+		it("does not track duplicate URLs", async () => {
+			const existingUrl = "https://existing.com/doc";
+			const existingApp = useApplicationStore.getState().application!;
+			useApplicationStore.setState({
+				application: {
+					...existingApp,
+					grant_template: {
+						...existingApp.grant_template!,
+						id: "template-123",
+						rag_sources: [{ filename: undefined, sourceId: "1", status: "FINISHED", url: existingUrl }],
+					},
+				},
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, existingUrl);
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expect(screen.getByText("URL already exists")).toBeInTheDocument();
+				expect(mockAddUrl).not.toHaveBeenCalled();
+				expectNoEventsTracked();
+			});
+		});
+
+		it("does not track when organizationId is missing", async () => {
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "https://example.com/doc");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expect(mockAddUrl).toHaveBeenCalled();
+				expectNoEventsTracked();
+			});
+		});
+
+		it("tracks URL even if addUrl fails", async () => {
+			mockAddUrl.mockRejectedValue(new Error("Network error"));
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<UrlInput parentId="app-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "https://example.com/doc");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
+					domain: "example.com",
+					url: "https://example.com/doc",
+				});
+			});
+		});
+
+		it("handles malformed URL gracefully in tracking", async () => {
+			mockIsValidUrl.mockReturnValue(true);
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+			});
+
+			render(<UrlInput parentId="template-123" />);
+
+			const input = screen.getByLabelText("URL");
+			await user.type(input, "http://:3000");
+			await user.keyboard("{Enter}");
+
+			await waitFor(() => {
+				// addUrl is called with (url, parentId) not (parentId, url)
+				expect(mockAddUrl).toHaveBeenCalledWith("http://:3000", "template-123");
+				// Analytics tracking should not happen for malformed URL due to URL parsing error
+				expectNoEventsTracked();
+			});
 		});
 	});
 });

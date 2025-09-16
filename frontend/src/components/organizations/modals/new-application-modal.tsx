@@ -11,7 +11,10 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import { trackWizardEvent } from "@/utils/segment";
 
 interface NewApplicationModalProps {
 	isOpen: boolean;
@@ -28,6 +31,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 	const [isSelectOpen, setIsSelectOpen] = useState(false);
 	const [selectedValue, setSelectedValue] = useState("");
 	const [isCreating, setIsCreating] = useState(false);
+	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
 
 	let modalHeight = "h-[330px]";
 	if (isSelectOpen) {
@@ -41,14 +45,29 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 
 		setIsCreating(true);
 		try {
+			let projectName: string;
+			let projectId: null | string;
+			let isNewProject: boolean;
+
 			if (showNewProjectInput) {
-				await onCreate(null, title, true);
+				projectName = title;
+				projectId = null;
+				isNewProject = true;
 			} else {
 				const selectedProject = projects.find((p) => p.id === selectedValue);
-				if (selectedProject) {
-					await onCreate(selectedProject.id, selectedProject.name, false);
-				}
+				if (!selectedProject) return;
+				projectName = selectedProject.name;
+				projectId = selectedProject.id;
+				isNewProject = false;
 			}
+
+			await trackWizardEvent(WizardAnalyticsEvent.ONBOARDING_START_NEW, {
+				isNewProject,
+				organizationId: selectedOrganizationId ?? "",
+				projectName,
+			});
+
+			await onCreate(projectId, projectName, isNewProject);
 			handleClose();
 		} catch {
 		} finally {

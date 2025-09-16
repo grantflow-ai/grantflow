@@ -300,7 +300,6 @@ async def handle_retrieve_project(
 
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
-    # Find the current user's role
     current_user_role = None
     for ou in organization_users:
         if ou.firebase_uid == request.auth:
@@ -1156,7 +1155,6 @@ async def handle_duplicate_project(
 
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
-    # Find the current user's role
     current_user_role = None
     for ou in organization_users:
         if ou.firebase_uid == request.auth:

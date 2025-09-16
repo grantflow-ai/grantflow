@@ -4,8 +4,10 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
+import { trackWizardEvent } from "@/utils/segment";
 import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 
 const DEBOUNCE_DELAY_MS = 2000;
@@ -219,6 +221,82 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 	}));
 };
 
+const validateAutofillRequirements = async (
+	application: API.RetrieveApplication.Http200.ResponseBody | null,
+): Promise<boolean> => {
+	if (!application) {
+		log.error("triggerAutofill: No application found");
+		return true;
+	}
+
+	const hasIndexingInProgress = application.rag_sources.some(
+		(source) => source.status === "INDEXING" || source.status === "CREATED",
+	);
+
+	if (hasIndexingInProgress) {
+		const { toast } = await import("sonner");
+		toast.error("Please wait for all documents to finish processing before using autofill");
+		return true;
+	}
+
+	if (application.rag_sources.length === 0) {
+		const { toast } = await import("sonner");
+		toast.error("Please upload at least one document before using autofill");
+		return true;
+	}
+
+	return false;
+};
+
+const trackAutofillEvent = async (
+	currentStep: WizardStep,
+	organizationId: string,
+	applicationId: string,
+	projectId: string,
+	fieldName?: string,
+): Promise<void> => {
+	if (currentStep === WizardStep.KNOWLEDGE_BASE) {
+		await trackWizardEvent(WizardAnalyticsEvent.STEP_3_AI, {
+			aiType: "autofill",
+			applicationId,
+			currentStep,
+			fieldName,
+			organizationId,
+			projectId,
+		});
+	} else if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
+		await trackWizardEvent(WizardAnalyticsEvent.STEP_5_AI, {
+			aiType: "autofill",
+			applicationId,
+			currentStep,
+			fieldName,
+			organizationId,
+			projectId,
+		});
+	}
+};
+
+const handleAutofillError = async (
+	error: unknown,
+	type: "research_deep_dive" | "research_plan",
+	fieldName?: string,
+): Promise<void> => {
+	log.error("triggerAutofill failed", { error, fieldName, type });
+
+	const { toast } = await import("sonner");
+	const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
+	toast.error(`Autofill error: ${errorMessage}`);
+
+	const state = useWizardStore.getState();
+	useWizardStore.setState({
+		...state,
+		isAutofillLoading: {
+			...state.isAutofillLoading,
+			[type]: false,
+		},
+	});
+};
+
 function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
 	const ragSources = application.grant_template?.rag_sources ?? [];
 	const validation = validateApplicationDetailsStep(application.title, ragSources);
@@ -404,6 +482,19 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				const currentObjectives = getCurrentObjectives();
 				const updatedObjectives = [...currentObjectives, objective];
 				await updateResearchObjectives(updatedObjectives);
+
+				const { application } = useApplicationStore.getState();
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (application && selectedOrganizationId) {
+					await trackWizardEvent(WizardAnalyticsEvent.STEP_4_ADD, {
+						applicationId: application.id,
+						contentType: "objective",
+						currentStep: WizardStep.RESEARCH_PLAN,
+						fieldName: "research_objective",
+						organizationId: selectedOrganizationId,
+						projectId: application.project_id,
+					});
+				}
 			}, "Create research objective");
 		},
 
@@ -697,40 +788,22 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		triggerAutofill: async (type: "research_deep_dive" | "research_plan", fieldName?: string) => {
 			const { application } = useApplicationStore.getState();
+			const { selectedOrganizationId } = useOrganizationStore.getState();
 
-			if (!application) {
-				log.error("triggerAutofill: No application found");
-				return;
-			}
+			const validationError = await validateAutofillRequirements(application);
+			if (validationError) return;
 
-			const hasIndexingInProgress = application.rag_sources.some(
-				(source) => source.status === "INDEXING" || source.status === "CREATED",
-			);
+			if (!(application && selectedOrganizationId)) return;
 
-			if (hasIndexingInProgress) {
-				const { toast } = await import("sonner");
-				toast.error("Please wait for all documents to finish processing before using autofill");
-				return;
-			}
-
-			if (application.rag_sources.length === 0) {
-				const { toast } = await import("sonner");
-				toast.error("Please upload at least one document before using autofill");
-				return;
-			}
+			set((state) => ({
+				...state,
+				isAutofillLoading: {
+					...state.isAutofillLoading,
+					[type]: true,
+				},
+			}));
 
 			try {
-				set((state) => ({
-					...state,
-					isAutofillLoading: {
-						...state.isAutofillLoading,
-						[type]: true,
-					},
-				}));
-
-				const { selectedOrganizationId } = useOrganizationStore.getState();
-				if (!selectedOrganizationId) return;
-
 				const response = await triggerAutofillAction(
 					selectedOrganizationId,
 					application.project_id,
@@ -748,22 +821,18 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					message_id: response.message_id,
 				});
 
+				await trackAutofillEvent(
+					get().currentStep,
+					selectedOrganizationId,
+					application.id,
+					application.project_id,
+					fieldName,
+				);
+
 				const { toast } = await import("sonner");
 				toast.success("Autofill request sent. Processing your documents...");
 			} catch (error) {
-				log.error("triggerAutofill failed", { error, fieldName, type });
-
-				const { toast } = await import("sonner");
-				const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
-				toast.error(`Autofill error: ${errorMessage}`);
-
-				set((state) => ({
-					...state,
-					isAutofillLoading: {
-						...state.isAutofillLoading,
-						[type]: false,
-					},
-				}));
+				await handleAutofillError(error, type, fieldName);
 			}
 		},
 

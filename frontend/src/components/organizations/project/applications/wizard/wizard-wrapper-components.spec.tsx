@@ -1,10 +1,15 @@
+/* eslint-disable vitest/expect-expect */
+import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
@@ -17,6 +22,8 @@ vi.mock("next/navigation", () => ({
 		push: mockPush,
 	}),
 }));
+
+vi.mock("@/utils/segment");
 
 describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	afterEach(() => {
@@ -856,5 +863,404 @@ describe.sequential("StepIndicator", () => {
 		render(<StepIndicator isLastStep={false} type="inactive" />);
 
 		expect(screen.getByTestId("step-inactive")).toBeInTheDocument();
+	});
+});
+
+describe("WizardFooter - Analytics Tracking", () => {
+	const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
+	const user = userEvent.setup();
+
+	beforeEach(() => {
+		resetAnalyticsMocks();
+		vi.clearAllMocks();
+		useWizardStore.getState().reset();
+		useApplicationStore.getState().reset();
+
+		useOrganizationStore.setState({
+			selectedOrganizationId: "org-123",
+		});
+
+		const application = ApplicationFactory.build({
+			grant_template: GrantTemplateFactory.build({
+				grant_sections: [
+					{ id: "section-1", order: 1, parent_id: null, title: "Section 1" },
+					{ id: "section-2", order: 2, parent_id: null, title: "Section 2" },
+				],
+				id: "template-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+			}),
+			id: "app-123",
+			project_id: "proj-123",
+			title: "Test Application Title",
+		});
+
+		useApplicationStore.setState({
+			application,
+			areAppOperationsInProgress: false,
+		});
+
+		useWizardStore.setState({
+			currentStep: WizardStep.APPLICATION_DETAILS,
+			validateStepNext: vi.fn(() => ({
+				isValid: true,
+				reason: ApplicationDetailsValidationReason.VALID,
+			})),
+		});
+	});
+
+	describe("Navigation tracking", () => {
+		it("tracks STEP_1_NEXT when continuing from Application Details", async () => {
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_1_NEXT, {
+					applicationId: "app-123",
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					organizationId: "org-123",
+					projectId: "proj-123",
+				});
+			});
+		});
+
+		it("tracks STEP_3_NEXT when continuing from Knowledge Base", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_3_NEXT, {
+					currentStep: WizardStep.KNOWLEDGE_BASE,
+				});
+			});
+		});
+
+		it("tracks STEP_4_NEXT when continuing from Research Plan", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_PLAN,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_4_NEXT, {
+					currentStep: WizardStep.RESEARCH_PLAN,
+				});
+			});
+		});
+
+		it("tracks back navigation", async () => {
+			const toPreviousStepSpy = vi.fn(() => {
+				useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				isGeneratingTemplate: false,
+				toPreviousStep: toPreviousStepSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			await waitFor(() => {
+				expect(toPreviousStepSpy).toHaveBeenCalled();
+				expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+				// Back navigation without errors should not track any analytics
+				expectNoEventsTracked();
+			});
+		});
+	});
+
+	describe("Approval tracking", () => {
+		it("tracks STEP_2_APPROVE when approving application structure", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+			});
+
+			render(<WizardFooter />);
+
+			const approveButton = screen.getByTestId("continue-button");
+			await user.click(approveButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_2_APPROVE, {
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
+					sectionsCount: 2,
+					templateId: "template-123",
+				});
+			});
+		});
+	});
+
+	describe("Generation tracking", () => {
+		it("tracks STEP_5_GENERATE when generating application from Research Deep Dive", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				generateApplication: vi.fn().mockResolvedValue(true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					text: "",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const generateButton = screen.getByTestId("continue-button");
+			expect(generateButton).toHaveTextContent("Generate");
+
+			await user.click(generateButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.STEP_5_GENERATE, {
+					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+					generationType: "application",
+				});
+			});
+		});
+
+		it("does not track generation when application text already exists", async () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					text: "Existing application text",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toHaveTextContent("Next");
+
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				const events = vi.mocked(setupAnalyticsMocks().mockTrackWizardEvent).mock.calls;
+				const generationEvent = events.find(([event]) => event === WizardAnalyticsEvent.STEP_5_GENERATE);
+				expect(generationEvent).toBeUndefined();
+			});
+		});
+	});
+
+	describe("Error tracking", () => {
+		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
+			// Start with valid state, then make it invalid during click
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: true,
+				reason: ApplicationDetailsValidationReason.VALID,
+			}));
+
+			useWizardStore.setState({
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			// Now change validation to fail before click
+			validateStepNextSpy.mockReturnValue({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+			});
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					currentStep: WizardStep.APPLICATION_DETAILS,
+					errorType: "validation",
+					validationErrors: ["rag-sources-missing"],
+				});
+			});
+		});
+
+		it("tracks validation error details for missing title", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.TITLE_INVALID,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					title: "",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["title-invalid"]),
+				});
+			});
+		});
+
+		it("tracks validation error for missing RAG sources", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [],
+					},
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["rag-sources-missing"]),
+				});
+			});
+		});
+
+		it("tracks validation error for processing RAG sources", async () => {
+			const user = userEvent.setup();
+
+			// Mock validation to return valid initially, then invalid during click
+			let callCount = 0;
+			const validateStepNextSpy = vi.fn(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call (during render) - return valid so button is enabled
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
+					};
+				}
+				// Second call (during handleRightButtonClick) - return invalid
+				return {
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
+				};
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
+						],
+					},
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+					errorType: "validation",
+					validationErrors: expect.arrayContaining(["rag-sources-processing"]),
+				});
+			});
+		});
+	});
+
+	describe("Context validation", () => {
+		it("does not track events when organizationId is missing", async () => {
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			await user.click(continueButton);
+
+			await waitFor(() => {
+				expectNoEventsTracked();
+			});
+		});
 	});
 });
