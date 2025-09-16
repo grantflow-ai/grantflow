@@ -9,6 +9,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
+import { log } from "@/utils/logger/client";
 
 interface NavigationContextProviderProps {
 	children: ReactNode;
@@ -26,35 +27,67 @@ export function NavigationContextProvider({
 	const router = useRouter();
 	const [error, setError] = useState<null | string>(null);
 
-	const { activeApplicationId, activeProjectId, clearActiveApplication, clearActiveProject } = useNavigationStore();
-	const { selectedOrganizationId } = useOrganizationStore();
-
-	const { setProject } = useProjectStore();
-	const { setApplication } = useApplicationStore();
+	const activeApplicationId = useNavigationStore((state) => state.activeApplicationId);
+	const activeProjectId = useNavigationStore((state) => state.activeProjectId);
+	const clearActiveApplication = useNavigationStore((state) => state.clearActiveApplication);
+	const clearActiveProject = useNavigationStore((state) => state.clearActiveProject);
+	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
 
 	const loadProjectData = useCallback(async () => {
 		if (!(activeProjectId && selectedOrganizationId)) return false;
 		try {
 			const project = await getProject(selectedOrganizationId, activeProjectId);
-			setProject(project);
+			useProjectStore.getState().setProject(project);
 			return true;
-		} catch {
+		} catch (error) {
+			log.error("Failed to load project data", { activeProjectId, error, selectedOrganizationId });
 			clearActiveProject();
 			return false;
 		}
-	}, [activeProjectId, selectedOrganizationId, setProject, clearActiveProject]);
+	}, [activeProjectId, selectedOrganizationId, clearActiveProject]);
 
 	const loadApplicationData = useCallback(async () => {
 		if (!(activeApplicationId && activeProjectId && selectedOrganizationId)) return false;
 		try {
 			const application = await getApplication(selectedOrganizationId, activeProjectId, activeApplicationId);
-			setApplication(application);
+			useApplicationStore.getState().setApplication(application);
 			return true;
-		} catch {
+		} catch (error) {
+			log.error("Failed to load application data", {
+				activeApplicationId,
+				activeProjectId,
+				error,
+				selectedOrganizationId,
+			});
 			clearActiveApplication();
 			return false;
 		}
-	}, [activeApplicationId, activeProjectId, selectedOrganizationId, setApplication, clearActiveApplication]);
+	}, [activeApplicationId, activeProjectId, selectedOrganizationId, clearActiveApplication]);
+
+	const loadRequiredData = useCallback(async () => {
+		if (activeProjectId && requireProject) {
+			const projectLoaded = await loadProjectData();
+			if (!projectLoaded) {
+				setError("Project not found");
+				return;
+			}
+		}
+
+		if (activeApplicationId && requireApplication) {
+			const applicationLoaded = await loadApplicationData();
+			if (!applicationLoaded) {
+				setError("Application not found");
+				return;
+			}
+		}
+	}, [
+		activeProjectId,
+		activeApplicationId,
+		requireProject,
+		requireApplication,
+		loadProjectData,
+		loadApplicationData,
+	]);
 
 	useEffect(() => {
 		if (
@@ -66,45 +99,35 @@ export function NavigationContextProvider({
 			return;
 		}
 
-		const loadData = async () => {
-			setError(null);
-
-			if (activeProjectId && !(await loadProjectData()) && requireProject) {
-				router.replace(redirectTo);
-				return;
-			}
-
-			if (activeApplicationId && !(await loadApplicationData()) && requireApplication) {
-				router.replace(redirectTo);
-			}
-		};
-
-		void loadData();
+		void loadRequiredData();
 	}, [
-		activeProjectId,
-		activeApplicationId,
 		selectedOrganizationId,
 		requireProject,
 		requireApplication,
+		activeProjectId,
+		activeApplicationId,
 		redirectTo,
 		router,
-		loadProjectData,
-		loadApplicationData,
+		loadRequiredData,
 	]);
+
+	useEffect(() => {
+		if (!error) return;
+
+		const timeoutId = setTimeout(() => {
+			router.replace(redirectTo);
+		}, 2000);
+
+		return () => {
+			clearTimeout(timeoutId);
+		};
+	}, [error, router, redirectTo]);
 
 	if (error) {
 		return (
-			<div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-				<p className="text-red-600">{error}</p>
-				<button
-					className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-					onClick={() => {
-						router.push(redirectTo);
-					}}
-					type="button"
-				>
-					Go Back
-				</button>
+			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
+				<p className="text-red-600 font-medium">{error}</p>
+				<p className="text-gray-500 text-sm">Redirecting in 2 seconds...</p>
 			</div>
 		);
 	}

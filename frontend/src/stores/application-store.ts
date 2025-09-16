@@ -227,6 +227,7 @@ interface ApplicationActions {
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
+	softReset: () => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (
 		organizationId: string,
@@ -981,6 +982,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			templateId: application.grant_template?.id,
 		});
 		set({ application });
+	},
+
+	softReset: () => {
+		const currentApplication = get().application;
+		set({
+			...structuredClone(initialState),
+			application: currentApplication,
+		});
 	},
 
 	updateApplication: async (data: Partial<API.UpdateApplication.RequestBody>) => {
