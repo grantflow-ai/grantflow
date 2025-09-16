@@ -2,10 +2,11 @@ from typing import cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from anthropic import BadRequestError, RateLimitError
 from anthropic.types import ToolUseBlock
 from google.cloud.exceptions import TooManyRequests
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
-from packages.shared_utils.src.exceptions import RagError, ValidationError
+from packages.shared_utils.src.exceptions import BackendError, RagError, ValidationError
 from pytest_mock import MockerFixture
 
 from services.rag.src.utils.completion import (
@@ -205,6 +206,105 @@ async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> N
         system_prompt="You are a helpful assistant.",
     )
     assert result == {"key": "value"}
+
+
+async def test_anthropic_credit_balance_error_fails_fast(mocker: MockerFixture) -> None:
+    client = AsyncMock()
+    error_response = Mock(
+        status_code=400,
+        request_id="req_test123",
+    )
+    credit_error = BadRequestError(
+        "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.",
+        response=error_response,
+        body={"type": "error", "error": {"type": "invalid_request_error", "message": "Your credit balance is too low"}},
+    )
+    client.messages.create.side_effect = credit_error
+    mocker.patch("services.rag.src.utils.completion.get_anthropic_client", return_value=client)
+
+    schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
+
+    with pytest.raises(BackendError) as exc_info:
+        await make_anthropic_completions_request(
+            model=ANTHROPIC_SONNET_MODEL,
+            response_schema=schema,
+            response_type=dict[str, str],
+            user_prompt="test message",
+            system_prompt="You are a helpful assistant.",
+        )
+
+    assert "Anthropic API credits exhausted" in str(exc_info.value)
+    assert exc_info.value.context["error_type"] == "CREDIT_EXHAUSTED"
+    client.messages.create.assert_called_once()
+
+
+async def test_anthropic_rate_limit_error_retries(mocker: MockerFixture) -> None:
+    client = AsyncMock()
+    response = Mock()
+    response.content = [
+        ToolUseBlock(
+            id="test",
+            name="set_output",
+            input={"key": "value"},
+            type="tool_use",
+        )
+    ]
+    usage_mock = Mock()
+    usage_mock.input_tokens = 10
+    usage_mock.output_tokens = 8
+    response.usage = usage_mock
+
+    client.messages.create.side_effect = [
+        RateLimitError("Rate limit exceeded", response=Mock(status_code=429), body={}),
+        response,
+    ]
+    mocker.patch("services.rag.src.utils.completion.get_anthropic_client", return_value=client)
+
+    mocker.patch("services.rag.src.utils.completion.with_exponential_backoff_retry", return_value=lambda func: func)
+
+    schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
+
+    result = await make_anthropic_completions_request(
+        model=ANTHROPIC_SONNET_MODEL,
+        response_schema=schema,
+        response_type=dict[str, str],
+        user_prompt="test message",
+        system_prompt="You are a helpful assistant.",
+    )
+
+    assert result == {"key": "value"}
+
+
+async def test_handle_completions_fallback_on_credit_error(mocker: MockerFixture) -> None:
+    anthropic_client = AsyncMock()
+    credit_error = BadRequestError(
+        "Your credit balance is too low to access the Anthropic API.",
+        response=Mock(status_code=400, request_id="req_test"),
+        body={},
+    )
+    anthropic_client.messages.create.side_effect = credit_error
+    mocker.patch("services.rag.src.utils.completion.get_anthropic_client", return_value=anthropic_client)
+
+    google_client = Mock()
+    aio_client = AsyncMock()
+    response = Mock()
+    response.text = '{"key": "value"}'
+    aio_client.models.generate_content.return_value = response
+    google_client._aio = aio_client
+    mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=google_client)
+
+    result = await handle_completions_request(
+        prompt_identifier="test",
+        model=ANTHROPIC_SONNET_MODEL,
+        response_type=dict[str, str],
+        response_schema={"type": "object", "properties": {"key": {"type": "string"}}},
+        messages="test message",
+        system_prompt="You are a helpful assistant.",
+    )
+
+    assert result == {"key": "value"}
+    anthropic_client.messages.create.assert_called_once()
+    aio_client.models.generate_content.assert_called_once()
 
 
 async def test_handle_completions_request_with_custom_validator(mock_google_api_response: Mock) -> None:

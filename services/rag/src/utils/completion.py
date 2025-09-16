@@ -4,7 +4,16 @@ from functools import partial
 from textwrap import dedent
 from typing import Any, Final, TypedDict
 
-from anthropic import NOT_GIVEN, RateLimitError
+from anthropic import (
+    NOT_GIVEN,
+    APIConnectionError,
+    APITimeoutError,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    PermissionDeniedError,
+    RateLimitError,
+)
 from anthropic import InternalServerError as AnthropicInternalServerError
 from anthropic.types import ToolParam, ToolUseBlock
 from google import genai
@@ -202,7 +211,21 @@ async def make_google_completions_request[T](
     )
 
 
-@with_exponential_backoff_retry(RateLimitError)
+# Retry decorator for retryable Anthropic errors
+@with_exponential_backoff_retry(
+    RateLimitError,
+    AnthropicInternalServerError,
+    APITimeoutError,
+    APIConnectionError,
+)
+async def _make_anthropic_request(
+    client: Any,
+    **kwargs: Any,
+) -> Any:
+    """Make Anthropic API request with retry logic for transient errors."""
+    return await client.messages.create(**kwargs)
+
+
 async def make_anthropic_completions_request[T](
     *,
     model: str,
@@ -217,22 +240,67 @@ async def make_anthropic_completions_request[T](
     anthropic_client = get_anthropic_client()
 
     start_time = datetime.now(UTC)
-    response = await anthropic_client.messages.create(
-        model=model,
-        max_tokens=8192,
-        messages=[{"role": "user", "content": user_prompt}],
-        system=system_prompt,
-        tools=[
-            ToolParam(
-                name="set_output",
-                description="returns the response output",
-                input_schema=response_schema,
+
+    try:
+        response = await _make_anthropic_request(
+            anthropic_client,
+            model=model,
+            max_tokens=8192,
+            messages=[{"role": "user", "content": user_prompt}],
+            system=system_prompt,
+            tools=[
+                ToolParam(
+                    name="set_output",
+                    description="returns the response output",
+                    input_schema=response_schema,
+                )
+            ],
+            temperature=temperature,
+            top_p=top_p or NOT_GIVEN,
+            top_k=top_k or NOT_GIVEN,
+        )
+    except (BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError) as e:
+        # Non-retryable errors - fail fast
+        error_message = str(e)
+
+        # Check for credit balance issue specifically
+        if isinstance(e, BadRequestError) and "credit balance" in error_message.lower():
+            logger.critical(
+                "Anthropic API credit balance insufficient",
+                model=model,
+                error_type=type(e).__name__,
+                error_message=error_message,
+                request_id=getattr(e, "request_id", None),
             )
-        ],
-        temperature=temperature,
-        top_p=top_p or NOT_GIVEN,
-        top_k=top_k or NOT_GIVEN,
-    )
+            # Return a clear error that won't be retried
+            raise BackendError(
+                "Anthropic API credits exhausted. Please contact operations team to add credits.",
+                context={"error_type": "CREDIT_EXHAUSTED", "provider": "anthropic"},
+            ) from e
+
+        # Log other non-retryable errors
+        logger.error(
+            "Non-retryable Anthropic API error",
+            model=model,
+            error_type=type(e).__name__,
+            error_message=error_message,
+            elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+        )
+        raise BackendError(
+            f"Anthropic API configuration error: {error_message}",
+            context={"error_type": type(e).__name__, "provider": "anthropic"},
+        ) from e
+    except (RateLimitError, AnthropicInternalServerError, APITimeoutError, APIConnectionError) as e:
+        # Retryable errors - will be handled by retry decorator
+        logger.warning(
+            "Retryable Anthropic API error",
+            model=model,
+            error_type=type(e).__name__,
+            error_message=str(e),
+            elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+        )
+        raise  # Let retry decorator handle these
+
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
     logger.info(
@@ -390,24 +458,88 @@ async def handle_completions_request[T](
             Address the errors and return corrected content
             """
             errors.append(e)
+        except BackendError as e:
+            # Handle credit exhaustion and non-retryable errors
+            if e.context and e.context.get("error_type") == "CREDIT_EXHAUSTED":
+                logger.critical(
+                    "Anthropic credits exhausted, attempting fallback to Google",
+                    prompt_identifier=prompt_identifier,
+                    attempt=attempts,
+                    max_attempts=max_attempts,
+                )
+                if model == ANTHROPIC_SONNET_MODEL:
+                    model = GENERATION_MODEL  # Switch to Google model
+                    attempts -= 1  # Don't count this as an attempt
+                    continue
+                # Both providers failed
+                raise BackendError(
+                    "All AI providers unavailable. Please contact operations.",
+                    context={"error_type": "ALL_PROVIDERS_FAILED"},
+                ) from e
+            # Re-raise other backend errors
+            raise
         except AnthropicInternalServerError as e:
             logger.warning(
-                "Internal server error received from anthorpic in completion request. Switching models.",
+                "Internal server error received from Anthropic in completion request. Switching to Google.",
                 prompt_identifier=prompt_identifier,
                 attempt=attempts,
                 max_attempts=max_attempts,
                 error=str(e),
+                error_type=type(e).__name__,
             )
-            model = GENERATION_MODEL  # Switch to Google model ~keep
+            if model == ANTHROPIC_SONNET_MODEL:
+                model = GENERATION_MODEL  # Switch to Google model
+                attempts -= 1  # Don't count this as a fallback attempt
+            else:
+                errors.append(e)
+                attempts += 1
         except GoogleInternalServerError as e:
             logger.warning(
-                "Internal server error received from google in completion request. Switching models.",
+                "Internal server error received from Google in completion request. Switching to Anthropic.",
                 prompt_identifier=prompt_identifier,
                 attempt=attempts,
                 max_attempts=max_attempts,
                 error=str(e),
+                error_type=type(e).__name__,
             )
-            model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic model ~keep
+            if model == GENERATION_MODEL:
+                model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic model
+                attempts -= 1  # Don't count this as a fallback attempt
+            else:
+                errors.append(e)
+                attempts += 1
+        except (ServiceUnavailable, TooManyRequests) as e:
+            # Handle Google-specific retryable errors
+            logger.warning(
+                "Google API temporarily unavailable, switching to Anthropic",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+            if model == GENERATION_MODEL:
+                model = ANTHROPIC_SONNET_MODEL  # Switch to Anthropic
+                attempts -= 1  # Don't count this as a fallback attempt
+            else:
+                errors.append(e)
+                attempts += 1
+        except (RateLimitError, APITimeoutError, APIConnectionError) as e:
+            # Handle Anthropic-specific retryable errors (these should be caught by retry decorator)
+            logger.warning(
+                "Anthropic API temporarily unavailable, switching to Google",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+            if model == ANTHROPIC_SONNET_MODEL:
+                model = GENERATION_MODEL  # Switch to Google
+                attempts -= 1  # Don't count this as a fallback attempt
+            else:
+                errors.append(e)
+                attempts += 1
 
     raise RagError(
         f"Failed to generate text after {max_attempts} attempts.",
