@@ -24,24 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set image tag and environment
+      - name: Setup build configuration
         id: config
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-              echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
-              echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
-          
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-              echo "project_id=grantflow" >> $GITHUB_OUTPUT
-              echo "environment=production" >> $GITHUB_OUTPUT
-          else
-              echo "project_id=grantflow" >> $GITHUB_OUTPUT
-              echo "environment=staging" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/setup-build-config
 
       - name: Build and push service
         uses: ./.github/actions/build-service
