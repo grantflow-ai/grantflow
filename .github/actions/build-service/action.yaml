@@ -25,15 +25,32 @@ runs:
   using: "composite"
   steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@main
-      with:
-        tool-cache: false
-        android: true
-        dotnet: true
-        haskell: true
-        large-packages: true
-        docker-images: true
-        swap-storage: true
+      shell: bash
+      run: |
+        echo "Disk space before cleanup:"
+        df -h
+
+        # Remove unnecessary tools and files
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+
+        # Clean apt cache
+        sudo apt-get clean
+
+        # Remove some large packages we don't need
+        # Use || true to continue even if some packages don't exist
+        sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel || true
+        sudo apt-get autoremove -y || true
+        sudo apt-get clean || true
+
+        # Clean docker images
+        docker system prune -af --volumes
+
+        echo "Disk space after cleanup:"
+        df -h
 
     - name: Setup GCP
       id: gcp
@@ -62,6 +79,12 @@ runs:
           echo "env_latest=latest" >> $GITHUB_OUTPUT
         fi
 
+    - name: Clear Docker cache before build
+      shell: bash
+      run: |
+        echo "Clearing Docker build cache..."
+        docker builder prune -af
+        docker system df
 
     - name: Set Dockerfile path
       id: dockerfile
@@ -81,12 +104,8 @@ runs:
         push: true
         context: ${{ github.workspace }}
         file: ${{ steps.dockerfile.outputs.path }}
-        cache-from: |
-          type=gha,scope=${{ inputs.service }}
-          type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
-        cache-to: |
-          type=gha,mode=max,scope=${{ inputs.service }}
-          type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
+        cache-from: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
+        cache-to: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
         tags: |
           us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ steps.env-tag.outputs.env_latest }}
           us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}

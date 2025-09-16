@@ -70,13 +70,13 @@ output "scraper_service_id" {
   value       = google_cloud_run_v2_service.scraper.name
 }
 
-output "crdt_server_url" {
+output "crdt_url" {
   description = "The URL of the deployed CRDT server"
-  value       = google_cloud_run_v2_service.crdt_server.uri
+  value       = google_cloud_run_v2_service.crdt.uri
 }
 
-output "crdt_server_service_id" {
+output "crdt_service_id" {
   description = "The ID of the CRDT server service"
-  value       = google_cloud_run_v2_service.crdt_server.name
+  value       = google_cloud_run_v2_service.crdt.name
 }
 

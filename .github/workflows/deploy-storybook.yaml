@@ -28,10 +28,19 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
-              uses: ./.github/actions/setup-node-workspace
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
               with:
-                  package: frontend
+                  package_json_file: frontend/package.json
+                  run_install: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: 22
+
+            - name: Install Dependencies
+              run: cd frontend && pnpm install
 
             - name: Build Storybook
               run: cd frontend && pnpm build-storybook

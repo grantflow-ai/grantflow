@@ -122,7 +122,7 @@ variable "crawler_max_instances" {
   default     = -1
 }
 
-variable "crdt_server_memory_limit" {
+variable "crdt_memory_limit" {
   description = "Memory allocation for CRDT server (defaults to memory_limit if not set)"
   type        = string
   default     = ""

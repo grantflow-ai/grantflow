@@ -56,7 +56,6 @@ output "monthly_budget_amount" {
   value       = var.monthly_budget_amount
 }
 
-# Entity cleanup scheduler job moved to terraform/modules/scheduler/main.tf
 
 output "user_deletion_grace_period" {
   description = "Grace period for user deletion in days"

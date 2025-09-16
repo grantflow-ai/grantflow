@@ -85,7 +85,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=None)
 
         if self._is_webhook_path(path):
-            # All webhooks must use OIDC token authentication
             if not auth_header or not auth_header.startswith("Bearer "):
                 raise NotAuthorizedException("Bearer token required for webhook authentication")
 

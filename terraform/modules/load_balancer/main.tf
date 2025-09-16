@@ -28,7 +28,7 @@ resource "google_compute_region_network_endpoint_group" "backend_neg" {
   }
 }
 
-resource "google_compute_region_network_endpoint_group" "crdt_server_neg_us_central1" {
+resource "google_compute_region_network_endpoint_group" "crdt_neg_us_central1" {
   name                  = "crdt-neg-us-central1"
   network_endpoint_type = "SERVERLESS"
   region                = "us-central1"
@@ -65,7 +65,7 @@ resource "google_compute_backend_service" "backend" {
 }
 
 
-resource "google_compute_backend_service" "crdt_server_backend" {
+resource "google_compute_backend_service" "crdt_backend" {
   name        = "crdt"
   protocol    = "HTTPS"
   port_name   = "http"
@@ -74,7 +74,7 @@ resource "google_compute_backend_service" "crdt_server_backend" {
   enable_cdn = var.enable_cdn
 
   backend {
-    group = google_compute_region_network_endpoint_group.crdt_server_neg_us_central1.id
+    group = google_compute_region_network_endpoint_group.crdt_neg_us_central1.id
   }
 
 
@@ -97,7 +97,7 @@ resource "google_compute_url_map" "backend_url_map" {
   }
 
   host_rule {
-    hosts        = [var.crdt_server_domain]
+    hosts        = [var.crdt_domain]
     path_matcher = "crdt-paths"
   }
 
@@ -112,11 +112,11 @@ resource "google_compute_url_map" "backend_url_map" {
   }
   path_matcher {
     name            = "crdt-paths"
-    default_service = google_compute_backend_service.crdt_server_backend.id
+    default_service = google_compute_backend_service.crdt_backend.id
 
     path_rule {
       paths   = ["/*"]
-      service = google_compute_backend_service.crdt_server_backend.id
+      service = google_compute_backend_service.crdt_backend.id
     }
   }
 }
@@ -135,13 +135,13 @@ resource "google_compute_managed_ssl_certificate" "backend_ssl" {
   }
 }
 
-resource "google_compute_managed_ssl_certificate" "crdt_server_ssl" {
+resource "google_compute_managed_ssl_certificate" "crdt_ssl" {
   count = var.enable_ssl ? 1 : 0
 
   name = "crdt-ssl-${var.environment}"
 
   managed {
-    domains = [var.crdt_server_domain]
+    domains = [var.crdt_domain]
   }
 
   lifecycle {
@@ -156,7 +156,7 @@ resource "google_compute_target_https_proxy" "backend_https_proxy" {
   url_map = google_compute_url_map.backend_url_map.id
   ssl_certificates = [
     google_compute_managed_ssl_certificate.backend_ssl[0].id,
-    google_compute_managed_ssl_certificate.crdt_server_ssl[0].id
+    google_compute_managed_ssl_certificate.crdt_ssl[0].id
   ]
 }
 

@@ -1,6 +1,4 @@
 
-# Entity cleanup job has been moved to terraform/modules/scheduler/main.tf
-# to consolidate all scheduler jobs in one place and use proper variables
 
 resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
   display_name = "Entity Cleanup Webhook Failures"
