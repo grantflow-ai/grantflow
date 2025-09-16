@@ -3,22 +3,21 @@ import { afterEach, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
 // Suppress unhandled promise rejections from intentional test failures
-const suppressedRejections = [
-	"Network error",
-	"Upload failed",
-];
+const suppressedRejections = ["Network error", "Upload failed"];
 
 beforeAll(() => {
-	const originalHandler = process.listeners('unhandledRejection');
-	process.removeAllListeners('unhandledRejection');
+	const originalHandler = process.listeners("unhandledRejection");
+	process.removeAllListeners("unhandledRejection");
 
-	process.on('unhandledRejection', (reason, promise) => {
+	process.on("unhandledRejection", (reason, promise) => {
 		const reasonString = String(reason);
-		const shouldSuppress = suppressedRejections.some(msg => reasonString.includes(msg));
+		const shouldSuppress = suppressedRejections.some((msg) => reasonString.includes(msg));
 
 		if (!shouldSuppress) {
 			// Call original handler if not suppressed
-			originalHandler.forEach(handler => handler(reason, promise));
+			originalHandler.forEach((handler) => {
+				handler(reason, promise);
+			});
 		}
 	});
 });
