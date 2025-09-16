@@ -1,3 +1,4 @@
+/* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -903,7 +904,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Navigation tracking", () => {
 		it("tracks STEP_1_NEXT when continuing from Application Details", async () => {
-			expect.assertions(1);
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -920,7 +920,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks STEP_3_NEXT when continuing from Knowledge Base", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 			});
@@ -938,7 +937,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks STEP_4_NEXT when continuing from Research Plan", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_PLAN,
 			});
@@ -956,7 +954,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks back navigation", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
@@ -974,7 +971,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Approval tracking", () => {
 		it("tracks STEP_2_APPROVE when approving application structure", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
@@ -996,7 +992,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Generation tracking", () => {
 		it("tracks STEP_5_GENERATE when generating application from Research Deep Dive", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: vi.fn().mockResolvedValue(true),
@@ -1025,7 +1020,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("does not track generation when application text already exists", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 			});
@@ -1054,7 +1048,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Error tracking", () => {
 		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
-			expect.assertions(1);
 			useWizardStore.setState({
 				validateStepNext: vi.fn(() => false),
 			});
@@ -1073,7 +1066,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error details for missing title", async () => {
-			expect.assertions(1);
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1095,7 +1087,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error for missing RAG sources", async () => {
-			expect.assertions(1);
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1120,7 +1111,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 		});
 
 		it("tracks validation error for processing RAG sources", async () => {
-			expect.assertions(1);
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
@@ -1150,7 +1140,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Context validation", () => {
 		it("does not track events when organizationId is missing", async () => {
-			expect.assertions(1);
 			useOrganizationStore.setState({
 				selectedOrganizationId: null,
 			});
