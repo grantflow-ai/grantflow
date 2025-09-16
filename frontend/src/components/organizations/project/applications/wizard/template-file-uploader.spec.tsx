@@ -483,37 +483,69 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("tracks multiple file uploads", async () => {
+			// Mock addFile to resolve with a small delay to avoid debouncing
+			mockAddFile.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(undefined), 10)));
+
+			useOrganizationStore.setState({
+				selectedOrganizationId: "org-123",
+			});
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+				}),
+			});
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 			});
 
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
-			const files = [
-				new File(["content1"], "doc1.pdf", { type: "application/pdf" }),
-				new File(["content2"], "doc2.pdf", { type: "application/pdf" }),
-				new File(["content3"], "doc3.pdf", { type: "application/pdf" }),
-			];
-
-			files.forEach((file, index) => {
-				Object.defineProperty(file, "size", { value: 1_024_000 * (index + 1) });
-			});
-
 			const fileInput = screen.getByTestId("file-input");
-			await user.upload(fileInput, files);
+
+			// Upload files one by one to avoid debouncing
+			const file1 = new File(["content1"], "doc1.pdf", { type: "application/pdf" });
+			Object.defineProperty(file1, "size", { value: 1_024_000 });
+			await user.upload(fileInput, file1);
+
+			// Wait a bit to avoid debouncing
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			const file2 = new File(["content2"], "doc2.pdf", { type: "application/pdf" });
+			Object.defineProperty(file2, "size", { value: 2_048_000 });
+			await user.upload(fileInput, file2);
+
+			// Wait a bit to avoid debouncing
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			const file3 = new File(["content3"], "doc3.pdf", { type: "application/pdf" });
+			Object.defineProperty(file3, "size", { value: 3_072_000 });
+			await user.upload(fileInput, file3);
 
 			await waitFor(() => {
 				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
 				expect(calls).toHaveLength(3);
 
 				// Check each file upload was tracked correctly
-				files.forEach((file, index) => {
-					expect(calls[index][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
-					expect(calls[index][1]).toMatchObject({
-						fileName: file.name,
-						fileSize: 1_024_000 * (index + 1),
-						fileType: "application/pdf",
-					});
+				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[0][1]).toMatchObject({
+					fileName: "doc1.pdf",
+					fileSize: 1_024_000,
+					fileType: "application/pdf",
+				});
+
+				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[1][1]).toMatchObject({
+					fileName: "doc2.pdf",
+					fileSize: 2_048_000,
+					fileType: "application/pdf",
+				});
+
+				expect(calls[2][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[2][1]).toMatchObject({
+					fileName: "doc3.pdf",
+					fileSize: 3_072_000,
+					fileType: "application/pdf",
 				});
 			});
 		});

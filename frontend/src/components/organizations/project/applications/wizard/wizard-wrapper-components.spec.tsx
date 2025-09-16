@@ -9,6 +9,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
@@ -900,7 +901,10 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 		useWizardStore.setState({
 			currentStep: WizardStep.APPLICATION_DETAILS,
-			validateStepNext: vi.fn(() => true),
+			validateStepNext: vi.fn(() => ({
+				isValid: true,
+				reason: ApplicationDetailsValidationReason.VALID,
+			})),
 		});
 	});
 
@@ -1057,7 +1061,10 @@ describe("WizardFooter - Analytics Tracking", () => {
 	describe("Error tracking", () => {
 		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
 			useWizardStore.setState({
-				validateStepNext: vi.fn(() => false),
+				validateStepNext: vi.fn(() => ({
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+				})),
 			});
 
 			render(<WizardFooter />);
@@ -1069,6 +1076,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
 					currentStep: WizardStep.APPLICATION_DETAILS,
 					errorType: "validation",
+					validationErrors: ["rag-sources-missing"],
 				});
 			});
 		});
