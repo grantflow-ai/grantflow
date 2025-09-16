@@ -246,3 +246,68 @@ class TestEmailNotificationWebhook:
             response = await test_client.post("/webhooks/pubsub/email-notifications", json=event_data)
 
         assert response.status_code == 401
+
+    async def test_webhook_oidc_authentication_success(
+        self,
+        test_client: TestingClientType,
+        mock_pubsub_event: PubSubEvent,
+        project_owner_user: OrganizationUser,
+    ) -> None:
+        with (
+            patch("services.backend.src.api.webhooks.email_sending.get_user") as mock_get_user,
+            patch("services.backend.src.api.webhooks.email_sending.send_application_ready_email") as mock_send_email,
+            patch("services.backend.src.api.middleware.verify_pubsub_oidc_token") as mock_verify_token,
+        ):
+            mock_get_user.return_value = {"email": "webhook-owner@example.com", "display_name": "Owner User"}
+            mock_send_email.return_value = None
+            mock_verify_token.return_value = True  # Mock successful token verification
+
+            response = await test_client.post(
+                "/webhooks/pubsub/email-notifications",
+                json={
+                    "message": {
+                        "data": mock_pubsub_event.message.data,
+                        "message_id": mock_pubsub_event.message.message_id,
+                        "publish_time": mock_pubsub_event.message.publish_time,
+                    }
+                },
+                headers={"Authorization": "Bearer valid-oidc-jwt-token"},
+            )
+
+        assert response.status_code == 201
+        result = response.json()
+        assert result["status"] == "success"
+        assert "1/1" in result["message"]
+
+        # Verify that OIDC token verification was called with correct parameters
+        mock_verify_token.assert_called_once_with(
+            "valid-oidc-jwt-token",
+            "http://testserver.local/webhooks/pubsub/email-notifications",
+            "pubsub-invoker@grantflow.iam.gserviceaccount.com",
+        )
+
+    async def test_webhook_oidc_authentication_failure(
+        self,
+        test_client: TestingClientType,
+    ) -> None:
+        with patch("services.backend.src.api.middleware.verify_pubsub_oidc_token") as mock_verify_token:
+            mock_verify_token.return_value = False  # Mock failed token verification
+
+            response = await test_client.post(
+                "/webhooks/pubsub/email-notifications",
+                json={
+                    "message": {
+                        "data": "dGVzdA==",
+                        "message_id": "test-message-id",
+                        "publish_time": "2023-01-01T00:00:00Z",
+                    }
+                },
+                headers={"Authorization": "Bearer invalid-oidc-jwt-token"},
+            )
+
+        assert response.status_code == 401
+        mock_verify_token.assert_called_once_with(
+            "invalid-oidc-jwt-token",
+            "http://testserver.local/webhooks/pubsub/email-notifications",
+            "pubsub-invoker@grantflow.iam.gserviceaccount.com",
+        )
