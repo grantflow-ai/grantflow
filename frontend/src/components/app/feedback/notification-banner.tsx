@@ -60,11 +60,17 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 					className="font-body text-[12px] leading-[16px] text-app-gray-600"
 					data-testid="notification-message"
 				>
-					Your project{" "}
-					<span className="font-semibold text-app-black" data-testid="notification-project-name">
-						&ldquo;{projectName}&rdquo;
-					</span>{" "}
-					{message}
+					{projectName ? (
+						<>
+							Your project{" "}
+							<span className="font-semibold text-app-black" data-testid="notification-project-name">
+								&ldquo;{projectName}&rdquo;
+							</span>{" "}
+							{message}
+						</>
+					) : (
+						message
+					)}
 				</p>
 			</div>
 		</div>
