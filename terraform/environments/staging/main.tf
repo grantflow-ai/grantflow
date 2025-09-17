@@ -289,15 +289,15 @@ output "crdt_url" {
 }
 
 module "load_balancer" {
-  source             = "../../modules/load_balancer"
-  project_id         = var.project_id
-  region             = var.region
-  environment        = var.environment
-  backend_url        = module.cloud_run.backend_url
-  domain             = "staging-api.grantflow.ai"
+  source      = "../../modules/load_balancer"
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  backend_url = module.cloud_run.backend_url
+  domain      = "staging-api.grantflow.ai"
   crdt_domain = "staging-crdt.grantflow.ai"
-  enable_ssl         = true
-  enable_cdn         = false
+  enable_ssl  = true
+  enable_cdn  = false
 }
 
 output "load_balancer_ip" {
