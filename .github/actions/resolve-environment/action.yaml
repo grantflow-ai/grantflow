@@ -1,0 +1,69 @@
+name: "Resolve Environment"
+description: "Resolve environment and URLs based on branch/event"
+
+outputs:
+  environment:
+    description: "Environment name (staging or production)"
+    value: ${{ steps.resolve.outputs.environment }}
+  image_tag:
+    description: "Docker image tag"
+    value: ${{ steps.resolve.outputs.image_tag }}
+  backend_url:
+    description: "Backend API URL"
+    value: ${{ steps.resolve.outputs.backend_url }}
+  crdt_url:
+    description: "CRDT WebSocket URL"
+    value: ${{ steps.resolve.outputs.crdt_url }}
+  site_url:
+    description: "Site URL"
+    value: ${{ steps.resolve.outputs.site_url }}
+  env_latest:
+    description: "Environment-specific latest tag"
+    value: ${{ steps.resolve.outputs.env_latest }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve environment and URLs
+      id: resolve
+      shell: bash
+      run: |
+        # Determine environment
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENVIRONMENT="production"
+          ENV_LATEST="latest"
+          BACKEND_URL="https://api.grantflow.ai"
+          CRDT_URL="wss://crdt.grantflow.ai"
+          SITE_URL="https://grantflow.ai"
+        else
+          ENVIRONMENT="staging"
+          ENV_LATEST="staging-latest"
+          BACKEND_URL="https://api-staging.grantflow.ai"
+          CRDT_URL="wss://crdt-staging.grantflow.ai"
+          SITE_URL="https://staging.grantflow.ai"
+        fi
+
+        # Determine image tag
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          IMAGE_TAG="${{ github.event.release.tag_name }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          IMAGE_TAG="${{ github.sha }}"
+        else
+          IMAGE_TAG="staging-${{ github.sha }}"
+        fi
+
+        # Output all values
+        echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+        echo "env_latest=$ENV_LATEST" >> $GITHUB_OUTPUT
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+        echo "crdt_url=$CRDT_URL" >> $GITHUB_OUTPUT
+        echo "site_url=$SITE_URL" >> $GITHUB_OUTPUT
+
+        # Summary
+        echo "### Environment Configuration 🎯" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment:** $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image Tag:** $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend URL:** $BACKEND_URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **CRDT URL:** $CRDT_URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **Site URL:** $SITE_URL" >> $GITHUB_STEP_SUMMARY

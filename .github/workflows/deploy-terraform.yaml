@@ -26,6 +26,11 @@ on:
         options:
           - staging
           - production
+      services:
+        description: 'Services to deploy (comma-separated, or "all")'
+        required: false
+        default: 'all'
+        type: string
       auto_approve:
         description: 'Skip manual approval for apply'
         required: false
@@ -37,94 +42,131 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check-workflows:
-    name: Check All Workflows Status
+  collect-build-info:
+    name: Collect Build Information
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read
     outputs:
-      all_successful: ${{ steps.check.outputs.all_successful }}
       environment: ${{ steps.config.outputs.environment }}
       should_deploy: ${{ steps.check.outputs.should_deploy }}
+      services_to_deploy: ${{ steps.services.outputs.services }}
+      image_digests: ${{ steps.artifacts.outputs.digests }}
     steps:
-      - name: Set environment
-        id: config
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
-          else
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          fi
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            .github
 
-      - name: Check workflow statuses
+      - name: Resolve environment
+        id: config
+        uses: ./.github/actions/resolve-environment
+
+      - name: Determine services to deploy
+        id: services
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SERVICES="${{ inputs.services || 'all' }}"
+          else
+            # For workflow_run, deploy the service that triggered it
+            WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+            case "$WORKFLOW_NAME" in
+              "Build Backend") SERVICES="backend" ;;
+              "Build Crawler") SERVICES="crawler" ;;
+              "Build Indexer") SERVICES="indexer" ;;
+              "Build RAG") SERVICES="rag" ;;
+              "Build Scraper") SERVICES="scraper" ;;
+              "Build CRDT Server") SERVICES="crdt" ;;
+              "Build Frontend") SERVICES="frontend" ;;
+              *) SERVICES="all" ;;
+            esac
+          fi
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+
+      - name: Check deployment conditions
         id: check
         uses: actions/github-script@v7
+        env:
+          SERVICES_TO_DEPLOY: ${{ steps.services.outputs.services }}
         with:
           script: |
-            // Only proceed if the triggering workflow was successful
-            if (context.eventName === 'workflow_run' && context.payload.workflow_run.conclusion !== 'success') {
-              console.log('Triggering workflow failed, skipping deployment');
-              core.setOutput('should_deploy', 'false');
-              core.setOutput('all_successful', 'false');
-              return;
-            }
+            // For workflow_run events
+            if (context.eventName === 'workflow_run') {
+              const conclusion = context.payload.workflow_run.conclusion;
+              if (conclusion !== 'success') {
+                console.log(`Triggering workflow failed with conclusion: ${conclusion}`);
+                core.setOutput('should_deploy', 'false');
+                return;
+              }
 
-            // For manual dispatch, always proceed
-            if (context.eventName === 'workflow_dispatch') {
-              console.log('Manual dispatch, proceeding with deployment');
+              // Store workflow run ID for artifact retrieval
+              core.exportVariable('TRIGGERING_RUN_ID', context.payload.workflow_run.id);
               core.setOutput('should_deploy', 'true');
-              core.setOutput('all_successful', 'true');
               return;
             }
 
-            // Get the list of required workflows
-            const requiredWorkflows = [
-              'Build Backend',
-              'Build Crawler',
-              'Build Indexer',
-              'Build RAG',
-              'Build Scraper',
-              'Build CRDT Server',
-              'Build Frontend'
-            ];
+            // For manual dispatch, check if requested services have recent successful builds
+            if (context.eventName === 'workflow_dispatch') {
+              const servicesRaw = process.env.SERVICES_TO_DEPLOY || '';
+              const services = servicesRaw.split(',').map(s => s.trim());
 
-            // Check if all required workflows have successful runs on this commit
-            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head_sha: context.sha,
-              status: 'completed',
-              per_page: 100
-            });
+              if (services.includes('all') || services.length === 0) {
+                // Deploying all services - check all builds exist
+                const requiredWorkflows = [
+                  'Build Backend', 'Build Crawler', 'Build Indexer',
+                  'Build RAG', 'Build Scraper', 'Build CRDT Server', 'Build Frontend'
+                ];
 
-            const successfulWorkflows = new Set(
-              runs.workflow_runs
-                .filter(run => run.conclusion === 'success')
-                .map(run => run.name)
-            );
+                const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: context.ref.replace('refs/heads/', ''),
+                  status: 'success',
+                  per_page: 20
+                });
 
-            const allSuccessful = requiredWorkflows.every(name => successfulWorkflows.has(name));
+                const recentSuccessful = new Set(
+                  runs.workflow_runs
+                    .filter(run => {
+                      const age = Date.now() - new Date(run.created_at).getTime();
+                      return age < 24 * 60 * 60 * 1000; // 24 hours
+                    })
+                    .map(run => run.name)
+                );
 
-            console.log('Required workflows:', requiredWorkflows);
-            console.log('Successful workflows:', Array.from(successfulWorkflows));
-            console.log('All successful?', allSuccessful);
+                const allBuilt = requiredWorkflows.every(name => recentSuccessful.has(name));
 
-            core.setOutput('should_deploy', allSuccessful ? 'true' : 'false');
-            core.setOutput('all_successful', allSuccessful ? 'true' : 'false');
+                if (!allBuilt) {
+                  console.log('Warning: Not all services have recent successful builds');
+                  console.log('Missing:', requiredWorkflows.filter(w => !recentSuccessful.has(w)));
+                }
+              }
+
+              core.setOutput('should_deploy', 'true');
+            }
+
+      - name: Collect image digests from builds
+        id: artifacts
+        if: steps.check.outputs.should_deploy == 'true'
+        run: |
+          # For now, we'll get digests from the GCR registry
+          # In the future, this should retrieve from workflow artifacts
+          echo "digests={}" >> $GITHUB_OUTPUT
 
   terraform-plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    needs: check-workflows
-    if: needs.check-workflows.outputs.should_deploy == 'true'
+    needs: collect-build-info
+    if: needs.collect-build-info.outputs.should_deploy == 'true'
     permissions:
       contents: read
       id-token: write
       pull-requests: write
     env:
       TF_VAR_project_id: grantflow
-      ENVIRONMENT: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+      ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
     outputs:
       plan_exitcode: ${{ steps.plan.outputs.exitcode }}
       plan_output: ${{ steps.plan.outputs.stdout }}
@@ -162,8 +204,29 @@ jobs:
         id: plan
         working-directory: terraform/environments/${{ env.ENVIRONMENT }}
         run: |
+          # Set target flags based on services to deploy
+          SERVICES="${{ needs.collect-build-info.outputs.services_to_deploy }}"
+          TARGET_FLAGS=""
+
+          if [[ "$SERVICES" != "all" ]]; then
+            # Build target flags for specific services
+            IFS=',' read -ra SERVICE_ARRAY <<< "$SERVICES"
+            for SERVICE in "${SERVICE_ARRAY[@]}"; do
+              SERVICE=$(echo "$SERVICE" | xargs)  # Trim whitespace
+              case "$SERVICE" in
+                backend) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.backend" ;;
+                crawler) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.crawler" ;;
+                indexer) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.indexer" ;;
+                rag) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.rag" ;;
+                scraper) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.scraper" ;;
+                crdt) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.crdt_server" ;;
+                frontend) echo "Note: Frontend deployment is handled separately, not via Terraform" ;;
+              esac
+            done
+          fi
+
           set +e
-          tofu plan -detailed-exitcode -out=tfplan
+          tofu plan -detailed-exitcode $TARGET_FLAGS -out=tfplan
           EXITCODE=$?
           set -e
 
@@ -219,13 +282,13 @@ jobs:
   terraform-apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
-    needs: [check-workflows, terraform-plan]
+    needs: [collect-build-info, terraform-plan]
     if: |
       needs.terraform-plan.outputs.plan_exitcode == '2' &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development') &&
       github.event_name != 'pull_request'
     environment:
-      name: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+      name: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
       url: ${{ steps.apply.outputs.app_url }}
     permissions:
       contents: read
@@ -233,7 +296,7 @@ jobs:
       issues: write
     env:
       TF_VAR_project_id: grantflow
-      ENVIRONMENT: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+      ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
