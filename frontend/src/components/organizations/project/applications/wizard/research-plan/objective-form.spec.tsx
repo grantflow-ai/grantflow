@@ -26,7 +26,7 @@ describe.sequential("ObjectiveForm", () => {
 		expect(screen.getByTestId("objective-description-input")).toBeInTheDocument();
 		expect(screen.getByTestId("task-description-0")).toBeInTheDocument();
 		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
-		expect(screen.getByTestId("save-button")).toBeInTheDocument();
+		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
 	});
 
 	it("starts with one task by default", () => {
@@ -73,7 +73,7 @@ describe.sequential("ObjectiveForm", () => {
 
 		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
 	});
@@ -87,7 +87,7 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		await user.type(screen.getByTestId("task-description-0"), "Test Task");
 
-		await user.click(screen.getByTestId("save-button"));
+		await user.click(screen.getByTestId("add-objective-button"));
 
 		expect(onSaveAction).toHaveBeenCalledWith({
 			description: "Test Description",
@@ -122,7 +122,7 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
@@ -139,7 +139,7 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("objective-name-input"), "   ");
@@ -151,7 +151,7 @@ describe.sequential("ObjectiveForm", () => {
 	it("save button is disabled when form is invalid", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 	});
 
@@ -159,7 +159,7 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
@@ -173,7 +173,7 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 
 		expect(saveButton).toBeDisabled();
 
@@ -201,7 +201,7 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		await user.type(screen.getByTestId("task-description-0"), "First task");
 
-		const saveButton = screen.getByTestId("save-button");
+		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("task-description-1"), "Second task");

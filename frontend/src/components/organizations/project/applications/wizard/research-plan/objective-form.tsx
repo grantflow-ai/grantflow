@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
+import { FloatingActionButton } from "@/components/organizations/project/applications/wizard/shared/floating-action-button";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -192,17 +193,18 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				))}
 			</div>
 
-			<div className="flex justify-end">
+			<FloatingActionButton>
 				<AppButton
-					data-testid="save-button"
+					className="w-full"
+					data-testid="add-objective-button"
 					disabled={!isFormValid()}
 					onClick={handleSave}
 					type="button"
 					variant="primary"
 				>
-					Save
+					Add Objective
 				</AppButton>
-			</div>
+			</FloatingActionButton>
 		</div>
 	);
 }
