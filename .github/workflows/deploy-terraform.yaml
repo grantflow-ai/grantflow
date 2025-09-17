@@ -48,6 +48,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      id-token: write
     outputs:
       environment: ${{ steps.config.outputs.environment }}
       should_deploy: ${{ steps.check.outputs.should_deploy }}
