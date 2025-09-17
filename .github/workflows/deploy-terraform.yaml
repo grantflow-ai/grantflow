@@ -1,0 +1,317 @@
+name: "Deploy with Terraform"
+
+on:
+  workflow_run:
+    workflows:
+      - "Build Backend"
+      - "Build Crawler"
+      - "Build Indexer"
+      - "Build RAG"
+      - "Build Scraper"
+      - "Build CRDT Server"
+      - "Build Frontend"
+    types:
+      - completed
+    branches:
+      - main
+      - development
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      auto_approve:
+        description: 'Skip manual approval for apply'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: terraform-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-workflows:
+    name: Check All Workflows Status
+    runs-on: ubuntu-latest
+    outputs:
+      all_successful: ${{ steps.check.outputs.all_successful }}
+      environment: ${{ steps.config.outputs.environment }}
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+    steps:
+      - name: Set environment
+        id: config
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check workflow statuses
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Only proceed if the triggering workflow was successful
+            if (context.eventName === 'workflow_run' && context.payload.workflow_run.conclusion !== 'success') {
+              console.log('Triggering workflow failed, skipping deployment');
+              core.setOutput('should_deploy', 'false');
+              core.setOutput('all_successful', 'false');
+              return;
+            }
+
+            // For manual dispatch, always proceed
+            if (context.eventName === 'workflow_dispatch') {
+              console.log('Manual dispatch, proceeding with deployment');
+              core.setOutput('should_deploy', 'true');
+              core.setOutput('all_successful', 'true');
+              return;
+            }
+
+            // Get the list of required workflows
+            const requiredWorkflows = [
+              'Build Backend',
+              'Build Crawler',
+              'Build Indexer',
+              'Build RAG',
+              'Build Scraper',
+              'Build CRDT Server',
+              'Build Frontend'
+            ];
+
+            // Check if all required workflows have successful runs on this commit
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: context.sha,
+              status: 'completed',
+              per_page: 100
+            });
+
+            const successfulWorkflows = new Set(
+              runs.workflow_runs
+                .filter(run => run.conclusion === 'success')
+                .map(run => run.name)
+            );
+
+            const allSuccessful = requiredWorkflows.every(name => successfulWorkflows.has(name));
+
+            console.log('Required workflows:', requiredWorkflows);
+            console.log('Successful workflows:', Array.from(successfulWorkflows));
+            console.log('All successful?', allSuccessful);
+
+            core.setOutput('should_deploy', allSuccessful ? 'true' : 'false');
+            core.setOutput('all_successful', allSuccessful ? 'true' : 'false');
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: check-workflows
+    if: needs.check-workflows.outputs.should_deploy == 'true'
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      TF_VAR_project_id: grantflow
+      ENVIRONMENT: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+    outputs:
+      plan_exitcode: ${{ steps.plan.outputs.exitcode }}
+      plan_output: ${{ steps.plan.outputs.stdout }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.0
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          tofu init -upgrade
+
+      - name: Terraform Format Check
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          tofu fmt -check -recursive || true
+
+      - name: Terraform Validate
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          tofu validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          set +e
+          tofu plan -detailed-exitcode -out=tfplan
+          EXITCODE=$?
+          set -e
+
+          if [ $EXITCODE -eq 0 ]; then
+            echo "No changes detected"
+            echo "exitcode=0" >> $GITHUB_OUTPUT
+          elif [ $EXITCODE -eq 2 ]; then
+            echo "Changes detected"
+            echo "exitcode=2" >> $GITHUB_OUTPUT
+
+            # Generate plan output for review
+            tofu show -no-color tfplan > plan.txt
+            echo "stdout<<EOF" >> $GITHUB_OUTPUT
+            cat plan.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "Plan failed"
+            exit $EXITCODE
+          fi
+
+      - name: Upload Plan
+        if: steps.plan.outputs.exitcode == '2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ env.ENVIRONMENT }}-${{ github.sha }}
+          path: terraform/environments/${{ env.ENVIRONMENT }}/tfplan
+          retention-days: 7
+
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request' && steps.plan.outputs.exitcode == '2'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### Terraform Plan - ${{ env.ENVIRONMENT }}
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: [check-workflows, terraform-plan]
+    if: |
+      needs.terraform-plan.outputs.plan_exitcode == '2' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development') &&
+      github.event_name != 'pull_request'
+    environment:
+      name: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+      url: ${{ steps.apply.outputs.app_url }}
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
+    env:
+      TF_VAR_project_id: grantflow
+      ENVIRONMENT: ${{ needs.check-workflows.outputs.environment || inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.0
+
+      - name: Initialize Terraform
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          tofu init -upgrade
+
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ env.ENVIRONMENT }}-${{ github.sha }}
+          path: terraform/environments/${{ env.ENVIRONMENT }}
+
+      - name: Apply Terraform Changes
+        id: apply
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          # Apply the plan
+          tofu apply -auto-approve tfplan
+
+          # Capture outputs
+          echo "app_url=$(tofu output -raw frontend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_OUTPUT
+          echo "backend_url=$(tofu output -raw backend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_OUTPUT
+
+      - name: Create Deployment Summary
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `## ✅ Deployment Successful
+
+            **Environment:** ${{ env.ENVIRONMENT }}
+            **Commit:** ${{ github.sha }}
+            **Frontend URL:** ${{ steps.apply.outputs.app_url }}
+            **Backend URL:** ${{ steps.apply.outputs.backend_url }}
+
+            Deployed by @${{ github.actor }} at ${new Date().toISOString()}`;
+
+            // Create a deployment record
+            await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: '${{ env.ENVIRONMENT }}',
+              description: 'Terraform deployment',
+              auto_merge: false,
+              required_contexts: [],
+              production_environment: '${{ env.ENVIRONMENT }}' === 'production'
+            });
+
+      - name: Notify on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `## ❌ Deployment Failed
+
+            **Environment:** ${{ env.ENVIRONMENT }}
+            **Commit:** ${{ github.sha }}
+            **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Please check the logs for details.`;
+
+            // Create an issue for the failure
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Deployment Failed: ${{ env.ENVIRONMENT }} - ${new Date().toISOString()}`,
+              body: message,
+              labels: ['deployment-failure', 'infrastructure']
+            });

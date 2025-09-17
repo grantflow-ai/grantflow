@@ -13,6 +13,7 @@ venv/
 *.terraform.lock.hcl
 *.tfplan
 *.tfplan.*
+tfplan
 *.tfstate
 *.tfstate.*
 *.tfvars
