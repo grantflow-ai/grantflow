@@ -84,6 +84,12 @@ resource "google_project_iam_member" "github_actions_compute_viewer" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+resource "google_project_iam_member" "github_actions_cloudsql_viewer" {
+  project = "grantflow"
+  role    = "roles/cloudsql.viewer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account_iam_member" "github_actions_service_account_user" {
   service_account_id = google_service_account.cloud_storage_admin.name
