@@ -116,7 +116,7 @@ async def test_download_search_data_no_advanced_search_link() -> None:
     with patch("services.scraper.src.search_data.async_playwright") as mock_async_playwright:
         mock_async_playwright.return_value.__aenter__.return_value = mock_playwright
 
-        with pytest.raises(ScraperError, match="Failed to find Advanced Search link"):
+        with pytest.raises(ScraperError, match="Failed to find or click Advanced Search link"):
             await download_search_data()
 
 
