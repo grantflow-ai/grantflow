@@ -36,8 +36,6 @@ jobs:
 
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
-        with:
-          package: crdt
 
       - name: Run Tests
         run: cd crdt && pnpm run test
@@ -51,8 +49,6 @@ jobs:
 
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
-        with:
-          package: crdt
 
       - name: Lint
         run: cd crdt && pnpm run lint
@@ -66,8 +62,6 @@ jobs:
 
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
-        with:
-          package: crdt
 
       - name: Build
         run: cd crdt && pnpm run build

@@ -25,10 +25,10 @@ on:
 env:
     NODE_OPTIONS: "--max_old_space_size=4096"
 
-
 concurrency:
     group: "${{ github.workflow }}-${{ github.ref }}"
     cancel-in-progress: true
+
 jobs:
     test:
         runs-on: ubuntu-latest
@@ -37,13 +37,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
+            - name: Setup workspace
               uses: ./.github/actions/setup-node-workspace
-              with:
-                  package: editor
 
-            - name: Run Tests
-              run: cd editor && pnpm run test
+            - name: Run tests
+              run: cd editor && pnpm test
 
     typecheck:
         runs-on: ubuntu-latest
@@ -52,13 +50,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
+            - name: Setup workspace
               uses: ./.github/actions/setup-node-workspace
-              with:
-                  package: editor
 
-            - name: Type Check
-              run: cd editor && pnpm run typecheck
+            - name: Type check
+              run: cd editor && pnpm typecheck
 
     lint:
         runs-on: ubuntu-latest
@@ -67,13 +63,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
+            - name: Setup workspace
               uses: ./.github/actions/setup-node-workspace
-              with:
-                  package: editor
 
             - name: Lint
-              run: cd editor && pnpm run lint
+              run: cd editor && pnpm lint
 
     build:
         runs-on: ubuntu-latest
@@ -82,13 +76,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
+            - name: Setup workspace
               uses: ./.github/actions/setup-node-workspace
-              with:
-                  package: editor
 
-            - name: Build Library
-              run: cd editor && pnpm run build
+            - name: Build library
+              run: cd editor && pnpm build
 
     e2e-setup:
         runs-on: ubuntu-latest
@@ -97,13 +89,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js and Dependencies
+            - name: Setup workspace
               uses: ./.github/actions/setup-node-workspace
-              with:
-                  package: editor
 
-            - name: Install Playwright Browsers
+            - name: Install Playwright browsers
               run: cd editor && pnpm exec playwright install --with-deps chromium
 
-            - name: Verify Playwright Setup
+            - name: Verify Playwright setup
               run: cd editor && pnpm exec playwright --version

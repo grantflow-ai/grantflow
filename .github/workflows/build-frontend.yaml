@@ -42,41 +42,20 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "22"
+            - name: Setup workspace
+              uses: ./.github/actions/setup-node-workspace
 
-            - name: Install PNPM
-              uses: pnpm/action-setup@v3
-              with:
-                  version: 9
-                  run_install: false
-
-            - name: Get pnpm store directory
-              shell: bash
-              run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-            - name: Setup pnpm cache
-              uses: actions/cache@v4
-              with:
-                  path: ${{ env.STORE_PATH }}
-                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: |
-                      ${{ runner.os }}-pnpm-store-
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+            - name: Build editor
+              run: cd editor && pnpm build
 
             - name: Run type checks
-              run: pnpm typecheck
+              run: cd frontend && pnpm typecheck
 
             - name: Run linters
-              run: pnpm lint
+              run: cd frontend && pnpm lint
 
             - name: Run tests
-              run: pnpm test
+              run: cd frontend && pnpm test
               env:
                   CI: true
 
@@ -108,37 +87,14 @@ jobs:
                   echo "build_id=${BUILD_ID}" >> $GITHUB_OUTPUT
                   echo "commit_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "22"
+            - name: Setup workspace
+              uses: ./.github/actions/setup-node-workspace
 
-            - name: Install PNPM
-              uses: pnpm/action-setup@v3
-              with:
-                  version: 9
-                  run_install: false
-
-            - name: Get pnpm store directory
-              shell: bash
-              run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-            - name: Setup pnpm cache
-              uses: actions/cache@v4
-              with:
-                  path: ${{ env.STORE_PATH }}
-                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: |
-                      ${{ runner.os }}-pnpm-store-
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+            - name: Build editor
+              run: cd editor && pnpm build
 
             - name: Build frontend
-              run: |
-                  cd frontend
-                  pnpm build
+              run: cd frontend && pnpm build
               env:
                   NEXT_PUBLIC_BUILD_ID: ${{ steps.build_info.outputs.build_id }}
                   NEXT_PUBLIC_COMMIT_SHA: ${{ github.sha }}
