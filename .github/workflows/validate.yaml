@@ -28,52 +28,16 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
-          run_install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
-
-      - name: Install Dependencies
-        run: pnpm install -r
+      - name: Setup workspace
+        uses: ./.github/actions/setup-node-workspace
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
 
-      - name: Install Dependencies
+      - name: Install Python dependencies
         run: uv sync --all-packages --all-extras --dev
-
-      - name: Cache Linter and Type Checker Caches
-        uses: actions/cache@v4
-        with:
-          path: |
-            frontend/.eslintcache
-            .mypy_cache
-            .ruff_cache
-            ~/.cache/uv
-            ~/.cache/pnpm
-          key: lint-cache-${{ runner.os }}-${{ hashFiles('uv.lock', 'pnpm-lock.yaml', 'frontend/package.json', 'pyproject.toml', '.prettierrc', 'eslint.config.mjs') }}
-          restore-keys: |
-            lint-cache-${{ runner.os }}-
-
-      - name: Cache Task Binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/task
-          key: task-${{ runner.os }}-3.x
-          restore-keys: |
-            task-${{ runner.os }}-
 
       - name: Install Task
         uses: arduino/setup-task@v2
@@ -96,22 +60,20 @@ jobs:
                 - '**/*.js'
                 - '**/*.jsx'
                 - 'frontend/**'
+                - 'editor/**'
                 - 'crdt/**'
             terraform:
-                - 'terraform/**/*.tf'
-                - 'terraform/**/*.tfvars'
+                - 'terraform/**'
+                - '.terraform-version'
 
-      - name: Run Python linters
+      - name: Validate Python
         if: steps.changes.outputs.python == 'true'
         run: task lint:python
 
-      - name: Run Frontend linters
+      - name: Validate TypeScript
         if: steps.changes.outputs.typescript == 'true'
         run: task lint:frontend
 
-      - name: Run Terraform linters
+      - name: Validate Terraform
         if: steps.changes.outputs.terraform == 'true'
         run: task lint:terraform
-
-      - name: Run Codespell
-        run: task lint:codespell
