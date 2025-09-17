@@ -1,5 +1,5 @@
 name: "Build Service"
-description: "Build and push Docker image for a service using standardized Task-based approach"
+description: "Optimized Docker build and push for GCP Cloud Run services"
 
 inputs:
   service:
@@ -21,36 +21,42 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  digest:
+    description: "Image digest"
+    value: ${{ steps.build.outputs.digest }}
+  metadata:
+    description: "Build metadata"
+    value: ${{ steps.build.outputs.metadata }}
+
 runs:
   using: "composite"
   steps:
-    - name: Free disk space
+    - name: Free disk space (optimized)
       shell: bash
       run: |
+        echo "::group::Disk cleanup"
         echo "Disk space before cleanup:"
-        df -h
+        df -h /
 
-        # Remove unnecessary tools and files
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/ghc
-        sudo rm -rf "/usr/local/share/boost"
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-        sudo rm -rf /usr/local/lib/android
+        # Parallel cleanup for speed
+        {
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /opt/hostedtoolcache &
+        }
+        wait
 
-        # Clean apt cache
+        # Clean package manager cache
         sudo apt-get clean
 
-        # Remove some large packages we don't need
-        # Use || true to continue even if some packages don't exist
-        sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel || true
-        sudo apt-get autoremove -y || true
-        sudo apt-get clean || true
-
-        # Clean docker images
-        docker system prune -af --volumes
+        # Prune Docker system (but keep buildx cache)
+        docker system prune -f --volumes
 
         echo "Disk space after cleanup:"
-        df -h
+        df -h /
+        echo "::endgroup::"
 
     - name: Setup GCP
       id: gcp
@@ -59,54 +65,110 @@ runs:
         workload_identity_provider: ${{ inputs.workload_identity_provider }}
         service_account: ${{ inputs.service_account }}
 
-    - name: Set up Docker Buildx
+    - name: Set up Docker Buildx (optimized)
       uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker-container
+        driver-opts: |
+          image=moby/buildkit:master
+          network=host
+        buildkitd-flags: --debug
+        # Enable GitHub Actions cache API v2 if available
+        config-inline: |
+          [worker.oci]
+            max-parallelism = 4
 
-    - name: Login to Container Registry
+    - name: Login to Artifact Registry
       uses: docker/login-action@v3
       with:
+        registry: us-east1-docker.pkg.dev
         username: oauth2accesstoken
         password: ${{ steps.gcp.outputs.access_token }}
-        registry: us-east1-docker.pkg.dev
 
-    - name: Set up environment tag
-      id: env-tag
+    - name: Configure build metadata
+      id: meta
       shell: bash
       run: |
+        # Set environment tag
         if [[ "${{ inputs.image_tag }}" == staging-* ]]; then
           echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
         else
           echo "env_latest=latest" >> $GITHUB_OUTPUT
         fi
 
-    - name: Clear Docker cache before build
-      shell: bash
-      run: |
-        echo "Clearing Docker build cache..."
-        docker builder prune -af
-        docker system df
+        # Set Dockerfile path
+        case "${{ inputs.service }}" in
+          frontend)
+            echo "dockerfile=frontend/Dockerfile" >> $GITHUB_OUTPUT
+            ;;
+          crdt)
+            echo "dockerfile=crdt/Dockerfile" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            echo "dockerfile=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
+            ;;
+        esac
 
-    - name: Set Dockerfile path
-      id: dockerfile
-      shell: bash
-      run: |
-        if [[ "${{ inputs.service }}" == "frontend" ]]; then
-          echo "path=frontend/Dockerfile" >> $GITHUB_OUTPUT
-        elif [[ "${{ inputs.service }}" == "crdt" ]]; then
-          echo "path=crdt/Dockerfile" >> $GITHUB_OUTPUT
-        else
-          echo "path=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
-        fi
+        # Generate cache scope for better cache isolation
+        echo "cache_scope=${{ inputs.service }}-${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
-    - name: Build and push service
+        # Registry path
+        echo "registry=us-east1-docker.pkg.dev/grantflow/grantflow" >> $GITHUB_OUTPUT
+
+    - name: Build and push Docker image
+      id: build
       uses: docker/build-push-action@v6
       with:
-        push: true
         context: ${{ github.workspace }}
-        file: ${{ steps.dockerfile.outputs.path }}
-        cache-from: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
-        cache-to: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
+        file: ${{ steps.meta.outputs.dockerfile }}
+        push: true
         tags: |
-          us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ steps.env-tag.outputs.env_latest }}
-          us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
+          ${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ steps.meta.outputs.env_latest }}
+          ${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ inputs.image_tag }}
         build-args: ${{ inputs.build_args }}
+        # Platform: Cloud Run only supports linux/amd64
+        platforms: linux/amd64
+        # Optimized caching strategy
+        cache-from: |
+          type=gha,scope=${{ steps.meta.outputs.cache_scope }}
+          type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache
+        cache-to: |
+          type=gha,mode=max,scope=${{ steps.meta.outputs.cache_scope }}
+          type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache,mode=max
+        # Enable provenance and SBOM for security
+        provenance: true
+        sbom: true
+        # Build annotations
+        annotations: |
+          index:org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          index:org.opencontainers.image.revision=${{ github.sha }}
+          index:org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          index:org.opencontainers.image.authors=grantflow-ci
+          index:org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/README.md
+          index:org.opencontainers.image.description=${{ inputs.service }} service for GrantFlow platform
+        # Labels for better tracking
+        labels: |
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          com.grantflow.service=${{ inputs.service }}
+          com.grantflow.environment=${{ steps.meta.outputs.env_latest }}
+          com.grantflow.build.number=${{ github.run_number }}
+          com.grantflow.build.id=${{ github.run_id }}
+
+    - name: Export build info
+      if: always()
+      shell: bash
+      run: |
+        echo "::notice title=Build Complete::Service ${{ inputs.service }} built with digest ${{ steps.build.outputs.digest }}"
+        echo "### Docker Build Summary 🐳" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Service:** ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ steps.meta.outputs.env_latest }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Cache used:**" >> $GITHUB_STEP_SUMMARY
+        echo "- GitHub Actions cache (scope: ${{ steps.meta.outputs.cache_scope }})" >> $GITHUB_STEP_SUMMARY
+        echo "- Registry cache" >> $GITHUB_STEP_SUMMARY

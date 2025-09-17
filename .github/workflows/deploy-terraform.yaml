@@ -40,6 +40,9 @@ jobs:
   check-workflows:
     name: Check All Workflows Status
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       all_successful: ${{ steps.check.outputs.all_successful }}
       environment: ${{ steps.config.outputs.environment }}
