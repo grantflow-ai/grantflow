@@ -79,11 +79,48 @@ describe.sequential("NotificationBanner", () => {
 		expect(container?.parentElement).toHaveClass("test-custom-class");
 	});
 
-	it("formats project name with quotes", () => {
+	it("formats project name with quotes when project name is provided", () => {
 		render(<NotificationBanner notification={mockNotification} />);
 
 		const projectNameElement = screen.getByTestId("notification-project-name");
 		expect(projectNameElement).toBeInTheDocument();
 		expect(projectNameElement.textContent).toContain("Research Project");
+
+		const messageElement = screen.getByTestId("notification-message");
+		expect(messageElement.textContent).toContain("Your project");
+		expect(messageElement.textContent).toContain("Research Project");
+		expect(messageElement.textContent).toContain("has a grant deadline in 2 days");
+	});
+
+	it("displays only message when project name is empty", () => {
+		const notificationWithoutProject: NotificationData = {
+			...mockNotification,
+			projectName: "",
+		};
+
+		render(<NotificationBanner notification={notificationWithoutProject} />);
+
+		const projectNameElement = screen.queryByTestId("notification-project-name");
+		expect(projectNameElement).not.toBeInTheDocument();
+
+		const messageElement = screen.getByTestId("notification-message");
+		expect(messageElement.textContent).toBe("has a grant deadline in 2 days");
+		expect(messageElement.textContent).not.toContain("Your project");
+	});
+
+	it("displays only message when project name is null/undefined", () => {
+		const notificationWithNullProject: NotificationData = {
+			...mockNotification,
+			projectName: "" as any, // simulating empty/null project name
+		};
+
+		render(<NotificationBanner notification={notificationWithNullProject} />);
+
+		const projectNameElement = screen.queryByTestId("notification-project-name");
+		expect(projectNameElement).not.toBeInTheDocument();
+
+		const messageElement = screen.getByTestId("notification-message");
+		expect(messageElement.textContent).toBe("has a grant deadline in 2 days");
+		expect(messageElement.textContent).not.toContain("Your project");
 	});
 });
