@@ -1,11 +1,23 @@
 # These owners will be the default owners for everything in the repo
-* @Goldziher
+* @Goldziher @grantflow-ai/developers
 
 # Frontend codebase
-/frontend/ @Goldziher @Developers
-/package.json @Goldziher @Developers
+/frontend/ @Goldziher @v-tan @grantflow-ai/developers
+/package.json @Goldziher @v-tan @grantflow-ai/developers
+/pnpm-lock.yaml @Goldziher @v-tan @grantflow-ai/developers
+
+# Editor and CRDT
+/editor/ @Goldziher @yatanvesh @grantflow-ai/developers
+/crdt/ @Goldziher @yatanvesh @grantflow-ai/developers
 
 # Backend services and packages
-/services/* @Goldziher
-/packages/* @Goldziher
-/pyproject.toml @Goldziher
+/services/* @Goldziher @grantflow-ai/developers
+/packages/* @Goldziher @grantflow-ai/developers
+/pyproject.toml @Goldziher @grantflow-ai/developers
+/uv.lock @Goldziher @grantflow-ai/developers
+
+# GitHub Actions and CI/CD
+/.github/ @Goldziher @grantflow-ai/developers
+
+# Infrastructure
+/terraform/ @Goldziher @grantflow-ai/developers

@@ -89,11 +89,13 @@ runs:
       id: meta
       shell: bash
       run: |
-        # Set environment tag
+        # Determine environment from image tag
         if [[ "${{ inputs.image_tag }}" == staging-* ]]; then
           echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
+          echo "environment=staging" >> $GITHUB_OUTPUT
         else
           echo "env_latest=latest" >> $GITHUB_OUTPUT
+          echo "environment=production" >> $GITHUB_OUTPUT
         fi
 
         # Set Dockerfile path
@@ -128,13 +130,13 @@ runs:
         build-args: ${{ inputs.build_args }}
         # Platform: Cloud Run only supports linux/amd64
         platforms: linux/amd64
-        # Optimized caching strategy
+        # Optimized caching strategy (mode=min exports only final layers)
         cache-from: |
           type=gha,scope=${{ steps.meta.outputs.cache_scope }}
           type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache
         cache-to: |
-          type=gha,mode=max,scope=${{ steps.meta.outputs.cache_scope }}
-          type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache,mode=max
+          type=gha,mode=min,scope=${{ steps.meta.outputs.cache_scope }}
+          type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache,mode=min
         # Enable provenance and SBOM for security
         provenance: true
         sbom: true
@@ -152,7 +154,7 @@ runs:
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
           com.grantflow.service=${{ inputs.service }}
-          com.grantflow.environment=${{ steps.meta.outputs.env_latest }}
+          com.grantflow.environment=${{ steps.meta.outputs.environment }}
           com.grantflow.build.number=${{ github.run_number }}
           com.grantflow.build.id=${{ github.run_id }}
 
