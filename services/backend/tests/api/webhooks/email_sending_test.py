@@ -1,5 +1,3 @@
-import base64
-import json
 from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
@@ -28,13 +26,12 @@ def mock_send_email() -> AsyncMock:
 
 @pytest.fixture
 def mock_pubsub_event(grant_application: GrantApplication) -> PubSubEvent:
-    data = {"application_id": str(grant_application.id)}
-    encoded_data = base64.b64encode(json.dumps(data).encode()).decode()
     return PubSubEvent(
         message=PubSubMessage(
-            data=encoded_data,
+            data="",
             message_id="test-message-id",
             publish_time="2023-01-01T00:00:00Z",
+            attributes={"application_id": str(grant_application.id)},
         )
     )
 
@@ -180,6 +177,7 @@ class TestEmailNotificationWebhook:
                         "data": mock_pubsub_event.message.data,
                         "message_id": mock_pubsub_event.message.message_id,
                         "publish_time": mock_pubsub_event.message.publish_time,
+                        "attributes": mock_pubsub_event.message.attributes,
                     }
                 },
                 headers={"Authorization": "Bearer test-token"},
@@ -193,13 +191,12 @@ class TestEmailNotificationWebhook:
     async def test_webhook_no_users_found(
         self, test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
     ) -> None:
-        data = {"application_id": str(uuid4())}
-        encoded_data = base64.b64encode(json.dumps(data).encode()).decode()
         event_data = {
             "message": {
-                "data": encoded_data,
+                "data": "",
                 "message_id": "test-message-id",
                 "publish_time": "2023-01-01T00:00:00Z",
+                "attributes": {"application_id": str(uuid4())},
             }
         }
 
@@ -213,12 +210,13 @@ class TestEmailNotificationWebhook:
 
         assert response.status_code == 400
 
-    async def test_webhook_invalid_pubsub_message(self, test_client: TestingClientType) -> None:
+    async def test_webhook_missing_application_id(self, test_client: TestingClientType) -> None:
         event_data = {
             "message": {
-                "data": "invalid-base64-data",
+                "data": "",
                 "message_id": "test-message-id",
                 "publish_time": "2023-01-01T00:00:00Z",
+                "attributes": {},
             }
         }
 
@@ -235,9 +233,10 @@ class TestEmailNotificationWebhook:
     async def test_webhook_authentication_required(self, test_client: TestingClientType) -> None:
         event_data = {
             "message": {
-                "data": "dGVzdA==",
+                "data": "",
                 "message_id": "test-message-id",
                 "publish_time": "2023-01-01T00:00:00Z",
+                "attributes": {"application_id": str(uuid4())},
             }
         }
 
@@ -269,6 +268,7 @@ class TestEmailNotificationWebhook:
                         "data": mock_pubsub_event.message.data,
                         "message_id": mock_pubsub_event.message.message_id,
                         "publish_time": mock_pubsub_event.message.publish_time,
+                        "attributes": mock_pubsub_event.message.attributes,
                     }
                 },
                 headers={"Authorization": "Bearer valid-oidc-jwt-token"},
@@ -295,9 +295,10 @@ class TestEmailNotificationWebhook:
                 "/webhooks/pubsub/email-notifications",
                 json={
                     "message": {
-                        "data": "dGVzdA==",
+                        "data": "",
                         "message_id": "test-message-id",
                         "publish_time": "2023-01-01T00:00:00Z",
+                        "attributes": {"application_id": str(uuid4())},
                     }
                 },
                 headers={"Authorization": "Bearer invalid-oidc-jwt-token"},

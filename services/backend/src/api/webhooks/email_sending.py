@@ -4,10 +4,9 @@ from uuid import UUID
 
 from litestar import post
 from packages.db.src.tables import GrantApplication, OrganizationUser, ProjectAccess
-from packages.shared_utils.src.exceptions import DeserializationError, ValidationError
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import PubSubEvent, decode_pubsub_message
-from packages.shared_utils.src.serialization import deserialize
+from packages.shared_utils.src.pubsub import PubSubEvent
 from sqlalchemy import exists, or_, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
@@ -32,14 +31,28 @@ def handle_pubsub_message(
     event: PubSubEvent,
 ) -> EmailNotificationRequest:
     logger.debug(
-        "Decoding PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
+        "Processing PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
     )
-    decoded_data = decode_pubsub_message(event=event)
+
+    # Get data from attributes instead of message body to avoid corruption issues
+    attributes = event.message.attributes or {}
+
+    application_id_str = attributes.get("application_id")
+    if not application_id_str:
+        raise ValidationError("Missing required attribute: application_id")
 
     try:
-        return deserialize(decoded_data, EmailNotificationRequest)
-    except DeserializationError as e:
-        raise ValidationError("Invalid email notification request", context={"data": decoded_data}) from e
+        application_id = UUID(application_id_str)
+    except ValueError as e:
+        raise ValidationError(f"Invalid application_id format: {application_id_str}") from e
+
+    request = EmailNotificationRequest(application_id=application_id)
+
+    # Add trace_id if present
+    if trace_id := attributes.get("trace_id"):
+        request["trace_id"] = trace_id
+
+    return request
 
 
 async def get_project_users(session_maker: async_sessionmaker[Any], application_id: UUID) -> list[OrganizationUser]:
