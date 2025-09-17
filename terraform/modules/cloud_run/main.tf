@@ -18,7 +18,7 @@ resource "google_cloud_run_v2_service" "backend" {
     service_account = var.backend_service_account_email != "" ? var.backend_service_account_email : null
 
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:${var.image_tag_suffix}"
+      image = var.backend_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend@${var.backend_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -203,7 +203,7 @@ resource "google_cloud_run_v2_service" "crawler" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:${var.image_tag_suffix}"
+      image = var.crawler_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler@${var.crawler_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -314,7 +314,7 @@ resource "google_cloud_run_v2_service" "indexer" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:${var.image_tag_suffix}"
+      image = var.indexer_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer@${var.indexer_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -427,7 +427,7 @@ resource "google_cloud_run_v2_service" "rag" {
     service_account = var.rag_service_account_email != "" ? var.rag_service_account_email : null
 
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:${var.image_tag_suffix}"
+      image = var.rag_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag@${var.rag_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -596,7 +596,7 @@ resource "google_cloud_run_v2_service" "scraper" {
     service_account = var.scraper_service_account_email
 
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
+      image = var.scraper_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper@${var.scraper_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -722,7 +722,7 @@ resource "google_cloud_run_v2_service" "crdt" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt:${var.image_tag_suffix}"
+      image = var.crdt_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt@${var.crdt_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt:${var.image_tag_suffix}"
 
       resources {
         limits = {

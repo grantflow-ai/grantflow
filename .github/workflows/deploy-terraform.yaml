@@ -147,13 +147,49 @@ jobs:
               core.setOutput('should_deploy', 'true');
             }
 
+      - name: Setup GCP Auth for digest collection
+        if: steps.check.outputs.should_deploy == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
       - name: Collect image digests from builds
         id: artifacts
         if: steps.check.outputs.should_deploy == 'true'
         run: |
-          # For now, we'll get digests from the GCR registry
-          # In the future, this should retrieve from workflow artifacts
-          echo "digests={}" >> $GITHUB_OUTPUT
+          echo "Collecting image digests for services: $SERVICES_TO_DEPLOY"
+
+          # Determine which services to collect digests for
+          if [[ "$SERVICES_TO_DEPLOY" == "all" ]]; then
+            SERVICES="backend crawler indexer rag scraper crdt"
+          else
+            SERVICES="$SERVICES_TO_DEPLOY"
+          fi
+
+          # Collect digests for each service
+          for service in $(echo "$SERVICES" | tr ',' ' '); do
+            service=$(echo "$service" | xargs) # trim whitespace
+            if [[ "$service" == "frontend" ]]; then
+              echo "Skipping frontend (not deployed via terraform)"
+              continue
+            fi
+
+            echo "Getting digest for $service..."
+            if digest=$(gcloud container images describe "us-east1-docker.pkg.dev/grantflow/grantflow/${service}:staging-latest" --format="value(image_summary.digest)" 2>/dev/null); then
+              if [[ "$digest" =~ ^sha256: ]]; then
+                echo "Found digest for $service: $digest"
+                echo "TF_VAR_${service}_image_digest=$digest" >> $GITHUB_ENV
+                echo "digest_${service}=$digest" >> $GITHUB_OUTPUT
+              else
+                echo "Warning: Invalid digest format for $service: $digest"
+              fi
+            else
+              echo "Warning: Could not get digest for $service"
+            fi
+          done
+        env:
+          SERVICES_TO_DEPLOY: ${{ steps.services.outputs.services }}
 
   terraform-plan:
     name: Terraform Plan
