@@ -26,6 +26,43 @@ variable "image_tag_suffix" {
   default     = "latest"
 }
 
+# Image digest variables for SHA-based deployments
+variable "backend_image_digest" {
+  description = "Backend service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
+variable "crawler_image_digest" {
+  description = "Crawler service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
+variable "indexer_image_digest" {
+  description = "Indexer service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
+variable "rag_image_digest" {
+  description = "RAG service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
+variable "scraper_image_digest" {
+  description = "Scraper service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
+variable "crdt_image_digest" {
+  description = "CRDT service image SHA digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
 variable "discord_webhook_url" {
   description = "Discord webhook URL for notifications"
   type        = string
