@@ -39,12 +39,12 @@ export function Notification({
 	}
 	return (
 		<div className="relative">
-			<button className="cursor-pointer relative block" data-testid="notification-trigger" type="button">
+			<div className="cursor-pointer relative block" data-testid="notification-trigger">
 				<BellIcon className="size-4 text-app-gray-600" />
 				{notifications.length > 0 && (
 					<div className="bg-error size-1 rounded-full absolute -top-0.5 -right-0.5" />
 				)}
-			</button>
+			</div>
 
 			<AnimatePresence>
 				{isOpen && (

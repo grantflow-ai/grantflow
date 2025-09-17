@@ -4,7 +4,6 @@ import { Mail, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { API } from "@/types/api-types";
@@ -311,7 +310,7 @@ export function InviteCollaboratorModal({
 											<div
 												className={` ${projects.length >= 6 ? "h-[220px] overflow-y-auto" : ""} scroll-box`}
 											>
-												<div
+												<SelectItem
 													className=" relative flex w-full items-center text-sm  select-none outline-hidden
 focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-pointer hover:bg-primary hover:text-white rounded-sm"
 													onClick={() => {
@@ -321,27 +320,10 @@ focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-
 															selectAllProjects();
 														}
 													}}
-													onKeyDown={(e) => {
-														if (e.key === "Enter" || e.key === " ") {
-															if (allProjectsSelected) {
-																deselectAllProjects();
-															} else {
-																selectAllProjects();
-															}
-														}
-													}}
-													role="button"
-													tabIndex={0}
+													value="__all__"
 												>
-													<Checkbox
-														checked={allProjectsSelected}
-														className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state-checked]:text-primary group-hover:text-white group-hover:border-white"
-														id="all-projects"
-													/>
-													<label className="text-sm font-normal" htmlFor="all-projects">
-														All
-													</label>
-												</div>
+													{allProjectsSelected ? "✓ " : ""}All
+												</SelectItem>
 												{projects.map((project) => (
 													<SelectItem
 														className=" group px-3 py-2 cursor-pointer text-app-black text-[14px]"
@@ -352,17 +334,8 @@ focus:bg-primary focus:text-accent-foregroundflex gap-1  group px-3 py-2 cursor-
 														}}
 														value={project.id}
 													>
-														<div className="flex gap-1 items-center">
-															<Checkbox
-																checked={selectedProjects.includes(project.id)}
-																className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state=checked]:text-primary"
-																id={project.id}
-															/>
-
-															<label className="text-sm font-normal" htmlFor={project.id}>
-																{project.name}
-															</label>
-														</div>
+														{selectedProjects.includes(project.id) ? "✓ " : ""}
+														{project.name}
 													</SelectItem>
 												))}
 											</div>
