@@ -5,7 +5,7 @@ import { afterEach } from "vitest";
 import { WelcomeModalContent, WelcomeModalOverlay } from "./modal-overlay";
 
 function DialogWrapper({ children }: { children: React.ReactNode }) {
-	return <DialogPrimitive.Root open>{children}</DialogPrimitive.Root>;
+	return <DialogPrimitive.Root open>{children as any}</DialogPrimitive.Root>;
 }
 
 describe.sequential("WelcomeModalContent", () => {
