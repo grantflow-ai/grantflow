@@ -3,8 +3,12 @@ description: "Set up environment and run tests for a specific backend target"
 
 inputs:
     target:
-        description: "Target to test (backend, indexer, crawler, db, shared_utils, functions)"
+        description: "Target to test (backend, indexer, crawler, db, shared_utils, functions, rag, scraper)"
         required: true
+    chromium:
+        description: "Install Chromium for Playwright (for crawler/scraper tests)"
+        required: false
+        default: 'false'
 
 runs:
     using: "composite"
