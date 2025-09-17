@@ -477,28 +477,26 @@ async def publish_email_notification(
 ) -> str:
     client = get_publisher_client()
 
-    data = EmailNotificationRequest(
-        application_id=UUID(str(application_id)),
+    # Use empty message body and send data as attributes to avoid corruption issues
+    message_data = b""
+    topic_path = client.topic_path(
+        project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
+        topic=get_env(
+            "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
+        ),
     )
 
-    if trace_id:
-        data["trace_id"] = trace_id
-
     try:
-        message_data = serialize(data)
-        topic_path = client.topic_path(
-            project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-            topic=get_env(
-                "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
-            ),
-        )
-
         with create_pubsub_publish_span(topic_path, "EmailNotificationRequest") as span:
             span.set_attribute("application_id", str(application_id))
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
-            attributes = {"trace_id": trace_id} if trace_id else {}
+            # Put data in attributes instead of message body
+            attributes = {"application_id": str(application_id)}
+            if trace_id:
+                attributes["trace_id"] = trace_id
+
             attributes = inject_trace_context(attributes)
 
             future = client.publish(topic_path, message_data, **attributes)
