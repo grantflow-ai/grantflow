@@ -1,0 +1,154 @@
+name: "Build Frontend"
+
+on:
+    push:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/build-frontend.yaml"
+            - ".github/actions/**"
+            - "editor/**"
+            - "frontend/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - "pnpm-workspace.yaml"
+    pull_request:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/build-frontend.yaml"
+            - ".github/actions/**"
+            - "editor/**"
+            - "frontend/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - "pnpm-workspace.yaml"
+    release:
+        types: [published]
+    workflow_dispatch:
+
+concurrency:
+    group: "${{ github.workflow }}-${{ github.ref }}"
+    cancel-in-progress: true
+
+jobs:
+    test:
+        name: Test Frontend
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "22"
+
+            - name: Install PNPM
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 9
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run type checks
+              run: pnpm typecheck
+
+            - name: Run linters
+              run: pnpm lint
+
+            - name: Run tests
+              run: pnpm test
+              env:
+                  CI: true
+
+    build:
+        name: Build Frontend Bundle
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            id-token: write
+        if: github.event_name != 'pull_request'
+        outputs:
+            build_id: ${{ steps.build_info.outputs.build_id }}
+            commit_sha: ${{ steps.build_info.outputs.commit_sha }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Set build info
+              id: build_info
+              run: |
+                  if [[ "${{ github.event_name }}" == "release" ]]; then
+                      BUILD_ID="${{ github.event.release.tag_name }}"
+                  elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                      BUILD_ID="production-${{ github.sha }}"
+                  else
+                      BUILD_ID="staging-${{ github.sha }}"
+                  fi
+                  echo "build_id=${BUILD_ID}" >> $GITHUB_OUTPUT
+                  echo "commit_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "22"
+
+            - name: Install PNPM
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 9
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build frontend
+              run: |
+                  cd frontend
+                  pnpm build
+              env:
+                  NEXT_PUBLIC_BUILD_ID: ${{ steps.build_info.outputs.build_id }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ github.sha }}
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: frontend-build-${{ steps.build_info.outputs.build_id }}
+                  path: |
+                      frontend/.next/
+                      frontend/out/
+                      frontend/package.json
+                  retention-days: 7

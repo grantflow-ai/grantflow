@@ -1,0 +1,23 @@
+name: "Build Indexer"
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - "services/indexer/**"
+      - "packages/db/**"
+      - "packages/shared_utils/**"
+      - ".github/workflows/build-indexer.yaml"
+      - ".github/actions/build-service/**"
+
+jobs:
+  build:
+    name: Build Indexer
+    uses: ./.github/workflows/build-service.yaml
+    with:
+      service: indexer
+    permissions:
+      contents: read
+      id-token: write

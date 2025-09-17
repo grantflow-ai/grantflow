@@ -1,0 +1,23 @@
+name: "Build CRDT Server"
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - "crdt/**"
+      - "packages/db/**"
+      - "packages/shared_utils/**"
+      - ".github/workflows/build-crdt.yaml"
+      - ".github/actions/build-service/**"
+
+jobs:
+  build:
+    name: Build CRDT Server
+    uses: ./.github/workflows/build-service.yaml
+    with:
+      service: crdt
+    permissions:
+      contents: read
+      id-token: write
