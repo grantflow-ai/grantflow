@@ -22,7 +22,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     timeout-minutes: ${{ inputs.timeout }}
     permissions:
       contents: read
