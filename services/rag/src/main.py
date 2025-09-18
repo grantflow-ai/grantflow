@@ -99,4 +99,6 @@ app = create_litestar_app(
         handle_request,
     ],
     on_startup=[before_server_start],
+    # ~keep Use lightweight health check for RAG service to prevent timeouts under load
+    lightweight_health_check=True,
 )

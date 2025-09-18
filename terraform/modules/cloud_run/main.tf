@@ -445,10 +445,20 @@ resource "google_cloud_run_v2_service" "rag" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 10
-        timeout_seconds       = 5
-        period_seconds        = 15
+        initial_delay_seconds = 30
+        timeout_seconds       = 10
+        period_seconds        = 30
         failure_threshold     = 3
+      }
+
+      startup_probe {
+        tcp_socket {
+          port = 8000
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 240
+        period_seconds        = 240
+        failure_threshold     = 1
       }
 
       env {
@@ -538,11 +548,13 @@ resource "google_cloud_run_v2_service" "rag" {
     }
 
     scaling {
-      max_instance_count = var.max_instances
-      min_instance_count = var.min_instances
+      max_instance_count = var.rag_max_instances >= 0 ? var.rag_max_instances : var.max_instances
+      min_instance_count = var.rag_min_instances >= 0 ? var.rag_min_instances : var.min_instances
     }
 
     timeout = "1800s"
+    # ~keep Reduced concurrency for RAG AI workloads (one message per instance)
+    max_instance_request_concurrency = var.rag_concurrency_limit > 0 ? var.rag_concurrency_limit : var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"

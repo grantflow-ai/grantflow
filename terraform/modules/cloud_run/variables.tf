@@ -117,6 +117,24 @@ variable "rag_cpu_limit" {
   default     = ""
 }
 
+variable "rag_concurrency_limit" {
+  description = "Maximum concurrent requests per RAG instance (defaults to concurrency_limit if not set)"
+  type        = number
+  default     = 0
+}
+
+variable "rag_min_instances" {
+  description = "Minimum number of RAG instances (defaults to min_instances if not set)"
+  type        = number
+  default     = -1
+}
+
+variable "rag_max_instances" {
+  description = "Maximum number of RAG instances (defaults to max_instances if not set)"
+  type        = number
+  default     = -1
+}
+
 variable "indexer_memory_limit" {
   description = "Memory allocation for indexer service (defaults to memory_limit if not set)"
   type        = string
