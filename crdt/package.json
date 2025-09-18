@@ -6,7 +6,7 @@
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.44.5",
 		"pg": "^8.16.3",
-		"pino": "^9.9.5",
+		"pino": "^9.10.0",
 		"zod": "^4.1.9"
 	},
 	"devDependencies": {
