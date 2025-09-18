@@ -153,25 +153,33 @@ def get_logger(name: str) -> FilteringBoundLogger:
             format_exc_info,
         )
 
+        # Determine if we're in a local development environment
+        is_local_dev = get_env("DEBUG", raise_on_missing=False) and not get_env(
+            "K_SERVICE", raise_on_missing=False
+        )
+
+        # Set log level - DEBUG if DEBUG env var is set, otherwise INFO
+        log_level = (
+            logging.DEBUG if get_env("DEBUG", raise_on_missing=False) else logging.INFO
+        )
+
         configure_once(
             cache_logger_on_first_use=True,
-            wrapper_class=make_filtering_bound_logger(
-                logging.DEBUG
-                if get_env("DEBUG", raise_on_missing=False)
-                else logging.INFO,
-            ),
+            wrapper_class=make_filtering_bound_logger(log_level),
             processors=[
                 merge_contextvars,
                 add_otel_context,
                 add_log_level,
                 format_exc_info,
                 TimeStamper(fmt="iso"),
+                # Use colored console output only for local development
+                # Cloud Run/Cloud Logging needs JSON format even with DEBUG=1
                 ConsoleRenderer(colors=True)
-                if get_env("DEBUG", raise_on_missing=False)
+                if is_local_dev
                 else JSONRenderer(serializer=serialize),
             ],
             logger_factory=PrintLoggerFactory()
-            if get_env("DEBUG", raise_on_missing=False)
+            if is_local_dev
             else BytesLoggerFactory(),
         )
 
