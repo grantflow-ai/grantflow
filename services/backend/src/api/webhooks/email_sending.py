@@ -30,8 +30,13 @@ class EmailResponse(TypedDict):
 def handle_pubsub_message(
     event: PubSubEvent,
 ) -> EmailNotificationRequest:
-    logger.debug(
-        "Processing PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
+    logger.info(
+        "Processing PubSub message",
+        message_id=event.message.message_id,
+        publish_time=event.message.publish_time,
+        has_attributes=bool(event.message.attributes),
+        attribute_keys=list(event.message.attributes.keys()) if event.message.attributes else [],
+        subscription=event.subscription,
     )
 
     # Get data from attributes instead of message body to avoid corruption issues
@@ -39,11 +44,27 @@ def handle_pubsub_message(
 
     application_id_str = attributes.get("application_id")
     if not application_id_str:
+        logger.error(
+            "Missing application_id in message attributes",
+            available_attributes=list(attributes.keys()),
+            message_id=event.message.message_id,
+        )
         raise ValidationError("Missing required attribute: application_id")
 
     try:
         application_id = UUID(application_id_str)
+        logger.info(
+            "Successfully parsed application_id",
+            application_id=str(application_id),
+            message_id=event.message.message_id,
+        )
     except ValueError as e:
+        logger.error(
+            "Invalid application_id format",
+            application_id_str=application_id_str,
+            error=str(e),
+            message_id=event.message.message_id,
+        )
         raise ValidationError(f"Invalid application_id format: {application_id_str}") from e
 
     request = EmailNotificationRequest(application_id=application_id)
@@ -51,6 +72,7 @@ def handle_pubsub_message(
     # Add trace_id if present
     if trace_id := attributes.get("trace_id"):
         request["trace_id"] = trace_id
+        logger.info("Added trace_id to request", trace_id=trace_id, application_id=str(application_id))
 
     return request
 
@@ -118,51 +140,113 @@ async def send_email_to_user(
     tags=["Webhooks"],
 )
 async def handle_email_notification_webhook(data: PubSubEvent, session_maker: async_sessionmaker[Any]) -> EmailResponse:
-    request = handle_pubsub_message(event=data)
-    application_id = request["application_id"]
+    logger.info(
+        "Email notification webhook triggered",
+        message_id=data.message.message_id if data.message else None,
+        subscription=data.subscription,
+    )
 
-    async with session_maker() as session:
-        application = await session.get(
-            GrantApplication, application_id, options=[selectinload(GrantApplication.project)]
-        )
-        if not application or application.deleted_at is not None:
-            raise ValidationError("Application not found.", context=str(application_id))
+    try:
+        request = handle_pubsub_message(event=data)
+        application_id = request["application_id"]
 
-    project_id = str(application.project.id)
-    application_title = application.title
-    application_text = application.text or ""
-
-    users_list = await get_project_users(session_maker, application_id)
-
-    if not users_list:
-        logger.warning("No users found for application", application_id=str(application_id), project_id=project_id)
-        return EmailResponse(
-            status="success",
-            message="No users to notify",
-        )
-
-    email_tasks = [
-        send_email_to_user(
-            user=user,
-            application_title=application_title,
-            application_text=application_text,
-            project_id=project_id,
+        logger.info(
+            "Fetching application from database",
             application_id=str(application_id),
         )
-        for user in users_list
-    ]
 
-    results = await asyncio.gather(*email_tasks, return_exceptions=True)
-    emails_sent = sum(1 for result in results if result is True)
+        async with session_maker() as session:
+            application = await session.get(
+                GrantApplication, application_id, options=[selectinload(GrantApplication.project)]
+            )
+            if not application or application.deleted_at is not None:
+                logger.error(
+                    "Application not found or deleted",
+                    application_id=str(application_id),
+                    found=application is not None,
+                    deleted=application.deleted_at is not None if application else None,
+                )
+                raise ValidationError("Application not found.", context=str(application_id))
 
-    logger.info(
-        "Email notification batch completed",
-        application_id=str(application_id),
-        total_users=len(users_list),
-        emails_sent=emails_sent,
-    )
+        project_id = str(application.project.id)
+        application_title = application.title
+        application_text = application.text or ""
 
-    return EmailResponse(
-        status="success",
-        message=f"Email notifications sent to {emails_sent}/{len(users_list)} users",
-    )
+        logger.info(
+            "Application details retrieved",
+            application_id=str(application_id),
+            project_id=project_id,
+            has_text=bool(application_text),
+        )
+
+        users_list = await get_project_users(session_maker, application_id)
+
+        if not users_list:
+            logger.warning(
+                "No users found for application",
+                application_id=str(application_id),
+                project_id=project_id,
+            )
+            return EmailResponse(
+                status="success",
+                message="No users to notify",
+            )
+
+        logger.info(
+            "Starting email send batch",
+            application_id=str(application_id),
+            user_count=len(users_list),
+        )
+
+        email_tasks = [
+            send_email_to_user(
+                user=user,
+                application_title=application_title,
+                application_text=application_text,
+                project_id=project_id,
+                application_id=str(application_id),
+            )
+            for user in users_list
+        ]
+
+        results = await asyncio.gather(*email_tasks, return_exceptions=True)
+        emails_sent = sum(1 for result in results if result is True)
+        exceptions = [r for r in results if isinstance(r, Exception)]
+
+        if exceptions:
+            logger.warning(
+                "Some emails failed to send",
+                application_id=str(application_id),
+                exception_count=len(exceptions),
+                first_exception=str(exceptions[0]) if exceptions else None,
+            )
+
+        logger.info(
+            "Email notification batch completed",
+            application_id=str(application_id),
+            total_users=len(users_list),
+            emails_sent=emails_sent,
+            emails_failed=len(users_list) - emails_sent,
+        )
+
+        return EmailResponse(
+            status="success",
+            message=f"Email notifications sent to {emails_sent}/{len(users_list)} users",
+        )
+
+    except ValidationError as e:
+        logger.error(
+            "Validation error in email webhook",
+            error=str(e),
+            context=e.context if hasattr(e, "context") else None,
+            message_id=data.message.message_id if data.message else None,
+        )
+        raise
+    except Exception as e:
+        logger.error(
+            "Unexpected error in email webhook",
+            error=str(e),
+            error_type=type(e).__name__,
+            message_id=data.message.message_id if data.message else None,
+        )
+        raise

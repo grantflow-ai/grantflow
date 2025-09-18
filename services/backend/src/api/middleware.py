@@ -85,15 +85,61 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=None)
 
         if self._is_webhook_path(path):
+            logger.debug(
+                "Processing webhook authentication",
+                path=path,
+                netloc=connection.url.netloc,
+                host_header=connection.headers.get("Host"),
+                x_forwarded_host=connection.headers.get("X-Forwarded-Host"),
+                has_auth_header=bool(auth_header),
+            )
+
             if not auth_header or not auth_header.startswith("Bearer "):
+                logger.warning(
+                    "Missing or invalid Bearer token for webhook",
+                    path=path,
+                    auth_header_present=bool(auth_header),
+                    auth_header_starts_with_bearer=auth_header.startswith("Bearer ") if auth_header else False,
+                )
                 raise NotAuthorizedException("Bearer token required for webhook authentication")
 
             token = auth_header.removeprefix("Bearer ").strip()
-            expected_audience = f"https://{connection.url.netloc}{path}"
 
-            if verify_webhook_oidc_token(token, expected_audience):
-                return AuthenticationResult(user=None, auth=None)
+            # Build possible audience URLs to handle Cloud Run URL variations
+            possible_audiences = [
+                f"https://{connection.url.netloc}{path}",
+            ]
 
+            # Also check with X-Forwarded-Host header if present (for load balancer scenarios)
+            if forwarded_host := connection.headers.get("X-Forwarded-Host"):
+                forwarded_audience = f"https://{forwarded_host}{path}"
+                if forwarded_audience not in possible_audiences:
+                    possible_audiences.append(forwarded_audience)
+
+            logger.debug(
+                "Verifying webhook OIDC token",
+                path=path,
+                audience_count=len(possible_audiences),
+                netloc=connection.url.netloc,
+            )
+
+            # Try each possible audience URL
+            for expected_audience in possible_audiences:
+                if verify_webhook_oidc_token(token, expected_audience):
+                    logger.debug(
+                        "Webhook authentication successful",
+                        path=path,
+                        matched_audience=expected_audience,
+                    )
+                    return AuthenticationResult(user=None, auth=None)
+
+            # If none matched, log the failure
+            logger.error(
+                "Webhook authentication failed - Invalid OIDC token",
+                path=path,
+                tried_audiences=possible_audiences,
+                netloc=connection.url.netloc,
+            )
             raise NotAuthorizedException("Invalid OIDC token")
 
         if self._is_admin_path(path):

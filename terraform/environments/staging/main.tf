@@ -101,8 +101,11 @@ module "cloud_run" {
   crawler_min_instances     = 0     # ~keep Scale to zero when idle
   crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
 
-  rag_memory_limit = "2Gi" # ~keep Reduced memory since processing one URL at a time
-  rag_cpu_limit    = "1"   # ~keep Single CPU for single URL processing
+  rag_memory_limit      = "4Gi" # ~keep Increased memory for AI context windows
+  rag_cpu_limit         = "1"   # ~keep Single CPU sufficient for async I/O operations
+  rag_concurrency_limit = 1     # ~keep ONE message per instance for AI workloads
+  rag_min_instances     = 1     # ~keep Always keep one warm instance
+  rag_max_instances     = 10    # ~keep Scale up to 10 for burst traffic
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
 

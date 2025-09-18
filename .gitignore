@@ -81,3 +81,6 @@ openapi.json
 .windsurf/
 .mcp.json
 .github/copilot-instructions.md
+
+# Temporary files and logs
+temp*
