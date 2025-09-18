@@ -36,7 +36,7 @@ import "@/editor/index.scss";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import type { JSONContent } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
-
+import { DiffMarkHoverHandler } from "@/components/prompt/diff-mark-hover-handler";
 import { EditorExtensions } from "@/editor/editor-extensions";
 import { markdownToYDoc } from "@/utils/text-transformers";
 
@@ -268,6 +268,7 @@ export const Editor = React.forwardRef(function Editor(
 
 	return (
 		<div className="simple-editor-wrapper">
+			<DiffMarkHoverHandler editor={editor} />
 			<EditorContext.Provider value={{ editor }}>
 				<Toolbar
 					ref={toolbarRef}
