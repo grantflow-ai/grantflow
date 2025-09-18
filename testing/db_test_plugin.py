@@ -63,13 +63,18 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    base_connection_string = os.getenv("DATABASE_URL") or "postgresql://grantflow:grantflow@localhost:5432/postgres"
+    base_connection_string = (
+        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql+asyncpg://local:local@localhost:5432/local"
+    )
 
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"
 
     parsed = urlparse(base_connection_string)
-    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
+    if parsed.scheme == "postgresql+asyncpg":
+        parsed = parsed._replace(scheme="postgresql")
+
+    admin_connection_string = urlunparse(parsed)
 
     try:
         admin_conn = await connect(admin_connection_string)

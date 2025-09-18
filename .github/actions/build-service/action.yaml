@@ -32,32 +32,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Free disk space (optimized)
-      shell: bash
-      run: |
-        echo "::group::Disk cleanup"
-        echo "Disk space before cleanup:"
-        df -h /
-
-        # Parallel cleanup for speed
-        {
-          sudo rm -rf /usr/share/dotnet &
-          sudo rm -rf /opt/ghc &
-          sudo rm -rf /usr/local/lib/android &
-          sudo rm -rf /opt/hostedtoolcache &
-        }
-        wait
-
-        # Clean package manager cache
-        sudo apt-get clean
-
-        # Prune Docker system (but keep buildx cache)
-        docker system prune -f --volumes
-
-        echo "Disk space after cleanup:"
-        df -h /
-        echo "::endgroup::"
-
     - name: Setup GCP
       id: gcp
       uses: ./.github/actions/setup-gcp
