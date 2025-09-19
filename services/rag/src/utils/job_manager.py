@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import UUID
@@ -5,147 +6,57 @@ from uuid import UUID
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GenerationNotification,
-    GrantApplication,
     GrantApplicationGenerationJob,
-    GrantTemplate,
     GrantTemplateGenerationJob,
     RagGenerationJob,
 )
 from packages.shared_utils.src.constants import NotificationEvents
+from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
 
 
-class JobManager:
-    def __init__(self, session_maker: async_sessionmaker[Any], job_id: UUID | None = None) -> None:
-        self.session_maker = session_maker
+class BaseJobManager[T: RagGenerationJob, E, D](ABC):
+    __slots__ = ("current_stage", "grant_application_id", "job_id", "parent_id", "pipeline_stages", "session_maker")
+
+    job: None | RagGenerationJob = None
+
+    def __init__(
+        self,
+        *,
+        current_stage: E,
+        grant_application_id: UUID,
+        job_id: UUID | None = None,
+        parent_id: UUID,
+        pipeline_stages: list[E],
+        session_maker: async_sessionmaker[Any],
+    ) -> None:
+        self.current_stage = current_stage
+        self.grant_application_id = grant_application_id
         self.job_id = job_id
+        self.parent_id = parent_id
+        self.session_maker = session_maker
+        self.pipeline_stages = pipeline_stages
 
-    async def create_grant_template_job(self, grant_template_id: UUID, total_stages: int) -> GrantTemplateGenerationJob:
-        logger.debug(
-            "Attempting to create grant template job",
-            template_id=str(grant_template_id),
-            total_stages=total_stages,
-        )
+    @abstractmethod
+    async def get_or_create_job(self) -> T:
+        pass
+
+    async def to_next_job_stage(self, dto: D) -> None:
+        next_stage = self.pipeline_stages[self.pipeline_stages.index(self.current_stage) + 1]
 
         async with self.session_maker() as session:
-            logger.debug(
-                "Checking for existing job",
-                template_id=str(grant_template_id),
-            )
-            existing_job_result = await session.execute(
-                select(GrantTemplateGenerationJob).where(
-                    GrantTemplateGenerationJob.grant_template_id == grant_template_id
-                )
-            )
-            existing_job = cast("GrantTemplateGenerationJob | None", existing_job_result.scalar_one_or_none())
+            self.job.checkpoint_data = dto
 
-            if existing_job:
-                logger.info(
-                    "Job already exists for template, returning existing job",
-                    template_id=str(grant_template_id),
-                    job_id=str(existing_job.id),
-                    job_status=existing_job.status.value,
-                )
-                self.job_id = existing_job.id
-                return existing_job
-
-            logger.debug(
-                "Verifying grant template exists before creating job",
-                template_id=str(grant_template_id),
-            )
-            template_result = await session.execute(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
-            template = template_result.scalar_one_or_none()
-
-            if template is None:
-                logger.warning(
-                    "Grant template not found, cannot create job - template may have been deleted",
-                    template_id=str(grant_template_id),
-                )
-                msg = f"Grant template {grant_template_id} not found"
-                raise ValueError(msg)
-
-            logger.debug(
-                "Grant template found, proceeding with job creation",
-                template_id=str(grant_template_id),
-                template_grant_application_id=str(template.grant_application_id),
-                template_existing_rag_job_id=str(template.rag_job_id) if template.rag_job_id else None,
-            )
-
-            job = GrantTemplateGenerationJob(
-                grant_template_id=grant_template_id,
-                total_stages=total_stages,
-                status=RagGenerationStatusEnum.PENDING,
-                current_stage=0,
-                retry_count=0,
-            )
-            logger.debug(
-                "Adding job to session",
-                template_id=str(grant_template_id),
-                job_id=str(job.id),
-            )
-            session.add(job)
-            await session.flush()
-
-            logger.debug(
-                "Updating template with job ID",
-                template_id=str(grant_template_id),
-                job_id=str(job.id),
-            )
-            template.rag_job_id = job.id
-
-            logger.debug(
-                "Committing job creation transaction",
-                template_id=str(grant_template_id),
-                job_id=str(job.id),
-            )
+            session.add(self.job)
             await session.commit()
-            self.job_id = job.id
-            logger.info("Created new job for template", template_id=str(grant_template_id), job_id=str(job.id))
-            return job
 
-    async def create_grant_application_job(
-        self, grant_application_id: UUID, total_stages: int
-    ) -> GrantApplicationGenerationJob:
-        async with self.session_maker() as session:
-            existing_job_result = await session.execute(
-                select(GrantApplicationGenerationJob).where(
-                    GrantApplicationGenerationJob.grant_application_id == grant_application_id
-                )
-            )
-            existing_job = cast("GrantApplicationGenerationJob | None", existing_job_result.scalar_one_or_none())
-
-            if existing_job:
-                logger.info(
-                    "Job already exists for application, returning existing job",
-                    application_id=str(grant_application_id),
-                    job_id=str(existing_job.id),
-                )
-                self.job_id = existing_job.id
-                return existing_job
-
-            job = GrantApplicationGenerationJob(
-                grant_application_id=grant_application_id,
-                total_stages=total_stages,
-                status=RagGenerationStatusEnum.PENDING,
-                current_stage=0,
-                retry_count=0,
-            )
-            session.add(job)
-            await session.flush()
-
-            result = await session.execute(select(GrantApplication).where(GrantApplication.id == grant_application_id))
-            application = result.scalar_one()
-            application.rag_job_id = job.id
-
-            await session.commit()
-            self.job_id = job.id
-            logger.info("Created new job for application", application_id=str(grant_application_id), job_id=str(job.id))
-            return job
+        # TODO - publish to pubsub here - this is where we are publishing the next rag processing message in the pipeline
 
     async def update_job_status(
         self,
@@ -154,7 +65,7 @@ class JobManager:
         error_details: dict[str, Any] | None = None,
     ) -> None:
         if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
+            raise RuntimeError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
             result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
@@ -173,37 +84,15 @@ class JobManager:
 
             await session.commit()
 
-    async def update_job_stage(
+    async def add_notification[T: dict](
         self,
-        current_stage: int,
-        checkpoint_data: dict[str, Any] | None = None,
-    ) -> None:
-        if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
-
-        async with self.session_maker() as session:
-            result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
-            job = result.scalar_one()
-
-            job.current_stage = current_stage
-            if checkpoint_data:
-                job.checkpoint_data = checkpoint_data
-
-            await session.commit()
-
-    async def add_notification(
-        self,
-        parent_id: UUID,
+        *,
         event: str,
         message: str,
         notification_type: Literal["info", "error", "warning", "success"] = "info",
-        data: dict[str, Any] | None = None,
-        current_pipeline_stage: int | None = None,
-        total_pipeline_stages: int | None = None,
+        data: T | None = None,
     ) -> None:
         logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
-        if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
             notification = GenerationNotification(
@@ -212,39 +101,29 @@ class JobManager:
                 message=message,
                 notification_type=notification_type,
                 data=data,
-                current_pipeline_stage=current_pipeline_stage,
-                total_pipeline_stages=total_pipeline_stages,
+                current_pipeline_stage=self.pipeline_stages.index(self.current_stage),
+                total_pipeline_stages=len(self.pipeline_stages),
             )
             session.add(notification)
-
-            if current_pipeline_stage is not None:
-                await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
-                if job := await session.get(RagGenerationJob, self.job_id):
-                    job.current_stage = current_pipeline_stage
-
             await session.commit()
 
         status_data: RagProcessingStatus = {
             "event": event,
             "message": message,
+            "current_pipeline_stage": notification["current_pipeline_stage"],
+            "total_pipeline_stages": notification["total_pipeline_stages"]
         }
+
         if data is not None:
             status_data["data"] = data
-        if current_pipeline_stage is not None:
-            status_data["current_pipeline_stage"] = current_pipeline_stage
-        if total_pipeline_stages is not None:
-            status_data["total_pipeline_stages"] = total_pipeline_stages
 
         await publish_notification(
-            parent_id=parent_id,
+            parent_id=self.grant_application_id,
             event=event,
             data=status_data,
         )
 
     async def increment_retry_count(self) -> int:
-        if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
-
         async with self.session_maker() as session:
             result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             job = result.scalar_one()
@@ -253,20 +132,7 @@ class JobManager:
             await session.commit()
             return int(job.retry_count)
 
-    async def get_job(self) -> RagGenerationJob | None:
-        if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
-
-        async with self.session_maker() as session:
-            return cast(
-                "RagGenerationJob | None",
-                await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id)),
-            )
-
     async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
-        if not self.job_id:
-            raise ValueError("Job ID not set. Create a job first.")
-
         async with self.session_maker() as session:
             query = (
                 select(GenerationNotification)
@@ -280,21 +146,112 @@ class JobManager:
             result = await session.execute(query)
             return list(result.scalars().all())
 
-    async def check_if_cancelled(self) -> bool:
-        if not self.job_id:
-            return False
-
+    async def ensure_not_cancelled(self) -> None:
         async with self.session_maker() as session:
-            job = await session.get(RagGenerationJob, self.job_id)
-            if job and job.status == RagGenerationStatusEnum.CANCELLED:
-                logger.info("Job has been cancelled", job_id=str(self.job_id))
-                return True
-        return False
+            await session.refresh(self.job)
 
-    async def handle_cancellation(self, parent_id: UUID) -> None:
-        await self.add_notification(
-            parent_id=parent_id,
-            event=NotificationEvents.CANCELLATION_ACKNOWLEDGED,
-            message="Processing stopped due to cancellation",
-            notification_type="warning",
+        if self.job.status == RagGenerationStatusEnum.CANCELLED:
+            await self.add_notification(
+                event=NotificationEvents.CANCELLATION_ACKNOWLEDGED,
+                message="Processing stopped due to cancellation",
+                notification_type="warning",
+            )
+            raise RagJobCancelledError
+
+
+class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E, D]):
+    async def get_or_create_job(self) -> GrantTemplateGenerationJob:
+        logger.debug(
+            "Getting or creating rag job job",
+            template_id=str(self.parent_id),
         )
+
+        async with self.session_maker() as session, session.begin():
+            logger.debug(
+                "Checking for existing job",
+                template_id=str(self.parent_id),
+            )
+            try:
+                existing_job_result = await session.execute(
+                    select(GrantTemplateGenerationJob).where(
+                        GrantTemplateGenerationJob.grant_template_id == self.parent_id
+                    )
+                )
+                existing_job = cast("GrantTemplateGenerationJob | None", existing_job_result.scalar_one_or_none())
+
+                if existing_job:
+                    logger.info(
+                        "Job already exists for template, returning existing job",
+                        template_id=str(self.parent_id),
+                        job_id=str(existing_job.id),
+                        job_status=existing_job.status.value,
+                    )
+                    self.job_id = existing_job.id
+                    return existing_job
+
+                job = GrantTemplateGenerationJob(
+                    grant_template_id=self.parent_id,
+                    total_stages=len(self.pipeline_stages),
+                    status=RagGenerationStatusEnum.PENDING,
+                    current_stage=0,
+                    retry_count=0,
+                )
+                session.add(job)
+                await session.flush()
+                await session.commit()
+
+                self.job_id = job.id
+                self.job = job
+                logger.info("Created new job for template", template_id=str(self.parent_id), job_id=str(job.id))
+
+                return job
+            except SQLAlchemyError as e:
+                logger.error("Error inserting rag job into db", error=e)
+                raise DatabaseError("Error inserting rag job into db") from e
+
+class GrantApplicationJobManager[D](BaseJobManager[D]):
+    async def get_or_create_job(self) -> GrantApplicationGenerationJob:
+        async with self.session_maker() as session, session.begin():
+            try:
+                existing_job_result = await session.execute(
+                    select(GrantApplicationGenerationJob).where(
+                        GrantApplicationGenerationJob.grant_application_id == self.parent_id
+                    )
+                )
+                existing_job = cast("GrantApplicationGenerationJob | None", existing_job_result.scalar_one_or_none())
+
+                if existing_job:
+                    logger.info(
+                        "Job already exists for application, returning existing job",
+                        application_id=str(self.parent_id),
+                        job_id=str(existing_job.id),
+                    )
+                    self.job_id = existing_job.id
+                    return existing_job
+
+                job = GrantApplicationGenerationJob(
+                    grant_application_id=self.parent_id,
+                    total_stages=len(self.pipeline_stages),
+                    status=RagGenerationStatusEnum.PENDING,
+                    current_stage=0,
+                    retry_count=0,
+                )
+                session.add(job)
+                await session.flush()
+                await session.commit()
+
+                self.job_id = job.id
+                self.job = job
+                logger.info("Created new job for application", application_id=str(self.parent_id), job_id=str(job.id))
+
+                return job
+            except SQLAlchemyError as e:
+                logger.error("Error inserting rag job into db", error=e)
+                raise DatabaseError("Error inserting rag job into db") from e
+
+    async def to_next_job_stage(
+        self,
+        dto: D,
+    ) -> None:
+        # TODO
+        raise NotImplementedError

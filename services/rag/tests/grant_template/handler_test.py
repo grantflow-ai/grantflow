@@ -4,7 +4,6 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
-from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
@@ -33,6 +32,7 @@ from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
+from src.json_objects import CFPContentSection as Content
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantLongFormSection
