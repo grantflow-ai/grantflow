@@ -340,6 +340,7 @@ function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templat
 			<div className="flex flex-wrap gap-3" data-testid="file-collection">
 				{templateFiles.map((file, index) => (
 					<FilePreviewCard
+						disableRemove={true}
 						file={file}
 						key={file.name + index.toString()}
 						parentId={parentId}
@@ -379,6 +380,7 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 			<div className="space-y-1">
 				{templateUrls.map((urlSource, index) => (
 					<LinkPreviewItem
+						disableRemove={true}
 						key={urlSource.url + index.toString()}
 						parentId={parentId}
 						sourceStatus={urlSource.sourceStatus}
