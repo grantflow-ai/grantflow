@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
+from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
@@ -11,7 +12,6 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import SentenceTransformer, util
 
-from services.rag.src.grant_template.extract_cfp_data import Content
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
