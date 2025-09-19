@@ -1,8 +1,8 @@
 from asyncio import gather
-from typing import Any
+from typing import Any, Final
 from uuid import UUID
 
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.json_objects import (
     CFPSectionAnalysis,
     GrantElement,
@@ -45,6 +45,20 @@ from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.text import normalize_markdown
 
 logger = get_logger(__name__)
+
+GRANT_APPLICATION_STAGES_ORDER: Final[tuple[GrantApplicationStageEnum, ...]] = (
+    GrantApplicationStageEnum.INITIALIZE,
+    GrantApplicationStageEnum.VALIDATE_CONTEXT,
+    GrantApplicationStageEnum.GENERATE_SECTION_TEXTS,
+    GrantApplicationStageEnum.FINALIZE_APPLICATION,
+)
+
+
+def _get_next_pipeline_stage(
+    current_stage: GrantApplicationStageEnum,
+) -> GrantApplicationStageEnum | None:
+    current_index = GRANT_APPLICATION_STAGES_ORDER.index(current_stage)
+    return GRANT_APPLICATION_STAGES_ORDER[current_index + 1]
 
 
 async def generate_work_plan_text(
@@ -295,6 +309,8 @@ async def generate_grant_section_texts(
 async def grant_application_text_generation_pipeline_handler(
     grant_application_id: UUID,
     session_maker: async_sessionmaker[Any],
+    stage: GrantApplicationStageEnum,
+    trace_id: str | None = None,
     job_manager: JobManager | None = None,
 ) -> tuple[str, dict[str, str]] | None:
     application_id = grant_application_id

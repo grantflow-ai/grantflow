@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
+from packages.db.src.json_objects import ExtractedCFPData
 from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -22,20 +23,6 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
-
-
-class Content(TypedDict):
-    title: str
-    subtitles: list[str]
-
-
-class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    error: NotRequired[str | None]
-    cfp_subject: str
-    submission_date: str | None
-    content: list[Content]
-
 
 class RagSourceData(TypedDict):
     source_id: str

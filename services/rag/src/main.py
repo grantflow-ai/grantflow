@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from litestar import post
 from packages.shared_utils.src.ai import init_llm_connection
@@ -17,6 +17,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
+
+if TYPE_CHECKING:
+    from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 
 configure_otel("rag")
 
@@ -80,12 +83,16 @@ async def handle_request(
         await grant_template_generation_pipeline_handler(
             grant_template_id=request["parent_id"],
             session_maker=session_maker,
+            stage=cast("GrantTemplateStageEnum", request["stage"]),
+            trace_id=trace_id,
         )
         return
 
     await grant_application_text_generation_pipeline_handler(
         grant_application_id=request["parent_id"],
         session_maker=session_maker,
+        stage=cast("GrantApplicationStageEnum", request["stage"]),
+        trace_id=trace_id,
     )
 
 

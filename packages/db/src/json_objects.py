@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 class TableContext(TypedDict):
@@ -80,3 +80,40 @@ class CFPSectionAnalysis(TypedDict):
     length_constraints: list[LengthConstraint]
     evaluation_criteria: list[EvaluationCriterion]
     additional_requirements: list[RequirementWithQuote]
+
+
+class CFPContentSection(TypedDict):
+    title: str
+    subtitles: list[str]
+
+
+class ExtractedCFPData(TypedDict):
+    organization_id: str | None
+    cfp_subject: str
+    submission_date: str | None
+    content: list[CFPContentSection]
+    error: NotRequired[str | None]
+
+
+class CFPAnalysisSnapshot(TypedDict):
+    cfp_analysis: NotRequired[dict[str, Any] | None]
+    nlp_analysis: NotRequired[dict[str, Any] | None]
+    analysis_metadata: NotRequired[dict[str, Any] | None]
+
+
+class GrantTemplateGenerationMetadata(TypedDict):
+    extraction: ExtractedCFPData
+    analysis: NotRequired[CFPAnalysisSnapshot]
+    sections: NotRequired[list[GrantElement | GrantLongFormSection]]
+
+
+class GrantApplicationGenerationMetadata(TypedDict):
+    section_texts: NotRequired[dict[str, str]]
+    application_text: NotRequired[str]
+
+
+class RagJobCheckpoint(TypedDict):
+    stage: str
+    trace_id: NotRequired[str]
+    template_metadata: NotRequired[GrantTemplateGenerationMetadata]
+    application_metadata: NotRequired[GrantApplicationGenerationMetadata]

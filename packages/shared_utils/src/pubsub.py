@@ -7,7 +7,11 @@ import google.cloud.pubsub_v1 as pubsub
 import msgspec
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import (
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
+    SourceIndexingStatusEnum,
+)
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -73,6 +77,7 @@ class RagProcessingStatus(TypedDict):
 class RagRequest(TypedDict):
     parent_type: Literal["grant_application", "grant_template"]
     parent_id: UUID
+    stage: GrantApplicationStageEnum | GrantTemplateStageEnum
     trace_id: NotRequired[str]
 
 
@@ -132,9 +137,7 @@ def decode_pubsub_message(event: PubSubEvent) -> str:
     try:
         encoded_data = event.message.data
         if not encoded_data:
-            logger.error(
-                "PubSub message missing data field", message_id=event.message.message_id
-            )
+            logger.error("PubSub message missing data field", message_id=event.message.message_id)
             raise ValidationError("PubSub message missing data field")
 
         logger.debug("Decoding base64 data", data_length=len(encoded_data))
@@ -146,9 +149,7 @@ def decode_pubsub_message(event: PubSubEvent) -> str:
             message_id=event.message.message_id,
             error_type=type(e).__name__,
         )
-        raise ValidationError(
-            "Invalid pubsub message format", context={"error": str(e)}
-        ) from e
+        raise ValidationError("Invalid pubsub message format", context={"error": str(e)}) from e
 
 
 async def publish_url_crawling_task(
@@ -202,15 +203,14 @@ async def publish_url_crawling_task(
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing URL crawling message", error=str(e))
-        raise BackendError(
-            "Error publishing URL crawling message", context={"error": str(e)}
-        ) from e
+        raise BackendError("Error publishing URL crawling message", context={"error": str(e)}) from e
 
 
 async def publish_rag_task(
     *,
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
+    stage: GrantApplicationStageEnum | GrantTemplateStageEnum,
     trace_id: str | None = None,
 ) -> str:
     start_time = time.time()
@@ -218,6 +218,7 @@ async def publish_rag_task(
         "Starting PubSub message publishing",
         parent_type=parent_type,
         parent_id=str(parent_id),
+        stage=stage,
         trace_id=trace_id,
     )
 
@@ -226,6 +227,7 @@ async def publish_rag_task(
     data = RagRequest(
         parent_type=parent_type,
         parent_id=UUID(str(parent_id)),
+        stage=stage,
     )
 
     if trace_id:
@@ -237,6 +239,7 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
+            stage=stage.value if isinstance(stage, (GrantTemplateStageEnum, GrantApplicationStageEnum)) else stage,
             message_size=len(message_data),
         )
 
@@ -255,6 +258,8 @@ async def publish_rag_task(
         with create_pubsub_publish_span(topic_path, "RagRequest") as span:
             span.set_attribute("parent_type", parent_type)
             span.set_attribute("parent_id", str(parent_id))
+            if stage is not None:
+                span.set_attribute("pipeline.stage", str(stage))
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
@@ -272,15 +277,14 @@ async def publish_rag_task(
             message_id=message_id,
             parent_type=parent_type,
             parent_id=str(parent_id),
+            stage=str(stage) if stage is not None else None,
             trace_id=trace_id,
             publish_duration_ms=round(publish_duration * 1000, 2),
         )
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing RAG processing message", error=str(e))
-        raise BackendError(
-            "Error publishing RAG processing message", context={"error": str(e)}
-        ) from e
+        raise BackendError("Error publishing RAG processing message", context={"error": str(e)}) from e
 
 
 async def publish_autofill_task(
@@ -353,28 +357,20 @@ async def publish_autofill_task(
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing autofill task", error=str(e))
-        raise BackendError(
-            "Error publishing autofill task", context={"error": str(e)}
-        ) from e
+        raise BackendError("Error publishing autofill task", context={"error": str(e)}) from e
 
 
 async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
     subscriber = get_subscriber_client()
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    topic_id = get_env(
-        "FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"
-    )
+    topic_id = get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications")
     topic_path = subscriber.topic_path(project=project_id, topic=topic_id)
 
     subscription_id = f"frontend-notifications-sub-{parent_id}"
-    subscription_path = str(
-        subscriber.subscription_path(project=project_id, subscription=subscription_id)
-    )
+    subscription_path = str(subscriber.subscription_path(project=project_id, subscription=subscription_id))
 
     if subscription_path in subscriber_paths:
-        logger.debug(
-            "Subscription path already exists", subscription_path=subscription_path
-        )
+        logger.debug("Subscription path already exists", subscription_path=subscription_path)
         return subscription_path
 
     logger.debug(
@@ -395,9 +391,7 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
         )
         logger.info("subscription created", subscription_path=subscription_path)
     except Exception as e:
-        logger.debug(
-            "subscription already exists", subscription_path=subscription_path, exc=e
-        )
+        logger.debug("subscription already exists", subscription_path=subscription_path, exc=e)
 
     subscriber_paths.add(subscription_path)
     return subscription_path
@@ -414,9 +408,7 @@ async def publish_notification[T](
 
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-        topic=get_env(
-            "FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"
-        ),
+        topic=get_env("FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"),
     )
 
     logger.info(
@@ -465,9 +457,7 @@ async def publish_notification[T](
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing notification", error=str(e))
-        raise BackendError(
-            "Error publishing notification", context={"error": str(e)}
-        ) from e
+        raise BackendError("Error publishing notification", context={"error": str(e)}) from e
 
 
 async def publish_email_notification(
@@ -481,9 +471,7 @@ async def publish_email_notification(
     message_data = b""
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-        topic=get_env(
-            "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
-        ),
+        topic=get_env("EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"),
     )
 
     try:
@@ -513,9 +501,7 @@ async def publish_email_notification(
         return str(message_id)
     except MessageTooLargeError as e:
         logger.error("Error publishing email notification message", error=str(e))
-        raise BackendError(
-            "Error publishing email notification message", context={"error": str(e)}
-        ) from e
+        raise BackendError("Error publishing email notification message", context={"error": str(e)}) from e
 
 
 async def publish_subscription_verification_email(
@@ -547,14 +533,10 @@ async def publish_subscription_verification_email(
         message_data = serialize(data)
         topic_path = client.topic_path(
             project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
-            topic=get_env(
-                "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
-            ),
+            topic=get_env("EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"),
         )
 
-        with create_pubsub_publish_span(
-            topic_path, "SubscriptionVerificationRequest"
-        ) as span:
+        with create_pubsub_publish_span(topic_path, "SubscriptionVerificationRequest") as span:
             span.set_attribute("email", email)
             span.set_attribute("subscription_id", subscription_id)
             if trace_id:
@@ -632,9 +614,7 @@ async def pull_notifications(
 
     for received_message in response.received_messages:
         try:
-            message = deserialize(
-                received_message.message.data, WebsocketMessage[dict[str, Any]]
-            )
+            message = deserialize(received_message.message.data, WebsocketMessage[dict[str, Any]])
             logger.debug(
                 "received message from pubsub",
                 message_id=received_message.message.message_id,
@@ -652,9 +632,7 @@ async def pull_notifications(
                 error=str(e),
                 message_id=received_message.message.message_id,
                 parent_id=str(parent_id),
-                raw_data=received_message.message.data[:200]
-                if received_message.message.data
-                else None,
+                raw_data=received_message.message.data[:200] if received_message.message.data else None,
             )
             ack_ids.append(received_message.ack_id)
 

@@ -3,7 +3,8 @@ from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
@@ -23,7 +24,6 @@ from testing.factories import (
 from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
 from services.rag.src.grant_template.extract_cfp_data import (
-    Content,
     RagSourceData,
     extract_cfp_data_multi_source,
     format_rag_sources_for_prompt,
@@ -350,6 +350,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
         result = await grant_template_generation_pipeline_handler(
             grant_template_id=grant_template_with_sources.id,
             session_maker=async_session_maker,
+            stage=GrantTemplateStageEnum.INITIALIZE,
             job_manager=mock_job_manager,
         )
 
@@ -481,6 +482,7 @@ async def test_grant_template_generation_pipeline_missing_sources(
         result = await grant_template_generation_pipeline_handler(
             grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
+            stage=GrantTemplateStageEnum.INITIALIZE,
             job_manager=mock_job_manager,
         )
 
@@ -535,6 +537,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
         result = await grant_template_generation_pipeline_handler(
             grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
+            stage=GrantTemplateStageEnum.INITIALIZE,
             job_manager=mock_job_manager,
         )
 
