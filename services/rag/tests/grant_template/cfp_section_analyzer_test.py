@@ -5,16 +5,16 @@ import pytest
 from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_application.generate_section_text import _format_cfp_requirements_for_section
-from services.rag.src.grant_template.cfp_section_analyzer import (
+from services.rag.src.grant_template.cfp_section_analysis import (
     CFP_SECTION_ANALYZER_SCHEMA,
     GEMINI_2_5_FLASH_MODEL,
     CFPSectionAnalysis,
-    analyze_cfp_sections_with_gemini,
+    analyze_cfp_sections,
     generate_cfp_analysis_report,
     transform_analysis_for_database,
     validate_cfp_analysis,
 )
-from services.rag.src.grant_template.nlp_categorizer import categorize_text_async
+from services.rag.src.grant_template.nlp_categorizer import categorize_text
 
 
 @pytest.fixture
@@ -195,13 +195,13 @@ def test_rejects_cfp_analysis_when_zero_sections_identified() -> None:
 async def test_extracts_sections_constraints_and_criteria_from_cfp_content(
     sample_cfp_content: str, mock_gemini_response: CFPSectionAnalysis
 ) -> None:
-    nlp_result = await categorize_text_async(sample_cfp_content)
+    nlp_result = await categorize_text(sample_cfp_content)
 
     with patch(
         "services.rag.src.grant_template.cfp_section_analyzer.handle_completions_request",
         return_value=mock_gemini_response,
     ):
-        result = await analyze_cfp_sections_with_gemini(sample_cfp_content, nlp_result)
+        result = await analyze_cfp_sections(sample_cfp_content, nlp_result)
 
     assert result["sections_count"] == 3
     assert result["length_constraints_found"] == 3
@@ -215,7 +215,7 @@ async def test_extracts_sections_constraints_and_criteria_from_cfp_content(
 async def test_generates_markdown_report_with_structured_analysis_data(
     sample_cfp_content: str, mock_gemini_response: CFPSectionAnalysis, tmp_path: Path
 ) -> None:
-    nlp_result = await categorize_text_async(sample_cfp_content)
+    nlp_result = await categorize_text(sample_cfp_content)
 
     with patch(
         "services.rag.src.grant_template.cfp_section_analyzer.analyze_cfp_sections_with_gemini",
@@ -247,7 +247,7 @@ async def test_categorizes_cfp_content_using_nlp_semantic_analysis() -> None:
     Deadline: June 15, 2025.
     """
 
-    nlp_result = await categorize_text_async(test_cfp)
+    nlp_result = await categorize_text(test_cfp)
     assert len(nlp_result["writing_related"]) > 0
     assert len(nlp_result["money"]) > 0
     assert len(nlp_result["date_time"]) > 0
@@ -379,7 +379,7 @@ async def test_processes_various_cfp_formats_with_nlp_categorization(cfp_file: s
 
     cfp_content = cfp_path.read_text(encoding="utf-8")
 
-    nlp_result = await categorize_text_async(cfp_content)
+    nlp_result = await categorize_text(cfp_content)
 
     categories_found = sum(1 for v in nlp_result.values() if v)
     assert categories_found >= 3, f"Expected at least 3 NLP categories, got {categories_found}"
@@ -438,7 +438,7 @@ async def test_processes_various_cfp_formats_with_nlp_categorization(cfp_file: s
     with patch(
         "services.rag.src.grant_template.cfp_section_analyzer.handle_completions_request", return_value=mock_response
     ):
-        result = await analyze_cfp_sections_with_gemini(cfp_content, nlp_result)
+        result = await analyze_cfp_sections(cfp_content, nlp_result)
 
         assert result["sections_count"] >= 4
         assert result["length_constraints_found"] >= 2
@@ -457,7 +457,7 @@ async def test_nlp_integration_without_external_api_calls() -> None:
     Deadline: June 15, 2025.
     """
 
-    nlp_result = await categorize_text_async(test_content)
+    nlp_result = await categorize_text(test_content)
 
     assert len(nlp_result["writing_related"]) > 0
     assert len(nlp_result["money"]) > 0
