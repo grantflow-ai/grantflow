@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -32,9 +32,8 @@ from services.rag.src.grant_template.handler import (
 from services.rag.src.utils.job_manager import JobManager
 
 if TYPE_CHECKING:
+    from packages.db.src.json_objects import CFPContentSection as Content
     from packages.db.src.json_objects import GrantLongFormSection
-
-    from services.rag.src.grant_template.extract_cfp_data import Content
 
 
 @pytest.mark.asyncio
@@ -145,6 +144,7 @@ async def test_template_generation_stops_at_verification_when_cancelled(
         result = await grant_template_generation_pipeline_handler(
             grant_template_id=grant_template_with_sections.id,
             session_maker=async_session_maker,
+            stage=GrantTemplateStageEnum.INITIALIZE,
             job_manager=mock_job_manager,
         )
 
@@ -194,6 +194,7 @@ async def test_application_generation_stops_at_verification_when_cancelled(
         result = await grant_application_text_generation_pipeline_handler(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
+            stage=GrantApplicationStageEnum.INITIALIZE,
             job_manager=mock_job_manager,
         )
 

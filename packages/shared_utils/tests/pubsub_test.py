@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, SourceIndexingStatusEnum
 from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import (
@@ -646,12 +646,14 @@ def test_rag_request_typed_dict() -> None:
     request: RagRequest = {
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "parent_type": "grant_application",
+        "stage": GrantApplicationStageEnum.INITIALIZE,
     }
     assert request["parent_type"] == "grant_application"
 
     request_template: RagRequest = {
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "parent_type": "grant_template",
+        "stage": GrantTemplateStageEnum.INITIALIZE,
     }
     assert request_template["parent_type"] == "grant_template"
 
@@ -676,6 +678,7 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
         result = await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id,
+            stage=GrantApplicationStageEnum.INITIALIZE,
         )
 
         assert result == "test-message-id"
@@ -710,6 +713,7 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
         result = await publish_rag_task(
             parent_type="grant_template",
             parent_id=parent_id,
+            stage=GrantTemplateStageEnum.INITIALIZE,
         )
 
         assert result == "test-message-id"
@@ -744,6 +748,7 @@ async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> N
         result = await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id_str,
+            stage=GrantApplicationStageEnum.INITIALIZE,
         )
 
         assert result == "test-message-id"
@@ -778,6 +783,7 @@ async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -
         await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id,
+            stage=GrantApplicationStageEnum.INITIALIZE,
         )
 
     assert "Error publishing RAG processing message" in str(exc_info.value)

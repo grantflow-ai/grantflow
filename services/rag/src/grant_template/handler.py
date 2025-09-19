@@ -1,8 +1,9 @@
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Final, cast
 from uuid import UUID
 
-from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum, SourceIndexingStatusEnum
+from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
@@ -16,13 +17,28 @@ from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.cfp_section_analyzer import analyze_cfp_sections_with_gemini
 from services.rag.src.grant_template.determine_application_sections import handle_extract_sections
 from services.rag.src.grant_template.determine_longform_metadata import handle_generate_grant_template
-from services.rag.src.grant_template.extract_cfp_data import Content, handle_extract_cfp_data_from_rag_sources
+from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.grant_template.nlp_categorizer import categorize_text_async
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.text import concat_extracted_cfp_content
 
 logger = get_logger(__name__)
+
+GRANT_TEMPLATE_STAGES_ORDER: Final[tuple[GrantTemplateStageEnum, ...]] = (
+    GrantTemplateStageEnum.INITIALIZE,
+    GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+    GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+    GrantTemplateStageEnum.BUILD_TEMPLATE_STRUCTURE,
+    GrantTemplateStageEnum.FINALIZE_TEMPLATE,
+)
+
+
+def _get_next_pipeline_stage(
+    current_stage: GrantTemplateStageEnum,
+) -> GrantTemplateStageEnum | None:
+    current_index = GRANT_TEMPLATE_STAGES_ORDER.index(current_stage)
+    return GRANT_TEMPLATE_STAGES_ORDER[current_index + 1]
 
 
 async def enhanced_cfp_analysis(
@@ -226,6 +242,8 @@ async def extract_and_enrich_sections(
 async def grant_template_generation_pipeline_handler(
     grant_template_id: UUID,
     session_maker: async_sessionmaker[Any],
+    stage: GrantTemplateStageEnum,
+    trace_id: str | None = None,
     job_manager: JobManager | None = None,
 ) -> GrantTemplate | None:
     logger.info("Starting grant template generation pipeline", template_id=grant_template_id)
