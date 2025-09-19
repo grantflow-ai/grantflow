@@ -12,7 +12,6 @@ from services.rag.src.grant_template.nlp_categorizer import (
     CATEGORY_LABELS,
     NLPCategorizationResult,
     categorize_text,
-    categorize_text_async,
     format_nlp_analysis_for_prompt,
     get_nlp_categorizer_status,
 )
@@ -59,7 +58,7 @@ async def test_categorize_text_async() -> None:
         expected = {"money": ["Budget of $25,000"], "date_time": []}
         mock_to_thread.return_value = expected
 
-        result = await categorize_text_async(text)
+        result = await categorize_text(text)
 
         assert result == expected
 
@@ -159,7 +158,7 @@ async def test_nlp_categorization_performance_benchmark(sample_cfp_texts: list[s
 
     for text in sample_cfp_texts:
         start_time = time.perf_counter()
-        result = await categorize_text_async(text)
+        result = await categorize_text(text)
         end_time = time.perf_counter()
 
         processing_time = end_time - start_time
@@ -190,7 +189,7 @@ async def test_nlp_categorization_accuracy_benchmark() -> None:
     total_tests = len(test_cases)
 
     for text, expected_categories in test_cases:
-        result = await categorize_text_async(text)
+        result = await categorize_text(text)
 
         for category, expected_count in expected_categories.items():
             category_result = result.get(category, [])

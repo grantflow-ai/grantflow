@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.nlp_categorizer import (
     NLPCategorizationResult,
-    categorize_text_async,
+    categorize_text,
     format_nlp_analysis_for_prompt,
 )
 from services.rag.src.utils.completion import handle_completions_request
@@ -23,6 +23,7 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
+
 
 class RagSourceData(TypedDict):
     source_id: str
@@ -142,7 +143,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks = chunks_by_source.get(source_id, [])
 
         try:
-            nlp_analysis = await categorize_text_async(text_content)
+            nlp_analysis = await categorize_text(text_content)
             total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
             categories_found = {
                 k: len(v)
