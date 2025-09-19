@@ -212,6 +212,49 @@ export const WithoutParentId: Story = {
 	name: "Without Parent ID (Remove Disabled)",
 };
 
+export const ApplicationStructureView: Story = {
+	decorators: [
+		() => {
+			const files = [
+				{ file: createMockFile("grant-guidelines.pdf"), status: "FINISHED" },
+				{ file: createMockFile("application-form.docx"), status: "INDEXING" },
+				{ file: createMockFile("budget-template.xlsx"), status: "FINISHED" },
+				{ file: createMockFile("requirements.md"), status: "CREATED" },
+				{ file: createMockFile("research-proposal.pdf"), status: "FINISHED" },
+				{ file: createMockFile("team-bios.docx"), status: "INDEXING" },
+			];
+
+			return (
+				<div className="flex flex-col gap-4">
+					<p className="text-sm text-gray-600">
+						Files as they appear in Step 2 (Application Structure) - deletion is disabled
+					</p>
+					<div className="grid grid-cols-4 gap-4">
+						{files.map(({ file, status }) => (
+							<FilePreviewCard
+								disableRemove={true}
+								file={file}
+								key={file.id}
+								parentId="template-123"
+								sourceStatus={status}
+							/>
+						))}
+					</div>
+				</div>
+			);
+		},
+	],
+	name: "Application Structure View (No Delete)",
+	parameters: {
+		docs: {
+			description: {
+				story: "Shows how files appear in the Application Structure step where users cannot delete them. Demonstrates various file types and statuses (completed, indexing, created) all with remove functionality disabled.",
+			},
+		},
+		layout: "fullscreen",
+	},
+};
+
 export const MultipleFiles: Story = {
 	decorators: [
 		() => {
