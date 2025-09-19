@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import { AiAutofillButton } from "./AiAutofillButton";
+import { AiAutofillButton } from "./ai-autofill-button.";
 
 describe("AiAutofillButton", () => {
 	it("should render the button with the default text", () => {
