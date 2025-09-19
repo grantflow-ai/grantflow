@@ -1,19 +1,22 @@
 from datetime import UTC, datetime
-from typing import Any, Final, cast
+from typing import Any, Final, TypedDict, cast
 from uuid import UUID
 
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum, SourceIndexingStatusEnum
-from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    InsufficientContextError,
+    ValidationError,
+)
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.constants import GRANT_TEMPLATE_PIPELINE_STAGES
+from services.rag.src.constants import TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES
 from services.rag.src.grant_template.cfp_section_analysis import (
     CFPAnalysisResult,
     handle_analyze_cfp,
@@ -22,18 +25,36 @@ from services.rag.src.grant_template.determine_application_sections import handl
 from services.rag.src.grant_template.determine_longform_metadata import handle_generate_grant_template
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.utils.job_manager import GrantTemplateJobManager
 from services.rag.src.utils.text import concat_extracted_cfp_content
+from src.json_objects import CFPContentSection as Content
+from src.json_objects import ExtractedCFPData
 
 logger = get_logger(__name__)
 
 GRANT_TEMPLATE_STAGES_ORDER: Final[tuple[GrantTemplateStageEnum, ...]] = (
-    GrantTemplateStageEnum.INITIALIZE,
     GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
     GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
-    GrantTemplateStageEnum.BUILD_TEMPLATE_STRUCTURE,
+    GrantTemplateStageEnum.ENRICH_SECTION_METADATA,
     GrantTemplateStageEnum.FINALIZE_TEMPLATE,
 )
+
+TOTAL_PIPELINE_STAGES: Final[int] = len(GRANT_TEMPLATE_STAGES_ORDER)
+
+
+class OrganizationNamespace(TypedDict):
+    full_name: str
+    abbreviation: str
+    organization_id: UUID
+
+
+class ExtractCFPContentStageDTO(TypedDict):
+    organization: OrganizationNamespace | None
+    extracted_data: ExtractedCFPData
+
+
+class AnalyzeCFPContentStageDTO(ExtractCFPContentStageDTO):
+    analysis_results: CFPAnalysisResult
 
 
 def _get_next_pipeline_stage(
@@ -42,56 +63,20 @@ def _get_next_pipeline_stage(
     current_index = GRANT_TEMPLATE_STAGES_ORDER.index(current_stage)
     return GRANT_TEMPLATE_STAGES_ORDER[current_index + 1]
 
+def _get_current_pipeline_stage_num(stage: GrantTemplateStageEnum) -> int:
+    return GRANT_TEMPLATE_STAGES_ORDER.index(stage) + 1
 
-async def enhanced_cfp_analysis(
-    cfp_content: list[Content],
-    parent_id: UUID,
-    job_manager: JobManager,
-) -> CFPAnalysisResult:
-    await job_manager.add_notification(
-        parent_id=parent_id,
-        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
-        message="Running enhanced CFP analysis with Gemini 2.5 Flash and NLP...",
-        notification_type="info",
-        current_pipeline_stage=3,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-    )
-
-    content_strings = [f"{content['title']}: {' '.join(content['subtitles'])}" for content in cfp_content]
-
-    cfp_analysis_results = await handle_analyze_cfp(full_cfp_text=concat_extracted_cfp_content(content_strings))
-
-    logger.info(
-        "CFP analysis completed",
-        **cfp_analysis_results,
-    )
-
-    await job_manager.add_notification(
-        parent_id=parent_id,
-        event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Enhanced CFP analysis completed successfully",
-        notification_type="info",
-        data=cast("dict", cfp_analysis_results),
-        current_pipeline_stage=3,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-    )
-    return cfp_analysis_results
-
-
-async def extract_and_enrich_sections(
+async def handle_enrich_section_metadata_stage(
     cfp_content: list[Content],
     cfp_subject: str,
     organization: GrantingInstitution | None,
-    parent_id: UUID,
-    job_manager: JobManager,
+    job_manager: GrantTemplateJobManager,
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.add_notification(
-        parent_id=parent_id,
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
         message="Extracting grant application sections from CFP content...",
-        notification_type="info",
-        current_pipeline_stage=7,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        current_pipeline_stage=_get_current_pipeline_stage_num(GrantTemplateStageEnum.ENRICH_SECTION_METADATA),
+        total_pipeline_stages=
     )
     sections = await handle_extract_sections(
         cfp_content=cfp_content,
@@ -109,12 +94,12 @@ async def extract_and_enrich_sections(
             "organization": organization.full_name if organization else None,
         },
         current_pipeline_stage=7,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
     )
 
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
-    if await job_manager.check_if_cancelled():
+    if await job_manager.ensure_not_cancelled():
         await job_manager.handle_cancellation(parent_id)
         return []
 
@@ -124,7 +109,7 @@ async def extract_and_enrich_sections(
         message="Generating metadata for grant template sections...",
         notification_type="info",
         current_pipeline_stage=7,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
     )
 
     section_metadata = await handle_generate_grant_template(
@@ -143,7 +128,7 @@ async def extract_and_enrich_sections(
             "metadata_count": len(section_metadata),
         },
         current_pipeline_stage=7,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
@@ -181,185 +166,163 @@ async def extract_and_enrich_sections(
     return ret
 
 
-async def grant_template_generation_pipeline_handler(
-    grant_template_id: UUID,
+async def handle_cfp_extraction_stage(
+    *,
+    grant_template: GrantTemplate,
+    job_manager: GrantTemplateJobManager,
     session_maker: async_sessionmaker[Any],
-    stage: GrantTemplateStageEnum,
-    trace_id: str | None = None,
-    job_manager: JobManager | None = None,
-) -> GrantTemplate | None:
-    logger.info("Starting grant template generation pipeline", template_id=grant_template_id)
-
-    async with session_maker() as session:
-        grant_template_result = await session.execute(
-            select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
-        )
-        grant_template = grant_template_result.scalar_one_or_none()
-        if not grant_template:
-            msg = f"Grant template {grant_template_id} not found"
-            raise ValueError(msg)
-        grant_application_id = grant_template.grant_application_id
-
-    logger.info(
-        "Found grant application for template",
-        template_id=str(grant_template_id),
-        application_id=str(grant_application_id),
-    )
-
-    if job_manager is None:
-        job_manager = JobManager(session_maker)
-        try:
-            await job_manager.create_grant_template_job(
-                grant_template_id=grant_template_id,
-                total_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-            )
-        except ValueError as e:
-            logger.warning(
-                "Cannot create grant template generation job - template may have been deleted",
-                template_id=str(grant_template_id),
-                error=str(e),
-            )
-
-            msg = f"Grant template {grant_template_id} not found - cannot proceed with generation"
-            raise RuntimeError(msg) from e
-
-        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
+) -> ExtractCFPContentStageDTO:
+    await job_manager.ensure_not_cancelled()
 
     await job_manager.add_notification(
-        parent_id=grant_application_id,
-        event=NotificationEvents.GRANT_TEMPLATE_GENERATION_STARTED,
-        message="Starting grant template generation pipeline...",
-        notification_type="info",
-        current_pipeline_stage=1,
-        total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        event=NotificationEvents.EXTRACTING_CFP_DATA,
+        message="Extracting data from CFP content...",
+        current_pipeline_stage=2,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
+    )
+    # this can take a while, thats why we are rechecking cancellation ~keep
+    await verify_rag_sources_indexed(grant_template.id, session_maker, GrantTemplate)
+
+    await job_manager.ensure_not_cancelled()
+
+    async with session_maker() as session:
+        source_ids = list(
+            await session.scalars(
+                select(RagSource.id)
+                .join(GrantTemplateSource, RagSource.id == GrantTemplateSource.rag_source_id)
+                .where(GrantTemplateSource.grant_template_id == grant_template.id)
+                .where(RagSource.indexing_status == SourceIndexingStatusEnum.FINISHED)
+            )
+        )
+
+        funding_organizations = list(
+            await session.scalars(select(GrantingInstitution).order_by(GrantingInstitution.full_name.asc()))
+        )
+
+    extraction_result = await handle_extract_cfp_data_from_rag_sources(
+        source_ids=[str(v) for v in source_ids],
+        organization_mapping={
+            str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+        },
+        session_maker=session_maker,
     )
 
+    organization = (
+        next(
+            OrganizationNamespace(
+                organization_id=org.id,
+                abbreviation=org.abbreviation,
+                full_name=org.full_name,
+            )
+            for org in funding_organizations
+            if str(org.id) == extraction_result["organization_id"]
+        )
+        if extraction_result["organization_id"]
+        else None
+    )
+
+    org_name = organization["full_name"] if organization else "Unknown"
+    submission_date = (
+        datetime.strptime(extraction_result["submission_date"], "%Y-%m-%d").date()  # noqa: DTZ007
+        if extraction_result["submission_date"]
+        else None
+    )
+
+    await job_manager.add_notification(
+        event=NotificationEvents.CFP_DATA_EXTRACTED,
+        message="CFP data extracted successfully",
+        data={
+            "organization": org_name,
+            "cfp_subject": extraction_result["cfp_subject"],
+            "content_sections": len(extraction_result["content"]),
+            "submission_date": str(submission_date) if submission_date else None,
+        },
+        current_pipeline_stage=3,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
+    )
+
+    logger.info("Extracted CFP data")
+
+    return ExtractCFPContentStageDTO(extracted_data=extraction_result, organization=organization)
+
+
+async def handle_cfp_analysis_stage(
+    *,
+    grant_template_id: UUID,
+    extracted_cfp: ExtractCFPContentStageDTO,
+    job_manager: GrantTemplateJobManager,
+) -> AnalyzeCFPContentStageDTO:
+    await job_manager.add_notification(
+        parent_id=grant_template_id,
+        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
+        message="Running enhanced CFP analysis with Gemini 2.5 Flash and NLP...",
+        current_pipeline_stage=3,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
+    )
+
+    content_strings = [
+        f"{content['title']}: {' '.join(content['subtitles'])}"
+        for content in extracted_cfp["extracted_data"]["content"]
+    ]
+    cfp_analysis_results = await handle_analyze_cfp(full_cfp_text=concat_extracted_cfp_content(content_strings))
+
+    logger.info(
+        "CFP analysis completed",
+        **cfp_analysis_results,
+    )
+
+    await job_manager.add_notification(
+        parent_id=grant_template_id,
+        event=NotificationEvents.CFP_DATA_EXTRACTED,
+        message="Enhanced CFP analysis completed successfully",
+        data=cast("dict", cfp_analysis_results),
+        current_pipeline_stage=3,
+        total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
+    )
+
+    return AnalyzeCFPContentStageDTO(
+        **extracted_cfp,
+        analysis_results=cfp_analysis_results,
+    )
+
+
+async def grant_template_generation_pipeline_handler(
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    generation_stage: GrantTemplateStageEnum,
+    trace_id: str,
+) -> GrantTemplate | None:
+    job_manager = GrantTemplateJobManager(
+        session_maker=session_maker,
+        grant_application_id=grant_template.grant_application_id,
+        job_id=grant_template.rag_job_id,
+    )
+
+    job = await job_manager.get_or_create_job()
+    await job_manager.ensure_not_cancelled()
+
+    logger.info(
+        "Starting grant template generation pipeline",
+        template_id=grant_template.id,
+        rag_job_id=job.id,
+        trace_id=trace_id,
+        generation_stage=generation_stage,
+    )
+    if job.status == RagGenerationStatusEnum.PENDING:
+        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
+
     try:
-        await verify_rag_sources_indexed(grant_template_id, session_maker, GrantTemplate)
-
-        if await job_manager.check_if_cancelled():
-            await job_manager.handle_cancellation(grant_application_id)
-            return None
-
-        async with session_maker() as session:
-            source_ids = [
-                str(source_id)
-                for source_id in await session.scalars(
-                    select(RagSource.id)
-                    .join(GrantTemplateSource, RagSource.id == GrantTemplateSource.rag_source_id)
-                    .where(GrantTemplateSource.grant_template_id == grant_template_id)
-                    .where(RagSource.indexing_status == SourceIndexingStatusEnum.FINISHED)
-                )
-            ]
-            funding_organizations = list(
-                await session.scalars(select(GrantingInstitution).order_by(GrantingInstitution.full_name.asc()))
-            )
-
-        organization_mapping = {
-            str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
-        }
-
-        await job_manager.add_notification(
-            parent_id=grant_application_id,
-            event=NotificationEvents.EXTRACTING_CFP_DATA,
-            message="Extracting data from CFP content...",
-            notification_type="info",
-            current_pipeline_stage=2,
-            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+        extracted_cfp = await handle_cfp_extraction_stage(
+            grant_template=grant_template, job_manager=job_manager, session_maker=session_maker
         )
 
-        if await job_manager.check_if_cancelled():
-            await job_manager.handle_cancellation(grant_application_id)
-            return None
-
-        extraction_result = await handle_extract_cfp_data_from_rag_sources(
-            source_ids=source_ids,
-            organization_mapping=organization_mapping,
-            session_maker=session_maker,
+        cfp_analysis_result = await handle_cfp_analysis_stage(
+            job_manager=job_manager,
+            extracted_cfp=extracted_cfp,
         )
-
-        organization = (
-            next(org for org in funding_organizations if str(org.id) == extraction_result["organization_id"])
-            if extraction_result["organization_id"]
-            else None
-        )
-
-        org_name = organization.full_name if organization else "Unknown"
-
-        submission_date = (
-            datetime.strptime(extraction_result["submission_date"], "%Y-%m-%d").date()  # noqa: DTZ007
-            if extraction_result["submission_date"]
-            else None
-        )
-
-        await job_manager.add_notification(
-            parent_id=grant_application_id,
-            event=NotificationEvents.CFP_DATA_EXTRACTED,
-            message="CFP data extracted successfully",
-            notification_type="info",
-            data={
-                "organization": org_name,
-                "cfp_subject": extraction_result["cfp_subject"],
-                "content_sections": len(extraction_result["content"]),
-                "submission_date": str(submission_date) if submission_date else None,
-            },
-            current_pipeline_stage=3,
-            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-        )
-
-        logger.info("Extracted CFP data")
-
-        if await job_manager.check_if_cancelled():
-            await job_manager.handle_cancellation(grant_application_id)
-            return None
-
-        await job_manager.add_notification(
-            parent_id=grant_application_id,
-            event=NotificationEvents.CFP_ANALYSIS_STARTED,
-            message="Running enhanced CFP analysis with AI models...",
-            notification_type="info",
-            current_pipeline_stage=7,
-            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-        )
-
-        try:
-            cfp_analysis_result = await enhanced_cfp_analysis(
-                cfp_content=extraction_result["content"],
-                parent_id=grant_application_id,
-                job_manager=job_manager,
-            )
-
-            await job_manager.add_notification(
-                parent_id=grant_application_id,
-                event=NotificationEvents.CFP_ANALYSIS_COMPLETED,
-                message="Enhanced CFP analysis completed successfully",
-                notification_type="info",
-                data={
-                    "sections_identified": cfp_analysis_result.get("sections_count", 0),
-                    "length_constraints": cfp_analysis_result.get("length_constraints_found", 0),
-                    "evaluation_criteria": cfp_analysis_result.get("evaluation_criteria_count", 0),
-                    "nlp_categories": cfp_analysis_result.get("nlp_categories_found", 0),
-                },
-                current_pipeline_stage=7,
-                total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-            )
-
-            logger.info(
-                "Enhanced CFP analysis completed",
-                sections_identified=cfp_analysis_result.get("sections_count", 0),
-                length_constraints=cfp_analysis_result.get("length_constraints_found", 0),
-                evaluation_criteria=cfp_analysis_result.get("evaluation_criteria_count", 0),
-            )
-
-        except Exception as e:
-            logger.warning("Enhanced CFP analysis failed, continuing with standard analysis", error=str(e))
-            cfp_analysis_result = None
 
         grant_sections = await extract_and_enrich_sections(
-            cfp_content=extraction_result["content"],
-            cfp_subject=extraction_result["cfp_subject"],
-            organization=organization,
-            parent_id=grant_application_id,
+            cfp_analysis_result=cfp_analysis_result,
             job_manager=job_manager,
         )
 
@@ -371,7 +334,7 @@ async def grant_template_generation_pipeline_handler(
             message="Saving grant template to database...",
             notification_type="info",
             current_pipeline_stage=7,
-            total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+            total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
         )
 
     except BackendError as e:
@@ -456,8 +419,8 @@ async def grant_template_generation_pipeline_handler(
                     "section_count": len(grant_sections),
                     "organization": org_name,
                 },
-                current_pipeline_stage=GRANT_TEMPLATE_PIPELINE_STAGES,
-                total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+                current_pipeline_stage=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
+                total_pipeline_stages=TOTAL_GRANT_TEMPLATE_PIPELINE_NUM_OF_STAGES,
             )
 
             return cast("GrantTemplate", grant_template)

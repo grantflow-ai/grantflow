@@ -32,8 +32,9 @@ from services.rag.src.grant_template.handler import (
 from services.rag.src.utils.job_manager import JobManager
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import CFPContentSection as Content
     from packages.db.src.json_objects import GrantLongFormSection
+
+    from src.json_objects import CFPContentSection as Content
 
 
 @pytest.mark.asyncio
@@ -55,7 +56,7 @@ async def test_check_if_cancelled_returns_false_when_not_cancelled(
         job_id = job.id
 
     job_manager.job_id = job_id
-    result = await job_manager.check_if_cancelled()
+    result = await job_manager.ensure_not_cancelled()
     assert result is False
 
 
@@ -78,7 +79,7 @@ async def test_check_if_cancelled_returns_true_when_cancelled(
         job_id = job.id
 
     job_manager.job_id = job_id
-    result = await job_manager.check_if_cancelled()
+    result = await job_manager.ensure_not_cancelled()
     assert result is True
 
 
@@ -87,7 +88,7 @@ async def test_check_if_cancelled_returns_false_when_no_job_id(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     job_manager = JobManager(async_session_maker)
-    result = await job_manager.check_if_cancelled()
+    result = await job_manager.ensure_not_cancelled()
     assert result is False
 
 

@@ -2,9 +2,8 @@ import hashlib
 import re
 import time
 from collections import defaultdict
-from typing import Any, Final, NotRequired, TypedDict
+from typing import Any, Final, TypedDict
 
-from packages.db.src.json_objects import ExtractedCFPData
 from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -13,14 +12,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
-from services.rag.src.grant_template.nlp_categorizer import (
-    NLPCategorizationResult,
+from services.rag.src.grant_template.category_extraction import (
+    CategorizationAnalysisResult,
     categorize_text,
     format_nlp_analysis_for_prompt,
 )
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
+from src.json_objects import ExtractedCFPData
 
 logger = get_logger(__name__)
 
@@ -30,7 +30,7 @@ class RagSourceData(TypedDict):
     source_type: str
     text_content: str
     chunks: list[str]
-    nlp_analysis: NotRequired[NLPCategorizationResult]
+    nlp_analysis: CategorizationAnalysisResult
 
 
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
@@ -142,46 +142,29 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         text_content = source_text_content or ""
         chunks = chunks_by_source.get(source_id, [])
 
-        try:
-            nlp_analysis = await categorize_text(text_content)
-            total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
-            categories_found = {
-                k: len(v)
-                for k, v in [
-                    ("money", nlp_analysis["money"]),
-                    ("date_time", nlp_analysis["date_time"]),
-                    ("writing_related", nlp_analysis["writing_related"]),
-                    ("other_numbers", nlp_analysis["other_numbers"]),
-                    ("recommendations", nlp_analysis["recommendations"]),
-                    ("orders", nlp_analysis["orders"]),
-                    ("positive_instructions", nlp_analysis["positive_instructions"]),
-                    ("negative_instructions", nlp_analysis["negative_instructions"]),
-                    ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
-                ]
-                if v
-            }
-            logger.debug(
-                "NLP analysis completed for source",
-                source_id=str(source_id),
-                total_sentences=total_sentences,
-                categories_found=categories_found,
-            )
-        except Exception as e:
-            logger.warning(
-                "NLP analysis failed for source, using empty analysis", source_id=str(source_id), error=str(e)
-            )
-            nlp_analysis = NLPCategorizationResult(
-                money=[],
-                date_time=[],
-                writing_related=[],
-                other_numbers=[],
-                recommendations=[],
-                orders=[],
-                positive_instructions=[],
-                negative_instructions=[],
-                evaluation_criteria=[],
-            )
-
+        nlp_analysis = await categorize_text(text_content)
+        total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
+        categories_found = {
+            k: len(v)
+            for k, v in [
+                ("money", nlp_analysis["money"]),
+                ("date_time", nlp_analysis["date_time"]),
+                ("writing_related", nlp_analysis["writing_related"]),
+                ("other_numbers", nlp_analysis["other_numbers"]),
+                ("recommendations", nlp_analysis["recommendations"]),
+                ("orders", nlp_analysis["orders"]),
+                ("positive_instructions", nlp_analysis["positive_instructions"]),
+                ("negative_instructions", nlp_analysis["negative_instructions"]),
+                ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
+            ]
+            if v
+        }
+        logger.info(
+            "NLP analysis completed for source",
+            source_id=str(source_id),
+            total_sentences=total_sentences,
+            categories_found=categories_found,
+        )
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),
@@ -241,7 +224,7 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
         nlp_analysis = source.get(
             "nlp_analysis",
-            NLPCategorizationResult(
+            CategorizationAnalysisResult(
                 money=[],
                 date_time=[],
                 writing_related=[],

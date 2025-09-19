@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
-from packages.db.src.json_objects import CFPContentSection as Content
 from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
@@ -19,6 +18,7 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 from services.rag.src.utils.text import concat_extracted_cfp_content
+from src.json_objects import CFPContentSection as Content
 
 logger = get_logger(__name__)
 ref = Ref[SentenceTransformer]()
