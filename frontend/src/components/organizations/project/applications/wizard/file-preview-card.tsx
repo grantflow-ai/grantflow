@@ -16,10 +16,12 @@ import { getFileExtension } from "@/utils/file-extensions";
 import { log } from "@/utils/logger/client";
 
 export function FilePreviewCard({
+	disableRemove = false,
 	file,
 	parentId,
 	sourceStatus,
 }: {
+	disableRemove?: boolean;
 	file: FileWithId;
 	parentId?: string;
 	sourceStatus?: string;
@@ -34,7 +36,7 @@ export function FilePreviewCard({
 	const canActuallyOpen = canOpenInBrowser && hasAccessibleContent;
 
 	const isIndexing = sourceStatus === SourceIndexingStatus.INDEXING;
-	const canRemove = !isIndexing;
+	const canRemove = !(isIndexing || disableRemove);
 
 	const handleOpen = () => {
 		if (!canActuallyOpen) return;
@@ -94,22 +96,24 @@ export function FilePreviewCard({
 						<ExternalLink className="size-4 text-app-black group-hover:text-white" />
 						Open
 					</AppDropdownMenuItem>
-					<AppDropdownMenuItem
-						className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm ${
-							canRemove
-								? "cursor-pointer text-app-red hover:bg-app-gray-100"
-								: "cursor-not-allowed text-app-gray-400"
-						}`}
-						data-testid="file-menu-remove"
-						disabled={!(parentId && canRemove)}
-						onClick={handleRemove}
-						title={isIndexing ? "Cannot remove file while indexing is in progress" : "Remove file"}
-					>
-						<Trash2
-							className={`size-4 ${canRemove ? "text-app-black group-hover:text-white" : "text-app-gray-400"}`}
-						/>
-						{isIndexing ? "Remove (indexing...)" : "Remove"}
-					</AppDropdownMenuItem>
+					{!disableRemove && (
+						<AppDropdownMenuItem
+							className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm ${
+								canRemove
+									? "cursor-pointer text-app-red hover:bg-app-gray-100"
+									: "cursor-not-allowed text-app-gray-400"
+							}`}
+							data-testid="file-menu-remove"
+							disabled={!(parentId && canRemove)}
+							onClick={handleRemove}
+							title={isIndexing ? "Cannot remove file while indexing is in progress" : "Remove file"}
+						>
+							<Trash2
+								className={`size-4 ${canRemove ? "text-app-black group-hover:text-white" : "text-app-gray-400"}`}
+							/>
+							{isIndexing ? "Remove (indexing...)" : "Remove"}
+						</AppDropdownMenuItem>
+					)}
 				</AppDropdownMenuContent>
 			</AppDropdownMenu>
 		</div>
