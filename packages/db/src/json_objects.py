@@ -1,4 +1,6 @@
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
+
+from src.enums import GrantTemplateStageEnum
 
 
 class TableContext(TypedDict):
@@ -55,31 +57,13 @@ class ResearchDeepDive(TypedDict):
     scientific_infrastructure: NotRequired[str]
 
 
-class RequirementWithQuote(TypedDict):
-    requirement: str
-    quote: str
-
-
-class SectionRequirement(TypedDict):
-    section: str
-    requirements: list[RequirementWithQuote]
-
-
-class LengthConstraint(TypedDict):
-    description: str
-    quote: str
-
-
-class EvaluationCriterion(TypedDict):
-    criterion: str
-    quote: str
-
-
-class CFPSectionAnalysis(TypedDict):
-    section_requirements: list[SectionRequirement]
-    length_constraints: list[LengthConstraint]
-    evaluation_criteria: list[EvaluationCriterion]
-    additional_requirements: list[RequirementWithQuote]
+class GrantTemplateRagJobCheckpoint(TypedDict, total=False):
+    stage: GrantTemplateStageEnum
+    organization_id: str | None
+    cfp_subject: str
+    submission_date: str | None
+    title: str
+    subtitles: list[str]
 
 
 class CFPContentSection(TypedDict):
@@ -93,27 +77,3 @@ class ExtractedCFPData(TypedDict):
     submission_date: str | None
     content: list[CFPContentSection]
     error: NotRequired[str | None]
-
-
-class CFPAnalysisSnapshot(TypedDict):
-    cfp_analysis: NotRequired[dict[str, Any] | None]
-    nlp_analysis: NotRequired[dict[str, Any] | None]
-    analysis_metadata: NotRequired[dict[str, Any] | None]
-
-
-class GrantTemplateGenerationMetadata(TypedDict):
-    extraction: ExtractedCFPData
-    analysis: NotRequired[CFPAnalysisSnapshot]
-    sections: NotRequired[list[GrantElement | GrantLongFormSection]]
-
-
-class GrantApplicationGenerationMetadata(TypedDict):
-    section_texts: NotRequired[dict[str, str]]
-    application_text: NotRequired[str]
-
-
-class RagJobCheckpoint(TypedDict):
-    stage: str
-    trace_id: NotRequired[str]
-    template_metadata: NotRequired[GrantTemplateGenerationMetadata]
-    application_metadata: NotRequired[GrantApplicationGenerationMetadata]

@@ -26,7 +26,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES
+from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import (
@@ -74,10 +74,10 @@ async def generate_work_plan_text(
         message="Extracting relationships between research objectives and tasks...",
         notification_type="info",
         current_pipeline_stage=4,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
-    if await job_manager.check_if_cancelled():
+    if await job_manager.ensure_not_cancelled():
         await job_manager.handle_cancellation(UUID(application_id))
         return ""
 
@@ -94,10 +94,10 @@ async def generate_work_plan_text(
         message="Enriching research objectives with additional context...",
         notification_type="info",
         current_pipeline_stage=5,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
-    if await job_manager.check_if_cancelled():
+    if await job_manager.ensure_not_cancelled():
         await job_manager.handle_cancellation(UUID(application_id))
         return ""
 
@@ -118,7 +118,7 @@ async def generate_work_plan_text(
             "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
         },
         current_pipeline_stage=5,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     await job_manager.add_notification(
@@ -127,7 +127,7 @@ async def generate_work_plan_text(
         message="Enhancing objectives with Wikidata scientific context...",
         notification_type="info",
         current_pipeline_stage=6,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     combined_enrichment_data: ObjectiveEnrichmentDTO = {
@@ -153,7 +153,7 @@ async def generate_work_plan_text(
             "has_scientific_context": bool(wikidata_enrichment["scientific_context"]),
         },
         current_pipeline_stage=6,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     dtos = []
@@ -247,7 +247,7 @@ async def generate_work_plan_text(
     )
 
     for objective, objective_text, task_results in objective_results:
-        if await job_manager.check_if_cancelled():
+        if await job_manager.ensure_not_cancelled():
             await job_manager.handle_cancellation(UUID(application_id))
             return ""
 
@@ -320,7 +320,7 @@ async def grant_application_text_generation_pipeline_handler(
         job_manager = JobManager(session_maker)
         await job_manager.create_grant_application_job(
             grant_application_id=application_id,
-            total_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
@@ -331,7 +331,7 @@ async def grant_application_text_generation_pipeline_handler(
         message="Starting grant application text generation pipeline...",
         notification_type="info",
         current_pipeline_stage=1,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     grant_application: GrantApplication | None = None
@@ -405,7 +405,7 @@ async def grant_application_text_generation_pipeline_handler(
             message="Validating grant template structure...",
             notification_type="info",
             current_pipeline_stage=2,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         work_plan_sections = []
@@ -464,7 +464,7 @@ async def grant_application_text_generation_pipeline_handler(
                 "research_objectives_count": len(grant_application.research_objectives),
             },
             current_pipeline_stage=3,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         if await job_manager.check_if_cancelled():
@@ -477,7 +477,7 @@ async def grant_application_text_generation_pipeline_handler(
             message="Generating text for all grant sections...",
             notification_type="info",
             current_pipeline_stage=4,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         section_texts = await generate_section_text(
@@ -497,7 +497,7 @@ async def grant_application_text_generation_pipeline_handler(
                 "total_words": sum(len(text.split()) for text in section_texts.values()),
             },
             current_pipeline_stage=5,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         await job_manager.add_notification(
@@ -506,7 +506,7 @@ async def grant_application_text_generation_pipeline_handler(
             message="Assembling complete grant application text...",
             notification_type="info",
             current_pipeline_stage=6,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
 
         application_text = generate_application_text(
@@ -521,7 +521,7 @@ async def grant_application_text_generation_pipeline_handler(
             message="Saving grant application text to database...",
             notification_type="info",
             current_pipeline_stage=7,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
         )
     except BackendError as e:
         logger.error("Failed to generate grant application text.", application_id=application_id, error=e)
@@ -593,7 +593,7 @@ async def grant_application_text_generation_pipeline_handler(
                     "section_count": len(section_texts),
                 },
                 current_pipeline_stage=8,
-                total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+                total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
             )
         except SQLAlchemyError as e:
             logger.error("Database error updating grant application text.", application_id=application_id, error=e)
@@ -618,8 +618,8 @@ async def grant_application_text_generation_pipeline_handler(
         event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
         message="Grant application text generation completed successfully.",
         notification_type="success",
-        current_pipeline_stage=GRANT_APPLICATION_PIPELINE_STAGES,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+        current_pipeline_stage=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     try:

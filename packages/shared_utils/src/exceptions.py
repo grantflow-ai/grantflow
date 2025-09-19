@@ -57,3 +57,7 @@ class DatabaseError(BackendError):
 
 class RagError(BackendError):
     pass
+
+
+class RagJobCancelledError(BackendError):
+    pass
