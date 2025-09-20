@@ -449,6 +449,7 @@ def _should_keep_section(
     sections: list[ExtractedSectionDTO],
     threshold: float,
     exclude_embeddings: list[float],
+    trace_id: str,
 ) -> bool:
     if section.get("is_detailed_research_plan"):
         return True
@@ -479,12 +480,12 @@ def _should_keep_section(
 
         return True
     except Exception as e:
-        logger.warning("Embedding calculation failed for section", title=section["title"], error=str(e))
+        logger.warning("Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id)
         return True
 
 
 async def filter_extracted_sections(
-    sections: list[ExtractedSectionDTO], initial_threshold: float = 0.7
+    sections: list[ExtractedSectionDTO], trace_id: str, initial_threshold: float = 0.7
 ) -> list[ExtractedSectionDTO]:
     exclude_embeddings = await get_exclude_embeddings()
     threshold = initial_threshold
@@ -497,6 +498,7 @@ async def filter_extracted_sections(
                 sections=sections,
                 threshold=threshold,
                 exclude_embeddings=exclude_embeddings,
+                trace_id=trace_id,
             )
             for section in sections
         ]
@@ -641,7 +643,7 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: list[CFPContentSection], cfp_subject: str, organization: OrganizationNamespace | None = None
+    cfp_content: list[CFPContentSection], cfp_subject: str, trace_id: str, organization: OrganizationNamespace | None = None
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
@@ -695,4 +697,4 @@ async def handle_extract_sections(
         retries=3,
     )
 
-    return await filter_extracted_sections(result["sections"])
+    return await filter_extracted_sections(result["sections"], trace_id)

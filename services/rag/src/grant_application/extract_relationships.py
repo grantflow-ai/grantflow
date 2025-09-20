@@ -307,6 +307,7 @@ async def handle_extract_relationships(
     grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
+    trace_id: str,
 ) -> dict[str, list[tuple[str, str]]]:
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
@@ -343,6 +344,7 @@ async def handle_extract_relationships(
         passing_score=80,
         increment=10,
         retries=5,
+        trace_id=trace_id,
     )
     ret = defaultdict[str, list[tuple[str, str]]](list)
     for dependent_id, target_id, description in result["relationships"]:

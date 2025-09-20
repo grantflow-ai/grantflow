@@ -278,11 +278,13 @@ def validate_cfp_analysis(response: CFPSectionAnalysis) -> None:
 async def analyze_cfp_sections(
     cfp_content: str,
     nlp_analysis: CategorizationAnalysisResult,
+    trace_id: str,
 ) -> CFPSectionAnalysis:
     logger.info(
         "Starting CFP section analysis with Gemini 2.5 Flash",
         content_length=len(cfp_content),
         nlp_categories_found=len([k for k, v in nlp_analysis.items() if v]),
+        trace_id=trace_id,
     )
 
     formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
@@ -304,8 +306,8 @@ async def analyze_cfp_sections(
     )
 
 
-async def handle_analyze_cfp(*, full_cfp_text: str) -> CFPAnalysisResult:
-    logger.info("Starting NLP analysis for CFP content", content_length=len(full_cfp_text))
+async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysisResult:
+    logger.info("Starting NLP analysis for CFP content", content_length=len(full_cfp_text), trace_id=trace_id)
     nlp_analysis = await categorize_text(full_cfp_text)
 
     categories_found = sum(1 for v in nlp_analysis.values() if v)
@@ -315,10 +317,11 @@ async def handle_analyze_cfp(*, full_cfp_text: str) -> CFPAnalysisResult:
         "NLP analysis completed",
         categories_found=categories_found,
         total_sentences=total_sentences,
+        trace_id=trace_id,
     )
 
-    logger.info("Starting enhanced CFP analysis with Gemini 2.5 Flash")
-    cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis)
+    logger.info("Starting enhanced CFP analysis with Gemini 2.5 Flash", trace_id=trace_id)
+    cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
 
     return CFPAnalysisResult(
         cfp_analysis=cfp_analysis,

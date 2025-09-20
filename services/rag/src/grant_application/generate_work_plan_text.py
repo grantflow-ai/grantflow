@@ -162,8 +162,9 @@ async def generate_work_plan_component_text(
     component: ResearchComponentGenerationDTO,
     form_inputs: ResearchDeepDive,
     work_plan_text: str,
+    trace_id: str,
 ) -> str:
-    logger.debug("Generating text for work plan component.", component=component)
+    logger.debug("Generating text for work plan component.", component=component, trace_id=trace_id)
 
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
@@ -227,6 +228,7 @@ async def generate_objective_with_tasks(
     objective: ResearchComponentGenerationDTO,
     tasks: list[ResearchComponentGenerationDTO],
     work_plan_text: str,
+    trace_id: str,
 ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
     """Generate text for an objective and its associated tasks in parallel."""
     research_objective_text = await generate_work_plan_component_text(
@@ -234,6 +236,7 @@ async def generate_objective_with_tasks(
         component=objective,
         work_plan_text=work_plan_text,
         form_inputs=form_inputs,
+        trace_id=trace_id,
     )
 
     research_task_texts = await gather(
@@ -243,6 +246,7 @@ async def generate_objective_with_tasks(
                 component=research_task,
                 work_plan_text=work_plan_text,
                 form_inputs=form_inputs,
+                trace_id=trace_id,
             )
             for research_task in tasks
         ]
