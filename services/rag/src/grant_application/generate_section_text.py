@@ -1,15 +1,12 @@
-import time
 from typing import Final
 
-from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection, ResearchObjective, CFPAnalysisResult
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
 
 logger = get_logger(__name__)
@@ -103,11 +100,11 @@ SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
 )
 
 
-async def _generate_single_section_with_context(
+async def handle_generate_section_text(
     section: GrantLongFormSection,
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
-    cfp_analysis: CFPSectionAnalysis | None = None,
+    cfp_analysis: CFPAnalysisResult,
 ) -> str:
     section_title = section.get("title", "Section")
 
@@ -273,83 +270,3 @@ async def _generate_single_section_with_context(
     )
 
     return result
-
-
-async def generate_section_text(
-    sections: list[GrantLongFormSection],
-    research_deep_dives: list[ResearchObjective],
-    application_id: str,
-    cfp_analysis: CFPSectionAnalysis | None = None,
-) -> dict[str, str]:
-    if not sections:
-        return {}
-
-    logger.info(
-        "Starting optimized section generation with shared retrieval",
-        sections_count=len(sections),
-        deep_dives_count=len(research_deep_dives),
-    )
-
-    start_time = time.time()
-
-    all_search_queries = []
-    all_keywords = []
-
-    for section in sections:
-        all_search_queries.extend(section.get("search_queries", []))
-        all_keywords.extend(section.get("keywords", []))
-
-    all_search_queries.extend(
-        research_objective["title"] for research_objective in research_deep_dives if "title" in research_objective
-    )
-
-    unique_queries = list(dict.fromkeys(all_search_queries))[:12]
-
-    logger.info(
-        "Performing shared retrieval for all sections",
-        unique_queries_count=len(unique_queries),
-        total_original_queries=len(all_search_queries),
-    )
-
-    combined_task_description = f"Generate content for {len(sections)} grant application sections: " + ", ".join(
-        [s.get("title", f"Section {i}") for i, s in enumerate(sections)]
-    )
-
-    retrieval_results = await retrieve_documents(
-        application_id=application_id,
-        search_queries=unique_queries,
-        task_description=combined_task_description,
-        max_tokens=12000,
-    )
-    shared_context = "\n".join(retrieval_results)
-
-    retrieval_time = time.time() - start_time
-    logger.info(
-        "Shared retrieval completed",
-        retrieval_time_seconds=retrieval_time,
-        context_length=len(shared_context),
-    )
-
-    generation_coroutines = [
-        _generate_single_section_with_context(section, research_deep_dives, shared_context, cfp_analysis)
-        for section in sections
-    ]
-
-    section_results = await batched_gather(*generation_coroutines, batch_size=3)
-
-    results: dict[str, str] = {}
-    for section, result in zip(sections, section_results, strict=False):
-        section_id = section.get("id", section.get("title", f"section_{len(results)}"))
-        results[section_id] = result
-
-    total_time = time.time() - start_time
-    logger.info(
-        "Optimized section generation completed",
-        total_time_seconds=total_time,
-        retrieval_time_seconds=retrieval_time,
-        generation_time_seconds=total_time - retrieval_time,
-        sections_generated=len(results),
-        avg_time_per_section=total_time / len(sections) if sections else 0,
-    )
-
-    return results

@@ -300,5 +300,45 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
         self,
         dto: D,
     ) -> None:
-        # TODO
-        raise NotImplementedError
+        if not self.job:
+            raise ValueError("No job available to update")
+
+        current_stage = self.pipeline_stages[self.job.current_stage]
+
+        # Check if there's a next stage
+        if self.job.current_stage >= len(self.pipeline_stages) - 1:
+            # This is the final stage - should not call to_next_job_stage
+            logger.warning(
+                "Attempted to advance past final stage",
+                application_id=str(self.parent_id),
+                current_stage=current_stage,
+            )
+            return
+
+        next_stage_index = self.job.current_stage + 1
+        next_stage = self.pipeline_stages[next_stage_index]
+
+        # Update job with checkpoint data and new stage
+        async with self.session_maker() as session, session.begin():
+            self.job.checkpoint_data = dto  # type: ignore[assignment]
+            self.job.current_stage = next_stage_index
+            session.add(self.job)
+            await session.flush()
+
+        logger.info(
+            "Advanced to next pipeline stage",
+            application_id=str(self.parent_id),
+            job_id=str(self.job.id),
+            from_stage=current_stage,
+            to_stage=next_stage,
+        )
+
+        # Publish next stage to PubSub
+        from packages.shared_utils.src.pubsub import publish_rag_task
+
+        await publish_rag_task(
+            parent_id=self.parent_id,
+            parent_type=self.parent_type,
+            stage=next_stage,
+            trace_id=self.trace_id,
+        )
