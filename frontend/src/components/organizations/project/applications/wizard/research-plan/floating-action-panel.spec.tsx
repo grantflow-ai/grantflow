@@ -1,30 +1,30 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { FloatingActionButton } from "./floating-action-button";
+import { FloatingActionPanel } from "./floating-action-panel";
 
-describe("FloatingActionButton", () => {
+describe("FloatingActionPanel", () => {
 	afterEach(() => {
 		cleanup();
 	});
 
 	it("renders the component", () => {
 		render(
-			<FloatingActionButton>
+			<FloatingActionPanel>
 				<button type="button">Test Button</button>
-			</FloatingActionButton>,
+			</FloatingActionPanel>,
 		);
 
-		expect(screen.getByTestId("floating-action-button")).toBeInTheDocument();
+		expect(screen.getByTestId("floating-action-panel")).toBeInTheDocument();
 	});
 
 	it("renders children correctly", () => {
 		render(
-			<FloatingActionButton>
+			<FloatingActionPanel>
 				<button data-testid="test-child" type="button">
 					Test Button
 				</button>
 				<span data-testid="test-span">Test Span</span>
-			</FloatingActionButton>,
+			</FloatingActionPanel>,
 		);
 
 		expect(screen.getByTestId("test-child")).toBeInTheDocument();
@@ -35,34 +35,34 @@ describe("FloatingActionButton", () => {
 
 	it("uses custom test id when provided", () => {
 		render(
-			<FloatingActionButton testId="custom-fab">
+			<FloatingActionPanel testId="custom-fab">
 				<button type="button">Test Button</button>
-			</FloatingActionButton>,
+			</FloatingActionPanel>,
 		);
 
 		expect(screen.getByTestId("custom-fab")).toBeInTheDocument();
-		expect(screen.queryByTestId("floating-action-button")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("floating-action-panel")).not.toBeInTheDocument();
 	});
 
 	it("applies custom className when provided", () => {
 		render(
-			<FloatingActionButton className="custom-class">
+			<FloatingActionPanel className="custom-class">
 				<button type="button">Test Button</button>
-			</FloatingActionButton>,
+			</FloatingActionPanel>,
 		);
 
-		const fab = screen.getByTestId("floating-action-button");
+		const fab = screen.getByTestId("floating-action-panel");
 		expect(fab).toHaveClass("custom-class");
 	});
 
 	it("merges custom className with default classes", () => {
 		render(
-			<FloatingActionButton className="justify-center">
+			<FloatingActionPanel className="justify-center">
 				<button type="button">Test Button</button>
-			</FloatingActionButton>,
+			</FloatingActionPanel>,
 		);
 
-		const fab = screen.getByTestId("floating-action-button");
-		expect(fab).toHaveClass("absolute", "bottom-0", "justify-center");
+		const fab = screen.getByTestId("floating-action-panel");
+		expect(fab).toHaveClass("absolute", "justify-center");
 	});
 });
