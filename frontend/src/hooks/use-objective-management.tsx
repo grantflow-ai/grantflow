@@ -4,13 +4,13 @@ import type { RefObject } from "react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
-import { type Objective, useWizardStore } from "@/stores/wizard-store";
+import { type ResearchObjective, useWizardStore } from "@/stores/wizard-store";
 
 export interface ObjectiveManagement {
 	editingObjectiveId: null | number;
 	handleEdit: (objectiveNumber: number) => void;
-	handleRemoveClick: (objective: Objective) => void;
-	handleSaveObjective: (updatedObjective: Objective) => Promise<void>;
+	handleRemoveClick: (objective: ResearchObjective) => void;
+	handleSaveObjective: (updatedObjective: ResearchObjective) => Promise<void>;
 	setEditingObjectiveId: (id: null | number) => void;
 }
 
@@ -24,7 +24,7 @@ export function useObjectiveManagement(dialogRef: RefObject<null | WizardDialogR
 		setEditingObjectiveId(objectiveNumber);
 	};
 
-	const handleRemoveClick = (objective: Objective) => {
+	const handleRemoveClick = (objective: ResearchObjective) => {
 		const handleConfirmDelete = async () => {
 			await removeObjective(objective.number);
 			dialogRef.current?.close();
@@ -66,7 +66,7 @@ export function useObjectiveManagement(dialogRef: RefObject<null | WizardDialogR
 		});
 	};
 
-	const handleSaveObjective = async (updatedObjective: Objective) => {
+	const handleSaveObjective = async (updatedObjective: ResearchObjective) => {
 		await updateObjective(updatedObjective.number, updatedObjective);
 		setEditingObjectiveId(null);
 	};

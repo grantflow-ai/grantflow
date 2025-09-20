@@ -50,6 +50,7 @@ vi.mock("./objective-form", () => {
 	interface Task {
 		description: string;
 		id: string;
+		title: string;
 	}
 
 	return {
@@ -60,42 +61,42 @@ vi.mock("./objective-form", () => {
 			objectiveNumber: number;
 			onSaveAction: (data: {
 				description: string;
-				name: string;
-				tasks: { description: string; id: string }[];
+				tasks: { description: string; title: string }[];
+				title: string;
 			}) => void;
 		}) => {
-			const [name, setName] = React.useState("");
+			const [title, setTitle] = React.useState("");
 
 			const [description, setDescription] = React.useState("");
 
-			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0" }] as Task[]);
+			const [tasks, setTasks] = React.useState([{ description: "", id: "task-0", title: "" }] as Task[]);
 
 			const handleSave = () => {
 				onSaveAction({
 					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
 					description: description || "Test objective description",
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
-					name: name || "Test objective name",
 
 					tasks: (tasks as Task[]).map((task: Task) => ({
 						description: task.description || "Test task description",
-						id: task.id,
+						title: task.title || "",
 					})),
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Need || for empty string fallback in test
+					title: title || "Test objective name",
 				});
 			};
 
 			const addTask = () => {
-				setTasks((prev: Task[]) => [...prev, { description: "", id: `task-${prev.length}` }]);
+				setTasks((prev: Task[]) => [...prev, { description: "", id: `task-${prev.length}`, title: "" }]);
 			};
 
 			return (
 				<div data-testid="objective-form-mock">
 					<span data-testid="objective-number">Objective {objectiveNumber}</span>
 					<input
-						data-testid="objective-name-input"
-						onChange={(e) => setName(e.target.value)}
-						placeholder="Objective name"
-						value={name}
+						data-testid="objective-title-input"
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder="Objective title"
+						value={title}
 					/>
 					<textarea
 						data-testid="objective-description-input"
@@ -789,11 +790,11 @@ describe.sequential("ResearchPlanStep", () => {
 			const newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			const nameInput = screen.getByTestId("objective-name-input");
+			const titleInput = screen.getByTestId("objective-title-input");
 			const descriptionInput = screen.getByTestId("objective-description-input");
 			const taskInput = screen.getByTestId("task-0-description");
 
-			await user.type(nameInput, "Test Objective");
+			await user.type(titleInput, "Test Objective");
 			await user.type(descriptionInput, "Test Description");
 			await user.type(taskInput, "Test Task");
 
@@ -818,7 +819,7 @@ describe.sequential("ResearchPlanStep", () => {
 			let newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "First Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "First Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "First Description");
 			await user.type(screen.getByTestId("task-0-description"), "First Task");
 			await user.click(screen.getByTestId("add-objective-button"));
@@ -840,7 +841,7 @@ describe.sequential("ResearchPlanStep", () => {
 			newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "Second Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "Second Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Second Description");
 			await user.type(screen.getByTestId("task-0-description"), "Second Task");
 			await user.click(screen.getByTestId("add-objective-button"));
@@ -862,7 +863,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "Multi-task Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "Multi-task Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
 			await user.type(screen.getByTestId("task-0-description"), "Task 1");
 
@@ -893,7 +894,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 			await user.type(screen.getByTestId("task-0-description"), "Test Task");
 
@@ -915,7 +916,7 @@ describe.sequential("ResearchPlanStep", () => {
 			const newObjectiveButton = screen.getByTestId("new-objective-button");
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "Failed Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "Failed Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
 			await user.type(screen.getByTestId("task-0-description"), "Task");
 
@@ -951,7 +952,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			await user.click(newObjectiveButton);
 
-			await user.type(screen.getByTestId("objective-name-input"), "Final Objective");
+			await user.type(screen.getByTestId("objective-title-input"), "Final Objective");
 			await user.type(screen.getByTestId("objective-description-input"), "Description");
 			await user.type(screen.getByTestId("task-0-description"), "Task");
 

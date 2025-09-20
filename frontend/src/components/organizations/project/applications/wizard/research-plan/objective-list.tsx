@@ -1,7 +1,7 @@
 "use client";
 
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import type { Objective } from "@/stores/wizard-store";
+import type { ResearchObjective } from "@/stores/wizard-store";
 import { DraggableObjectiveCard } from "./draggable-objective-card";
 
 interface ObjectiveDragDropItem extends DragDropItem {
@@ -10,11 +10,11 @@ interface ObjectiveDragDropItem extends DragDropItem {
 
 interface ObjectiveListProps {
 	editingObjectiveId: null | number;
-	objectives: Objective[];
+	objectives: ResearchObjective[];
 	onEdit: (objectiveNumber: number) => void;
-	onRemove: (objective: Objective) => void;
-	onReorder: (objectives: Objective[], oldIndex: number, newIndex: number) => Promise<void>;
-	onSave: (objective: Objective) => Promise<void>;
+	onRemove: (objective: ResearchObjective) => void;
+	onReorder: (objectives: ResearchObjective[], oldIndex: number, newIndex: number) => Promise<void>;
+	onSave: (objective: ResearchObjective) => Promise<void>;
 	setEditingObjectiveId: (id: null | number) => void;
 }
 

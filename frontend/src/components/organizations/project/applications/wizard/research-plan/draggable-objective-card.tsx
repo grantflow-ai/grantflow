@@ -3,18 +3,18 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AppCard } from "@/components/app/app-card";
-import type { Objective } from "@/stores/wizard-store";
+import type { ResearchObjective } from "@/stores/wizard-store";
 import { EditableObjective, ObjectiveCardContent, ObjectiveHeader } from "./objective-components";
 
 interface DraggableObjectiveCardProps {
 	index: number;
 	isEditing: boolean;
-	objective: Objective;
+	objective: ResearchObjective;
 	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
 	onRemove: () => void;
-	onSave: (updatedObjective: Objective) => Promise<void>;
+	onSave: (updatedObjective: ResearchObjective) => Promise<void>;
 }
 
 export function DraggableObjectiveCard({

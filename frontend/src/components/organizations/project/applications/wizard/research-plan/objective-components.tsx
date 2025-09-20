@@ -12,19 +12,19 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Objective } from "@/stores/wizard-store";
+import type { ResearchObjective } from "@/stores/wizard-store";
 import { DraggableTaskList } from "./draggable-task-list";
 
 interface EditableObjectiveProps {
 	index: number;
-	objective: Objective;
+	objective: ResearchObjective;
 	onCancel: () => void;
-	onSave: (updatedObjective: Objective) => void;
+	onSave: (updatedObjective: ResearchObjective) => void;
 }
 
 interface ObjectiveCardContentProps {
 	index: number;
-	objective: Objective;
+	objective: ResearchObjective;
 }
 
 interface ObjectiveHeaderProps {
@@ -32,7 +32,7 @@ interface ObjectiveHeaderProps {
 	index: number;
 	isEditing: boolean;
 	listeners: ReturnType<typeof useSortable>["listeners"];
-	objective: Objective;
+	objective: ResearchObjective;
 	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
@@ -42,7 +42,7 @@ interface ObjectiveHeaderProps {
 export function EditableObjective({ index, objective, onCancel: _onCancel, onSave }: EditableObjectiveProps) {
 	const [title, setTitle] = useState(objective.title);
 	const [description, setDescription] = useState(objective.description);
-	const [tasks, setTasks] = useState(objective.research_tasks);
+	const [tasks, setTasks] = useState<ResearchObjective["research_tasks"]>(objective.research_tasks);
 
 	const taskValues: Record<number, string> = {};
 
@@ -51,11 +51,11 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleTaskDelete = (taskIndex: number) => {
-		setTasks((prevTasks) => prevTasks.filter((_, idx) => idx !== taskIndex));
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => prevTasks.filter((_, idx) => idx !== taskIndex));
 	};
 
 	const handleTaskAdd = () => {
-		setTasks((prevTasks) => [
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => [
 			...prevTasks,
 			{
 				description: "",
@@ -66,7 +66,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleTaskReorder = (oldIndex: number, newIndex: number) => {
-		setTasks((prevTasks) => {
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => {
 			const reorderedTasks = [...prevTasks];
 			const [movedTask] = reorderedTasks.splice(oldIndex, 1);
 			reorderedTasks.splice(newIndex, 0, movedTask);
@@ -79,7 +79,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleSave = () => {
-		const updatedTasks = tasks.map((task, index) => ({
+		const updatedTasks = tasks.map((task: ResearchObjective["research_tasks"][0], index: number) => ({
 			...task,
 			description: taskValues[index] ?? task.description,
 		}));
