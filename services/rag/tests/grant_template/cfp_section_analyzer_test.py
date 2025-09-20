@@ -2,15 +2,15 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from packages.db.src.json_objects import CFPSectionAnalysis
 from packages.shared_utils.src.exceptions import ValidationError
-from services.rag.src.grant_template.category_extraction import categorize_text
 
+from services.rag.src.grant_template.category_extraction import categorize_text
 from services.rag.src.grant_template.cfp_section_analysis import (
     GEMINI_2_5_FLASH_MODEL,
     analyze_cfp_sections,
     validate_cfp_analysis,
 )
-from src.json_objects import CFPSectionAnalysis
 
 
 @pytest.fixture

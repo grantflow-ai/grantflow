@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 from typing import Any, Final, TypedDict
 
+from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -20,7 +21,6 @@ from services.rag.src.grant_template.dto import ExtractedCFPData
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
-from packages.db.src.json_objects import CategorizationAnalysisResult
 
 logger = get_logger(__name__)
 
