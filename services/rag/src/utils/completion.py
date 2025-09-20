@@ -120,6 +120,7 @@ async def make_google_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    trace_id: str,
 ) -> T:
     client = get_google_ai_client()
 
@@ -181,6 +182,7 @@ async def make_google_completions_request[T](
             prompt_tokens=getattr(usage_metadata, "prompt_token_count", None),
             completion_tokens=getattr(usage_metadata, "candidates_token_count", None),
             total_tokens=getattr(usage_metadata, "total_token_count", None),
+            trace_id=trace_id,
         )
     else:
         logger.info(
@@ -188,6 +190,7 @@ async def make_google_completions_request[T](
             prompt_identifier=prompt_identifier,
             model=model,
             elapsed_ms=round(elapsed_ms, 2),
+            trace_id=trace_id,
         )
 
     if not candidate_count:
@@ -234,6 +237,7 @@ async def make_anthropic_completions_request[T](
     top_k: int | None = None,
     top_p: float | None = None,
     user_prompt: str,
+    trace_id: str,
 ) -> T:
     anthropic_client = get_anthropic_client()
 
@@ -267,6 +271,7 @@ async def make_anthropic_completions_request[T](
                 error_type=type(e).__name__,
                 error_message=error_message,
                 request_id=getattr(e, "request_id", None),
+                trace_id=trace_id,
             )
             raise BackendError(
                 "Anthropic API credits exhausted. Please contact operations team to add credits.",
@@ -279,6 +284,7 @@ async def make_anthropic_completions_request[T](
             error_type=type(e).__name__,
             error_message=error_message,
             elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+            trace_id=trace_id,
         )
         raise BackendError(
             f"Anthropic API configuration error: {error_message}",
@@ -291,6 +297,7 @@ async def make_anthropic_completions_request[T](
             error_type=type(e).__name__,
             error_message=str(e),
             elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+            trace_id=trace_id,
         )
         raise
 
@@ -303,6 +310,7 @@ async def make_anthropic_completions_request[T](
         input_tokens=response.usage.input_tokens,
         output_tokens=response.usage.output_tokens,
         total_tokens=response.usage.input_tokens + response.usage.output_tokens,
+        trace_id=trace_id,
     )
 
     tool_blocks = [block for block in response.content if isinstance(block, ToolUseBlock)]
@@ -356,6 +364,7 @@ async def handle_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    trace_id: str,
 ) -> T:
     attempts = 0
 
@@ -385,6 +394,7 @@ async def handle_completions_request[T](
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
+                    trace_id=trace_id,
                 )
             else:
                 response = await make_google_completions_request(
@@ -398,6 +408,7 @@ async def handle_completions_request[T](
                     top_p=top_p,
                     top_k=top_k,
                     candidate_count=candidate_count,
+                    trace_id=trace_id,
                 )
 
             if validator:
@@ -412,6 +423,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_context=e.context if hasattr(e, "context") else None,
+                trace_id=trace_id,
             )
             error_message = f"""
             The last response from the API failed validation due to the following error:
@@ -438,6 +450,7 @@ async def handle_completions_request[T](
                 attempt=attempts,
                 max_attempts=max_attempts,
                 error=str(e),
+                trace_id=trace_id,
             )
             error_message = f"""
             The last API call with the provided prompt returned an invalid JSON object.
@@ -458,6 +471,7 @@ async def handle_completions_request[T](
                     prompt_identifier=prompt_identifier,
                     attempt=attempts,
                     max_attempts=max_attempts,
+                    trace_id=trace_id,
                 )
                 if model == ANTHROPIC_SONNET_MODEL:
                     model = GENERATION_MODEL
@@ -476,6 +490,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == ANTHROPIC_SONNET_MODEL:
                 model = GENERATION_MODEL
@@ -491,6 +506,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == GENERATION_MODEL:
                 model = ANTHROPIC_SONNET_MODEL
@@ -506,6 +522,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == GENERATION_MODEL:
                 model = ANTHROPIC_SONNET_MODEL
@@ -521,6 +538,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == ANTHROPIC_SONNET_MODEL:
                 model = GENERATION_MODEL

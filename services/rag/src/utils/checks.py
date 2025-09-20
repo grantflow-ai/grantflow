@@ -25,9 +25,10 @@ async def verify_rag_sources_indexed(
     parent_id: UUID,
     session_maker: async_sessionmaker[Any],
     entity_type: type[GrantApplication | GrantTemplate],
+    trace_id: str,
     total_sleep_duration: int = 0,
 ) -> None:
-    logger.debug("Verifying rag sources indexed", parent_id=str(parent_id))
+    logger.debug("Verifying rag sources indexed", parent_id=str(parent_id), trace_id=trace_id)
     async with session_maker() as session:
         try:
             if entity_type == GrantApplication:
@@ -56,7 +57,7 @@ async def verify_rag_sources_indexed(
                 for source in rag_sources
             ):
                 logger.debug(
-                    "Rag sources indexing", parent_id=str(parent_id), total_sleep_duration=total_sleep_duration
+                    "Rag sources indexing", parent_id=str(parent_id), total_sleep_duration=total_sleep_duration, trace_id=trace_id
                 )
                 await publish_notification(
                     parent_id=parent_id,
@@ -69,7 +70,11 @@ async def verify_rag_sources_indexed(
                 )
                 await sleep(10)
                 return await verify_rag_sources_indexed(
-                    parent_id, session_maker, entity_type, total_sleep_duration + 10
+                    parent_id=parent_id,
+                    session_maker=session_maker,
+                    entity_type=entity_type,
+                    trace_id=trace_id,
+                    total_sleep_duration=total_sleep_duration + 10,
                 )
 
             if not any(source.indexing_status == SourceIndexingStatusEnum.FINISHED for source in rag_sources):
@@ -83,6 +88,7 @@ async def verify_rag_sources_indexed(
                     parent_id=str(parent_id),
                     failed_sources=len(failed_sources),
                     total_sources=total_sources,
+                    trace_id=trace_id,
                 )
 
                 await publish_notification(

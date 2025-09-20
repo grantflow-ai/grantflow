@@ -254,11 +254,12 @@ def _validate_research_plan_response(response: Any) -> None:
         _validate_research_tasks(obj, obj_number)
 
 
-async def generate_research_plan_content(application: GrantApplication) -> list[ResearchObjective]:
+async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
     logger.info(
         "Starting research plan generation",
         application_id=application.id,
         application_title=application.title,
+        trace_id=trace_id,
     )
 
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
@@ -271,7 +272,7 @@ async def generate_research_plan_content(application: GrantApplication) -> list[
         max_tokens=RESEARCH_PLAN_MAX_TOKENS,
     )
 
-    logger.debug("Retrieved documents", application_id=application.id, documents_count=len(retrieval_results))
+    logger.debug("Retrieved documents", application_id=application.id, documents_count=len(retrieval_results), trace_id=trace_id)
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 

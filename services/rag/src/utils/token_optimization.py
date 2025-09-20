@@ -53,7 +53,7 @@ class SentenceInfo(TypedDict):
 
 
 async def smart_parse_documents_with_batched_tokens(
-    sentence_infos: list[SentenceInfo], max_tokens: int
+    sentence_infos: list[SentenceInfo], max_tokens: int, trace_id: str
 ) -> tuple[list[str], int]:
     if not sentence_infos:
         return [], 0
@@ -85,6 +85,7 @@ async def smart_parse_documents_with_batched_tokens(
         len([s for s, t in zip(sentences, token_counts, strict=False) if total_tokens >= t]),
         total_tokens,
         len(final_docs),
+        trace_id=trace_id,
     )
 
     return final_docs, total_tokens

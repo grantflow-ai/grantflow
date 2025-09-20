@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Final, cast
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
 from packages.shared_utils.src.sync import batched_gather
@@ -62,6 +62,12 @@ async def handle_generate_sections_stage(
     trace_id: str,
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
+
+    await job_manager.add_notification(
+        event=NotificationEvents.GENERATING_SECTION_TEXTS,
+        message="Generating application sections",
+        notification_type="info",
+    )
 
     # Fetch the grant template with its sections
     if not grant_application.grant_template:
@@ -156,6 +162,15 @@ async def handle_generate_sections_stage(
     # Convert dict to list of SectionText
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
 
+    await job_manager.add_notification(
+        event=NotificationEvents.SECTION_TEXTS_GENERATED,
+        message=f"Generated {len(section_text_list)} sections",
+        notification_type="success",
+        data={
+            "sections_generated": len(section_text_list),
+        },
+    )
+
     return GenerateSectionsStageDTO(
         section_texts=section_text_list,
         work_plan_section=work_plan_section,
@@ -173,7 +188,8 @@ async def handle_extract_relationships_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.EXTRACTING_RELATIONSHIPS,
-        message="Extracting relationships between research objectives and tasks...",
+        message="Analyzing research dependencies",
+        notification_type="info",
     )
 
     relationships = await handle_extract_relationships(
@@ -202,7 +218,8 @@ async def handle_enrich_objectives_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.ENRICHING_OBJECTIVES,
-        message="Enriching research objectives with additional context...",
+        message="Enhancing research objectives",
+        notification_type="info",
     )
 
     enrichment_responses = await handle_batch_enrich_objectives(
@@ -215,10 +232,11 @@ async def handle_enrich_objectives_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.OBJECTIVES_ENRICHED,
-        message="Objectives enriched successfully",
+        message="Research objectives enhanced",
+        notification_type="success",
         data={
-            "objective_count": len(grant_application.research_objectives or []),
-            "total_tasks": sum(
+            "objectives": len(grant_application.research_objectives or []),
+            "tasks": sum(
                 len(obj.get("research_tasks", [])) for obj in (grant_application.research_objectives or [])
             ),
         },
@@ -243,7 +261,8 @@ async def handle_enrich_terminology_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
-        message="Enhancing objectives with Wikidata scientific context...",
+        message="Adding scientific terminology",
+        notification_type="info",
     )
 
     # Enhance each objective with Wikidata scientific context
@@ -257,9 +276,10 @@ async def handle_enrich_terminology_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
-        message="Wikidata enhancement completed",
+        message="Scientific context added",
+        notification_type="success",
         data={
-            "enrichments_count": len(wikidata_enrichments),
+            "terms_added": len(wikidata_enrichments),
         },
     )
 
@@ -329,7 +349,8 @@ async def handle_generate_research_plan_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.GENERATING_RESEARCH_PLAN,
-        message="Generating work plan text for research objectives and tasks...",
+        message="Writing research plan",
+        notification_type="info",
     )
 
     total_objectives = len(research_objectives)
@@ -342,7 +363,8 @@ async def handle_generate_research_plan_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.GENERATING_OBJECTIVE,
-        message=f"Generating text for all {total_objectives} objectives in parallel...",
+        message=f"Generating {total_objectives} research objectives",
+        notification_type="info",
     )
 
     objective_results = await gather(
@@ -367,22 +389,24 @@ async def handle_generate_research_plan_stage(
 
         await job_manager.add_notification(
             event=NotificationEvents.OBJECTIVE_COMPLETED,
-            message=f"Completed Objective {objective['number']}",
+            message=f"Objective {objective['number']}/{total_objectives} complete",
+            notification_type="info",
             data={
-                "objective_number": objective["number"],
-                "objective_title": objective["title"],
-                "tasks_completed": len(task_results),
-                "progress": f"{objective['number']}/{total_objectives}",
+                "number": objective["number"],
+                "title": objective["title"][:50],
+                "tasks": len(task_results),
+                "progress": int(float(objective['number']) / total_objectives * 100),
             },
         )
 
     await job_manager.add_notification(
         event=NotificationEvents.RESEARCH_PLAN_COMPLETED,
-        message="Work plan generation completed",  # rename workplan throughout to research plan
+        message="Research plan complete",
+        notification_type="success",
         data={
-            "objectives_count": total_objectives,
-            "total_tasks": total_tasks,
-            "word_count": len(work_plan_text.split()),
+            "objectives": total_objectives,
+            "tasks": total_tasks,
+            "words": len(work_plan_text.split()),
         },
     )
 
@@ -436,122 +460,188 @@ async def grant_application_text_generation_pipeline_handler(
 
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
-        message="Starting grant application text generation pipeline...",
+        message="Starting application generation",
+        notification_type="info",
     )
 
-    grant_template: GrantTemplate | None = None
+    try:
+        grant_template: GrantTemplate | None = None
 
-    async with session_maker() as session:
-        await session.refresh(grant_application)
+        async with session_maker() as session:
+            await session.refresh(grant_application)
 
-        grant_template = grant_application.grant_template
+            grant_template = grant_application.grant_template
 
-    if grant_template is None:
-        raise ValidationError("Grant template is unexpectedly None")
+        if grant_template is None:
+            raise ValidationError("Grant template is unexpectedly None")
 
-    if not grant_template.cfp_analysis:
-        raise ValidationError("CFP analysis is missing from grant template")
+        if not grant_template.cfp_analysis:
+            raise ValidationError("CFP analysis is missing from grant template")
 
-    await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
+        await verify_rag_sources_indexed(
+            parent_id=application_id,
+            session_maker=session_maker,
+            entity_type=GrantApplication,
+            trace_id=trace_id,
+        )
 
-    # Match/case routing based on stage
-    match generation_stage:
-        case GrantApplicationStageEnum.GENERATE_SECTIONS:
-            # First stage - create initial DTO
-            dto = await handle_generate_sections_stage(
-                grant_application=grant_application,
-                job_manager=job_manager,
-                trace_id=trace_id,
-            )
-            await job_manager.to_next_job_stage(dto)
-            return
-
-        case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
-            if not existing_job or not existing_job.checkpoint_data:
-                raise ValidationError("Missing checkpoint data for stage")
-
-            dto = await handle_extract_relationships_stage(
-                grant_application=grant_application,
-                dto=cast("GenerateSectionsStageDTO", existing_job.checkpoint_data),
-                job_manager=job_manager,
-                trace_id=trace_id,
-            )
-            await job_manager.to_next_job_stage(dto)
-            return
-
-        case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
-            if not existing_job or not existing_job.checkpoint_data:
-                raise ValidationError("Missing checkpoint data for stage")
-
-            dto = await handle_enrich_objectives_stage(
-                grant_application=grant_application,
-                dto=cast("ExtractRelationshipsStageDTO", existing_job.checkpoint_data),
-                job_manager=job_manager,
-                trace_id=trace_id,
-            )
-            await job_manager.to_next_job_stage(dto)
-            return
-
-        case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
-            if not existing_job or not existing_job.checkpoint_data:
-                raise ValidationError("Missing checkpoint data for stage")
-
-            dto = await handle_enrich_terminology_stage(
-                grant_application=grant_application,
-                dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
-                job_manager=job_manager,
-                trace_id=trace_id,
-            )
-            await job_manager.to_next_job_stage(dto)
-            return
-
-        case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
-            if not existing_job or not existing_job.checkpoint_data:
-                raise ValidationError("Missing checkpoint data for stage")
-            final_dto = await handle_generate_research_plan_stage(
-                grant_application=grant_application,
-                dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
-                job_manager=job_manager,
-                trace_id=trace_id,
-            )
-
-            # Final stage - save to database
-            # Combine section texts from DTO with research plan
-            complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
-            complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]
-
-            application_text = generate_application_text(
-                title=grant_application.title,
-                grant_sections=grant_template.grant_sections,
-                section_texts=complete_section_texts,
-            )
-
-            async with session_maker() as session, session.begin():
-                await session.execute(
-                    update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
-                )
-
-            await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
-            await job_manager.add_notification(
-                event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
-                message="Grant application text generation completed successfully.",
-            )
-
-            try:
-                await publish_email_notification(
-                    application_id=application_id,
+        # Match/case routing based on stage
+        match generation_stage:
+            case GrantApplicationStageEnum.GENERATE_SECTIONS:
+                # First stage - create initial DTO
+                dto = await handle_generate_sections_stage(
+                    grant_application=grant_application,
+                    job_manager=job_manager,
                     trace_id=trace_id,
                 )
-                logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
-            except Exception as e:
-                logger.error(
-                    "Failed to publish email notification",
-                    application_id=str(application_id),
-                    error=str(e),
+                await job_manager.to_next_job_stage(dto)
+                return
+
+            case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
+                if not existing_job or not existing_job.checkpoint_data:
+                    raise ValidationError("Missing checkpoint data for stage")
+
+                dto = await handle_extract_relationships_stage(
+                    grant_application=grant_application,
+                    dto=cast("GenerateSectionsStageDTO", existing_job.checkpoint_data),
+                    job_manager=job_manager,
+                    trace_id=trace_id,
+                )
+                await job_manager.to_next_job_stage(dto)
+                return
+
+            case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
+                if not existing_job or not existing_job.checkpoint_data:
+                    raise ValidationError("Missing checkpoint data for stage")
+
+                dto = await handle_enrich_objectives_stage(
+                    grant_application=grant_application,
+                    dto=cast("ExtractRelationshipsStageDTO", existing_job.checkpoint_data),
+                    job_manager=job_manager,
+                    trace_id=trace_id,
+                )
+                await job_manager.to_next_job_stage(dto)
+                return
+
+            case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
+                if not existing_job or not existing_job.checkpoint_data:
+                    raise ValidationError("Missing checkpoint data for stage")
+
+                dto = await handle_enrich_terminology_stage(
+                    grant_application=grant_application,
+                    dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
+                    job_manager=job_manager,
+                    trace_id=trace_id,
+                )
+                await job_manager.to_next_job_stage(dto)
+                return
+
+            case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
+                if not existing_job or not existing_job.checkpoint_data:
+                    raise ValidationError("Missing checkpoint data for stage")
+                final_dto = await handle_generate_research_plan_stage(
+                    grant_application=grant_application,
+                    dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
+                    job_manager=job_manager,
                     trace_id=trace_id,
                 )
 
-            return
+                # Final stage - save to database
+                # Combine section texts from DTO with research plan
+                complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
+                complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]
 
-        case _:
-            raise ValidationError(f"Unknown stage: {generation_stage}")
+                application_text = generate_application_text(
+                    title=grant_application.title,
+                    grant_sections=grant_template.grant_sections,
+                    section_texts=complete_section_texts,
+                )
+
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
+                    )
+
+                await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+                await job_manager.add_notification(
+                    event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
+                    message="Application ready for review",
+                    notification_type="success",
+                    data={
+                        "application_id": str(application_id),
+                        "word_count": len(application_text.split()) if application_text else 0,
+                    },
+                )
+
+                try:
+                    await publish_email_notification(
+                        application_id=application_id,
+                        trace_id=trace_id,
+                    )
+                    logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
+                except Exception as e:
+                    logger.error(
+                        "Failed to publish email notification",
+                        application_id=str(application_id),
+                        error=str(e),
+                        trace_id=trace_id,
+                    )
+
+                return
+
+            case _:
+                raise ValidationError(f"Unknown stage: {generation_stage}")
+
+    except BackendError as e:
+        logger.error(
+            "Backend error in grant application generation pipeline",
+            error=e,
+            application_id=str(application_id),
+            job_id=str(existing_job.id) if existing_job else None,
+            trace_id=trace_id,
+            stage=generation_stage,
+        )
+
+        if isinstance(e, InsufficientContextError):
+            error_message = "Insufficient research context. Please add more documents or refine objectives."
+            event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
+            error_message = "Document indexing is taking longer than expected. Please wait and try again."
+            event_type = NotificationEvents.INDEXING_TIMEOUT
+        elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
+            error_message = "Document indexing failed. Please upload new documents and try again."
+            event_type = NotificationEvents.INDEXING_FAILED
+        else:
+            error_message = "Failed to generate application. Please try again."
+            event_type = NotificationEvents.PIPELINE_ERROR
+            logger.error(
+                "Unexpected error in grant application pipeline",
+                error=e,
+                context=getattr(e, "context", None),
+                application_id=str(application_id),
+                job_id=str(existing_job.id) if existing_job else None,
+                trace_id=trace_id,
+                stage=generation_stage,
+            )
+
+        await job_manager.update_job_status(
+            status=RagGenerationStatusEnum.FAILED,
+            error_message=error_message,
+            error_details={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+        )
+        await job_manager.add_notification(
+            event=event_type,
+            message=error_message,
+            notification_type="error",
+            data={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+        )
+        logger.info(
+            "Grant application generation failed with error notification sent",
+            error_type=e.__class__.__name__,
+            event_type=event_type,
+            error_message=error_message[:200],
+            application_id=str(application_id),
+            job_id=str(existing_job.id) if existing_job else None,
+            trace_id=trace_id,
+            stage=generation_stage,
+        )
