@@ -164,6 +164,7 @@ async def handle_generate_section_text(
         minimum_percentage=MIN_WORDS_RATIO * 100,
         retrieval_context=shared_context,
         research_context=research_context,
+        trace_id=trace_id,
     )
     if validation_error:
         logger.warning(
@@ -263,6 +264,7 @@ async def handle_generate_section_text(
                 weight=0.75,
             ),
         ],
+        trace_id=trace_id,
     )
 
     logger.info(

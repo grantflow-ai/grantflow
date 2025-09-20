@@ -127,7 +127,7 @@ def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
 
 
 async def _generate_field_answer(
-    application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str
+    application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str, trace_id: str
 ) -> str:
     prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
         application_title=application.title,
@@ -158,18 +158,19 @@ async def _generate_field_answer(
     return response["answer"].strip()
 
 
-async def generate_research_deep_dive_content(application: GrantApplication) -> ResearchDeepDive:
+async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     logger.info(
         "Starting research deep dive generation",
         application_id=application.id,
         application_title=application.title,
+        trace_id=trace_id,
     )
 
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
     results = await gather(
         *[
-            _generate_field_answer(field_name=key, application=application, objectives_text=objectives_text)
+            _generate_field_answer(field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id)
             for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
         ]
     )

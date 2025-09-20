@@ -387,7 +387,7 @@ score_object_schema = {
 
 
 async def evaluate_prompt_output(
-    *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any]
+    *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any], trace_id: str
 ) -> EvaluationToolResponse:
     cached_result = _evaluation_cache.get(prompt, model_output, criteria)
     if cached_result is not None:
@@ -431,6 +431,7 @@ async def evaluate_prompt_output(
         messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
         temperature=0.2,
         top_p=0.7,
+        trace_id=trace_id,
     )
 
     _evaluation_cache.put(prompt, model_output, criteria, result)
@@ -996,6 +997,7 @@ async def with_prompt_evaluation[T, **P](
     retries: int = 4,
     increment: float = 2.5,
     criteria: list[EvaluationCriterion],
+    trace_id: str,
     **kwargs: Any,
 ) -> T:
     current_prompt = str(prompt)
@@ -1012,11 +1014,12 @@ async def with_prompt_evaluation[T, **P](
             iteration=iteration,
             max_retries=retries,
             passing_score=min_passing_score,
+            trace_id=trace_id,
         )
 
         model_output = await prompt_handler(current_prompt, **kwargs)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
-            prompt=current_prompt, model_output=cast("dict[str, Any] | str", model_output), criteria=criteria
+            prompt=current_prompt, model_output=cast("dict[str, Any] | str", model_output), criteria=criteria, trace_id=trace_id
         )
 
         failing_criteria = {
@@ -1031,6 +1034,7 @@ async def with_prompt_evaluation[T, **P](
                 prompt_identifier=prompt_identifier,
                 iteration=iteration,
                 all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                trace_id=trace_id,
             )
             return model_output
 
@@ -1040,6 +1044,7 @@ async def with_prompt_evaluation[T, **P](
             iteration=iteration,
             failing_criteria={k: v["score"] for k, v in failing_criteria.items()},
             all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+            trace_id=trace_id,
         )
 
         failures.append(failing_criteria)

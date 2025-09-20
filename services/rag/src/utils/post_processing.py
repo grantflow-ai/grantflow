@@ -71,11 +71,12 @@ async def post_process_documents(
     model: str,  # noqa: ARG001
     query: str,
     task_description: str,
+    trace_id: str,
 ) -> list[str]:
     if not documents:
         return []
 
-    logger.info("Post-processing retrieved documents", document_count=len(documents), query=query)
+    logger.info("Post-processing retrieved documents", document_count=len(documents), query=query, trace_id=trace_id)
 
     nlp = get_spacy_model()
     all_sentences: list[SentenceInfo] = []
@@ -125,7 +126,7 @@ async def post_process_documents(
 
     adjusted_max_tokens = max_tokens - await count_tokens(task_description)
     processed_docs, actual_token_count = await smart_parse_documents_with_batched_tokens(
-        sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens
+        sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens, trace_id=trace_id
     )
 
     token_count = actual_token_count
@@ -136,6 +137,7 @@ async def post_process_documents(
         processed_docs=len(processed_docs),
         token_count=token_count,
         filtered_docs=len(documents) - len(processed_docs),
+        trace_id=trace_id,
     )
 
     return processed_docs
@@ -235,9 +237,9 @@ async def apply_semantic_ranking(sentences: list[str], query: str) -> dict[str, 
     return {sentences[i]: similarities[i] for i in range(len(sentences))}
 
 
-async def parse_documents(*, sentence_infos: list[SentenceInfo], max_tokens: int, model: str) -> list[str]:
+async def parse_documents(*, sentence_infos: list[SentenceInfo], max_tokens: int, model: str, trace_id: str) -> list[str]:
     _ = model
     processed_docs, _ = await smart_parse_documents_with_batched_tokens(
-        sentence_infos=sentence_infos, max_tokens=max_tokens
+        sentence_infos=sentence_infos, max_tokens=max_tokens, trace_id=trace_id
     )
     return processed_docs

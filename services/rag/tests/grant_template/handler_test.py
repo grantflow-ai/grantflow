@@ -504,7 +504,7 @@ async def test_grant_template_generation_pipeline_full_flow(
         job = GrantTemplateGenerationJob(
             grant_template_id=grant_template_with_sources.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=4,
+            current_stage=3,  # GENERATE_METADATA is the 4th stage (index 3)
             total_stages=4,
             checkpoint_data={
                 "organization": {
@@ -519,6 +519,13 @@ async def test_grant_template_generation_pipeline_full_flow(
         )
         session.add(job)
         await session.commit()
+        job_id = job.id
+
+    # Update grant_template with the job_id in a new transaction
+    async with async_session_maker() as session, session.begin():
+        grant_template = await session.get(GrantTemplate, grant_template_with_sources.id)
+        grant_template.rag_job_id = job_id
+        await session.commit()
 
     with (
         patch(
@@ -530,7 +537,11 @@ async def test_grant_template_generation_pipeline_full_flow(
             new_callable=AsyncMock,
         ),
     ):
-        await grant_template_generation_pipeline_handler(
+        # Reload grant_template to get updated rag_job_id
+        async with async_session_maker() as session:
+            grant_template_with_sources = await session.get(GrantTemplate, grant_template_with_sources.id)
+
+        result = await grant_template_generation_pipeline_handler(
             grant_template=grant_template_with_sources,
             session_maker=async_session_maker,
             generation_stage=GrantTemplateStageEnum.GENERATE_METADATA,
@@ -538,17 +549,17 @@ async def test_grant_template_generation_pipeline_full_flow(
         )
 
     # Verify the grant template was updated with new sections
+    assert result is not None
     async with async_session_maker() as session:
         updated_template = await session.get(GrantTemplate, grant_template_with_sources.id)
         assert updated_template is not None
         assert updated_template.grant_sections is not None
-        # The template should have the sections from the pipeline, not the original fixture sections
+        # The template should have been updated with the 3 sections from the pipeline
         assert len(updated_template.grant_sections) == 3
         # Verify the sections match what we expected from the pipeline
-        section_ids = [s["id"] for s in updated_template.grant_sections if isinstance(s, dict)]
-        assert "abstract" in section_ids
-        assert "research_plan" in section_ids
-        assert "impact" in section_ids
+        section_ids = {s["id"] for s in updated_template.grant_sections if isinstance(s, dict)}
+        expected_ids = {"abstract", "research_plan", "impact"}
+        assert section_ids == expected_ids
 
 
 async def test_get_rag_sources_data(

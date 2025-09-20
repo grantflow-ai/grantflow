@@ -126,7 +126,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         notification_type: Literal["info", "error", "warning", "success"] = "info",
         data: dict[str, Any] | None = None,
     ) -> None:
-        logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
+        logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event, trace_id=self.trace_id)
 
         current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
         total_pipeline_stages = len(self.pipeline_stages)
@@ -209,12 +209,14 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
         logger.debug(
             "Getting or creating rag job job",
             template_id=str(self.parent_id),
+            trace_id=self.trace_id,
         )
 
         async with self.session_maker() as session, session.begin():
             logger.debug(
                 "Checking for existing job",
                 template_id=str(self.parent_id),
+                trace_id=self.trace_id,
             )
             try:
                 existing_job_result = await session.execute(
@@ -230,6 +232,7 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
                         template_id=str(self.parent_id),
                         job_id=str(existing_job.id),
                         job_status=existing_job.status.value,
+                        trace_id=self.trace_id,
                     )
                     self.job_id = existing_job.id
                     self.job = existing_job
@@ -248,11 +251,11 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
 
                 self.job_id = job.id
                 self.job = job
-                logger.info("Created new job for template", template_id=str(self.parent_id), job_id=str(job.id))
+                logger.info("Created new job for template", template_id=str(self.parent_id), job_id=str(job.id), trace_id=self.trace_id)
 
                 return job
             except SQLAlchemyError as e:
-                logger.error("Error inserting rag job into db", error=e)
+                logger.error("Error inserting rag job into db", error=e, trace_id=self.trace_id)
                 raise DatabaseError("Error inserting rag job into db") from e
 
 
@@ -274,6 +277,7 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
                         "Job already exists for application, returning existing job",
                         application_id=str(self.parent_id),
                         job_id=str(existing_job.id),
+                        trace_id=self.trace_id,
                     )
                     self.job_id = existing_job.id
                     self.job = existing_job
@@ -292,11 +296,11 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
 
                 self.job_id = job.id
                 self.job = job
-                logger.info("Created new job for application", application_id=str(self.parent_id), job_id=str(job.id))
+                logger.info("Created new job for application", application_id=str(self.parent_id), job_id=str(job.id), trace_id=self.trace_id)
 
                 return job
             except SQLAlchemyError as e:
-                logger.error("Error inserting rag job into db", error=e)
+                logger.error("Error inserting rag job into db", error=e, trace_id=self.trace_id)
                 raise DatabaseError("Error inserting rag job into db") from e
 
     async def to_next_job_stage(
@@ -315,6 +319,7 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
                 "Attempted to advance past final stage",
                 application_id=str(self.parent_id),
                 current_stage=current_stage,
+                trace_id=self.trace_id,
             )
             return
 
@@ -334,6 +339,7 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
             job_id=str(self.job.id),
             from_stage=current_stage,
             to_stage=next_stage,
+            trace_id=self.trace_id,
         )
 
         # Publish next stage to PubSub

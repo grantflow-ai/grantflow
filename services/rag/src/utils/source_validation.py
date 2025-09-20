@@ -166,6 +166,7 @@ async def handle_source_validation(
     task_description: str,
     minimum_percentage: float = 50.0,
     max_length: int,
+    trace_id: str,
     **sources: Any,
 ) -> str | None:
     logger.debug(
@@ -173,6 +174,7 @@ async def handle_source_validation(
         task_description_length=len(task_description),
         sources_length=len(sources),
         minimum_percentage=minimum_percentage,
+        trace_id=trace_id,
     )
 
     prompt = VALIDATE_SOURCES_USER_PROMPT.to_string(
@@ -189,6 +191,7 @@ async def handle_source_validation(
         validator=validate_source_validation_response,
         system_prompt=VALIDATE_SOURCES_SYSTEM_PROMPT,
         model=ANTHROPIC_SONNET_MODEL,
+        trace_id=trace_id,
     )
 
     if result["percentage_available"] < minimum_percentage:
