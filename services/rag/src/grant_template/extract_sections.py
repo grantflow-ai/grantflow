@@ -8,9 +8,9 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
-from rag.src.grant_template.dto import CFPContentSection, OrganizationNamespace
 from sentence_transformers import SentenceTransformer, util
 
+from services.rag.src.grant_template.dto import CFPContentSection, OrganizationNamespace
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
@@ -653,7 +653,7 @@ async def handle_extract_sections(
     organization_guidelines = (
         ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results=await retrieve_documents(
-                organization_id=str(organization.id),
+                organization_id=str(organization["organization_id"]),
                 task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
                 search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
                 model=ANTHROPIC_SONNET_MODEL,

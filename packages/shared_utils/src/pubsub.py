@@ -10,7 +10,7 @@ from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 from packages.db.src.enums import (
     SourceIndexingStatusEnum,
 )
-from rag.src.enums import GrantTemplateStageEnum, GrantApplicationStageEnum
+from services.rag.src.enums import GrantTemplateStageEnum, GrantApplicationStageEnum
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,

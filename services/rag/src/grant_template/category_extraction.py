@@ -1,50 +1,10 @@
 import re
 from collections import defaultdict
-from typing import Any, Final, Literal, NotRequired, TypedDict
+from typing import Any, Final, Literal
 
+from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.shared_utils.src.nlp import get_spacy_model
 from packages.shared_utils.src.sync import run_sync
-
-
-class CFPAnalysisRequirementWithQuote(TypedDict):
-    requirement: str
-    quote_from_source: str
-    category: str
-
-
-class CFPSectionRequirement(TypedDict):
-    section_name: str
-    definition: str
-    requirements: list[CFPAnalysisRequirementWithQuote]
-    dependencies: list[str]
-
-
-class CFPSectionLengthConstraint(TypedDict):
-    section_name: str
-    measurement_type: str
-    limit_description: str
-    quote_from_source: str
-    exclusions: list[str]
-
-
-class CFPAnalysisEvaluationCriterion(TypedDict):
-    criterion_name: str
-    description: str
-    weight_percentage: NotRequired[int | None]
-    quote_from_source: str
-
-
-class CategorizationAnalysisResult(TypedDict):
-    money: list[str]
-    date_time: list[str]
-    writing_related: list[str]
-    other_numbers: list[str]
-    recommendations: list[str]
-    orders: list[str]
-    positive_instructions: list[str]
-    negative_instructions: list[str]
-    evaluation_criteria: list[str]
-
 
 CategoryKey = Literal[
     "money",
