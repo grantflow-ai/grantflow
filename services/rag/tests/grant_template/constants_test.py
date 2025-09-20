@@ -22,7 +22,7 @@ class TestGrantTemplatePipelineStages:
             GrantTemplateStageEnum.EXTRACT_SECTIONS,
             GrantTemplateStageEnum.GENERATE_METADATA,
         )
-        assert GRANT_TEMPLATE_PIPELINE_STAGES == expected_stages
+        assert expected_stages == GRANT_TEMPLATE_PIPELINE_STAGES
 
     def test_pipeline_stages_order(self) -> None:
         """Test that pipeline stages are in the correct execution order."""
@@ -51,7 +51,7 @@ class TestTotalPipelineStages:
 
     def test_total_pipeline_stages_correct_count(self) -> None:
         """Test that TOTAL_PIPELINE_STAGES matches the length of the stages tuple."""
-        assert TOTAL_PIPELINE_STAGES == len(GRANT_TEMPLATE_PIPELINE_STAGES)
+        assert len(GRANT_TEMPLATE_PIPELINE_STAGES) == TOTAL_PIPELINE_STAGES
 
     def test_total_pipeline_stages_is_integer(self) -> None:
         """Test that TOTAL_PIPELINE_STAGES is an integer."""
@@ -113,8 +113,10 @@ class TestPipelineStageIntegrity:
         # After importing, values should remain the same
         from services.rag.src.grant_template.constants import (
             GRANT_TEMPLATE_PIPELINE_STAGES as IMPORTED_STAGES,
+        )
+        from services.rag.src.grant_template.constants import (
             TOTAL_PIPELINE_STAGES as IMPORTED_TOTAL,
         )
 
         assert IMPORTED_STAGES is original_stages
-        assert IMPORTED_TOTAL == original_total
+        assert original_total == IMPORTED_TOTAL

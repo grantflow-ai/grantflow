@@ -43,7 +43,7 @@ def handle_pubsub_message(event: PubSubEvent) -> EmailNotificationRequest:
     except (KeyError, ValueError) as e:
         logger.error(
             "Invalid application_id format",
-            application_id_str=application_id_str,
+            application_id=attributes.get("application_id", "missing"),
             error=str(e),
             message_id=event.message.message_id,
         )

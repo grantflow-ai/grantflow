@@ -33,9 +33,8 @@ from services.rag.src.grant_template.handler import (
 from services.rag.src.utils.job_manager import JobManager
 
 if TYPE_CHECKING:
+    from packages.db.src.json_objects import CFPContentSection as Content
     from packages.db.src.json_objects import GrantLongFormSection
-
-    from src.json_objects import CFPContentSection as Content
 
 
 @pytest.mark.asyncio

@@ -43,20 +43,14 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def handle_grant_application_pipeline(
-    *,
-    generation_stage: GrantApplicationStageEnum,
+async def _initialize_pipeline(
     grant_application: GrantApplication,
+    generation_stage: GrantApplicationStageEnum,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
-) -> None:
+) -> tuple[GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO], Any]:
+    """Initialize the pipeline job manager and verify prerequisites."""
     application_id = grant_application.id
-    logger.info(
-        "Starting grant application text generation pipeline",
-        application_id=application_id,
-        stage=generation_stage,
-        trace_id=trace_id,
-    )
 
     job_manager = GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO](
         current_stage=generation_stage,
@@ -101,25 +95,181 @@ async def handle_grant_application_pipeline(
             trace_id=trace_id,
         )
 
-    try:
-        grant_template: GrantTemplate | None = None
+    return job_manager, existing_job
 
-        async with session_maker() as session:
-            await session.refresh(grant_application)
 
-            grant_template = grant_application.grant_template
+async def _verify_prerequisites(
+    grant_application: GrantApplication,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> GrantTemplate:
+    """Verify that prerequisites for pipeline execution are met."""
+    application_id = grant_application.id
 
-        if grant_template is None:
-            raise ValidationError("Grant template is unexpectedly None")
+    async with session_maker() as session:
+        await session.refresh(grant_application)
+        grant_template = grant_application.grant_template
 
-        if not grant_template.cfp_analysis:
-            raise ValidationError("CFP analysis is missing from grant template")
+    if grant_template is None:
+        raise ValidationError("Grant template is unexpectedly None")
 
-        await verify_rag_sources_indexed(
-            parent_id=application_id,
-            session_maker=session_maker,
-            entity_type=GrantApplication,
+    if not grant_template.cfp_analysis:
+        raise ValidationError("CFP analysis is missing from grant template")
+
+    await verify_rag_sources_indexed(
+        parent_id=application_id,
+        session_maker=session_maker,
+        entity_type=GrantApplication,
+        trace_id=trace_id,
+    )
+
+    return grant_template
+
+
+def _get_error_details(error: BackendError) -> tuple[str, str]:
+    """Map backend errors to user-friendly messages and notification events."""
+    if isinstance(error, InsufficientContextError):
+        return (
+            "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives.",
+            NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+        )
+    if isinstance(error, ValidationError) and "indexing timeout" in str(error):
+        return (
+            "Document indexing is taking longer than expected. Please wait a few minutes and try again.",
+            NotificationEvents.INDEXING_TIMEOUT
+        )
+    if isinstance(error, ValidationError) and "indexing failed" in str(error).lower():
+        return (
+            "Document indexing failed. Please upload new documents and try again.",
+            NotificationEvents.INDEXING_FAILED
+        )
+    if isinstance(error, EvaluationError):
+        return (
+            "Quality evaluation failed during text generation. Please try again or contact support.",
+            NotificationEvents.PIPELINE_ERROR
+        )
+    if isinstance(error, DatabaseError):
+        return (
+            "Database error occurred while saving your application. Please try again.",
+            NotificationEvents.PIPELINE_ERROR
+        )
+    if isinstance(error, RagError):
+        return (
+            "Document processing error occurred. Please try again or upload different documents.",
+            NotificationEvents.PIPELINE_ERROR
+        )
+    if isinstance(error, DeserializationError):
+        return (
+            "Data processing error occurred. Please try again.",
+            NotificationEvents.PIPELINE_ERROR
+        )
+    return (
+        "An unexpected error occurred while generating your application. Please try again or contact support if this persists.",
+        NotificationEvents.PIPELINE_ERROR
+    )
+
+
+async def _handle_pipeline_error(
+    error: BackendError,
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    application_id: Any,
+    existing_job: Any,
+    generation_stage: GrantApplicationStageEnum,
+    trace_id: str,
+) -> None:
+    """Handle pipeline errors with proper logging and notifications."""
+    job_id = existing_job.id if existing_job else None
+    logger.error(
+        "Backend error in grant application generation pipeline",
+        error=error,
+        error_type=type(error).__name__,
+        error_message=str(error),
+        application_id=str(application_id),
+        job_id=str(job_id) if job_id else None,
+        trace_id=trace_id,
+        stage=generation_stage,
+    )
+
+    error_message, event_type = _get_error_details(error)
+
+    if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError)):
+        logger.error(
+            "Unexpected error in grant application pipeline",
+            error=error,
+            context=getattr(error, "context", None),
+            application_id=str(application_id),
+            job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
+            stage=generation_stage,
+        )
+
+    try:
+        await job_manager.update_job_status(
+            status=RagGenerationStatusEnum.FAILED,
+            error_message=error_message,
+            error_details={"error_type": error.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+        )
+    except Exception as job_error:
+        logger.error(
+            "Failed to update job status to failed",
+            error=str(job_error),
+            original_error=str(error),
+            application_id=str(application_id),
+            job_id=str(job_id) if job_id else None,
+            trace_id=trace_id,
+        )
+
+    try:
+        await job_manager.add_notification(
+            event=event_type,
+            message=error_message,
+            notification_type="error",
+            data={"error_type": error.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+        )
+    except Exception as notification_error:
+        logger.error(
+            "Failed to add error notification",
+            error=str(notification_error),
+            original_error=str(error),
+            application_id=str(application_id),
+            job_id=str(job_id) if job_id else None,
+            trace_id=trace_id,
+        )
+
+    logger.info(
+        "Grant application generation failed with error notification sent",
+        error_type=error.__class__.__name__,
+        event_type=event_type,
+        error_message=error_message[:200],
+        application_id=str(application_id),
+        job_id=str(job_id) if job_id else None,
+        trace_id=trace_id,
+        stage=generation_stage,
+    )
+
+
+async def handle_grant_application_pipeline(
+    *,
+    generation_stage: GrantApplicationStageEnum,
+    grant_application: GrantApplication,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    application_id = grant_application.id
+    logger.info(
+        "Starting grant application text generation pipeline",
+        application_id=application_id,
+        stage=generation_stage,
+        trace_id=trace_id,
+    )
+
+    try:
+        job_manager, existing_job = await _initialize_pipeline(
+            grant_application, generation_stage, session_maker, trace_id
+        )
+
+        grant_template = await _verify_prerequisites(
+            grant_application, session_maker, trace_id
         )
 
         # Match/case routing based on stage
@@ -326,93 +476,6 @@ async def handle_grant_application_pipeline(
                 raise ValidationError(f"Unknown stage: {generation_stage}")
 
     except BackendError as e:
-        application_id = grant_application.id
-        job_id = existing_job.id if existing_job else None
-        logger.error(
-            "Backend error in grant application generation pipeline",
-            error=e,
-            error_type=type(e).__name__,
-            error_message=str(e),
-            application_id=str(application_id),
-            job_id=str(job_id) if job_id else None,
-            trace_id=trace_id,
-            stage=generation_stage,
+        await _handle_pipeline_error(
+            e, job_manager, application_id, existing_job, generation_stage, trace_id
         )
-
-        if isinstance(e, InsufficientContextError):
-            error_message = "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives."
-            event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
-        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
-            error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
-            event_type = NotificationEvents.INDEXING_TIMEOUT
-        elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
-            error_message = "Document indexing failed. Please upload new documents and try again."
-            event_type = NotificationEvents.INDEXING_FAILED
-        elif isinstance(e, EvaluationError):
-            error_message = "Quality evaluation failed during text generation. Please try again or contact support."
-            event_type = NotificationEvents.PIPELINE_ERROR
-        elif isinstance(e, DatabaseError):
-            error_message = "Database error occurred while saving your application. Please try again."
-            event_type = NotificationEvents.PIPELINE_ERROR
-        elif isinstance(e, RagError):
-            error_message = "Document processing error occurred. Please try again or upload different documents."
-            event_type = NotificationEvents.PIPELINE_ERROR
-        elif isinstance(e, DeserializationError):
-            error_message = "Data processing error occurred. Please try again."
-            event_type = NotificationEvents.PIPELINE_ERROR
-        else:
-            error_message = "An unexpected error occurred while generating your application. Please try again or contact support if this persists."
-            event_type = NotificationEvents.PIPELINE_ERROR
-            logger.error(
-                "Unexpected error in grant application pipeline",
-                error=e,
-                context=getattr(e, "context", None),
-                application_id=str(application_id),
-                job_id=str(job_id) if job_id else None,
-                trace_id=trace_id,
-                stage=generation_stage,
-            )
-
-        try:
-            await job_manager.update_job_status(
-                status=RagGenerationStatusEnum.FAILED,
-                error_message=error_message,
-                error_details={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
-            )
-        except Exception as job_error:
-            logger.error(
-                "Failed to update job status to failed",
-                error=str(job_error),
-                original_error=str(e),
-                application_id=str(application_id),
-                job_id=str(job_id) if job_id else None,
-                trace_id=trace_id,
-            )
-
-        try:
-            await job_manager.add_notification(
-                event=event_type,
-                message=error_message,
-                notification_type="error",
-                data={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
-            )
-        except Exception as notification_error:
-            logger.error(
-                "Failed to add error notification",
-                error=str(notification_error),
-                original_error=str(e),
-                application_id=str(application_id),
-                job_id=str(job_id) if job_id else None,
-                trace_id=trace_id,
-            )
-        logger.info(
-            "Grant application generation failed with error notification sent",
-            error_type=e.__class__.__name__,
-            event_type=event_type,
-            error_message=error_message[:200],
-            application_id=str(application_id),
-            job_id=str(job_id) if job_id else None,
-            trace_id=trace_id,
-            stage=generation_stage,
-        )
-        return

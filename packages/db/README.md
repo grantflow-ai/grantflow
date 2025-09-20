@@ -78,8 +78,8 @@ task db:migrate
 The database package is designed to be imported by other services:
 
 ```python
-from db.tables import Project, GrantApplication
-from db.connection import get_async_session_maker
+from packages.db.tables import Project, GrantApplication
+from packages.db.connection import get_async_session_maker
 from sqlalchemy import select
 
 async def get_project(project_id: UUID) -> Project:
