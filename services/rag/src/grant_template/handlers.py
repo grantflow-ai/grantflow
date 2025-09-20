@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 async def handle_cfp_extraction_stage(
     *,
     grant_template: GrantTemplate,
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    job_manager: GrantTemplateJobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> ExtractCFPContentStageDTO:
@@ -129,7 +129,7 @@ async def handle_cfp_extraction_stage(
 async def handle_cfp_analysis_stage(
     *,
     extracted_cfp: ExtractCFPContentStageDTO,
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    job_manager: GrantTemplateJobManager[StageDTO],
     trace_id: str,
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -175,7 +175,7 @@ async def handle_cfp_analysis_stage(
 async def handle_section_extraction_stage(
     *,
     analysis_result: AnalyzeCFPContentStageDTO,
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    job_manager: GrantTemplateJobManager[StageDTO],
     trace_id: str,
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -219,7 +219,7 @@ async def handle_section_extraction_stage(
 async def handle_generate_metadata_stage(
     *,
     section_extraction_result: ExtractionSectionsStageDTO,
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    job_manager: GrantTemplateJobManager[StageDTO],
     trace_id: str,
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
@@ -290,7 +290,7 @@ async def handle_save_grant_template(
     extracted_cfp: ExtractionSectionsStageDTO,
     grant_sections: list[GrantElement | GrantLongFormSection],
     grant_template: GrantTemplate,
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    job_manager: GrantTemplateJobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:

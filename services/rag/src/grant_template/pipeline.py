@@ -37,7 +37,7 @@ async def handle_grant_template_pipeline(
     generation_stage: GrantTemplateStageEnum,
     trace_id: str,
 ) -> GrantTemplate | None:
-    job_manager = GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO](
+    job_manager = GrantTemplateJobManager[StageDTO](
         session_maker=session_maker,
         grant_application_id=grant_template.grant_application_id,
         job_id=grant_template.rag_job_id,

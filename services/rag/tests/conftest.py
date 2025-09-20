@@ -176,15 +176,16 @@ def baseline_performance_targets() -> dict[str, float]:
 
 
 @pytest.fixture
-def mock_job_manager() -> Any:
-    from services.rag.src.utils.job_manager import JobManager
-
-    async def create_mock_job_manager(session_maker: Any, application_id: UUID) -> JobManager:
-        job_manager = JobManager(session_maker)
-        await job_manager.create_grant_application_job(grant_application_id=application_id, total_stages=5)
-        return job_manager
-
-    return create_mock_job_manager
+def mock_job_manager() -> AsyncMock:
+    manager = AsyncMock()
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    manager.to_next_job_stage = AsyncMock(return_value=None)
+    manager.get_or_create_job = AsyncMock()
+    manager.job = None
+    manager.job_id = None
+    return manager
 
 
 @pytest.fixture

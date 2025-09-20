@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 async def handle_generate_sections_stage(
     *,
     grant_application: "GrantApplication",
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -175,7 +175,7 @@ async def handle_extract_relationships_stage(
     *,
     grant_application: "GrantApplication",
     dto: GenerateSectionsStageDTO,
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
 ) -> ExtractRelationshipsStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -214,7 +214,7 @@ async def handle_enrich_objectives_stage(
     *,
     grant_application: "GrantApplication",
     dto: ExtractRelationshipsStageDTO,
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
 ) -> EnrichObjectivesStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -255,7 +255,7 @@ async def handle_enrich_terminology_stage(
     *,
     grant_application: "GrantApplication",  # noqa: ARG001
     dto: EnrichObjectivesStageDTO,
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
 ) -> EnrichTerminologyStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -306,7 +306,7 @@ async def handle_generate_research_plan_stage(
     *,
     grant_application: "GrantApplication",
     dto: EnrichTerminologyStageDTO,
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
 ) -> GenerateResearchPlanStageDTO:
     await job_manager.ensure_not_cancelled()

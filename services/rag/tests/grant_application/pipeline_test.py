@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -19,6 +19,14 @@ from services.rag.src.grant_application.dto import (
     SectionText,
 )
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+
+@pytest.fixture(autouse=True)
+def mock_pubsub():
+    """Mock all PubSub operations to prevent actual GCP calls."""
+    with patch('packages.shared_utils.src.pubsub.publish_notification'), \
+         patch('packages.shared_utils.src.pubsub.publish_rag_task'), \
+         patch('packages.shared_utils.src.pubsub.publish_email_notification'):
+        yield
 
 
 @pytest.fixture
@@ -75,9 +83,7 @@ def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
 
 @patch("services.rag.src.grant_application.pipeline.handle_generate_sections_stage")
 @patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed")
-@patch("services.rag.src.grant_application.pipeline.publish_email_notification")
 async def test_generate_sections_stage(
-    mock_publish_email: AsyncMock,
     mock_verify_sources: AsyncMock,
     mock_handle_generate_sections: AsyncMock,
     grant_application: GrantApplication,
@@ -89,7 +95,6 @@ async def test_generate_sections_stage(
     # Setup mocks
     mock_verify_sources.return_value = None
     mock_handle_generate_sections.return_value = sample_generate_sections_dto
-    mock_publish_email.return_value = None
 
     # Execute
     result = await handle_grant_application_pipeline(
@@ -245,8 +250,12 @@ async def test_missing_grant_template_validation(
     # Setup mocks
     mock_verify_sources.return_value = None
 
-    # Set grant template to None
-    grant_application.grant_template = None
+    # Actually remove the grant_template from the database
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        if app:
+            app.grant_template_id = None
+            await session.commit()
 
     # Execute and verify validation error
     with pytest.raises(ValidationError, match="Grant template is unexpectedly None"):
@@ -262,6 +271,7 @@ async def test_missing_grant_template_validation(
 async def test_missing_cfp_analysis_validation(
     mock_verify_sources: AsyncMock,
     grant_application: GrantApplication,
+    grant_template: Any,
     sample_rag_sources: Any,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -269,8 +279,13 @@ async def test_missing_cfp_analysis_validation(
     # Setup mocks
     mock_verify_sources.return_value = None
 
-    # Remove CFP analysis
-    grant_application.grant_template.cfp_analysis = None
+    # Actually remove CFP analysis from the database
+    from packages.db.src.tables import GrantTemplate
+    async with async_session_maker() as session:
+        template = await session.get(GrantTemplate, grant_template.id)
+        if template:
+            template.cfp_analysis = None
+            await session.commit()
 
     # Execute and verify validation error
     with pytest.raises(ValidationError, match="CFP analysis is missing from grant template"):
