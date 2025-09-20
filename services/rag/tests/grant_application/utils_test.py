@@ -1,12 +1,9 @@
 import pytest
 from packages.db.src.json_objects import GrantLongFormSection
-from packages.shared_utils.src.exceptions import ValidationError
 from testing.factories import GrantSectionFactory
 
 from services.rag.src.grant_application.utils import (
     TreeNode,
-    create_dependencies_text,
-    create_generation_groups,
     create_text_recursively,
     generate_application_text,
     map_to_tree,
@@ -21,61 +18,7 @@ SAMPLE_TEXTS = {
 }
 
 
-def test_create_dependencies_text_empty() -> None:
-    result = create_dependencies_text(depends_on=[], texts={})
-    assert result == {}
-
-
-def test_create_dependencies_text_with_dependencies() -> None:
-    result = create_dependencies_text(
-        depends_on=["research_strategy"],
-        texts=SAMPLE_TEXTS,
-    )
-    assert result == {"research_strategy": "This is the research strategy."}
-
-
-@pytest.mark.parametrize(
-    ("sections", "expected_groups"),
-    [
-        (
-            [
-                {"id": "a", "depends_on": []},
-                {"id": "b", "depends_on": ["a"]},
-            ],
-            [["a"], ["b"]],
-        ),
-        (
-            [
-                {"id": "a", "depends_on": []},
-                {"id": "b", "depends_on": []},
-                {"id": "c", "depends_on": ["a", "b"]},
-            ],
-            [["a", "b"], ["c"]],
-        ),
-    ],
-)
-def test_create_generation_groups(sections: list[GrantLongFormSection], expected_groups: list[list[str]]) -> None:
-    groups = create_generation_groups(sections)
-    assert len(groups) == len(expected_groups)
-    assert all(len(group) == len(expected) for group, expected in zip(groups, expected_groups, strict=False))
-    assert all(
-        section["id"] in expected for group, expected in zip(groups, expected_groups, strict=False) for section in group
-    )
-
-
-def test_create_generation_groups_circular_dependency() -> None:
-    sections = [
-        {"id": "a", "depends_on": ["b"]},
-        {"id": "b", "depends_on": ["a"]},
-    ]
-    with pytest.raises(ValidationError):
-        create_generation_groups(sections)  # type: ignore[arg-type]
-
-
-def test_create_generation_groups_missing_dependency() -> None:
-    sections = [{"id": "a", "depends_on": ["missing"]}]
-    with pytest.raises(ValidationError):
-        create_generation_groups(sections)  # type: ignore[arg-type]
+# Tests for the simplified utils module focused on tree operations and text generation
 
 
 @pytest.fixture
