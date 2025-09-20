@@ -3,7 +3,7 @@ from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
@@ -11,6 +11,7 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
+from rag.src.enums import GrantTemplateStageEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -20,14 +21,14 @@ from testing.factories import (
     TextVectorFactory,
 )
 
-from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
-from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
 from services.rag.src.grant_template.extract_cfp_data import (
     RagSourceData,
     extract_cfp_data_multi_source,
     format_rag_sources_for_prompt,
     get_rag_sources_data,
 )
+from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
+from services.rag.src.grant_template.generate_metadata import SectionMetadata
 from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,

@@ -1,11 +1,11 @@
 from functools import partial
 from typing import Final, NotRequired, TypedDict
 
-from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
+from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
+from services.rag.src.grant_template.handler import OrganizationNamespace
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -372,11 +372,11 @@ evaluation_criteria = [
 ]
 
 
-async def handle_generate_grant_template(
+async def handle_generate_grant_template_metadata(
     *,
     cfp_content: str,
     cfp_subject: str,
-    organization: GrantingInstitution | None,
+    organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
@@ -396,11 +396,11 @@ async def handle_generate_grant_template(
     organization_guidelines = (
         ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results=await retrieve_documents(
-                organization_id=str(organization.id),
+                organization_id=str(organization["organization_id"]),
                 task_description=str(prompt),
             ),
-            organization_full_name=organization.full_name,
-            organization_abbreviation=organization.abbreviation,
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
         )
         if organization
         else ""

@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
-from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -9,6 +8,8 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
+from rag.src.grant_template.dto import CFPContentSection
+from rag.src.grant_template.handler import OrganizationNamespace
 from sentence_transformers import SentenceTransformer, util
 
 from services.rag.src.grant_template.utils import detect_cycle
@@ -17,8 +18,6 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
-from services.rag.src.utils.text import concat_extracted_cfp_content
-from src.json_objects import CFPContentSection as Content
 
 logger = get_logger(__name__)
 ref = Ref[SentenceTransformer]()
@@ -643,12 +642,12 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: list[Content], cfp_subject: str, organization: GrantingInstitution | None = None
+    cfp_content: list[CFPContentSection], cfp_subject: str, organization: OrganizationNamespace | None = None
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_subject=cfp_subject,
-        cfp_content=concat_extracted_cfp_content(content_list),
+        cfp_content="\n".join(content_list),
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
@@ -660,8 +659,8 @@ async def handle_extract_sections(
                 search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
                 model=ANTHROPIC_SONNET_MODEL,
             ),
-            organization_full_name=organization.full_name,
-            organization_abbreviation=organization.abbreviation,
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
         )
         if organization
         else ""

@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from src.enums import GrantTemplateStageEnum
+from rag.src.enums import GrantTemplateStageEnum
 
 
 class TableContext(TypedDict):
@@ -64,16 +64,3 @@ class GrantTemplateRagJobCheckpoint(TypedDict, total=False):
     submission_date: str | None
     title: str
     subtitles: list[str]
-
-
-class CFPContentSection(TypedDict):
-    title: str
-    subtitles: list[str]
-
-
-class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    cfp_subject: str
-    submission_date: str | None
-    content: list[CFPContentSection]
-    error: NotRequired[str | None]
