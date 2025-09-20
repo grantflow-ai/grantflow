@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date
+from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -8,7 +9,7 @@ from packages.db.src.tables import GrantTemplate, GrantTemplateSource
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError
 from sqlalchemy.exc import SQLAlchemyError
-from testing.factories import GrantingInstitutionFactory, GrantTemplateFactory, RagSourceFactory
+from testing.factories import RagSourceFactory
 
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
@@ -25,7 +26,7 @@ from services.rag.src.grant_template.pipeline_dto import (
 
 
 @pytest.fixture
-def mock_job_manager():
+def mock_job_manager() -> AsyncMock:
     """Mock job manager with all required methods."""
     manager = AsyncMock()
     manager.job_id = uuid4()
@@ -39,7 +40,7 @@ def mock_job_manager():
 
 
 @pytest.fixture
-async def sample_rag_sources(async_session_maker, grant_template):
+async def sample_rag_sources(async_session_maker: Any, grant_template: Any) -> list[Any]:
     """Create real RAG sources in the database."""
     async with async_session_maker() as session:
         # Create RAG sources
@@ -67,7 +68,7 @@ async def sample_rag_sources(async_session_maker, grant_template):
 
 
 @pytest.fixture
-def sample_extract_cfp_dto():
+def sample_extract_cfp_dto() -> Any:
     """Sample extracted CFP data."""
     org_id = uuid4()
     return ExtractCFPContentStageDTO(
@@ -89,7 +90,7 @@ def sample_extract_cfp_dto():
 
 
 @pytest.fixture
-def sample_analyze_cfp_dto(sample_extract_cfp_dto):
+def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
     """Sample analyzed CFP data."""
     return AnalyzeCFPContentStageDTO(
         **sample_extract_cfp_dto,
@@ -124,7 +125,7 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto):
 
 
 @pytest.fixture
-def sample_sections_dto(sample_analyze_cfp_dto):
+def sample_sections_dto(sample_analyze_cfp_dto: Any) -> Any:
     """Sample sections extraction data."""
     return ExtractionSectionsStageDTO(
         **sample_analyze_cfp_dto,
@@ -134,6 +135,8 @@ def sample_sections_dto(sample_analyze_cfp_dto):
                 "id": "project_summary",
                 "parent_id": None,
                 "is_detailed_research_plan": False,
+                "is_title_only": False,
+                "is_clinical_trial": False,
                 "is_long_form": True,
                 "order": 1,
             },
@@ -142,6 +145,8 @@ def sample_sections_dto(sample_analyze_cfp_dto):
                 "id": "research_plan",
                 "parent_id": None,
                 "is_detailed_research_plan": True,
+                "is_title_only": False,
+                "is_clinical_trial": False,
                 "is_long_form": True,
                 "order": 2,
             },
@@ -156,13 +161,13 @@ class TestCFPExtractionStage:
     @patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data")
     async def test_cfp_extraction_stage_success(
         self,
-        mock_handle_extract_cfp_data,
-        mock_verify_rag_sources,
-        mock_job_manager,
-        grant_template,
-        nih_organization,
-        sample_rag_sources,
-        async_session_maker,
+        mock_handle_extract_cfp_data: AsyncMock,
+        mock_verify_rag_sources: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        nih_organization: Any,
+        sample_rag_sources: list[Any],
+        async_session_maker: Any,
     ) -> None:
         """Test successful CFP extraction stage."""
         # Setup mocks
@@ -227,13 +232,13 @@ class TestCFPExtractionStage:
     @patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data")
     async def test_cfp_extraction_stage_no_organization_match(
         self,
-        mock_handle_extract_cfp_data,
-        mock_verify_rag_sources,
-        mock_job_manager,
-        grant_template,
-        nih_organization,
-        sample_rag_sources,
-        async_session_maker,
+        mock_handle_extract_cfp_data: AsyncMock,
+        mock_verify_rag_sources: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        nih_organization: Any,
+        sample_rag_sources: list[Any],
+        async_session_maker: Any,
     ) -> None:
         """Test CFP extraction when no organization matches."""
         # Setup mocks - return non-matching organization ID
@@ -271,13 +276,13 @@ class TestCFPExtractionStage:
     @patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data")
     async def test_cfp_extraction_stage_no_submission_date(
         self,
-        mock_handle_extract_cfp_data,
-        mock_verify_rag_sources,
-        mock_job_manager,
-        grant_template,
-        nih_organization,
-        sample_rag_sources,
-        async_session_maker,
+        mock_handle_extract_cfp_data: AsyncMock,
+        mock_verify_rag_sources: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        nih_organization: Any,
+        sample_rag_sources: list[Any],
+        async_session_maker: Any,
     ) -> None:
         """Test CFP extraction when no submission date is found."""
         # Setup mocks
@@ -313,11 +318,11 @@ class TestCFPExtractionStage:
 
     async def test_cfp_extraction_stage_database_queries(
         self,
-        mock_job_manager,
-        grant_template,
-        nih_organization,
-        sample_rag_sources,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        nih_organization: Any,
+        sample_rag_sources: list[Any],
+        async_session_maker: Any,
     ) -> None:
         """Test that database queries work correctly."""
         # Mock external services to focus on database operations
@@ -357,10 +362,10 @@ class TestCFPAnalysisStage:
     @patch("services.rag.src.grant_template.handlers.handle_analyze_cfp")
     async def test_cfp_analysis_stage_success(
         self,
-        mock_handle_analyze_cfp,
-        mock_job_manager,
-        grant_template,
-        sample_extract_cfp_dto,
+        mock_handle_analyze_cfp: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_extract_cfp_dto: Any,
     ) -> None:
         """Test successful CFP analysis stage."""
         # Setup mock
@@ -434,17 +439,36 @@ class TestCFPAnalysisStage:
     @patch("services.rag.src.grant_template.handlers.handle_analyze_cfp")
     async def test_cfp_analysis_stage_limited_disciplines(
         self,
-        mock_handle_analyze_cfp,
-        mock_job_manager,
-        grant_template,
-        sample_extract_cfp_dto,
+        mock_handle_analyze_cfp: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_extract_cfp_dto: Any,
     ) -> None:
         """Test CFP analysis stage with many academic disciplines (should limit to 3)."""
-        # Setup mock with many disciplines
+        # Setup mock with proper CFPAnalysisResult structure
         mock_analysis_result = {
-            "category": "research",
-            "academic_disciplines": ["comp_sci", "bio", "chem", "physics", "math", "stats"],
-            "cfp_analysis": {"sections_count": 5},
+            "cfp_analysis": {
+                "required_sections": [],
+                "length_constraints": [],
+                "evaluation_criteria": [],
+                "additional_requirements": [],
+            },
+            "nlp_analysis": {
+                "money": [],
+                "date_time": [],
+                "writing_related": [],
+                "other_numbers": [],
+                "recommendations": [],
+                "orders": [],
+                "positive_instructions": [],
+                "negative_instructions": [],
+                "evaluation_criteria": [],
+            },
+            "analysis_metadata": {
+                "content_length": 1500,
+                "categories_found": 6,
+                "total_sentences": 75,
+            },
         }
         mock_handle_analyze_cfp.return_value = mock_analysis_result
 
@@ -455,31 +479,50 @@ class TestCFPAnalysisStage:
             trace_id="test-trace",
         )
 
-        # Verify notification limits academic disciplines to first 3
+        # Verify notification uses analysis metadata
         mock_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.SECTIONS_EXTRACTED,
             message="Requirements analysis complete",
             notification_type="success",
             data={
-                "category": "research",
-                "academic_disciplines": ["comp_sci", "bio", "chem"],  # Limited to 3
+                "categories_found": 6,
+                "total_sentences": 75,
             },
         )
 
     @patch("services.rag.src.grant_template.handlers.handle_analyze_cfp")
     async def test_cfp_analysis_stage_no_disciplines(
         self,
-        mock_handle_analyze_cfp,
-        mock_job_manager,
-        grant_template,
-        sample_extract_cfp_dto,
+        mock_handle_analyze_cfp: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_extract_cfp_dto: Any,
     ) -> None:
         """Test CFP analysis stage with no academic disciplines."""
-        # Setup mock with no disciplines
+        # Setup mock with proper CFPAnalysisResult structure
         mock_analysis_result = {
-            "category": "research",
-            "academic_disciplines": None,
-            "cfp_analysis": {"sections_count": 5},
+            "cfp_analysis": {
+                "required_sections": [],
+                "length_constraints": [],
+                "evaluation_criteria": [],
+                "additional_requirements": [],
+            },
+            "nlp_analysis": {
+                "money": [],
+                "date_time": [],
+                "writing_related": [],
+                "other_numbers": [],
+                "recommendations": [],
+                "orders": [],
+                "positive_instructions": [],
+                "negative_instructions": [],
+                "evaluation_criteria": [],
+            },
+            "analysis_metadata": {
+                "content_length": 800,
+                "categories_found": 0,
+                "total_sentences": 40,
+            },
         }
         mock_handle_analyze_cfp.return_value = mock_analysis_result
 
@@ -490,14 +533,14 @@ class TestCFPAnalysisStage:
             trace_id="test-trace",
         )
 
-        # Verify notification handles None disciplines
+        # Verify notification uses analysis metadata
         mock_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.SECTIONS_EXTRACTED,
             message="Requirements analysis complete",
             notification_type="success",
             data={
-                "category": "research",
-                "academic_disciplines": [],  # Empty list when None
+                "categories_found": 0,
+                "total_sentences": 40,
             },
         )
 
@@ -508,10 +551,10 @@ class TestSectionExtractionStage:
     @patch("services.rag.src.grant_template.handlers.handle_extract_sections")
     async def test_section_extraction_stage_success(
         self,
-        mock_handle_extract_sections,
-        mock_job_manager,
-        grant_template,
-        sample_analyze_cfp_dto,
+        mock_handle_extract_sections: AsyncMock,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_analyze_cfp_dto: Any,
     ) -> None:
         """Test successful section extraction stage."""
         # Setup mock
@@ -582,17 +625,33 @@ class TestGenerateMetadataStage:
     @patch("services.rag.src.grant_template.handlers.handle_generate_grant_template_metadata")
     async def test_generate_metadata_stage_success(
         self,
-        mock_handle_generate_metadata,
-        mock_job_manager,
-        sample_sections_dto,
+        mock_handle_generate_metadata: AsyncMock,
+        mock_job_manager: AsyncMock,
+        sample_sections_dto: Any,
     ) -> None:
         """Test successful metadata generation stage."""
-        # Setup mock
-        mock_grant_sections = [
-            {"id": "section1", "title": "Project Summary", "type": "grant_element"},
-            {"id": "section2", "title": "Research Plan", "type": "grant_long_form_section"},
+        # Setup mock - return SectionMetadata objects matching fixture section IDs
+        mock_section_metadata = [
+            {
+                "id": "project_summary",
+                "keywords": ["project", "summary", "overview"],
+                "topics": ["project goals", "objectives"],
+                "generation_instructions": "Provide a concise summary of the project",
+                "depends_on": [],
+                "max_words": 500,
+                "search_queries": ["project summary examples", "grant proposal overview"],
+            },
+            {
+                "id": "research_plan",
+                "keywords": ["research", "methodology", "plan"],
+                "topics": ["research design", "methodology"],
+                "generation_instructions": "Describe the detailed research methodology",
+                "depends_on": ["project_summary"],
+                "max_words": 2000,
+                "search_queries": ["research methodology", "experimental design"],
+            },
         ]
-        mock_handle_generate_metadata.return_value = mock_grant_sections
+        mock_handle_generate_metadata.return_value = mock_section_metadata
 
         # Execute
         result = await handle_generate_metadata_stage(
@@ -601,8 +660,21 @@ class TestGenerateMetadataStage:
             trace_id="test-trace",
         )
 
-        # Verify result
-        assert result == mock_grant_sections
+        # Verify result - should be list of GrantElement/GrantLongFormSection objects
+        assert len(result) == 2
+        assert all(isinstance(section, (dict)) for section in result)  # They'll be dicts from TypedDict
+
+        # Check first section (project_summary)
+        project_section = result[0]
+        assert project_section["id"] == "project_summary"
+        assert project_section["title"] == "Project Summary"
+        assert project_section["order"] == 1
+
+        # Check second section (research_plan)
+        research_section = result[1]
+        assert research_section["id"] == "research_plan"
+        assert research_section["title"] == "Research Plan"
+        assert research_section["order"] == 2
 
         # Verify cancellation check
         mock_job_manager.ensure_not_cancelled.assert_called_once()
@@ -621,10 +693,11 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_success(
         self,
-        mock_job_manager,
-        grant_template,
-        sample_sections_dto,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_sections_dto: Any,
+        async_session_maker: Any,
+        nih_organization: Any,
     ) -> None:
         """Test successful grant template saving."""
         # Setup test data
@@ -632,6 +705,10 @@ class TestSaveGrantTemplate:
             {"id": "section1", "title": "Project Summary"},
             {"id": "section2", "title": "Research Plan"},
         ]
+
+        # Update the fixture organization to use the real NIH organization
+        sample_sections_dto["organization"]["organization_id"] = nih_organization.id
+        sample_sections_dto["extracted_data"]["organization_id"] = str(nih_organization.id)
 
         # Execute
         result = await handle_save_grant_template(
@@ -672,10 +749,10 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_no_organization(
         self,
-        mock_job_manager,
-        grant_template,
-        sample_sections_dto,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_sections_dto: Any,
+        async_session_maker: Any,
     ) -> None:
         """Test grant template saving with no organization."""
         # Modify DTO to have no organization
@@ -714,15 +791,20 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_no_submission_date(
         self,
-        mock_job_manager,
-        grant_template,
-        sample_sections_dto,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_sections_dto: Any,
+        async_session_maker: Any,
+        nih_organization: Any,
     ) -> None:
         """Test grant template saving with no submission date."""
         # Modify DTO to have no submission date
         sections_dto_no_date = sample_sections_dto.copy()
         sections_dto_no_date["extracted_data"]["submission_date"] = None
+
+        # Update the fixture organization to use the real NIH organization
+        sections_dto_no_date["organization"]["organization_id"] = nih_organization.id
+        sections_dto_no_date["extracted_data"]["organization_id"] = str(nih_organization.id)
 
         mock_grant_sections = [{"id": "section1", "title": "Project Summary"}]
 
@@ -744,12 +826,17 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_date_parsing(
         self,
-        mock_job_manager,
-        grant_template,
-        sample_sections_dto,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_sections_dto: Any,
+        async_session_maker: Any,
+        nih_organization: Any,
     ) -> None:
         """Test proper date parsing from string to date object."""
+        # Update the fixture organization to use the real NIH organization
+        sample_sections_dto["organization"]["organization_id"] = nih_organization.id
+        sample_sections_dto["extracted_data"]["organization_id"] = str(nih_organization.id)
+
         mock_grant_sections = [{"id": "section1", "title": "Project Summary"}]
 
         # Execute
@@ -766,14 +853,14 @@ class TestSaveGrantTemplate:
         # Verify date was parsed correctly
         async with async_session_maker() as session:
             updated_template = await session.get(GrantTemplate, grant_template.id)
-            assert updated_template.submission_date == datetime(2025, 3, 31).date()
+            assert updated_template.submission_date == date(2025, 3, 31)
 
     async def test_save_grant_template_database_error(
         self,
-        mock_job_manager,
-        grant_template,
-        sample_sections_dto,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        sample_sections_dto: Any,
+        async_session_maker: Any,
     ) -> None:
         """Test DatabaseError handling on SQLAlchemy error."""
         mock_grant_sections = [{"id": "section1", "title": "Project Summary"}]
@@ -800,11 +887,11 @@ class TestHandlersIntegration:
 
     async def test_handlers_preserve_data_flow(
         self,
-        mock_job_manager,
-        grant_template,
-        nih_organization,
-        sample_rag_sources,
-        async_session_maker,
+        mock_job_manager: AsyncMock,
+        grant_template: Any,
+        nih_organization: Any,
+        sample_rag_sources: list[Any],
+        async_session_maker: Any,
     ) -> None:
         """Test that data flows correctly through multiple handler stages."""
         # Mock external services
@@ -818,12 +905,35 @@ class TestHandlersIntegration:
                 "organization_id": str(nih_organization.id),
                 "cfp_subject": "Research Grant",
                 "submission_date": "2025-06-15",
+                "content": [
+                    {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
+                    {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
+                ],
             }
 
             mock_analyze.return_value = {
-                "category": "research",
-                "academic_disciplines": ["biology"],
-                "cfp_analysis": {"sections_count": 2},
+                "cfp_analysis": {
+                    "required_sections": [],
+                    "length_constraints": [],
+                    "evaluation_criteria": [],
+                    "additional_requirements": [],
+                },
+                "nlp_analysis": {
+                    "money": [],
+                    "date_time": [],
+                    "writing_related": [],
+                    "other_numbers": [],
+                    "recommendations": [],
+                    "orders": [],
+                    "positive_instructions": [],
+                    "negative_instructions": [],
+                    "evaluation_criteria": [],
+                },
+                "analysis_metadata": {
+                    "content_length": 800,
+                    "categories_found": 2,
+                    "total_sentences": 50,
+                },
             }
 
             mock_sections.return_value = [
@@ -832,6 +942,8 @@ class TestHandlersIntegration:
                     "id": "abstract",
                     "parent_id": None,
                     "is_detailed_research_plan": False,
+                    "is_title_only": False,
+                    "is_clinical_trial": False,
                     "is_long_form": True,
                     "order": 1,
                 }
@@ -847,17 +959,15 @@ class TestHandlersIntegration:
 
             # Execute CFP analysis using extraction result
             analysis_result = await handle_cfp_analysis_stage(
-                grant_template=grant_template,
+                extracted_cfp=extraction_result,
                 job_manager=mock_job_manager,
-                dto=extraction_result,
                 trace_id="test-trace",
             )
 
             # Execute section extraction using analysis result
             sections_result = await handle_section_extraction_stage(
-                grant_template=grant_template,
+                analysis_result=analysis_result,
                 job_manager=mock_job_manager,
-                dto=analysis_result,
                 trace_id="test-trace",
             )
 

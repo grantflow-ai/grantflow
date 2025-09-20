@@ -1,12 +1,14 @@
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
 
 
 @pytest.fixture
-def sample_objective():
+def sample_objective() -> dict[str, Any]:
     """Sample research objective for testing."""
     return {
         "number": "1",
@@ -25,7 +27,7 @@ def sample_objective():
 
 
 @pytest.fixture
-def sample_tasks():
+def sample_tasks() -> list[dict[str, Any]]:
     """Sample research tasks for testing."""
     return [
         {
@@ -54,7 +56,7 @@ def sample_tasks():
 
 
 @pytest.fixture
-def sample_form_inputs():
+def sample_form_inputs() -> dict[str, Any]:
     """Sample form inputs for testing."""
     return {
         "background_context": "This is a cancer research project focusing on early detection",
@@ -66,10 +68,10 @@ def sample_form_inputs():
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_success(
-    mock_generate_component_text,
-    sample_objective,
-    sample_tasks,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_tasks: list[dict[str, Any]],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test successful generation of objective with tasks."""
     # Setup mock responses
@@ -94,7 +96,7 @@ async def test_generate_objective_with_tasks_success(
     ]
 
     # Setup mock to return different text for each call
-    mock_generate_component_text.side_effect = [mock_objective_text] + mock_task_texts
+    mock_generate_component_text.side_effect = [mock_objective_text, *mock_task_texts]
 
     # Generate test UUIDs
     test_app_id = str(uuid4())
@@ -154,9 +156,9 @@ async def test_generate_objective_with_tasks_success(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_no_tasks(
-    mock_generate_component_text,
-    sample_objective,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test generation of objective with no tasks."""
     # Setup mock response for objective only
@@ -187,9 +189,9 @@ async def test_generate_objective_with_tasks_no_tasks(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_single_task(
-    mock_generate_component_text,
-    sample_objective,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test generation of objective with single task."""
     # Single task
@@ -239,10 +241,10 @@ async def test_generate_objective_with_tasks_single_task(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_existing_work_plan_text(
-    mock_generate_component_text,
-    sample_objective,
-    sample_tasks,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_tasks: list[dict[str, Any]],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test generation with existing work plan text context."""
     # Existing work plan text
@@ -269,7 +271,7 @@ async def test_generate_objective_with_tasks_existing_work_plan_text(
     )
 
     # Verify result
-    objective_returned, objective_text, task_results = result
+    _objective_returned, objective_text, task_results = result
     assert objective_text == mock_objective_text
     assert len(task_results) == 2
 
@@ -280,9 +282,9 @@ async def test_generate_objective_with_tasks_existing_work_plan_text(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_empty_form_inputs(
-    mock_generate_component_text,
-    sample_objective,
-    sample_tasks,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_tasks: list[dict[str, Any]],
 ) -> None:
     """Test generation with empty form inputs."""
     # Setup mock responses
@@ -301,7 +303,7 @@ async def test_generate_objective_with_tasks_empty_form_inputs(
     )
 
     # Verify result
-    objective_returned, objective_text, task_results = result
+    _objective_returned, objective_text, task_results = result
     assert objective_text == mock_objective_text
     assert len(task_results) == 2
 
@@ -312,10 +314,10 @@ async def test_generate_objective_with_tasks_empty_form_inputs(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_error_handling(
-    mock_generate_component_text,
-    sample_objective,
-    sample_tasks,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_tasks: list[dict[str, Any]],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test error handling when component generation fails."""
     # Setup mock to raise exception on objective generation
@@ -338,10 +340,10 @@ async def test_generate_objective_with_tasks_error_handling(
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
 async def test_generate_objective_with_tasks_task_generation_error(
-    mock_generate_component_text,
-    sample_objective,
-    sample_tasks,
-    sample_form_inputs,
+    mock_generate_component_text: AsyncMock,
+    sample_objective: dict[str, Any],
+    sample_tasks: list[dict[str, Any]],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test error handling when task generation fails."""
     # Setup mock to succeed for objective but fail for first task
@@ -362,5 +364,5 @@ async def test_generate_objective_with_tasks_task_generation_error(
             trace_id=str(uuid4()),
         )
 
-    # Verify service was called twice (objective + first task)
-    assert mock_generate_component_text.call_count == 2
+    # Verify service was called three times (objective + 2 tasks in parallel)
+    assert mock_generate_component_text.call_count == 3

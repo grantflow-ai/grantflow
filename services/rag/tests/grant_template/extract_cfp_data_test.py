@@ -3,9 +3,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import CategorizationAnalysisResult
-from packages.db.src.tables import GrantTemplate, GrantTemplateSource
-from sqlalchemy import select
+from packages.db.src.tables import GrantTemplate
 
 from services.rag.src.grant_template.extract_cfp_data import (
     RagSourceData,

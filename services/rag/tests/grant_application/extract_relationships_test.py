@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -8,7 +9,7 @@ from services.rag.src.grant_application.extract_relationships import handle_extr
 
 
 @pytest.fixture
-def sample_research_objectives():
+def sample_research_objectives() -> list[ResearchObjective]:
     """Sample research objectives for testing."""
     return [
         ResearchObjective(
@@ -39,7 +40,7 @@ def sample_research_objectives():
 
 
 @pytest.fixture
-def sample_grant_section():
+def sample_grant_section() -> dict[str, Any]:
     """Sample grant section for testing."""
     return {
         "id": "research_plan",
@@ -58,7 +59,7 @@ def sample_grant_section():
 
 
 @pytest.fixture
-def sample_form_inputs():
+def sample_form_inputs() -> dict[str, Any]:
     """Sample form inputs for testing."""
     return {
         "background_context": "This is a cancer research project focusing on biomarker discovery",
@@ -67,37 +68,30 @@ def sample_form_inputs():
     }
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_success(
-    mock_extract_relationships,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test successful relationship extraction."""
-    # Setup mock response
+    # Setup mock responses
     mock_relationships_response = {
-        "1": [
-            ("2", "provides_data_for", "The biomarkers identified in objective 1 will be used as features in the ML model"),
-            ("3", "enables", "Validated biomarkers are needed for clinical validation"),
-        ],
-        "2": [
-            ("3", "supports", "ML model predictions will guide clinical validation strategy"),
-        ],
-        "1.1": [
-            ("1.2", "precedes", "Biomarker identification must occur before validation"),
-        ],
-        "1.2": [
-            ("2.1", "informs", "Validation results inform algorithm design"),
-        ],
-        "2.1": [
-            ("2.2", "precedes", "Algorithm design precedes model training"),
-        ],
-        "2.2": [
-            ("3.1", "guides", "Trained model guides patient recruitment strategy"),
-        ],
+        "relationships": [
+            ("1", "2", "The biomarkers identified in objective 1 will be used as features in the ML model"),
+            ("1", "3", "Validated biomarkers are needed for clinical validation"),
+            ("2", "3", "ML model predictions will guide clinical validation strategy"),
+            ("1.1", "1.2", "Biomarker identification must occur before validation"),
+            ("1.2", "2.1", "Validation results inform algorithm design"),
+            ("2.1", "2.2", "Algorithm design precedes model training"),
+            ("2.2", "3.1", "Trained model guides patient recruitment strategy"),
+        ]
     }
-    mock_extract_relationships.return_value = mock_relationships_response
+    mock_with_prompt_evaluation.return_value = mock_relationships_response
+    mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
 
     test_app_id = str(uuid4())
     test_trace_id = str(uuid4())
@@ -122,28 +116,35 @@ async def test_handle_extract_relationships_success(
 
     # Verify relationship data
     assert len(result["1"]) == 2
-    assert result["1"][0] == ("2", "provides_data_for", "The biomarkers identified in objective 1 will be used as features in the ML model")
-    assert result["1"][1] == ("3", "enables", "Validated biomarkers are needed for clinical validation")
+    assert result["1"][0] == ("2", "The biomarkers identified in objective 1 will be used as features in the ML model")
+    assert result["1"][1] == ("3", "Validated biomarkers are needed for clinical validation")
 
-    # Verify service call
-    mock_extract_relationships.assert_called_once()
-    call_args = mock_extract_relationships.call_args
-    assert call_args.kwargs["application_id"] == test_app_id
-    assert len(call_args.kwargs["research_objectives"]) == 3
-    assert call_args.kwargs["grant_section"] == sample_grant_section
-    assert call_args.kwargs["form_inputs"] == sample_form_inputs
-    assert call_args.kwargs["trace_id"] == test_trace_id
+    # Verify service calls
+    mock_with_prompt_evaluation.assert_called_once()
+    mock_retrieve_documents.assert_called_once()
+
+    # Verify retrieval was called with correct parameters
+    retrieval_call = mock_retrieve_documents.call_args
+    assert retrieval_call.kwargs["application_id"] == test_app_id
+
+    # Verify prompt evaluation was called with correct parameters
+    eval_call = mock_with_prompt_evaluation.call_args
+    assert eval_call.kwargs["prompt_identifier"] == "extract_relationships"
+    assert eval_call.kwargs["research_objectives"] == sample_research_objectives
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_empty_objectives(
-    mock_extract_relationships,
-    sample_grant_section,
-    sample_form_inputs,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test relationship extraction with empty objectives list."""
     # Setup mock response for empty objectives
-    mock_extract_relationships.return_value = {}
+    mock_with_prompt_evaluation.return_value = {"relationships": []}
+    mock_retrieve_documents.return_value = []
 
     # Execute with empty objectives
     result = await handle_extract_relationships(
@@ -159,16 +160,17 @@ async def test_handle_extract_relationships_empty_objectives(
     assert len(result) == 0
 
     # Verify service call
-    mock_extract_relationships.assert_called_once()
-    call_args = mock_extract_relationships.call_args
-    assert len(call_args.kwargs["research_objectives"]) == 0
+    mock_with_prompt_evaluation.assert_called_once()
+    mock_retrieve_documents.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_single_objective(
-    mock_extract_relationships,
-    sample_grant_section,
-    sample_form_inputs,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test relationship extraction with single objective."""
     # Single objective with single task
@@ -184,10 +186,10 @@ async def test_handle_extract_relationships_single_objective(
 
     # Setup mock response
     mock_relationships_response = {
-        "1": [],  # No relationships with other objectives
-        "1.1": [],  # No relationships with other tasks
+        "relationships": []  # No relationships for single objective
     }
-    mock_extract_relationships.return_value = mock_relationships_response
+    mock_with_prompt_evaluation.return_value = mock_relationships_response
+    mock_retrieve_documents.return_value = []
 
     # Execute
     result = await handle_extract_relationships(
@@ -200,52 +202,42 @@ async def test_handle_extract_relationships_single_objective(
 
     # Verify result
     assert isinstance(result, dict)
-    assert "1" in result
-    assert "1.1" in result
-    assert len(result["1"]) == 0
-    assert len(result["1.1"]) == 0
+    assert len(result) == 0  # No relationships for single objective
 
     # Verify service call
-    call_args = mock_extract_relationships.call_args
-    assert len(call_args.kwargs["research_objectives"]) == 1
+    mock_with_prompt_evaluation.assert_called_once()
+    mock_retrieve_documents.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_complex_dependencies(
-    mock_extract_relationships,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test relationship extraction with complex interdependencies."""
     # Setup mock response with complex relationships
     mock_relationships_response = {
-        "1": [
-            ("2", "provides_data_for", "Biomarkers serve as ML features"),
-            ("3", "enables", "Biomarkers enable clinical validation"),
-        ],
-        "2": [
-            ("3", "supports", "ML predictions guide clinical studies"),
-            ("1", "depends_on", "ML model depends on biomarker data quality"),
-        ],
-        "3": [
-            ("1", "validates", "Clinical validation confirms biomarker utility"),
-            ("2", "evaluates", "Clinical studies evaluate ML model performance"),
-        ],
-        "1.1": [
-            ("1.2", "precedes", "Identification precedes validation"),
-            ("2.1", "informs", "Biomarker identification informs algorithm design"),
-        ],
-        "1.2": [
-            ("2.2", "enables", "Validation enables model training"),
-            ("3.1", "guides", "Validation guides patient recruitment"),
-        ],
-        "2.1": [
-            ("2.2", "precedes", "Design precedes training"),
-            ("3.2", "defines", "Algorithm design defines data collection requirements"),
-        ],
+        "relationships": [
+            ("1", "2", "Biomarkers serve as ML features"),
+            ("1", "3", "Biomarkers enable clinical validation"),
+            ("2", "3", "ML predictions guide clinical studies"),
+            ("2", "1", "ML model depends on biomarker data quality"),
+            ("3", "1", "Clinical validation confirms biomarker utility"),
+            ("3", "2", "Clinical studies evaluate ML model performance"),
+            ("1.1", "1.2", "Identification precedes validation"),
+            ("1.1", "2.1", "Biomarker identification informs algorithm design"),
+            ("1.2", "2.2", "Validation enables model training"),
+            ("1.2", "3.1", "Validation guides patient recruitment"),
+            ("2.1", "2.2", "Design precedes training"),
+            ("2.1", "3.2", "Algorithm design defines data collection requirements"),
+        ]
     }
-    mock_extract_relationships.return_value = mock_relationships_response
+    mock_with_prompt_evaluation.return_value = mock_relationships_response
+    mock_retrieve_documents.return_value = []
 
     # Execute
     result = await handle_extract_relationships(
@@ -265,24 +257,27 @@ async def test_handle_extract_relationships_complex_dependencies(
     assert len(result["2.1"]) == 2
 
     # Verify bidirectional relationships
-    assert ("2", "provides_data_for", "Biomarkers serve as ML features") in result["1"]
-    assert ("1", "depends_on", "ML model depends on biomarker data quality") in result["2"]
+    assert ("2", "Biomarkers serve as ML features") in result["1"]
+    assert ("1", "ML model depends on biomarker data quality") in result["2"]
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_no_form_inputs(
-    mock_extract_relationships,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
     sample_research_objectives,
     sample_grant_section,
 ) -> None:
     """Test relationship extraction with minimal form inputs."""
     # Setup mock response
     mock_relationships_response = {
-        "1": [("2", "relates_to", "Basic relationship without context")],
-        "2": [],
-        "3": [],
+        "relationships": [
+            ("1", "2", "Basic relationship without context"),
+        ]
     }
-    mock_extract_relationships.return_value = mock_relationships_response
+    mock_with_prompt_evaluation.return_value = mock_relationships_response
+    mock_retrieve_documents.return_value = []
 
     # Execute with empty form inputs
     result = await handle_extract_relationships(
@@ -296,23 +291,26 @@ async def test_handle_extract_relationships_no_form_inputs(
     # Verify result
     assert isinstance(result, dict)
     assert len(result["1"]) == 1
-    assert result["1"][0] == ("2", "relates_to", "Basic relationship without context")
+    assert result["1"][0] == ("2", "Basic relationship without context")
 
     # Verify service call with empty form inputs
-    call_args = mock_extract_relationships.call_args
-    assert call_args.kwargs["form_inputs"] == {}
+    mock_with_prompt_evaluation.assert_called_once()
+    mock_retrieve_documents.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.extract_relationships.extract_research_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.with_prompt_evaluation")
 async def test_handle_extract_relationships_error_handling(
-    mock_extract_relationships,
+    mock_with_prompt_evaluation: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
     sample_research_objectives,
     sample_grant_section,
     sample_form_inputs,
 ) -> None:
     """Test error handling when relationship extraction fails."""
     # Setup mock to raise exception
-    mock_extract_relationships.side_effect = Exception("Relationship extraction service error")
+    mock_with_prompt_evaluation.side_effect = Exception("Relationship extraction service error")
+    mock_retrieve_documents.return_value = []
 
     # Execute and verify exception is propagated
     with pytest.raises(Exception, match="Relationship extraction service error"):
@@ -325,4 +323,5 @@ async def test_handle_extract_relationships_error_handling(
         )
 
     # Verify service was called
-    mock_extract_relationships.assert_called_once()
+    mock_with_prompt_evaluation.assert_called_once()
+    mock_retrieve_documents.assert_called_once()

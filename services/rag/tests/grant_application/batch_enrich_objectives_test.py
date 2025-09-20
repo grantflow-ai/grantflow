@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -8,7 +9,7 @@ from services.rag.src.grant_application.batch_enrich_objectives import handle_ba
 
 
 @pytest.fixture
-def sample_research_objectives():
+def sample_research_objectives() -> list[ResearchObjective]:
     """Sample research objectives for testing."""
     return [
         ResearchObjective(
@@ -31,7 +32,7 @@ def sample_research_objectives():
 
 
 @pytest.fixture
-def sample_grant_section():
+def sample_grant_section() -> dict[str, Any]:
     """Sample grant section for testing."""
     return {
         "id": "research_plan",
@@ -50,7 +51,7 @@ def sample_grant_section():
 
 
 @pytest.fixture
-def sample_form_inputs():
+def sample_form_inputs() -> dict[str, str]:
     """Sample form inputs for testing."""
     return {
         "background_context": "This is a cancer research project",
@@ -62,12 +63,12 @@ def sample_form_inputs():
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
 @patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
 async def test_handle_batch_enrich_objectives_success(
-    mock_batched_gather,
-    mock_handle_enrich_objective,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
-):
+    mock_batched_gather: AsyncMock,
+    mock_handle_enrich_objective: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, str],
+) -> None:
     """Test successful batch enrichment of objectives."""
     # Setup mock responses
     mock_enrichment_responses = [
@@ -155,11 +156,11 @@ async def test_handle_batch_enrich_objectives_success(
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
 @patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
 async def test_handle_batch_enrich_objectives_empty_list(
-    mock_batched_gather,
-    mock_handle_enrich_objective,
-    sample_grant_section,
-    sample_form_inputs,
-):
+    mock_batched_gather: AsyncMock,
+    mock_handle_enrich_objective: AsyncMock,
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, str],
+) -> None:
     """Test batch enrichment with empty objectives list."""
     # Execute with empty objectives
     result = await handle_batch_enrich_objectives(
@@ -181,11 +182,11 @@ async def test_handle_batch_enrich_objectives_empty_list(
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
 @patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
 async def test_handle_batch_enrich_objectives_single_objective(
-    mock_batched_gather,
-    mock_handle_enrich_objective,
-    sample_grant_section,
-    sample_form_inputs,
-):
+    mock_batched_gather: AsyncMock,
+    mock_handle_enrich_objective: AsyncMock,
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, str],
+) -> None:
     """Test batch enrichment with single objective."""
     # Single objective
     single_objective = [
@@ -238,12 +239,12 @@ async def test_handle_batch_enrich_objectives_single_objective(
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
 @patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
 async def test_handle_batch_enrich_objectives_error_propagation(
-    mock_batched_gather,
-    mock_handle_enrich_objective,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
-):
+    mock_batched_gather: AsyncMock,
+    mock_handle_enrich_objective: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, str],
+) -> None:
     """Test error propagation from batch enrichment."""
     # Setup mock to raise exception
     mock_batched_gather.side_effect = Exception("Enrichment service error")
@@ -266,13 +267,13 @@ async def test_handle_batch_enrich_objectives_error_propagation(
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
 @patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
 async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
-    mock_batched_gather,
-    mock_handle_enrich_objective,
-    mock_perform_shared_retrieval,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
-):
+    mock_batched_gather: AsyncMock,
+    mock_handle_enrich_objective: AsyncMock,
+    mock_perform_shared_retrieval: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, str],
+) -> None:
     """Test that shared retrieval is called correctly."""
     # Setup mocks
     mock_perform_shared_retrieval.return_value = "Shared context from retrieval"
