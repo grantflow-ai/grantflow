@@ -143,7 +143,7 @@ async def handle_generate_sections_stage(
             batched_gather(*generation_coroutines, batch_size=3),
             timeout=600  # 10 minutes timeout for section generation
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("Section generation timed out after 10 minutes. Please try again or contact support.") from None
 
     section_texts: dict[str, str] = {}
@@ -190,6 +190,15 @@ async def handle_extract_relationships_stage(
         grant_section=dto["work_plan_section"],
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
+    )
+
+    await job_manager.add_notification(
+        event=NotificationEvents.RELATIONSHIPS_EXTRACTED,
+        message="Research dependencies analyzed",
+        notification_type="success",
+        data={
+            "relationships_count": len(relationships),
+        },
     )
 
     return ExtractRelationshipsStageDTO(
@@ -270,7 +279,7 @@ async def handle_enrich_terminology_stage(
             batched_gather(*wikidata_enrichment_coroutines, batch_size=3),
             timeout=300  # 5 minutes timeout for Wikidata enrichments
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("Wikidata enrichment timed out after 5 minutes. Please try again or contact support.") from None
 
     await job_manager.add_notification(
@@ -391,7 +400,7 @@ async def handle_generate_research_plan_stage(
             ),
             timeout=900  # 15 minutes timeout for research plan generation
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("Research plan generation timed out after 15 minutes. Please try again or contact support.") from None
 
     for objective, objective_text, task_results in objective_results:

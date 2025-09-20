@@ -47,6 +47,7 @@ class NotificationEvents(StrEnum):
     GENERATING_SECTION_TEXTS = "generating_section_texts"
     SECTION_TEXTS_GENERATED = "section_texts_generated"
     EXTRACTING_RELATIONSHIPS = "extracting_relationships"
+    RELATIONSHIPS_EXTRACTED = "relationships_extracted"
     ENRICHING_OBJECTIVES = "enriching_objectives"
     OBJECTIVES_ENRICHED = "objectives_enriched"
     ENHANCING_WITH_WIKIDATA = "enhancing_with_wikidata"
