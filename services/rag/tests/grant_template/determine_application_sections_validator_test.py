@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.determine_application_sections import (
+from services.rag.src.grant_template.extract_sections import (
     ExtractedSectionDTO,
     ExtractedSections,
     validate_section_extraction,

@@ -2,7 +2,7 @@ from asyncio import gather
 from typing import Any, Final
 from uuid import UUID
 
-from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import (
     CFPSectionAnalysis,
     GrantElement,
@@ -22,6 +22,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
+from rag.src.enums import GrantApplicationStageEnum
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker

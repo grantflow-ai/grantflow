@@ -4,7 +4,8 @@ from uuid import UUID
 import pytest
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
-from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, SourceIndexingStatusEnum
+from packages.db.src.enums import SourceIndexingStatusEnum
+from rag.src.enums import GrantTemplateStageEnum, GrantApplicationStageEnum
 from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import (
@@ -39,9 +40,7 @@ def mock_publisher_client() -> Mock:
 @pytest.fixture
 def mock_subscriber_client() -> Mock:
     client = Mock()
-    client.subscription_path.return_value = (
-        "projects/test-project/subscriptions/test-subscription"
-    )
+    client.subscription_path.return_value = "projects/test-project/subscriptions/test-subscription"
     return client
 
 
@@ -54,9 +53,7 @@ def reset_client_refs() -> None:
 
 
 def test_get_publisher_client_creates_client_once() -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.pubsub.PublisherClient"
-    ) as mock_client_class:
+    with patch("packages.shared_utils.src.pubsub.pubsub.PublisherClient") as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
@@ -69,9 +66,7 @@ def test_get_publisher_client_creates_client_once() -> None:
 
 
 def test_get_subscriber_client_creates_client_once() -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.pubsub.SubscriberClient"
-    ) as mock_client_class:
+    with patch("packages.shared_utils.src.pubsub.pubsub.SubscriberClient") as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
@@ -109,9 +104,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
         )
 
         assert result == "test-message-id"
-        mock_publisher_client.topic_path.assert_called_once_with(
-            project="grantflow", topic="url-crawling"
-        )
+        mock_publisher_client.topic_path.assert_called_once_with(project="grantflow", topic="url-crawling")
         mock_publisher_client.publish.assert_called_once()
         args, kwargs = mock_publisher_client.publish.call_args
 
@@ -157,9 +150,7 @@ async def test_publish_url_crawling_task_with_all_params(
 async def test_publish_url_crawling_task_message_too_large(
     mock_publisher_client: Mock,
 ) -> None:
-    mock_publisher_client.publish.side_effect = MessageTooLargeError(
-        "Message too large"
-    )
+    mock_publisher_client.publish.side_effect = MessageTooLargeError("Message too large")
 
     with (
         patch(
@@ -278,9 +269,7 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
         )
 
         assert result == "test-message-id"
-        mock_publisher_client.topic_path.assert_called_once_with(
-            project="grantflow", topic="frontend-notifications"
-        )
+        mock_publisher_client.topic_path.assert_called_once_with(project="grantflow", topic="frontend-notifications")
         mock_publisher_client.publish.assert_called_once()
 
 
@@ -359,9 +348,7 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
 
 
 async def test_publish_notification_too_large(mock_publisher_client: Mock) -> None:
-    mock_publisher_client.publish.side_effect = MessageTooLargeError(
-        "Message too large"
-    )
+    mock_publisher_client.publish.side_effect = MessageTooLargeError("Message too large")
 
     with (
         patch(
@@ -452,9 +439,7 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         assert results[0]["event"] == "source_processing"
         assert results[0]["data"]["parent_id"] == str(parent_id)
         assert results[0]["data"]["rag_source_id"] == str(rag_source_id)
-        assert (
-            results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-        )
+        assert results[0]["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
 
         mock_subscriber_client.acknowledge.assert_called_once()
         ack_call_args = mock_subscriber_client.acknowledge.call_args[1]
