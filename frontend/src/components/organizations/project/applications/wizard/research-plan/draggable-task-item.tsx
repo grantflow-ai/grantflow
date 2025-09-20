@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripHorizontal } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
 
@@ -12,7 +12,7 @@ interface DraggableTaskItemProps {
 	isEditing?: boolean;
 	objectiveIndex: number;
 	onTaskDelete?: () => void;
-	onValueChange?: (taskIndex: number, value: string) => void;
+	onValueChange?: (taskIndex: number, title: string, description: string) => void;
 	task: Task;
 	taskIndex: number;
 	totalTasks: number;
@@ -46,19 +46,28 @@ export function DraggableTaskItem({
 	const taskId = `${objectiveIndex}-task-${taskIndex}`;
 	const isDragDisabled = totalTasks <= 1;
 
-	const [localDescription, setLocalDescription] = useState(() => getTaskContent(task));
+	const [localTitle, setLocalTitle] = useState(task.title);
+	const [localDescription, setLocalDescription] = useState(task.description ?? "");
 
 	const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
 		disabled: isDragDisabled,
 		id: taskId,
 	});
 
-	useEffect(() => {
-		onValueChange?.(taskIndex, localDescription);
-	}, [localDescription, taskIndex, onValueChange]);
+	const handleTitleUpdate = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setLocalTitle(e.target.value);
+	};
 
-	const handleTaskUpdate = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+	const handleTitleBlur = () => {
+		onValueChange?.(taskIndex, localTitle, localDescription);
+	};
+
+	const handleDescriptionUpdate = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setLocalDescription(e.target.value);
+	};
+
+	const handleDescriptionBlur = () => {
+		onValueChange?.(taskIndex, localTitle, localDescription);
 	};
 
 	const handleTaskDelete = () => {
@@ -84,30 +93,39 @@ export function DraggableTaskItem({
 			/>
 			<div className="pt-9.5 px-3 pb-3">
 				{isEditing ? (
-					<div className="pt-3">
+					<div className="pt-3 space-y-3">
 						<AppTextArea
-							className="min-h-52"
+							className="min-h-20"
+							id={`task-title-${objectiveIndex}-${taskIndex}`}
+							label="Task title"
+							onBlur={handleTitleBlur}
+							onChange={handleTitleUpdate}
+							placeholder="Enter a clear, concise task title"
+							value={localTitle}
+							variant="field"
+						/>
+						<AppTextArea
+							className="min-h-32"
 							id={`task-description-${objectiveIndex}-${taskIndex}`}
 							label="Task description"
-							onChange={handleTaskUpdate}
+							onBlur={handleDescriptionBlur}
+							onChange={handleDescriptionUpdate}
 							placeholder="Describe a step to achieve this objective"
 							value={localDescription}
 							variant="field"
 						/>
 					</div>
 				) : (
-					<div className="text-app-gray-600 text-sm font-normal leading-none" data-testid="task-display">
-						Task: {getTaskContent(task)}
+					<div className="space-y-1" data-testid="task-display">
+						<div className="text-black text-sm font-semibold leading-none">{task.title}</div>
+						{task.description && (
+							<div className="text-Grey-600 text-sm leading-none">{task.description}</div>
+						)}
 					</div>
 				)}
 			</div>
 		</div>
 	);
-}
-
-function getTaskContent(task: Task): string {
-	const trimmedDescription = task.description?.trim();
-	return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
 }
 
 function TaskHeader({

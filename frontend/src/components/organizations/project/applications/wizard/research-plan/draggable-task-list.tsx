@@ -2,6 +2,7 @@
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Plus } from "lucide-react";
+import { useCallback } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
@@ -15,7 +16,7 @@ interface DraggableTaskListProps {
 	onTaskAdd?: () => void;
 	onTaskDelete?: (taskIndex: number) => void;
 	onTaskReorder?: (oldIndex: number, newIndex: number) => void;
-	onTaskValuesChange?: (taskValues: Record<number, string>) => void;
+	onTaskValuesChange?: (taskValues: Record<number, { description: string; title: string }>) => void;
 	tasks: Task[];
 }
 
@@ -48,6 +49,15 @@ export function DraggableTaskList({
 
 	const updateTasksForObjective = useWizardStore((state) => state.updateTasksForObjective);
 
+	const handleValueChange = useCallback(
+		(taskIndex: number, title: string, description: string) => {
+			const taskValues: Record<number, { description: string; title: string }> = {};
+			taskValues[taskIndex] = { description, title };
+			onTaskValuesChange?.(taskValues);
+		},
+		[onTaskValuesChange],
+	);
+
 	const { DragDropWrapper } = useDragAndDrop<TaskDragDropItem>(
 		{
 			onReorder: async (_items, oldIndex, newIndex) => {
@@ -68,44 +78,42 @@ export function DraggableTaskList({
 
 	return (
 		<div className="space-y-3">
-			<div className={isEditing ? "flex items-center justify-between" : ""}>
-				<div className="text-app-black font-semibold font-heading leading-snug" data-testid="tasks-section">
-					Tasks
+			{(tasks.length > 0 || isEditing) && (
+				<div className={isEditing ? "flex items-center justify-between" : ""}>
+					<div className="text-app-black font-semibold font-heading leading-snug" data-testid="tasks-section">
+						Tasks
+					</div>
+					{isEditing && (
+						<TooltipProvider delayDuration={300}>
+							<TooltipPrimitive.Root>
+								<TooltipTrigger asChild>
+									<IconButton
+										data-testid="add-task-button"
+										onClick={onTaskAdd}
+										size="sm"
+										type="button"
+										variant="solid"
+									>
+										<Plus className="w-4 h-4" />
+									</IconButton>
+								</TooltipTrigger>
+								<TooltipContent side="top">
+									<p>Add Task</p>
+								</TooltipContent>
+							</TooltipPrimitive.Root>
+						</TooltipProvider>
+					)}
 				</div>
-				{isEditing && (
-					<TooltipProvider delayDuration={300}>
-						<TooltipPrimitive.Root>
-							<TooltipTrigger asChild>
-								<IconButton
-									data-testid="add-task-button"
-									onClick={onTaskAdd}
-									size="sm"
-									type="button"
-									variant="solid"
-								>
-									<Plus className="w-4 h-4" />
-								</IconButton>
-							</TooltipTrigger>
-							<TooltipContent side="top">
-								<p>Add Task</p>
-							</TooltipContent>
-						</TooltipPrimitive.Root>
-					</TooltipProvider>
-				)}
-			</div>
+			)}
 			<DragDropWrapper items={dragDropItems}>
 				<div className="space-y-1">
 					{tasks.map((task, taskIndex) => (
 						<DraggableTaskItem
 							isEditing={isEditing}
-							key={`task-${task.number}-${objectiveIndex}`}
+							key={`objective-${objectiveIndex}-task-${taskIndex}`}
 							objectiveIndex={objectiveIndex}
 							onTaskDelete={() => onTaskDelete?.(taskIndex)}
-							onValueChange={(taskIndex, value) => {
-								const taskValues: Record<number, string> = {};
-								taskValues[taskIndex] = value;
-								onTaskValuesChange?.(taskValues);
-							}}
+							onValueChange={handleValueChange}
 							task={task}
 							taskIndex={taskIndex}
 							totalTasks={tasks.length}
