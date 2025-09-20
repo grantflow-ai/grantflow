@@ -4,11 +4,20 @@ from typing import TYPE_CHECKING, Any, Final, cast
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DatabaseError,
+    DeserializationError,
+    EvaluationError,
+    InsufficientContextError,
+    RagError,
+    ValidationError,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
 from packages.shared_utils.src.sync import batched_gather
 from sqlalchemy import update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.dto import ResearchComponentGenerationDTO
@@ -128,6 +137,8 @@ async def handle_generate_sections_stage(
         trace_id=trace_id,
     )
 
+    await job_manager.ensure_not_cancelled()
+
     combined_task_description = (
         f"Generate content for {len(long_form_sections)} grant application sections: "
         + ", ".join([s.get("title", f"Section {i}") for i, s in enumerate(long_form_sections)])
@@ -138,6 +149,7 @@ async def handle_generate_sections_stage(
         search_queries=unique_queries,
         task_description=combined_task_description,
         max_tokens=12000,
+        trace_id=trace_id,
     )
     shared_context = "\n".join(retrieval_results)
 
@@ -146,6 +158,8 @@ async def handle_generate_sections_stage(
         context_length=len(shared_context),
         trace_id=trace_id,
     )
+
+    await job_manager.ensure_not_cancelled()
 
     generation_coroutines = [
         handle_generate_section_text(section, research_objectives, shared_context, cfp_analysis, trace_id)
@@ -347,6 +361,8 @@ async def handle_generate_research_plan_stage(
 
     work_plan_text = ""
 
+    await job_manager.ensure_not_cancelled()
+
     await job_manager.add_notification(
         event=NotificationEvents.GENERATING_RESEARCH_PLAN,
         message="Writing research plan",
@@ -395,7 +411,7 @@ async def handle_generate_research_plan_stage(
                 "number": objective["number"],
                 "title": objective["title"][:50],
                 "tasks": len(task_results),
-                "progress": int(float(objective['number']) / total_objectives * 100),
+                "progress": int(float(objective["number"]) / total_objectives * 100),
             },
         )
 
@@ -488,6 +504,14 @@ async def grant_application_text_generation_pipeline_handler(
         # Match/case routing based on stage
         match generation_stage:
             case GrantApplicationStageEnum.GENERATE_SECTIONS:
+                logger.info(
+                    "Executing section generation stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
+                await job_manager.ensure_not_cancelled()
+
                 # First stage - create initial DTO
                 dto = await handle_generate_sections_stage(
                     grant_application=grant_application,
@@ -495,11 +519,25 @@ async def grant_application_text_generation_pipeline_handler(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
+                logger.info(
+                    "Section generation stage completed, triggering next stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 return
 
             case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
+                logger.info(
+                    "Executing relationship extraction stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                await job_manager.ensure_not_cancelled()
 
                 dto = await handle_extract_relationships_stage(
                     grant_application=grant_application,
@@ -508,11 +546,25 @@ async def grant_application_text_generation_pipeline_handler(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
+                logger.info(
+                    "Relationship extraction stage completed, triggering next stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 return
 
             case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
+                logger.info(
+                    "Executing research objectives enrichment stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                await job_manager.ensure_not_cancelled()
 
                 dto = await handle_enrich_objectives_stage(
                     grant_application=grant_application,
@@ -521,11 +573,25 @@ async def grant_application_text_generation_pipeline_handler(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
+                logger.info(
+                    "Research objectives enrichment stage completed, triggering next stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 return
 
             case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
+                logger.info(
+                    "Executing terminology enrichment stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                await job_manager.ensure_not_cancelled()
 
                 dto = await handle_enrich_terminology_stage(
                     grant_application=grant_application,
@@ -534,16 +600,47 @@ async def grant_application_text_generation_pipeline_handler(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
+                logger.info(
+                    "Terminology enrichment stage completed, triggering next stage",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
                 return
 
             case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
+                logger.info(
+                    "Executing research plan generation stage (final)",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                    checkpoint_keys=list(existing_job.checkpoint_data.keys()) if existing_job and existing_job.checkpoint_data else [],
+                )
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                await job_manager.ensure_not_cancelled()
+
                 final_dto = await handle_generate_research_plan_stage(
                     grant_application=grant_application,
                     dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
+                )
+
+                logger.info(
+                    "All stages completed, saving application to database",
+                    application_id=str(application_id),
+                    job_id=str(existing_job.id) if existing_job else None,
+                    trace_id=trace_id,
+                )
+
+                await job_manager.ensure_not_cancelled()
+
+                await job_manager.add_notification(
+                    event=NotificationEvents.SAVING_GRANT_APPLICATION,
+                    message="Finalizing grant application",
+                    notification_type="info",
                 )
 
                 # Final stage - save to database
@@ -557,10 +654,16 @@ async def grant_application_text_generation_pipeline_handler(
                     section_texts=complete_section_texts,
                 )
 
-                async with session_maker() as session, session.begin():
-                    await session.execute(
-                        update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
-                    )
+                try:
+                    async with session_maker() as session, session.begin():
+                        await session.execute(
+                            update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
+                        )
+                except SQLAlchemyError as sql_error:
+                    raise DatabaseError(
+                        "Failed to save application to database",
+                        context={"application_id": str(application_id), "sql_error": str(sql_error)}
+                    ) from sql_error
 
                 await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
                 await job_manager.add_notification(
@@ -593,33 +696,49 @@ async def grant_application_text_generation_pipeline_handler(
                 raise ValidationError(f"Unknown stage: {generation_stage}")
 
     except BackendError as e:
+        application_id = grant_application.id
+        job_id = existing_job.id if existing_job else None
         logger.error(
             "Backend error in grant application generation pipeline",
             error=e,
+            error_type=type(e).__name__,
+            error_message=str(e),
             application_id=str(application_id),
-            job_id=str(existing_job.id) if existing_job else None,
+            job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
             stage=generation_stage,
         )
 
         if isinstance(e, InsufficientContextError):
-            error_message = "Insufficient research context. Please add more documents or refine objectives."
+            error_message = "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives."
             event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
         elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
-            error_message = "Document indexing is taking longer than expected. Please wait and try again."
+            error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
             event_type = NotificationEvents.INDEXING_TIMEOUT
         elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
             error_message = "Document indexing failed. Please upload new documents and try again."
             event_type = NotificationEvents.INDEXING_FAILED
+        elif isinstance(e, EvaluationError):
+            error_message = "Quality evaluation failed during text generation. Please try again or contact support."
+            event_type = NotificationEvents.PIPELINE_ERROR
+        elif isinstance(e, DatabaseError):
+            error_message = "Database error occurred while saving your application. Please try again."
+            event_type = NotificationEvents.PIPELINE_ERROR
+        elif isinstance(e, RagError):
+            error_message = "Document processing error occurred. Please try again or upload different documents."
+            event_type = NotificationEvents.PIPELINE_ERROR
+        elif isinstance(e, DeserializationError):
+            error_message = "Data processing error occurred. Please try again."
+            event_type = NotificationEvents.PIPELINE_ERROR
         else:
-            error_message = "Failed to generate application. Please try again."
+            error_message = "An unexpected error occurred while generating your application. Please try again or contact support if this persists."
             event_type = NotificationEvents.PIPELINE_ERROR
             logger.error(
                 "Unexpected error in grant application pipeline",
                 error=e,
                 context=getattr(e, "context", None),
                 application_id=str(application_id),
-                job_id=str(existing_job.id) if existing_job else None,
+                job_id=str(job_id) if job_id else None,
                 trace_id=trace_id,
                 stage=generation_stage,
             )
@@ -641,7 +760,8 @@ async def grant_application_text_generation_pipeline_handler(
             event_type=event_type,
             error_message=error_message[:200],
             application_id=str(application_id),
-            job_id=str(existing_job.id) if existing_job else None,
+            job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
             stage=generation_stage,
         )
+        return None
