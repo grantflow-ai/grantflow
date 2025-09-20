@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
@@ -121,9 +122,9 @@ async def test_handle_batch_enrich_objectives_success(
     result = await handle_batch_enrich_objectives(
         research_objectives=sample_research_objectives,
         grant_section=sample_grant_section,
-        application_id="test-app-id",
+        application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify result structure
@@ -148,7 +149,7 @@ async def test_handle_batch_enrich_objectives_success(
     mock_batched_gather.assert_called_once()
     call_args = mock_batched_gather.call_args
     assert len(call_args[0]) == 2  # Two coroutines for two objectives
-    assert call_args[1]["batch_size"] == 3  # Default batch size
+    assert call_args[1]["batch_size"] == 2  # min(3, len(batch_coroutines)) = min(3, 2) = 2
 
 
 @patch("services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective")
@@ -164,9 +165,9 @@ async def test_handle_batch_enrich_objectives_empty_list(
     result = await handle_batch_enrich_objectives(
         research_objectives=[],
         grant_section=sample_grant_section,
-        application_id="test-app-id",
+        application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify result
@@ -222,9 +223,9 @@ async def test_handle_batch_enrich_objectives_single_objective(
     result = await handle_batch_enrich_objectives(
         research_objectives=single_objective,
         grant_section=sample_grant_section,
-        application_id="test-app-id",
+        application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify result
@@ -252,9 +253,9 @@ async def test_handle_batch_enrich_objectives_error_propagation(
         await handle_batch_enrich_objectives(
             research_objectives=sample_research_objectives,
             grant_section=sample_grant_section,
-            application_id="test-app-id",
+            application_id=str(uuid4()),
             form_inputs=sample_form_inputs,
-            trace_id="test-trace",
+            trace_id=str(uuid4()),
         )
 
     # Verify service was called
@@ -277,20 +278,24 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
     mock_perform_shared_retrieval.return_value = "Shared context from retrieval"
     mock_batched_gather.return_value = [{"research_objective": {}, "research_tasks": []}] * 2
 
+    # Test IDs
+    test_app_id = str(uuid4())
+    test_trace_id = str(uuid4())
+
     # Execute
     await handle_batch_enrich_objectives(
         research_objectives=sample_research_objectives,
         grant_section=sample_grant_section,
-        application_id="test-app-id-123",
+        application_id=test_app_id,
         form_inputs=sample_form_inputs,
-        trace_id="test-trace-456",
+        trace_id=test_trace_id,
     )
 
     # Verify shared retrieval was called with correct parameters
     mock_perform_shared_retrieval.assert_called_once_with(
         sample_research_objectives,
         sample_grant_section,
-        "test-app-id-123"
+        test_app_id
     )
 
     # Verify batched_gather was called

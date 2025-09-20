@@ -13,12 +13,28 @@ const ERROR_EVENTS = new Set([
 	"missing_prerequisites",
 	"pipeline_error",
 	"template_incomplete",
+	"job_cancelled",
+	"auto_cancelled",
 ]);
 
-const WARNING_EVENTS = new Set(["indexing_timeout", "insufficient_context_error", "low_retrieval_quality"]);
+const WARNING_EVENTS = new Set([
+	"indexing_timeout",
+	"insufficient_context_error",
+	"low_retrieval_quality",
+	"cancellation_acknowledged",
+]);
 
 const SUCCESS_EVENTS = new Set([
 	"application_saved",
+	"cfp_data_extracted",
+	"sections_extracted",
+	"metadata_generated",
+	"section_texts_generated",
+	"relationships_extracted",
+	"objectives_enriched",
+	"wikidata_enhancement_complete",
+	"objective_completed",
+	"research_plan_completed",
 	"grant_application_generation_completed",
 	"grant_template_created",
 	"grant_template_generation_completed",
@@ -30,6 +46,14 @@ const PROGRESS_EVENTS = new Set([
 	"generating_section_texts",
 	"grant_application_generation_started",
 	"grant_template_generation_started",
+	"grant_template_extraction",
+	"grant_template_metadata",
+	"extracting_relationships",
+	"enriching_objectives",
+	"enhancing_with_wikidata",
+	"generating_research_plan",
+	"generating_objective",
+	"indexing_in_progress",
 	"restored_progress",
 	"saving_application",
 	"saving_grant_template",

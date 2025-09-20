@@ -93,8 +93,11 @@ interface WizardActions {
 
 	toNextStep: () => void;
 	toPreviousStep: () => void;
-	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
-
+	triggerAutofill: (
+		type: "research_deep_dive" | "research_plan",
+		context?: Record<string, unknown>,
+		fieldName?: string,
+	) => Promise<void>;
 	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: Objective[]) => Promise<void>;
@@ -786,7 +789,11 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}));
 		},
 
-		triggerAutofill: async (type: "research_deep_dive" | "research_plan", fieldName?: string) => {
+		triggerAutofill: async (
+			type: "research_deep_dive" | "research_plan",
+			context?: Record<string, unknown>,
+			fieldName?: string,
+		) => {
 			const { application } = useApplicationStore.getState();
 			const { selectedOrganizationId } = useOrganizationStore.getState();
 
@@ -803,15 +810,18 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				},
 			}));
 
+			const payload = {
+				autofill_type: type,
+				...(fieldName && { field_name: fieldName }),
+				...(context && { context }),
+			};
+
 			try {
 				const response = await triggerAutofillAction(
 					selectedOrganizationId,
 					application.project_id,
 					application.id,
-					{
-						autofill_type: type,
-						...(fieldName && { field_name: fieldName }),
-					},
+					payload,
 				);
 
 				log.info("Autofill triggered successfully", {

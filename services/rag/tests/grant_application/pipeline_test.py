@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -94,7 +95,7 @@ async def test_generate_sections_stage(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify
@@ -122,7 +123,7 @@ async def test_extract_relationships_stage_requires_checkpoint(
             grant_application=grant_application,
             session_maker=async_session_maker,
             generation_stage=GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS,
-            trace_id="test-trace",
+            trace_id=str(uuid4()),
         )
 
     # Should not call the handler if validation fails
@@ -148,7 +149,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
             grant_application=grant_application,
             session_maker=async_session_maker,
             generation_stage=GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES,
-            trace_id="test-trace",
+            trace_id=str(uuid4()),
         )
 
     mock_handle_enrich_objectives.assert_not_called()
@@ -173,7 +174,7 @@ async def test_insufficient_context_error_handling(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify
@@ -199,7 +200,7 @@ async def test_indexing_timeout_error_handling(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify
@@ -225,7 +226,7 @@ async def test_generic_backend_error_handling(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify
@@ -249,7 +250,7 @@ async def test_missing_grant_template_validation(
             grant_application=grant_application,
             session_maker=async_session_maker,
             generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-            trace_id="test-trace",
+            trace_id=str(uuid4()),
         )
 
 
@@ -270,7 +271,7 @@ async def test_missing_cfp_analysis_validation(
             grant_application=grant_application,
             session_maker=async_session_maker,
             generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-            trace_id="test-trace",
+            trace_id=str(uuid4()),
         )
 
 
@@ -294,7 +295,7 @@ async def test_pipeline_creates_real_job_entry(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        trace_id="test-trace",
+        trace_id=str(uuid4()),
     )
 
     # Verify

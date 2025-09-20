@@ -19,7 +19,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_trigger_autofill,
     handle_update_application,
 )
-from services.backend.src.api.routes.grant_template import (
+from services.backend.src.api.routes.grant_templates import (
     handle_generate_grant_template,
     handle_update_grant_template,
 )

@@ -245,5 +245,5 @@ class TraceIdMiddleware(ASGIMiddleware):
             await next_app(scope, receive, send)
 
 
-def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str | None:
-    return getattr(request.state, "trace_id", None)
+def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str:
+    return getattr(request.state, "trace_id", str(uuid4())) # TODO: align with frontend, we should have a clear format for these.
