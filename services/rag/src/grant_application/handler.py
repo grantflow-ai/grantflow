@@ -11,7 +11,6 @@ from packages.db.src.json_objects import (
     ResearchObjective,
 )
 from packages.db.src.tables import GrantApplication, GrantTemplate
-from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -308,14 +307,19 @@ async def generate_grant_section_texts(
 
 
 async def grant_application_text_generation_pipeline_handler(
-    grant_application_id: UUID,
+    grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
-    stage: GrantApplicationStageEnum,
-    trace_id: str | None = None,
+    generation_stage: GrantApplicationStageEnum,
+    trace_id: str,
     job_manager: JobManager | None = None,
 ) -> tuple[str, dict[str, str]] | None:
-    application_id = grant_application_id
-    logger.info("Starting grant application text generation pipeline", application_id=application_id)
+    application_id = grant_application.id
+    logger.info(
+        "Starting grant application text generation pipeline",
+        application_id=application_id,
+        trace_id=trace_id,
+        stage=generation_stage,
+    )
 
     if job_manager is None:
         job_manager = JobManager(session_maker)
@@ -335,11 +339,11 @@ async def grant_application_text_generation_pipeline_handler(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
-    grant_application: GrantApplication | None = None
     grant_template: GrantTemplate | None = None
 
     async with session_maker() as session:
-        grant_application = await retrieve_application(application_id=application_id, session=session)
+        # Refresh the grant_application to ensure we have latest data
+        await session.refresh(grant_application)
         grant_template = grant_application.grant_template
 
         cfp_analysis: CFPSectionAnalysis | None = None

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import UUID
@@ -14,7 +13,7 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
+from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification, publish_rag_task
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -23,9 +22,18 @@ logger = get_logger(__name__)
 
 
 class BaseJobManager[T: RagGenerationJob, E, D](ABC):
-    __slots__ = ("current_stage", "grant_application_id", "job_id", "parent_id", "pipeline_stages", "session_maker")
+    __slots__ = (
+        "current_stage",
+        "grant_application_id",
+        "job_id",
+        "parent_id",
+        "pipeline_stages",
+        "session_maker",
+        "trace_id",
+    )
 
-    job: None | RagGenerationJob = None
+    job: None | T = None
+    parent_type: Literal["grant_application", "grant_template"]
 
     def __init__(
         self,
@@ -36,6 +44,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         parent_id: UUID,
         pipeline_stages: list[E],
         session_maker: async_sessionmaker[Any],
+        trace_id: str,
     ) -> None:
         self.current_stage = current_stage
         self.grant_application_id = grant_application_id
@@ -43,21 +52,45 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         self.parent_id = parent_id
         self.session_maker = session_maker
         self.pipeline_stages = pipeline_stages
+        self.trace_id = trace_id
 
     @abstractmethod
     async def get_or_create_job(self) -> T:
         pass
 
     async def to_next_job_stage(self, dto: D) -> None:
-        next_stage = self.pipeline_stages[self.pipeline_stages.index(self.current_stage) + 1]
+        """Save checkpoint data and publish next stage to PubSub."""
+        current_index = self.pipeline_stages.index(self.current_stage)
+        if current_index >= len(self.pipeline_stages) - 1:
+            raise ValueError(f"No next stage after {self.current_stage}")
 
+        next_stage = self.pipeline_stages[current_index + 1]
+
+        # Save checkpoint data to job
         async with self.session_maker() as session:
-            self.job.checkpoint_data = dto
+            job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
+            if not job:
+                raise RuntimeError(f"Job {self.job_id} not found")
 
-            session.add(self.job)
+            job.checkpoint_data = dto
+            job.current_stage = current_index + 1
             await session.commit()
 
-        # TODO - publish to pubsub here - this is where we are publishing the next rag processing message in the pipeline
+        logger.info(
+            "Publishing next pipeline stage to PubSub",
+            job_id=str(self.job_id),
+            current_stage=self.current_stage,
+            next_stage=next_stage,
+            trace_id=self.trace_id,
+        )
+
+        # Publish next stage to PubSub
+        await publish_rag_task(
+            parent_type=self.parent_type,
+            parent_id=self.parent_id,
+            stage=next_stage,
+            trace_id=self.trace_id,
+        )
 
     async def update_job_status(
         self,
@@ -91,9 +124,12 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         event: str,
         message: str,
         notification_type: Literal["info", "error", "warning", "success"] = "info",
-        data: Mapping[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
     ) -> None:
         logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
+
+        current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
+        total_pipeline_stages = len(self.pipeline_stages)
 
         async with self.session_maker() as session:
             notification = GenerationNotification(
@@ -102,8 +138,8 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
                 message=message,
                 notification_type=notification_type,
                 data=data,
-                current_pipeline_stage=self.pipeline_stages.index(self.current_stage),
-                total_pipeline_stages=len(self.pipeline_stages),
+                current_pipeline_stage=current_pipeline_stage,
+                total_pipeline_stages=total_pipeline_stages,
             )
             session.add(notification)
             await session.commit()
@@ -111,8 +147,8 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         status_data: RagProcessingStatus = {
             "event": event,
             "message": message,
-            "current_pipeline_stage": notification["current_pipeline_stage"],
-            "total_pipeline_stages": notification["total_pipeline_stages"],
+            "current_pipeline_stage": current_pipeline_stage,
+            "total_pipeline_stages": total_pipeline_stages,
         }
 
         if data is not None:
@@ -148,6 +184,9 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             return list(result.scalars().all())
 
     async def ensure_not_cancelled(self) -> None:
+        if self.job is None:
+            raise RuntimeError("Job not set. Create a job first.")
+
         async with self.session_maker() as session:
             await session.refresh(self.job)
 
@@ -157,10 +196,12 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
                 message="Processing stopped due to cancellation",
                 notification_type="warning",
             )
-            raise RagJobCancelledError
+            raise RagJobCancelledError("Job cancelled")
 
 
 class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E, D]):
+    parent_type: Literal["grant_template"] = "grant_template"
+
     async def get_or_create_job(self) -> GrantTemplateGenerationJob:
         logger.debug(
             "Getting or creating rag job job",
@@ -188,6 +229,7 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
                         job_status=existing_job.status.value,
                     )
                     self.job_id = existing_job.id
+                    self.job = existing_job
                     return existing_job
 
                 job = GrantTemplateGenerationJob(
@@ -211,7 +253,9 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
                 raise DatabaseError("Error inserting rag job into db") from e
 
 
-class GrantApplicationJobManager[D](BaseJobManager[D]):
+class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGenerationJob, E, D]):
+    parent_type: Literal["grant_application"] = "grant_application"
+
     async def get_or_create_job(self) -> GrantApplicationGenerationJob:
         async with self.session_maker() as session, session.begin():
             try:
@@ -229,6 +273,7 @@ class GrantApplicationJobManager[D](BaseJobManager[D]):
                         job_id=str(existing_job.id),
                     )
                     self.job_id = existing_job.id
+                    self.job = existing_job
                     return existing_job
 
                 job = GrantApplicationGenerationJob(

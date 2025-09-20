@@ -118,7 +118,7 @@ async def handle_generate_grant_template(
             await publish_rag_task(
                 parent_type="grant_template",
                 parent_id=grant_template.id,
-                stage=GrantTemplateStageEnum.INITIALIZE,
+                stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
                 trace_id=trace_id,
             )
 
