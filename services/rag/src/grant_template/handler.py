@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
-from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.db.src.json_objects import CFPAnalysisResult, GrantElement, GrantLongFormSection
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -28,7 +28,6 @@ from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
-from src.json_objects import CFPAnalysisResult
 
 logger = get_logger(__name__)
 
@@ -63,6 +62,7 @@ async def handle_cfp_extraction_stage(
     grant_template: GrantTemplate,
     job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
     session_maker: async_sessionmaker[Any],
+    trace_id: str,
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
@@ -95,6 +95,7 @@ async def handle_cfp_extraction_stage(
             str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
         },
         session_maker=session_maker,
+        trace_id=trace_id,
     )
 
     organization = (
@@ -129,7 +130,7 @@ async def handle_cfp_extraction_stage(
         },
     )
 
-    logger.info("Extracted CFP data")
+    logger.info("Extracted CFP data", template_id=str(grant_template.id), trace_id=trace_id)
 
     return ExtractCFPContentStageDTO(extracted_data=extraction_result, organization=organization)
 
@@ -138,6 +139,7 @@ async def handle_cfp_analysis_stage(
     *,
     extracted_cfp: ExtractCFPContentStageDTO,
     job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    trace_id: str,
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
@@ -150,18 +152,20 @@ async def handle_cfp_analysis_stage(
                 f"{content['title']}: {' '.join(content['subtitles'])}"
                 for content in extracted_cfp["extracted_data"]["content"]
             ]
-        )
+        ),
+        trace_id=trace_id,
     )
 
     logger.info(
         "CFP analysis completed",
+        trace_id=trace_id,
         **analysis_results,
     )
 
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
         message="Enhanced CFP analysis completed successfully",
-        data=cast("dict", analysis_results),
+        data=cast("dict[str, Any]", analysis_results),
     )
 
     return AnalyzeCFPContentStageDTO(
@@ -171,8 +175,10 @@ async def handle_cfp_analysis_stage(
 
 
 async def handle_section_extraction_stage(
+    *,
     analysis_result: AnalyzeCFPContentStageDTO,
     job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    trace_id: str,
 ) -> ExtractionSectionsStageDTO:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
@@ -181,6 +187,7 @@ async def handle_section_extraction_stage(
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
+        trace_id=trace_id,
         organization=analysis_result["organization"],
     )
 
@@ -199,8 +206,10 @@ async def handle_section_extraction_stage(
 
 
 async def handle_generate_metadata_stage(
+    *,
     section_extraction_result: ExtractionSectionsStageDTO,
     job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    trace_id: str,  # noqa: ARG001
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_METADATA,
@@ -309,6 +318,7 @@ async def grant_template_generation_pipeline_handler(
                     grant_template=grant_template,
                     job_manager=job_manager,
                     session_maker=session_maker,
+                    trace_id=trace_id,
                 )
 
                 # Save checkpoint and trigger next stage
@@ -331,6 +341,7 @@ async def grant_template_generation_pipeline_handler(
                 analysis_result = await handle_cfp_analysis_stage(
                     job_manager=job_manager,
                     extracted_cfp=cast("ExtractCFPContentStageDTO", checkpoint_data),
+                    trace_id=trace_id,
                 )
 
                 # Save checkpoint and trigger next stage
@@ -354,6 +365,7 @@ async def grant_template_generation_pipeline_handler(
                 section_extraction_result = await handle_section_extraction_stage(
                     analysis_result=analysis_result,
                     job_manager=job_manager,
+                    trace_id=trace_id,
                 )
 
                 # Save checkpoint and trigger next stage
@@ -377,6 +389,7 @@ async def grant_template_generation_pipeline_handler(
                 grant_sections = await handle_generate_metadata_stage(
                     section_extraction_result=section_extraction_result,
                     job_manager=job_manager,
+                    trace_id=trace_id,
                 )
 
                 logger.info(
@@ -396,6 +409,7 @@ async def grant_template_generation_pipeline_handler(
                     grant_template=grant_template,
                     session_maker=session_maker,
                     job_manager=job_manager,
+                    cfp_analysis=section_extraction_result["analysis_results"],
                     extracted_cfp=section_extraction_result,  # Contains all accumulated data
                     grant_sections=grant_sections,
                     trace_id=trace_id,

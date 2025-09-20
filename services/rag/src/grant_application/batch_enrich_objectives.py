@@ -105,6 +105,7 @@ async def handle_batch_enrich_objectives(
     grant_section: GrantLongFormSection,
     application_id: str,
     form_inputs: ResearchDeepDive,
+    trace_id: str,
 ) -> list[ObjectiveEnrichmentDTO]:
     if not research_objectives:
         return []
@@ -113,6 +114,8 @@ async def handle_batch_enrich_objectives(
         "Starting batch enrichment with optimizations",
         objectives_count=len(research_objectives),
         section_title=grant_section.get("title", "Unknown"),
+        application_id=application_id,
+        trace_id=trace_id,
     )
 
     shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)

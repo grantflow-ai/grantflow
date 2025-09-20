@@ -22,10 +22,7 @@ from services.rag.src.grant_application.dto import (
     GenerateSectionsStageDTO,
     SectionText,
 )
-from services.rag.src.grant_application.enrich_research_objective import (
-    ObjectiveEnrichmentDTO,
-    enrich_objective_with_wikidata,
-)
+from services.rag.src.grant_application.enrich_terminology_stage import enrich_objective_with_wikidata
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
@@ -62,6 +59,7 @@ async def handle_generate_sections_stage(
     *,
     grant_application: GrantApplication,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    trace_id: str,
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
@@ -101,6 +99,7 @@ async def handle_generate_sections_stage(
         application_id=str(grant_application.id),
         sections_count=len(long_form_sections),
         deep_dives_count=len(research_objectives),
+        trace_id=trace_id,
     )
 
     all_search_queries = []
@@ -120,6 +119,7 @@ async def handle_generate_sections_stage(
         "Performing shared retrieval for all sections",
         unique_queries_count=len(unique_queries),
         total_original_queries=len(all_search_queries),
+        trace_id=trace_id,
     )
 
     combined_task_description = (
@@ -138,10 +138,11 @@ async def handle_generate_sections_stage(
     logger.info(
         "Shared retrieval completed",
         context_length=len(shared_context),
+        trace_id=trace_id,
     )
 
     generation_coroutines = [
-        handle_generate_section_text(section, research_objectives, shared_context, cfp_analysis)
+        handle_generate_section_text(section, research_objectives, shared_context, cfp_analysis, trace_id)
         for section in long_form_sections
     ]
 
@@ -166,6 +167,7 @@ async def handle_extract_relationships_stage(
     grant_application: GrantApplication,
     dto: GenerateSectionsStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    trace_id: str,
 ) -> ExtractRelationshipsStageDTO:
     await job_manager.ensure_not_cancelled()
 
@@ -179,6 +181,7 @@ async def handle_extract_relationships_stage(
         research_objectives=grant_application.research_objectives or [],
         grant_section=dto["work_plan_section"],
         form_inputs=grant_application.form_inputs or {},
+        trace_id=trace_id,
     )
 
     return ExtractRelationshipsStageDTO(
@@ -193,6 +196,7 @@ async def handle_enrich_objectives_stage(
     grant_application: GrantApplication,
     dto: ExtractRelationshipsStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    trace_id: str,
 ) -> EnrichObjectivesStageDTO:
     await job_manager.ensure_not_cancelled()
 
@@ -202,10 +206,11 @@ async def handle_enrich_objectives_stage(
     )
 
     enrichment_responses = await handle_batch_enrich_objectives(
-        application_id=str(grant_application.id),
-        grant_section=dto["work_plan_section"],
         research_objectives=grant_application.research_objectives or [],
+        grant_section=dto["work_plan_section"],
+        application_id=str(grant_application.id),
         form_inputs=grant_application.form_inputs or {},
+        trace_id=trace_id,
     )
 
     await job_manager.add_notification(
@@ -227,9 +232,9 @@ async def handle_enrich_objectives_stage(
     )
 
 
-async def handle_enrich_vocabulary_stage(
+async def handle_enrich_terminology_stage(
     *,
-    grant_application: GrantApplication,
+    grant_application: GrantApplication,  # noqa: ARG001
     dto: EnrichObjectivesStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
     trace_id: str,
@@ -241,16 +246,11 @@ async def handle_enrich_vocabulary_stage(
         message="Enhancing objectives with Wikidata scientific context...",
     )
 
-    # Combine enrichment data from all objectives for Wikidata enhancement
+    # Enhance each objective with Wikidata scientific context
     wikidata_enrichments = []
     for enrichment_response in dto["enrichment_responses"]:
-        combined_data: ObjectiveEnrichmentDTO = {
-            "research_objective": enrichment_response["research_objective"],
-            "research_tasks": enrichment_response["research_tasks"],
-        }
-
         wikidata_enrichment = await enrich_objective_with_wikidata(
-            combined_data,
+            enrichment_response,
             trace_id=trace_id,
         )
         wikidata_enrichments.append(wikidata_enrichment)
@@ -272,11 +272,12 @@ async def handle_enrich_vocabulary_stage(
     )
 
 
-async def handle_generate_research_plan_state(
+async def handle_generate_research_plan_stage(
     *,
     grant_application: GrantApplication,
     dto: EnrichTerminologyStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    trace_id: str,
 ) -> GenerateResearchPlanStageDTO:
     await job_manager.ensure_not_cancelled()
 
@@ -352,6 +353,7 @@ async def handle_generate_research_plan_state(
                 objective=objective,
                 tasks=tasks,
                 work_plan_text=work_plan_text,
+                trace_id=trace_id,
             )
             for objective, tasks in objective_task_groups
         ]
@@ -444,41 +446,6 @@ async def grant_application_text_generation_pipeline_handler(
 
         grant_template = grant_application.grant_template
 
-        if not grant_application.grant_template or not grant_application.research_objectives:
-            missing_parts = []
-            if not grant_application.grant_template:
-                missing_parts.append("grant template")
-            if not grant_application.research_objectives:
-                missing_parts.append("research objectives")
-
-            error_message = (
-                f"Please complete the following before generating application text: {', '.join(missing_parts)}."
-            )
-            logger.error(
-                "Missing prerequisites for grant application", application_id=application_id, missing=missing_parts
-            )
-
-            await job_manager.add_notification(
-                event=NotificationEvents.MISSING_PREREQUISITES,
-                message=error_message,
-                notification_type="error",
-                data={
-                    "has_grant_template": grant_application.grant_template is not None,
-                    "has_research_objectives": grant_application.research_objectives is not None,
-                    "missing": missing_parts,
-                    "recoverable": True,
-                },
-            )
-            raise ValidationError(
-                error_message,
-                context={
-                    "application_id": application_id,
-                    "has_grant_template": grant_application.grant_template is not None,
-                    "has_research_objectives": grant_application.research_objectives is not None,
-                    "recovery_instruction": "Ensure the grant application has both a grant template and research objectives before generating text.",
-                },
-            )
-
     if grant_template is None:
         raise ValidationError("Grant template is unexpectedly None")
 
@@ -494,6 +461,7 @@ async def grant_application_text_generation_pipeline_handler(
             dto = await handle_generate_sections_stage(
                 grant_application=grant_application,
                 job_manager=job_manager,
+                trace_id=trace_id,
             )
             await job_manager.to_next_job_stage(dto)
             return
@@ -501,10 +469,12 @@ async def grant_application_text_generation_pipeline_handler(
         case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
+
             dto = await handle_extract_relationships_stage(
                 grant_application=grant_application,
                 dto=cast("GenerateSectionsStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
+                trace_id=trace_id,
             )
             await job_manager.to_next_job_stage(dto)
             return
@@ -512,10 +482,12 @@ async def grant_application_text_generation_pipeline_handler(
         case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
+
             dto = await handle_enrich_objectives_stage(
                 grant_application=grant_application,
                 dto=cast("ExtractRelationshipsStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
+                trace_id=trace_id,
             )
             await job_manager.to_next_job_stage(dto)
             return
@@ -523,7 +495,8 @@ async def grant_application_text_generation_pipeline_handler(
         case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
-            dto = await handle_enrich_vocabulary_stage(
+
+            dto = await handle_enrich_terminology_stage(
                 grant_application=grant_application,
                 dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
@@ -535,10 +508,11 @@ async def grant_application_text_generation_pipeline_handler(
         case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
-            final_dto = await handle_generate_research_plan_state(
+            final_dto = await handle_generate_research_plan_stage(
                 grant_application=grant_application,
                 dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
+                trace_id=trace_id,
             )
 
             # Final stage - save to database
@@ -568,12 +542,13 @@ async def grant_application_text_generation_pipeline_handler(
                     application_id=application_id,
                     trace_id=trace_id,
                 )
-                logger.info("Email notification published", application_id=str(application_id))
+                logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
             except Exception as e:
                 logger.error(
                     "Failed to publish email notification",
                     application_id=str(application_id),
                     error=str(e),
+                    trace_id=trace_id,
                 )
 
             return

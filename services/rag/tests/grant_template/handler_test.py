@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Any, cast
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
@@ -299,14 +299,25 @@ async def test_handle_cfp_extraction_stage(
     # Create the job using get_or_create_job
     job = await job_manager.get_or_create_job()
 
-    with patch(
-        "services.rag.src.grant_template.handler.handle_extract_cfp_data",
-        return_value=mock_extracted_cfp_data,
+    with (
+        patch(
+            "services.rag.src.grant_template.handler.handle_extract_cfp_data",
+            return_value=mock_extracted_cfp_data,
+        ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_rag_task",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_notification",
+            new_callable=AsyncMock,
+        ),
     ):
         result = await handle_cfp_extraction_stage(
             grant_template=grant_template_with_sources,
             job_manager=job_manager,
             session_maker=async_session_maker,
+            trace_id="test-trace-id",
         )
 
     assert result["extracted_data"]["cfp_subject"] == mock_extracted_cfp_data["cfp_subject"]
@@ -370,13 +381,24 @@ async def test_handle_cfp_analysis_stage(
         "extracted_data": mock_extracted_cfp_data,
     }
 
-    with patch(
-        "services.rag.src.grant_template.handler.handle_analyze_cfp",
-        return_value=mock_cfp_analysis_result,
+    with (
+        patch(
+            "services.rag.src.grant_template.handler.handle_analyze_cfp",
+            return_value=mock_cfp_analysis_result,
+        ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_rag_task",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_notification",
+            new_callable=AsyncMock,
+        ),
     ):
         result = await handle_cfp_analysis_stage(
             extracted_cfp=extracted_cfp,
             job_manager=job_manager,
+            trace_id="test-trace-id",
         )
 
     assert result["analysis_results"] == mock_cfp_analysis_result
@@ -435,13 +457,20 @@ async def test_handle_generate_metadata_stage(
         "extracted_sections": mock_extracted_sections,
     }
 
-    with patch(
-        "services.rag.src.grant_template.handler.handle_generate_grant_template_metadata",
-        return_value=mock_section_metadata,
+    with (
+        patch(
+            "services.rag.src.grant_template.handler.handle_generate_grant_template_metadata",
+            return_value=mock_section_metadata,
+        ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_notification",
+            new_callable=AsyncMock,
+        ),
     ):
         result = await handle_generate_metadata_stage(
             section_extraction_result=section_extraction_result,
             job_manager=job_manager,
+            trace_id="test-trace-id",
         )
 
     assert len(result) == 3
@@ -496,6 +525,10 @@ async def test_grant_template_generation_pipeline_full_flow(
             "services.rag.src.grant_template.handler.handle_generate_grant_template_metadata",
             return_value=mock_section_metadata,
         ),
+        patch(
+            "services.rag.src.utils.job_manager.publish_notification",
+            new_callable=AsyncMock,
+        ),
     ):
         await grant_template_generation_pipeline_handler(
             grant_template=grant_template_with_sources,
@@ -504,12 +537,18 @@ async def test_grant_template_generation_pipeline_full_flow(
             trace_id="test-trace-id",
         )
 
-    # Verify the grant template was updated
+    # Verify the grant template was updated with new sections
     async with async_session_maker() as session:
         updated_template = await session.get(GrantTemplate, grant_template_with_sources.id)
         assert updated_template is not None
         assert updated_template.grant_sections is not None
+        # The template should have the sections from the pipeline, not the original fixture sections
         assert len(updated_template.grant_sections) == 3
+        # Verify the sections match what we expected from the pipeline
+        section_ids = [s["id"] for s in updated_template.grant_sections if isinstance(s, dict)]
+        assert "abstract" in section_ids
+        assert "research_plan" in section_ids
+        assert "impact" in section_ids
 
 
 async def test_get_rag_sources_data(
