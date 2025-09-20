@@ -124,31 +124,19 @@ def create_session_maker_server_startup(logger: FilteringBoundLogger) -> Lifespa
     return session_maker_server_startup
 
 
-async def _health_check() -> str:
+# TODO: change health to healthz, and add readyz for readiness checks.
+@get("/health", media_type="text/plain", operation_id="HealthCheck")
+async def health_check() -> str:
     return "OK"
 
 
 def create_litestar_app(
     logger: FilteringBoundLogger,
     add_session_maker: bool = True,
-    lightweight_health_check: bool = False,
     **kwargs: Any,
 ) -> Litestar:
     exception_handler = create_exception_handler(logger)
 
-    # Use lightweight health check if requested (no DB connectivity check)
-    if lightweight_health_check:
-
-        async def _lightweight_health() -> str:
-            return "OK"
-
-        health_check = get(
-            "/health", media_type="text/plain", operation_id="HealthCheck"
-        )(_lightweight_health)
-    else:
-        health_check = get(
-            "/health", media_type="text/plain", operation_id="HealthCheck"
-        )(_health_check)
     if "route_handlers" in kwargs:
         kwargs["route_handlers"].append(health_check)
     else:

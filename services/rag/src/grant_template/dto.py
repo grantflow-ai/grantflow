@@ -1,4 +1,5 @@
 from typing import NotRequired, TypedDict
+from uuid import UUID
 
 
 class CFPContentSection(TypedDict):
@@ -12,3 +13,9 @@ class ExtractedCFPData(TypedDict):
     submission_date: str | None
     content: list[CFPContentSection]
     error: NotRequired[str | None]
+
+
+class OrganizationNamespace(TypedDict):
+    full_name: str
+    abbreviation: str
+    organization_id: UUID

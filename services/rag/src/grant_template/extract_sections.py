@@ -8,8 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
-from rag.src.grant_template.dto import CFPContentSection
-from rag.src.grant_template.handler import OrganizationNamespace
+from rag.src.grant_template.dto import CFPContentSection, OrganizationNamespace
 from sentence_transformers import SentenceTransformer, util
 
 from services.rag.src.grant_template.utils import detect_cycle
