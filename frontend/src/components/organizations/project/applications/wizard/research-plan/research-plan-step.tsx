@@ -54,7 +54,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 
 	return (
 		<div className="flex size-full" data-testid="research-plan-step">
-			<WizardLeftPane className="relative" innerClassName="pb-5" testId="research-plan-left-pane">
+			<WizardLeftPane className="relative" innerClassName="pb-15" testId="research-plan-left-pane">
 				<div className="space-y-1">
 					<div className="flex items-center justify-between gap-4">
 						<h2
@@ -75,6 +75,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 					{!showObjectiveForm && (
 						<>
 							<AppButton
+								className="w-full"
 								data-testid="new-objective-button"
 								disabled={objectives.length >= MAX_OBJECTIVES}
 								leftIcon={<Plus size={16} />}

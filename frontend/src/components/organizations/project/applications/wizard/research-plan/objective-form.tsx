@@ -1,14 +1,11 @@
 "use client";
 
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
-import { FloatingActionButton } from "@/components/organizations/project/applications/wizard/shared/floating-action-button";
-import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { FloatingActionPanel } from "./floating-action-panel";
 
 export interface ObjectiveFormData {
 	description: string;
@@ -153,27 +150,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					value={formData.description}
 				/>
 
-				<div className="flex items-center justify-between">
-					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
-					<TooltipProvider delayDuration={300}>
-						<TooltipPrimitive.Root>
-							<TooltipTrigger asChild>
-								<IconButton
-									data-testid="add-task-button"
-									onClick={addTask}
-									size="sm"
-									type="button"
-									variant="solid"
-								>
-									<Plus className="w-4 h-4" />
-								</IconButton>
-							</TooltipTrigger>
-							<TooltipContent side="top">
-								<p>Add Task</p>
-							</TooltipContent>
-						</TooltipPrimitive.Root>
-					</TooltipProvider>
-				</div>
+				<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
 
 				{formData.tasks.map((task, index) => (
 					<div className="flex gap-3 items-start" key={task.id}>
@@ -193,7 +170,16 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				))}
 			</div>
 
-			<FloatingActionButton>
+			<FloatingActionPanel>
+				<AppButton
+					className="w-full"
+					data-testid="add-task-button"
+					leftIcon={<Plus size={16} />}
+					onClick={addTask}
+					variant="secondary"
+				>
+					Add Task
+				</AppButton>
 				<AppButton
 					className="w-full"
 					data-testid="add-objective-button"
@@ -204,7 +190,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				>
 					Add Objective
 				</AppButton>
-			</FloatingActionButton>
+			</FloatingActionPanel>
 		</div>
 	);
 }

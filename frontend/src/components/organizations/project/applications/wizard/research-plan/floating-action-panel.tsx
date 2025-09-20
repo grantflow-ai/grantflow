@@ -2,17 +2,17 @@
 
 import { cn } from "@/lib/utils";
 
-interface FloatingActionButtonProps {
+interface FloatingActionPanelProps {
 	children: React.ReactNode;
 	className?: string;
 	testId?: string;
 }
 
-export function FloatingActionButton({
+export function FloatingActionPanel({
 	children,
 	className,
-	testId = "floating-action-button",
-}: FloatingActionButtonProps) {
+	testId = "floating-action-panel",
+}: FloatingActionPanelProps) {
 	return (
 		<div
 			className={cn(
@@ -20,7 +20,7 @@ export function FloatingActionButton({
 				"bg-surface-primary/95 backdrop-blur-md",
 				"p-4",
 				"z-10",
-				"flex",
+				"flex flex-col gap-4",
 				className,
 			)}
 			data-testid={testId}
