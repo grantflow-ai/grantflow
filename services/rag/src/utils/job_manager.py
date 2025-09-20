@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import Any, Literal, TypeVar, cast
+from typing import Any, Literal, cast
 from uuid import UUID
 
+import msgspec
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GenerationNotification,
@@ -14,7 +15,7 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification, publish_rag_task
-from packages.shared_utils.src.serialization import serialize
+from packages.shared_utils.src.serialization import encode_hook
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -23,10 +24,17 @@ from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStage
 
 logger = get_logger(__name__)
 
-StageEnum = TypeVar("StageEnum", bound=GrantApplicationStageEnum | GrantTemplateStageEnum)
+
+def _serialize_checkpoint_data[DTOType: dict[str, Any]](data: DTOType) -> dict[str, Any]:
+    """Convert stage DTOs into JSON-safe dictionaries."""
+    return cast("dict[str, Any]", msgspec.to_builtins(data, enc_hook=encode_hook))
 
 
-class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
+class BaseJobManager[
+    JobT: RagGenerationJob,
+    StageT: GrantApplicationStageEnum | GrantTemplateStageEnum,
+    DTOType: dict[str, Any],
+](ABC):
     __slots__ = (
         "current_stage",
         "grant_application_id",
@@ -42,11 +50,11 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
     def __init__(
         self,
         *,
-        current_stage: StageEnum,
+        current_stage: StageT,
         grant_application_id: UUID,
         job_id: UUID | None = None,
         parent_id: UUID,
-        pipeline_stages: list[StageEnum],
+        pipeline_stages: list[StageT],
         session_maker: async_sessionmaker[Any],
         trace_id: str,
     ) -> None:
@@ -57,26 +65,28 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
         self.session_maker = session_maker
         self.pipeline_stages = pipeline_stages
         self.trace_id = trace_id
+        self.job: JobT | None = None
 
     @abstractmethod
-    async def get_or_create_job(self) -> T:
-        pass
+    async def get_or_create_job(self) -> JobT: ...
 
     async def to_next_job_stage(self, dto: DTOType) -> None:
-        """Save checkpoint data and publish next stage to PubSub."""
+        """Persist checkpoint data and publish the next stage."""
         current_index = self.pipeline_stages.index(self.current_stage)
         if current_index >= len(self.pipeline_stages) - 1:
             raise ValueError(f"No next stage after {self.current_stage}")
 
+        if self.job_id is None:
+            raise RuntimeError("Job ID not set. Create a job first.")
+
         next_stage = self.pipeline_stages[current_index + 1]
 
-        # Save checkpoint data to job
         async with self.session_maker() as session:
             job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             if not job:
                 raise RuntimeError(f"Job {self.job_id} not found")
 
-            job.checkpoint_data = serialize(dto)
+            job.checkpoint_data = _serialize_checkpoint_data(dto)
             job.current_stage = current_index + 1
             await session.commit()
 
@@ -88,7 +98,6 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
             trace_id=self.trace_id,
         )
 
-        # Publish next stage to PubSub
         await publish_rag_task(
             parent_type=self.parent_type,
             parent_id=self.parent_id,
@@ -130,6 +139,9 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
         notification_type: Literal["info", "error", "warning", "success"] = "info",
         data: dict[str, Any] | None = None,
     ) -> None:
+        if self.job_id is None:
+            raise RuntimeError("Job ID not set. Create a job first.")
+
         logger.debug(
             "Adding notification to job",
             job_id=str(self.job_id),
@@ -173,6 +185,9 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
         )
 
     async def increment_retry_count(self) -> int:
+        if self.job_id is None:
+            raise RuntimeError("Job ID not set. Create a job first.")
+
         async with self.session_maker() as session:
             result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             job = result.scalar_one()
@@ -182,6 +197,9 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
             return int(job.retry_count)
 
     async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
+        if self.job_id is None:
+            raise RuntimeError("Job ID not set. Create a job first.")
+
         async with self.session_maker() as session:
             query = (
                 select(GenerationNotification)
@@ -189,23 +207,26 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
                 .order_by(GenerationNotification.created_at.desc())
             )
 
-            if limit:
+            if limit is not None:
                 query = query.limit(limit)
 
             result = await session.execute(query)
             return list(result.scalars().all())
 
     async def ensure_not_cancelled(self) -> None:
-        if self.job is None:
+        job_instance = self.job
+        if job_instance is None:
             raise RuntimeError("Job not set. Create a job first.")
 
         async with self.session_maker() as session:
-            job = await session.get(type(self.job), self.job.id)
-            if not job:
-                raise RuntimeError(f"Job {self.job.id} not found")
-            self.job = job
+            refreshed_job = await session.get(type(job_instance), job_instance.id)
+            if not refreshed_job:
+                raise RuntimeError(f"Job {job_instance.id} not found")
+            job_instance = cast("JobT", refreshed_job)
 
-        if self.job.status == RagGenerationStatusEnum.CANCELLED:
+        self.job = job_instance
+
+        if job_instance.status == RagGenerationStatusEnum.CANCELLED:
             await self.add_notification(
                 event=NotificationEvents.CANCELLATION_ACKNOWLEDGED,
                 message="Processing stopped due to cancellation",
@@ -214,7 +235,9 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
             raise RagJobCancelledError("Job cancelled")
 
 
-class GrantTemplateJobManager[StageEnum, DTOType](BaseJobManager[GrantTemplateGenerationJob, StageEnum, DTOType]):
+class GrantTemplateJobManager[DTOType: dict[str, Any]](
+    BaseJobManager[GrantTemplateGenerationJob, GrantTemplateStageEnum, DTOType],
+):
     parent_type: Literal["grant_template"] = "grant_template"
 
     async def get_or_create_job(self) -> GrantTemplateGenerationJob:
@@ -276,11 +299,24 @@ class GrantTemplateJobManager[StageEnum, DTOType](BaseJobManager[GrantTemplateGe
                 raise DatabaseError("Error inserting rag job into db") from e
 
 
-class GrantApplicationJobManager[StageEnum, DTOType](BaseJobManager[GrantApplicationGenerationJob, StageEnum, DTOType]):
+class GrantApplicationJobManager[DTOType: dict[str, Any]](
+    BaseJobManager[GrantApplicationGenerationJob, GrantApplicationStageEnum, DTOType],
+):
     parent_type: Literal["grant_application"] = "grant_application"
 
     async def get_or_create_job(self) -> GrantApplicationGenerationJob:
+        logger.debug(
+            "Getting or creating rag job job",
+            application_id=str(self.parent_id),
+            trace_id=self.trace_id,
+        )
+
         async with self.session_maker() as session, session.begin():
+            logger.debug(
+                "Checking for existing job",
+                application_id=str(self.parent_id),
+                trace_id=self.trace_id,
+            )
             try:
                 existing_job_result = await session.execute(
                     select(GrantApplicationGenerationJob).where(
@@ -329,14 +365,13 @@ class GrantApplicationJobManager[StageEnum, DTOType](BaseJobManager[GrantApplica
         self,
         dto: DTOType,
     ) -> None:
-        if not self.job:
+        job_instance = self.job
+        if job_instance is None:
             raise ValueError("No job available to update")
 
-        current_stage = self.pipeline_stages[self.job.current_stage]
+        current_stage = self.pipeline_stages[job_instance.current_stage]
 
-        # Check if there's a next stage
-        if self.job.current_stage >= len(self.pipeline_stages) - 1:
-            # This is the final stage - should not call to_next_job_stage
+        if job_instance.current_stage >= len(self.pipeline_stages) - 1:
             logger.warning(
                 "Attempted to advance past final stage",
                 application_id=str(self.parent_id),
@@ -345,26 +380,26 @@ class GrantApplicationJobManager[StageEnum, DTOType](BaseJobManager[GrantApplica
             )
             return
 
-        next_stage_index = self.job.current_stage + 1
+        next_stage_index = job_instance.current_stage + 1
         next_stage = self.pipeline_stages[next_stage_index]
 
-        # Update job with checkpoint data and new stage
         async with self.session_maker() as session, session.begin():
-            self.job.checkpoint_data = dto  # type: ignore[assignment]
-            self.job.current_stage = next_stage_index
-            session.add(self.job)
+            job_instance.checkpoint_data = _serialize_checkpoint_data(dto)
+            job_instance.current_stage = next_stage_index
+            session.add(job_instance)
             await session.flush()
+
+        self.job = job_instance
 
         logger.info(
             "Advanced to next pipeline stage",
             application_id=str(self.parent_id),
-            job_id=str(self.job.id),
+            job_id=str(job_instance.id),
             from_stage=current_stage,
             to_stage=next_stage,
             trace_id=self.trace_id,
         )
 
-        # Publish next stage to PubSub
         await publish_rag_task(
             parent_id=self.parent_id,
             parent_type=self.parent_type,

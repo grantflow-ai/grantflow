@@ -17,6 +17,7 @@ from packages.shared_utils.src.pubsub import publish_email_notification
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
@@ -48,11 +49,11 @@ async def _initialize_pipeline(
     generation_stage: GrantApplicationStageEnum,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
-) -> tuple[GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO], Any]:
+) -> tuple[GrantApplicationJobManager[StageDTO], Any]:
     """Initialize the pipeline job manager and verify prerequisites."""
     application_id = grant_application.id
 
-    job_manager = GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO](
+    job_manager = GrantApplicationJobManager[StageDTO](
         current_stage=generation_stage,
         grant_application_id=application_id,
         parent_id=application_id,
@@ -107,8 +108,18 @@ async def _verify_prerequisites(
     application_id = grant_application.id
 
     async with session_maker() as session:
-        await session.refresh(grant_application)
-        grant_template = grant_application.grant_template
+        # Load fresh instance with grant_template eagerly loaded to avoid lazy loading issues
+        from sqlalchemy import select
+
+        result = await session.execute(
+            select(GrantApplication)
+            .options(selectinload(GrantApplication.grant_template))
+            .where(GrantApplication.id == application_id)
+        )
+        fresh_application = result.scalar_one_or_none()
+        if not fresh_application:
+            raise ValidationError(f"Grant application {application_id} not found")
+        grant_template = fresh_application.grant_template
 
     if grant_template is None:
         raise ValidationError("Grant template is unexpectedly None")
@@ -168,7 +179,7 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
 
 async def _handle_pipeline_error(
     error: BackendError,
-    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    job_manager: GrantApplicationJobManager[StageDTO],
     application_id: Any,
     existing_job: Any,
     generation_stage: GrantApplicationStageEnum,
