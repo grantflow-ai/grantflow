@@ -321,7 +321,7 @@ def validate_template_sections(
 
 
 async def generate_grant_template(
-    task_description: str, *, input_sections: list[ExtractedSectionDTO]
+    task_description: str, *, trace_id: str, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
     return await handle_completions_request(
         prompt_identifier="grant_template_extraction",
@@ -333,6 +333,7 @@ async def generate_grant_template(
         temperature=0.1,
         top_p=0.9,
         candidate_count=2,
+        trace_id=trace_id,
     )
 
 
@@ -378,6 +379,7 @@ async def handle_generate_grant_template_metadata(
     cfp_subject: str,
     organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
+    trace_id: str,
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
@@ -398,6 +400,7 @@ async def handle_generate_grant_template_metadata(
             rag_results=await retrieve_documents(
                 organization_id=str(organization["organization_id"]),
                 task_description=str(prompt),
+                trace_id=trace_id,
             ),
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
@@ -432,5 +435,6 @@ async def handle_generate_grant_template_metadata(
         retries=3,
         criteria=criteria,
         passing_score=70,
+        trace_id=trace_id,
     )
     return result["sections"]

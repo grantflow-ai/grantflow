@@ -216,6 +216,7 @@ def validate_relationships_response(
 async def extract_relationships_generation(
     task_description: str,
     *,
+    trace_id: str,
     research_objectives: list[ResearchObjective] | None = None,
 ) -> RelationshipsDTO:
     return await handle_completions_request(
@@ -227,6 +228,7 @@ async def extract_relationships_generation(
         system_prompt=EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT,
         validator=partial(validate_relationships_response, research_objectives=research_objectives),
         max_attempts=5,
+        trace_id=trace_id,
     )
 
 

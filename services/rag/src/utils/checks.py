@@ -66,7 +66,9 @@ async def verify_rag_sources_indexed(
                         event=NotificationEvents.INDEXING_IN_PROGRESS,
                         message="Document indexing in progress. This may take a few minutes for large documents.",
                         data={"wait_time": total_sleep_duration, "max_wait": 30},
+                        trace_id=trace_id,
                     ),
+                    trace_id=trace_id,
                 )
                 await sleep(10)
                 return await verify_rag_sources_indexed(
@@ -102,7 +104,9 @@ async def verify_rag_sources_indexed(
                             "total_count": total_sources,
                             "recoverable": True,
                         },
+                        trace_id=trace_id,
                     ),
+                    trace_id=trace_id,
                 )
 
                 entity_name = "grant_application" if entity_type == GrantApplication else "grant_template"

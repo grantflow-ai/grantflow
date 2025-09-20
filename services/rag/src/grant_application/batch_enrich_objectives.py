@@ -142,6 +142,7 @@ async def handle_batch_enrich_objectives(
                     retrieval_context=shared_context,
                     keywords=grant_section["keywords"],
                     topics=grant_section["topics"],
+                    trace_id=trace_id,
                 )
             )
             for obj in batch

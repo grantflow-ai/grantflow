@@ -166,10 +166,8 @@ async def publish_url_crawling_task(
         source_id=UUID(str(source_id)),
         entity_type=entity_type,
         entity_id=UUID(str(entity_id)),
+        trace_id=trace_id,
     )
-
-    if trace_id:
-        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)
@@ -418,10 +416,8 @@ async def publish_notification[T](
             data=data,
             parent_id=parent_id,
             type="data",
+            trace_id=trace_id,
         )
-
-        if trace_id:
-            websocket_message["trace_id"] = trace_id
 
         message_data = serialize(websocket_message)
 
@@ -514,14 +510,13 @@ async def publish_subscription_verification_email(
         subscription_id=subscription_id,
         verification_token=verification_token,
         template_type="subscription_verification",
+        trace_id=trace_id,
     )
 
     if search_params:
         data["search_params"] = search_params
     if frequency:
         data["frequency"] = frequency
-    if trace_id:
-        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)

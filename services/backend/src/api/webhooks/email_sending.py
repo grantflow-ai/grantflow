@@ -24,6 +24,7 @@ class EmailNotificationRequest(TypedDict):
 
 class EmailResponse(TypedDict):
     message: str
+    status: str
 
 
 def handle_pubsub_message(event: PubSubEvent) -> EmailNotificationRequest:
