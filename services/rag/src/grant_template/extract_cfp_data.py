@@ -344,12 +344,12 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
 
 
 async def handle_extract_cfp_data(
-    *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any]
+    *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any], trace_id: str
 ) -> ExtractedCFPData:
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
-        logger.info("Using cached CFP extraction result", cache_key=cache_key)
+        logger.info("Using cached CFP extraction result", cache_key=cache_key, trace_id=trace_id)
         return cached_result
 
     rag_sources = await get_rag_sources_data(source_ids, session_maker)
@@ -363,6 +363,7 @@ async def handle_extract_cfp_data(
         "Extracting CFP data from multiple sources",
         source_count=len(rag_sources),
         source_types=[s["source_type"] for s in rag_sources],
+        trace_id=trace_id,
         cache_key=cache_key,
     )
 
@@ -419,6 +420,6 @@ async def handle_extract_cfp_data(
     )
 
     _cache_cfp_result(cache_key, result)
-    logger.info("CFP extraction completed and cached", cache_key=cache_key)
+    logger.info("CFP extraction completed and cached", cache_key=cache_key, trace_id=trace_id)
 
     return result

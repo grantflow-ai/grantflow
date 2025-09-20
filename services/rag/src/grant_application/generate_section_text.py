@@ -105,6 +105,7 @@ async def handle_generate_section_text(
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
     cfp_analysis: CFPAnalysisResult,
+    trace_id: str,
 ) -> str:
     section_title = section.get("title", "Section")
 
@@ -112,6 +113,7 @@ async def handle_generate_section_text(
         "Generating section with shared context",
         section_title=section_title,
         shared_context_length=len(shared_context),
+        trace_id=trace_id,
     )
 
     research_context_parts = [
@@ -168,6 +170,7 @@ async def handle_generate_section_text(
             "Source validation failed for section",
             section_title=section_title,
             error=validation_error,
+            trace_id=trace_id,
         )
 
         return ""
@@ -266,6 +269,7 @@ async def handle_generate_section_text(
         "Section generation completed",
         section_title=section_title,
         result_length=len(result),
+        trace_id=trace_id,
         word_count=len(result.split()),
     )
 
