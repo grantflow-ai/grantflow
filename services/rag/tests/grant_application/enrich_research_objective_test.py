@@ -94,6 +94,8 @@ def valid_enrichment_response() -> dict[str, Any]:
 @pytest.fixture
 def sample_dto_input() -> dict[str, Any]:
     """Sample DTO input for testing."""
+    from uuid import uuid4
+
     return {
         "research_objective": ResearchObjective(
             number=1,
@@ -107,6 +109,7 @@ def sample_dto_input() -> dict[str, Any]:
         "topics": ["proteomics", "clinical validation"],
         "form_inputs": {"background_context": "Cancer research project"},
         "retrieval_context": "Retrieved context about biomarker research methods and validation techniques.",
+        "trace_id": str(uuid4()),
     }
 
 
@@ -306,10 +309,12 @@ async def test_enrich_objective_generation_success(
     mock_handle_completions_request: AsyncMock, valid_enrichment_response: dict[str, Any]
 ) -> None:
     """Test successful objective enrichment generation."""
+    from uuid import uuid4
+
     mock_handle_completions_request.return_value = valid_enrichment_response
 
     result = await enrich_objective_generation(
-        "Test task description with research objectives and tasks", input_objective=None
+        "Test task description with research objectives and tasks", trace_id=str(uuid4()), input_objective=None
     )
 
     assert result == valid_enrichment_response

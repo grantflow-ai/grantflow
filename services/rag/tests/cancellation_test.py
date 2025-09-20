@@ -17,6 +17,7 @@ from packages.db.src.tables import (
     RagSource,
 )
 from packages.shared_utils.src.constants import NotificationEvents
+from packages.shared_utils.src.exceptions import RagJobCancelledError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -30,7 +31,8 @@ from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
-from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
+from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import CFPContentSection as Content
@@ -38,92 +40,107 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
-async def test_check_if_cancelled_returns_false_when_not_cancelled(
+async def _create_template_manager(
     async_session_maker: async_sessionmaker[Any],
-) -> None:
-    job_manager = JobManager(async_session_maker)
-
+    *,
+    template: GrantTemplate,
+    status: RagGenerationStatusEnum,
+) -> GrantTemplateJobManager:
     async with async_session_maker() as session:
-        job = RagGenerationJob(
-            job_type="grant_template_generation",
-            status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=1,
-            total_stages=5,
+        job = GrantTemplateGenerationJob(
+            grant_template_id=template.id,
+            total_stages=len(GRANT_TEMPLATE_PIPELINE_STAGES),
+            status=status,
+            current_stage=0,
             retry_count=0,
         )
         session.add(job)
         await session.commit()
-        job_id = job.id
+        await session.refresh(job)
 
-    job_manager.job_id = job_id
-    result = await job_manager.ensure_not_cancelled()
-    assert result is False
-
-
-@pytest.mark.asyncio
-async def test_check_if_cancelled_returns_true_when_cancelled(
-    async_session_maker: async_sessionmaker[Any],
-) -> None:
-    job_manager = JobManager(async_session_maker)
-
-    async with async_session_maker() as session:
-        job = RagGenerationJob(
-            job_type="grant_template_generation",
-            status=RagGenerationStatusEnum.CANCELLED,
-            current_stage=1,
-            total_stages=5,
-            retry_count=0,
-        )
-        session.add(job)
-        await session.commit()
-        job_id = job.id
-
-    job_manager.job_id = job_id
-    result = await job_manager.ensure_not_cancelled()
-    assert result is True
+    manager = GrantTemplateJobManager(
+        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        grant_application_id=template.grant_application_id,
+        job_id=job.id,
+        parent_id=template.id,
+        pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
+        session_maker=async_session_maker,
+        trace_id="test-trace",
+    )
+    manager.job = job
+    return manager
 
 
 @pytest.mark.asyncio
-async def test_check_if_cancelled_returns_false_when_no_job_id(
+async def test_ensure_not_cancelled_allows_active_job(
     async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
-    job_manager = JobManager(async_session_maker)
-    result = await job_manager.ensure_not_cancelled()
-    assert result is False
+    manager = await _create_template_manager(
+        async_session_maker,
+        template=grant_template_with_sections,
+        status=RagGenerationStatusEnum.PROCESSING,
+    )
+
+    await manager.ensure_not_cancelled()
 
 
 @pytest.mark.asyncio
-async def test_handle_cancellation_adds_notification(
+async def test_ensure_not_cancelled_raises_when_job_cancelled(
     async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
-    job_manager = JobManager(async_session_maker)
+    manager = await _create_template_manager(
+        async_session_maker,
+        template=grant_template_with_sections,
+        status=RagGenerationStatusEnum.CANCELLED,
+    )
 
-    async with async_session_maker() as session:
-        job = RagGenerationJob(
-            job_type="grant_template_generation",
-            status=RagGenerationStatusEnum.CANCELLED,
-            current_stage=1,
-            total_stages=5,
-            retry_count=0,
-        )
-        session.add(job)
-        await session.commit()
-        job_id = job.id
+    with pytest.raises(RagJobCancelledError):
+        await manager.ensure_not_cancelled()
 
-    job_manager.job_id = job_id
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+
+@pytest.mark.asyncio
+async def test_ensure_not_cancelled_requires_active_job(
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
+) -> None:
+    manager = GrantTemplateJobManager(
+        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        grant_application_id=grant_template_with_sections.grant_application_id,
+        parent_id=grant_template_with_sections.id,
+        job_id=None,
+        pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
+        session_maker=async_session_maker,
+        trace_id="test-trace",
+    )
+
+    with pytest.raises(RuntimeError, match="Job not set"):
+        await manager.ensure_not_cancelled()
+
+
+@pytest.mark.asyncio
+async def test_ensure_not_cancelled_emits_cancellation_notification(
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
+) -> None:
+    manager = await _create_template_manager(
+        async_session_maker,
+        template=grant_template_with_sections,
+        status=RagGenerationStatusEnum.CANCELLED,
+    )
 
     with patch("services.rag.src.utils.job_manager.publish_notification") as mock_publish:
-        await job_manager.handle_cancellation(parent_id)
+        with pytest.raises(RagJobCancelledError):
+            await manager.ensure_not_cancelled()
 
     async with async_session_maker() as session:
         notifications = await session.scalars(
-            select(GenerationNotification).where(GenerationNotification.rag_job_id == job_id)
+            select(GenerationNotification).where(GenerationNotification.rag_job_id == manager.job_id)
         )
         notification = notifications.first()
         assert notification is not None
         assert notification.event == NotificationEvents.CANCELLATION_ACKNOWLEDGED
-        assert notification.message == "Processing stopped due to cancellation"
         assert notification.notification_type == "warning"
 
     mock_publish.assert_called_once()
@@ -191,7 +208,8 @@ async def test_application_generation_stops_at_verification_when_cancelled(
     mock_job_manager.check_if_cancelled = AsyncMock(return_value=True)
     mock_job_manager.handle_cancellation = AsyncMock()
 
-            with patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed"):        result = await grant_application_text_generation_pipeline_handler(
+    with patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed"):
+        result = await grant_application_text_generation_pipeline_handler(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             stage=GrantApplicationStageEnum.INITIALIZE,
