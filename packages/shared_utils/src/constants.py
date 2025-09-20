@@ -55,6 +55,7 @@ class NotificationEvents(StrEnum):
     GENERATING_OBJECTIVE = "generating_objective"
     OBJECTIVE_COMPLETED = "objective_completed"
     RESEARCH_PLAN_COMPLETED = "research_plan_completed"
+    SAVING_GRANT_APPLICATION = "saving_grant_application"
     GRANT_APPLICATION_GENERATION_COMPLETED = "grant_application_generation_completed"
 
     # Error events

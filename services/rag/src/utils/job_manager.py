@@ -158,6 +158,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             parent_id=self.grant_application_id,
             event=event,
             data=status_data,
+            trace_id=self.trace_id,
         )
 
     async def increment_retry_count(self) -> int:
