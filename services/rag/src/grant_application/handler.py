@@ -1,10 +1,10 @@
 from asyncio import gather
-from typing import Any, Final
+from typing import Any, Final, cast
 from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import (
-    CFPSectionAnalysis,
+    CFPAnalysisResult,
     GrantElement,
     GrantLongFormSection,
     ResearchDeepDive,
@@ -12,45 +12,53 @@ from packages.db.src.json_objects import (
 )
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import (
-    BackendError,
-    DatabaseError,
-    InsufficientContextError,
-    RagError,
-    ValidationError,
-)
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
+from packages.shared_utils.src.sync import batched_gather
 from sqlalchemy import update
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
+from services.rag.src.grant_application.dto import (
+    EnrichObjectivesStageDTO,
+    EnrichTerminologyStageDTO,
+    ExtractRelationshipsStageDTO,
+    GenerateResearchPlanStageDTO,
+    GenerateSectionsStageDTO,
+)
 from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
     enrich_objective_with_wikidata,
 )
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
-from services.rag.src.grant_application.generate_section_text import generate_section_text
-from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
-from services.rag.src.grant_application.utils import (
-    generate_application_text,
-    is_grant_long_form_section,
-)
+from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
+from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
+from services.rag.src.grant_application.utils import generate_application_text
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.utils.job_manager import GrantApplicationJobManager
+from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.text import normalize_markdown
 
 logger = get_logger(__name__)
 
 GRANT_APPLICATION_STAGES_ORDER: Final[tuple[GrantApplicationStageEnum, ...]] = (
-    GrantApplicationStageEnum.INITIALIZE,
-    GrantApplicationStageEnum.VALIDATE_CONTEXT,
-    GrantApplicationStageEnum.GENERATE_SECTION_TEXTS,
-    GrantApplicationStageEnum.FINALIZE_APPLICATION,
+    GrantApplicationStageEnum.GENERATE_SECTIONS,
+    GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS,
+    GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES,
+    GrantApplicationStageEnum.ENRICH_TERMINOLOGY,
+    GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN,
+)
+
+
+StageDTO = (
+    GenerateSectionsStageDTO
+    | ExtractRelationshipsStageDTO
+    | EnrichObjectivesStageDTO
+    | EnrichTerminologyStageDTO
+    | GenerateResearchPlanStageDTO
 )
 
 
@@ -61,100 +69,214 @@ def _get_next_pipeline_stage(
     return GRANT_APPLICATION_STAGES_ORDER[current_index + 1]
 
 
-async def generate_work_plan_text(
-    application_id: str,
-    work_plan_section: GrantLongFormSection,
+async def handle_generate_sections_stage(
+    *,
+    application_id: UUID,
+    cfp_analysis: CFPAnalysisResult,
     form_inputs: ResearchDeepDive,
+    grant_sections: list[GrantElement | GrantLongFormSection],
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
     research_objectives: list[ResearchObjective],
-    job_manager: JobManager,
-) -> str:
+    template_id: UUID,
+    title: str,
+) -> GenerateSectionsStageDTO:
+    await job_manager.ensure_not_cancelled()
+
+    # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
+    long_form_sections: list[GrantLongFormSection] = [
+        s  # type: ignore[misc]
+        for s in grant_sections
+        if isinstance(s, dict) and s.get("is_detailed_research_plan") is False
+    ]
+
+    work_plan_section = cast(
+        "GrantLongFormSection | None",
+        next((s for s in grant_sections if isinstance(s, dict) and s.get("is_detailed_research_plan") is True), None),
+    )
+
+    if not work_plan_section:
+        raise ValidationError("No research plan section found in grant template")
+
+    logger.info(
+        "Starting section generation",
+        sections_count=len(long_form_sections),
+        deep_dives_count=len(research_objectives),
+    )
+
+    all_search_queries = []
+    all_keywords = []
+
+    for section in long_form_sections:
+        all_search_queries.extend(section.get("search_queries", []))
+        all_keywords.extend(section.get("keywords", []))
+
+    all_search_queries.extend(
+        research_objective["title"] for research_objective in research_objectives if "title" in research_objective
+    )
+
+    unique_queries = list(dict.fromkeys(all_search_queries))[:12]
+
+    logger.info(
+        "Performing shared retrieval for all sections",
+        unique_queries_count=len(unique_queries),
+        total_original_queries=len(all_search_queries),
+    )
+
+    combined_task_description = (
+        f"Generate content for {len(long_form_sections)} grant application sections: "
+        + ", ".join([s.get("title", f"Section {i}") for i, s in enumerate(long_form_sections)])
+    )
+
+    retrieval_results = await retrieve_documents(
+        application_id=str(application_id),
+        search_queries=unique_queries,
+        task_description=combined_task_description,
+        max_tokens=12000,
+    )
+    shared_context = "\n".join(retrieval_results)
+
+    logger.info(
+        "Shared retrieval completed",
+        context_length=len(shared_context),
+    )
+
+    generation_coroutines = [
+        handle_generate_section_text(section, research_objectives, shared_context, cfp_analysis)
+        for section in long_form_sections
+    ]
+
+    section_results = await batched_gather(*generation_coroutines, batch_size=3)
+
+    section_texts: dict[str, str] = {}
+    for section, result in zip(long_form_sections, section_results, strict=False):
+        section_id = section.get("id", section.get("title", f"section_{len(section_texts)}"))
+        section_texts[section_id] = result
+
+    return GenerateSectionsStageDTO(
+        application_id=application_id,
+        form_inputs=form_inputs,
+        grant_sections=grant_sections,
+        research_objectives=research_objectives,
+        section_texts=section_texts,
+        template_id=template_id,
+        title=title,
+        work_plan_section=work_plan_section,
+    )
+
+
+async def handle_extract_relationships_stage(
+    *,
+    dto: GenerateSectionsStageDTO,
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+) -> ExtractRelationshipsStageDTO:
+    await job_manager.ensure_not_cancelled()
+
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.EXTRACTING_RELATIONSHIPS,
         message="Extracting relationships between research objectives and tasks...",
-        notification_type="info",
-        current_pipeline_stage=4,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
-
-    if await job_manager.ensure_not_cancelled():
-        await job_manager.handle_cancellation(UUID(application_id))
-        return ""
 
     relationships = await handle_extract_relationships(
-        application_id=application_id,
-        research_objectives=research_objectives,
-        grant_section=work_plan_section,
-        form_inputs=form_inputs,
+        application_id=str(dto["application_id"]),
+        research_objectives=dto["research_objectives"],
+        grant_section=dto["work_plan_section"],
+        form_inputs=dto["form_inputs"],
     )
 
+    return ExtractRelationshipsStageDTO(
+        **dto,
+        relationships=relationships,
+    )
+
+
+async def handle_enrich_objectives_stage(
+    *,
+    dto: ExtractRelationshipsStageDTO,
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+) -> EnrichObjectivesStageDTO:
+    await job_manager.ensure_not_cancelled()
+
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.ENRICHING_OBJECTIVES,
         message="Enriching research objectives with additional context...",
-        notification_type="info",
-        current_pipeline_stage=5,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
-
-    if await job_manager.ensure_not_cancelled():
-        await job_manager.handle_cancellation(UUID(application_id))
-        return ""
 
     enrichment_responses = await handle_batch_enrich_objectives(
-        application_id=application_id,
-        grant_section=work_plan_section,
-        research_objectives=research_objectives,
-        form_inputs=form_inputs,
+        application_id=str(dto["application_id"]),
+        grant_section=dto["work_plan_section"],
+        research_objectives=dto["research_objectives"],
+        form_inputs=dto["form_inputs"],
     )
 
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.OBJECTIVES_ENRICHED,
         message="Objectives enriched successfully",
-        notification_type="info",
         data={
-            "objective_count": len(research_objectives),
-            "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
+            "objective_count": len(dto["research_objectives"]),
+            "total_tasks": sum(len(obj["research_tasks"]) for obj in dto["research_objectives"]),
         },
-        current_pipeline_stage=5,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
+    return EnrichObjectivesStageDTO(
+        **dto,
+        enrichment_responses=enrichment_responses,
+    )
+
+
+async def handle_enrich_vocabulary_stage(
+    *,
+    dto: EnrichObjectivesStageDTO,
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+    trace_id: str,
+) -> EnrichTerminologyStageDTO:
+    await job_manager.ensure_not_cancelled()
+
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
         message="Enhancing objectives with Wikidata scientific context...",
-        notification_type="info",
-        current_pipeline_stage=6,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
-    combined_enrichment_data: ObjectiveEnrichmentDTO = {
-        "research_objective": enrichment_responses[0]["research_objective"],
-        "research_tasks": [],
-    }
+    # Combine enrichment data from all objectives for Wikidata enhancement
+    wikidata_enrichments = []
+    for enrichment_response in dto["enrichment_responses"]:
+        combined_data: ObjectiveEnrichmentDTO = {
+            "research_objective": enrichment_response["research_objective"],
+            "research_tasks": enrichment_response["research_tasks"],
+        }
 
-    for response in enrichment_responses:
-        combined_enrichment_data["research_tasks"].extend(response["research_tasks"])
-
-    wikidata_enrichment = await enrich_objective_with_wikidata(
-        combined_enrichment_data,
-        trace_id=application_id,
-    )
+        wikidata_enrichment = await enrich_objective_with_wikidata(
+            combined_data,
+            trace_id=trace_id,
+        )
+        wikidata_enrichments.append(wikidata_enrichment)
 
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
         message="Wikidata enhancement completed",
-        notification_type="info",
         data={
-            "scientific_terms_count": len(wikidata_enrichment["core_scientific_terms"]),
-            "has_scientific_context": bool(wikidata_enrichment["scientific_context"]),
+            "enrichments_count": len(wikidata_enrichments),
         },
-        current_pipeline_stage=6,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
+
+    return EnrichTerminologyStageDTO(
+        **dto,
+        wikidata_enrichments=wikidata_enrichments,
+    )
+
+
+async def handle_generate_research_plan_state(
+    *,
+    dto: EnrichTerminologyStageDTO,
+    job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
+) -> GenerateResearchPlanStageDTO:
+    await job_manager.ensure_not_cancelled()
+
+    application_id = str(dto["application_id"])
+    work_plan_section = dto["work_plan_section"]
+    form_inputs = dto["form_inputs"]
+    research_objectives = dto["research_objectives"]
+    relationships = dto["relationships"]
+    enrichment_responses = dto["enrichment_responses"]
 
     dtos = []
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
@@ -196,10 +318,8 @@ async def generate_work_plan_text(
     work_plan_text = ""
 
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.GENERATING_RESEARCH_PLAN,
         message="Generating work plan text for research objectives and tasks...",
-        notification_type="info",
     )
 
     total_objectives = len(research_objectives)
@@ -211,56 +331,32 @@ async def generate_work_plan_text(
         objective_task_groups.append((objective, tasks))
 
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.GENERATING_OBJECTIVE,
         message=f"Generating text for all {total_objectives} objectives in parallel...",
-        notification_type="info",
     )
 
-    async def generate_objective_with_tasks(
-        objective: ResearchComponentGenerationDTO, tasks: list[ResearchComponentGenerationDTO]
-    ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
-        research_objective_text = await generate_work_plan_component_text(
-            application_id=application_id,
-            component=objective,
-            work_plan_text=work_plan_text,
-            form_inputs=form_inputs,
-        )
-
-        research_task_texts = await gather(
-            *[
-                generate_work_plan_component_text(
-                    application_id=application_id,
-                    component=research_task,
-                    work_plan_text=work_plan_text,
-                    form_inputs=form_inputs,
-                )
-                for research_task in tasks
-            ]
-        )
-
-        task_results = list(zip(tasks, research_task_texts, strict=True))
-        return objective, research_objective_text, task_results
-
     objective_results = await gather(
-        *[generate_objective_with_tasks(objective, tasks) for objective, tasks in objective_task_groups]
+        *[
+            generate_objective_with_tasks(
+                application_id=application_id,
+                form_inputs=form_inputs,
+                objective=objective,
+                tasks=tasks,
+                work_plan_text=work_plan_text,
+            )
+            for objective, tasks in objective_task_groups
+        ]
     )
 
     for objective, objective_text, task_results in objective_results:
-        if await job_manager.ensure_not_cancelled():
-            await job_manager.handle_cancellation(UUID(application_id))
-            return ""
-
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
 
         for research_task, research_task_text in task_results:
             work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
         await job_manager.add_notification(
-            parent_id=UUID(application_id),
             event=NotificationEvents.OBJECTIVE_COMPLETED,
             message=f"Completed Objective {objective['number']}",
-            notification_type="info",
             data={
                 "objective_number": objective["number"],
                 "objective_title": objective["title"],
@@ -270,10 +366,8 @@ async def generate_work_plan_text(
         )
 
     await job_manager.add_notification(
-        parent_id=UUID(application_id),
         event=NotificationEvents.RESEARCH_PLAN_COMPLETED,
-        message="Work plan generation completed",
-        notification_type="info",
+        message="Work plan generation completed",  # rename workplan throughout to research plan
         data={
             "objectives_count": total_objectives,
             "total_tasks": total_tasks,
@@ -281,82 +375,65 @@ async def generate_work_plan_text(
         },
     )
 
-    return normalize_markdown(work_plan_text)
+    research_plan_text = normalize_markdown(work_plan_text)
 
+    complete_section_texts = dict(dto["section_texts"])
+    complete_section_texts[work_plan_section["id"]] = research_plan_text
 
-async def generate_grant_section_texts(
-    application_id: str,
-    form_inputs: ResearchDeepDive,  # noqa: ARG001
-    grant_sections: list[GrantElement | GrantLongFormSection],
-    research_objectives: list[ResearchObjective],
-    job_manager: JobManager,  # noqa: ARG001
-    cfp_analysis: CFPSectionAnalysis | None = None,
-) -> dict[str, str]:
-    long_form_sections: list[GrantLongFormSection] = [
-        s  # type: ignore[misc]
-        for s in grant_sections
-        if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None
-    ]
-
-    return await generate_section_text(
-        sections=long_form_sections,
-        research_deep_dives=research_objectives,
-        application_id=application_id,
-        cfp_analysis=cfp_analysis,
+    return GenerateResearchPlanStageDTO(
+        **dto,
+        research_plan_text=research_plan_text,
+        complete_section_texts=complete_section_texts,
     )
 
 
 async def grant_application_text_generation_pipeline_handler(
+    *,
+    generation_stage: GrantApplicationStageEnum,
     grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
-    generation_stage: GrantApplicationStageEnum,
     trace_id: str,
-    job_manager: JobManager | None = None,
-) -> tuple[str, dict[str, str]] | None:
+) -> None:
     application_id = grant_application.id
     logger.info(
         "Starting grant application text generation pipeline",
         application_id=application_id,
-        trace_id=trace_id,
         stage=generation_stage,
+        trace_id=trace_id,
     )
 
-    if job_manager is None:
-        job_manager = JobManager(session_maker)
-        await job_manager.create_grant_application_job(
-            grant_application_id=application_id,
-            total_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
+    job_manager = GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO](
+        current_stage=generation_stage,
+        grant_application_id=application_id,
+        parent_id=application_id,
+        pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
+        session_maker=session_maker,
+        trace_id=trace_id,
+    )
 
+    existing_job = await job_manager.get_or_create_job()
+
+    if existing_job and existing_job.checkpoint_data:
+        logger.info(
+            "Resuming from checkpoint",
+            application_id=str(application_id),
+            job_id=str(existing_job.id),
+            stage=generation_stage,
+        )
+    else:
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     await job_manager.add_notification(
-        parent_id=application_id,
         event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
         message="Starting grant application text generation pipeline...",
-        notification_type="info",
-        current_pipeline_stage=1,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
     )
 
     grant_template: GrantTemplate | None = None
 
     async with session_maker() as session:
-        # Refresh the grant_application to ensure we have latest data
         await session.refresh(grant_application)
-        grant_template = grant_application.grant_template
 
-        cfp_analysis: CFPSectionAnalysis | None = None
-        if grant_template and grant_template.cfp_section_analysis:
-            cfp_analysis = grant_template.cfp_section_analysis
-            logger.info(
-                "CFP analysis found for grant template",
-                application_id=application_id,
-                template_id=str(grant_template.id),
-                sections_count=len(cfp_analysis.get("section_requirements", [])),
-                constraints_count=len(cfp_analysis.get("length_constraints", [])),
-                criteria_count=len(cfp_analysis.get("evaluation_criteria", [])),
-            )
+        grant_template = grant_application.grant_template
 
         if not grant_application.grant_template or not grant_application.research_objectives:
             missing_parts = []
@@ -373,7 +450,6 @@ async def grant_application_text_generation_pipeline_handler(
             )
 
             await job_manager.add_notification(
-                parent_id=application_id,
                 event=NotificationEvents.MISSING_PREREQUISITES,
                 message=error_message,
                 notification_type="error",
@@ -397,247 +473,99 @@ async def grant_application_text_generation_pipeline_handler(
     if grant_template is None:
         raise ValidationError("Grant template is unexpectedly None")
 
-    try:
-        await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
+    if not grant_template.cfp_analysis:
+        raise ValidationError("CFP analysis is missing from grant template")
 
-        if await job_manager.check_if_cancelled():
-            await job_manager.handle_cancellation(application_id)
-            return None
+    await verify_rag_sources_indexed(application_id, session_maker, GrantApplication)
 
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.VALIDATING_TEMPLATE,
-            message="Validating grant template structure...",
-            notification_type="info",
-            current_pipeline_stage=2,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
+    # Match/case routing based on stage
+    match generation_stage:
+        case GrantApplicationStageEnum.GENERATE_SECTIONS:
+            # First stage - create initial DTO
+            dto = await handle_generate_sections_stage(
+                application_id=application_id,
+                cfp_analysis=grant_application.grant_template.cfp_analysis,
+                form_inputs=grant_application.form_inputs or {},
+                grant_sections=grant_template.grant_sections or [],
+                job_manager=job_manager,
+                research_objectives=grant_application.research_objectives or [],
+                template_id=grant_template.id,
+                title=grant_application.title,
+            )
+            await job_manager.to_next_job_stage(dto)
+            return
 
-        work_plan_sections = []
-        if grant_application.grant_template.grant_sections:
-            work_plan_sections = [
-                section
-                for section in grant_application.grant_template.grant_sections
-                if is_grant_long_form_section(section) and section.get("is_detailed_research_plan")
-            ]
+        case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
+            if not existing_job or not existing_job.checkpoint_data:
+                raise ValidationError("Missing checkpoint data for stage")
+            dto = await handle_extract_relationships_stage(
+                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                job_manager=job_manager,
+            )
+            await job_manager.to_next_job_stage(dto)
+            return
 
-        if not work_plan_sections:
-            error_message = "The grant template is missing a required work plan section. Please update the template to include a detailed work plan section."
-            logger.error("Missing work plan section in template", application_id=application_id)
+        case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
+            if not existing_job or not existing_job.checkpoint_data:
+                raise ValidationError("Missing checkpoint data for stage")
+            dto = await handle_enrich_objectives_stage(
+                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                job_manager=job_manager,
+            )
+            await job_manager.to_next_job_stage(dto)
+            return
+
+        case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
+            if not existing_job or not existing_job.checkpoint_data:
+                raise ValidationError("Missing checkpoint data for stage")
+            dto = await handle_enrich_vocabulary_stage(
+                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                job_manager=job_manager,
+                trace_id=trace_id,
+            )
+            await job_manager.to_next_job_stage(dto)
+            return
+
+        case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
+            if not existing_job or not existing_job.checkpoint_data:
+                raise ValidationError("Missing checkpoint data for stage")
+            final_dto = await handle_generate_research_plan_state(
+                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                job_manager=job_manager,
+            )
+
+            # Final stage - save to database
+            application_text = generate_application_text(
+                title=grant_application.title,
+                grant_sections=grant_template.grant_sections,
+                section_texts=final_dto["complete_section_texts"],
+            )
+
+            async with session_maker() as session, session.begin():
+                await session.execute(
+                    update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
+                )
+
+            await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
             await job_manager.add_notification(
-                parent_id=application_id,
-                event=NotificationEvents.TEMPLATE_INCOMPLETE,
-                message=error_message,
-                notification_type="error",
-                data={
-                    "grant_section_count": len(grant_application.grant_template.grant_sections)
-                    if grant_application.grant_template.grant_sections
-                    else 0,
-                    "missing_section": "detailed_work_plan",
-                    "recoverable": True,
-                },
-            )
-            raise ValidationError(
-                error_message,
-                context={
-                    "application_id": application_id,
-                    "grant_section_count": len(grant_application.grant_template.grant_sections)
-                    if grant_application.grant_template.grant_sections
-                    else 0,
-                    "long_form_sections": [
-                        {
-                            "id": section["id"],
-                            "title": section["title"],
-                            "is_detailed_research_plan": section.get("is_detailed_research_plan", False),
-                        }
-                        for section in grant_application.grant_template.grant_sections
-                        if is_grant_long_form_section(section)
-                    ]
-                    if grant_application.grant_template.grant_sections
-                    else [],
-                    "recovery_instruction": "Add a detailed work plan section to the grant template with is_detailed_research_plan=True.",
-                },
+                event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
+                message="Grant application text generation completed successfully.",
             )
 
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.TEMPLATE_VALIDATED,
-            message="Template validation complete",
-            notification_type="info",
-            data={
-                "section_count": len(grant_template.grant_sections),
-                "research_objectives_count": len(grant_application.research_objectives),
-            },
-            current_pipeline_stage=3,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
+            try:
+                await publish_email_notification(
+                    application_id=application_id,
+                    trace_id=trace_id,
+                )
+                logger.info("Email notification published", application_id=str(application_id))
+            except Exception as e:
+                logger.error(
+                    "Failed to publish email notification",
+                    application_id=str(application_id),
+                    error=str(e),
+                )
 
-        if await job_manager.check_if_cancelled():
-            await job_manager.handle_cancellation(application_id)
-            return None
+            return
 
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.GENERATING_SECTION_TEXTS,
-            message="Generating text for all grant sections...",
-            notification_type="info",
-            current_pipeline_stage=4,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
-
-        section_texts = await generate_section_text(
-            application_id=str(application_id),
-            sections=grant_template.grant_sections,  # type: ignore[arg-type]
-            research_deep_dives=grant_application.research_objectives or [],
-            cfp_analysis=cfp_analysis,
-        )
-
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.SECTION_TEXTS_GENERATED,
-            message="Section texts generated",
-            notification_type="info",
-            data={
-                "section_count": len(section_texts),
-                "total_words": sum(len(text.split()) for text in section_texts.values()),
-            },
-            current_pipeline_stage=5,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
-
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.ASSEMBLING_APPLICATION,
-            message="Assembling complete grant application text...",
-            notification_type="info",
-            current_pipeline_stage=6,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
-
-        application_text = generate_application_text(
-            title=grant_application.title,
-            grant_sections=grant_template.grant_sections,
-            section_texts=section_texts,
-        )
-
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=NotificationEvents.SAVING_APPLICATION,
-            message="Saving grant application text to database...",
-            notification_type="info",
-            current_pipeline_stage=7,
-            total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        )
-    except BackendError as e:
-        logger.error("Failed to generate grant application text.", application_id=application_id, error=e)
-
-        if isinstance(e, InsufficientContextError):
-            error_message = "Unable to generate application text due to insufficient information. Please ensure all research objectives have detailed descriptions."
-            event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
-            recoverable = True
-        elif isinstance(e, RagError) and "retrieval quality" in str(e).lower():
-            error_message = "Unable to find sufficient relevant information to generate high-quality content. Please ensure your uploaded documents contain comprehensive research details."
-            event_type = NotificationEvents.LOW_RETRIEVAL_QUALITY
-            recoverable = True
-        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
-            error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
-            event_type = NotificationEvents.INDEXING_TIMEOUT
-            recoverable = True
-        elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
-            error_message = "Document indexing failed. Please upload new documents and try again."
-            event_type = NotificationEvents.INDEXING_FAILED
-            recoverable = True
-        else:
-            error_message = "An unexpected error occurred while generating your application text. Please try again or contact support if this persists."
-            event_type = NotificationEvents.GENERATION_ERROR
-            recoverable = False
-            logger.error("Unexpected error in application generation", error=e, context=getattr(e, "context", None))
-
-        await job_manager.update_job_status(
-            status=RagGenerationStatusEnum.FAILED,
-            error_message=error_message,
-            error_details={
-                "error_type": e.__class__.__name__,
-                "recoverable": recoverable,
-            },
-        )
-        await job_manager.add_notification(
-            parent_id=application_id,
-            event=event_type,
-            message=error_message,
-            notification_type="error",
-            data={
-                "error_type": e.__class__.__name__,
-                "recoverable": recoverable,
-            },
-        )
-        logger.info(
-            "Grant application generation failed with error notification sent",
-            application_id=str(application_id),
-            error_type=e.__class__.__name__,
-            event_type=event_type,
-            error_message=error_message[:200],
-            recoverable=recoverable,
-        )
-        return None
-
-    async with session_maker() as session, session.begin():
-        try:
-            await session.execute(
-                update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
-            )
-
-            await job_manager.add_notification(
-                parent_id=application_id,
-                event=NotificationEvents.APPLICATION_SAVED,
-                message="Application saved successfully",
-                notification_type="info",
-                data={
-                    "application_id": str(application_id),
-                    "word_count": len(application_text.split()),
-                    "section_count": len(section_texts),
-                },
-                current_pipeline_stage=8,
-                total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-            )
-        except SQLAlchemyError as e:
-            logger.error("Database error updating grant application text.", application_id=application_id, error=e)
-
-            await job_manager.update_job_status(
-                status=RagGenerationStatusEnum.FAILED,
-                error_message="An internal error occurred. Please try again or contact support.",
-                error_details={"error_type": "database_error"},
-            )
-            await job_manager.add_notification(
-                parent_id=application_id,
-                event=NotificationEvents.INTERNAL_ERROR,
-                message="An internal error occurred. Please try again or contact support.",
-                notification_type="error",
-                data={"error_type": "database_error"},
-            )
-            raise DatabaseError("Failed to update grant application text.", context=str(e)) from e
-
-    await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
-    await job_manager.add_notification(
-        parent_id=application_id,
-        event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
-        message="Grant application text generation completed successfully.",
-        notification_type="success",
-        current_pipeline_stage=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES,
-    )
-
-    try:
-        await publish_email_notification(
-            application_id=application_id,
-            trace_id=None,  # TODO: Get trace_id from context when available
-        )
-        logger.info("Email notification published", application_id=str(application_id))
-    except Exception as e:
-        logger.error(
-            "Failed to publish email notification",
-            application_id=str(application_id),
-            error=str(e),
-        )
-
-    return application_text, section_texts
+        case _:
+            raise ValidationError(f"Unknown stage: {generation_stage}")

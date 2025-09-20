@@ -1,3 +1,4 @@
+from asyncio import gather
 from typing import Any, Final
 
 from packages.db.src.json_objects import ResearchDeepDive
@@ -217,3 +218,35 @@ async def generate_work_plan_component_text(
         )
     except EvaluationError:
         return "Failed to generate component text."
+
+
+async def generate_objective_with_tasks(
+    *,
+    application_id: str,
+    form_inputs: ResearchDeepDive,
+    objective: ResearchComponentGenerationDTO,
+    tasks: list[ResearchComponentGenerationDTO],
+    work_plan_text: str,
+) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
+    """Generate text for an objective and its associated tasks in parallel."""
+    research_objective_text = await generate_work_plan_component_text(
+        application_id=application_id,
+        component=objective,
+        work_plan_text=work_plan_text,
+        form_inputs=form_inputs,
+    )
+
+    research_task_texts = await gather(
+        *[
+            generate_work_plan_component_text(
+                application_id=application_id,
+                component=research_task,
+                work_plan_text=work_plan_text,
+                form_inputs=form_inputs,
+            )
+            for research_task in tasks
+        ]
+    )
+
+    task_results = list(zip(tasks, research_task_texts, strict=True))
+    return objective, research_objective_text, task_results

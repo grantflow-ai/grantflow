@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
-from services.rag.src.grant_template.nlp_categorizer import (
+from services.rag.src.grant_template.category_extraction import (
     CATEGORY_LABELS,
     NLPCategorizationResult,
     categorize_text,
@@ -312,7 +312,7 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
 def test_nlp_categorizer_memory_efficiency() -> None:
     import sys
 
-    from services.rag.src.grant_template.nlp_categorizer import get_nlp_categorizer_status
+    from services.rag.src.grant_template.category_extraction import get_nlp_categorizer_status
 
     initial_modules = len(sys.modules)
     status = get_nlp_categorizer_status()

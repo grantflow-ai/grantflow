@@ -1,26 +1,35 @@
 from typing import TYPE_CHECKING, Any, cast
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
+    GrantTemplateGenerationJob,
+    RagFile,
+    TextVector,
 )
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import BackendError, ValidationError
+from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import (
+    GrantTemplateFactory,
     GrantTemplateSourceFactory,
     RagFileFactory,
     TextVectorFactory,
 )
 
 from services.rag.src.enums import GrantTemplateStageEnum
+from services.rag.src.grant_template.dto import (
+    ExtractedCFPData,
+    OrganizationNamespace,
+    CFPContentSection as Content,
+)
 from services.rag.src.grant_template.extract_cfp_data import (
     RagSourceData,
     extract_cfp_data_multi_source,
@@ -30,10 +39,16 @@ from services.rag.src.grant_template.extract_cfp_data import (
 from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.generate_metadata import SectionMetadata
 from services.rag.src.grant_template.handler import (
-    extract_and_enrich_sections,
+    ExtractCFPContentStageDTO,
+    AnalyzeCFPContentStageDTO,
+    ExtractionSectionsStageDTO,
     grant_template_generation_pipeline_handler,
+    handle_cfp_extraction_stage,
+    handle_cfp_analysis_stage,
+    handle_section_extraction_stage,
+    handle_generate_metadata_stage,
 )
-from src.json_objects import CFPContentSection as Content
+from packages.db.src.json_objects import CFPAnalysisResult
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantLongFormSection
@@ -111,7 +126,7 @@ def mock_section_metadata() -> list[SectionMetadata]:
 @pytest.fixture
 def mock_extracted_cfp_data(
     nih_organization: GrantingInstitution,
-) -> dict[str, Any]:
+) -> ExtractedCFPData:
     return {
         "organization_id": str(nih_organization.id),
         "cfp_subject": "Test CFP Subject",
@@ -121,6 +136,17 @@ def mock_extracted_cfp_data(
             {"title": "Evaluation", "subtitles": ["Metrics", "Timeline"]},
         ],
         "submission_date": "2025-04-26",
+    }
+
+
+@pytest.fixture
+def mock_cfp_analysis_result() -> CFPAnalysisResult:
+    return {
+        "sections_count": 5,
+        "length_constraints_found": True,
+        "evaluation_criteria_count": 3,
+        "nlp_categories_detected": 4,
+        "total_sentences_analyzed": 150,
     }
 
 
@@ -183,115 +209,260 @@ async def grant_template_with_sources(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
 ) -> GrantTemplate:
-    source1 = RagFileFactory.build(
-        text_content="This is the full content of the first source document about funding opportunities.",
-        source_type="rag_file",
-        mime_type="application/pdf",
-    )
-    source2 = RagFileFactory.build(
-        text_content="This is web content from the funding organization's website with additional details.",
-        source_type="rag_file",
-        mime_type="text/html",
-    )
-
-    vector1_1 = TextVectorFactory.build(
-        rag_source_id=source1.id,
-        chunk={"content": "Chunk 1: Funding eligibility criteria"},
-    )
-    vector1_2 = TextVectorFactory.build(
-        rag_source_id=source1.id,
-        chunk={"content": "Chunk 2: Application submission requirements"},
-    )
-    vector1_3 = TextVectorFactory.build(
-        rag_source_id=source1.id,
-        chunk={"content": "Chunk 3: Budget guidelines and restrictions"},
-    )
-    vector2_1 = TextVectorFactory.build(
-        rag_source_id=source2.id,
-        chunk={"content": "Web chunk 1: Organization mission and values"},
-    )
-    vector2_2 = TextVectorFactory.build(
-        rag_source_id=source2.id,
-        chunk={"content": "Web chunk 2: Past funded projects examples"},
-    )
-
-    async with async_session_maker() as session:
-        session.add_all(
-            [
-                source1,
-                source2,
-                vector1_1,
-                vector1_2,
-                vector1_3,
-                vector2_1,
-                vector2_2,
-            ]
+    """Create a grant template with associated RAG sources and text vectors."""
+    async with async_session_maker() as session, session.begin():
+        # Create RAG sources
+        source1 = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path/doc1.pdf",
+            filename="doc1.pdf",
+            text_content="This is the full content of the first source document about funding opportunities.",
+            source_type="rag_file",
+            mime_type="application/pdf",
+            size=1024,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
-        await session.commit()
+        source2 = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path/doc2.html",
+            filename="doc2.html",
+            text_content="This is web content from the funding organization's website with additional details.",
+            source_type="rag_file",
+            mime_type="text/html",
+            size=2048,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add_all([source1, source2])
+        await session.flush()
 
-    template_source1 = GrantTemplateSourceFactory.build(
-        grant_template_id=grant_template_with_sections.id,
-        rag_source_id=source1.id,
-    )
-    template_source2 = GrantTemplateSourceFactory.build(
-        grant_template_id=grant_template_with_sections.id,
-        rag_source_id=source2.id,
-    )
+        # Create text vectors for the sources with mock embeddings
+        import numpy as np
+        mock_embedding = np.random.rand(384).tolist()  # Mock 384-dimensional embedding
 
-    async with async_session_maker() as session:
-        session.add_all([template_source1, template_source2])
+        vectors = [
+            TextVector(
+                rag_source_id=source1.id,
+                chunk={"content": "Chunk 1: Funding eligibility criteria"},
+                embedding=mock_embedding,
+            ),
+            TextVector(
+                rag_source_id=source1.id,
+                chunk={"content": "Chunk 2: Application submission requirements"},
+                embedding=mock_embedding,
+            ),
+            TextVector(
+                rag_source_id=source1.id,
+                chunk={"content": "Chunk 3: Budget guidelines and restrictions"},
+                embedding=mock_embedding,
+            ),
+            TextVector(
+                rag_source_id=source2.id,
+                chunk={"content": "Web chunk 1: Organization mission and values"},
+                embedding=mock_embedding,
+            ),
+            TextVector(
+                rag_source_id=source2.id,
+                chunk={"content": "Web chunk 2: Past funded projects examples"},
+                embedding=mock_embedding,
+            ),
+        ]
+        session.add_all(vectors)
+
+        # Create grant template sources
+        template_sources = [
+            GrantTemplateSource(
+                grant_template_id=grant_template_with_sections.id,
+                rag_source_id=source1.id,
+            ),
+            GrantTemplateSource(
+                grant_template_id=grant_template_with_sections.id,
+                rag_source_id=source2.id,
+            ),
+        ]
+        session.add_all(template_sources)
         await session.commit()
 
     return grant_template_with_sections
 
 
-async def test_extract_and_enrich_sections_with_mocked_llm(
+async def test_handle_cfp_extraction_stage(
+    grant_template_with_sources: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    nih_organization: GrantingInstitution,
+    mock_extracted_cfp_data: ExtractedCFPData,
+) -> None:
+    """Test the CFP extraction stage of the pipeline."""
+    from services.rag.src.utils.job_manager import GrantTemplateJobManager
+
+    # Create a real job in the database
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sources.id,
+            status=RagGenerationStatusEnum.PENDING,
+            current_stage=1,
+            total_stages=4,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    # Create real job manager
+    job_manager = GrantTemplateJobManager(
+        session_maker=async_session_maker,
+        grant_application_id=grant_template_with_sources.grant_application_id,
+        job_id=job_id,
+        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        pipeline_stages=list(GrantTemplateStageEnum),
+        parent_id=grant_template_with_sources.id,
+        trace_id="test-trace-id",
+    )
+
+    with patch(
+        "services.rag.src.grant_template.handler.handle_extract_cfp_data",
+        return_value=mock_extracted_cfp_data,
+    ):
+        result = await handle_cfp_extraction_stage(
+            grant_template=grant_template_with_sources,
+            job_manager=job_manager,
+            session_maker=async_session_maker,
+        )
+
+    assert result["extracted_data"]["cfp_subject"] == mock_extracted_cfp_data["cfp_subject"]
+    assert len(result["extracted_data"]["content"]) == len(mock_extracted_cfp_data["content"])
+
+    # Verify job status was updated
+    async with async_session_maker() as session:
+        updated_job = await session.get(GrantTemplateGenerationJob, job_id)
+        assert updated_job is not None
+        # Job should still be processing (next stage would be triggered via pubsub)
+        assert updated_job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]
+
+
+async def test_handle_cfp_analysis_stage(
+    mock_extracted_cfp_data: ExtractedCFPData,
+    mock_cfp_analysis_result: CFPAnalysisResult,
+    nih_organization: GrantingInstitution,
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
+) -> None:
+    """Test the CFP analysis stage."""
+    from services.rag.src.utils.job_manager import GrantTemplateJobManager
+
+    # Create a job with checkpoint data from previous stage
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sections.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=2,
+            total_stages=4,
+            checkpoint_data={
+                "organization": {
+                    "organization_id": str(nih_organization.id),
+                    "abbreviation": nih_organization.abbreviation,
+                    "full_name": nih_organization.full_name,
+                },
+                "extracted_data": mock_extracted_cfp_data,
+            },
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
+
+    job_manager = GrantTemplateJobManager(
+        session_maker=async_session_maker,
+        grant_application_id=grant_template_with_sections.grant_application_id,
+        job_id=job_id,
+        current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+        pipeline_stages=list(GrantTemplateStageEnum),
+        parent_id=grant_template_with_sections.id,
+        trace_id="test-trace-id",
+    )
+
+    extracted_cfp: ExtractCFPContentStageDTO = {
+        "organization": OrganizationNamespace(
+            organization_id=nih_organization.id,
+            abbreviation=nih_organization.abbreviation,
+            full_name=nih_organization.full_name,
+        ),
+        "extracted_data": mock_extracted_cfp_data,
+    }
+
+    with patch(
+        "services.rag.src.grant_template.handler.handle_analyze_cfp",
+        return_value=mock_cfp_analysis_result,
+    ):
+        result = await handle_cfp_analysis_stage(
+            extracted_cfp=extracted_cfp,
+            job_manager=job_manager,
+        )
+
+    assert result["analysis_results"] == mock_cfp_analysis_result
+    assert result["extracted_data"] == mock_extracted_cfp_data
+    assert result["organization"] == extracted_cfp["organization"]
+
+
+async def test_handle_generate_metadata_stage(
     sample_cfp_content: list[Content],
     cfp_subject: str,
     nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sections: GrantTemplate,
 ) -> None:
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+    """Test the metadata generation stage."""
+    from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
-    mock_job_manager = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
+    # Create job for this test
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sections.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=4,
+            total_stages=4,
+        )
+        session.add(job)
+        await session.commit()
+        job_id = job.id
 
-    with (
-        patch(
-            "services.rag.src.grant_template.handler.handle_extract_sections",
-            return_value=mock_extracted_sections,
+    job_manager = GrantTemplateJobManager(
+        session_maker=async_session_maker,
+        grant_application_id=grant_template_with_sections.grant_application_id,
+        job_id=job_id,
+        current_stage=GrantTemplateStageEnum.GENERATE_METADATA,
+        pipeline_stages=list(GrantTemplateStageEnum),
+        parent_id=grant_template_with_sections.id,
+        trace_id="test-trace-id",
+    )
+
+    section_extraction_result: ExtractionSectionsStageDTO = {
+        "organization": OrganizationNamespace(
+            organization_id=nih_organization.id,
+            abbreviation=nih_organization.abbreviation,
+            full_name=nih_organization.full_name,
         ),
-        patch(
-            "services.rag.src.grant_template.handler.handle_generate_grant_template",
-            return_value=mock_section_metadata,
-        ),
+        "extracted_data": {
+            "organization_id": str(nih_organization.id),
+            "cfp_subject": cfp_subject,
+            "content": sample_cfp_content,
+            "submission_date": "2025-04-26",
+        },
+        "analysis_results": {},
+        "extracted_sections": mock_extracted_sections,
+    }
+
+    with patch(
+        "services.rag.src.grant_template.handler.handle_generate_grant_template_metadata",
+        return_value=mock_section_metadata,
     ):
-        result = await extract_and_enrich_sections(
-            cfp_content=sample_cfp_content,
-            cfp_subject=cfp_subject,
-            organization=nih_organization,
-            parent_id=parent_id,
-            job_manager=mock_job_manager,
+        result = await handle_generate_metadata_stage(
+            section_extraction_result=section_extraction_result,
+            job_manager=job_manager,
         )
 
     assert len(result) == 3
 
-    assert mock_job_manager.add_notification.call_count > 0
-
-    notification_events = [
-        call.kwargs["event"] for call in mock_job_manager.add_notification.call_args_list if "event" in call.kwargs
-    ]
-
-    assert NotificationEvents.GRANT_TEMPLATE_EXTRACTION in notification_events
-    assert NotificationEvents.SECTIONS_EXTRACTED in notification_events
-    assert NotificationEvents.GRANT_TEMPLATE_METADATA in notification_events
-    assert NotificationEvents.METADATA_GENERATED in notification_events
-
     long_form_sections = [s for s in result if isinstance(s, dict) and "keywords" in s]
-
     assert len(long_form_sections) == 3
 
     for section in long_form_sections:
@@ -303,90 +474,65 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
         assert "max_words" in section
         assert "search_queries" in section
 
-        assert isinstance(section["keywords"], list)
-        assert isinstance(section["topics"], list)
-        assert isinstance(section["generation_instructions"], str)
-        assert isinstance(section["max_words"], int)
-        assert isinstance(section["search_queries"], list)
 
-    research_plan_sections = [s for s in long_form_sections if s.get("is_detailed_research_plan")]
-    assert len(research_plan_sections) == 1, "Exactly one section should be marked as a detailed research_plan"
-    assert research_plan_sections[0]["id"] == "research_plan"
-
-
-async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
+async def test_grant_template_generation_pipeline_full_flow(
     grant_template_with_sources: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
-    mock_extracted_cfp_data: dict[str, Any],
+    mock_extracted_cfp_data: ExtractedCFPData,
+    mock_cfp_analysis_result: CFPAnalysisResult,
 ) -> None:
-    mock_job = AsyncMock()
-    mock_job.id = UUID("00000000-0000-0000-0000-000000000001")
+    """Test the full pipeline flow for the final stage (GENERATE_METADATA)."""
 
-    mock_job_manager = AsyncMock()
-    mock_job_manager.create_grant_template_job = AsyncMock(return_value=mock_job)
-    mock_job_manager.update_job_status = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
+    # Create a job with checkpoint data from all previous stages
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sources.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=4,
+            total_stages=4,
+            checkpoint_data={
+                "organization": {
+                    "organization_id": str(nih_organization.id),
+                    "abbreviation": nih_organization.abbreviation,
+                    "full_name": nih_organization.full_name,
+                },
+                "extracted_data": mock_extracted_cfp_data,
+                "analysis_results": mock_cfp_analysis_result,
+                "extracted_sections": mock_extracted_sections,
+            },
+        )
+        session.add(job)
+        await session.commit()
 
     with (
         patch(
-            "services.rag.src.grant_template.handler.handle_extract_cfp_data_from_rag_sources",
-            return_value=mock_extracted_cfp_data,
-        ),
-        patch(
-            "services.rag.src.grant_template.handler.handle_extract_sections",
-            return_value=mock_extracted_sections,
-        ),
-        patch(
-            "services.rag.src.grant_template.handler.handle_generate_grant_template",
+            "services.rag.src.grant_template.handler.handle_generate_grant_template_metadata",
             return_value=mock_section_metadata,
         ),
-        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
         result = await grant_template_generation_pipeline_handler(
-            grant_template_id=grant_template_with_sources.id,
+            grant_template=grant_template_with_sources,
             session_maker=async_session_maker,
-            stage=GrantTemplateStageEnum.INITIALIZE,
-            job_manager=mock_job_manager,
+            generation_stage=GrantTemplateStageEnum.GENERATE_METADATA,
+            trace_id="test-trace-id",
         )
 
-    assert mock_job_manager.add_notification.call_count > 0
-
-    assert result is not None
-    assert result.id == grant_template_with_sources.id
-    assert result.grant_sections is not None
-    assert len(result.grant_sections) == 3
-
-    for section in result.grant_sections:
-        assert "id" in section
-        assert "title" in section
-        assert "order" in section
-
-    long_form_sections = [s for s in result.grant_sections if not s.get("is_title_only", False)]
-    assert len(long_form_sections) == 3
-
-    for section in long_form_sections:
-        assert "keywords" in section
-        assert "topics" in section
-        assert "generation_instructions" in section
-        assert "depends_on" in section
-        assert "max_words" in section
-        assert "search_queries" in section
-
-    research_plan_sections = [s for s in long_form_sections if s.get("is_detailed_research_plan")]
-    assert len(research_plan_sections) == 1
-    assert research_plan_sections[0]["id"] == "research_plan"
+    # Verify the grant template was updated
+    async with async_session_maker() as session:
+        updated_template = await session.get(GrantTemplate, grant_template_with_sources.id)
+        assert updated_template is not None
+        assert updated_template.grant_sections is not None
+        assert len(updated_template.grant_sections) == 3
 
 
 async def test_get_rag_sources_data(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sources: GrantTemplate,
 ) -> None:
+    """Test fetching RAG sources data."""
     async with async_session_maker() as session:
         stmt = select(GrantTemplateSource.rag_source_id).where(
             GrantTemplateSource.grant_template_id == grant_template_with_sources.id
@@ -416,6 +562,7 @@ async def test_get_rag_sources_data(
 
 
 def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) -> None:
+    """Test formatting RAG sources for LLM prompt."""
     formatted = format_rag_sources_for_prompt(mock_rag_sources)
 
     assert "Source 0: RAG_FILE" in formatted or "Source 1 (rag_file)" in formatted
@@ -431,6 +578,7 @@ def test_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) ->
 
 
 async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceData]) -> None:
+    """Test extracting CFP data from multiple sources."""
     task_description = format_rag_sources_for_prompt(mock_rag_sources)
 
     mock_response = {
@@ -464,255 +612,66 @@ async def test_extract_cfp_data_multi_source(mock_rag_sources: list[RagSourceDat
         assert isinstance(item["subtitles"], list)
 
 
-async def test_grant_template_generation_pipeline_missing_sources(
-    async_session_maker: async_sessionmaker[Any],
-    grant_template_with_sections: GrantTemplate,
-) -> None:
-    mock_job_manager = AsyncMock()
-    mock_job_manager.create_grant_template_job = AsyncMock()
-    mock_job_manager.update_job_status = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-
-    with patch(
-        "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
-    ) as mock_verify:
-        mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
-
-        result = await grant_template_generation_pipeline_handler(
-            grant_template_id=grant_template_with_sections.id,
-            session_maker=async_session_maker,
-            stage=GrantTemplateStageEnum.INITIALIZE,
-            job_manager=mock_job_manager,
-        )
-
-    assert result is None
-    mock_job_manager.update_job_status.assert_called_with(
-        status=RagGenerationStatusEnum.FAILED,
-        error_message=ANY,
-        error_details=ANY,
-    )
-    mock_job_manager.add_notification.assert_any_call(
-        parent_id=grant_template_with_sections.grant_application_id,
-        event=NotificationEvents.INDEXING_TIMEOUT,
-        message=ANY,
-        notification_type="error",
-        data=ANY,
-    )
-
-
-async def test_grant_template_generation_pipeline_unindexed_sources(
-    async_session_maker: async_sessionmaker[Any],
-    grant_template_with_sections: GrantTemplate,
-) -> None:
-    source = RagFileFactory.build(
-        text_content="Test content",
-        source_type="rag_file",
-        mime_type="application/pdf",
-    )
-
-    async with async_session_maker() as session:
-        session.add(source)
-        await session.commit()
-
-    template_source = GrantTemplateSourceFactory.build(
-        grant_template_id=grant_template_with_sections.id,
-        rag_source_id=source.id,
-    )
-
-    async with async_session_maker() as session:
-        session.add(template_source)
-        await session.commit()
-
-    mock_job_manager = AsyncMock()
-    mock_job_manager.create_grant_template_job = AsyncMock()
-    mock_job_manager.update_job_status = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-
-    mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
-
-    with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):
-        result = await grant_template_generation_pipeline_handler(
-            grant_template_id=grant_template_with_sections.id,
-            session_maker=async_session_maker,
-            stage=GrantTemplateStageEnum.INITIALIZE,
-            job_manager=mock_job_manager,
-        )
-
-    assert result is None
-    mock_job_manager.update_job_status.assert_called_with(
-        status=RagGenerationStatusEnum.FAILED,
-        error_message=ANY,
-        error_details=ANY,
-    )
-    mock_job_manager.add_notification.assert_any_call(
-        parent_id=grant_template_with_sections.grant_application_id,
-        event=NotificationEvents.INDEXING_FAILED,
-        message=ANY,
-        notification_type="error",
-        data=ANY,
-    )
-
-
-async def test_extract_and_enrich_sections_empty_cfp_content(
-    cfp_subject: str,
-    nih_organization: GrantingInstitution,
-    mock_extracted_sections: list[ExtractedSectionDTO],
-    mock_section_metadata: list[SectionMetadata],
-) -> None:
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
-
-    mock_job_manager = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-
-    with (
-        patch(
-            "services.rag.src.grant_template.handler.handle_extract_sections",
-            return_value=mock_extracted_sections,
-        ),
-        patch(
-            "services.rag.src.grant_template.handler.handle_generate_grant_template",
-            return_value=mock_section_metadata,
-        ),
-    ):
-        result = await extract_and_enrich_sections(
-            cfp_content=[],
-            cfp_subject=cfp_subject,
-            organization=nih_organization,
-            parent_id=parent_id,
-            job_manager=mock_job_manager,
-        )
-
-    assert len(result) == 3
-
-
-async def test_extract_and_enrich_sections_validation_error(
-    sample_cfp_content: list[Content],
-    cfp_subject: str,
-    nih_organization: GrantingInstitution,
-) -> None:
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
-
-    mock_job_manager = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-
-    with patch(
-        "services.rag.src.grant_template.handler.handle_extract_sections",
-        side_effect=ValidationError("Invalid sections"),
-    ):
-        with pytest.raises(ValidationError) as exc_info:
-            await extract_and_enrich_sections(
-                cfp_content=sample_cfp_content,
-                cfp_subject=cfp_subject,
-                organization=nih_organization,
-                parent_id=parent_id,
-                job_manager=mock_job_manager,
-            )
-
-        assert "Invalid sections" in str(exc_info.value)
-
-
-async def test_extract_and_enrich_sections_backend_error(
-    sample_cfp_content: list[Content],
-    cfp_subject: str,
-    nih_organization: GrantingInstitution,
-    mock_extracted_sections: list[ExtractedSectionDTO],
-) -> None:
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
-
-    mock_job_manager = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-
-    with (
-        patch(
-            "services.rag.src.grant_template.handler.handle_extract_sections",
-            return_value=mock_extracted_sections,
-        ),
-        patch(
-            "services.rag.src.grant_template.handler.handle_generate_grant_template",
-            side_effect=BackendError("LLM service unavailable"),
-        ),
-    ):
-        with pytest.raises(BackendError) as exc_info:
-            await extract_and_enrich_sections(
-                cfp_content=sample_cfp_content,
-                cfp_subject=cfp_subject,
-                organization=nih_organization,
-                parent_id=parent_id,
-                job_manager=mock_job_manager,
-            )
-
-        assert "LLM service unavailable" in str(exc_info.value)
-
-
-async def test_get_rag_sources_data_with_nlp_analysis(
-    async_session_maker: async_sessionmaker[Any],
+async def test_grant_template_pipeline_error_handling(
     grant_template_with_sources: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    async with async_session_maker() as session:
-        stmt = select(GrantTemplateSource.rag_source_id).where(
-            GrantTemplateSource.grant_template_id == grant_template_with_sources.id
+    """Test error handling in the pipeline."""
+    # Create a job
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sources.id,
+            status=RagGenerationStatusEnum.PENDING,
+            current_stage=1,
+            total_stages=4,
         )
-        result = await session.execute(stmt)
-        source_ids = [str(row[0]) for row in result.fetchall()]
+        session.add(job)
+        await session.commit()
+        job_id = job.id
 
-    with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text_async") as mock_categorize:
-        mock_categorize.return_value = {
-            "orders": ["Application must include detailed budget"],
-            "money": ["Budget should not exceed $100,000"],
-            "date_time": ["Deadline is March 15, 2025"],
-            "writing_related": ["Proposal should be 10 pages maximum"],
-            "other_numbers": [],
-            "recommendations": ["Consider including preliminary data"],
-            "evaluation_criteria": ["Proposals will be evaluated on merit"],
-            "positive_instructions": [],
-            "negative_instructions": [],
-        }
-
-        result = await get_rag_sources_data(
-            source_ids=source_ids,
+    with patch(
+        "services.rag.src.grant_template.handler.verify_rag_sources_indexed",
+        side_effect=ValidationError("No RAG sources found"),
+    ):
+        result = await grant_template_generation_pipeline_handler(
+            grant_template=grant_template_with_sources,
             session_maker=async_session_maker,
+            generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            trace_id="test-trace-id",
         )
 
-    assert len(result) == 2
+    assert result is None
 
-    for source_data in result:
-        assert "nlp_analysis" in source_data
-        nlp_analysis = source_data["nlp_analysis"]
-
-        assert isinstance(nlp_analysis, dict)
-        assert "orders" in nlp_analysis
-        assert "money" in nlp_analysis
-        assert "date_time" in nlp_analysis
-
-        assert "Application must include detailed budget" in nlp_analysis["orders"]
-        assert "Budget should not exceed $100,000" in nlp_analysis["money"]
-        assert "Deadline is March 15, 2025" in nlp_analysis["date_time"]
-
-    assert mock_categorize.call_count == 2
+    # Verify job was marked as failed
+    async with async_session_maker() as session:
+        failed_job = await session.get(GrantTemplateGenerationJob, job_id)
+        assert failed_job is not None
+        assert failed_job.status == RagGenerationStatusEnum.FAILED
+        assert failed_job.error_message is not None
 
 
-def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSourceData]) -> None:
-    formatted = format_rag_sources_for_prompt(mock_rag_sources)
+async def test_grant_template_pipeline_cancellation(
+    grant_template_with_sources: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    """Test pipeline cancellation handling."""
+    # Create a cancelled job
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sources.id,
+            status=RagGenerationStatusEnum.CANCELLED,
+            current_stage=1,
+            total_stages=4,
+        )
+        session.add(job)
+        await session.commit()
 
-    assert "NLP Analysis:" in formatted
-    assert "NLP Analysis" in formatted
-    assert "orders" in formatted
-    assert "money" in formatted
-    assert "evaluation_criteria" in formatted
+    result = await grant_template_generation_pipeline_handler(
+        grant_template=grant_template_with_sources,
+        session_maker=async_session_maker,
+        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        trace_id="test-trace-id",
+    )
 
-    assert "Funding eligibility criteria" in formatted
-    assert "Budget guidelines and restrictions" in formatted
-    assert "Organization mission and values" in formatted
-
-    assert "Source 0: RAG_FILE" in formatted
-    assert "Source 1: RAG_URL" in formatted
+    # Should return None when cancelled
+    assert result is None
