@@ -1,15 +1,7 @@
 from asyncio import gather
-from typing import Any, Final, cast
-from uuid import UUID
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum
-from packages.db.src.json_objects import (
-    CFPAnalysisResult,
-    GrantElement,
-    GrantLongFormSection,
-    ResearchDeepDive,
-    ResearchObjective,
-)
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
@@ -28,6 +20,7 @@ from services.rag.src.grant_application.dto import (
     ExtractRelationshipsStageDTO,
     GenerateResearchPlanStageDTO,
     GenerateSectionsStageDTO,
+    SectionText,
 )
 from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
@@ -41,6 +34,9 @@ from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantApplicationJobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.text import normalize_markdown
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import GrantLongFormSection
 
 logger = get_logger(__name__)
 
@@ -62,43 +58,47 @@ StageDTO = (
 )
 
 
-def _get_next_pipeline_stage(
-    current_stage: GrantApplicationStageEnum,
-) -> GrantApplicationStageEnum | None:
-    current_index = GRANT_APPLICATION_STAGES_ORDER.index(current_stage)
-    return GRANT_APPLICATION_STAGES_ORDER[current_index + 1]
-
-
 async def handle_generate_sections_stage(
     *,
-    application_id: UUID,
-    cfp_analysis: CFPAnalysisResult,
-    form_inputs: ResearchDeepDive,
-    grant_sections: list[GrantElement | GrantLongFormSection],
+    grant_application: GrantApplication,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
-    research_objectives: list[ResearchObjective],
-    template_id: UUID,
-    title: str,
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
-    long_form_sections: list[GrantLongFormSection] = [
-        s  # type: ignore[misc]
-        for s in grant_sections
-        if isinstance(s, dict) and s.get("is_detailed_research_plan") is False
-    ]
+    # Fetch the grant template with its sections
+    if not grant_application.grant_template:
+        raise ValidationError("Grant template is required")
 
-    work_plan_section = cast(
-        "GrantLongFormSection | None",
-        next((s for s in grant_sections if isinstance(s, dict) and s.get("is_detailed_research_plan") is True), None),
-    )
+    grant_template = grant_application.grant_template
+    if not grant_template.grant_sections:
+        raise ValidationError("Grant template has no sections")
+
+    grant_sections = grant_template.grant_sections
+    research_objectives = grant_application.research_objectives or []
+
+    # Get CFP analysis from grant template
+    cfp_analysis = grant_template.cfp_analysis
+    if not cfp_analysis:
+        raise ValidationError("CFP analysis is required for section generation")
+
+    # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
+    long_form_sections: list[GrantLongFormSection] = []
+    work_plan_section: GrantLongFormSection | None = None
+
+    for section in grant_sections:
+        # Check if this is a GrantLongFormSection (has required fields)
+        if "max_words" in section and "generation_instructions" in section:
+            if section.get("is_detailed_research_plan"):
+                work_plan_section = cast("GrantLongFormSection", section)
+            else:
+                long_form_sections.append(cast("GrantLongFormSection", section))
 
     if not work_plan_section:
         raise ValidationError("No research plan section found in grant template")
 
     logger.info(
         "Starting section generation",
+        application_id=str(grant_application.id),
         sections_count=len(long_form_sections),
         deep_dives_count=len(research_objectives),
     )
@@ -128,7 +128,7 @@ async def handle_generate_sections_stage(
     )
 
     retrieval_results = await retrieve_documents(
-        application_id=str(application_id),
+        application_id=str(grant_application.id),
         search_queries=unique_queries,
         task_description=combined_task_description,
         max_tokens=12000,
@@ -152,20 +152,18 @@ async def handle_generate_sections_stage(
         section_id = section.get("id", section.get("title", f"section_{len(section_texts)}"))
         section_texts[section_id] = result
 
+    # Convert dict to list of SectionText
+    section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
+
     return GenerateSectionsStageDTO(
-        application_id=application_id,
-        form_inputs=form_inputs,
-        grant_sections=grant_sections,
-        research_objectives=research_objectives,
-        section_texts=section_texts,
-        template_id=template_id,
-        title=title,
+        section_texts=section_text_list,
         work_plan_section=work_plan_section,
     )
 
 
 async def handle_extract_relationships_stage(
     *,
+    grant_application: GrantApplication,
     dto: GenerateSectionsStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
 ) -> ExtractRelationshipsStageDTO:
@@ -177,20 +175,22 @@ async def handle_extract_relationships_stage(
     )
 
     relationships = await handle_extract_relationships(
-        application_id=str(dto["application_id"]),
-        research_objectives=dto["research_objectives"],
+        application_id=str(grant_application.id),
+        research_objectives=grant_application.research_objectives or [],
         grant_section=dto["work_plan_section"],
-        form_inputs=dto["form_inputs"],
+        form_inputs=grant_application.form_inputs or {},
     )
 
     return ExtractRelationshipsStageDTO(
-        **dto,
+        section_texts=dto["section_texts"],
+        work_plan_section=dto["work_plan_section"],
         relationships=relationships,
     )
 
 
 async def handle_enrich_objectives_stage(
     *,
+    grant_application: GrantApplication,
     dto: ExtractRelationshipsStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
 ) -> EnrichObjectivesStageDTO:
@@ -202,29 +202,34 @@ async def handle_enrich_objectives_stage(
     )
 
     enrichment_responses = await handle_batch_enrich_objectives(
-        application_id=str(dto["application_id"]),
+        application_id=str(grant_application.id),
         grant_section=dto["work_plan_section"],
-        research_objectives=dto["research_objectives"],
-        form_inputs=dto["form_inputs"],
+        research_objectives=grant_application.research_objectives or [],
+        form_inputs=grant_application.form_inputs or {},
     )
 
     await job_manager.add_notification(
         event=NotificationEvents.OBJECTIVES_ENRICHED,
         message="Objectives enriched successfully",
         data={
-            "objective_count": len(dto["research_objectives"]),
-            "total_tasks": sum(len(obj["research_tasks"]) for obj in dto["research_objectives"]),
+            "objective_count": len(grant_application.research_objectives or []),
+            "total_tasks": sum(
+                len(obj.get("research_tasks", [])) for obj in (grant_application.research_objectives or [])
+            ),
         },
     )
 
     return EnrichObjectivesStageDTO(
-        **dto,
+        section_texts=dto["section_texts"],
+        work_plan_section=dto["work_plan_section"],
+        relationships=dto["relationships"],
         enrichment_responses=enrichment_responses,
     )
 
 
 async def handle_enrich_vocabulary_stage(
     *,
+    grant_application: GrantApplication,
     dto: EnrichObjectivesStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
     trace_id: str,
@@ -259,22 +264,26 @@ async def handle_enrich_vocabulary_stage(
     )
 
     return EnrichTerminologyStageDTO(
-        **dto,
+        section_texts=dto["section_texts"],
+        work_plan_section=dto["work_plan_section"],
+        relationships=dto["relationships"],
+        enrichment_responses=dto["enrichment_responses"],
         wikidata_enrichments=wikidata_enrichments,
     )
 
 
 async def handle_generate_research_plan_state(
     *,
+    grant_application: GrantApplication,
     dto: EnrichTerminologyStageDTO,
     job_manager: GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO],
 ) -> GenerateResearchPlanStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    application_id = str(dto["application_id"])
     work_plan_section = dto["work_plan_section"]
-    form_inputs = dto["form_inputs"]
-    research_objectives = dto["research_objectives"]
+    application_id = str(grant_application.id)
+    form_inputs = grant_application.form_inputs or {}
+    research_objectives = grant_application.research_objectives or []
     relationships = dto["relationships"]
     enrichment_responses = dto["enrichment_responses"]
 
@@ -377,13 +386,13 @@ async def handle_generate_research_plan_state(
 
     research_plan_text = normalize_markdown(work_plan_text)
 
-    complete_section_texts = dict(dto["section_texts"])
-    complete_section_texts[work_plan_section["id"]] = research_plan_text
-
     return GenerateResearchPlanStageDTO(
-        **dto,
+        section_texts=dto["section_texts"],
+        work_plan_section=dto["work_plan_section"],
+        relationships=dto["relationships"],
+        enrichment_responses=dto["enrichment_responses"],
+        wikidata_enrichments=dto["wikidata_enrichments"],
         research_plan_text=research_plan_text,
-        complete_section_texts=complete_section_texts,
     )
 
 
@@ -483,14 +492,8 @@ async def grant_application_text_generation_pipeline_handler(
         case GrantApplicationStageEnum.GENERATE_SECTIONS:
             # First stage - create initial DTO
             dto = await handle_generate_sections_stage(
-                application_id=application_id,
-                cfp_analysis=grant_application.grant_template.cfp_analysis,
-                form_inputs=grant_application.form_inputs or {},
-                grant_sections=grant_template.grant_sections or [],
+                grant_application=grant_application,
                 job_manager=job_manager,
-                research_objectives=grant_application.research_objectives or [],
-                template_id=grant_template.id,
-                title=grant_application.title,
             )
             await job_manager.to_next_job_stage(dto)
             return
@@ -499,7 +502,8 @@ async def grant_application_text_generation_pipeline_handler(
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
             dto = await handle_extract_relationships_stage(
-                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                grant_application=grant_application,
+                dto=cast("GenerateSectionsStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
             )
             await job_manager.to_next_job_stage(dto)
@@ -509,7 +513,8 @@ async def grant_application_text_generation_pipeline_handler(
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
             dto = await handle_enrich_objectives_stage(
-                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                grant_application=grant_application,
+                dto=cast("ExtractRelationshipsStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
             )
             await job_manager.to_next_job_stage(dto)
@@ -519,7 +524,8 @@ async def grant_application_text_generation_pipeline_handler(
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
             dto = await handle_enrich_vocabulary_stage(
-                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                grant_application=grant_application,
+                dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
                 trace_id=trace_id,
             )
@@ -530,15 +536,20 @@ async def grant_application_text_generation_pipeline_handler(
             if not existing_job or not existing_job.checkpoint_data:
                 raise ValidationError("Missing checkpoint data for stage")
             final_dto = await handle_generate_research_plan_state(
-                dto=existing_job.checkpoint_data,  # type: ignore[arg-type]
+                grant_application=grant_application,
+                dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
                 job_manager=job_manager,
             )
 
             # Final stage - save to database
+            # Combine section texts from DTO with research plan
+            complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
+            complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]
+
             application_text = generate_application_text(
                 title=grant_application.title,
                 grant_sections=grant_template.grant_sections,
-                section_texts=final_dto["complete_section_texts"],
+                section_texts=complete_section_texts,
             )
 
             async with session_maker() as session, session.begin():

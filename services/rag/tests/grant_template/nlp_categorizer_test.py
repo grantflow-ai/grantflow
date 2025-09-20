@@ -6,14 +6,13 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from packages.db.src.json_objects import CategorizationAnalysisResult
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.category_extraction import (
     CATEGORY_LABELS,
-    NLPCategorizationResult,
     categorize_text,
     format_nlp_analysis_for_prompt,
-    get_nlp_categorizer_status,
 )
 
 
@@ -64,7 +63,7 @@ async def test_categorize_text_async() -> None:
 
 
 def test_format_nlp_analysis_for_prompt_with_content() -> None:
-    analysis = NLPCategorizationResult(
+    analysis = CategorizationAnalysisResult(
         money=["Budget should not exceed $100,000"],
         orders=["You must submit detailed plans"],
         date_time=[],
@@ -85,7 +84,7 @@ def test_format_nlp_analysis_for_prompt_with_content() -> None:
 
 
 def test_format_nlp_analysis_for_prompt_empty() -> None:
-    analysis = NLPCategorizationResult(
+    analysis = CategorizationAnalysisResult(
         money=[],
         date_time=[],
         writing_related=[],
@@ -102,13 +101,14 @@ def test_format_nlp_analysis_for_prompt_empty() -> None:
     assert result == "No NLP analysis available - no categorized content found."
 
 
-def test_get_nlp_categorizer_status() -> None:
-    status = get_nlp_categorizer_status()
-
-    assert isinstance(status, dict)
-    assert "spacy_model_loaded" in status
-    assert "supported_categories" in status
-    assert status["supported_categories"] == CATEGORY_LABELS
+# NOTE: get_nlp_categorizer_status was removed in the pipeline redesign
+# def test_get_nlp_categorizer_status() -> None:
+#     status = get_nlp_categorizer_status()
+#
+#     assert isinstance(status, dict)
+#     assert "spacy_model_loaded" in status
+#     assert "supported_categories" in status
+#     assert status["supported_categories"] == CATEGORY_LABELS
 
 
 @pytest.fixture
@@ -309,19 +309,20 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     assert total_sentences >= 20, f"Too few sentences categorized: {total_sentences}"
 
 
-def test_nlp_categorizer_memory_efficiency() -> None:
-    import sys
-
-    from services.rag.src.grant_template.category_extraction import get_nlp_categorizer_status
-
-    initial_modules = len(sys.modules)
-    status = get_nlp_categorizer_status()
-    final_modules = len(sys.modules)
-
-    module_growth = final_modules - initial_modules
-
-    assert status["spacy_model_loaded"], "spaCy model should be loaded"
-    assert module_growth < 10, f"Too many modules loaded: {module_growth}"
+# NOTE: get_nlp_categorizer_status was removed in the pipeline redesign
+# def test_nlp_categorizer_memory_efficiency() -> None:
+#     import sys
+#
+#     from services.rag.src.grant_template.category_extraction import get_nlp_categorizer_status
+#
+#     initial_modules = len(sys.modules)
+#     status = get_nlp_categorizer_status()
+#     final_modules = len(sys.modules)
+#
+#     module_growth = final_modules - initial_modules
+#
+#     assert status["spacy_model_loaded"], "spaCy model should be loaded"
+#     assert module_growth < 10, f"Too many modules loaded: {module_growth}"
 
 
 def _create_mock_doc() -> Any:

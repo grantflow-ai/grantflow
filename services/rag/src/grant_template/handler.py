@@ -58,17 +58,6 @@ class ExtractionSectionsStageDTO(AnalyzeCFPContentStageDTO):
 StageDTO = ExtractCFPContentStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO
 
 
-def _get_next_pipeline_stage(
-    current_stage: GrantTemplateStageEnum,
-) -> GrantTemplateStageEnum | None:
-    current_index = GRANT_TEMPLATE_PIPELINE_STAGES.index(current_stage)
-    return GRANT_TEMPLATE_PIPELINE_STAGES[current_index + 1]
-
-
-def _get_current_pipeline_stage_num(stage: GrantTemplateStageEnum) -> int:
-    return GRANT_TEMPLATE_PIPELINE_STAGES.index(stage) + 1
-
-
 async def handle_cfp_extraction_stage(
     *,
     grant_template: GrantTemplate,

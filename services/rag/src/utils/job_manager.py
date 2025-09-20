@@ -188,7 +188,10 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             raise RuntimeError("Job not set. Create a job first.")
 
         async with self.session_maker() as session:
-            await session.refresh(self.job)
+            job = await session.get(type(self.job), self.job.id)
+            if not job:
+                raise RuntimeError(f"Job {self.job.id} not found")
+            self.job = job
 
         if self.job.status == RagGenerationStatusEnum.CANCELLED:
             await self.add_notification(
