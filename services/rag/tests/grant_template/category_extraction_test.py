@@ -19,14 +19,13 @@ from services.rag.src.grant_template.category_extraction import (
 async def test_categorize_text_basic() -> None:
     text = "The budget must not exceed $50,000. Deadline is March 15, 2025."
 
-    with patch("packages.shared_utils.src.nlp.get_spacy_model") as mock_spacy:
-        mock_doc = _create_mock_doc()
-        mock_spacy.return_value.return_value = mock_doc
+    result = await categorize_text(text)
 
-        result = await categorize_text(text)
-
-        assert isinstance(result, dict)
-        assert all(category in result for category in CATEGORY_LABELS)
+    assert isinstance(result, dict)
+    assert all(category in result for category in CATEGORY_LABELS)
+    # Verify it detected the budget and date
+    assert any("50,000" in str(item) for item in result["money"])
+    assert any("2025" in str(item) for item in result["date_time"])
 
 
 async def test_categorize_text_empty() -> None:
@@ -53,13 +52,13 @@ async def test_categorize_text_empty() -> None:
 async def test_categorize_text_async() -> None:
     text = "Applications must include budgets of $25,000."
 
-    with patch("asyncio.to_thread") as mock_to_thread:
-        expected = {"money": ["Budget of $25,000"], "date_time": []}
-        mock_to_thread.return_value = expected
+    result = await categorize_text(text)
 
-        result = await categorize_text(text)
-
-        assert result == expected
+    # Just verify the basic structure and that it contains expected content
+    assert isinstance(result, dict)
+    assert all(category in result for category in CATEGORY_LABELS)
+    # Verify money category detected the budget reference
+    assert any("25,000" in str(item) for item in result["money"])
 
 
 def test_format_nlp_analysis_for_prompt_with_content() -> None:
@@ -299,26 +298,3 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     assert total_sentences >= 20, f"Too few sentences categorized: {total_sentences}"
 
 
-def _create_mock_doc() -> Any:
-    class MockEntity:
-        def __init__(self, label_: str) -> None:
-            self.label_ = label_
-
-    class MockToken:
-        def __init__(self, text: str, like_num: bool = False) -> None:
-            self.text = text
-            self.like_num = like_num
-
-    class MockSentence:
-        def __init__(self, text: str) -> None:
-            self.text = text
-            self.ents = [MockEntity("DATE")] if "2025" in text else []
-
-        def __iter__(self) -> Any:
-            return iter([MockToken("$50,000", like_num=True)])
-
-    class MockDoc:
-        def __init__(self) -> None:
-            self.sents = [MockSentence("Budget is $50,000 due March 15, 2025")]
-
-    return MockDoc()

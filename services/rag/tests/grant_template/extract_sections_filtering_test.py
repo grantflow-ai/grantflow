@@ -148,13 +148,13 @@ SECTION_OUTPOUT: ExtractedSections = {
 
 
 async def test_section_filtering() -> None:
-    result = await filter_extracted_sections(sections=SECTION_OUTPOUT["sections"])
+    result = await filter_extracted_sections(sections=SECTION_OUTPOUT["sections"], trace_id="test-trace")
     assert len(result) > 0
     assert any(s.get("is_detailed_research_plan") for s in result)
 
 
 async def test_section_filtering_empty_input() -> None:
-    result = await filter_extracted_sections(sections=[])
+    result = await filter_extracted_sections(sections=[], trace_id="test-trace")
     assert result == []
 
 
@@ -169,7 +169,7 @@ async def test_section_filtering_always_keeps_research_plan() -> None:
             "order": 1,
         }
     ]
-    result = await filter_extracted_sections(sections=sections, initial_threshold=0.1)
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.1)
     assert len(result) == 1
     assert result[0]["title"] == "Methods"
 
@@ -193,7 +193,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
             "order": 2,
         },
     ]
-    result = await filter_extracted_sections(sections=sections, initial_threshold=0.9)
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.9)
     assert len(result) == 2
     assert any(s["id"] == "research_plan" for s in result)
 
@@ -217,7 +217,7 @@ async def test_section_filtering_removes_non_long_form() -> None:
             "order": 2,
         },
     ]
-    result = await filter_extracted_sections(sections=sections, initial_threshold=0.9)
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.9)
     assert len(result) == 1
     assert result[0]["id"] == "research_plan"
 
@@ -234,10 +234,10 @@ async def test_section_filtering_threshold() -> None:
         }
     ]
 
-    high_result = await filter_extracted_sections(sections=sections, initial_threshold=0.9)
+    high_result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.9)
     assert len(high_result) == 1
 
-    await filter_extracted_sections(sections=sections, initial_threshold=0.5)
+    await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.5)
 
 
 async def test_adaptive_threshold_preserves_research_plan() -> None:
@@ -252,7 +252,7 @@ async def test_adaptive_threshold_preserves_research_plan() -> None:
         }
     ]
 
-    result = await filter_extracted_sections(sections=sections, initial_threshold=0.1)
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.1)
     assert len(result) == 1
     assert result[0]["is_detailed_research_plan"] is True
 
@@ -285,7 +285,7 @@ async def test_maintain_hierarchy_integrity() -> None:
         },
     ]
 
-    result = await filter_extracted_sections(sections=sections, initial_threshold=0.5)
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.5)
 
     assert any(s["is_detailed_research_plan"] for s in result)
 

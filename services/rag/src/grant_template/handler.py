@@ -478,13 +478,13 @@ async def grant_template_generation_pipeline_handler(
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,
             error_message=error_message,
-            error_details={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
+            error_details={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
         )
         await job_manager.add_notification(
             event=event_type,
             message=error_message,
             notification_type="error",
-            data={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
+            data={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
         )
         logger.info(
             "Grant template generation failed with error notification sent",
