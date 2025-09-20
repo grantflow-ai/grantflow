@@ -6,6 +6,7 @@ from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
+    RagJobCancelledError,
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -15,10 +16,11 @@ from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from packages.db.src.query_helpers import select_active
 
 from services.rag.src.autofill.handler import handle_autofill_request
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
-from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
+from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
 
 if TYPE_CHECKING:
     from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
@@ -76,13 +78,23 @@ async def handle_request(
     )
 
     if "autofill_type" in request:
-        await handle_autofill_request(request=cast("AutofillRequest", request), session_maker=session_maker)
+        try:
+            await handle_autofill_request(request=cast("AutofillRequest", request), session_maker=session_maker)
+        except RagJobCancelledError:
+            logger.info(
+                "Autofill request job was cancelled",
+                autofill_type=request.get("autofill_type"),
+                application_id=request.get("application_id"),
+                trace_id=request.get("trace_id"),
+            )
+            # Return None to ACK the message and prevent retries
+            return
         return
 
     if request["parent_type"] == "grant_template":
         # Fetch the GrantTemplate from database
         async with session_maker() as session:
-            grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == request["parent_id"]))
+            grant_template = await session.scalar(select_active(GrantTemplate).where(GrantTemplate.id == request["parent_id"]))
 
             if not grant_template:
                 logger.error(
@@ -92,18 +104,28 @@ async def handle_request(
                 )
                 raise ValidationError(f"Grant template {request['parent_id']} not found")
 
-        await grant_template_generation_pipeline_handler(
-            grant_template=grant_template,
-            session_maker=session_maker,
-            generation_stage=cast("GrantTemplateStageEnum", request["stage"]),
-            trace_id=request["trace_id"],
-        )
+        try:
+            await handle_grant_template_pipeline(
+                grant_template=grant_template,
+                session_maker=session_maker,
+                generation_stage=cast("GrantTemplateStageEnum", request["stage"]),
+                trace_id=request["trace_id"],
+            )
+        except RagJobCancelledError:
+            logger.info(
+                "Grant template pipeline job was cancelled",
+                template_id=str(request["parent_id"]),
+                stage=request["stage"],
+                trace_id=request["trace_id"],
+            )
+            # Return None to ACK the message and prevent retries
+            return
         return
 
     # Fetch the GrantApplication from database
     async with session_maker() as session:
         grant_application = await session.scalar(
-            select(GrantApplication).where(GrantApplication.id == request["parent_id"])
+            select_active(GrantApplication).where(GrantApplication.id == request["parent_id"])
         )
 
         if not grant_application:
@@ -114,12 +136,22 @@ async def handle_request(
             )
             raise ValidationError(f"Grant application {request['parent_id']} not found")
 
-    await grant_application_text_generation_pipeline_handler(
-        grant_application=grant_application,
-        session_maker=session_maker,
-        generation_stage=cast("GrantApplicationStageEnum", request["stage"]),
-        trace_id=request["trace_id"],
-    )
+    try:
+        await handle_grant_application_pipeline(
+            grant_application=grant_application,
+            session_maker=session_maker,
+            generation_stage=cast("GrantApplicationStageEnum", request["stage"]),
+            trace_id=request["trace_id"],
+        )
+    except RagJobCancelledError:
+        logger.info(
+            "Grant application pipeline job was cancelled",
+            application_id=str(request["parent_id"]),
+            stage=request["stage"],
+            trace_id=request["trace_id"],
+        )
+        # Return None to ACK the message and prevent retries
+        return
 
 
 async def before_server_start() -> None:

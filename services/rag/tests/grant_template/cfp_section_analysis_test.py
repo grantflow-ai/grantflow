@@ -1,11 +1,11 @@
 import pytest
+from packages.db.src.json_objects import CFPSectionAnalysis
+from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_template.cfp_section_analysis import (
     handle_analyze_cfp,
     validate_cfp_analysis,
 )
-from packages.db.src.json_objects import CFPSectionAnalysis
-from packages.shared_utils.src.exceptions import ValidationError
 
 
 @pytest.fixture

@@ -344,8 +344,6 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
         )
 
         # Publish next stage to PubSub
-        from packages.shared_utils.src.pubsub import publish_rag_task
-
         await publish_rag_task(
             parent_id=self.parent_id,
             parent_type=self.parent_type,

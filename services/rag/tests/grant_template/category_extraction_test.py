@@ -3,7 +3,6 @@ import time
 from pathlib import Path
 from statistics import mean
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 from packages.db.src.json_objects import CategorizationAnalysisResult
