@@ -3,8 +3,8 @@ from typing import Final, NotRequired, TypedDict
 
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from rag.src.grant_template.dto import OrganizationNamespace
 
+from services.rag.src.grant_template.dto import OrganizationNamespace
 from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation

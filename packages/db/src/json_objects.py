@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from rag.src.enums import GrantTemplateStageEnum
+from services.rag.src.enums import GrantTemplateStageEnum
 
 
 class TableContext(TypedDict):
@@ -64,3 +64,66 @@ class GrantTemplateRagJobCheckpoint(TypedDict, total=False):
     submission_date: str | None
     title: str
     subtitles: list[str]
+
+
+class CFPAnalysisRequirementWithQuote(TypedDict):
+    requirement: str
+    quote_from_source: str
+    category: str
+
+
+class CFPSectionRequirement(TypedDict):
+    section_name: str
+    definition: str
+    requirements: list[CFPAnalysisRequirementWithQuote]
+    dependencies: list[str]
+
+
+class CFPSectionLengthConstraint(TypedDict):
+    section_name: str
+    measurement_type: str
+    limit_description: str
+    quote_from_source: str
+    exclusions: list[str]
+
+
+class CFPAnalysisEvaluationCriterion(TypedDict):
+    criterion_name: str
+    description: str
+    weight_percentage: NotRequired[int | None]
+    quote_from_source: str
+
+
+class CategorizationAnalysisResult(TypedDict):
+    money: list[str]
+    date_time: list[str]
+    writing_related: list[str]
+    other_numbers: list[str]
+    recommendations: list[str]
+    orders: list[str]
+    positive_instructions: list[str]
+    negative_instructions: list[str]
+    evaluation_criteria: list[str]
+
+
+class CFPAnalysisMetadata(TypedDict):
+    content_length: int
+    categories_found: int
+    total_sentences: int
+
+
+class CFPSectionAnalysis(TypedDict):
+    required_sections: list[CFPSectionRequirement]
+    length_constraints: list[CFPSectionLengthConstraint]
+    evaluation_criteria: list[CFPAnalysisEvaluationCriterion]
+    additional_requirements: list[CFPAnalysisRequirementWithQuote]
+    sections_count: int
+    length_constraints_found: int
+    evaluation_criteria_count: int
+    error: NotRequired[str | None]
+
+
+class CFPAnalysisResult(TypedDict):
+    cfp_analysis: CFPSectionAnalysis
+    nlp_analysis: CategorizationAnalysisResult
+    analysis_metadata: CFPAnalysisMetadata

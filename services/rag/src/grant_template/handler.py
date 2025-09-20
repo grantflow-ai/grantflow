@@ -17,7 +17,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.cfp_section_analysis import (
-    CFPAnalysisResult,
     handle_analyze_cfp,
 )
 from services.rag.src.grant_template.dto import (
@@ -29,6 +28,7 @@ from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
+from src.json_objects import CFPAnalysisResult
 
 logger = get_logger(__name__)
 
@@ -172,7 +172,7 @@ async def handle_cfp_analysis_stage(
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
         message="Enhanced CFP analysis completed successfully",
-        data=analysis_results,
+        data=cast("dict", analysis_results),
     )
 
     return AnalyzeCFPContentStageDTO(
@@ -472,11 +472,12 @@ async def grant_template_generation_pipeline_handler(
 
 async def handle_save_grant_template(
     *,
-    grant_template: GrantTemplate,
-    session_maker: async_sessionmaker[Any],
-    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    cfp_analysis: CFPAnalysisResult,
     extracted_cfp: ExtractionSectionsStageDTO,
     grant_sections: list[GrantElement | GrantLongFormSection],
+    grant_template: GrantTemplate,
+    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate | None:
     template_id = grant_template.id
@@ -490,6 +491,7 @@ async def handle_save_grant_template(
                 else None,
                 "submission_date": extracted_cfp["extracted_data"]["submission_date"],
                 "grant_sections": grant_sections,
+                "cfp_analysis": cfp_analysis,
             }
 
             grant_template = await session.scalar(

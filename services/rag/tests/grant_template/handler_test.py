@@ -11,7 +11,6 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
-from rag.src.enums import GrantTemplateStageEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -21,6 +20,7 @@ from testing.factories import (
     TextVectorFactory,
 )
 
+from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.extract_cfp_data import (
     RagSourceData,
     extract_cfp_data_multi_source,

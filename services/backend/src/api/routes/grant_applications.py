@@ -34,7 +34,6 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
-from rag.src.enums import GrantApplicationStageEnum
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -44,6 +43,7 @@ from sqlalchemy.sql.functions import count
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
+from services.rag.src.enums import GrantApplicationStageEnum
 
 logger = get_logger(__name__)
 

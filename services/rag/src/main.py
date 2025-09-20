@@ -21,7 +21,7 @@ from services.rag.src.grant_application.handler import grant_application_text_ge
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
 
 if TYPE_CHECKING:
-    from rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
+    from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 
 configure_otel("rag")
 

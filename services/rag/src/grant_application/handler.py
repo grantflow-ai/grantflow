@@ -21,13 +21,13 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
-from rag.src.enums import GrantApplicationStageEnum
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_NUM_OF_STAGES
 from services.rag.src.dto import ResearchComponentGenerationDTO
+from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
