@@ -32,18 +32,18 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const objectives = application?.research_objectives ?? [];
 
 	const handleSaveObjective = async (data: ObjectiveFormData) => {
+		const { tasks, ...objectiveData } = data;
 		const objective = {
-			description: data.description,
+			...objectiveData,
 			number: objectives.length + 1,
-			research_tasks: data.tasks.map((task, index) => ({
+			research_tasks: tasks.map((task, index) => ({
 				description: task.description,
 				number: index + 1,
-				title: "",
+				title: task.title,
 			})),
-			title: data.name,
 		};
 
-		await trackContentAdd("objective", data.name);
+		await trackContentAdd("objective", data.title);
 
 		try {
 			await useWizardStore.getState().createObjective(objective);

@@ -23,7 +23,7 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.GENERATE_AND_COMPLETE,
 ];
 
-export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
+export type ResearchObjective = API.UpdateApplication.RequestBody["research_objectives"][0];
 
 export type TemplateGenerationEvent =
 	| "cfp_data_extracted"
@@ -74,7 +74,7 @@ type RagSourceStatus = NonNullable<
 interface WizardActions {
 	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
-	createObjective: (objective: Objective) => Promise<void>;
+	createObjective: (objective: ResearchObjective) => Promise<void>;
 	generateApplication: () => Promise<boolean>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleTitleChange: (title: string) => void;
@@ -96,9 +96,9 @@ interface WizardActions {
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
 
 	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
-	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
-	updateObjectives: (objectives: Objective[]) => Promise<void>;
-	updateTasksForObjective: (objectiveNumber: number, tasks: Objective["research_tasks"]) => Promise<void>;
+	updateObjective: (objectiveNumber: number, updates: Partial<Omit<ResearchObjective, "number">>) => Promise<void>;
+	updateObjectives: (objectives: ResearchObjective[]) => Promise<void>;
+	updateTasksForObjective: (objectiveNumber: number, tasks: ResearchObjective["research_tasks"]) => Promise<void>;
 	validateStepNext: () => ValidationResult;
 }
 
@@ -189,16 +189,16 @@ const debouncedUpdateTitle = createDebounce((title: string) => {
 	}
 }, DEBOUNCE_DELAY_MS);
 
-const getCurrentObjectives = (): Objective[] => {
+const getCurrentObjectives = (): ResearchObjective[] => {
 	return useApplicationStore.getState().application?.research_objectives ?? [];
 };
 
-const updateResearchObjectives = async (updatedObjectives: Objective[]): Promise<void> => {
-	const partialUpdate: Partial<API.UpdateApplication.RequestBody> = {
+const updateResearchObjectives = async (updatedObjectives: ResearchObjective[]): Promise<void> => {
+	const update: Partial<API.UpdateApplication.RequestBody> = {
 		research_objectives: updatedObjectives,
 	};
 
-	await useApplicationStore.getState().updateApplication(partialUpdate);
+	await useApplicationStore.getState().updateApplication(update);
 };
 
 const withErrorHandling = async <T>(operation: () => Promise<T>, errorMessage: string): Promise<T> => {
@@ -214,7 +214,7 @@ const withErrorHandling = async <T>(operation: () => Promise<T>, errorMessage: s
 	}
 };
 
-const renumberObjectives = (objectives: Objective[]): Objective[] => {
+const renumberObjectives = (objectives: ResearchObjective[]): ResearchObjective[] => {
 	return objectives.map((obj, index) => ({
 		...obj,
 		number: index + 1,
@@ -467,7 +467,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}
 		},
 
-		createObjective: async (objective: Objective): Promise<void> => {
+		createObjective: async (objective: ResearchObjective): Promise<void> => {
 			return withErrorHandling(async () => {
 				if (!objective.title.trim()) {
 					throw new Error("Title is required");
@@ -854,7 +854,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		updateObjective: async (
 			objectiveNumber: number,
-			updates: Partial<Omit<Objective, "number">>,
+			updates: Partial<Omit<ResearchObjective, "number">>,
 		): Promise<void> => {
 			return withErrorHandling(async () => {
 				const currentObjectives = getCurrentObjectives();
@@ -878,14 +878,17 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}, "Update research objective");
 		},
 
-		updateObjectives: async (objectives: Objective[]): Promise<void> => {
+		updateObjectives: async (objectives: ResearchObjective[]): Promise<void> => {
 			return withErrorHandling(async () => {
 				const renumberedObjectives = renumberObjectives(objectives);
 				await updateResearchObjectives(renumberedObjectives);
 			}, "Update research objectives");
 		},
 
-		updateTasksForObjective: async (objectiveNumber: number, tasks: Objective["research_tasks"]): Promise<void> => {
+		updateTasksForObjective: async (
+			objectiveNumber: number,
+			tasks: ResearchObjective["research_tasks"],
+		): Promise<void> => {
 			return withErrorHandling(async () => {
 				const currentObjectives = getCurrentObjectives();
 				const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
