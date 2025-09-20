@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
-from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -17,6 +17,7 @@ from packages.db.src.tables import (
     RagSource,
 )
 from packages.shared_utils.src.constants import NotificationEvents
+from rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 

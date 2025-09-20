@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import UUID
@@ -84,13 +85,13 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
 
             await session.commit()
 
-    async def add_notification[T: dict](
+    async def add_notification(
         self,
         *,
         event: str,
         message: str,
         notification_type: Literal["info", "error", "warning", "success"] = "info",
-        data: T | None = None,
+        data: Mapping[str, Any] | None = None,
     ) -> None:
         logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
 
@@ -111,7 +112,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             "event": event,
             "message": message,
             "current_pipeline_stage": notification["current_pipeline_stage"],
-            "total_pipeline_stages": notification["total_pipeline_stages"]
+            "total_pipeline_stages": notification["total_pipeline_stages"],
         }
 
         if data is not None:
@@ -208,6 +209,7 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
             except SQLAlchemyError as e:
                 logger.error("Error inserting rag job into db", error=e)
                 raise DatabaseError("Error inserting rag job into db") from e
+
 
 class GrantApplicationJobManager[D](BaseJobManager[D]):
     async def get_or_create_job(self) -> GrantApplicationGenerationJob:

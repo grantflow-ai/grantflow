@@ -4,12 +4,13 @@ from uuid import UUID
 
 from litestar import patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import GrantTemplateStageEnum, SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
+from rag.src.enums import GrantTemplateStageEnum
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker

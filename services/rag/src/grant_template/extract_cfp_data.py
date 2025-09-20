@@ -17,12 +17,15 @@ from services.rag.src.grant_template.category_extraction import (
     categorize_text,
     format_nlp_analysis_for_prompt,
 )
+from services.rag.src.grant_template.dto import ExtractedCFPData
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
-from src.json_objects import ExtractedCFPData
 
 logger = get_logger(__name__)
+
+_cfp_extraction_cache: dict[str, tuple["ExtractedCFPData", float]] = {}
+CFP_CACHE_TTL_SECONDS = 3600
 
 
 class RagSourceData(TypedDict):
@@ -31,10 +34,6 @@ class RagSourceData(TypedDict):
     text_content: str
     chunks: list[str]
     nlp_analysis: CategorizationAnalysisResult
-
-
-_cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
-CFP_CACHE_TTL_SECONDS = 3600
 
 
 def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
@@ -344,7 +343,7 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
     )
 
 
-async def handle_extract_cfp_data_from_rag_sources(
+async def handle_extract_cfp_data(
     *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any]
 ) -> ExtractedCFPData:
     cache_key = _create_cache_key(source_ids, organization_mapping)

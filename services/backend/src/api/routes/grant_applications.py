@@ -8,7 +8,6 @@ from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import Parameter
 from packages.db.src.enums import (
     ApplicationStatusEnum,
-    GrantApplicationStageEnum,
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
@@ -35,6 +34,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
+from rag.src.enums import GrantApplicationStageEnum
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
