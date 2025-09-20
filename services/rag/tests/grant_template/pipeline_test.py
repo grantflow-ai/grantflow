@@ -1,14 +1,17 @@
+from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
     InsufficientContextError,
     ValidationError,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
@@ -20,7 +23,7 @@ from services.rag.src.grant_template.pipeline_dto import (
 
 
 @pytest.fixture
-def mock_job_manager():
+def mock_job_manager() -> AsyncMock:
     """Mock job manager with all required methods."""
     manager = AsyncMock()
     manager.get_or_create_job = AsyncMock()
@@ -32,7 +35,7 @@ def mock_job_manager():
 
 
 @pytest.fixture
-def mock_job():
+def mock_job() -> AsyncMock:
     """Mock job object."""
     job = AsyncMock()
     job.id = uuid4()
@@ -46,7 +49,7 @@ def mock_job():
 
 
 @pytest.fixture
-def sample_extract_cfp_dto():
+def sample_extract_cfp_dto() -> ExtractCFPContentStageDTO:
     """Sample extracted CFP data."""
     return ExtractCFPContentStageDTO(
         organization={
@@ -67,7 +70,7 @@ def sample_extract_cfp_dto():
 
 
 @pytest.fixture
-def sample_analyze_cfp_dto(sample_extract_cfp_dto):
+def sample_analyze_cfp_dto(sample_extract_cfp_dto: ExtractCFPContentStageDTO) -> AnalyzeCFPContentStageDTO:
     """Sample analyzed CFP data."""
     return AnalyzeCFPContentStageDTO(
         **sample_extract_cfp_dto,
@@ -102,7 +105,7 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto):
 
 
 @pytest.fixture
-def sample_sections_dto(sample_analyze_cfp_dto):
+def sample_sections_dto(sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO) -> ExtractionSectionsStageDTO:
     """Sample sections extraction data."""
     return ExtractionSectionsStageDTO(
         **sample_analyze_cfp_dto,
@@ -122,21 +125,38 @@ def sample_sections_dto(sample_analyze_cfp_dto):
 class TestPipelineStageExecution:
     """Test each pipeline stage execution path."""
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage")
     async def test_extract_cfp_content_stage(
-        self, mock_handle_cfp_extraction, mock_job_manager_class, grant_template, async_session_maker, sample_extract_cfp_dto
+        self,
+        mock_handle_cfp_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_extract_cfp_dto: ExtractCFPContentStageDTO
     ) -> None:
         """Test EXTRACT_CFP_CONTENT stage execution."""
-        # Setup mocks
+        # Setup mocks - create a proper AsyncMock that works with generics
         mock_job_manager = AsyncMock()
+
+        # Make the class mock itself an AsyncMock that always returns our instance
+        def create_mock_manager(*args, **kwargs):
+            return mock_job_manager
+
+        mock_job_manager_class.side_effect = create_mock_manager
         mock_job_manager_class.return_value = mock_job_manager
 
         mock_job = AsyncMock()
         mock_job.id = uuid4()
         mock_job.status = RagGenerationStatusEnum.PENDING
         mock_job.checkpoint_data = {}
+
+        # Set up all required async methods
         mock_job_manager.get_or_create_job = AsyncMock(return_value=mock_job)
+        mock_job_manager.ensure_not_cancelled = AsyncMock()
+        mock_job_manager.update_job_status = AsyncMock()
+        mock_job_manager.to_next_job_stage = AsyncMock()
+        mock_job_manager.add_notification = AsyncMock()
 
         mock_handle_cfp_extraction.return_value = sample_extract_cfp_dto
 
@@ -154,10 +174,16 @@ class TestPipelineStageExecution:
         mock_handle_cfp_extraction.assert_called_once()
         mock_job_manager.to_next_job_stage.assert_called_once_with(sample_extract_cfp_dto)
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage")
     async def test_analyze_cfp_content_stage(
-        self, mock_handle_cfp_analysis, mock_job_manager_class, grant_template, async_session_maker, sample_extract_cfp_dto, sample_analyze_cfp_dto
+        self,
+        mock_handle_cfp_analysis: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_extract_cfp_dto: ExtractCFPContentStageDTO,
+        sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO
     ) -> None:
         """Test ANALYZE_CFP_CONTENT stage execution."""
         # Setup mocks
@@ -185,10 +211,16 @@ class TestPipelineStageExecution:
         mock_handle_cfp_analysis.assert_called_once()
         mock_job_manager.to_next_job_stage.assert_called_once_with(sample_analyze_cfp_dto)
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_section_extraction_stage")
     async def test_extract_sections_stage(
-        self, mock_handle_section_extraction, mock_job_manager_class, grant_template, async_session_maker, sample_analyze_cfp_dto, sample_sections_dto
+        self,
+        mock_handle_section_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
+        sample_sections_dto: ExtractionSectionsStageDTO
     ) -> None:
         """Test EXTRACT_SECTIONS stage execution."""
         # Setup mocks
@@ -216,11 +248,17 @@ class TestPipelineStageExecution:
         mock_handle_section_extraction.assert_called_once()
         mock_job_manager.to_next_job_stage.assert_called_once_with(sample_sections_dto)
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_generate_metadata_stage")
     @patch("services.rag.src.grant_template.pipeline.handle_save_grant_template")
     async def test_generate_metadata_stage_final(
-        self, mock_handle_save, mock_handle_generate_metadata, mock_job_manager_class, grant_template, async_session_maker, sample_sections_dto
+        self,
+        mock_handle_save: AsyncMock,
+        mock_handle_generate_metadata: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_sections_dto: ExtractionSectionsStageDTO
     ) -> None:
         """Test GENERATE_METADATA stage execution (final stage)."""
         # Setup mocks
@@ -255,10 +293,14 @@ class TestPipelineStageExecution:
 class TestPipelineErrorHandling:
     """Test comprehensive error handling scenarios."""
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage")
     async def test_insufficient_context_error_handling(
-        self, mock_handle_cfp_extraction, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_handle_cfp_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test InsufficientContextError handling with specific error message."""
         # Setup mocks
@@ -296,10 +338,14 @@ class TestPipelineErrorHandling:
             data={"error_type": "InsufficientContextError", "recoverable": True},
         )
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage")
     async def test_indexing_timeout_error_handling(
-        self, mock_handle_cfp_extraction, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_handle_cfp_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test ValidationError with indexing timeout handling."""
         # Setup mocks
@@ -332,10 +378,14 @@ class TestPipelineErrorHandling:
             data={"error_type": "ValidationError", "recoverable": True},
         )
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage")
     async def test_indexing_failed_error_handling(
-        self, mock_handle_cfp_extraction, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_handle_cfp_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test ValidationError with indexing failed handling."""
         # Setup mocks
@@ -368,10 +418,14 @@ class TestPipelineErrorHandling:
             data={"error_type": "ValidationError", "recoverable": True},
         )
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage")
     async def test_generic_backend_error_handling(
-        self, mock_handle_cfp_extraction, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_handle_cfp_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test generic BackendError handling."""
         # Setup mocks
@@ -408,9 +462,12 @@ class TestPipelineErrorHandling:
 class TestPipelineStateManagement:
     """Test pipeline state management and validation."""
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     async def test_missing_checkpoint_data_validation(
-        self, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test validation error when checkpoint data is missing for later stages."""
         # Setup mocks
@@ -432,9 +489,12 @@ class TestPipelineStateManagement:
                 trace_id="test-trace",
             )
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     async def test_job_status_update_from_pending(
-        self, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test job status update from PENDING to PROCESSING."""
         # Setup mocks
@@ -461,9 +521,12 @@ class TestPipelineStateManagement:
         # Verify status update
         mock_job_manager.update_job_status.assert_called_with(RagGenerationStatusEnum.PROCESSING)
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     async def test_job_status_no_update_when_not_pending(
-        self, mock_job_manager_class, grant_template, async_session_maker
+        self,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any]
     ) -> None:
         """Test no job status update when job is not PENDING."""
         # Setup mocks
@@ -494,10 +557,15 @@ class TestPipelineStateManagement:
 class TestPipelineDataFlow:
     """Test data flow and DTO casting between stages."""
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage")
     async def test_checkpoint_data_casting_analyze_stage(
-        self, mock_handle_cfp_analysis, mock_job_manager_class, grant_template, async_session_maker, sample_extract_cfp_dto
+        self,
+        mock_handle_cfp_analysis: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_extract_cfp_dto: ExtractCFPContentStageDTO,
     ) -> None:
         """Test correct DTO casting for ANALYZE_CFP_CONTENT stage."""
         # Setup mocks
@@ -525,10 +593,15 @@ class TestPipelineDataFlow:
         call_args = mock_handle_cfp_analysis.call_args
         assert call_args.kwargs["extracted_cfp"] == sample_extract_cfp_dto
 
-    @patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager")
+    @patch("services.rag.src.utils.job_manager.GrantTemplateJobManager")
     @patch("services.rag.src.grant_template.pipeline.handle_section_extraction_stage")
     async def test_checkpoint_data_casting_sections_stage(
-        self, mock_handle_section_extraction, mock_job_manager_class, grant_template, async_session_maker, sample_analyze_cfp_dto
+        self,
+        mock_handle_section_extraction: AsyncMock,
+        mock_job_manager_class: AsyncMock,
+        grant_template: GrantTemplate,
+        async_session_maker: async_sessionmaker[Any],
+        sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
     ) -> None:
         """Test correct DTO casting for EXTRACT_SECTIONS stage."""
         # Setup mocks

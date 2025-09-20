@@ -2,6 +2,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any, cast
 
 from litestar import post
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.exceptions import (
@@ -14,9 +15,7 @@ from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import AutofillRequest, PubSubEvent, RagRequest, decode_pubsub_message
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from packages.db.src.query_helpers import select_active
 
 from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline

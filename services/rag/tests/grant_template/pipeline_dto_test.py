@@ -1,15 +1,17 @@
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from packages.db.src.json_objects import CFPAnalysisResult
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import CFPAnalysisResult
 
-from services.rag.src.grant_template.dto import ExtractedCFPData, OrganizationNamespace
-from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
-from services.rag.src.grant_template.pipeline_dto import (
-    AnalyzeCFPContentStageDTO,
-    ExtractCFPContentStageDTO,
-    ExtractionSectionsStageDTO,
-    StageDTO,
-)
+    from services.rag.src.grant_template.dto import ExtractedCFPData, OrganizationNamespace
+    from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
+    from services.rag.src.grant_template.pipeline_dto import (
+        AnalyzeCFPContentStageDTO,
+        ExtractCFPContentStageDTO,
+        ExtractionSectionsStageDTO,
+        StageDTO,
+    )
 
 
 class TestExtractCFPContentStageDTO:

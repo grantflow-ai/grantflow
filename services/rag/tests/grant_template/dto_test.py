@@ -1,12 +1,12 @@
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-import pytest
-
-from services.rag.src.grant_template.dto import (
-    CFPContentSection,
-    ExtractedCFPData,
-    OrganizationNamespace,
-)
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import (
+        CFPContentSection,
+        ExtractedCFPData,
+        OrganizationNamespace,
+    )
 
 
 class TestCFPContentSection:

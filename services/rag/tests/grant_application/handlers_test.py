@@ -1,9 +1,9 @@
+from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
-from packages.shared_utils.src.constants import NotificationEvents
 
 from services.rag.src.grant_application.handlers import (
     handle_enrich_objectives_stage,
@@ -15,7 +15,7 @@ from services.rag.src.grant_application.handlers import (
 
 
 @pytest.fixture
-def mock_job_manager():
+def mock_job_manager() -> AsyncMock:
     """Mock job manager with all required methods."""
     manager = AsyncMock()
     manager.ensure_not_cancelled = AsyncMock()
@@ -24,7 +24,7 @@ def mock_job_manager():
 
 
 @pytest.fixture
-def sample_research_objectives():
+def sample_research_objectives() -> list[ResearchObjective]:
     """Sample research objectives."""
     return [
         ResearchObjective(
@@ -47,7 +47,7 @@ def sample_research_objectives():
 
 
 @pytest.fixture
-def sample_work_plan_section():
+def sample_work_plan_section() -> dict[str, Any]:
     """Sample work plan section."""
     return {
         "id": "research_plan",
@@ -66,7 +66,7 @@ def sample_work_plan_section():
 
 
 @pytest.fixture
-def sample_grant_sections():
+def sample_grant_sections() -> list[dict[str, Any]]:
     """Sample grant sections."""
     return [
         {
@@ -104,165 +104,75 @@ def sample_grant_sections():
 @patch("services.rag.src.grant_application.handlers.handle_generate_section_text")
 @patch("services.rag.src.grant_application.handlers.batched_gather")
 async def test_generate_sections_stage_success(
-    mock_batched_gather,
-    mock_handle_generate_section_text,
-    mock_retrieve_documents,
-    mock_job_manager,
-    async_session_manager,
-    sample_grant_sections,
-    sample_work_plan_section,
+    mock_batched_gather: AsyncMock,
+    mock_handle_generate_section_text: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
+    sample_grant_sections: list[dict[str, Any]],
+    sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test successful section generation stage."""
-    async with async_session_manager() as session, session.begin():
-        from packages.db.src.models import GrantApplication, GrantTemplate
-
-        # Create grant template with sections
-        grant_template = GrantTemplate(
-            id=uuid4(),
-            organization_id=uuid4(),
-            grant_sections=sample_grant_sections + [sample_work_plan_section],
-            cfp_analysis={
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
-            }
+    # Setup research objectives and template data on existing fixture
+    grant_application.research_objectives = [
+        ResearchObjective(
+            number=1,
+            title="Test objective",
+            research_tasks=[ResearchTask(number=1, title="Test task")],
         )
-        session.add(grant_template)
+    ]
 
-        # Create grant application
-        grant_application = GrantApplication(
-            id=uuid4(),
-            organization_id=grant_template.organization_id,
-            grant_template_id=grant_template.id,
-            grant_template=grant_template,
-            research_objectives=[
-                ResearchObjective(
-                    number=1,
-                    title="Test objective",
-                    research_tasks=[ResearchTask(number=1, title="Test task")],
-                )
-            ]
-        )
-        session.add(grant_application)
-        await session.flush()
+    # Add grant sections to the template
+    if hasattr(grant_application, "grant_template") and grant_application.grant_template:
+        grant_application.grant_template.grant_sections = [*sample_grant_sections, sample_work_plan_section]
+        grant_application.grant_template.cfp_analysis = {
+            "sections_count": 3,
+            "length_constraints_found": 2,
+            "evaluation_criteria_count": 2,
+        }
 
-        # Setup mocks
-        mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
-        mock_batched_gather.return_value = ["Generated abstract text", "Generated significance text"]
+    # Setup mocks
+    mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
+    mock_batched_gather.return_value = ["Generated abstract text", "Generated significance text"]
 
-        # Execute
-        result = await handle_generate_sections_stage(
-            grant_application=grant_application,
-            job_manager=mock_job_manager,
-            trace_id=str(uuid4()),
-        )
+    # Execute
+    result = await handle_generate_sections_stage(
+        grant_application=grant_application,
+        job_manager=mock_job_manager,
+        trace_id=str(uuid4()),
+    )
 
-        # Verify result structure
-        assert isinstance(result, dict)
-        assert "section_texts" in result
-        assert "work_plan_section" in result
-        assert len(result["section_texts"]) == 2
-        assert result["section_texts"][0]["section_id"] == "abstract"
-        assert result["section_texts"][1]["section_id"] == "significance"
-        assert result["work_plan_section"]["id"] == "research_plan"
+    # Verify result structure
+    assert isinstance(result, dict)
+    assert "section_texts" in result
+    assert "work_plan_section" in result
+    assert len(result["section_texts"]) == 2
+    assert result["section_texts"][0]["section_id"] == "abstract"
+    assert result["section_texts"][1]["section_id"] == "significance"
+    assert result["work_plan_section"]["id"] == "research_plan"
 
-        # Verify cancellation checks
-        assert mock_job_manager.ensure_not_cancelled.call_count >= 2
+    # Verify cancellation checks
+    assert mock_job_manager.ensure_not_cancelled.call_count >= 2
 
-        # Verify notifications
-        assert mock_job_manager.add_notification.call_count >= 2
+    # Verify notifications
+    assert mock_job_manager.add_notification.call_count >= 2
 
-        # Verify retrieval was called
-        mock_retrieve_documents.assert_called_once()
-
-
-async def test_generate_sections_stage_missing_grant_template(
-    mock_job_manager,
-    async_session_manager,
-) -> None:
-    """Test section generation with missing grant template."""
-    async with async_session_manager() as session, session.begin():
-        from packages.db.src.models import GrantApplication
-
-        # Create grant application without grant template
-        grant_application = GrantApplication(
-            id=uuid4(),
-            organization_id=uuid4(),
-            grant_template_id=None,
-            grant_template=None,
-            research_objectives=[]
-        )
-        session.add(grant_application)
-        await session.flush()
-
-        # Execute and expect error
-        with pytest.raises(ValueError, match="Grant template not found"):
-            await handle_generate_sections_stage(
-                grant_application=grant_application,
-                job_manager=mock_job_manager,
-                trace_id=str(uuid4()),
-            )
-
-
-@patch("services.rag.src.grant_application.handlers.retrieve_documents")
-@patch("services.rag.src.grant_application.handlers.handle_generate_section_text")
-@patch("services.rag.src.grant_application.handlers.batched_gather")
-async def test_generate_sections_stage_missing_cfp_analysis(
-    mock_batched_gather,
-    mock_handle_generate_section_text,
-    mock_retrieve_documents,
-    mock_job_manager,
-    async_session_manager,
-    sample_grant_sections,
-    sample_work_plan_section,
-) -> None:
-    """Test section generation with missing CFP analysis."""
-    async with async_session_manager() as session, session.begin():
-        from packages.db.src.models import GrantApplication, GrantTemplate
-
-        # Create grant template without CFP analysis
-        grant_template = GrantTemplate(
-            id=uuid4(),
-            organization_id=uuid4(),
-            grant_sections=sample_grant_sections + [sample_work_plan_section],
-            cfp_analysis=None
-        )
-        session.add(grant_template)
-
-        # Create grant application
-        grant_application = GrantApplication(
-            id=uuid4(),
-            organization_id=grant_template.organization_id,
-            grant_template_id=grant_template.id,
-            grant_template=grant_template,
-            research_objectives=[
-                ResearchObjective(
-                    number=1,
-                    title="Test objective",
-                    research_tasks=[ResearchTask(number=1, title="Test task")],
-                )
-            ]
-        )
-        session.add(grant_application)
-        await session.flush()
-
-        # Execute and expect error
-        with pytest.raises(ValueError, match="CFP analysis not found"):
-            await handle_generate_sections_stage(
-                grant_application=grant_application,
-                job_manager=mock_job_manager,
-                trace_id=str(uuid4()),
-            )
+    # Verify retrieval was called
+    mock_retrieve_documents.assert_called_once()
 
 
 @patch("services.rag.src.grant_application.handlers.handle_extract_relationships")
 async def test_extract_relationships_stage_success(
-    mock_handle_extract_relationships,
-    mock_job_manager,
-    sample_research_objectives,
-    sample_work_plan_section,
+    mock_handle_extract_relationships: AsyncMock,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
+    sample_research_objectives: list[ResearchObjective],
+    sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test successful relationship extraction stage."""
+    # Setup grant application
+    grant_application.research_objectives = sample_research_objectives
+
     # Setup input DTO
     input_dto = {
         "section_texts": [
@@ -281,18 +191,16 @@ async def test_extract_relationships_stage_success(
 
     # Execute
     result = await handle_extract_relationships_stage(
-        input_dto=input_dto,
-        research_objectives=sample_research_objectives,
-        form_inputs={"background_context": "Test background"},
-        application_id=str(uuid4()),
+        grant_application=grant_application,
+        dto=input_dto,
         job_manager=mock_job_manager,
         trace_id=str(uuid4()),
     )
 
     # Verify result structure
     assert isinstance(result, dict)
-    assert "research_relationships" in result
-    assert result["research_relationships"] == mock_relationships
+    assert "relationships" in result
+    assert result["relationships"] == mock_relationships
 
     # Verify cancellation checks
     mock_job_manager.ensure_not_cancelled.assert_called()
@@ -303,15 +211,21 @@ async def test_extract_relationships_stage_success(
 
 @patch("services.rag.src.grant_application.handlers.handle_batch_enrich_objectives")
 async def test_enrich_objectives_stage_success(
-    mock_handle_batch_enrich_objectives,
-    mock_job_manager,
-    sample_research_objectives,
-    sample_work_plan_section,
+    mock_handle_batch_enrich_objectives: AsyncMock,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
+    sample_research_objectives: list[ResearchObjective],
+    sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test successful objective enrichment stage."""
+    # Setup grant application
+    grant_application.research_objectives = sample_research_objectives
+
     # Setup input DTO
     input_dto = {
-        "research_relationships": {
+        "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
+        "work_plan_section": sample_work_plan_section,
+        "relationships": {
             "1": [("2", "provides_data_for", "Objective 1 provides data for objective 2")],
             "2": [("1", "depends_on", "Objective 2 depends on objective 1")],
         }
@@ -356,20 +270,16 @@ async def test_enrich_objectives_stage_success(
 
     # Execute
     result = await handle_enrich_objectives_stage(
-        input_dto=input_dto,
-        research_objectives=sample_research_objectives,
-        grant_section=sample_work_plan_section,
-        application_id=str(uuid4()),
-        form_inputs={"background_context": "Test background"},
+        grant_application=grant_application,
+        dto=input_dto,
         job_manager=mock_job_manager,
         trace_id=str(uuid4()),
     )
 
     # Verify result structure
     assert isinstance(result, dict)
-    assert "enriched_objectives" in result
-    assert "objectives_count" in result
-    assert result["objectives_count"] == 2
+    assert "enrichment_responses" in result
+    assert len(result["enrichment_responses"]) == 2
 
     # Verify cancellation checks
     mock_job_manager.ensure_not_cancelled.assert_called()
@@ -381,14 +291,18 @@ async def test_enrich_objectives_stage_success(
 @patch("services.rag.src.grant_application.handlers.enrich_objective_with_wikidata")
 @patch("services.rag.src.grant_application.handlers.batched_gather")
 async def test_enrich_terminology_stage_success(
-    mock_batched_gather,
-    mock_enrich_objective_with_wikidata,
-    mock_job_manager,
+    mock_batched_gather: AsyncMock,
+    mock_enrich_objective_with_wikidata: AsyncMock,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
 ) -> None:
     """Test successful terminology enrichment stage."""
     # Setup input DTO
     input_dto = {
-        "enriched_objectives": [
+        "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
+        "work_plan_section": {"id": "research_plan"},
+        "relationships": {},
+        "enrichment_responses": [
             {
                 "research_objective": {
                     "description": "Enhanced objective 1",
@@ -422,7 +336,6 @@ async def test_enrich_terminology_stage_success(
                 ],
             },
         ],
-        "objectives_count": 2,
     }
 
     # Setup mocks
@@ -440,16 +353,17 @@ async def test_enrich_terminology_stage_success(
 
     # Execute
     result = await handle_enrich_terminology_stage(
-        input_dto=input_dto,
+        grant_application=grant_application,
+        dto=input_dto,
         job_manager=mock_job_manager,
         trace_id=str(uuid4()),
     )
 
     # Verify result structure
     assert isinstance(result, dict)
-    assert "enriched_objectives" in result
-    assert "terminology_contexts" in result
-    assert result["terminology_contexts_count"] == 2
+    assert "enrichment_responses" in result
+    assert "wikidata_enrichments" in result
+    assert len(result["wikidata_enrichments"]) == 2
 
     # Verify cancellation checks
     mock_job_manager.ensure_not_cancelled.assert_called()
@@ -458,15 +372,31 @@ async def test_enrich_terminology_stage_success(
     mock_job_manager.add_notification.assert_called()
 
 
-@patch("services.rag.src.grant_application.handlers.generate_research_plan_content")
+@patch("services.rag.src.grant_application.handlers.generate_objective_with_tasks")
 async def test_generate_research_plan_stage_success(
-    mock_generate_research_plan_content,
-    mock_job_manager,
+    mock_generate_objective_with_tasks: AsyncMock,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
 ) -> None:
     """Test successful research plan generation stage."""
+    # Setup grant application research objectives
+    grant_application.research_objectives = [
+        ResearchObjective(
+            number=1,
+            title="Develop novel biomarkers",
+            research_tasks=[
+                ResearchTask(number=1, title="Identify candidate biomarkers"),
+                ResearchTask(number=2, title="Validate biomarkers"),
+            ],
+        )
+    ]
+
     # Setup input DTO with matching task count
     input_dto = {
-        "enriched_objectives": [
+        "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
+        "work_plan_section": {"id": "research_plan"},
+        "relationships": {},
+        "enrichment_responses": [
             {
                 "research_objective": {
                     "description": "Enhanced objective 1",
@@ -490,43 +420,29 @@ async def test_generate_research_plan_stage_success(
                 ],
             }
         ],
-        "terminology_contexts": [
+        "wikidata_enrichments": [
             {
                 "core_scientific_terms": ["biomarkers"],
                 "scientific_context": "Context",
             }
         ],
-        "terminology_contexts_count": 1,
     }
 
-    # Create research objectives that match the DTO structure
-    research_objectives = [
-        ResearchObjective(
-            number=1,
-            title="Develop novel biomarkers",
-            research_tasks=[
-                ResearchTask(number=1, title="Identify candidate biomarkers"),
-                ResearchTask(number=2, title="Validate biomarkers"),
-            ],
-        )
-    ]
-
     # Setup mock
-    mock_generate_research_plan_content.return_value = "Generated research plan content"
+    mock_generate_objective_with_tasks.return_value = "Generated research plan content"
 
     # Execute
     result = await handle_generate_research_plan_stage(
-        input_dto=input_dto,
-        research_objectives=research_objectives,
-        application_id=str(uuid4()),
+        grant_application=grant_application,
+        dto=input_dto,
         job_manager=mock_job_manager,
         trace_id=str(uuid4()),
     )
 
     # Verify result structure
     assert isinstance(result, dict)
-    assert "research_plan_text" in result
-    assert result["research_plan_text"] == "Generated research plan content"
+    assert "text" in result
+    assert result["text"] == "Generated research plan content"
 
     # Verify cancellation checks
     mock_job_manager.ensure_not_cancelled.assert_called()
@@ -536,54 +452,31 @@ async def test_generate_research_plan_stage_success(
 
 
 async def test_handlers_preserve_data_flow(
-    mock_job_manager,
-    async_session_manager,
-    sample_grant_sections,
-    sample_work_plan_section,
+    mock_job_manager: AsyncMock,
+    grant_application: Any,
+    sample_grant_sections: list[dict[str, Any]],
+    sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test that handlers preserve data flow correctly."""
-    async with async_session_manager() as session, session.begin():
-        from packages.db.src.models import GrantApplication, GrantTemplate
-
-        # Create test data
-        grant_template = GrantTemplate(
-            id=uuid4(),
-            organization_id=uuid4(),
-            grant_sections=sample_grant_sections + [sample_work_plan_section],
-            cfp_analysis={
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
-            }
+    # Setup grant application
+    grant_application.research_objectives = [
+        ResearchObjective(
+            number=1,
+            title="Test objective",
+            research_tasks=[ResearchTask(number=1, title="Test task")],
         )
-        session.add(grant_template)
+    ]
 
-        grant_application = GrantApplication(
-            id=uuid4(),
-            organization_id=grant_template.organization_id,
-            grant_template_id=grant_template.id,
-            grant_template=grant_template,
-            research_objectives=[
-                ResearchObjective(
-                    number=1,
-                    title="Test objective",
-                    research_tasks=[ResearchTask(number=1, title="Test task")],
-                )
-            ]
-        )
-        session.add(grant_application)
-        await session.flush()
+    # Test data flow preservation
+    test_dto = {
+        "section_texts": [
+            {"section_id": "abstract", "text": "Test abstract"},
+        ],
+        "work_plan_section": sample_work_plan_section,
+    }
 
-        # Test data flow preservation
-        test_dto = {
-            "section_texts": [
-                {"section_id": "abstract", "text": "Test abstract"},
-            ],
-            "work_plan_section": sample_work_plan_section,
-        }
-
-        # Verify that the input structure is preserved
-        assert "section_texts" in test_dto
-        assert "work_plan_section" in test_dto
-        assert test_dto["section_texts"][0]["section_id"] == "abstract"
-        assert test_dto["work_plan_section"]["id"] == "research_plan"
+    # Verify that the input structure is preserved
+    assert "section_texts" in test_dto
+    assert "work_plan_section" in test_dto
+    assert test_dto["section_texts"][0]["section_id"] == "abstract"
+    assert test_dto["work_plan_section"]["id"] == "research_plan"

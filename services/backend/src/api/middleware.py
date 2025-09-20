@@ -246,4 +246,4 @@ class TraceIdMiddleware(ASGIMiddleware):
 
 
 def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str:
-    return getattr(request.state, "trace_id", str(uuid4())) # TODO: align with frontend, we should have a clear format for these.
+    return getattr(request.state, "trace_id", str(uuid4()))

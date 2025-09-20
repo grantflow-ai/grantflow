@@ -1,11 +1,10 @@
-from typing import Any
-from unittest.mock import AsyncMock, patch
+from typing import TYPE_CHECKING
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.generate_metadata import (
     SectionMetadata,
     TemplateSectionsResponse,
@@ -13,6 +12,9 @@ from services.rag.src.grant_template.generate_metadata import (
     handle_generate_grant_template_metadata,
     validate_template_sections,
 )
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 
 
 

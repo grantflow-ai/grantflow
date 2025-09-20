@@ -2,6 +2,7 @@ import ky, { type KyInstance } from "ky";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 import { Ref } from "@/utils/state";
+import { generateTraceId } from "@/utils/tracing";
 
 const clientRef = new Ref<KyInstance>();
 
@@ -80,8 +81,19 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				(request, options) => {
-					let requestBody: unknown;
+					// Ensure every request has a trace_id
+					if (!request.headers.get("X-Trace-ID")) {
+						const traceId = generateTraceId();
+						request.headers.set("X-Trace-ID", traceId);
+						log.debug("Auto-generated trace_id for request", {
+							method: request.method,
+							trace_id: traceId,
+							url: request.url,
+						});
+					}
 
+					// Log request details
+					let requestBody: unknown;
 					if (options.body) {
 						try {
 							requestBody = typeof options.body === "string" ? JSON.parse(options.body) : options.body;

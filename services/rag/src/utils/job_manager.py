@@ -21,6 +21,19 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 logger = get_logger(__name__)
 
 
+def _serialize_checkpoint_data(data: Any) -> Any:
+    """Convert UUIDs to strings recursively for JSON serialization."""
+    if isinstance(data, UUID):
+        return str(data)
+    if isinstance(data, dict):
+        return {key: _serialize_checkpoint_data(value) for key, value in data.items()}
+    if isinstance(data, list):
+        return [_serialize_checkpoint_data(item) for item in data]
+    if isinstance(data, tuple):
+        return tuple(_serialize_checkpoint_data(item) for item in data)
+    return data
+
+
 class BaseJobManager[T: RagGenerationJob, E, D](ABC):
     __slots__ = (
         "current_stage",
@@ -72,7 +85,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             if not job:
                 raise RuntimeError(f"Job {self.job_id} not found")
 
-            job.checkpoint_data = dto
+            job.checkpoint_data = _serialize_checkpoint_data(dto)
             job.current_stage = current_index + 1
             await session.commit()
 

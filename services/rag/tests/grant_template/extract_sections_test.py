@@ -1,5 +1,4 @@
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -17,23 +16,6 @@ from services.rag.src.grant_template.extract_sections import (
     handle_extract_sections,
     validate_section_extraction,
 )
-
-
-@pytest.fixture(autouse=True)
-def reset_mocks():
-    """Reset all mocks between tests to ensure test isolation."""
-    yield
-    # Clean up any module-level state
-    import sys
-    from unittest.mock import _patch
-
-    # Reset all active patches
-    for patch_obj in list(_patch._patch_registry):
-        if hasattr(patch_obj, 'stop'):
-            try:
-                patch_obj.stop()
-            except Exception:
-                pass
 
 
 class TestExtractedSectionDTO:

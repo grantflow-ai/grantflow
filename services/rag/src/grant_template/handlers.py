@@ -80,18 +80,21 @@ async def handle_cfp_extraction_stage(
             ),
             timeout=300  # 5 minutes timeout
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("CFP data extraction timed out after 5 minutes. Please try again with a smaller document.") from None
 
     organization = (
         next(
-            OrganizationNamespace(
-                organization_id=org.id,
-                abbreviation=org.abbreviation,
-                full_name=org.full_name,
-            )
-            for org in funding_organizations
-            if str(org.id) == extraction_result["organization_id"]
+            (
+                OrganizationNamespace(
+                    organization_id=org.id,
+                    abbreviation=org.abbreviation,
+                    full_name=org.full_name,
+                )
+                for org in funding_organizations
+                if str(org.id) == extraction_result["organization_id"]
+            ),
+            None,  # Default value when no match found
         )
         if extraction_result["organization_id"]
         else None
@@ -147,7 +150,7 @@ async def handle_cfp_analysis_stage(
             ),
             timeout=180  # 3 minutes timeout
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("CFP analysis timed out after 3 minutes. Please try again or contact support.") from None
 
     await job_manager.add_notification(
@@ -190,7 +193,7 @@ async def handle_section_extraction_stage(
             ),
             timeout=240  # 4 minutes timeout
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("Section extraction timed out after 4 minutes. Please try again or contact support.") from None
 
     await job_manager.add_notification(
@@ -216,6 +219,8 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
+    logger.info("Starting metadata generation stage", trace_id=trace_id)
+
     try:
         section_metadata = await asyncio.wait_for(
             handle_generate_grant_template_metadata(
@@ -231,7 +236,7 @@ async def handle_generate_metadata_stage(
             ),
             timeout=300  # 5 minutes timeout
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ValidationError("Metadata generation timed out after 5 minutes. Please try again or contact support.") from None
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
