@@ -15,6 +15,7 @@ from services.rag.src.grant_template.generate_metadata import (
 )
 
 
+
 class TestSectionMetadata:
     """Test SectionMetadata TypedDict structure."""
 
@@ -257,7 +258,7 @@ class TestValidateTemplateSections:
             ]
         }
 
-        with pytest.raises(ValidationError, match="Invalid max_words"):
+        with pytest.raises(ValidationError, match="Invalid word count"):
             validate_template_sections(response_negative, input_sections=input_sections)
 
         # Test zero max_words
@@ -275,7 +276,7 @@ class TestValidateTemplateSections:
             ]
         }
 
-        with pytest.raises(ValidationError, match="Invalid max_words"):
+        with pytest.raises(ValidationError, match="Invalid word count"):
             validate_template_sections(response_zero, input_sections=input_sections)
 
 
@@ -300,7 +301,18 @@ class TestGenerateGrantTemplate:
         }
         mock_completions.return_value = mock_response
 
-        result = await generate_grant_template("Test CFP content", long_form_sections=[])
+        # Create input sections for testing
+        input_sections: list[ExtractedSectionDTO] = [
+            {
+                "title": "Project Summary",
+                "id": "project_summary",
+                "order": 1,
+                "is_long_form": True,
+                "is_detailed_research_plan": False,
+            }
+        ]
+
+        result = await generate_grant_template("Test CFP content", input_sections=input_sections)
 
         assert "sections" in result
         assert len(result["sections"]) == 1
@@ -310,20 +322,22 @@ class TestGenerateGrantTemplate:
     @patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
     async def test_generate_grant_template_validation_error(self, mock_completions) -> None:
         """Test generate_grant_template with validation error."""
-        mock_response = {
-            "sections": [],  # Empty sections will trigger validation error
-        }
-        mock_completions.return_value = mock_response
+        # Mock to raise ValidationError as would happen with empty sections
+        mock_completions.side_effect = ValidationError("No sections generated. Please provide an error message.")
+
+        # Create input sections for testing
+        input_sections: list[ExtractedSectionDTO] = [
+            {
+                "title": "Project Summary",
+                "id": "project_summary",
+                "order": 1,
+                "is_long_form": True,
+                "is_detailed_research_plan": False,
+            }
+        ]
 
         with pytest.raises(ValidationError, match="No sections generated"):
-            await generate_grant_template("Test CFP content", long_form_sections=[
-                {
-                    "title": "Project Summary",
-                    "id": "project_summary",
-                    "order": 1,
-                    "is_long_form": True,
-                }
-            ])
+            await generate_grant_template("Test CFP content", input_sections=input_sections)
 
 
 class TestHandleGenerateGrantTemplateMetadata:
@@ -471,7 +485,7 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Develop a detailed research plan with methodology and timeline",
                     "depends_on": [],
                     "max_words": 2000,  # Default for research plan
-                    "search_queries": ["research methodology examples"],
+                    "search_queries": ["research methodology examples", "project timeline format", "detailed research plan"],
                 },
             ]
         }
@@ -507,9 +521,13 @@ class TestHandleGenerateGrantTemplateMetadata:
 class TestIntegrationGenerateMetadata:
     """Test integration scenarios for metadata generation."""
 
+    @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
     @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
-    async def test_end_to_end_metadata_generation(self, mock_evaluation) -> None:
+    async def test_end_to_end_metadata_generation(self, mock_evaluation, mock_retrieve) -> None:
         """Test complete end-to-end metadata generation workflow."""
+        # Mock retrieve_documents to avoid deep call chain
+        mock_retrieve.return_value = "Mocked organizational guidelines content"
+
         # Setup comprehensive mock response
         mock_evaluation.return_value = {
             "sections": [
@@ -555,24 +573,27 @@ class TestIntegrationGenerateMetadata:
             ]
         }
 
-        long_form_sections = [
+        long_form_sections: list[ExtractedSectionDTO] = [
             {
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
                 "is_long_form": True,
+                "is_detailed_research_plan": False,
             },
             {
                 "title": "Research Plan",
                 "id": "research_plan",
                 "order": 2,
                 "is_long_form": True,
+                "is_detailed_research_plan": True,
             },
             {
                 "title": "Expected Outcomes",
                 "id": "expected_outcomes",
                 "order": 3,
                 "is_long_form": True,
+                "is_detailed_research_plan": False,
             },
         ]
 

@@ -33,7 +33,7 @@ from services.backend.src.api.routes.grant_applications import (
 from services.backend.src.api.routes.grant_applications import (
     GrantingInstitutionResponse as AppGrantingInstitutionResponse,
 )
-from services.backend.src.api.routes.grant_template import UpdateGrantTemplateRequestBody
+from services.backend.src.api.routes.grant_templates import UpdateGrantTemplateRequestBody
 from services.backend.src.api.routes.granting_institutions import (
     CreateOrganizationRequestBody,
     GrantingInstitutionResponse,

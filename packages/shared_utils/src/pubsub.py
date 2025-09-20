@@ -54,14 +54,14 @@ class CrawlingRequest(TypedDict):
     entity_type: EntityType
     entity_id: UUID
     url: str
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class SourceProcessingResult(TypedDict):
     source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class RagProcessingStatus(TypedDict):
@@ -70,7 +70,7 @@ class RagProcessingStatus(TypedDict):
     data: NotRequired[dict[str, Any]]
     current_pipeline_stage: NotRequired[int]
     total_pipeline_stages: NotRequired[int]
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class RagRequest(TypedDict):
@@ -85,7 +85,7 @@ class AutofillRequest(TypedDict):
     autofill_type: Literal["research_plan", "research_deep_dive"]
     field_name: NotRequired[str]
     context: NotRequired[dict[str, Any]]
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class WebsocketMessage[T](TypedDict):
@@ -93,12 +93,12 @@ class WebsocketMessage[T](TypedDict):
     parent_id: UUID
     event: str
     data: T
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class EmailNotificationRequest(TypedDict):
     application_id: UUID
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class SubscriptionVerificationRequest(TypedDict):
@@ -108,7 +108,7 @@ class SubscriptionVerificationRequest(TypedDict):
     template_type: Literal["subscription_verification"]
     search_params: NotRequired[dict[str, Any]]
     frequency: NotRequired[str]
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 def get_publisher_client() -> pubsub.PublisherClient:
@@ -297,16 +297,13 @@ async def publish_autofill_task(
     client = get_publisher_client()
 
     autofill_request = AutofillRequest(
-        application_id=UUID(str(parent_id)),
-        autofill_type=autofill_type,
+        application_id=UUID(str(parent_id)), autofill_type=autofill_type, trace_id=trace_id
     )
 
     if field_name:
         autofill_request["field_name"] = field_name
     if context:
         autofill_request["context"] = context
-    if trace_id:
-        autofill_request["trace_id"] = trace_id
 
     try:
         message_data = serialize(autofill_request)
