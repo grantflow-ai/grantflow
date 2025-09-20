@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeVar, cast
 from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
@@ -18,7 +18,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
+
 logger = get_logger(__name__)
+
+StageEnum = TypeVar("StageEnum", bound=GrantApplicationStageEnum | GrantTemplateStageEnum)
+
 
 
 def _serialize_checkpoint_data(data: Any) -> Any:
@@ -34,28 +39,27 @@ def _serialize_checkpoint_data(data: Any) -> Any:
     return data
 
 
-class BaseJobManager[T: RagGenerationJob, E, D](ABC):
+class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
     __slots__ = (
         "current_stage",
         "grant_application_id",
+        "job",
         "job_id",
         "parent_id",
         "pipeline_stages",
         "session_maker",
         "trace_id",
     )
-
-    job: None | T = None
     parent_type: Literal["grant_application", "grant_template"]
 
     def __init__(
         self,
         *,
-        current_stage: E,
+        current_stage: StageEnum,
         grant_application_id: UUID,
         job_id: UUID | None = None,
         parent_id: UUID,
-        pipeline_stages: list[E],
+        pipeline_stages: list[StageEnum],
         session_maker: async_sessionmaker[Any],
         trace_id: str,
     ) -> None:
@@ -71,7 +75,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
     async def get_or_create_job(self) -> T:
         pass
 
-    async def to_next_job_stage(self, dto: D) -> None:
+    async def to_next_job_stage(self, dto: DTOType) -> None:
         """Save checkpoint data and publish next stage to PubSub."""
         current_index = self.pipeline_stages.index(self.current_stage)
         if current_index >= len(self.pipeline_stages) - 1:
@@ -101,7 +105,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
         await publish_rag_task(
             parent_type=self.parent_type,
             parent_id=self.parent_id,
-            stage=next_stage,
+            stage=cast("GrantApplicationStageEnum | GrantTemplateStageEnum", next_stage),
             trace_id=self.trace_id,
         )
 
@@ -162,6 +166,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             "message": message,
             "current_pipeline_stage": current_pipeline_stage,
             "total_pipeline_stages": total_pipeline_stages,
+            "trace_id": self.trace_id,
         }
 
         if data is not None:
@@ -216,7 +221,7 @@ class BaseJobManager[T: RagGenerationJob, E, D](ABC):
             raise RagJobCancelledError("Job cancelled")
 
 
-class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E, D]):
+class GrantTemplateJobManager[StageEnum, DTOType](BaseJobManager[GrantTemplateGenerationJob, StageEnum, DTOType]):
     parent_type: Literal["grant_template"] = "grant_template"
 
     async def get_or_create_job(self) -> GrantTemplateGenerationJob:
@@ -273,7 +278,7 @@ class GrantTemplateJobManager[E, D](BaseJobManager[GrantTemplateGenerationJob, E
                 raise DatabaseError("Error inserting rag job into db") from e
 
 
-class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGenerationJob, E, D]):
+class GrantApplicationJobManager[StageEnum, DTOType](BaseJobManager[GrantApplicationGenerationJob, StageEnum, DTOType]):
     parent_type: Literal["grant_application"] = "grant_application"
 
     async def get_or_create_job(self) -> GrantApplicationGenerationJob:
@@ -319,7 +324,7 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
 
     async def to_next_job_stage(
         self,
-        dto: D,
+        dto: DTOType,
     ) -> None:
         if not self.job:
             raise ValueError("No job available to update")
@@ -360,6 +365,6 @@ class GrantApplicationJobManager[E, D](BaseJobManager[GrantApplicationGeneration
         await publish_rag_task(
             parent_id=self.parent_id,
             parent_type=self.parent_type,
-            stage=next_stage,
+            stage=cast("GrantApplicationStageEnum | GrantTemplateStageEnum", next_stage),
             trace_id=self.trace_id,
         )

@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import CFPAnalysisResult, GrantElement, GrantLongFormSection
@@ -233,6 +233,7 @@ async def handle_generate_metadata_stage(
                 cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
                 organization=section_extraction_result["organization"],
                 long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]],
+                trace_id=trace_id,
             ),
             timeout=300  # 5 minutes timeout
         )
@@ -309,6 +310,9 @@ async def handle_save_grant_template(
                 .returning(GrantTemplate)
             )
 
+            if not updated_template:
+                raise DatabaseError("Failed to update and retrieve grant template")
+
             await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
             await job_manager.add_notification(
                 event=NotificationEvents.GRANT_TEMPLATE_CREATED,
@@ -329,7 +333,7 @@ async def handle_save_grant_template(
                 section_count=len(grant_sections),
             )
 
-            return updated_template
+            return cast("GrantTemplate", updated_template)
         except SQLAlchemyError as e:
             logger.error(
                 "Database error generating grant template",

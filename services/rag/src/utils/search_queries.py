@@ -166,6 +166,7 @@ async def handle_create_search_queries(
             response_schema=response_schema,
             response_type=DiverseQueryResponse,
             model=EVALUATION_MODEL,
+            trace_id=trace_id,
         )
 
         current_query_texts = [q["text"] for q in response["queries"]]

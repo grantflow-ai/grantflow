@@ -531,7 +531,7 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
     for section in sections:
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
-            section["parent_id"] = None
+            del section["parent_id"]
 
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
@@ -540,7 +540,7 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     return sorted_sections
 
 
-async def extract_sections(task_description: str, **_: Any) -> ExtractedSections:
+async def extract_sections(task_description: str, trace_id: str, **_: Any) -> ExtractedSections:
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
@@ -549,6 +549,7 @@ async def extract_sections(task_description: str, **_: Any) -> ExtractedSections
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
+        trace_id=trace_id,
     )
 
 
@@ -695,6 +696,7 @@ async def handle_extract_sections(
         passing_score=75,
         increment=15,
         retries=3,
+        trace_id=trace_id,
     )
 
     return await filter_extracted_sections(result["sections"], trace_id)
