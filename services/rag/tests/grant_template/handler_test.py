@@ -1,34 +1,29 @@
 from typing import TYPE_CHECKING, Any, cast
-from unittest.mock import AsyncMock, patch
-from uuid import UUID
+from unittest.mock import patch
 
 import pytest
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
+from packages.db.src.json_objects import CFPAnalysisResult
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantTemplate,
-    GrantTemplateSource,
     GrantTemplateGenerationJob,
+    GrantTemplateSource,
     RagFile,
     TextVector,
 )
-from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
+from packages.shared_utils.src.exceptions import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
-from testing.factories import (
-    GrantTemplateFactory,
-    GrantTemplateSourceFactory,
-    RagFileFactory,
-    TextVectorFactory,
-)
 
 from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.dto import (
+    CFPContentSection as Content,
+)
+from services.rag.src.grant_template.dto import (
     ExtractedCFPData,
     OrganizationNamespace,
-    CFPContentSection as Content,
 )
 from services.rag.src.grant_template.extract_cfp_data import (
     RagSourceData,
@@ -40,15 +35,12 @@ from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.grant_template.generate_metadata import SectionMetadata
 from services.rag.src.grant_template.handler import (
     ExtractCFPContentStageDTO,
-    AnalyzeCFPContentStageDTO,
     ExtractionSectionsStageDTO,
     grant_template_generation_pipeline_handler,
-    handle_cfp_extraction_stage,
     handle_cfp_analysis_stage,
-    handle_section_extraction_stage,
+    handle_cfp_extraction_stage,
     handle_generate_metadata_stage,
 )
-from packages.db.src.json_objects import CFPAnalysisResult
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantLongFormSection
@@ -294,28 +286,18 @@ async def test_handle_cfp_extraction_stage(
     """Test the CFP extraction stage of the pipeline."""
     from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
-    # Create a real job in the database
-    async with async_session_maker() as session, session.begin():
-        job = GrantTemplateGenerationJob(
-            grant_template_id=grant_template_with_sources.id,
-            status=RagGenerationStatusEnum.PENDING,
-            current_stage=1,
-            total_stages=4,
-        )
-        session.add(job)
-        await session.commit()
-        job_id = job.id
-
     # Create real job manager
     job_manager = GrantTemplateJobManager(
         session_maker=async_session_maker,
         grant_application_id=grant_template_with_sources.grant_application_id,
-        job_id=job_id,
         current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         pipeline_stages=list(GrantTemplateStageEnum),
         parent_id=grant_template_with_sources.id,
         trace_id="test-trace-id",
     )
+
+    # Create the job using get_or_create_job
+    job = await job_manager.get_or_create_job()
 
     with patch(
         "services.rag.src.grant_template.handler.handle_extract_cfp_data",
@@ -332,7 +314,7 @@ async def test_handle_cfp_extraction_stage(
 
     # Verify job status was updated
     async with async_session_maker() as session:
-        updated_job = await session.get(GrantTemplateGenerationJob, job_id)
+        updated_job = await session.get(GrantTemplateGenerationJob, job.id)
         assert updated_job is not None
         # Job should still be processing (next stage would be triggered via pubsub)
         assert updated_job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]
@@ -348,12 +330,22 @@ async def test_handle_cfp_analysis_stage(
     """Test the CFP analysis stage."""
     from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
+    # Create job manager
+    job_manager = GrantTemplateJobManager(
+        session_maker=async_session_maker,
+        grant_application_id=grant_template_with_sections.grant_application_id,
+        current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+        pipeline_stages=list(GrantTemplateStageEnum),
+        parent_id=grant_template_with_sections.id,
+        trace_id="test-trace-id",
+    )
+
     # Create a job with checkpoint data from previous stage
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=2,
+            current_stage=1,  # Current stage index in pipeline
             total_stages=4,
             checkpoint_data={
                 "organization": {
@@ -366,17 +358,8 @@ async def test_handle_cfp_analysis_stage(
         )
         session.add(job)
         await session.commit()
-        job_id = job.id
-
-    job_manager = GrantTemplateJobManager(
-        session_maker=async_session_maker,
-        grant_application_id=grant_template_with_sections.grant_application_id,
-        job_id=job_id,
-        current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
-        pipeline_stages=list(GrantTemplateStageEnum),
-        parent_id=grant_template_with_sections.id,
-        trace_id="test-trace-id",
-    )
+        job_manager.job_id = job.id
+        job_manager.job = job
 
     extracted_cfp: ExtractCFPContentStageDTO = {
         "organization": OrganizationNamespace(
@@ -413,27 +396,28 @@ async def test_handle_generate_metadata_stage(
     """Test the metadata generation stage."""
     from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
-    # Create job for this test
-    async with async_session_maker() as session, session.begin():
-        job = GrantTemplateGenerationJob(
-            grant_template_id=grant_template_with_sections.id,
-            status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=4,
-            total_stages=4,
-        )
-        session.add(job)
-        await session.commit()
-        job_id = job.id
-
+    # Create job manager
     job_manager = GrantTemplateJobManager(
         session_maker=async_session_maker,
         grant_application_id=grant_template_with_sections.grant_application_id,
-        job_id=job_id,
         current_stage=GrantTemplateStageEnum.GENERATE_METADATA,
         pipeline_stages=list(GrantTemplateStageEnum),
         parent_id=grant_template_with_sections.id,
         trace_id="test-trace-id",
     )
+
+    # Create job for this test
+    async with async_session_maker() as session, session.begin():
+        job = GrantTemplateGenerationJob(
+            grant_template_id=grant_template_with_sections.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            current_stage=3,  # Index for GENERATE_METADATA stage
+            total_stages=4,
+        )
+        session.add(job)
+        await session.commit()
+        job_manager.job_id = job.id
+        job_manager.job = job
 
     section_extraction_result: ExtractionSectionsStageDTO = {
         "organization": OrganizationNamespace(
@@ -513,7 +497,7 @@ async def test_grant_template_generation_pipeline_full_flow(
             return_value=mock_section_metadata,
         ),
     ):
-        result = await grant_template_generation_pipeline_handler(
+        await grant_template_generation_pipeline_handler(
             grant_template=grant_template_with_sources,
             session_maker=async_session_maker,
             generation_stage=GrantTemplateStageEnum.GENERATE_METADATA,

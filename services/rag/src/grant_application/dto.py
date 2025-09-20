@@ -1,9 +1,6 @@
 from typing import Literal, NotRequired, TypedDict
-from uuid import UUID
 
 from packages.db.src.json_objects import (
-    CFPSectionAnalysis,
-    GrantElement,
     GrantLongFormSection,
     ResearchDeepDive,
     ResearchObjective,
@@ -56,21 +53,19 @@ class WikidataBatchResponse(TypedDict):
     failed_expansions: int
 
 
-class GenerateSectionsStageDTO(
-    TypedDict
-):  # TODO: this is bad. We have all of the data here on the GrantApplication type itself, WE DO NOT NEED to duplicate it here. We should use the GrantApplication directly in the handle
-    application_id: UUID
-    cfp_analysis: CFPSectionAnalysis
-    form_inputs: ResearchDeepDive
-    grant_sections: list[GrantElement | GrantLongFormSection]
-    research_objectives: list[ResearchObjective]
-    section_texts: dict[str, str]  # TODO: this is the only value we should keep here! but it should be properly typed.
-    template_id: UUID
-    title: str
+class SectionText(TypedDict):
+    section_id: str
+    text: str
+
+
+class GenerateSectionsStageDTO(TypedDict):
+    """Contains only the generated section texts, not the input data"""
+    section_texts: list[SectionText]  # Generated texts for all sections except research plan
     work_plan_section: GrantLongFormSection  # The research plan section to generate later
 
 
 class ExtractRelationshipsStageDTO(GenerateSectionsStageDTO):
+    """Adds extracted relationships to the previous stage data"""
     relationships: dict[str, list[tuple[str, str]]]  # Relationships between objectives/tasks
 
 
@@ -80,13 +75,15 @@ class ObjectiveEnrichmentResponse(TypedDict):
 
 
 class EnrichObjectivesStageDTO(ExtractRelationshipsStageDTO):
+    """Adds enrichment responses to the previous stage data"""
     enrichment_responses: list[ObjectiveEnrichmentResponse]  # Enriched objectives and tasks data
 
 
 class EnrichTerminologyStageDTO(EnrichObjectivesStageDTO):
+    """Adds Wikidata enrichments to the previous stage data"""
     wikidata_enrichments: list[EnrichmentDataDTO]  # Scientific terminology enrichments
 
 
 class GenerateResearchPlanStageDTO(EnrichTerminologyStageDTO):
+    """Final stage with complete application text"""
     research_plan_text: str  # The generated research plan/work plan text
-    complete_section_texts: dict[str, str]  # All sections including research plan

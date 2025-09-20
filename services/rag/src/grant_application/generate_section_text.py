@@ -1,6 +1,6 @@
 from typing import Final
 
-from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection, ResearchObjective, CFPAnalysisResult
+from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
