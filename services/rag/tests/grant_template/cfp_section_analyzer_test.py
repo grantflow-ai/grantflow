@@ -3,18 +3,14 @@ from unittest.mock import patch
 
 import pytest
 from packages.shared_utils.src.exceptions import ValidationError
-from rag.src.grant_template.category_extraction import CFP_SECTION_ANALYZER_SCHEMA
+from rag.src.grant_template.category_extraction import categorize_text
 
-from services.rag.src.grant_application.generate_section_text import _format_cfp_requirements_for_section
 from services.rag.src.grant_template.cfp_section_analysis import (
     GEMINI_2_5_FLASH_MODEL,
-    CFPSectionAnalysis,
     analyze_cfp_sections,
-    generate_cfp_analysis_report,
-    transform_analysis_for_database,
     validate_cfp_analysis,
 )
-from services.rag.src.grant_template.nlp_categorizer import categorize_text
+from src.json_objects import CFPSectionAnalysis
 
 
 @pytest.fixture

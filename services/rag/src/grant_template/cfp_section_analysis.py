@@ -1,14 +1,15 @@
-from typing import Final, NotRequired, TypedDict
+from typing import Final
 
+from packages.db.src.json_objects import (
+    CategorizationAnalysisResult,
+    CFPAnalysisMetadata,
+    CFPAnalysisResult,
+    CFPSectionAnalysis,
+)
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.category_extraction import (
-    CategorizationAnalysisResult,
-    CFPAnalysisEvaluationCriterion,
-    CFPAnalysisRequirementWithQuote,
-    CFPSectionLengthConstraint,
-    CFPSectionRequirement,
     categorize_text,
     format_nlp_analysis_for_prompt,
 )
@@ -18,30 +19,6 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 GEMINI_2_5_FLASH_MODEL: Final[str] = "gemini-2.5-flash"
-
-
-class CFPSectionAnalysis(TypedDict):
-    required_sections: list[CFPSectionRequirement]
-    length_constraints: list[CFPSectionLengthConstraint]
-    evaluation_criteria: list[CFPAnalysisEvaluationCriterion]
-    additional_requirements: list[CFPAnalysisRequirementWithQuote]
-    sections_count: int
-    length_constraints_found: int
-    evaluation_criteria_count: int
-    error: NotRequired[str | None]
-
-
-class CFPAnalysisMetadata(TypedDict):
-    content_length: int
-    categories_found: int
-    total_sentences: int
-
-
-class CFPAnalysisResult(TypedDict):
-    cfp_analysis: CFPSectionAnalysis
-    nlp_analysis: CategorizationAnalysisResult
-    analysis_metadata: CFPAnalysisMetadata
-
 
 CFP_SECTION_ANALYZER_SYSTEM_PROMPT: Final[str] = """
 You are a specialized CFP (Call for Proposals) analyzer that extracts comprehensive section requirements

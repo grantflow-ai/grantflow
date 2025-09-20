@@ -10,7 +10,6 @@ from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
-from rag.src.enums import GrantTemplateStageEnum
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -18,6 +17,7 @@ from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
+from services.rag.src.enums import GrantTemplateStageEnum
 
 logger = get_logger(__name__)
 

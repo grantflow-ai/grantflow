@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.category_extraction import (
-    CategorizationAnalysisResult,
     categorize_text,
     format_nlp_analysis_for_prompt,
 )
@@ -21,6 +20,7 @@ from services.rag.src.grant_template.dto import ExtractedCFPData
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
+from src.json_objects import CategorizationAnalysisResult
 
 logger = get_logger(__name__)
 
@@ -315,7 +315,7 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
                 error,
                 context={
                     "cfp_subject": response.get("cfp_subject", ""),
-                    "organization_id": response.get("organization_id", None),
+                    "organization_id": response.get("organization_id"),
                     "recovery_instruction": "The CFP content appears to be insufficient or unclear. Try extracting more specific guidelines or requirements from all available sources.",
                 },
             )
@@ -323,7 +323,7 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
             "No content extracted from any source. Please provide an error message.",
             context={
                 "cfp_subject": response.get("cfp_subject", ""),
-                "organization_id": response.get("organization_id", None),
+                "organization_id": response.get("organization_id"),
                 "recovery_instruction": "Extract at least 3-5 relevant guidelines or requirements from the available RAG sources, or provide a specific error message.",
             },
         )
