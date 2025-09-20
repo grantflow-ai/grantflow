@@ -329,7 +329,7 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
         )
 
 
-async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> ExtractedCFPData:
+async def extract_cfp_data_multi_source(task_description: str, trace_id: str, **_: Any) -> ExtractedCFPData:
     return await handle_completions_request(
         prompt_identifier="extract_cfp_data_multi_source",
         response_type=ExtractedCFPData,
@@ -340,6 +340,7 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
         temperature=TEMPERATURE,
         model=REASONING_MODEL,
         top_p=0.9,
+        trace_id=trace_id,
     )
 
 
@@ -417,6 +418,7 @@ async def handle_extract_cfp_data(
                 weight=0.7,
             ),
         ],
+        trace_id=trace_id,
     )
 
     _cache_cfp_result(cache_key, result)

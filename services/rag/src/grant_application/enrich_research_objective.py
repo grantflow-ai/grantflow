@@ -275,6 +275,7 @@ def validate_enrichment_response(
 async def enrich_objective_generation(
     task_description: str,
     *,
+    trace_id: str,
     input_objective: ResearchObjective | None = None,
 ) -> ObjectiveEnrichmentDTO:
     return await handle_completions_request(
@@ -285,6 +286,7 @@ async def enrich_objective_generation(
         model=ANTHROPIC_SONNET_MODEL,
         system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
         validator=partial(validate_enrichment_response, input_objective=input_objective),
+        trace_id=trace_id,
     )
 
 
@@ -383,4 +385,5 @@ async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnri
         criteria=criteria,
         passing_score=80,
         increment=10,
+        trace_id=dto["trace_id"],
     )

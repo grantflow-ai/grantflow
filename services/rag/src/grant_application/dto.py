@@ -27,6 +27,7 @@ class EnrichObjectiveInputDTO(TypedDict):
     retrieval_context: str
     keywords: list[str]
     topics: list[str]
+    trace_id: str
 
 
 class EnrichmentDataDTO(TypedDict):

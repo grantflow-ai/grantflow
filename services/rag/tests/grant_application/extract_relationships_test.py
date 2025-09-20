@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import ResearchObjective, ResearchTask
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
 
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 
@@ -74,8 +74,8 @@ async def test_handle_extract_relationships_success(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
-    sample_grant_section: dict[str, Any],
-    sample_form_inputs: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
+    sample_form_inputs: ResearchDeepDive,
 ) -> None:
     """Test successful relationship extraction."""
     # Setup mock responses
@@ -138,8 +138,8 @@ async def test_handle_extract_relationships_success(
 async def test_handle_extract_relationships_empty_objectives(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
-    sample_grant_section: dict[str, Any],
-    sample_form_inputs: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
+    sample_form_inputs: ResearchDeepDive,
 ) -> None:
     """Test relationship extraction with empty objectives list."""
     # Setup mock response for empty objectives
@@ -169,8 +169,8 @@ async def test_handle_extract_relationships_empty_objectives(
 async def test_handle_extract_relationships_single_objective(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
-    sample_grant_section: dict[str, Any],
-    sample_form_inputs: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
+    sample_form_inputs: ResearchDeepDive,
 ) -> None:
     """Test relationship extraction with single objective."""
     # Single objective with single task
@@ -266,8 +266,8 @@ async def test_handle_extract_relationships_complex_dependencies(
 async def test_handle_extract_relationships_no_form_inputs(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
-    sample_research_objectives,
-    sample_grant_section,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
 ) -> None:
     """Test relationship extraction with minimal form inputs."""
     # Setup mock response
@@ -303,9 +303,9 @@ async def test_handle_extract_relationships_no_form_inputs(
 async def test_handle_extract_relationships_error_handling(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
-    sample_research_objectives,
-    sample_grant_section,
-    sample_form_inputs,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: dict[str, Any],
+    sample_form_inputs: dict[str, Any],
 ) -> None:
     """Test error handling when relationship extraction fails."""
     # Setup mock to raise exception

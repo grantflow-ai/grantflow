@@ -90,6 +90,7 @@ def validate_select_best_response(tool_response: BestResponseSelection, *, candi
 async def select_best_response[T](
     candidates: dict[int, T],
     prompt: str | PromptTemplate,
+    trace_id: str,
 ) -> T:
     response = await handle_completions_request(
         prompt_identifier="select_best_response_use_prompt",
@@ -103,6 +104,7 @@ async def select_best_response[T](
         top_p=0.7,
         validator=partial(validate_select_best_response, candidates=candidates),
         system_prompt=SELECT_BEST_RESPONSE_SYSTEM_PROMPT,
+        trace_id=trace_id,
     )
     return candidates[response["best_response"]]
 
@@ -211,6 +213,7 @@ async def make_google_completions_request[T](
     return await select_best_response(
         candidates=candidates_dict,
         prompt=prompt,
+        trace_id=trace_id,
     )
 
 

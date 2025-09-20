@@ -27,15 +27,15 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
     relevant_constraints = [
         constraint
         for constraint in cfp_analysis.get("length_constraints", [])
-        if section_title_lower in constraint["description"].lower()
-        or any(word in constraint["description"].lower() for word in section_title_lower.split())
+        if section_title_lower in constraint["limit_description"].lower()
+        or any(word in constraint["limit_description"].lower() for word in section_title_lower.split())
     ]
 
     relevant_criteria = [
         criterion
         for criterion in cfp_analysis.get("evaluation_criteria", [])
-        if section_title_lower in criterion["criterion"].lower()
-        or any(word in criterion["criterion"].lower() for word in section_title_lower.split())
+        if section_title_lower in criterion["criterion_name"].lower()
+        or any(word in criterion["criterion_name"].lower() for word in section_title_lower.split())
     ]
 
     if not relevant_requirements and not relevant_constraints and not relevant_criteria:
@@ -54,14 +54,14 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
     if relevant_constraints:
         cfp_text += "### Length Constraints\n"
         for constraint in relevant_constraints:
-            cfp_text += f"- **{constraint['description']}**\n"
-            cfp_text += f'  > *Quote: "{constraint["quote"]}"*\n\n'
+            cfp_text += f"- **{constraint['limit_description']}**\n"
+            cfp_text += f'  > *Quote: "{constraint["quote_from_source"]}"*\n\n'
 
     if relevant_criteria:
         cfp_text += "### Evaluation Criteria\n"
         for criterion in relevant_criteria:
-            cfp_text += f"- **{criterion['criterion']}**\n"
-            cfp_text += f'  > *Quote: "{criterion["quote"]}"*\n\n'
+            cfp_text += f"- **{criterion['criterion_name']}**\n"
+            cfp_text += f'  > *Quote: "{criterion["quote_from_source"]}"*\n\n'
 
     return cfp_text
 
@@ -178,7 +178,9 @@ async def handle_generate_section_text(
 
     validated_context = combined_context
 
-    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis)
+    cfp_requirements_text = _format_cfp_requirements_for_section(
+        section_title, cfp_analysis.get("cfp_analysis") if cfp_analysis else None
+    )
 
     prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
