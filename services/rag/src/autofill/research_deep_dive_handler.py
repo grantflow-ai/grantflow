@@ -141,6 +141,7 @@ async def _generate_field_answer(
         search_queries=search_queries,
         task_description=str(prompt_with_title),
         max_tokens=MAX_RETRIEVAL_TOKENS,
+        trace_id=trace_id,
     )
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
@@ -153,6 +154,7 @@ async def _generate_field_answer(
         response_type=AnswerResponse,
         validator=_validate_answer_response,
         temperature=TEMPERATURE,
+        trace_id=trace_id,
     )
 
     return response["answer"].strip()

@@ -323,7 +323,7 @@ class ExtractedSectionDTO(TypedDict):
     title: str
     id: str
     order: int
-    parent_id: NotRequired[str | None]
+    parent_id: NotRequired[str]
     is_detailed_research_plan: NotRequired[bool | None]
     is_title_only: NotRequired[bool | None]
     is_clinical_trial: NotRequired[bool | None]
@@ -420,15 +420,15 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 "Invalid section ID format", context={"section_id": section["id"], "expected_format": "snake_case"}
             )
 
-        if section["parent_id"]:
-            if section["parent_id"] not in valid_ids:
+        if parent_id := section.get("parent_id"):
+            if parent_id not in valid_ids:
                 raise ValidationError(
-                    f"Invalid parent section reference. The section {section['id']} defines a parent section {section['parent_id']} that does not exist in the sections list.",
+                    f"Invalid parent section reference. The section {section['id']} defines a parent section {parent_id} that does not exist in the sections list.",
                 )
-            if mapped_sections[section["parent_id"]].get("is_detailed_research_plan"):
+            if mapped_sections[parent_id].get("is_detailed_research_plan"):
                 raise ValidationError(
                     "The research_plan section cannot have any sub-sections as children",
-                    context={"research_plan_id": section["parent_id"], "child_id": section["id"]},
+                    context={"research_plan_id": parent_id, "child_id": section["id"]},
                 )
 
         depth = 1
