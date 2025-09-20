@@ -16,21 +16,21 @@ from services.rag.src.grant_template.category_extraction import (
 )
 
 
-def test_categorize_text_basic() -> None:
+async def test_categorize_text_basic() -> None:
     text = "The budget must not exceed $50,000. Deadline is March 15, 2025."
 
     with patch("packages.shared_utils.src.nlp.get_spacy_model") as mock_spacy:
         mock_doc = _create_mock_doc()
         mock_spacy.return_value.return_value = mock_doc
 
-        result = categorize_text(text)
+        result = await categorize_text(text)
 
         assert isinstance(result, dict)
         assert all(category in result for category in CATEGORY_LABELS)
 
 
-def test_categorize_text_empty() -> None:
-    result = categorize_text("")
+async def test_categorize_text_empty() -> None:
+    result = await categorize_text("")
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
@@ -123,7 +123,7 @@ async def test_nlp_categorizer_smoke(logger: Any) -> None:
     content = txt_files[0].read_text(encoding="utf-8")[:2000]
 
     start_time = time.perf_counter()
-    result = categorize_text(content)
+    result = await categorize_text(content)
     processing_time = time.perf_counter() - start_time
 
     total_sentences = sum(len(sentences) for sentences in result.values() if isinstance(sentences, list))
@@ -224,7 +224,7 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
         content = txt_file.read_text(encoding="utf-8")
 
         start_time = time.perf_counter()
-        nlp_result = categorize_text(content[:5000])
+        nlp_result = await categorize_text(content[:5000])
         processing_time = time.perf_counter() - start_time
 
         total_sentences = sum(len(sentences) for sentences in nlp_result.values() if isinstance(sentences, list))

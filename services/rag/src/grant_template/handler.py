@@ -7,6 +7,7 @@ from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemp
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
+    DatabaseError,
     InsufficientContextError,
     ValidationError,
 )
@@ -68,10 +69,16 @@ async def handle_cfp_extraction_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.EXTRACTING_CFP_DATA,
-        message="Extracting data from CFP content...",
+        message="Analyzing call for proposals document",
+        notification_type="info",
     )
     # this can take a while, that's why we are rechecking cancellation ~keep
-    await verify_rag_sources_indexed(grant_template.id, session_maker, GrantTemplate)
+    await verify_rag_sources_indexed(
+        parent_id=grant_template.id,
+        session_maker=session_maker,
+        entity_type=GrantTemplate,
+        trace_id=trace_id,
+    )
 
     await job_manager.ensure_not_cancelled()
 
@@ -121,12 +128,12 @@ async def handle_cfp_extraction_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="CFP data extracted successfully",
+        message="Document analysis complete",
+        notification_type="success",
         data={
             "organization": org_name,
-            "cfp_subject": extraction_result["cfp_subject"],
-            "content_sections": len(extraction_result["content"]),
-            "submission_date": str(submission_date) if submission_date else None,
+            "subject": extraction_result["cfp_subject"][:100] if extraction_result["cfp_subject"] else None,
+            "deadline": str(submission_date) if submission_date else None,
         },
     )
 
@@ -143,7 +150,8 @@ async def handle_cfp_analysis_stage(
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
-        message="Running enhanced CFP analysis with Gemini 2.5 Flash and NLP...",
+        message="Analyzing grant requirements",
+        notification_type="info",
     )
 
     analysis_results = await handle_analyze_cfp(
@@ -164,8 +172,12 @@ async def handle_cfp_analysis_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Enhanced CFP analysis completed successfully",
-        data=cast("dict[str, Any]", analysis_results),
+        message="Requirements analysis complete",
+        notification_type="success",
+        data={
+            "category": analysis_results.get("category"),
+            "academic_disciplines": analysis_results.get("academic_disciplines", [])[:3] if analysis_results.get("academic_disciplines") else [],
+        },
     )
 
     return AnalyzeCFPContentStageDTO(
@@ -182,7 +194,8 @@ async def handle_section_extraction_stage(
 ) -> ExtractionSectionsStageDTO:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
-        message="Extracting grant application sections from CFP content...",
+        message="Identifying application sections",
+        notification_type="info",
     )
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
@@ -193,9 +206,11 @@ async def handle_section_extraction_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Sections extracted successfully",
+        message=f"Identified {len(sections)} application sections",
+        notification_type="success",
         data={
-            "identified_sections": [section["title"] for section in sections],
+            "section_count": len(sections),
+            "main_sections": [section["title"] for section in sections[:5]],
         },
     )
 
@@ -213,7 +228,8 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.add_notification(
         event=NotificationEvents.GRANT_TEMPLATE_METADATA,
-        message="Generating metadata for grant template sections...",
+        message="Generating section guidelines",
+        notification_type="info",
     )
 
     section_metadata = await handle_generate_grant_template_metadata(
@@ -230,7 +246,11 @@ async def handle_generate_metadata_stage(
 
     await job_manager.add_notification(
         event=NotificationEvents.METADATA_GENERATED,
-        message="Metadata generated successfully",
+        message="Section guidelines created",
+        notification_type="success",
+        data={
+            "sections_configured": len(section_extraction_result["extracted_sections"]),
+        },
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
@@ -296,6 +316,8 @@ async def grant_template_generation_pipeline_handler(
         job_id=job_id,
         trace_id=trace_id,
         stage=generation_stage,
+        job_current_stage=job.current_stage,
+        job_checkpoint_data=bool(job.checkpoint_data),
     )
 
     # Update job status if starting or continuing
@@ -384,6 +406,7 @@ async def grant_template_generation_pipeline_handler(
                     template_id=template_id,
                     job_id=job_id,
                     trace_id=trace_id,
+                    checkpoint_keys=list(checkpoint_data.keys()) if checkpoint_data else [],
                 )
                 section_extraction_result = cast("ExtractionSectionsStageDTO", checkpoint_data)
                 grant_sections = await handle_generate_metadata_stage(
@@ -401,7 +424,8 @@ async def grant_template_generation_pipeline_handler(
 
                 await job_manager.add_notification(
                     event=NotificationEvents.SAVING_GRANT_TEMPLATE,
-                    message="Saving grant template to database...",
+                    message="Finalizing grant template",
+                    notification_type="info",
                 )
 
                 # This is the final stage - save to database
@@ -421,6 +445,8 @@ async def grant_template_generation_pipeline_handler(
         logger.error(
             "Backend error in grant template generation pipeline",
             error=e,
+            error_type=type(e).__name__,
+            error_message=str(e),
             template_id=template_id,
             job_id=job_id,
             trace_id=trace_id,
@@ -482,7 +508,7 @@ async def handle_save_grant_template(
     job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
-) -> GrantTemplate | None:
+) -> GrantTemplate:
     template_id = grant_template.id
     job_id = job_manager.job_id
 
@@ -492,7 +518,9 @@ async def handle_save_grant_template(
                 "granting_institution_id": extracted_cfp["organization"]["organization_id"]
                 if extracted_cfp["organization"]
                 else None,
-                "submission_date": extracted_cfp["extracted_data"]["submission_date"],
+                "submission_date": datetime.strptime(extracted_cfp["extracted_data"]["submission_date"], "%Y-%m-%d").date()
+                if extracted_cfp["extracted_data"]["submission_date"]
+                else None,
                 "grant_sections": grant_sections,
                 "cfp_analysis": cfp_analysis,
             }
@@ -509,12 +537,12 @@ async def handle_save_grant_template(
             await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
             await job_manager.add_notification(
                 event=NotificationEvents.GRANT_TEMPLATE_CREATED,
-                message="Grant template created successfully",
+                message="Grant template ready",
                 notification_type="success",
                 data={
                     "template_id": str(grant_template.id),
-                    "section_count": len(grant_sections),
-                    "organization": extracted_cfp["organization"]["full_name"] if extracted_cfp["organization"] else "",
+                    "sections": len(grant_sections),
+                    "organization": extracted_cfp["organization"]["full_name"] if extracted_cfp["organization"] else "Unknown",
                 },
             )
 
@@ -535,23 +563,4 @@ async def handle_save_grant_template(
                 job_id=job_id,
                 trace_id=trace_id,
             )
-
-            await job_manager.update_job_status(
-                status=RagGenerationStatusEnum.FAILED,
-                error_message="An internal error occurred. Please try again or contact support.",
-                error_details={"error_type": "database_error"},
-            )
-            await job_manager.add_notification(
-                event=NotificationEvents.INTERNAL_ERROR,
-                message="An internal error occurred. Please try again or contact support.",
-                notification_type="error",
-                data={"error_type": "database_error"},
-            )
-            logger.info(
-                "Database error during grant template save - notification sent",
-                error=str(e),
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-            )
-            return None
+            raise DatabaseError("Error saving grant template", context=str(e)) from e

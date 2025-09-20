@@ -14,8 +14,13 @@ from services.rag.src.utils.checks import verify_rag_sources_indexed
 async def handle_autofill_request(
     request: AutofillRequest, session_maker: async_sessionmaker[Any]
 ) -> list[ResearchObjective] | ResearchDeepDive:
+    trace_id = request.get("trace_id", "")
+
     await verify_rag_sources_indexed(
-        parent_id=request["application_id"], session_maker=session_maker, entity_type=GrantApplication
+        parent_id=request["application_id"],
+        session_maker=session_maker,
+        entity_type=GrantApplication,
+        trace_id=trace_id,
     )
 
     async with session_maker() as session:
@@ -24,5 +29,5 @@ async def handle_autofill_request(
         )
 
     if request["autofill_type"] == "research_plan":
-        return await generate_research_plan_content(application=application)
-    return await generate_research_deep_dive_content(application=application)
+        return await generate_research_plan_content(application=application, trace_id=trace_id)
+    return await generate_research_deep_dive_content(application=application, trace_id=trace_id)
