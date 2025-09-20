@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -15,7 +15,6 @@ from services.rag.src.grant_template.generate_metadata import (
 
 if TYPE_CHECKING:
     from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
-
 
 
 class TestSectionMetadata:
@@ -70,7 +69,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives and methodology",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 },
                 {
                     "id": "research_plan",
@@ -79,7 +82,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Develop a detailed research plan with methodology and timeline information",
                     "depends_on": ["project_summary"],
                     "max_words": 2000,
-                    "search_queries": ["research methodology examples", "project timeline format", "detailed research plan"],
+                    "search_queries": [
+                        "research methodology examples",
+                        "project timeline format",
+                        "detailed research plan",
+                    ],
                 },
             ]
         }
@@ -142,7 +149,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -170,7 +181,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -198,7 +213,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -226,7 +245,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Short",  # Too short, need 50+ characters
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -255,7 +278,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": -100,  # Invalid negative value
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -273,7 +300,11 @@ class TestValidateTemplateSections:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 0,  # Invalid zero value
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -286,7 +317,7 @@ class TestGenerateGrantTemplate:
     """Test generate_grant_template function."""
 
     @patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-    async def test_generate_grant_template_success(self, mock_completions) -> None:
+    async def test_generate_grant_template_success(self, mock_completions: AsyncMock) -> None:
         """Test successful grant template generation."""
         mock_response = {
             "sections": [
@@ -297,7 +328,11 @@ class TestGenerateGrantTemplate:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives and methodology",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -322,7 +357,7 @@ class TestGenerateGrantTemplate:
         mock_completions.assert_called_once()
 
     @patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-    async def test_generate_grant_template_validation_error(self, mock_completions) -> None:
+    async def test_generate_grant_template_validation_error(self, mock_completions: AsyncMock) -> None:
         """Test generate_grant_template with validation error."""
         # Mock to raise ValidationError as would happen with empty sections
         mock_completions.side_effect = ValidationError("No sections generated. Please provide an error message.")
@@ -348,7 +383,7 @@ class TestHandleGenerateGrantTemplateMetadata:
     @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
     @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
     async def test_handle_generate_grant_template_metadata_success(
-        self, mock_retrieve, mock_evaluation
+        self, mock_retrieve: AsyncMock, mock_evaluation: AsyncMock
     ) -> None:
         """Test successful metadata generation handling."""
         # Setup mocks
@@ -362,7 +397,11 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives and methodology",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 },
                 {
                     "id": "research_plan",
@@ -371,7 +410,11 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Develop a detailed research plan with methodology and timeline information",
                     "depends_on": ["project_summary"],
                     "max_words": 2000,
-                    "search_queries": ["research methodology examples", "project timeline format", "detailed research plan"],
+                    "search_queries": [
+                        "research methodology examples",
+                        "project timeline format",
+                        "detailed research plan",
+                    ],
                 },
             ]
         }
@@ -413,7 +456,7 @@ class TestHandleGenerateGrantTemplateMetadata:
     @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
     @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
     async def test_handle_generate_grant_template_metadata_no_organization(
-        self, mock_retrieve, mock_evaluation
+        self, mock_retrieve: AsyncMock, mock_evaluation: AsyncMock
     ) -> None:
         """Test metadata generation with no organization provided."""
         mock_retrieve.return_value = ""
@@ -426,7 +469,11 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 300,
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 }
             ]
         }
@@ -465,9 +512,7 @@ class TestHandleGenerateGrantTemplateMetadata:
             assert result == []
 
     @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
-    async def test_handle_generate_metadata_word_count_calculation(
-        self, mock_evaluation
-    ) -> None:
+    async def test_handle_generate_metadata_word_count_calculation(self, mock_evaluation: AsyncMock) -> None:
         """Test word count calculation logic."""
         mock_evaluation.return_value = {
             "sections": [
@@ -478,7 +523,11 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
                     "depends_on": [],
                     "max_words": 300,  # Default for project summary
-                    "search_queries": ["project summary examples", "research objectives format", "grant proposal structure"],
+                    "search_queries": [
+                        "project summary examples",
+                        "research objectives format",
+                        "grant proposal structure",
+                    ],
                 },
                 {
                     "id": "research_plan",
@@ -487,7 +536,11 @@ class TestHandleGenerateGrantTemplateMetadata:
                     "generation_instructions": "Develop a detailed research plan with methodology and timeline",
                     "depends_on": [],
                     "max_words": 2000,  # Default for research plan
-                    "search_queries": ["research methodology examples", "project timeline format", "detailed research plan"],
+                    "search_queries": [
+                        "research methodology examples",
+                        "project timeline format",
+                        "detailed research plan",
+                    ],
                 },
             ]
         }
@@ -525,7 +578,7 @@ class TestIntegrationGenerateMetadata:
 
     @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
     @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
-    async def test_end_to_end_metadata_generation(self, mock_evaluation, mock_retrieve) -> None:
+    async def test_end_to_end_metadata_generation(self, mock_evaluation: AsyncMock, mock_retrieve: AsyncMock) -> None:
         """Test complete end-to-end metadata generation workflow."""
         # Mock retrieve_documents to avoid deep call chain
         mock_retrieve.return_value = "Mocked organizational guidelines content"

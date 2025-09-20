@@ -53,11 +53,7 @@ async def sample_rag_sources(async_session_maker: Any, grant_template: Any) -> l
 
         # Link sources to grant template
         template_sources = [
-            GrantTemplateSource(
-                grant_template_id=grant_template.id,
-                rag_source_id=source.id
-            )
-            for source in sources
+            GrantTemplateSource(grant_template_id=grant_template.id, rag_source_id=source.id) for source in sources
         ]
         session.add_all(template_sources)
         await session.commit()
@@ -326,9 +322,10 @@ class TestCFPExtractionStage:
     ) -> None:
         """Test that database queries work correctly."""
         # Mock external services to focus on database operations
-        with patch("services.rag.src.grant_template.handlers.verify_rag_sources_indexed"), \
-             patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data") as mock_extract:
-
+        with (
+            patch("services.rag.src.grant_template.handlers.verify_rag_sources_indexed"),
+            patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data") as mock_extract,
+        ):
             mock_extract.return_value = {
                 "organization_id": str(nih_organization.id),
                 "cfp_subject": "Test Subject",
@@ -895,11 +892,12 @@ class TestHandlersIntegration:
     ) -> None:
         """Test that data flows correctly through multiple handler stages."""
         # Mock external services
-        with patch("services.rag.src.grant_template.handlers.verify_rag_sources_indexed"), \
-             patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data") as mock_extract, \
-             patch("services.rag.src.grant_template.handlers.handle_analyze_cfp") as mock_analyze, \
-             patch("services.rag.src.grant_template.handlers.handle_extract_sections") as mock_sections:
-
+        with (
+            patch("services.rag.src.grant_template.handlers.verify_rag_sources_indexed"),
+            patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data") as mock_extract,
+            patch("services.rag.src.grant_template.handlers.handle_analyze_cfp") as mock_analyze,
+            patch("services.rag.src.grant_template.handlers.handle_extract_sections") as mock_sections,
+        ):
             # Setup mock returns
             mock_extract.return_value = {
                 "organization_id": str(nih_organization.id),

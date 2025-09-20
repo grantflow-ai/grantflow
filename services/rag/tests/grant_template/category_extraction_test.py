@@ -295,5 +295,3 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     assert avg_processing_time < 10.0, f"Average processing time {avg_processing_time:.2f}s too slow"
     assert total_categories >= 10, f"Too few categories detected: {total_categories}"
     assert total_sentences >= 20, f"Too few sentences categorized: {total_sentences}"
-
-

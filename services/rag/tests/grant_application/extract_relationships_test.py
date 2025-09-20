@@ -215,8 +215,8 @@ async def test_handle_extract_relationships_complex_dependencies(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
-    sample_grant_section: dict[str, Any],
-    sample_form_inputs: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
+    sample_form_inputs: ResearchDeepDive,
 ) -> None:
     """Test relationship extraction with complex interdependencies."""
     # Setup mock response with complex relationships
@@ -267,7 +267,7 @@ async def test_handle_extract_relationships_no_form_inputs(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
 ) -> None:
     """Test relationship extraction with minimal form inputs."""
     # Setup mock response
@@ -304,8 +304,8 @@ async def test_handle_extract_relationships_error_handling(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
-    sample_grant_section: dict[str, Any],
-    sample_form_inputs: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
+    sample_form_inputs: ResearchDeepDive,
 ) -> None:
     """Test error handling when relationship extraction fails."""
     # Setup mock to raise exception

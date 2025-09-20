@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
@@ -73,15 +73,18 @@ async def handle_cfp_extraction_stage(
             handle_extract_cfp_data(
                 source_ids=[str(v) for v in source_ids],
                 organization_mapping={
-                    str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+                    str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation}
+                    for org in funding_organizations
                 },
                 session_maker=session_maker,
                 trace_id=trace_id,
             ),
-            timeout=300  # 5 minutes timeout
+            timeout=300,  # 5 minutes timeout
         )
     except TimeoutError:
-        raise ValidationError("CFP data extraction timed out after 5 minutes. Please try again with a smaller document.") from None
+        raise ValidationError(
+            "CFP data extraction timed out after 5 minutes. Please try again with a smaller document."
+        ) from None
 
     organization = (
         next(
@@ -148,7 +151,7 @@ async def handle_cfp_analysis_stage(
                 ),
                 trace_id=trace_id,
             ),
-            timeout=180  # 3 minutes timeout
+            timeout=180,  # 3 minutes timeout
         )
     except TimeoutError:
         raise ValidationError("CFP analysis timed out after 3 minutes. Please try again or contact support.") from None
@@ -191,10 +194,12 @@ async def handle_section_extraction_stage(
                 trace_id=trace_id,
                 organization=analysis_result["organization"],
             ),
-            timeout=240  # 4 minutes timeout
+            timeout=240,  # 4 minutes timeout
         )
     except TimeoutError:
-        raise ValidationError("Section extraction timed out after 4 minutes. Please try again or contact support.") from None
+        raise ValidationError(
+            "Section extraction timed out after 4 minutes. Please try again or contact support."
+        ) from None
 
     await job_manager.add_notification(
         event=NotificationEvents.METADATA_GENERATED,
@@ -232,13 +237,17 @@ async def handle_generate_metadata_stage(
                 ),
                 cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
                 organization=section_extraction_result["organization"],
-                long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]],
+                long_form_sections=[
+                    s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]
+                ],
                 trace_id=trace_id,
             ),
-            timeout=300  # 5 minutes timeout
+            timeout=300,  # 5 minutes timeout
         )
     except TimeoutError:
-        raise ValidationError("Metadata generation timed out after 5 minutes. Please try again or contact support.") from None
+        raise ValidationError(
+            "Metadata generation timed out after 5 minutes. Please try again or contact support."
+        ) from None
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
 
@@ -296,7 +305,9 @@ async def handle_save_grant_template(
                 "granting_institution_id": extracted_cfp["organization"]["organization_id"]
                 if extracted_cfp["organization"]
                 else None,
-                "submission_date": datetime.strptime(extracted_cfp["extracted_data"]["submission_date"], "%Y-%m-%d").date()  # noqa: DTZ007
+                "submission_date": datetime.strptime(extracted_cfp["extracted_data"]["submission_date"], "%Y-%m-%d")
+                .replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC)
+                .date()
                 if extracted_cfp["extracted_data"]["submission_date"]
                 else None,
                 "grant_sections": grant_sections,
@@ -321,7 +332,9 @@ async def handle_save_grant_template(
                 data={
                     "template_id": str(updated_template.id),
                     "sections": len(grant_sections),
-                    "organization": extracted_cfp["organization"]["full_name"] if extracted_cfp["organization"] else "Unknown",
+                    "organization": extracted_cfp["organization"]["full_name"]
+                    if extracted_cfp["organization"]
+                    else "Unknown",
                 },
             )
 

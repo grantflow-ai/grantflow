@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -183,7 +183,7 @@ class TestCFPDataExtraction:
 
     @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
     async def test_extract_cfp_data_multi_source_success(
-        self, mock_completions, mock_rag_sources: list[RagSourceData]
+        self, mock_completions: AsyncMock, mock_rag_sources: list[RagSourceData]
     ) -> None:
         """Test successful CFP data extraction from multiple sources."""
         # Setup mock response
@@ -219,9 +219,7 @@ class TestCFPDataExtraction:
         mock_completions.assert_called_once()
 
     @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-    async def test_extract_cfp_data_multi_source_minimal_content(
-        self, mock_completions
-    ) -> None:
+    async def test_extract_cfp_data_multi_source_minimal_content(self, mock_completions: AsyncMock) -> None:
         """Test CFP data extraction with minimal content."""
         # Setup mock response with minimal data
         mock_response = {
@@ -242,9 +240,7 @@ class TestCFPDataExtraction:
         assert result["submission_date"] is None
 
     @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-    async def test_extract_cfp_data_multi_source_empty_task_description(
-        self, mock_completions
-    ) -> None:
+    async def test_extract_cfp_data_multi_source_empty_task_description(self, mock_completions: AsyncMock) -> None:
         """Test CFP data extraction with empty task description."""
         mock_response = {
             "organization_id": None,
@@ -262,9 +258,7 @@ class TestCFPDataExtraction:
         assert result["content"] == []
 
     @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-    async def test_extract_cfp_data_multi_source_complex_content(
-        self, mock_completions
-    ) -> None:
+    async def test_extract_cfp_data_multi_source_complex_content(self, mock_completions: AsyncMock) -> None:
         """Test CFP data extraction with complex content structure."""
         # Setup mock response with complex content
         mock_response = {
@@ -273,11 +267,7 @@ class TestCFPDataExtraction:
             "content": [
                 {
                     "title": "Project Description",
-                    "subtitles": [
-                        "Research Objectives",
-                        "Innovation and Significance",
-                        "Preliminary Studies"
-                    ]
+                    "subtitles": ["Research Objectives", "Innovation and Significance", "Preliminary Studies"],
                 },
                 {
                     "title": "Research Plan",
@@ -285,17 +275,13 @@ class TestCFPDataExtraction:
                         "Specific Aims",
                         "Background and Significance",
                         "Research Design and Methods",
-                        "Expected Outcomes"
-                    ]
+                        "Expected Outcomes",
+                    ],
                 },
                 {
                     "title": "Team and Resources",
-                    "subtitles": [
-                        "Principal Investigator",
-                        "Co-Investigators",
-                        "Research Environment"
-                    ]
-                }
+                    "subtitles": ["Principal Investigator", "Co-Investigators", "Research Environment"],
+                },
             ],
             "submission_date": "2025-09-15",
         }

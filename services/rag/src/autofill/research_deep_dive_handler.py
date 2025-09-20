@@ -98,40 +98,39 @@ def _validate_answer_response(response: Any) -> None:
     if not isinstance(response, dict):
         raise ValidationError(
             f"Response must be a dictionary, got {type(response).__name__}",
-            context={"response_type": type(response).__name__}
+            context={"response_type": type(response).__name__},
         )
 
     if "answer" not in response:
         raise ValidationError(
             "Missing 'answer' field in response",
-            context={"response_keys": list(response.keys()) if isinstance(response, dict) else []}
+            context={"response_keys": list(response.keys()) if isinstance(response, dict) else []},
         )
 
     answer = response["answer"]
     if not isinstance(answer, str):
         raise ValidationError(
-            f"Answer must be a string, got {type(answer).__name__}",
-            context={"answer_type": type(answer).__name__}
+            f"Answer must be a string, got {type(answer).__name__}", context={"answer_type": type(answer).__name__}
         )
 
     answer = answer.strip()
     if len(answer) < MIN_ANSWER_LENGTH:
         raise ValidationError(
             f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})",
-            context={"length": len(answer), "min_length": MIN_ANSWER_LENGTH, "content_preview": answer[:100]}
+            context={"length": len(answer), "min_length": MIN_ANSWER_LENGTH, "content_preview": answer[:100]},
         )
 
     word_count = len(answer.split())
     if word_count < 150:
         raise ValidationError(
             f"Answer has too few words: {word_count} (target: 200-500)",
-            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]}
+            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
         )
 
     if word_count > 600:
         raise ValidationError(
             f"Answer has too many words: {word_count} (target: 200-500)",
-            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]}
+            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
         )
 
 
@@ -194,7 +193,7 @@ async def _generate_field_answer(
                 temperature=TEMPERATURE,
                 trace_id=trace_id,
             ),
-            timeout=120  # 2 minutes for LLM completion
+            timeout=120,  # 2 minutes for LLM completion
         )
     except TimeoutError:
         raise ValidationError(
@@ -204,8 +203,8 @@ async def _generate_field_answer(
                 "field_name": field_name,
                 "timeout_seconds": 120,
                 "operation": "research_deep_dive_field_generation",
-                "trace_id": trace_id
-            }
+                "trace_id": trace_id,
+            },
         ) from None
 
     completion_duration = time.time() - completion_start
@@ -241,7 +240,9 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
     parallel_generation_start = time.time()
     results = await gather(
         *[
-            _generate_field_answer(field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id)
+            _generate_field_answer(
+                field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id
+            )
             for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
         ]
     )

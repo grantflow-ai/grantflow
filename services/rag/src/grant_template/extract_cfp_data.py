@@ -345,7 +345,11 @@ async def extract_cfp_data_multi_source(task_description: str, trace_id: str, **
 
 
 async def handle_extract_cfp_data(
-    *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any], trace_id: str
+    *,
+    source_ids: list[str],
+    organization_mapping: dict[str, dict[str, str]],
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
 ) -> ExtractedCFPData:
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)

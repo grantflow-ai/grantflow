@@ -246,7 +246,10 @@ async def handle_grant_template_pipeline(
             await job_manager.update_job_status(
                 status=RagGenerationStatusEnum.FAILED,
                 error_message=error_message,
-                error_details={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+                error_details={
+                    "error_type": e.__class__.__name__,
+                    "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                },
             )
         except Exception as job_error:
             logger.error(
@@ -263,7 +266,10 @@ async def handle_grant_template_pipeline(
                 event=event_type,
                 message=error_message,
                 notification_type="error",
-                data={"error_type": e.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+                data={
+                    "error_type": e.__class__.__name__,
+                    "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                },
             )
         except Exception as notification_error:
             logger.error(

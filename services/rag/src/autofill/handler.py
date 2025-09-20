@@ -53,8 +53,8 @@ async def handle_autofill_request(
                 context={
                     "application_id": str(request["application_id"]),
                     "autofill_type": request["autofill_type"],
-                    "trace_id": trace_id
-                }
+                    "trace_id": trace_id,
+                },
             )
 
     try:
@@ -114,6 +114,6 @@ async def handle_autofill_request(
                 "autofill_type": request["autofill_type"],
                 "application_id": str(request["application_id"]),
                 "error_type": type(e).__name__,
-                "trace_id": trace_id
-            }
+                "trace_id": trace_id,
+            },
         ) from e

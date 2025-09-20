@@ -131,41 +131,38 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
     if isinstance(error, InsufficientContextError):
         return (
             "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives.",
-            NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+            NotificationEvents.INSUFFICIENT_CONTEXT_ERROR,
         )
     if isinstance(error, ValidationError) and "indexing timeout" in str(error):
         return (
             "Document indexing is taking longer than expected. Please wait a few minutes and try again.",
-            NotificationEvents.INDEXING_TIMEOUT
+            NotificationEvents.INDEXING_TIMEOUT,
         )
     if isinstance(error, ValidationError) and "indexing failed" in str(error).lower():
         return (
             "Document indexing failed. Please upload new documents and try again.",
-            NotificationEvents.INDEXING_FAILED
+            NotificationEvents.INDEXING_FAILED,
         )
     if isinstance(error, EvaluationError):
         return (
             "Quality evaluation failed during text generation. Please try again or contact support.",
-            NotificationEvents.PIPELINE_ERROR
+            NotificationEvents.PIPELINE_ERROR,
         )
     if isinstance(error, DatabaseError):
         return (
             "Database error occurred while saving your application. Please try again.",
-            NotificationEvents.PIPELINE_ERROR
+            NotificationEvents.PIPELINE_ERROR,
         )
     if isinstance(error, RagError):
         return (
             "Document processing error occurred. Please try again or upload different documents.",
-            NotificationEvents.PIPELINE_ERROR
+            NotificationEvents.PIPELINE_ERROR,
         )
     if isinstance(error, DeserializationError):
-        return (
-            "Data processing error occurred. Please try again.",
-            NotificationEvents.PIPELINE_ERROR
-        )
+        return ("Data processing error occurred. Please try again.", NotificationEvents.PIPELINE_ERROR)
     return (
         "An unexpected error occurred while generating your application. Please try again or contact support if this persists.",
-        NotificationEvents.PIPELINE_ERROR
+        NotificationEvents.PIPELINE_ERROR,
     )
 
 
@@ -192,7 +189,9 @@ async def _handle_pipeline_error(
 
     error_message, event_type = _get_error_details(error)
 
-    if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError)):
+    if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(
+        error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError)
+    ):
         logger.error(
             "Unexpected error in grant application pipeline",
             error=error,
@@ -207,7 +206,10 @@ async def _handle_pipeline_error(
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,
             error_message=error_message,
-            error_details={"error_type": error.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+            error_details={
+                "error_type": error.__class__.__name__,
+                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+            },
         )
     except Exception as job_error:
         logger.error(
@@ -224,7 +226,10 @@ async def _handle_pipeline_error(
             event=event_type,
             message=error_message,
             notification_type="error",
-            data={"error_type": error.__class__.__name__, "recoverable": event_type != NotificationEvents.PIPELINE_ERROR},
+            data={
+                "error_type": error.__class__.__name__,
+                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+            },
         )
     except Exception as notification_error:
         logger.error(
@@ -268,9 +273,7 @@ async def handle_grant_application_pipeline(
             grant_application, generation_stage, session_maker, trace_id
         )
 
-        grant_template = await _verify_prerequisites(
-            grant_application, session_maker, trace_id
-        )
+        grant_template = await _verify_prerequisites(grant_application, session_maker, trace_id)
 
         # Match/case routing based on stage
         match generation_stage:
@@ -385,7 +388,9 @@ async def handle_grant_application_pipeline(
                     application_id=str(application_id),
                     job_id=str(existing_job.id) if existing_job else None,
                     trace_id=trace_id,
-                    checkpoint_keys=list(existing_job.checkpoint_data.keys()) if existing_job and existing_job.checkpoint_data else [],
+                    checkpoint_keys=list(existing_job.checkpoint_data.keys())
+                    if existing_job and existing_job.checkpoint_data
+                    else [],
                 )
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
@@ -436,7 +441,9 @@ async def handle_grant_application_pipeline(
                 try:
                     async with session_maker() as session, session.begin():
                         await session.execute(
-                            update(GrantApplication).where(GrantApplication.id == application_id).values(text=application_text)
+                            update(GrantApplication)
+                            .where(GrantApplication.id == application_id)
+                            .values(text=application_text)
                         )
 
                         # Update job status and add notification within the same transaction
@@ -453,7 +460,7 @@ async def handle_grant_application_pipeline(
                 except SQLAlchemyError as sql_error:
                     raise DatabaseError(
                         "Failed to save application to database",
-                        context={"application_id": str(application_id), "sql_error": str(sql_error)}
+                        context={"application_id": str(application_id), "sql_error": str(sql_error)},
                     ) from sql_error
 
                 try:
@@ -476,6 +483,4 @@ async def handle_grant_application_pipeline(
                 raise ValidationError(f"Unknown stage: {generation_stage}")
 
     except BackendError as e:
-        await _handle_pipeline_error(
-            e, job_manager, application_id, existing_job, generation_stage, trace_id
-        )
+        await _handle_pipeline_error(e, job_manager, application_id, existing_job, generation_stage, trace_id)

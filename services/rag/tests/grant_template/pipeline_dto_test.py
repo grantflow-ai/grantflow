@@ -401,7 +401,7 @@ class TestExtractionSectionsStageDTO:
         child_sections = [s for s in stage_dto["extracted_sections"] if s.get("parent_id") is not None]
 
         assert len(parent_sections) == 2  # project_summary and research_plan
-        assert len(child_sections) == 2   # specific_aims and expected_outcomes
+        assert len(child_sections) == 2  # specific_aims and expected_outcomes
 
         # Verify research plan is detailed
         research_plans = [s for s in stage_dto["extracted_sections"] if s.get("is_detailed_research_plan")]

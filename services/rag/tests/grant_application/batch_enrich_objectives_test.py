@@ -293,11 +293,7 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
     )
 
     # Verify shared retrieval was called with correct parameters
-    mock_perform_shared_retrieval.assert_called_once_with(
-        sample_research_objectives,
-        sample_grant_section,
-        test_app_id
-    )
+    mock_perform_shared_retrieval.assert_called_once_with(sample_research_objectives, sample_grant_section, test_app_id)
 
     # Verify batched_gather was called
     mock_batched_gather.assert_called_once()
