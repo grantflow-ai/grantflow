@@ -1,6 +1,5 @@
-from datetime import UTC, datetime
-from typing import Any, Final, TypedDict
-from uuid import UUID
+from datetime import datetime
+from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
@@ -21,7 +20,10 @@ from services.rag.src.grant_template.cfp_section_analysis import (
     CFPAnalysisResult,
     handle_analyze_cfp,
 )
-from services.rag.src.grant_template.dto import ExtractedCFPData
+from services.rag.src.grant_template.dto import (
+    ExtractedCFPData,
+    OrganizationNamespace,
+)
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
 from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO, handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
@@ -40,12 +42,6 @@ GRANT_TEMPLATE_PIPELINE_STAGES: Final[tuple[GrantTemplateStageEnum, ...]] = (
 TOTAL_PIPELINE_STAGES: Final[int] = len(GRANT_TEMPLATE_PIPELINE_STAGES)
 
 
-class OrganizationNamespace(TypedDict):
-    full_name: str
-    abbreviation: str
-    organization_id: UUID
-
-
 class ExtractCFPContentStageDTO(TypedDict):
     organization: OrganizationNamespace | None
     extracted_data: ExtractedCFPData
@@ -59,7 +55,7 @@ class ExtractionSectionsStageDTO(AnalyzeCFPContentStageDTO):
     extracted_sections: list[ExtractedSectionDTO]
 
 
-StageDTO = ExtractionSectionsStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO
+StageDTO = ExtractCFPContentStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO
 
 
 def _get_next_pipeline_stage(
@@ -287,55 +283,146 @@ async def grant_template_generation_pipeline_handler(
         current_stage=generation_stage,
         pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
         parent_id=grant_template.id,
+        trace_id=trace_id,
     )
 
     job = await job_manager.get_or_create_job()
     await job_manager.ensure_not_cancelled()
 
+    template_id = grant_template.id
+    job_id = job.id
+
     logger.info(
-        "Starting grant template generation pipeline",
-        template_id=grant_template.id,
-        rag_job_id=job.id,
+        "Starting grant template generation pipeline stage",
+        template_id=template_id,
+        job_id=job_id,
         trace_id=trace_id,
-        generation_stage=generation_stage,
+        stage=generation_stage,
     )
+
+    # Update job status if starting or continuing
     if job.status == RagGenerationStatusEnum.PENDING:
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
-    # TODO: 1. convert the flow of control below to use match case
-    # 2. since we have a 10 minutes ack timeout, and each stage can take an indeterminate amount of time, we need to change the architecture
-    # each stage should return results, as is noe, and then the main handler should publish to results to the same pubsub topic the service consumes
-    # to schedule the next stage. Except the last stage, which should result in persisting the results in the DB.
-    # 3. preserve the error handling patterns. And preserve the notification patterns.
-    # 4. add to all logging statements consistantnly - the trace_id, job_id, template_id - be consistant here.
     try:
-        extracted_cfp = await handle_cfp_extraction_stage(
-            grant_template=grant_template, job_manager=job_manager, session_maker=session_maker
-        )
+        # Load checkpoint data from job (it's already fresh from DB via get_or_create_job)
+        checkpoint_data = job.checkpoint_data if job.checkpoint_data else {}
 
-        analysis_result = await handle_cfp_analysis_stage(
-            job_manager=job_manager,
-            extracted_cfp=extracted_cfp,
-        )
+        match generation_stage:
+            case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
+                logger.info(
+                    "Executing CFP extraction stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                extracted_cfp = await handle_cfp_extraction_stage(
+                    grant_template=grant_template,
+                    job_manager=job_manager,
+                    session_maker=session_maker,
+                )
 
-        section_extraction_result = await handle_section_extraction_stage(
-            analysis_result=analysis_result,
-            job_manager=job_manager,
-        )
+                # Save checkpoint and trigger next stage
+                await job_manager.to_next_job_stage(dto=extracted_cfp)
+                logger.info(
+                    "CFP extraction stage completed, triggering next stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                return None  # Stage completed, next will be triggered via PubSub
 
-        grant_sections = await handle_generate_metadata_stage(
-            section_extraction_result=section_extraction_result, job_manager=job_manager
-        )
+            case GrantTemplateStageEnum.ANALYZE_CFP_CONTENT:
+                logger.info(
+                    "Executing CFP analysis stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                analysis_result = await handle_cfp_analysis_stage(
+                    job_manager=job_manager,
+                    extracted_cfp=cast("ExtractCFPContentStageDTO", checkpoint_data),
+                )
 
-        logger.info("Extracted grant template sections")
+                # Save checkpoint and trigger next stage
+                await job_manager.to_next_job_stage(dto=analysis_result)
+                logger.info(
+                    "CFP analysis stage completed, triggering next stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                return None
 
-        await job_manager.add_notification(
-            event=NotificationEvents.SAVING_GRANT_TEMPLATE,
-            message="Saving grant template to database...",
-        )
+            case GrantTemplateStageEnum.EXTRACT_SECTIONS:
+                logger.info(
+                    "Executing section extraction stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                analysis_result = cast("AnalyzeCFPContentStageDTO", checkpoint_data)
+                section_extraction_result = await handle_section_extraction_stage(
+                    analysis_result=analysis_result,
+                    job_manager=job_manager,
+                )
+
+                # Save checkpoint and trigger next stage
+                await job_manager.to_next_job_stage(dto=section_extraction_result)
+                logger.info(
+                    "Section extraction stage completed, triggering next stage",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                return None
+
+            case GrantTemplateStageEnum.GENERATE_METADATA:
+                logger.info(
+                    "Executing metadata generation stage (final)",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+                section_extraction_result = cast("ExtractionSectionsStageDTO", checkpoint_data)
+                grant_sections = await handle_generate_metadata_stage(
+                    section_extraction_result=section_extraction_result,
+                    job_manager=job_manager,
+                )
+
+                logger.info(
+                    "All stages completed, saving grant template to database",
+                    template_id=template_id,
+                    job_id=job_id,
+                    trace_id=trace_id,
+                )
+
+                await job_manager.add_notification(
+                    event=NotificationEvents.SAVING_GRANT_TEMPLATE,
+                    message="Saving grant template to database...",
+                )
+
+                # This is the final stage - save to database
+                return await handle_save_grant_template(
+                    grant_template=grant_template,
+                    session_maker=session_maker,
+                    job_manager=job_manager,
+                    extracted_cfp=section_extraction_result,  # Contains all accumulated data
+                    grant_sections=grant_sections,
+                    trace_id=trace_id,
+                )
 
     except BackendError as e:
-        logger.error("Backend error in grant template generation pipeline", error=e)
+        template_id = grant_template.id
+        job_id = job.id
+        logger.error(
+            "Backend error in grant template generation pipeline",
+            error=e,
+            template_id=template_id,
+            job_id=job_id,
+            trace_id=trace_id,
+            stage=generation_stage,
+        )
 
         if isinstance(e, InsufficientContextError):
             error_message = "The uploaded document doesn't contain sufficient information about the required application sections. Please upload a complete Call for Proposals (CFP) document that includes details about application requirements and sections."
@@ -349,7 +436,15 @@ async def grant_template_generation_pipeline_handler(
         else:
             error_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."
             event_type = NotificationEvents.PIPELINE_ERROR
-            logger.error("Unexpected error in grant template pipeline", error=e, context=getattr(e, "context", None))
+            logger.error(
+                "Unexpected error in grant template pipeline",
+                error=e,
+                context=getattr(e, "context", None),
+                template_id=template_id,
+                job_id=job_id,
+                trace_id=trace_id,
+                stage=generation_stage,
+            )
 
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,
@@ -367,8 +462,25 @@ async def grant_template_generation_pipeline_handler(
             error_type=e.__class__.__name__,
             event_type=event_type,
             error_message=error_message[:200],
+            template_id=template_id,
+            job_id=job_id,
+            trace_id=trace_id,
+            stage=generation_stage,
         )
         return None
+
+
+async def handle_save_grant_template(
+    *,
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    job_manager: GrantTemplateJobManager[GrantTemplateStageEnum, StageDTO],
+    extracted_cfp: ExtractionSectionsStageDTO,
+    grant_sections: list[GrantElement | GrantLongFormSection],
+    trace_id: str,
+) -> GrantTemplate | None:
+    template_id = grant_template.id
+    job_id = job_manager.job_id
 
     async with session_maker() as session, session.begin():
         try:
@@ -379,18 +491,6 @@ async def grant_template_generation_pipeline_handler(
                 "submission_date": extracted_cfp["extracted_data"]["submission_date"],
                 "grant_sections": grant_sections,
             }
-
-            update_values.update(
-                {
-                    "cfp_section_analysis": analysis_result["analysis_results"]["cfp_analysis"],
-                    "cfp_analysis_metadata": analysis_result["analysis_results"]["analysis_metadata"],
-                    "cfp_analyzed_at": datetime.now(UTC),
-                }
-            )
-            logger.info(
-                "Including CFP analysis in template update",
-                template_id=str(grant_template.id),
-            )
 
             grant_template = await session.scalar(
                 update(GrantTemplate)
@@ -413,9 +513,23 @@ async def grant_template_generation_pipeline_handler(
                 },
             )
 
+            logger.info(
+                "Grant template saved successfully",
+                template_id=template_id,
+                job_id=job_id,
+                trace_id=trace_id,
+                section_count=len(grant_sections),
+            )
+
             return grant_template
         except SQLAlchemyError as e:
-            logger.error("Database error generating grant template", error=e)
+            logger.error(
+                "Database error generating grant template",
+                error=e,
+                template_id=template_id,
+                job_id=job_id,
+                trace_id=trace_id,
+            )
 
             await job_manager.update_job_status(
                 status=RagGenerationStatusEnum.FAILED,
@@ -431,5 +545,8 @@ async def grant_template_generation_pipeline_handler(
             logger.info(
                 "Database error during grant template save - notification sent",
                 error=str(e),
+                template_id=template_id,
+                job_id=job_id,
+                trace_id=trace_id,
             )
             return None

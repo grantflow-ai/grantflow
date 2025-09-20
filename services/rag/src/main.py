@@ -2,6 +2,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any, cast
 
 from litestar import post
+from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
@@ -12,6 +13,7 @@ from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import AutofillRequest, PubSubEvent, RagRequest, decode_pubsub_message
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.autofill.handler import handle_autofill_request
@@ -46,7 +48,7 @@ def handle_pubsub_message(event: PubSubEvent) -> RagRequest | AutofillRequest:
             "PubSub message decoded as RagRequest",
             parent_type=rag_request["parent_type"],
             parent_id=str(rag_request["parent_id"]),
-            trace_id=rag_request.get("trace_id"),
+            trace_id=rag_request["trace_id"],
         )
         return rag_request
     except DeserializationError as e:
@@ -65,13 +67,11 @@ async def handle_request(
     session_maker: async_sessionmaker[Any],
 ) -> None:
     request = handle_pubsub_message(data)
-    trace_id = request.get("trace_id")
 
     logger.debug(
         "Received PubSub request",
         message_id=data.message.message_id if data.message else "unknown",
         publish_time=data.message.publish_time if data.message else "unknown",
-        trace_id=trace_id,
         request=request,
     )
 
@@ -80,19 +80,45 @@ async def handle_request(
         return
 
     if request["parent_type"] == "grant_template":
+        # Fetch the GrantTemplate from database
+        async with session_maker() as session:
+            grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == request["parent_id"]))
+
+            if not grant_template:
+                logger.error(
+                    "Grant template not found",
+                    template_id=str(request["parent_id"]),
+                    trace_id=request["trace_id"],
+                )
+                raise ValidationError(f"Grant template {request['parent_id']} not found")
+
         await grant_template_generation_pipeline_handler(
-            grant_template_id=request["parent_id"],
+            grant_template=grant_template,
             session_maker=session_maker,
-            stage=cast("GrantTemplateStageEnum", request["stage"]),
-            trace_id=trace_id,
+            generation_stage=cast("GrantTemplateStageEnum", request["stage"]),
+            trace_id=request["trace_id"],
         )
         return
 
+    # Fetch the GrantApplication from database
+    async with session_maker() as session:
+        grant_application = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == request["parent_id"])
+        )
+
+        if not grant_application:
+            logger.error(
+                "Grant application not found",
+                application_id=str(request["parent_id"]),
+                trace_id=request["trace_id"],
+            )
+            raise ValidationError(f"Grant application {request['parent_id']} not found")
+
     await grant_application_text_generation_pipeline_handler(
-        grant_application_id=request["parent_id"],
+        grant_application=grant_application,
         session_maker=session_maker,
-        stage=cast("GrantApplicationStageEnum", request["stage"]),
-        trace_id=trace_id,
+        generation_stage=cast("GrantApplicationStageEnum", request["stage"]),
+        trace_id=request["trace_id"],
     )
 
 
@@ -106,6 +132,4 @@ app = create_litestar_app(
         handle_request,
     ],
     on_startup=[before_server_start],
-    # ~keep Use lightweight health check for RAG service to prevent timeouts under load
-    lightweight_health_check=True,
 )

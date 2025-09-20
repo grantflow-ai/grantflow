@@ -514,7 +514,7 @@ async def handle_generate_application(
             await publish_rag_task(
                 parent_type="grant_application",
                 parent_id=application.id,
-                stage=GrantApplicationStageEnum.INITIALIZE,
+                stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
                 trace_id=trace_id,
             )
         except BackendError as e:
