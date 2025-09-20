@@ -141,10 +141,12 @@ async def handle_generate_sections_stage(
     try:
         section_results = await asyncio.wait_for(
             batched_gather(*generation_coroutines, batch_size=3),
-            timeout=600  # 10 minutes timeout for section generation
+            timeout=600,  # 10 minutes timeout for section generation
         )
     except TimeoutError:
-        raise ValidationError("Section generation timed out after 10 minutes. Please try again or contact support.") from None
+        raise ValidationError(
+            "Section generation timed out after 10 minutes. Please try again or contact support."
+        ) from None
 
     section_texts: dict[str, str] = {}
     for section, result in zip(long_form_sections, section_results, strict=False):
@@ -237,9 +239,7 @@ async def handle_enrich_objectives_stage(
         notification_type="success",
         data={
             "objectives": len(grant_application.research_objectives or []),
-            "tasks": sum(
-                len(obj["research_tasks"]) for obj in (grant_application.research_objectives or [])
-            ),
+            "tasks": sum(len(obj["research_tasks"]) for obj in (grant_application.research_objectives or [])),
         },
     )
 
@@ -277,10 +277,12 @@ async def handle_enrich_terminology_stage(
     try:
         wikidata_enrichments = await asyncio.wait_for(
             batched_gather(*wikidata_enrichment_coroutines, batch_size=3),
-            timeout=300  # 5 minutes timeout for Wikidata enrichments
+            timeout=300,  # 5 minutes timeout for Wikidata enrichments
         )
     except TimeoutError:
-        raise ValidationError("Wikidata enrichment timed out after 5 minutes. Please try again or contact support.") from None
+        raise ValidationError(
+            "Wikidata enrichment timed out after 5 minutes. Please try again or contact support."
+        ) from None
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
@@ -350,7 +352,9 @@ async def handle_generate_research_plan_stage(
                         "instructions": task_enrichment["instructions"],
                         "guiding_questions": task_enrichment["guiding_questions"],
                         "search_queries": task_enrichment["search_queries"],
-                        "relationships": relationships.get(f"{research_objective['number']}.{research_task['number']}", []),
+                        "relationships": relationships.get(
+                            f"{research_objective['number']}.{research_task['number']}", []
+                        ),
                         "max_words": words_per_component,
                         "type": "task",
                     },
@@ -398,10 +402,12 @@ async def handle_generate_research_plan_stage(
                     for objective, tasks in objective_task_groups
                 ]
             ),
-            timeout=900  # 15 minutes timeout for research plan generation
+            timeout=900,  # 15 minutes timeout for research plan generation
         )
     except TimeoutError:
-        raise ValidationError("Research plan generation timed out after 15 minutes. Please try again or contact support.") from None
+        raise ValidationError(
+            "Research plan generation timed out after 15 minutes. Please try again or contact support."
+        ) from None
 
     for objective, objective_text, task_results in objective_results:
         await job_manager.ensure_not_cancelled()

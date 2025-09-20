@@ -73,7 +73,7 @@ def sample_cfp_analysis() -> dict[str, Any]:
                 "section": "Abstract",
                 "requirements": [
                     {"requirement": "Summarize project goals", "quote": "Provide a clear summary of objectives"}
-                ]
+                ],
             }
         ],
         "length_constraints": [

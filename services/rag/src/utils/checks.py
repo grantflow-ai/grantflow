@@ -57,7 +57,10 @@ async def verify_rag_sources_indexed(
                 for source in rag_sources
             ):
                 logger.debug(
-                    "Rag sources indexing", parent_id=str(parent_id), total_sleep_duration=total_sleep_duration, trace_id=trace_id
+                    "Rag sources indexing",
+                    parent_id=str(parent_id),
+                    total_sleep_duration=total_sleep_duration,
+                    trace_id=trace_id,
                 )
                 await publish_notification(
                     parent_id=parent_id,

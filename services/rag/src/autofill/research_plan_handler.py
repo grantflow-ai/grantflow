@@ -122,7 +122,7 @@ def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
     if "title" not in obj or not obj["title"]:
         raise ValidationError(
             f"Objective {obj_number} missing or empty 'title'",
-            context={"objective_number": obj_number, "title": obj.get("title")}
+            context={"objective_number": obj_number, "title": obj.get("title")},
         )
 
     if len(obj["title"]) < 10:
@@ -134,7 +134,7 @@ def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
     if "description" not in obj or not obj["description"]:
         raise ValidationError(
             f"Objective {obj_number} missing or empty 'description'",
-            context={"objective_number": obj_number, "description": obj.get("description")}
+            context={"objective_number": obj_number, "description": obj.get("description")},
         )
 
     if len(obj["description"]) < 50:
@@ -148,7 +148,7 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
     if "research_tasks" not in obj:
         raise ValidationError(
             f"Objective {obj_number} missing 'research_tasks'",
-            context={"objective_number": obj_number, "available_keys": list(obj.keys())}
+            context={"objective_number": obj_number, "available_keys": list(obj.keys())},
         )
 
     tasks = obj["research_tasks"]
@@ -175,7 +175,7 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
         if "number" not in task:
             raise ValidationError(
                 f"Objective {obj_number} task {j + 1} missing 'number'",
-                context={"objective_number": obj_number, "task_index": j, "task_keys": list(task.keys())}
+                context={"objective_number": obj_number, "task_index": j, "task_keys": list(task.keys())},
             )
 
         task_number = task["number"]
@@ -195,7 +195,7 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
         if "title" not in task or not task["title"]:
             raise ValidationError(
                 f"Objective {obj_number} task {task_number} missing or empty 'title'",
-                context={"objective_number": obj_number, "task_number": task_number, "title": task.get("title", None)}
+                context={"objective_number": obj_number, "task_number": task_number, "title": task.get("title", None)},
             )
 
         if len(task["title"]) < 10:
@@ -207,7 +207,11 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
         if "description" not in task or not task["description"]:
             raise ValidationError(
                 f"Objective {obj_number} task {task_number} missing or empty 'description'",
-                context={"objective_number": obj_number, "task_number": task_number, "description": task.get("description", None)}
+                context={
+                    "objective_number": obj_number,
+                    "task_number": task_number,
+                    "description": task.get("description", None),
+                },
             )
 
         if len(task["description"]) < 50:
@@ -221,7 +225,7 @@ def _validate_objective_number(obj: dict[str, Any], i: int, seen_numbers: set[in
     if "number" not in obj:
         raise ValidationError(
             f"Objective {i + 1} missing 'number' field",
-            context={"objective_index": i, "available_keys": list(obj.keys())}
+            context={"objective_index": i, "available_keys": list(obj.keys())},
         )
 
     obj_number = obj["number"]
@@ -250,7 +254,7 @@ def _validate_research_plan_response(response: Any) -> None:
     if "research_objectives" not in response:
         raise ValidationError(
             "Missing 'research_objectives' in response",
-            context={"response_keys": list(response.keys()) if isinstance(response, dict) else []}
+            context={"response_keys": list(response.keys()) if isinstance(response, dict) else []},
         )
 
     objectives = response["research_objectives"]
@@ -339,7 +343,7 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
                 temperature=TEMPERATURE,
                 trace_id=trace_id,
             ),
-            timeout=120  # 2 minutes for LLM completion
+            timeout=120,  # 2 minutes for LLM completion
         )
     except TimeoutError:
         raise ValidationError(
@@ -348,8 +352,8 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
                 "application_id": str(application.id),
                 "timeout_seconds": 120,
                 "operation": "research_plan_generation",
-                "trace_id": trace_id
-            }
+                "trace_id": trace_id,
+            },
         ) from None
 
     completion_duration = time.time() - completion_start

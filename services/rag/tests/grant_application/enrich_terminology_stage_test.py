@@ -17,7 +17,7 @@ def sample_enrichment_response() -> dict[str, Any]:
             "instructions": "Focus on identifying protein-based biomarkers",
             "guiding_questions": ["What biomarkers are most promising?"],
             "search_queries": ["cancer biomarkers proteomics"],
-            "core_scientific_terms": ["biomarkers", "proteomics"]
+            "core_scientific_terms": ["biomarkers", "proteomics"],
         },
         "research_tasks": [
             {
@@ -25,7 +25,7 @@ def sample_enrichment_response() -> dict[str, Any]:
                 "instructions": "Use mass spectrometry techniques",
                 "guiding_questions": ["Which proteins show differential expression?"],
                 "search_queries": ["proteomics mass spectrometry"],
-                "core_scientific_terms": ["mass spectrometry"]
+                "core_scientific_terms": ["mass spectrometry"],
             }
         ],
     }
@@ -37,7 +37,9 @@ async def test_enrich_objective_with_wikidata_success(
 ) -> None:
     """Test successful Wikidata enrichment."""
     # Setup mock
-    mock_get_scientific_context.return_value = "**Biochemistry:** biomarkers, proteomics\n**Analytical Chemistry:** mass spectrometry"
+    mock_get_scientific_context.return_value = (
+        "**Biochemistry:** biomarkers, proteomics\n**Analytical Chemistry:** mass spectrometry"
+    )
 
     test_trace_id = str(uuid4())
 
@@ -105,7 +107,7 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
         **sample_enrichment_response,
         "research_objective": {
             **sample_enrichment_response["research_objective"],
-            "core_scientific_terms": ["biomarkers", "proteomics"]
+            "core_scientific_terms": ["biomarkers", "proteomics"],
         },
         "research_tasks": [
             {
@@ -113,26 +115,28 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
                 "instructions": "Use mass spectrometry techniques",
                 "guiding_questions": ["Which proteins show differential expression?"],
                 "search_queries": ["proteomics mass spectrometry"],
-                "core_scientific_terms": ["mass spectrometry", "protein analysis"]
+                "core_scientific_terms": ["mass spectrometry", "protein analysis"],
             },
             {
                 "description": "Validate biomarkers in clinical samples",
                 "instructions": "Test in patient cohorts",
                 "guiding_questions": ["What is the sensitivity and specificity?"],
                 "search_queries": ["biomarker validation clinical"],
-                "core_scientific_terms": ["clinical validation", "sensitivity"]
+                "core_scientific_terms": ["clinical validation", "sensitivity"],
             },
             {
                 "description": "Develop diagnostic assay",
                 "instructions": "Create standardized testing protocol",
                 "guiding_questions": ["How can we standardize the assay?"],
                 "search_queries": ["diagnostic assay development"],
-                "core_scientific_terms": ["diagnostic assay", "standardization"]
+                "core_scientific_terms": ["diagnostic assay", "standardization"],
             },
         ],
     }
 
-    mock_get_scientific_context.return_value = "**Biochemistry:** biomarkers, proteomics\n**Analytics:** mass spectrometry\n**Clinical:** validation, assay"
+    mock_get_scientific_context.return_value = (
+        "**Biochemistry:** biomarkers, proteomics\n**Analytics:** mass spectrometry\n**Clinical:** validation, assay"
+    )
 
     # Execute
     result = await enrich_objective_with_wikidata(
@@ -145,7 +149,16 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
     assert "scientific_context" in result
 
     # Verify all unique terms are collected (objective + all tasks)
-    expected_terms = ["biomarkers", "proteomics", "mass spectrometry", "protein analysis", "clinical validation", "sensitivity", "diagnostic assay", "standardization"]
+    expected_terms = [
+        "biomarkers",
+        "proteomics",
+        "mass spectrometry",
+        "protein analysis",
+        "clinical validation",
+        "sensitivity",
+        "diagnostic assay",
+        "standardization",
+    ]
     assert result["core_scientific_terms"] == expected_terms
 
     # Verify scientific context contains multiple fields
@@ -166,14 +179,11 @@ async def test_enrich_objective_with_wikidata_error_handling(
         **sample_enrichment_response,
         "research_objective": {
             **sample_enrichment_response["research_objective"],
-            "core_scientific_terms": ["biomarkers"]
+            "core_scientific_terms": ["biomarkers"],
         },
         "research_tasks": [
-            {
-                **sample_enrichment_response["research_tasks"][0],
-                "core_scientific_terms": ["proteomics"]
-            }
-        ]
+            {**sample_enrichment_response["research_tasks"][0], "core_scientific_terms": ["proteomics"]}
+        ],
     }
 
     # Setup mock to raise exception

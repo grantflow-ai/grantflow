@@ -53,7 +53,7 @@ async def test_handle_analyze_cfp_basic_functionality(sample_cfp_content: str) -
 
 async def test_handle_analyze_cfp_empty_content() -> None:
     """Test handle_analyze_cfp with empty content should raise appropriate error."""
-    with pytest.raises(Exception):  # Expecting it to fail gracefully
+    with pytest.raises(ValidationError):  # Expecting it to fail gracefully
         await handle_analyze_cfp(full_cfp_text="", trace_id="test-trace-id")
 
 
@@ -71,10 +71,10 @@ def test_validate_cfp_analysis_valid_data() -> None:
                     {
                         "requirement": "Brief overview of project",
                         "quote_from_source": "Project Summary (1 page maximum)",
-                        "category": "content"
+                        "category": "content",
                     }
                 ],
-                "dependencies": []
+                "dependencies": [],
             }
         ],
         length_constraints=[
@@ -83,7 +83,7 @@ def test_validate_cfp_analysis_valid_data() -> None:
                 "measurement_type": "pages",
                 "limit_description": "1 page maximum",
                 "quote_from_source": "Project Summary (1 page maximum)",
-                "exclusions": []
+                "exclusions": [],
             }
         ],
         evaluation_criteria=[
@@ -91,10 +91,10 @@ def test_validate_cfp_analysis_valid_data() -> None:
                 "criterion_name": "Intellectual Merit",
                 "description": "Scientific value of the research",
                 "quote_from_source": "Applications evaluated on intellectual merit",
-                "weight_percentage": 50
+                "weight_percentage": 50,
             }
         ],
-        additional_requirements=[]
+        additional_requirements=[],
     )
 
     # Should not raise an exception
@@ -110,7 +110,7 @@ def test_validate_cfp_analysis_empty_sections() -> None:
         required_sections=[],
         length_constraints=[],
         evaluation_criteria=[],
-        additional_requirements=[]
+        additional_requirements=[],
     )
 
     with pytest.raises(ValidationError) as exc_info:

@@ -25,9 +25,7 @@ async def real_job_manager(
 ) -> GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO]:
     """Create a real job manager for testing."""
     pipeline_stages = list(GrantApplicationStageEnum)
-    return GrantApplicationJobManager[
-        GrantApplicationStageEnum, StageDTO
-    ](
+    return GrantApplicationJobManager[GrantApplicationStageEnum, StageDTO](
         current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         grant_application_id=grant_application.id,
         parent_id=grant_application.id,
@@ -235,7 +233,7 @@ async def test_enrich_objectives_stage_success(
         "relationships": {
             "1": [("2", "provides_data_for", "Objective 1 provides data for objective 2")],
             "2": [("1", "depends_on", "Objective 2 depends on objective 1")],
-        }
+        },
     }
 
     # Setup mock

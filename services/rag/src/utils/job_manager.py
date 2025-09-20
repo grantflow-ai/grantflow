@@ -14,6 +14,7 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification, publish_rag_task
+from packages.shared_utils.src.serialization import serialize
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -23,20 +24,6 @@ from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStage
 logger = get_logger(__name__)
 
 StageEnum = TypeVar("StageEnum", bound=GrantApplicationStageEnum | GrantTemplateStageEnum)
-
-
-
-def _serialize_checkpoint_data(data: Any) -> Any:
-    """Convert UUIDs to strings recursively for JSON serialization."""
-    if isinstance(data, UUID):
-        return str(data)
-    if isinstance(data, dict):
-        return {key: _serialize_checkpoint_data(value) for key, value in data.items()}
-    if isinstance(data, list):
-        return [_serialize_checkpoint_data(item) for item in data]
-    if isinstance(data, tuple):
-        return tuple(_serialize_checkpoint_data(item) for item in data)
-    return data
 
 
 class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
@@ -89,7 +76,7 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
             if not job:
                 raise RuntimeError(f"Job {self.job_id} not found")
 
-            job.checkpoint_data = _serialize_checkpoint_data(dto)
+            job.checkpoint_data = serialize(dto)
             job.current_stage = current_index + 1
             await session.commit()
 
@@ -143,7 +130,13 @@ class BaseJobManager[T: RagGenerationJob, StageEnum, DTOType](ABC):
         notification_type: Literal["info", "error", "warning", "success"] = "info",
         data: dict[str, Any] | None = None,
     ) -> None:
-        logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event, trace_id=self.trace_id)
+        logger.debug(
+            "Adding notification to job",
+            job_id=str(self.job_id),
+            message=message,
+            notification_event=event,
+            trace_id=self.trace_id,
+        )
 
         current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
         total_pipeline_stages = len(self.pipeline_stages)
@@ -270,7 +263,12 @@ class GrantTemplateJobManager[StageEnum, DTOType](BaseJobManager[GrantTemplateGe
 
                 self.job_id = job.id
                 self.job = job
-                logger.info("Created new job for template", template_id=str(self.parent_id), job_id=str(job.id), trace_id=self.trace_id)
+                logger.info(
+                    "Created new job for template",
+                    template_id=str(self.parent_id),
+                    job_id=str(job.id),
+                    trace_id=self.trace_id,
+                )
 
                 return job
             except SQLAlchemyError as e:
@@ -315,7 +313,12 @@ class GrantApplicationJobManager[StageEnum, DTOType](BaseJobManager[GrantApplica
 
                 self.job_id = job.id
                 self.job = job
-                logger.info("Created new job for application", application_id=str(self.parent_id), job_id=str(job.id), trace_id=self.trace_id)
+                logger.info(
+                    "Created new job for application",
+                    application_id=str(self.parent_id),
+                    job_id=str(job.id),
+                    trace_id=self.trace_id,
+                )
 
                 return job
             except SQLAlchemyError as e:

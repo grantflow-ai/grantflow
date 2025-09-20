@@ -480,7 +480,9 @@ def _should_keep_section(
 
         return True
     except Exception as e:
-        logger.warning("Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id)
+        logger.warning(
+            "Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id
+        )
         return True
 
 
@@ -644,7 +646,10 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: list[CFPContentSection], cfp_subject: str, trace_id: str, organization: OrganizationNamespace | None = None
+    cfp_content: list[CFPContentSection],
+    cfp_subject: str,
+    trace_id: str,
+    organization: OrganizationNamespace | None = None,
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
