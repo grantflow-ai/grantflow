@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from packages.shared_utils.src.exceptions import ValidationError
-from rag.src.grant_template.category_extraction import categorize_text
+from services.rag.src.grant_template.category_extraction import categorize_text
 
 from services.rag.src.grant_template.cfp_section_analysis import (
     GEMINI_2_5_FLASH_MODEL,

@@ -20,7 +20,7 @@ from services.rag.src.grant_template.dto import ExtractedCFPData
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
-from src.json_objects import CategorizationAnalysisResult
+from packages.db.src.json_objects import CategorizationAnalysisResult
 
 logger = get_logger(__name__)
 
