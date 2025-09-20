@@ -24,7 +24,6 @@ describe.sequential("ObjectiveForm", () => {
 
 		expect(screen.getByTestId("objective-title-input")).toBeInTheDocument();
 		expect(screen.getByTestId("objective-description-input")).toBeInTheDocument();
-		// No tasks shown initially (empty tasks array)
 		expect(screen.queryByTestId("task-title-0")).not.toBeInTheDocument();
 		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
@@ -33,7 +32,6 @@ describe.sequential("ObjectiveForm", () => {
 	it("starts with no tasks by default", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// No tasks shown initially (empty tasks array)
 		expect(screen.queryByTestId("task-title-0")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("task-description-0")).not.toBeInTheDocument();
 	});
@@ -42,16 +40,12 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// Fill objective data first to enable Add Task button
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Now Add Task should be enabled
 		await user.click(screen.getByTestId("add-task-button"));
 
-		// Should see the first task title field
 		expect(screen.getByTestId("task-title-0")).toBeInTheDocument();
-		// Description field should be visible after UI changes
 		expect(screen.queryByTestId("task-description-0")).toBeInTheDocument();
 	});
 
@@ -59,20 +53,16 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// Fill objective data first
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Add first task
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "First task title");
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
-		// Add second task
 		await user.click(screen.getByTestId("add-task-button"));
 		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
 
-		// Both tasks should be visible
 		expect(screen.getByTestId("task-title-0")).toBeInTheDocument();
 		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
 	});
@@ -80,7 +70,6 @@ describe.sequential("ObjectiveForm", () => {
 	it("does not show remove button (auto-cleanup handles empty tasks)", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// No explicit remove buttons - empty tasks are auto-cleaned
 		expect(screen.queryByTestId("remove-task-0")).not.toBeInTheDocument();
 	});
 
@@ -92,7 +81,6 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Save button should be disabled - no complete tasks
 		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
@@ -106,7 +94,6 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Add task and fill both title and description
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
 		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
@@ -162,10 +149,9 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		expect(saveButton).toBeDisabled();
 
-		// Add a task
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
-		expect(saveButton).not.toBeDisabled(); // Task description is now optional
+		expect(saveButton).not.toBeDisabled();
 
 		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
 		expect(saveButton).toBeEnabled();
@@ -181,7 +167,6 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-title-input"), "   ");
 		await user.type(screen.getByTestId("objective-description-input"), "   ");
 
-		// Add Task button should be disabled since objective fields are whitespace
 		const addTaskButton = screen.getByTestId("add-task-button");
 		expect(addTaskButton).toBeDisabled();
 		expect(saveButton).toBeDisabled();
@@ -204,7 +189,6 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Add task and fill both title and description
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
 		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
@@ -230,7 +214,6 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		expect(saveButton).toBeDisabled();
 
-		// Add task and fill both title and description
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
 		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
@@ -242,19 +225,15 @@ describe.sequential("ObjectiveForm", () => {
 		const onSaveAction = vi.fn();
 		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
-		// Fill objective info first to enable add-task-button
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Now add task
 		await user.click(screen.getByTestId("add-task-button"));
 
-		// First task - add title to make description field visible
 		await user.type(screen.getByTestId("task-title-0"), "First task title");
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
 		const saveButton = screen.getByTestId("add-objective-button");
-		// Now the form should be valid since all required fields are filled
 		expect(saveButton).not.toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
 	});
@@ -263,16 +242,13 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// Fill objective fields first
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Add first task
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "First task title");
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
-		// Add second task
 		await user.click(screen.getByTestId("add-task-button"));
 
 		expect(screen.getByTestId("task-description-0")).toHaveValue("First task description");
@@ -283,21 +259,17 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		// Fill objective fields first
 		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		// Add first task
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-0"), "First task title");
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
-		// Add second task
 		await user.click(screen.getByTestId("add-task-button"));
 		await user.type(screen.getByTestId("task-title-1"), "Second task title");
 		await user.type(screen.getByTestId("task-description-1"), "Second task description");
 
-		// Update first task description
 		await user.clear(screen.getByTestId("task-description-0"));
 		await user.type(screen.getByTestId("task-description-0"), "Updated first task description");
 
