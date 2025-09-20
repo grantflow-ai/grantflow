@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";

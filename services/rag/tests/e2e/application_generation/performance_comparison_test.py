@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
 
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.rag.src.grant_application.handlers import grant_application_text_generation_pipeline_handler
 
 
 def create_mock_job_manager() -> AsyncMock:

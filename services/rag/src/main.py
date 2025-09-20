@@ -93,7 +93,9 @@ async def handle_request(
     if request["parent_type"] == "grant_template":
         # Fetch the GrantTemplate from database
         async with session_maker() as session:
-            grant_template = await session.scalar(select_active(GrantTemplate).where(GrantTemplate.id == request["parent_id"]))
+            grant_template = await session.scalar(
+                select_active(GrantTemplate).where(GrantTemplate.id == request["parent_id"])
+            )
 
             if not grant_template:
                 logger.error(

@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -213,57 +214,61 @@ class TestShouldKeepSection:
     def test_keep_high_similarity_section(self) -> None:
         """Test excluding section with high similarity to exclude categories."""
         # Mock high similarity score
-        with patch("services.rag.src.grant_template.extract_sections.util.cos_sim") as mock_cos_sim:
-            with patch("services.rag.src.grant_template.extract_sections.run_sync") as mock_run_sync:
-                mock_cos_sim.return_value = 0.9  # High similarity to exclude categories
-                mock_model = MagicMock()
-                mock_model.encode.return_value = [0.8, 0.9, 0.7]
-                mock_run_sync.return_value = mock_model
+        with (
+            patch("services.rag.src.grant_template.extract_sections.util.cos_sim") as mock_cos_sim,
+            patch("services.rag.src.grant_template.extract_sections.run_sync") as mock_run_sync,
+        ):
+            mock_cos_sim.return_value = 0.9  # High similarity to exclude categories
+            mock_model = MagicMock()
+            mock_model.encode.return_value = [0.8, 0.9, 0.7]
+            mock_run_sync.return_value = mock_model
 
-                section: ExtractedSectionDTO = {
-                    "title": "Budget Justification",  # Should be excluded
-                    "id": "budget",
-                    "order": 1,
-                    "is_long_form": True,
-                    "is_detailed_research_plan": False,
-                }
+            section: ExtractedSectionDTO = {
+                "title": "Budget Justification",  # Should be excluded
+                "id": "budget",
+                "order": 1,
+                "is_long_form": True,
+                "is_detailed_research_plan": False,
+            }
 
-                result = _should_keep_section(
-                    section=section,
-                    sections=[section],
-                    threshold=0.8,
-                    exclude_embeddings=[0.1, 0.2, 0.3],
-                    trace_id="test-trace",
-                )
+            result = _should_keep_section(
+                section=section,
+                sections=[section],
+                threshold=0.8,
+                exclude_embeddings=[0.1, 0.2, 0.3],
+                trace_id="test-trace",
+            )
 
-                assert result is False  # Should be excluded
+            assert result is False  # Should be excluded
 
     def test_keep_low_similarity_section(self) -> None:
         """Test keeping section with low similarity to exclude categories."""
-        with patch("services.rag.src.grant_template.extract_sections.util.cos_sim") as mock_cos_sim:
-            with patch("services.rag.src.grant_template.extract_sections.run_sync") as mock_run_sync:
-                mock_cos_sim.return_value = 0.3  # Low similarity
-                mock_model = MagicMock()
-                mock_model.encode.return_value = [0.8, 0.9, 0.7]
-                mock_run_sync.return_value = mock_model
+        with (
+            patch("services.rag.src.grant_template.extract_sections.util.cos_sim") as mock_cos_sim,
+            patch("services.rag.src.grant_template.extract_sections.run_sync") as mock_run_sync,
+        ):
+            mock_cos_sim.return_value = 0.3  # Low similarity
+            mock_model = MagicMock()
+            mock_model.encode.return_value = [0.8, 0.9, 0.7]
+            mock_run_sync.return_value = mock_model
 
-                section: ExtractedSectionDTO = {
-                    "title": "Research Methods",  # Should be kept
-                    "id": "research_methods",
-                    "order": 1,
-                    "is_long_form": True,
-                    "is_detailed_research_plan": False,
-                }
+            section: ExtractedSectionDTO = {
+                "title": "Research Methods",  # Should be kept
+                "id": "research_methods",
+                "order": 1,
+                "is_long_form": True,
+                "is_detailed_research_plan": False,
+            }
 
-                result = _should_keep_section(
-                    section=section,
-                    sections=[section],
-                    threshold=0.8,
-                    exclude_embeddings=[0.1, 0.2, 0.3],
-                    trace_id="test-trace",
-                )
+            result = _should_keep_section(
+                section=section,
+                sections=[section],
+                threshold=0.8,
+                exclude_embeddings=[0.1, 0.2, 0.3],
+                trace_id="test-trace",
+            )
 
-                assert result is True  # Should be kept
+            assert result is True  # Should be kept
 
     def test_exact_match_exclusion(self) -> None:
         """Test exact string match exclusion."""
@@ -311,7 +316,7 @@ class TestGetExcludeEmbeddings:
 
     @patch("services.rag.src.grant_template.extract_sections.get_embedding_model")
     @patch("services.rag.src.grant_template.extract_sections.run_sync")
-    async def test_get_exclude_embeddings_cached(self, mock_run_sync, mock_get_model) -> None:
+    async def test_get_exclude_embeddings_cached(self, mock_run_sync: AsyncMock, mock_get_model: AsyncMock) -> None:
         """Test get_exclude_embeddings with caching."""
         # Mock embedding model
         mock_model = MagicMock()
@@ -408,7 +413,7 @@ class TestFilterExtractedSections:
     @patch("services.rag.src.grant_template.extract_sections.get_embedding_model")
     @patch("services.rag.src.grant_template.extract_sections.run_sync")
     async def test_filter_extracted_sections_success(
-        self, mock_run_sync, mock_get_model, mock_get_exclude
+        self, mock_run_sync: AsyncMock, mock_get_model: AsyncMock, mock_get_exclude: AsyncMock
     ) -> None:
         """Test successful section filtering."""
         # Setup mocks
@@ -436,8 +441,9 @@ class TestFilterExtractedSections:
 
         with patch("services.rag.src.grant_template.extract_sections._should_keep_section") as mock_should_keep:
             # Mock function to keep research methods but filter budget
-            def mock_keep(section, **kwargs):
+            def mock_keep(section: ExtractedSectionDTO, **kwargs: Any) -> bool:
                 return section["title"] == "Research Methods"
+
             mock_should_keep.side_effect = mock_keep
 
             result = await filter_extracted_sections(sections, "test-trace")
@@ -450,7 +456,7 @@ class TestExtractSections:
     """Test extract_sections function."""
 
     @patch("services.rag.src.grant_template.extract_sections.handle_completions_request")
-    async def test_extract_sections_success(self, mock_completions) -> None:
+    async def test_extract_sections_success(self, mock_completions: AsyncMock) -> None:
         """Test successful section extraction."""
         mock_response = {
             "sections": [
@@ -480,7 +486,7 @@ class TestExtractSections:
         mock_completions.assert_called_once()
 
     @patch("services.rag.src.grant_template.extract_sections.handle_completions_request")
-    async def test_extract_sections_validation_error(self, mock_completions) -> None:
+    async def test_extract_sections_validation_error(self, mock_completions: AsyncMock) -> None:
         """Test extract_sections with validation error."""
         # Mock to raise ValidationError as would happen with empty sections
         mock_completions.side_effect = ValidationError("No sections extracted. Please provide an error message.")
@@ -496,7 +502,7 @@ class TestHandleExtractSections:
     @patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections")
     @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
     async def test_handle_extract_sections_success(
-        self, mock_retrieve, mock_filter, mock_evaluation
+        self, mock_retrieve: AsyncMock, mock_filter: AsyncMock, mock_evaluation: AsyncMock
     ) -> None:
         """Test successful section extraction handling."""
         # Setup mocks
@@ -547,7 +553,7 @@ class TestHandleExtractSections:
     @patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation")
     @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
     async def test_handle_extract_sections_no_organization(
-        self, mock_retrieve, mock_evaluation
+        self, mock_retrieve: AsyncMock, mock_evaluation: AsyncMock
     ) -> None:
         """Test section extraction with no organization provided."""
         mock_retrieve.return_value = ""
@@ -569,19 +575,21 @@ class TestHandleExtractSections:
 
     async def test_handle_extract_sections_empty_cfp_content(self) -> None:
         """Test handling of empty CFP content."""
-        with patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation") as mock_evaluation:
-            with patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections") as mock_filter:
-                mock_evaluation.return_value = {"sections": []}
-                mock_filter.return_value = []
+        with (
+            patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation") as mock_evaluation,
+            patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections") as mock_filter,
+        ):
+            mock_evaluation.return_value = {"sections": []}
+            mock_filter.return_value = []
 
-                result = await handle_extract_sections(
-                    cfp_content=[],
-                    cfp_subject="",
-                    trace_id="test-trace",
-                    organization=None,
-                )
+            result = await handle_extract_sections(
+                cfp_content=[],
+                cfp_subject="",
+                trace_id="test-trace",
+                organization=None,
+            )
 
-                assert result == []
+            assert result == []
 
 
 class TestIntegrationExtractSections:
@@ -592,7 +600,11 @@ class TestIntegrationExtractSections:
     @patch("services.rag.src.grant_template.extract_sections.get_embedding_model")
     @patch("services.rag.src.grant_template.extract_sections.run_sync")
     async def test_end_to_end_section_extraction(
-        self, mock_run_sync, mock_get_model, mock_get_exclude, mock_evaluation
+        self,
+        mock_run_sync: AsyncMock,
+        mock_get_model: AsyncMock,
+        mock_get_exclude: AsyncMock,
+        mock_evaluation: AsyncMock,
     ) -> None:
         """Test complete end-to-end section extraction workflow."""
         # Setup comprehensive mocks

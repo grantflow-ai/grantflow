@@ -85,7 +85,7 @@ export function getClient(): KyInstance {
 					if (!request.headers.get("X-Trace-ID")) {
 						const traceId = generateTraceId();
 						request.headers.set("X-Trace-ID", traceId);
-						log.debug("Auto-generated trace_id for request", {
+						log.info("Auto-generated trace_id for request", {
 							method: request.method,
 							trace_id: traceId,
 							url: request.url,

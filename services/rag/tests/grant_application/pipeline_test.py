@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationSource
+from packages.db.src.tables import GrantApplication, GrantApplicationSource, RagSource
 from packages.shared_utils.src.exceptions import (
     BackendError,
     InsufficientContextError,
@@ -22,7 +22,9 @@ from services.rag.src.grant_application.pipeline import handle_grant_application
 
 
 @pytest.fixture
-async def sample_rag_sources(async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication):
+async def sample_rag_sources(
+    async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
+) -> list[RagSource]:
     """Create real RAG sources in the database."""
     async with async_session_maker() as session:
         # Create RAG sources
@@ -35,10 +37,7 @@ async def sample_rag_sources(async_session_maker: async_sessionmaker[Any], grant
 
         # Link sources to grant application
         app_sources = [
-            GrantApplicationSource(
-                grant_application_id=grant_application.id,
-                rag_source_id=source.id
-            )
+            GrantApplicationSource(grant_application_id=grant_application.id, rag_source_id=source.id)
             for source in sources
         ]
         session.add_all(app_sources)
@@ -237,7 +236,10 @@ async def test_generic_backend_error_handling(
 
 @patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed")
 async def test_missing_grant_template_validation(
-    mock_verify_sources: AsyncMock, grant_application: GrantApplication, sample_rag_sources: Any, async_session_maker: async_sessionmaker[Any]
+    mock_verify_sources: AsyncMock,
+    grant_application: GrantApplication,
+    sample_rag_sources: Any,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test validation error when grant template is missing."""
     # Setup mocks
@@ -258,7 +260,10 @@ async def test_missing_grant_template_validation(
 
 @patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed")
 async def test_missing_cfp_analysis_validation(
-    mock_verify_sources: AsyncMock, grant_application: GrantApplication, sample_rag_sources: Any, async_session_maker: async_sessionmaker[Any]
+    mock_verify_sources: AsyncMock,
+    grant_application: GrantApplication,
+    sample_rag_sources: Any,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test validation error when CFP analysis is missing."""
     # Setup mocks

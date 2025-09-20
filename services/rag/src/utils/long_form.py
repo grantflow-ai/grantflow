@@ -151,7 +151,11 @@ async def handle_long_form_text_generation(
     api_call_num = 1
 
     logger.info(
-        "Starting text generation", entity_identifier=prompt_identifier, min_words=min_words, max_words=max_words, trace_id=trace_id
+        "Starting text generation",
+        entity_identifier=prompt_identifier,
+        min_words=min_words,
+        max_words=max_words,
+        trace_id=trace_id,
     )
     start_time = time()
     while api_call_num <= max_api_calls:

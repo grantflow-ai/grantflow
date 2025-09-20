@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.sources import _cancel_job_if_active
 from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
-from services.rag.src.grant_application.handler import (
+from services.rag.src.grant_application.handlers import (
     generate_work_plan_text,
     grant_application_text_generation_pipeline_handler,
 )
@@ -191,8 +191,7 @@ async def test_application_generation_stops_at_verification_when_cancelled(
     mock_job_manager.check_if_cancelled = AsyncMock(return_value=True)
     mock_job_manager.handle_cancellation = AsyncMock()
 
-    with patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed"):
-        result = await grant_application_text_generation_pipeline_handler(
+            with patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed"):        result = await grant_application_text_generation_pipeline_handler(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             stage=GrantApplicationStageEnum.INITIALIZE,
@@ -231,17 +230,17 @@ async def test_work_plan_generation_checks_cancellation_between_objectives(
 
     with (
         patch(
-            "services.rag.src.grant_application.handler.handle_extract_relationships",
+            "services.rag.src.grant_application.handlers.handle_extract_relationships",
             new_callable=AsyncMock,
             return_value={},
         ),
         patch(
-            "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
+            "services.rag.src.grant_application.handlers.handle_batch_enrich_objectives",
             new_callable=AsyncMock,
             return_value=[mock_enrichment_response, mock_enrichment_response],
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_work_plan_component_text",
+            "services.rag.src.grant_application.handlers.generate_work_plan_component_text",
             new_callable=AsyncMock,
             return_value="Mock text",
         ),

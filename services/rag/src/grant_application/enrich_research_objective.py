@@ -290,8 +290,6 @@ async def enrich_objective_generation(
     )
 
 
-
-
 criteria: list[EvaluationCriterion] = [
     EvaluationCriterion(
         name="Objective & Task Alignment",

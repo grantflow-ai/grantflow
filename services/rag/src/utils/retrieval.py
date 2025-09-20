@@ -369,13 +369,21 @@ async def retrieve_documents(
             best_processed_contents = processed_contents
 
         if current_score >= MIN_QUALITY_SCORE:
-            logger.info("Retrieval quality meets target threshold", score=current_score, threshold=MIN_QUALITY_SCORE, trace_id=trace_id)
+            logger.info(
+                "Retrieval quality meets target threshold",
+                score=current_score,
+                threshold=MIN_QUALITY_SCORE,
+                trace_id=trace_id,
+            )
             return best_processed_contents
 
         previous_scores.append(current_score)
         if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
             logger.info(
-                "Retrieval quality optimization plateaued", last_score=previous_scores[-2], current_score=current_score, trace_id=trace_id
+                "Retrieval quality optimization plateaued",
+                last_score=previous_scores[-2],
+                current_score=current_score,
+                trace_id=trace_id,
             )
             return best_processed_contents
 
