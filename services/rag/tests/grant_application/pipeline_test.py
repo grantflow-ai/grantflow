@@ -89,14 +89,13 @@ async def test_generate_sections_stage(
         return_value=sample_generate_sections_dto,
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
-    assert result is None
     mock_handle_generate_sections.assert_called_once()
     mock_verify_sources.assert_called_once()
 
@@ -118,14 +117,13 @@ async def test_extract_relationships_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS,
         trace_id=trace_id,
     )
 
-    assert result is None
     mock_handle_extract_relationships.assert_not_called()
 
 
@@ -146,14 +144,13 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES,
         trace_id=trace_id,
     )
 
-    assert result is None
     mock_handle_enrich_objectives.assert_not_called()
 
 
@@ -174,14 +171,12 @@ async def test_insufficient_context_error_handling(
         side_effect=InsufficientContextError("Not enough context"),
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
 
 
 async def test_indexing_timeout_error_handling(
@@ -201,14 +196,12 @@ async def test_indexing_timeout_error_handling(
         side_effect=ValidationError("indexing timeout occurred"),
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
 
 
 async def test_generic_backend_error_handling(
@@ -228,14 +221,12 @@ async def test_generic_backend_error_handling(
         side_effect=BackendError("Unexpected backend error"),
     )
 
-    result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
 
 
 async def test_missing_grant_template_validation(
@@ -258,14 +249,12 @@ async def test_missing_grant_template_validation(
         await session.execute(delete(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id))
         await session.commit()
 
-    result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
 
 
 async def test_missing_cfp_analysis_validation(
@@ -291,14 +280,12 @@ async def test_missing_cfp_analysis_validation(
         )
         await session.commit()
 
-    result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
 
 
 async def test_pipeline_creates_real_job_entry(
@@ -320,12 +307,9 @@ async def test_pipeline_creates_real_job_entry(
         return_value=sample_generate_sections_dto,
     )
 
-    result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
         generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
-
-    assert result is None
-

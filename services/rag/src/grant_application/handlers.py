@@ -60,7 +60,6 @@ async def handle_generate_sections_stage(
             else:
                 long_form_sections.append(long_form_section)
 
-
     all_search_queries = []
     all_keywords = []
 
@@ -75,7 +74,6 @@ async def handle_generate_sections_stage(
     )
 
     unique_queries = list(dict.fromkeys(all_search_queries))[:12]
-
 
     combined_task_description = (
         f"Generate content for {len(long_form_sections)} grant application sections: "
@@ -97,7 +95,7 @@ async def handle_generate_sections_stage(
             grant_application.research_objectives or [],
             shared_context,
             cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
-            trace_id
+            trace_id,
         )
         for section in long_form_sections
     ]
@@ -261,7 +259,9 @@ async def handle_generate_research_plan_stage(
     research_objectives = grant_application.research_objectives or []
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
     total_components = len(research_objectives) + total_tasks
-    words_per_component = abs(round(dto["work_plan_section"]["max_words"] / total_components)) if total_components > 0 else 500
+    words_per_component = (
+        abs(round(dto["work_plan_section"]["max_words"] / total_components)) if total_components > 0 else 500
+    )
     for research_objective, enrichment_response in zip(research_objectives, dto["enrichment_responses"], strict=True):
         objective_enrichment = enrichment_response["research_objective"]
         tasks_enrichment = enrichment_response["research_tasks"]
@@ -332,7 +332,7 @@ async def handle_generate_research_plan_stage(
             )
             for objective, tasks in objective_task_groups
         ],
-        batch_size=4
+        batch_size=4,
     )
 
     for objective, objective_text, task_results in objective_results:
@@ -374,5 +374,3 @@ async def handle_generate_research_plan_stage(
         wikidata_enrichments=dto["wikidata_enrichments"],
         research_plan_text=research_plan_text,
     )
-
-

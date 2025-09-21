@@ -79,7 +79,10 @@ def test_get_embedding_model(mocker: MockerFixture) -> None:
     assert model == mock_model_instance
     assert embedding_model_ref.value == mock_model_instance
     mock_sentence_transformer.assert_called_once_with(
-        EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False
+        EMBEDDING_MODEL_NAME,
+        device="cpu",
+        trust_remote_code=False,
+        local_files_only=True,
     )
 
     model2 = get_embedding_model()

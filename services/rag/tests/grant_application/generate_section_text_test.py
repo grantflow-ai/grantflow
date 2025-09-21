@@ -80,10 +80,10 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
                         CFPAnalysisRequirementWithQuote(
                             requirement="Summarize project goals",
                             quote_from_source="Provide a clear summary of objectives",
-                            category="summary"
+                            category="summary",
                         )
                     ],
-                    dependencies=[]
+                    dependencies=[],
                 )
             ],
             length_constraints=[
@@ -92,20 +92,20 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
                     measurement_type="words",
                     limit_description="Maximum 250 words",
                     quote_from_source="Maximum 250 words for abstract",
-                    exclusions=[]
+                    exclusions=[],
                 )
             ],
             evaluation_criteria=[
                 CFPAnalysisEvaluationCriterion(
                     criterion_name="Innovation and significance",
                     description="Evaluate innovation",
-                    quote_from_source="Assess innovation"
+                    quote_from_source="Assess innovation",
                 )
             ],
             additional_requirements=[],
             sections_count=5,
             length_constraints_found=3,
-            evaluation_criteria_count=4
+            evaluation_criteria_count=4,
         ),
         nlp_analysis=CategorizationAnalysisResult(
             money=[],
@@ -116,13 +116,9 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
             orders=[],
             positive_instructions=[],
             negative_instructions=[],
-            evaluation_criteria=[]
+            evaluation_criteria=[],
         ),
-        analysis_metadata=CFPAnalysisMetadata(
-            content_length=1000,
-            categories_found=8,
-            total_sentences=50
-        )
+        analysis_metadata=CFPAnalysisMetadata(content_length=1000, categories_found=8, total_sentences=50),
     )
 
 

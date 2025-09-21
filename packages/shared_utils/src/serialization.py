@@ -48,11 +48,13 @@ def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
     try:
         return decode(value, type=target_type, strict=False)
     except MsgspecError as e:
+        # Handle union types and other types that might not have __name__
+        type_name = getattr(target_type, "__name__", str(target_type))
         raise DeserializationError(
             str(e),
             context={
                 "value": value,
-                "target_type": target_type.__name__,
+                "target_type": type_name,
             },
         ) from e
 

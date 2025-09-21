@@ -87,7 +87,6 @@ class BaseJobManager[
             job.current_stage = current_index + 1
             await session.commit()
 
-
         await publish_rag_task(
             parent_type=self.parent_type,
             parent_id=self.parent_id,
@@ -131,7 +130,6 @@ class BaseJobManager[
     ) -> None:
         if self.job_id is None:
             raise RuntimeError("Job ID not set. Create a job first.")
-
 
         current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
         total_pipeline_stages = len(self.pipeline_stages)

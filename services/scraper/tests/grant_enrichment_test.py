@@ -237,9 +237,7 @@ async def test_enrich_grant_data_with_amounts_and_eligibility() -> None:
     mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
     mock_session_maker.return_value.__aexit__ = AsyncMock()
 
-    with patch(
-        "services.scraper.src.grant_enrichment.fetch_grant_page_content", new_callable=AsyncMock
-    ) as mock_fetch:
+    with patch("services.scraper.src.grant_enrichment.fetch_grant_page_content", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = """
         <section>Award Information
         <p>Maximum award: $750,000</p>

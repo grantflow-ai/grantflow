@@ -5,7 +5,6 @@ from uuid import uuid4
 import pytest
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.dto import OrganizationNamespace
 from services.rag.src.grant_template.generate_metadata import (
     SectionMetadata,
     TemplateSectionsResponse,
@@ -15,6 +14,7 @@ from services.rag.src.grant_template.generate_metadata import (
 )
 
 if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import OrganizationNamespace
     from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 
 

@@ -216,7 +216,6 @@ class AdaptiveTimeoutCalculator:
 
         self.timeout_multipliers[complexity_level] = new_multiplier
 
-
     def get_performance_stats(self) -> dict[str, Any]:
         if not self.performance_history:
             return {"total_evaluations": 0}
@@ -314,7 +313,6 @@ class EvaluationCache:
         entry.access_count += 1
         self._update_access_order(key)
 
-
         return entry.result
 
     def put(
@@ -337,7 +335,6 @@ class EvaluationCache:
 
         self._cache[key] = entry
         self._update_access_order(key)
-
 
     def clear(self) -> None:
         self._cache.clear()
@@ -675,7 +672,6 @@ async def smart_evaluate_output(
             )
 
             _adaptive_timeout_calculator.record_performance(metrics)
-
 
     return result, complexity_analysis
 

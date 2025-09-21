@@ -76,7 +76,6 @@ async def post_process_documents(
     if not documents:
         return []
 
-
     nlp = get_spacy_model()
     all_sentences: list[SentenceInfo] = []
 
@@ -127,8 +126,6 @@ async def post_process_documents(
     processed_docs, _actual_token_count = await smart_parse_documents_with_batched_tokens(
         sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens, trace_id=trace_id
     )
-
-
 
     return processed_docs
 

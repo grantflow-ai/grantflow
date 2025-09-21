@@ -8,6 +8,7 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 
 class ValidationResult(TypedDict):
     """Validation result for scientific context."""
+
     is_valid: bool
     has_content: bool
     has_scientific_terms: bool
@@ -41,14 +42,33 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
     all_terms = terms + capitalized_terms
 
     scientific_keywords = [
-        "acid", "protein", "enzyme", "cell", "gene", "dna", "rna",
-        "molecule", "compound", "synthesis", "analysis", "study",
-        "research", "method", "technique", "process", "system",
-        "learning", "intelligence", "network", "algorithm", "data"
+        "acid",
+        "protein",
+        "enzyme",
+        "cell",
+        "gene",
+        "dna",
+        "rna",
+        "molecule",
+        "compound",
+        "synthesis",
+        "analysis",
+        "study",
+        "research",
+        "method",
+        "technique",
+        "process",
+        "system",
+        "learning",
+        "intelligence",
+        "network",
+        "algorithm",
+        "data",
     ]
 
     scientific_terms = [
-        term.strip() for term in all_terms
+        term.strip()
+        for term in all_terms
         if term.strip() and any(keyword in term.lower() for keyword in scientific_keywords)
     ]
 
@@ -74,29 +94,34 @@ def validate_scientific_context(context: Any) -> ValidationResult:
     if not isinstance(context, str):
         errors.append("Context must be a string")
         return ValidationResult(
-            is_valid=False,
-            has_content=False,
-            has_scientific_terms=False,
-            term_count=0,
-            errors=errors
+            is_valid=False, has_content=False, has_scientific_terms=False, term_count=0, errors=errors
         )
 
     if not context.strip():
         errors.append("Context is empty")
         return ValidationResult(
-            is_valid=False,
-            has_content=False,
-            has_scientific_terms=False,
-            term_count=0,
-            errors=errors
+            is_valid=False, has_content=False, has_scientific_terms=False, term_count=0, errors=errors
         )
 
     # Check for scientific content
     scientific_keywords = [
-        "research", "study", "analysis", "method", "technique",
-        "experiment", "hypothesis", "theory", "model", "data",
-        "result", "conclusion", "investigation", "observation",
-        "measurement", "assessment", "evaluation"
+        "research",
+        "study",
+        "analysis",
+        "method",
+        "technique",
+        "experiment",
+        "hypothesis",
+        "theory",
+        "model",
+        "data",
+        "result",
+        "conclusion",
+        "investigation",
+        "observation",
+        "measurement",
+        "assessment",
+        "evaluation",
     ]
 
     context_lower = context.lower()
@@ -117,5 +142,5 @@ def validate_scientific_context(context: Any) -> ValidationResult:
         has_content=True,
         has_scientific_terms=has_scientific_terms,
         term_count=term_count,
-        errors=errors
+        errors=errors,
     )

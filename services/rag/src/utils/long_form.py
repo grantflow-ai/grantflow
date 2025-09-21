@@ -152,7 +152,6 @@ async def handle_long_form_text_generation(
 
     time()
     while api_call_num <= max_api_calls:
-
         prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
             min_words=min_words,
@@ -175,7 +174,6 @@ async def handle_long_form_text_generation(
 
         result = concatenate_segments_with_spacy_coherence([result, response["text"]])
         current_word_count = count_words(result)
-
 
         api_call_num += 1
         if response["is_complete"]:
@@ -200,7 +198,6 @@ async def handle_long_form_text_generation(
             min_words=min_words,
             trace_id=trace_id,
         )
-
 
     return normalize_markdown(result)
 
@@ -249,7 +246,6 @@ async def generate_long_form_text(
     while long_form_length > max_words and attempts < max_shortening_attempts:
         words_overflow = long_form_length - max_words
 
-
         long_form_text = await handle_long_form_text_generation(
             max_words=max_words,
             min_words=min_words,
@@ -261,6 +257,5 @@ async def generate_long_form_text(
 
         long_form_length = count_words(long_form_text)
         attempts += 1
-
 
     return long_form_text

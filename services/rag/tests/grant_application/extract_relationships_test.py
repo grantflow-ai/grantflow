@@ -166,9 +166,7 @@ async def test_handle_extract_relationships_single_objective(
         )
     ]
 
-    mock_relationships_response: dict[str, list[Any]] = {
-        "relationships": []
-    }
+    mock_relationships_response: dict[str, list[Any]] = {"relationships": []}
     mock_with_prompt_evaluation.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 

@@ -28,14 +28,12 @@ from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStage
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
-from services.rag.src.grant_template.dto import ExtractedCFPData
+from services.rag.src.grant_template.dto import AnalyzeCFPContentStageDTO, ExtractedCFPData, StageDTO
 from services.rag.src.grant_template.handlers import handle_section_extraction_stage
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
-from services.rag.src.grant_template.dto import AnalyzeCFPContentStageDTO, StageDTO
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import GrantLongFormSection
     from services.rag.src.grant_template.dto import CFPContentSection as Content
 
 
@@ -89,6 +87,7 @@ async def test_ensure_not_cancelled_allows_active_job(
 async def test_ensure_not_cancelled_raises_when_job_cancelled(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
+    mock_publish_notification: AsyncMock,
 ) -> None:
     manager = await _create_template_manager(
         async_session_maker,
@@ -152,6 +151,7 @@ async def test_ensure_not_cancelled_emits_cancellation_notification(
 async def test_template_generation_stops_at_verification_when_cancelled(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
+    mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
     mock_job_manager = MagicMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
@@ -177,8 +177,9 @@ async def test_template_extraction_stops_when_cancelled(
     sample_cfp_content: list[dict[str, Any]],
     cfp_subject: str,
     nih_organization: Any,
+    mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
-    parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+    UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = MagicMock()
     mock_job_manager.add_notification = AsyncMock()
@@ -194,7 +195,7 @@ async def test_template_extraction_stops_when_cancelled(
                 content=cast("list[Content]", sample_cfp_content),
             ),
             organization=nih_organization,
-            analysis_results=cast(CFPAnalysisResult, {"analysis": "mock analysis"}),
+            analysis_results=cast("CFPAnalysisResult", {"analysis": "mock analysis"}),
         )
         with pytest.raises(RagJobCancelledError):
             await handle_section_extraction_stage(
@@ -208,6 +209,7 @@ async def test_template_extraction_stops_when_cancelled(
 async def test_application_generation_stops_at_verification_when_cancelled(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
+    mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
     mock_job_manager = MagicMock()
     mock_job_manager.create_grant_application_job = AsyncMock()
@@ -234,6 +236,7 @@ async def test_work_plan_generation_checks_cancellation_between_objectives(
     mock_research_objectives: list[Any],
     mock_enrichment_response: dict[str, Any],
     mock_grant_sections: list[Any],
+    mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
     research_plan_section = None
     for s in mock_grant_sections:
