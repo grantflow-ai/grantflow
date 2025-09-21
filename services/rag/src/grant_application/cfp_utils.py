@@ -17,7 +17,7 @@ async def get_cfp_analysis_for_template(
     if not grant_template:
         return None
 
-    cfp_analysis = grant_template.cfp_analysis
+    cfp_analysis = getattr(grant_template, "cfp_analysis", None)
 
     if cfp_analysis:
         logger.info(
@@ -35,7 +35,7 @@ async def get_cfp_analysis_for_template(
             template_id=str(grant_template.id),
         )
 
-    return cfp_analysis
+    return cfp_analysis  # type: ignore[no-any-return]
 
 
 async def get_cfp_analysis_by_template_id(
