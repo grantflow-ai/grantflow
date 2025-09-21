@@ -1,0 +1,7 @@
+{
+  "test_name": "Quote Verification",
+  "total_quotes_checked": 20,
+  "quotes_found_in_source": 20,
+  "quotes_not_found": [],
+  "accuracy_percentage": 100.0
+}
