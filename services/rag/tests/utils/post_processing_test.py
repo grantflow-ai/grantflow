@@ -127,12 +127,20 @@ async def test_apply_semantic_ranking(mocker: MockFixture) -> None:
 
 
 async def test_parse_documents(
-    sample_documents: list[DocumentDTO], sample_sentence_infos: list[SentenceInfo], mocker: MockFixture
+    sample_documents: list[DocumentDTO],
+    sample_sentence_infos: list[SentenceInfo],
+    mocker: MockFixture,
+    trace_id: str,
 ) -> None:
     mock_count_tokens = mocker.patch("services.rag.src.utils.post_processing.count_tokens")
     mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
-    result = await parse_documents(sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model")
+    result = await parse_documents(
+        sentence_infos=sample_sentence_infos,
+        max_tokens=100,
+        model="test-model",
+        trace_id=trace_id,
+    )
 
     assert len(result) == 3
     assert "The quick brown fox jumps over the lazy dog." in result
@@ -140,14 +148,23 @@ async def test_parse_documents(
     assert "This is a new sentence not in any document." in result
 
 
-async def test_post_process_documents_empty_input() -> None:
+async def test_post_process_documents_empty_input(trace_id: str) -> None:
     result = await post_process_documents(
-        documents=[], query="test query", max_tokens=1000, model="test-model", task_description=""
+        documents=[],
+        query="test query",
+        max_tokens=1000,
+        model="test-model",
+        task_description="",
+        trace_id=trace_id,
     )
     assert result == []
 
 
-async def test_post_process_documents_integration(sample_documents: list[DocumentDTO], mocker: MockFixture) -> None:
+async def test_post_process_documents_integration(
+    sample_documents: list[DocumentDTO],
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_process_sentence = mocker.patch("services.rag.src.utils.post_processing._process_sentence")
     mock_process_sentence.return_value = "Processed text"
 
@@ -182,7 +199,12 @@ async def test_post_process_documents_integration(sample_documents: list[Documen
     mock_nlp.return_value.return_value = mock_doc
 
     result = await post_process_documents(
-        documents=sample_documents, query="test query", max_tokens=1000, model="test-model", task_description=""
+        documents=sample_documents,
+        query="test query",
+        max_tokens=1000,
+        model="test-model",
+        task_description="",
+        trace_id=trace_id,
     )
 
     assert result == processed_docs

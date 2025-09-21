@@ -95,17 +95,20 @@ async def test_handle_grant_application_notifications_success(
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
+    trace_id: str,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
             source_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="test_document.pdf",
+            trace_id=trace_id,
         ),
         SourceProcessingResult(
             source_id=UUID("223e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="https://example.com/resource",
+            trace_id=trace_id,
         ),
     ]
 
@@ -115,6 +118,7 @@ async def test_handle_grant_application_notifications_success(
             parent_id=application.id,
             event="source_processing",
             data=notification,
+            trace_id=trace_id,
         )
         for notification in test_notifications
     ]
@@ -134,19 +138,23 @@ async def test_handle_grant_application_notifications_success(
         assert message1["type"] == "data"
         assert message1["event"] == "source_processing"
         assert message1["parent_id"] == str(application.id)
+        assert message1["trace_id"] == trace_id
         notification1 = message1["data"]
         assert notification1["source_id"] == "123e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "FINISHED"
         assert notification1["identifier"] == "test_document.pdf"
+        assert notification1["trace_id"] == trace_id
 
         message2 = ws.receive_json()
         assert message2["type"] == "data"
         assert message2["event"] == "source_processing"
         assert message2["parent_id"] == str(application.id)
+        assert message2["trace_id"] == trace_id
         notification2 = message2["data"]
         assert notification2["source_id"] == "223e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "INDEXING"
         assert notification2["identifier"] == "https://example.com/resource"
+        assert notification2["trace_id"] == trace_id
 
     assert mock_pull_notifications.call_count >= 1
     call_kwargs = mock_pull_notifications.call_args_list[0].kwargs
@@ -160,12 +168,14 @@ async def test_handle_grant_application_notifications_failed_status(
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
+    trace_id: str,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
             source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FAILED,
             identifier="error_document.pdf",
+            trace_id=trace_id,
         ),
     ]
 
@@ -175,6 +185,7 @@ async def test_handle_grant_application_notifications_failed_status(
             parent_id=application.id,
             event="source_processing",
             data=notification,
+            trace_id=trace_id,
         )
         for notification in test_notifications
     ]
@@ -193,10 +204,12 @@ async def test_handle_grant_application_notifications_failed_status(
         message = ws.receive_json()
         assert message["type"] == "data"
         assert message["event"] == "source_processing"
+        assert message["trace_id"] == trace_id
         notification = message["data"]
         assert notification["source_id"] == "323e4567-e89b-12d3-a456-426614174000"
         assert notification["indexing_status"] == "FAILED"
         assert notification["identifier"] == "error_document.pdf"
+        assert notification["trace_id"] == trace_id
 
 
 async def test_handle_grant_application_notifications_empty_notifications(
@@ -227,12 +240,14 @@ async def test_handle_grant_application_notifications_different_roles(
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
+    trace_id: str,
 ) -> None:
     test_notifications = [
         SourceProcessingResult(
             source_id=UUID("423e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="admin_test.pdf",
+            trace_id=trace_id,
         ),
     ]
 
@@ -242,6 +257,7 @@ async def test_handle_grant_application_notifications_different_roles(
             parent_id=application.id,
             event="source_processing",
             data=notification,
+            trace_id=trace_id,
         )
         for notification in test_notifications
     ]
@@ -260,8 +276,10 @@ async def test_handle_grant_application_notifications_different_roles(
         message = ws.receive_json()
         assert message["type"] == "data"
         assert message["event"] == "source_processing"
+        assert message["trace_id"] == trace_id
         notification = message["data"]
         assert notification["identifier"] == "admin_test.pdf"
+        assert notification["trace_id"] == trace_id
 
 
 async def test_handle_grant_application_notifications_continuous_updates(
@@ -271,12 +289,14 @@ async def test_handle_grant_application_notifications_continuous_updates(
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
+    trace_id: str,
 ) -> None:
     round1 = [
         SourceProcessingResult(
             source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="doc1.pdf",
+            trace_id=trace_id,
         ),
     ]
 
@@ -285,6 +305,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
             source_id=UUID("523e4567-e89b-12d3-a456-426614174000"),
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="doc1.pdf",
+            trace_id=trace_id,
         ),
     ]
 
@@ -294,6 +315,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
             parent_id=application.id,
             event="source_processing",
             data=notification,
+            trace_id=trace_id,
         )
         for notification in round1
     ]
@@ -304,6 +326,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
             parent_id=application.id,
             event="source_processing",
             data=notification,
+            trace_id=trace_id,
         )
         for notification in round2
     ]
@@ -323,15 +346,19 @@ async def test_handle_grant_application_notifications_continuous_updates(
         message1 = ws.receive_json()
         assert message1["type"] == "data"
         assert message1["event"] == "source_processing"
+        assert message1["trace_id"] == trace_id
         notification1 = message1["data"]
         assert notification1["source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification1["indexing_status"] == "INDEXING"
+        assert notification1["trace_id"] == trace_id
 
         message2 = ws.receive_json()
         assert message2["type"] == "data"
         assert message2["event"] == "source_processing"
+        assert message2["trace_id"] == trace_id
         notification2 = message2["data"]
         assert notification2["source_id"] == "523e4567-e89b-12d3-a456-426614174000"
         assert notification2["indexing_status"] == "FINISHED"
+        assert notification2["trace_id"] == trace_id
 
     assert mock_pull_notifications.call_count >= 2

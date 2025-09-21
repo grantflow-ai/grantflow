@@ -615,6 +615,7 @@ tasks:
     dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests -v
 
@@ -623,6 +624,7 @@ tasks:
     dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests -v -n0
 
@@ -632,6 +634,7 @@ tasks:
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests -v
 
@@ -641,6 +644,7 @@ tasks:
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m smoke -v
 
@@ -650,6 +654,7 @@ tasks:
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m quality_assessment -v
 
@@ -659,6 +664,7 @@ tasks:
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m semantic_evaluation -v
 
@@ -667,6 +673,7 @@ tasks:
     dotenv: [".env"]
     env:
       E2E_TESTS: "1"
+      PUBSUB_EMULATOR_HOST: "localhost:8085"
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m ai_eval -v

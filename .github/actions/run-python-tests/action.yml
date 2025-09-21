@@ -83,6 +83,9 @@ runs:
               elif [[ "${{ inputs.target }}" == "backend" ]]; then
                 # Run backend tests serially (xdist removed)
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
+              elif [[ "${{ inputs.target }}" == "rag" ]]; then
+                # Run rag tests with PubSub emulator
+                PYTHONPATH=. PUBSUB_EMULATOR_HOST=localhost:8085 uv run pytest services/${{ inputs.target }} -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi

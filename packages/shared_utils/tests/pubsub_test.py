@@ -84,7 +84,10 @@ def test_get_subscriber_client_creates_client_once() -> None:
         mock_client_class.assert_called_once()
 
 
-async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) -> None:
+async def test_publish_url_crawling_task_success(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
@@ -107,6 +110,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
             source_id=source_id,
             entity_id=entity_id,
             entity_type="grant_application",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -122,6 +126,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
 
 async def test_publish_url_crawling_task_with_all_params(
     mock_publisher_client: Mock,
+    trace_id: str,
 ) -> None:
     with (
         patch(
@@ -145,6 +150,7 @@ async def test_publish_url_crawling_task_with_all_params(
             source_id=source_id,
             entity_id=entity_id,
             entity_type="grant_application",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -157,6 +163,7 @@ async def test_publish_url_crawling_task_with_all_params(
 
 async def test_publish_url_crawling_task_message_too_large(
     mock_publisher_client: Mock,
+    trace_id: str,
 ) -> None:
     mock_publisher_client.publish.side_effect = MessageTooLargeError(
         "Message too large"
@@ -182,6 +189,7 @@ async def test_publish_url_crawling_task_message_too_large(
                 source_id="323e4567-e89b-12d3-a456-426614174000",
                 entity_type="grant_application",
                 entity_id="223e4567-e89b-12d3-a456-426614174000",
+                trace_id=trace_id,
             )
 
         assert "Error publishing URL crawling message" in str(exc_info.value)
@@ -189,6 +197,7 @@ async def test_publish_url_crawling_task_message_too_large(
 
 async def test_publish_url_crawling_task_with_string_ids(
     mock_publisher_client: Mock,
+    trace_id: str,
 ) -> None:
     with (
         patch(
@@ -209,6 +218,7 @@ async def test_publish_url_crawling_task_with_string_ids(
             source_id="323e4567-e89b-12d3-a456-426614174000",
             entity_type="grant_application",
             entity_id="223e4567-e89b-12d3-a456-426614174000",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -217,6 +227,7 @@ async def test_publish_url_crawling_task_with_string_ids(
 
 async def test_publish_url_crawling_task_with_none_project(
     mock_publisher_client: Mock,
+    trace_id: str,
 ) -> None:
     with (
         patch(
@@ -237,6 +248,7 @@ async def test_publish_url_crawling_task_with_none_project(
             source_id="323e4567-e89b-12d3-a456-426614174000",
             entity_type="grant_application",
             entity_id="223e4567-e89b-12d3-a456-426614174000",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -248,7 +260,10 @@ async def test_publish_url_crawling_task_with_none_project(
         assert published_data["entity_type"] == "grant_application"
 
 
-async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_success(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
@@ -270,12 +285,14 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
             source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             identifier="test_file.pdf",
+            trace_id=trace_id,
         )
 
         result = await publish_notification(
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -287,6 +304,7 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
 
 async def test_publish_notification_with_url_identifier(
     mock_publisher_client: Mock,
+    trace_id: str,
 ) -> None:
     with (
         patch(
@@ -309,12 +327,14 @@ async def test_publish_notification_with_url_identifier(
             source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.INDEXING,
             identifier="https://example.com/guidelines",
+            trace_id=trace_id,
         )
 
         result = await publish_notification(
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -323,7 +343,10 @@ async def test_publish_notification_with_url_identifier(
         assert b"https://example.com/guidelines" in args[1]
 
 
-async def test_publish_notification_failed_status(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_failed_status(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
@@ -345,12 +368,14 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
             source_id=rag_source_id,
             indexing_status=SourceIndexingStatusEnum.FAILED,
             identifier="template.docx",
+            trace_id=trace_id,
         )
 
         result = await publish_notification(
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -359,7 +384,10 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
         assert b"FAILED" in args[1]
 
 
-async def test_publish_notification_too_large(mock_publisher_client: Mock) -> None:
+async def test_publish_notification_too_large(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     mock_publisher_client.publish.side_effect = MessageTooLargeError(
         "Message too large"
     )
@@ -383,12 +411,14 @@ async def test_publish_notification_too_large(mock_publisher_client: Mock) -> No
                 source_id=UUID("323e4567-e89b-12d3-a456-426614174000"),
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 identifier="document.pdf",
+                trace_id=trace_id,
             )
 
             await publish_notification(
                 parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
                 event="source_processing",
                 data=test_data,
+                trace_id=trace_id,
             )
 
         assert "Error publishing notification" in str(exc_info.value)
@@ -598,22 +628,24 @@ def test_pubsub_event_typed_dict() -> None:
     assert event.message.message_id == "test-id"
 
 
-def test_crawling_request_typed_dict() -> None:
+def test_crawling_request_typed_dict(trace_id: str) -> None:
     request: CrawlingRequest = {
         "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "entity_type": "grant_application",
         "entity_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
         "url": "https://example.com",
+        "trace_id": trace_id,
     }
     assert request["url"] == "https://example.com"
     assert request["entity_id"] == UUID("223e4567-e89b-12d3-a456-426614174000")
 
 
-def test_source_processing_result_typed_dict() -> None:
+def test_source_processing_result_typed_dict(trace_id: str) -> None:
     result: SourceProcessingResult = {
         "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "indexing_status": SourceIndexingStatusEnum.FINISHED,
         "identifier": "guidelines.pdf",
+        "trace_id": trace_id,
     }
     assert result["indexing_status"] == SourceIndexingStatusEnum.FINISHED
     assert result["identifier"] == "guidelines.pdf"
@@ -622,11 +654,12 @@ def test_source_processing_result_typed_dict() -> None:
         "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "indexing_status": SourceIndexingStatusEnum.INDEXING,
         "identifier": "https://example.com/document",
+        "trace_id": trace_id,
     }
     assert result_with_url["identifier"] == "https://example.com/document"
 
 
-def test_websocket_message_typed_dict() -> None:
+def test_websocket_message_typed_dict(trace_id: str) -> None:
     test_data: dict[str, str | int] = {
         "some_field": "value",
         "another_field": 123,
@@ -637,17 +670,19 @@ def test_websocket_message_typed_dict() -> None:
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "event": "test_event",
         "data": test_data,
+        "trace_id": trace_id,
     }
     assert message["type"] == "data"
     assert message["event"] == "test_event"
     assert message["data"] == test_data
 
 
-def test_rag_request_typed_dict() -> None:
+def test_rag_request_typed_dict(trace_id: str) -> None:
     request: RagRequest = {
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "parent_type": "grant_application",
         "stage": GrantApplicationStageEnum.INITIALIZE,
+        "trace_id": trace_id,
     }
     assert request["parent_type"] == "grant_application"
 
@@ -655,11 +690,15 @@ def test_rag_request_typed_dict() -> None:
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "parent_type": "grant_template",
         "stage": GrantTemplateStageEnum.INITIALIZE,
+        "trace_id": trace_id,
     }
     assert request_template["parent_type"] == "grant_template"
 
 
-async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
+async def test_publish_rag_task_success(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
     with (
@@ -680,7 +719,7 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
             parent_type="grant_application",
             parent_id=parent_id,
             stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
-            trace_id="test-trace-id",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -695,7 +734,10 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
         assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
 
 
-async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> None:
+async def test_publish_rag_task_grant_template(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
     with (
@@ -716,7 +758,7 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
             parent_type="grant_template",
             parent_id=parent_id,
             stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-            trace_id="test-trace-id",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -731,7 +773,10 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
         assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
 
 
-async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> None:
+async def test_publish_rag_task_with_string_id(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     parent_id_str = "123e4567-e89b-12d3-a456-426614174000"
 
     with (
@@ -752,7 +797,7 @@ async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> N
             parent_type="grant_application",
             parent_id=parent_id_str,
             stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
-            trace_id="test-trace-id",
+            trace_id=trace_id,
         )
 
         assert result == "test-message-id"
@@ -762,7 +807,10 @@ async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> N
         assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
 
 
-async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -> None:
+async def test_publish_rag_task_message_too_large(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
     future = Mock()
@@ -788,7 +836,7 @@ async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -
             parent_type="grant_application",
             parent_id=parent_id,
             stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
-            trace_id="test-trace-id",
+            trace_id=trace_id,
         )
 
     assert "Error publishing RAG processing message" in str(exc_info.value)

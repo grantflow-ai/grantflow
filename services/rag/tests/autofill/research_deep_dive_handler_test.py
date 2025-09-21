@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from packages.shared_utils.src.pubsub import AutofillRequest
+from packages.shared_utils.src.pubsub import ResearchDeepDiveAutofillRequest
 
 from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
 
@@ -35,13 +35,13 @@ def mock_session_maker() -> MagicMock:
 
 
 @pytest.fixture
-def sample_request() -> AutofillRequest:
+def sample_request(trace_id: str) -> ResearchDeepDiveAutofillRequest:
     from uuid import UUID
 
-    return {
-        "application_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "autofill_type": "research_deep_dive",
-    }
+    return ResearchDeepDiveAutofillRequest(
+        application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        trace_id=trace_id,
+    )
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def sample_application() -> dict[str, Any]:
     }
 
 
-async def test_generate_field_answer(mock_logger: MagicMock) -> None:
+async def test_generate_field_answer(mock_logger: MagicMock, trace_id: str) -> None:
     from packages.db.src.tables import GrantApplication
 
     from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer
@@ -78,7 +78,10 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 
         app = GrantApplication(id="test-id", title="Test Application")
         result = await _generate_field_answer(
-            application=app, field_name="background_context", objectives_text="Test objectives"
+            application=app,
+            field_name="background_context",
+            objectives_text="Test objectives",
+            trace_id=trace_id,
         )
 
         assert len(result) >= 50
@@ -193,7 +196,10 @@ def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
 
 
 async def test_generate_research_deep_dive_content_with_mocks(
-    mock_logger: MagicMock, mock_session_maker: AsyncMock, sample_application: dict[str, Any]
+    mock_logger: MagicMock,
+    mock_session_maker: AsyncMock,
+    sample_application: dict[str, Any],
+    trace_id: str,
 ) -> None:
     from packages.db.src.tables import GrantApplication
 
@@ -214,7 +220,10 @@ async def test_generate_research_deep_dive_content_with_mocks(
         mock_retrieve.return_value = ["Document content 1", "Document content 2"]
         mock_generate.return_value = "Generated answer text " * 30
 
-        result = await generate_research_deep_dive_content(application=app)
+        result = await generate_research_deep_dive_content(
+            application=app,
+            trace_id=trace_id,
+        )
 
         assert isinstance(result, dict)
         assert "background_context" in result

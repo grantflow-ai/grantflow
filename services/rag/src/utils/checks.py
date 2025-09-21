@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
@@ -14,7 +15,6 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
-from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -34,7 +34,7 @@ async def verify_rag_sources_indexed(
             if entity_type == GrantApplication:
                 rag_sources = list(
                     await session.scalars(
-                        select(RagSource)
+                        select_active(RagSource)
                         .join(GrantApplicationSource)
                         .join(GrantApplication)
                         .where(GrantApplicationSource.grant_application_id == parent_id)
@@ -43,7 +43,7 @@ async def verify_rag_sources_indexed(
             else:
                 rag_sources = list(
                     await session.scalars(
-                        select(RagSource)
+                        select_active(RagSource)
                         .join(GrantTemplateSource)
                         .join(GrantTemplate)
                         .where(GrantTemplateSource.grant_template_id == parent_id)

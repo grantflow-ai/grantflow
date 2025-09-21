@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import partial
@@ -367,6 +368,7 @@ async def handle_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    timeout: float = 120,  # 2 minutes timeout for LLM API calls ~keep
     trace_id: str,
 ) -> T:
     attempts = 0
@@ -388,30 +390,36 @@ async def handle_completions_request[T](
                 if not response_schema:
                     raise BackendError("Response schema must be provided")
 
-                response = await make_anthropic_completions_request(
-                    model=model,
-                    response_type=response_type,
-                    system_prompt=system_prompt,
-                    user_prompt=str(msgs),
-                    response_schema=response_schema,
-                    temperature=temperature,
-                    top_p=top_p,
-                    top_k=top_k,
-                    trace_id=trace_id,
+                response = await asyncio.wait_for(
+                    make_anthropic_completions_request(
+                        model=model,
+                        response_type=response_type,
+                        system_prompt=system_prompt,
+                        user_prompt=str(msgs),
+                        response_schema=response_schema,
+                        temperature=temperature,
+                        top_p=top_p,
+                        top_k=top_k,
+                        trace_id=trace_id,
+                    ),
+                    timeout=timeout,
                 )
             else:
-                response = await make_google_completions_request(
-                    model=model,
-                    prompt_identifier=prompt_identifier,
-                    response_type=response_type,
-                    system_prompt=system_prompt,
-                    response_schema=response_schema,
-                    messages=msgs,
-                    temperature=temperature,
-                    top_p=top_p,
-                    top_k=top_k,
-                    candidate_count=candidate_count,
-                    trace_id=trace_id,
+                response = await asyncio.wait_for(
+                    make_google_completions_request(
+                        model=model,
+                        prompt_identifier=prompt_identifier,
+                        response_type=response_type,
+                        system_prompt=system_prompt,
+                        response_schema=response_schema,
+                        messages=msgs,
+                        temperature=temperature,
+                        top_p=top_p,
+                        top_k=top_k,
+                        candidate_count=candidate_count,
+                        trace_id=trace_id,
+                    ),
+                    timeout=timeout,
                 )
 
             if validator:
@@ -445,6 +453,19 @@ async def handle_completions_request[T](
 
             response = None
             errors.append(e)
+        except asyncio.TimeoutError:
+            attempts += 1
+            logger.warning(
+                "LLM API call timed out",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                timeout_seconds=timeout,
+                trace_id=trace_id,
+            )
+            errors.append(
+                BackendError(f"LLM API call timed out after {timeout} seconds", context={"timeout": timeout})
+            )
         except DeserializationError as e:
             attempts += 1
             logger.warning(

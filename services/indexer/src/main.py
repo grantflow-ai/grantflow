@@ -174,6 +174,7 @@ async def handle_file_indexing(
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             should_send_notifications=parse_result["entity_type"] != "granting_institution",
+            trace_id=trace_id,
         )
         logger.info(
             "File indexing completed (already processed)",
@@ -217,6 +218,7 @@ async def handle_file_indexing(
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             should_send_notifications=parse_result["entity_type"] != "granting_institution",
+            trace_id=trace_id,
         )
 
         logger.info(
@@ -251,6 +253,7 @@ async def handle_file_indexing(
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
             should_send_notifications=parse_result["entity_type"] != "granting_institution",
+            trace_id=trace_id,
         )
         failure_update_duration = time.time() - failure_update_start
 

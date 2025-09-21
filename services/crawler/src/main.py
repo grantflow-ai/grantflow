@@ -206,6 +206,7 @@ async def handle_url_crawling(
         indexing_status=SourceIndexingStatusEnum.INDEXING,
         should_send_notifications=crawling_request["entity_type"]
         != "granting_institution",
+        trace_id=trace_id,
     )
 
     try:
@@ -286,6 +287,7 @@ async def handle_url_crawling(
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             should_send_notifications=crawling_request["entity_type"]
             != "granting_institution",
+            trace_id=trace_id,
         )
 
         logger.info(
@@ -320,6 +322,7 @@ async def handle_url_crawling(
             indexing_status=SourceIndexingStatusEnum.FAILED,
             should_send_notifications=crawling_request["entity_type"]
             != "granting_institution",
+            trace_id=trace_id,
         )
 
 

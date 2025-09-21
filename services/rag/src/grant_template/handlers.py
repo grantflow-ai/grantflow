@@ -1,18 +1,17 @@
-import asyncio
 from datetime import UTC, datetime
 from typing import Any, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import CFPAnalysisResult, GrantElement, GrantLongFormSection
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
+from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.cfp_section_analysis import handle_analyze_cfp
 from services.rag.src.grant_template.dto import OrganizationNamespace
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
@@ -61,30 +60,22 @@ async def handle_cfp_extraction_stage(
                 .join(GrantTemplateSource, RagSource.id == GrantTemplateSource.rag_source_id)
                 .where(GrantTemplateSource.grant_template_id == grant_template.id)
                 .where(RagSource.indexing_status == SourceIndexingStatusEnum.FINISHED)
+                .where(RagSource.deleted_at.is_(None))
             )
         )
 
         funding_organizations = list(
-            await session.scalars(select(GrantingInstitution).order_by(GrantingInstitution.full_name.asc()))
+            await session.scalars(select_active(GrantingInstitution).order_by(GrantingInstitution.full_name.asc()))
         )
 
-    try:
-        extraction_result = await asyncio.wait_for(
-            handle_extract_cfp_data(
-                source_ids=[str(v) for v in source_ids],
-                organization_mapping={
-                    str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation}
-                    for org in funding_organizations
-                },
-                session_maker=session_maker,
-                trace_id=trace_id,
-            ),
-            timeout=300,  # 5 minutes timeout
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "CFP data extraction timed out after 5 minutes. Please try again with a smaller document."
-        ) from None
+    extraction_result = await handle_extract_cfp_data(
+        source_ids=[str(v) for v in source_ids],
+        organization_mapping={
+            str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
+        },
+        session_maker=session_maker,
+        trace_id=trace_id,
+    )
 
     organization = (
         next(
@@ -140,21 +131,15 @@ async def handle_cfp_analysis_stage(
         notification_type="info",
     )
 
-    try:
-        analysis_results: CFPAnalysisResult = await asyncio.wait_for(
-            handle_analyze_cfp(
-                full_cfp_text="\n".join(
-                    [
-                        f"{content['title']}: {' '.join(content['subtitles'])}"
-                        for content in extracted_cfp["extracted_data"]["content"]
-                    ]
-                ),
-                trace_id=trace_id,
-            ),
-            timeout=180,  # 3 minutes timeout
-        )
-    except TimeoutError:
-        raise ValidationError("CFP analysis timed out after 3 minutes. Please try again or contact support.") from None
+    analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
+        full_cfp_text="\n".join(
+            [
+                f"{content['title']}: {' '.join(content['subtitles'])}"
+                for content in extracted_cfp["extracted_data"]["content"]
+            ]
+        ),
+        trace_id=trace_id,
+    )
 
     await job_manager.add_notification(
         event=NotificationEvents.SECTIONS_EXTRACTED,
@@ -186,20 +171,12 @@ async def handle_section_extraction_stage(
         notification_type="info",
     )
 
-    try:
-        sections = await asyncio.wait_for(
-            handle_extract_sections(
-                cfp_content=analysis_result["extracted_data"]["content"],
-                cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
-                trace_id=trace_id,
-                organization=analysis_result["organization"],
-            ),
-            timeout=240,  # 4 minutes timeout
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Section extraction timed out after 4 minutes. Please try again or contact support."
-        ) from None
+    sections = await handle_extract_sections(
+        cfp_content=analysis_result["extracted_data"]["content"],
+        cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
+        trace_id=trace_id,
+        organization=analysis_result["organization"],
+    )
 
     await job_manager.add_notification(
         event=NotificationEvents.METADATA_GENERATED,
@@ -226,28 +203,18 @@ async def handle_generate_metadata_stage(
 
     logger.info("Starting metadata generation stage", trace_id=trace_id)
 
-    try:
-        section_metadata = await asyncio.wait_for(
-            handle_generate_grant_template_metadata(
-                cfp_content="\n".join(
-                    [
-                        f"{content['title']}: {'...'.join(content['subtitles'])}"
-                        for content in section_extraction_result["extracted_data"]["content"]
-                    ]
-                ),
-                cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
-                organization=section_extraction_result["organization"],
-                long_form_sections=[
-                    s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]
-                ],
-                trace_id=trace_id,
-            ),
-            timeout=300,  # 5 minutes timeout
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Metadata generation timed out after 5 minutes. Please try again or contact support."
-        ) from None
+    section_metadata = await handle_generate_grant_template_metadata(
+        cfp_content="\n".join(
+            [
+                f"{content['title']}: {'...'.join(content['subtitles'])}"
+                for content in section_extraction_result["extracted_data"]["content"]
+            ]
+        ),
+        cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
+        organization=section_extraction_result["organization"],
+        long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]],
+        trace_id=trace_id,
+    )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
 
