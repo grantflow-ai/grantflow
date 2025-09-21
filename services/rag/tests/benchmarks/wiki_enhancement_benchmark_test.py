@@ -214,7 +214,7 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
     with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+        m.setattr("services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client", lambda: mock_httpx_client)
 
         start_time = time.time()
         await get_scientific_context(test_terms, "benchmark-trace")

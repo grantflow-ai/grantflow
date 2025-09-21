@@ -436,7 +436,10 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
         logger.info("subscription created", subscription_path=subscription_path)
     except Exception as e:
         logger.debug(
-            "subscription already exists", subscription_path=subscription_path, exc=e
+            "subscription already exists",
+            subscription_path=subscription_path,
+            error_message=str(e),
+            error_type=type(e).__name__
         )
 
     subscriber_paths.add(subscription_path)

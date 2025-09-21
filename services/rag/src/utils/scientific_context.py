@@ -64,7 +64,7 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
         if term.strip() and any(keyword in term.lower() for keyword in scientific_keywords)
     ]
 
-    return list(set(scientific_terms))
+    return sorted(set(scientific_terms))
 
 
 def format_scientific_context(context: str) -> str:
