@@ -162,15 +162,10 @@ async def handle_create_rag_source(
                     )
                 ):
                     if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                        logger.info(
-                            "Found existing rag source for URL",
-                            source_id=rag_source.id,
-                            url=url,
-                            status=rag_source.indexing_status,
-                        )
+                        # Found existing rag source for URL
                         return UUID(str(rag_source.id))
 
-                    logger.info("Soft-deleting failed rag source", source_id=rag_source.id, url=url)
+                    # Soft-deleting failed rag source
                     rag_source.soft_delete()
 
             source_id = await session.scalar(
@@ -187,7 +182,7 @@ async def handle_create_rag_source(
                 .returning(RagSource.id)
             )
 
-            logger.info("Created rag source", source_id=source_id, parent_type=parent_type, entity_id=entity_id)
+            # Created rag source successfully
 
             if url:
                 await session.execute(
@@ -202,7 +197,7 @@ async def handle_create_rag_source(
                     )
                     .returning(RagUrl.id)
                 )
-                logger.info("Created rag url", source_id=source_id, url=url)
+                # Created rag url successfully
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
@@ -226,16 +221,11 @@ async def handle_create_rag_source(
                         ]
                     )
                 )
-                logger.info("Created rag file", source_id=source_id, filename=blob_name)
+                # Created rag file successfully
 
             await _create_junction_table_entry(session, parent_type, entity_id, source_id)
 
-            logger.info(
-                "Successfully created complete rag source with junction table entry",
-                source_id=source_id,
-                parent_type=parent_type,
-                entity_id=entity_id,
-            )
+            # Successfully created complete rag source with junction table entry
             return UUID(str(source_id))
 
         except SQLAlchemyError as e:
@@ -267,7 +257,7 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            logger.info("Created grant application source link", source_id=source_id, application_id=entity_id)
+            # Created grant application source link
         elif parent_type == "grant_template":
             await session.execute(
                 insert(GrantTemplateSource).values(
@@ -277,7 +267,7 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            logger.info("Created grant template source link", source_id=source_id, template_id=entity_id)
+            # Created grant template source link
         else:
             await session.execute(
                 insert(GrantingInstitutionSource).values(
@@ -287,7 +277,7 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            logger.info("Created granting institution source link", source_id=source_id, institution_id=entity_id)
+            # Created granting institution source link
     except SQLAlchemyError as e:
         logger.exception(
             "Critical error creating junction table entry",
@@ -489,11 +479,7 @@ async def handle_delete_rag_source(
             if isinstance(source, RagFile):
                 try:
                     await delete_blob(source.object_path)
-                    logger.info(
-                        "Deleted file from GCS",
-                        source_id=source_id,
-                        object_path=source.object_path,
-                    )
+                    # Deleted file from GCS successfully
                 except Exception as e:
                     logger.warning(
                         "Failed to delete file from GCS, continuing with database deletion",
@@ -533,7 +519,7 @@ async def handle_delete_rag_source(
             source.soft_delete()
             await session.commit()
 
-            logger.info("Successfully soft deleted RAG source", source_id=source_id)
+            # Successfully soft deleted RAG source
 
         except NoResultFound as e:
             raise NotFoundException from e
@@ -631,15 +617,7 @@ async def handle_crawl_url(
     trace_id = get_trace_id(request)
     url = data["url"]
 
-    logger.debug(
-        "Starting URL crawl request",
-        url=url,
-        trace_id=trace_id,
-        application_id=str(application_id) if application_id else None,
-        organization_id=str(organization_id) if organization_id else None,
-        granting_institution_id=str(granting_institution_id) if granting_institution_id else None,
-        template_id=str(template_id) if template_id else None,
-    )
+    # Starting URL crawl request
 
     if not project_id and not organization_id and not granting_institution_id:
         raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
@@ -663,7 +641,7 @@ async def handle_crawl_url(
         organization_id=organization_id,
     )
 
-    message_id = await publish_url_crawling_task(
+    await publish_url_crawling_task(
         url=url,
         source_id=source_id,
         entity_type=entity_type,
@@ -671,12 +649,7 @@ async def handle_crawl_url(
         trace_id=trace_id,
     )
 
-    logger.info(
-        "Published URL crawling task",
-        url=url,
-        message_id=message_id,
-        trace_id=trace_id,
-    )
+    # Published URL crawling task successfully
 
     return UrlCrawlingResponse(
         source_id=str(source_id),
@@ -702,8 +675,4 @@ async def _cancel_job_if_active(
         )
         session.add(notification)
 
-        logger.info(
-            "Cancelled job due to source deletion",
-            job_id=str(job_id),
-            reason=reason,
-        )
+        # Cancelled job due to source deletion

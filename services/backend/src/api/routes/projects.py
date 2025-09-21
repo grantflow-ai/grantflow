@@ -114,7 +114,7 @@ async def handle_create_project(
     data: CreateProjectRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
-    logger.info("Creating project by user", uid=request.auth, organization_id=organization_id)
+    # Creating project for user
     async with session_maker() as session, session.begin():
         try:
             project_data = {**data, "organization_id": organization_id}
@@ -136,7 +136,7 @@ async def handle_retrieve_projects(
     session_maker: async_sessionmaker[Any],
 ) -> list[ProjectListItemResponse]:
     store = request.app.stores.get("firebase_user_cache")
-    logger.info("Retrieving projects for user", uid=request.auth, organization_id=organization_id)
+    # Retrieving projects for user
 
     async with session_maker() as session:
         projects = list(
@@ -216,7 +216,7 @@ async def handle_update_project(
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectBaseResponse:
-    logger.info("Updating project", project_id=project_id, organization_id=organization_id)
+    # Updating project data
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -250,7 +250,7 @@ async def handle_retrieve_project(
     request: APIRequest, organization_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ProjectResponse:
     store = request.app.stores.get("firebase_user_cache")
-    logger.info("Retrieving project", project_id=project_id, organization_id=organization_id)
+    # Retrieving project details
 
     async with session_maker() as session:
         project = await session.scalar(
@@ -344,7 +344,7 @@ async def handle_retrieve_project(
 async def handle_delete_project(
     request: APIRequest, organization_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> None:
-    logger.info("Deleting project", project_id=project_id, organization_id=organization_id)
+    # Deleting project with audit logging
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -383,12 +383,7 @@ async def handle_create_invitation_redirect_url(
     data: CreateInvitationRedirectUrlRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info(
-        "Creating invitation redirect URL",
-        project_id=project_id,
-        organization_id=organization_id,
-        email=data["email"],
-    )
+    # Creating invitation redirect URL
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -475,9 +470,7 @@ async def handle_delete_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Deleting invitation", project_id=project_id, organization_id=organization_id, invitation_id=invitation_id
-    )
+    # Deleting project invitation
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -528,12 +521,7 @@ async def handle_update_invitation_role(
     data: UpdateInvitationRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info(
-        "Updating invitation role",
-        project_id=project_id,
-        organization_id=organization_id,
-        invitation_id=invitation_id,
-    )
+    # Updating invitation role
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -615,7 +603,7 @@ async def handle_accept_invitation(
     data: AcceptInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info("Accepting invitation", invitation_id=invitation_id)
+    # Accepting project invitation
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
@@ -728,7 +716,7 @@ async def handle_list_project_members(
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[ProjectMemberResponse]:
-    logger.info("Listing project members", project_id=project_id, organization_id=organization_id)
+    # Listing project members
     async with session_maker() as session:
         project = await session.scalar(
             select(Project).where(
@@ -794,13 +782,7 @@ async def handle_update_member_role(
     data: UpdateMemberRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectMemberResponse:
-    logger.info(
-        "Updating member role",
-        project_id=project_id,
-        organization_id=organization_id,
-        firebase_uid=firebase_uid,
-        new_role=data["role"],
-    )
+    # Updating member role
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -876,12 +858,7 @@ async def handle_remove_project_member(
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Removing project member",
-        project_id=project_id,
-        organization_id=organization_id,
-        firebase_uid=firebase_uid,
-    )
+    # Removing project member
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -951,12 +928,7 @@ async def handle_duplicate_project(
     data: DuplicateProjectRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectResponse:
-    logger.info(
-        "Duplicating project",
-        organization_id=organization_id,
-        project_id=project_id,
-        new_title=data.get("title"),
-    )
+    # Duplicating project with new title
 
     async with session_maker() as session, session.begin():
         try:
@@ -991,12 +963,7 @@ async def handle_duplicate_project(
                 .returning(Project)
             )
 
-            logger.info(
-                "Created new project",
-                original_project_id=str(project_id),
-                new_project_id=str(new_project.id),
-                applications_to_duplicate=len(original_project.grant_applications),
-            )
+            # Created new project successfully
 
             for original_app in original_project.grant_applications:
                 if original_app.deleted_at is not None:
@@ -1085,24 +1052,11 @@ async def handle_duplicate_project(
                         )
                     )
 
-                logger.info(
-                    "Duplicated application",
-                    original_app_id=str(original_app.id),
-                    new_app_id=str(new_app.id),
-                    has_template=original_app.grant_template is not None,
-                    rag_sources_count=len(app_rag_source_ids),
-                )
+                # Duplicated application successfully
 
             await session.commit()
 
-            logger.info(
-                "Project duplication completed successfully",
-                original_project_id=str(project_id),
-                new_project_id=str(new_project.id),
-                duplicated_applications=len(
-                    [app for app in original_project.grant_applications if app.deleted_at is None]
-                ),
-            )
+            # Project duplication completed successfully
 
         except SQLAlchemyError as e:
             logger.error("Error duplicating project", exc_info=e)

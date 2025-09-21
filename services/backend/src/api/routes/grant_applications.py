@@ -160,13 +160,7 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         "status": rag_source.indexing_status,
     }
 
-    logger.debug(
-        "Building source response",
-        source_type=type(rag_source).__name__,
-        source_id=str(rag_source.id),
-        is_url=isinstance(rag_source, RagUrl),
-        is_file=isinstance(rag_source, RagFile),
-    )
+    # Building source response based on type
 
     if isinstance(rag_source, RagUrl):
         source_response["url"] = rag_source.url
@@ -179,12 +173,7 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 async def _handle_retrieve_application(
     organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    logger.info(
-        "Retrieving application",
-        organization_id=organization_id,
-        project_id=project_id,
-        application_id=application_id,
-    )
+    # Retrieving application with validation
     async with session_maker() as session:
         try:
             grant_application = await retrieve_application(application_id=application_id, session=session)
@@ -291,7 +280,7 @@ async def handle_create_application(
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Creating application", organization_id=organization_id, project_id=project_id, title=data["title"])
+    # Creating new grant application
 
     async with session_maker() as session, session.begin():
         try:
@@ -352,9 +341,7 @@ async def handle_update_application(
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info(
-        "Updating application", organization_id=organization_id, project_id=project_id, application_id=application_id
-    )
+    # Updating application data
 
     async with session_maker() as session, session.begin():
         try:
@@ -400,7 +387,7 @@ async def handle_delete_application(
     application_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Deleting application", organization_id=organization_id, application_id=application_id)
+    # Deleting application with audit logging
 
     async with session_maker() as session, session.begin():
         try:
@@ -434,24 +421,10 @@ async def handle_delete_application(
                     GrantTemplate.deleted_at.is_(None),
                 )
             )
-            template_ids = template_result.scalars().all()
-
-            if template_ids:
-                logger.debug(
-                    "Grant templates will be soft deleted due to CASCADE",
-                    application_id=str(application_id),
-                    template_ids=[str(t_id) for t_id in template_ids],
-                )
+            template_result.scalars().all()
 
             application.soft_delete()
             await session.commit()
-
-            if template_ids:
-                logger.debug(
-                    "Application and associated templates soft deleted successfully",
-                    application_id=str(application_id),
-                    deleted_template_ids=[str(t_id) for t_id in template_ids],
-                )
         except SQLAlchemyError as e:
             logger.error("Error deleting application", exc_info=e)
             raise DatabaseError("Error deleting application", context=str(e)) from e
@@ -466,9 +439,7 @@ async def handle_generate_application(
     organization_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
 ) -> None:
     trace_id = get_trace_id(request)
-    logger.info(
-        "Generating application", organization_id=organization_id, application_id=application_id, trace_id=trace_id
-    )
+    # Generating application via RAG pipeline
     async with session_maker() as session:
         try:
             application = await retrieve_application(application_id=application_id, session=session)
@@ -572,17 +543,7 @@ async def handle_list_applications(
         ge=0,
     ),
 ) -> ApplicationListResponse:
-    logger.info(
-        "Listing applications",
-        organization_id=organization_id,
-        project_id=project_id,
-        search=search,
-        status=status,
-        sort=sort,
-        order=order,
-        limit=limit,
-        offset=offset,
-    )
+    # Listing applications with search and pagination
 
     async with session_maker() as session:
         query = (
@@ -668,15 +629,7 @@ async def handle_trigger_autofill(
 ) -> AutofillResponse:
     trace_id = get_trace_id(request)
 
-    logger.info(
-        "Triggering autofill",
-        organization_id=organization_id,
-        project_id=project_id,
-        application_id=application_id,
-        autofill_type=data["autofill_type"],
-        field_name=data.get("field_name"),
-        trace_id=trace_id,
-    )
+    # Triggering autofill via pub/sub
 
     async with session_maker() as session:
         application = await retrieve_application(
@@ -695,13 +648,7 @@ async def handle_trigger_autofill(
         trace_id=trace_id,
     )
 
-    logger.info(
-        "Autofill task published",
-        message_id=message_id,
-        application_id=application_id,
-        autofill_type=data["autofill_type"],
-        trace_id=trace_id,
-    )
+    # Autofill task published successfully
 
     response: AutofillResponse = {
         "message_id": message_id,
@@ -727,13 +674,7 @@ async def handle_duplicate_application(
     data: DuplicateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info(
-        "Duplicating application",
-        organization_id=organization_id,
-        project_id=project_id,
-        application_id=application_id,
-        new_title=data["title"],
-    )
+    # Duplicating application with new title
 
     new_app_id = None
 
@@ -785,7 +726,7 @@ async def handle_duplicate_application(
             new_app_id = new_app.id
 
             if template:
-                new_template = await session.scalar(
+                await session.scalar(
                     insert(GrantTemplate)
                     .values(
                         {
@@ -797,12 +738,7 @@ async def handle_duplicate_application(
                     )
                     .returning(GrantTemplate)
                 )
-                logger.info(
-                    "Grant template duplicated",
-                    original_template_id=str(template.id),
-                    new_template_id=str(new_template.id),
-                    new_app_id=str(new_app.id),
-                )
+                # Grant template duplicated successfully
 
             rag_sources_result = await session.execute(
                 select(GrantApplicationSource.rag_source_id).where(
@@ -827,12 +763,7 @@ async def handle_duplicate_application(
 
             await session.commit()
 
-            logger.info(
-                "Application duplicated successfully",
-                original_id=str(application_id),
-                new_id=str(new_app.id),
-                parent_id=str(application_id),
-            )
+            # Application duplicated successfully
 
         except SQLAlchemyError as e:
             logger.error("Error duplicating application", exc_info=e)
@@ -857,11 +788,7 @@ async def handle_list_organization_applications(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationListResponse:
-    logger.info(
-        "Listing organization applications",
-        organization_id=organization_id,
-        limit=5,
-    )
+    # Listing recent organization applications
 
     async with session_maker() as session:
         ninety_days_ago = datetime.now(UTC) - timedelta(days=90)

@@ -4,11 +4,13 @@ This module handles the enrichment of scientific terminology using Wikidata,
 providing additional scientific context for grant applications.
 """
 
-import asyncio
-from typing import Any, Final
+from collections import defaultdict
+from functools import lru_cache
+from typing import Any, Final, TypedDict, cast
 
 import httpx
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.tracing import start_span_with_trace_id
 
 from services.rag.src.grant_application.dto import EnrichmentDataDTO, ObjectiveEnrichmentResponse
@@ -21,6 +23,30 @@ WIKIDATA_BATCH_SIZE: Final[int] = 5
 WIKIDATA_TIMEOUT: Final[int] = 30
 WIKIDATA_MAX_RETRIES: Final[int] = 3
 
+
+class WikidataClientManager:
+    """Manages a singleton Wikidata HTTP client for connection pooling."""
+
+    _instance: httpx.AsyncClient | None = None
+
+    @classmethod
+    def get_client(cls) -> httpx.AsyncClient:
+        """Get or create the cached Wikidata HTTP client."""
+        if cls._instance is None:
+            cls._instance = httpx.AsyncClient(
+                headers={"User-Agent": "GrantFlow.AI/1.0 (https://grantflow.ai)"},
+                timeout=httpx.Timeout(WIKIDATA_TIMEOUT),
+            )
+        return cls._instance
+
+
+class WikidataItem(TypedDict):
+    """Represents a single Wikidata item from SPARQL query results."""
+    item_id: str
+    label: str
+    description: str
+    scientific_field: str
+
 SCIENTIFIC_CONTEXT_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
     name="scientific_context",
     template="""## Scientific Foundation Context
@@ -30,7 +56,8 @@ This context provides foundational scientific concepts and terminology relevant 
 )
 
 
-def _build_sparql_query(terms: list[str]) -> str:
+@lru_cache(maxsize=128)
+def _build_sparql_query(terms: tuple[str, ...]) -> str:
     """Build a SPARQL query for Wikidata to expand scientific terms."""
     quoted_terms = [f'"{term}"' for term in terms]
     terms_filter = " || ".join([f"?label = {term}" for term in quoted_terms])
@@ -60,112 +87,100 @@ def _build_sparql_query(terms: list[str]) -> str:
     """
 
 
-async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_id: str) -> Any:
+@with_exponential_backoff_retry(httpx.HTTPError, httpx.TimeoutException, max_retries=WIKIDATA_MAX_RETRIES)
+async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_id: str) -> dict[str, Any]:
     """Make a request to Wikidata with retry logic."""
-    for attempt in range(WIKIDATA_MAX_RETRIES):
+    with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
+        span.set_attribute("query", query)
+
+        params = {
+            "query": query,
+            "format": "json",
+        }
+
         try:
-            with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
-                span.set_attribute("query", query)
-                span.set_attribute("attempt", attempt + 1)
+            response = await client.get(WIKIDATA_BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
 
-                params = {
-                    "query": query,
-                    "format": "json",
-                }
-
-                response = await client.get(WIKIDATA_BASE_URL, params=params, timeout=WIKIDATA_TIMEOUT)
-                response.raise_for_status()
-                data = response.json()
-
-                logger.info(
-                    "Wikidata query successful",
-                    query_length=len(query),
-                    response_size=len(str(data)),
-                    attempt=attempt + 1,
-                    trace_id=trace_id,
-                )
-
-                return data
-
-        except httpx.HTTPError as e:
-            logger.warning(
-                "Wikidata request failed",
-                error=str(e),
-                attempt=attempt + 1,
-                max_retries=WIKIDATA_MAX_RETRIES,
+            logger.info(
+                "Wikidata query successful",
+                query_length=len(query),
+                response_size=len(str(data)),
                 trace_id=trace_id,
             )
 
-            if attempt == WIKIDATA_MAX_RETRIES - 1:
-                raise
+            return cast("dict[str, Any]", data)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code >= 500:
+                # Service unavailable - gracefully return empty result
+                logger.warning(
+                    "Wikidata service unavailable",
+                    status_code=e.response.status_code,
+                    trace_id=trace_id,
+                )
+                return {"results": {"bindings": []}}
+            raise
+        except (httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.warning(
+                "Wikidata network error",
+                error=str(e),
+                trace_id=trace_id,
+            )
+            return {"results": {"bindings": []}}
 
-            wait_time = 2**attempt
-            await asyncio.sleep(wait_time)
 
-    raise RuntimeError(f"Failed after {WIKIDATA_MAX_RETRIES} attempts")
-
-
-def _parse_wikidata_response(data: dict[str, Any]) -> list[dict[str, Any]]:
+def _parse_wikidata_response(data: dict[str, Any]) -> list[WikidataItem]:
     """Parse the Wikidata SPARQL response."""
-    results = []
+    results: list[WikidataItem] = []
 
     if "results" in data and "bindings" in data["results"]:
         for binding in data["results"]["bindings"]:
-            result = {
-                "item_id": binding.get("item", {}).get("value", ""),
-                "label": binding.get("label", {}).get("value", ""),
-                "description": binding.get("description", {}).get("value", ""),
-                "scientific_field": binding.get("scientific_field", {}).get("value", ""),
-            }
+            result = WikidataItem(
+                item_id=binding.get("item", {}).get("value", ""),
+                label=binding.get("label", {}).get("value", ""),
+                description=binding.get("description", {}).get("value", ""),
+                scientific_field=binding.get("scientific_field", {}).get("value", ""),
+            )
             results.append(result)
 
     return results
 
 
-async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[dict[str, Any]]:
+async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[WikidataItem]:
     """Expand scientific terms using Wikidata."""
     if not terms:
         return []
 
-    logger.info(
-        "Expanding scientific terms",
-        term_count=len(terms),
-        batch_size=WIKIDATA_BATCH_SIZE,
-        trace_id=trace_id,
-    )
+    # Expanding scientific terms via Wikidata API
 
-    async with httpx.AsyncClient(headers={"User-Agent": "GrantFlow.AI/1.0 (https://grantflow.ai)"}) as client:
-        all_results = []
-        for i in range(0, len(terms), WIKIDATA_BATCH_SIZE):
-            batch = terms[i : i + WIKIDATA_BATCH_SIZE]
+    client = WikidataClientManager.get_client()
+    all_results: list[WikidataItem] = []
+    for i in range(0, len(terms), WIKIDATA_BATCH_SIZE):
+        batch = terms[i : i + WIKIDATA_BATCH_SIZE]
 
-            with start_span_with_trace_id("wikidata_batch_expansion", trace_id=trace_id) as span:
-                span.set_attribute("batch_size", len(batch))
-                span.set_attribute("batch_index", i // WIKIDATA_BATCH_SIZE)
+        with start_span_with_trace_id("wikidata_batch_expansion", trace_id=trace_id) as span:
+            span.set_attribute("batch_size", len(batch))
+            span.set_attribute("batch_index", i // WIKIDATA_BATCH_SIZE)
 
-                try:
-                    query = _build_sparql_query(batch)
-                    response_data = await _make_request_with_retry(client, query, trace_id)
-                    batch_results = _parse_wikidata_response(response_data)
-                    all_results.extend(batch_results)
+            try:
+                query = _build_sparql_query(tuple(batch))
+                response_data = await _make_request_with_retry(client, query, trace_id)
+                batch_results = _parse_wikidata_response(response_data)
+                all_results.extend(batch_results)
 
-                    logger.info(
-                        "Batch expansion completed",
-                        batch_size=len(batch),
-                        results_count=len(batch_results),
-                        trace_id=trace_id,
-                    )
+                # Batch expansion completed
 
-                except Exception as e:
-                    logger.error(
-                        "Batch expansion failed",
-                        batch=batch,
-                        error=str(e),
-                        trace_id=trace_id,
-                    )
-                    continue
+            except (httpx.HTTPError, httpx.TimeoutException) as e:
+                logger.warning(
+                    "Batch expansion failed - continuing with next batch",
+                    batch=batch,
+                    error=str(e),
+                    trace_id=trace_id,
+                )
+                continue
 
-        return all_results
+    return all_results
 
 
 async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
@@ -178,13 +193,11 @@ async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
     if not expanded_data:
         return ""
 
-    field_groups: dict[str, list[str]] = {}
+    field_groups: defaultdict[str, list[str]] = defaultdict(list)
     for item in expanded_data:
-        field = item.get("scientific_field", "General Science")
-        label = item.get("label", "")
+        field = item["scientific_field"] or "General Science"
+        label = item["label"]
         if label:
-            if field not in field_groups:
-                field_groups[field] = []
             field_groups[field].append(label)
 
     context_parts = []
@@ -194,25 +207,21 @@ async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
     return "\n".join(context_parts)
 
 
+@lru_cache(maxsize=128)
 def _format_scientific_context(scientific_context: str) -> str:
     """Format scientific context using the template."""
     if not scientific_context:
         return ""
 
     try:
-        formatted_context = SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
+        return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
 
-        logger.info(
-            "Scientific context formatted successfully",
-            context_length=len(scientific_context),
-            formatted_length=len(formatted_context),
-        )
+        # Scientific context formatted for objective
 
-        return formatted_context
 
-    except Exception as e:
-        logger.error(
-            "Failed to format scientific context",
+    except ValueError as e:
+        logger.warning(
+            "Failed to format scientific context - returning raw context",
             error=str(e),
             context_length=len(scientific_context),
         )
@@ -234,7 +243,7 @@ async def enrich_objective_with_wikidata(
         for task in enrichment_response["research_tasks"]:
             all_terms.extend(task["core_scientific_terms"])
 
-        unique_terms = list(dict.fromkeys(all_terms))
+        unique_terms = list(set(all_terms))
 
         if not unique_terms:
             return {
@@ -254,15 +263,15 @@ async def enrich_objective_with_wikidata(
             "scientific_context": formatted_context,
         }
 
-    except Exception as e:
-        logger.error(
-            "Failed to enrich objective with Wikidata",
+    except (httpx.HTTPError, httpx.TimeoutException) as e:
+        logger.warning(
+            "Wikidata enrichment failed - returning empty context",
             error=str(e),
             trace_id=trace_id,
         )
-        return {
-            "enriched_objective": "",
-            "search_queries": [],
-            "core_scientific_terms": [],
-            "scientific_context": "",
-        }
+        return EnrichmentDataDTO(
+            enriched_objective="",
+            search_queries=[],
+            core_scientific_terms=[],
+            scientific_context="",
+        )

@@ -69,17 +69,7 @@ async def handle_search_grants(
 ) -> list[GrantInfoResponse]:
     limit = min(limit, 100)
 
-    logger.info(
-        "Public grant search request",
-        search_query=search_query,
-        category=category,
-        min_amount=min_amount,
-        max_amount=max_amount,
-        deadline_after=deadline_after,
-        deadline_before=deadline_before,
-        limit=limit,
-        offset=offset,
-    )
+    # Public grant search request
 
     try:
         async with session_maker() as session:
@@ -143,7 +133,7 @@ async def handle_search_grants(
 
                 results.append(grant_info)
 
-            logger.info("Public grant search completed", result_count=len(results))
+            # Public grant search completed
             return results
 
     except SQLAlchemyError as e:
@@ -166,7 +156,7 @@ async def handle_search_grants(
 
 @get("/grants/{grant_id:str}", operation_id="GetGrantDetails")
 async def handle_get_grant_details(grant_id: str, session_maker: async_sessionmaker[Any]) -> GrantInfoResponse:
-    logger.info("Public grant details request", grant_id=grant_id)
+    # Public grant details request
 
     try:
         async with session_maker() as session:
@@ -200,7 +190,7 @@ async def handle_get_grant_details(grant_id: str, session_maker: async_sessionma
                 "deadline": None,
             }
 
-            logger.info("Public grant details retrieved", document_number=grant_id)
+            # Public grant details retrieved
             return grant_info
 
     except SQLAlchemyError as e:
@@ -213,7 +203,7 @@ async def handle_create_subscription(
     data: SubscriptionRequest,
     session_maker: async_sessionmaker[Any],
 ) -> SubscriptionResponse:
-    logger.info("Creating grant subscription", email=data["email"])
+    # Creating grant subscription
 
     try:
         async with session_maker() as session, session.begin():
@@ -232,11 +222,7 @@ async def handle_create_subscription(
                 )
                 subscription_id = result.scalar_one()
 
-                logger.info(
-                    "Grant subscription created",
-                    subscription_id=str(subscription_id),
-                    email=data["email"],
-                )
+                # Grant subscription created
 
                 return SubscriptionResponse(
                     id=str(subscription_id),
@@ -265,7 +251,7 @@ async def handle_unsubscribe(
     data: UnsubscribeRequest,
     session_maker: async_sessionmaker[Any],
 ) -> UnsubscribeResponse:
-    logger.info("Unsubscribing from grant notifications", email=data["email"])
+    # Unsubscribing from grant notifications
 
     try:
         async with session_maker() as session, session.begin():
@@ -285,11 +271,7 @@ async def handle_unsubscribe(
                 .values(unsubscribed=True, unsubscribed_at=datetime.now(UTC))
             )
 
-            logger.info(
-                "Grant subscription cancelled",
-                subscription_id=str(subscription.id),
-                email=data["email"],
-            )
+            # Grant subscription cancelled
 
             return UnsubscribeResponse(
                 message="Successfully unsubscribed from grant notifications",

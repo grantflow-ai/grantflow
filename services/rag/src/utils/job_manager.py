@@ -89,13 +89,7 @@ class BaseJobManager[
             job.current_stage = current_index + 1
             await session.commit()
 
-        logger.info(
-            "Publishing next pipeline stage to PubSub",
-            job_id=str(self.job_id),
-            current_stage=self.current_stage,
-            next_stage=next_stage,
-            trace_id=self.trace_id,
-        )
+        # Stage transition handled by pubsub and notifications
 
         await publish_rag_task(
             parent_type=self.parent_type,
@@ -141,13 +135,7 @@ class BaseJobManager[
         if self.job_id is None:
             raise RuntimeError("Job ID not set. Create a job first.")
 
-        logger.debug(
-            "Adding notification to job",
-            job_id=str(self.job_id),
-            message=message,
-            notification_event=event,
-            trace_id=self.trace_id,
-        )
+        # Notification tracking handled by database and pubsub
 
         current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
         total_pipeline_stages = len(self.pipeline_stages)

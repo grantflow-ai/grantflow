@@ -268,9 +268,7 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
-            stage=stage.value
-            if isinstance(stage, (GrantTemplateStageEnum, GrantApplicationStageEnum))
-            else stage,
+            stage=stage,  # msgspec handles enum serialization via encode_hook
             message_size=len(message_data),
         )
 

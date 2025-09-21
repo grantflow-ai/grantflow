@@ -201,9 +201,7 @@ async def handle_create_search_queries(
 
     final_queries = [q["query"] for q in query_results]
 
-    query_types = [q.get("type", "unknown") for q in query_results]
-    logger.info(
-        "Generated diverse search queries", query_count=len(final_queries), query_types=query_types, trace_id=trace_id
-    )
+    [q.get("type", "unknown") for q in query_results]
+    # Search queries generated with type diversity
 
     return final_queries[:10]

@@ -1,4 +1,4 @@
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
 
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import GrantApplication
@@ -116,151 +116,9 @@ research_plan_schema = {
 }
 
 
-def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
-    if "title" not in obj or not obj["title"]:
-        raise ValidationError(
-            f"Objective {obj_number} missing or empty 'title'",
-            context={"objective_number": obj_number, "title": obj.get("title")},
-        )
-
-    if len(obj["title"]) < 10:
-        raise ValidationError(
-            f"Objective {obj_number} title too short (min 10 chars)",
-            context={"title": obj["title"], "length": len(obj["title"])},
-        )
-
-    if "description" not in obj or not obj["description"]:
-        raise ValidationError(
-            f"Objective {obj_number} missing or empty 'description'",
-            context={"objective_number": obj_number, "description": obj.get("description")},
-        )
-
-    if len(obj["description"]) < 50:
-        raise ValidationError(
-            f"Objective {obj_number} description too short (min 50 chars)",
-            context={"description": obj["description"][:50], "length": len(obj["description"])},
-        )
-
-
-def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
-    if "research_tasks" not in obj:
-        raise ValidationError(
-            f"Objective {obj_number} missing 'research_tasks'",
-            context={"objective_number": obj_number, "available_keys": list(obj.keys())},
-        )
-
-    tasks = obj["research_tasks"]
-    if not isinstance(tasks, list):
-        raise ValidationError(
-            f"Objective {obj_number} research_tasks must be a list",
-            context={"type": type(tasks).__name__},
-        )
-
-    if len(tasks) < 2 or len(tasks) > 5:
-        raise ValidationError(
-            f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
-            context={"count": len(tasks)},
-        )
-
-    seen_task_numbers = set()
-    for j, task in enumerate(tasks):
-        if not isinstance(task, dict):
-            raise ValidationError(
-                f"Objective {obj_number} task {j + 1} must be a dictionary",
-                context={"type": type(task).__name__},
-            )
-
-        if "number" not in task:
-            raise ValidationError(
-                f"Objective {obj_number} task {j + 1} missing 'number'",
-                context={"objective_number": obj_number, "task_index": j, "task_keys": list(task.keys())},
-            )
-
-        task_number = task["number"]
-        if not isinstance(task_number, int) or task_number < 1 or task_number > 5:
-            raise ValidationError(
-                f"Task number must be an integer between 1 and 5, got {task_number}",
-                context={"objective": obj_number, "task_index": j, "number": task_number},
-            )
-
-        if task_number in seen_task_numbers:
-            raise ValidationError(
-                f"Duplicate task number {task_number} in objective {obj_number}",
-                context={"objective": obj_number, "task_number": task_number},
-            )
-        seen_task_numbers.add(task_number)
-
-        if "title" not in task or not task["title"]:
-            raise ValidationError(
-                f"Objective {obj_number} task {task_number} missing or empty 'title'",
-                context={"objective_number": obj_number, "task_number": task_number, "title": task.get("title", None)},
-            )
-
-        if len(task["title"]) < 10:
-            raise ValidationError(
-                f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
-                context={"title": task["title"], "length": len(task["title"])},
-            )
-
-        if "description" not in task or not task["description"]:
-            raise ValidationError(
-                f"Objective {obj_number} task {task_number} missing or empty 'description'",
-                context={
-                    "objective_number": obj_number,
-                    "task_number": task_number,
-                    "description": task.get("description", None),
-                },
-            )
-
-        if len(task["description"]) < 50:
-            raise ValidationError(
-                f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
-                context={"description": task["description"][:50], "length": len(task["description"])},
-            )
-
-
-def _validate_objective_number(obj: dict[str, Any], i: int, seen_numbers: set[int]) -> int:
-    if "number" not in obj:
-        raise ValidationError(
-            f"Objective {i + 1} missing 'number' field",
-            context={"objective_index": i, "available_keys": list(obj.keys())},
-        )
-
-    obj_number = obj["number"]
-    if not isinstance(obj_number, int) or obj_number < 1 or obj_number > 3:
-        raise ValidationError(
-            f"Objective number must be an integer between 1 and 3, got {obj_number}",
-            context={"index": i, "number": obj_number},
-        )
-
-    if obj_number in seen_numbers:
-        raise ValidationError(
-            f"Duplicate objective number: {obj_number}",
-            context={"index": i, "number": obj_number},
-        )
-    seen_numbers.add(obj_number)
-    return obj_number
-
-
-def _validate_research_plan_response(response: Any) -> None:
-    if not isinstance(response, dict):
-        raise ValidationError(
-            "Response must be a dictionary",
-            context={"type": type(response).__name__},
-        )
-
-    if "research_objectives" not in response:
-        raise ValidationError(
-            "Missing 'research_objectives' in response",
-            context={"response_keys": list(response.keys()) if isinstance(response, dict) else []},
-        )
-
+def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
+    """Validate the research plan response values (structure is already validated by deserialize)."""
     objectives = response["research_objectives"]
-    if not isinstance(objectives, list):
-        raise ValidationError(
-            "research_objectives must be a list",
-            context={"type": type(objectives).__name__},
-        )
 
     if len(objectives) < 2 or len(objectives) > 3:
         raise ValidationError(
@@ -270,35 +128,71 @@ def _validate_research_plan_response(response: Any) -> None:
 
     seen_numbers: set[int] = set()
     for i, obj in enumerate(objectives):
-        if not isinstance(obj, dict):
+        obj_number = obj["number"]
+
+        # Check for duplicate objective numbers
+        if obj_number in seen_numbers:
             raise ValidationError(
-                f"Objective {i + 1} must be a dictionary",
-                context={"type": type(obj).__name__, "index": i},
+                f"Duplicate objective number: {obj_number}",
+                context={"index": i, "number": obj_number},
+            )
+        seen_numbers.add(obj_number)
+
+        # Validate objective content
+        if len(obj["title"]) < 10:
+            raise ValidationError(
+                f"Objective {obj_number} title too short (min 10 chars)",
+                context={"title": obj["title"], "length": len(obj["title"])},
             )
 
-        obj_number = _validate_objective_number(obj, i, seen_numbers)
-        _validate_objective_fields(obj, obj_number)
+        if len(obj["description"]) < 50:
+            raise ValidationError(
+                f"Objective {obj_number} description too short (min 50 chars)",
+                context={"description": obj["description"][:50], "length": len(obj["description"])},
+            )
 
-        _validate_research_tasks(obj, obj_number)
+        # Validate tasks
+        tasks = obj["research_tasks"]
+        if len(tasks) < 2 or len(tasks) > 5:
+            raise ValidationError(
+                f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
+                context={"count": len(tasks)},
+            )
+
+        seen_task_numbers: set[int] = set()
+        for task in tasks:
+            task_number = task["number"]
+
+            # Check for duplicate task numbers
+            if task_number in seen_task_numbers:
+                raise ValidationError(
+                    f"Duplicate task number {task_number} in objective {obj_number}",
+                    context={"objective": obj_number, "task_number": task_number},
+                )
+            seen_task_numbers.add(task_number)
+
+            # Validate task content
+            if len(task["title"]) < 10:
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
+                    context={"title": task["title"], "length": len(task["title"])},
+                )
+
+            if len(task["description"]) < 50:
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
+                    context={"description": task["description"][:50], "length": len(task["description"])},
+                )
+
 
 
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
-    logger.info(
-        "Starting research plan generation",
-        application_id=str(application.id),
-        application_title=application.title,
-        trace_id=trace_id,
-    )
+    # Starting research plan generation
 
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
 
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
-    logger.debug(
-        "Search queries generated",
-        application_id=str(application.id),
-        queries_count=len(search_queries),
-        trace_id=trace_id,
-    )
+    # Query generation tracked in retrieval
 
     retrieval_results = await retrieve_documents(
         application_id=application.id,
@@ -308,13 +202,7 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    logger.info(
-        "Retrieved documents for research plan",
-        application_id=str(application.id),
-        documents_count=len(retrieval_results),
-        search_queries_count=len(search_queries),
-        trace_id=trace_id,
-    )
+    # Retrieval metrics logged in retrieve_documents
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 
@@ -329,11 +217,7 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    logger.info(
-        "Research plan generation completed successfully",
-        application_id=str(application.id),
-        objectives_generated=len(response["research_objectives"]),
-        trace_id=trace_id,
-    )
-
     return response["research_objectives"]
+
+    # Research plan generation completed
+

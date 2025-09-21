@@ -1,10 +1,10 @@
-from asyncio import gather
 from typing import TYPE_CHECKING, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
+from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.dto import (
     EnrichObjectivesStageDTO,
@@ -27,8 +27,6 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantLongFormSection
     from packages.db.src.tables import GrantApplication
 
-    from services.rag.src.dto import ResearchComponentGenerationDTO
-
 logger = get_logger(__name__)
 
 
@@ -47,16 +45,11 @@ async def handle_generate_sections_stage(
     )
 
     # Validation has been moved to pipeline.py
-    grant_template = grant_application.grant_template
-    grant_sections = grant_template.grant_sections
-    research_objectives = grant_application.research_objectives or []
-    cfp_analysis = grant_template.cfp_analysis
-
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
     work_plan_section: GrantLongFormSection | None = None
 
-    for section in grant_sections:
+    for section in grant_application.grant_template.grant_sections:
         # Check if this is a GrantLongFormSection (has required fields)
         if "max_words" in section and "generation_instructions" in section:
             long_form_section = cast("GrantLongFormSection", section)
@@ -65,13 +58,7 @@ async def handle_generate_sections_stage(
             else:
                 long_form_sections.append(long_form_section)
 
-    logger.info(
-        "Starting section generation",
-        application_id=str(grant_application.id),
-        sections_count=len(long_form_sections),
-        deep_dives_count=len(research_objectives),
-        trace_id=trace_id,
-    )
+    # Logging handled by pipeline and notifications
 
     all_search_queries = []
     all_keywords = []
@@ -81,19 +68,14 @@ async def handle_generate_sections_stage(
         all_keywords.extend(section["keywords"])
 
     all_search_queries.extend(
-        research_objective["title"] for research_objective in research_objectives if "title" in research_objective
+        research_objective["title"]
+        for research_objective in (grant_application.research_objectives or [])
+        if "title" in research_objective
     )
 
     unique_queries = list(dict.fromkeys(all_search_queries))[:12]
 
-    logger.info(
-        "Performing shared retrieval for all sections",
-        unique_queries_count=len(unique_queries),
-        total_original_queries=len(all_search_queries),
-        trace_id=trace_id,
-    )
-
-    await job_manager.ensure_not_cancelled()
+    # Retrieval logging handled within retrieve_documents
 
     combined_task_description = (
         f"Generate content for {len(long_form_sections)} grant application sections: "
@@ -109,16 +91,14 @@ async def handle_generate_sections_stage(
     )
     shared_context = "\n".join(retrieval_results)
 
-    logger.info(
-        "Shared retrieval completed",
-        context_length=len(shared_context),
-        trace_id=trace_id,
-    )
-
-    await job_manager.ensure_not_cancelled()
-
     generation_coroutines = [
-        handle_generate_section_text(section, research_objectives, shared_context, cfp_analysis, trace_id)
+        handle_generate_section_text(
+            section,
+            grant_application.research_objectives or [],
+            shared_context,
+            grant_application.grant_template.cfp_analysis,
+            trace_id
+        )
         for section in long_form_sections
     ]
 
@@ -229,7 +209,6 @@ async def handle_enrich_objectives_stage(
 
 async def handle_enrich_terminology_stage(
     *,
-    grant_application: "GrantApplication",  # noqa: ARG001
     dto: EnrichObjectivesStageDTO,
     job_manager: GrantApplicationJobManager[StageDTO],
     trace_id: str,
@@ -243,8 +222,6 @@ async def handle_enrich_terminology_stage(
     )
 
     # Enhance each objective with Wikidata scientific context in parallel
-    await job_manager.ensure_not_cancelled()
-
     wikidata_enrichment_coroutines = [
         enrich_objective_with_wikidata(enrichment_response, trace_id=trace_id)
         for enrichment_response in dto["enrichment_responses"]
@@ -279,61 +256,48 @@ async def handle_generate_research_plan_stage(
 ) -> GenerateResearchPlanStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    work_plan_section = dto["work_plan_section"]
-    application_id = str(grant_application.id)
-    form_inputs = grant_application.form_inputs or {}
-    research_objectives = grant_application.research_objectives or []
-    relationships = dto["relationships"]
-    enrichment_responses = dto["enrichment_responses"]
-
     dtos = []
+    research_objectives = grant_application.research_objectives or []
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
-    words_per_component = abs(round(work_plan_section["max_words"] / (len(research_objectives) + total_tasks)))
-    for research_objective, enrichment_response in zip(research_objectives, enrichment_responses, strict=True):
+    total_components = len(research_objectives) + total_tasks
+    words_per_component = abs(round(dto["work_plan_section"]["max_words"] / total_components)) if total_components > 0 else 500
+    for research_objective, enrichment_response in zip(research_objectives, dto["enrichment_responses"], strict=True):
         objective_enrichment = enrichment_response["research_objective"]
         tasks_enrichment = enrichment_response["research_tasks"]
         research_tasks = research_objective["research_tasks"]
         dtos.append(
-            cast(
-                "ResearchComponentGenerationDTO",
-                {
-                    "number": str(research_objective["number"]),
-                    "title": research_objective["title"],
-                    "description": objective_enrichment["description"],
-                    "instructions": objective_enrichment["instructions"],
-                    "guiding_questions": objective_enrichment["guiding_questions"],
-                    "search_queries": objective_enrichment["search_queries"],
-                    "relationships": relationships.get(str(research_objective["number"]), []),
-                    "max_words": words_per_component,
-                    "type": "objective",
-                },
+            ResearchComponentGenerationDTO(
+                number=str(research_objective["number"]),
+                title=research_objective["title"],
+                description=objective_enrichment["description"],
+                instructions=objective_enrichment["instructions"],
+                guiding_questions=objective_enrichment["guiding_questions"],
+                search_queries=objective_enrichment["search_queries"],
+                relationships=dto["relationships"].get(str(research_objective["number"]), []),
+                max_words=words_per_component,
+                type="objective",
             )
         )
         dtos.extend(
             [
-                cast(
-                    "ResearchComponentGenerationDTO",
-                    {
-                        "number": f"{research_objective['number']}.{research_task['number']}",
-                        "title": research_task["title"],
-                        "description": task_enrichment["description"],
-                        "instructions": task_enrichment["instructions"],
-                        "guiding_questions": task_enrichment["guiding_questions"],
-                        "search_queries": task_enrichment["search_queries"],
-                        "relationships": relationships.get(
-                            f"{research_objective['number']}.{research_task['number']}", []
-                        ),
-                        "max_words": words_per_component,
-                        "type": "task",
-                    },
+                ResearchComponentGenerationDTO(
+                    number=f"{research_objective['number']}.{research_task['number']}",
+                    title=research_task["title"],
+                    description=task_enrichment["description"],
+                    instructions=task_enrichment["instructions"],
+                    guiding_questions=task_enrichment["guiding_questions"],
+                    search_queries=task_enrichment["search_queries"],
+                    relationships=dto["relationships"].get(
+                        f"{research_objective['number']}.{research_task['number']}", []
+                    ),
+                    max_words=words_per_component,
+                    type="task",
                 )
                 for research_task, task_enrichment in zip(research_tasks, tasks_enrichment, strict=True)
             ]
         )
 
     work_plan_text = ""
-
-    await job_manager.ensure_not_cancelled()
 
     await job_manager.add_notification(
         event=NotificationEvents.GENERATING_RESEARCH_PLAN,
@@ -355,22 +319,22 @@ async def handle_generate_research_plan_stage(
         notification_type="info",
     )
 
-    objective_results = await gather(
+    objective_results = await batched_gather(
         *[
             generate_objective_with_tasks(
-                application_id=application_id,
-                form_inputs=form_inputs,
+                application_id=str(grant_application.id),
+                form_inputs=grant_application.form_inputs or {},
                 objective=objective,
                 tasks=tasks,
                 work_plan_text=work_plan_text,
                 trace_id=trace_id,
             )
             for objective, tasks in objective_task_groups
-        ]
+        ],
+        batch_size=4
     )
 
     for objective, objective_text, task_results in objective_results:
-        await job_manager.ensure_not_cancelled()
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
 
         for research_task, research_task_text in task_results:
@@ -409,3 +373,5 @@ async def handle_generate_research_plan_stage(
         wikidata_enrichments=dto["wikidata_enrichments"],
         research_plan_text=research_plan_text,
     )
+
+

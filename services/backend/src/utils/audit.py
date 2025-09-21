@@ -52,12 +52,7 @@ async def log_organization_audit(
                 ip_address=ip_address,
             )
         )
-        logger.debug(
-            "Audit log created",
-            organization_id=str(organization_id),
-            user_firebase_uid=user_firebase_uid,
-            action=action,
-        )
+        # Audit log created successfully
     except Exception as e:
         logger.warning(
             "Failed to create audit log",

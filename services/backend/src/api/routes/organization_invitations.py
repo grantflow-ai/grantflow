@@ -58,7 +58,7 @@ async def handle_list_organization_invitations(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationInvitationResponse]:
-    logger.info("Listing organization invitations", organization_id=organization_id, uid=request.auth)
+    # Listing organization invitations
 
     async with session_maker() as session:
         organization = await session.scalar(
@@ -98,9 +98,7 @@ async def handle_create_organization_invitation(
     data: CreateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationTokenResponse:
-    logger.info(
-        "Creating organization invitation", organization_id=organization_id, email=data["email"], uid=request.auth
-    )
+    # Creating organization invitation
 
     async with session_maker() as session, session.begin():
         try:
@@ -184,9 +182,7 @@ async def handle_update_organization_invitation(
     data: UpdateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationInvitationResponse:
-    logger.info(
-        "Updating organization invitation",
-        organization_id=organization_id,
+    # Updating organization invitation
         invitation_id=invitation_id,
         uid=request.auth,
     )
@@ -272,9 +268,7 @@ async def handle_delete_organization_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Deleting organization invitation",
-        organization_id=organization_id,
+    # Deleting organization invitation
         invitation_id=invitation_id,
         uid=request.auth,
     )

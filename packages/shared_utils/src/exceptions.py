@@ -61,3 +61,8 @@ class RagError(BackendError):
 
 class RagJobCancelledError(BackendError):
     pass
+
+
+class LLMTimeoutError(BackendError):
+    """Raised when LLM API calls timeout."""
+    pass

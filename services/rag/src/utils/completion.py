@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import partial
@@ -32,6 +31,7 @@ from packages.shared_utils.src.exceptions import (
     BackendError,
     DeserializationError,
     InsufficientContextError,
+    LLMTimeoutError,
     RagError,
     ValidationError,
 )
@@ -124,6 +124,7 @@ async def make_google_completions_request[T](
     top_k: int | None = None,
     candidate_count: int | None = None,
     trace_id: str,
+    timeout: float = 120,
 ) -> T:
     client = get_google_ai_client()
 
@@ -172,6 +173,7 @@ async def make_google_completions_request[T](
         model=model,
         contents=content,
         config=config,
+        timeout=timeout,
     )
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
@@ -242,6 +244,7 @@ async def make_anthropic_completions_request[T](
     top_p: float | None = None,
     user_prompt: str,
     trace_id: str,
+    timeout: float = 120,
 ) -> T:
     anthropic_client = get_anthropic_client()
 
@@ -264,6 +267,7 @@ async def make_anthropic_completions_request[T](
             temperature=temperature,
             top_p=top_p or NOT_GIVEN,
             top_k=top_k or NOT_GIVEN,
+            timeout=timeout,
         )
     except (BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError) as e:
         error_message = str(e)
@@ -390,35 +394,31 @@ async def handle_completions_request[T](
                 if not response_schema:
                     raise BackendError("Response schema must be provided")
 
-                response = await asyncio.wait_for(
-                    make_anthropic_completions_request(
-                        model=model,
-                        response_type=response_type,
-                        system_prompt=system_prompt,
-                        user_prompt=str(msgs),
-                        response_schema=response_schema,
-                        temperature=temperature,
-                        top_p=top_p,
-                        top_k=top_k,
-                        trace_id=trace_id,
-                    ),
+                response = await make_anthropic_completions_request(
+                    model=model,
+                    response_type=response_type,
+                    system_prompt=system_prompt,
+                    user_prompt=str(msgs),
+                    response_schema=response_schema,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    trace_id=trace_id,
                     timeout=timeout,
                 )
             else:
-                response = await asyncio.wait_for(
-                    make_google_completions_request(
-                        model=model,
-                        prompt_identifier=prompt_identifier,
-                        response_type=response_type,
-                        system_prompt=system_prompt,
-                        response_schema=response_schema,
-                        messages=msgs,
-                        temperature=temperature,
-                        top_p=top_p,
-                        top_k=top_k,
-                        candidate_count=candidate_count,
-                        trace_id=trace_id,
-                    ),
+                response = await make_google_completions_request(
+                    model=model,
+                    prompt_identifier=prompt_identifier,
+                    response_type=response_type,
+                    system_prompt=system_prompt,
+                    response_schema=response_schema,
+                    messages=msgs,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    candidate_count=candidate_count,
+                    trace_id=trace_id,
                     timeout=timeout,
                 )
 
@@ -453,7 +453,7 @@ async def handle_completions_request[T](
 
             response = None
             errors.append(e)
-        except TimeoutError:
+        except (TimeoutError, APITimeoutError):
             attempts += 1
             logger.warning(
                 "LLM API call timed out",
@@ -463,9 +463,15 @@ async def handle_completions_request[T](
                 timeout_seconds=timeout,
                 trace_id=trace_id,
             )
-            errors.append(
-                BackendError(f"LLM API call timed out after {timeout} seconds", context={"timeout": timeout})
+            timeout_error = LLMTimeoutError(
+                f"LLM API call timed out after {timeout} seconds",
+                context={"timeout": timeout, "prompt_identifier": prompt_identifier}
             )
+            errors.append(timeout_error)
+
+            # If this is the last attempt, raise our custom timeout error
+            if attempts >= max_attempts:
+                raise timeout_error
         except DeserializationError as e:
             attempts += 1
             logger.warning(
