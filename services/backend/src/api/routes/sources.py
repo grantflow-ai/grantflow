@@ -180,7 +180,6 @@ async def handle_create_rag_source(
                 .returning(RagSource.id)
             )
 
-
             if url:
                 await session.execute(
                     insert(RagUrl)
@@ -509,7 +508,6 @@ async def handle_delete_rag_source(
             source.soft_delete()
             await session.commit()
 
-
         except NoResultFound as e:
             raise NotFoundException from e
         except SQLAlchemyError as e:
@@ -606,7 +604,6 @@ async def handle_crawl_url(
     trace_id = get_trace_id(request)
     url = data["url"]
 
-
     if not project_id and not organization_id and not granting_institution_id:
         raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
 
@@ -637,7 +634,6 @@ async def handle_crawl_url(
         trace_id=trace_id,
     )
 
-
     return UrlCrawlingResponse(
         source_id=str(source_id),
     )
@@ -661,4 +657,3 @@ async def _cancel_job_if_active(
             notification_type="warning",
         )
         session.add(notification)
-

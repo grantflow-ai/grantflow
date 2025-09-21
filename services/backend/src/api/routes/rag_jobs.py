@@ -55,7 +55,6 @@ async def handle_retrieve_rag_job(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> RagJobResponse:
-
     async with session_maker() as session:
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
@@ -152,7 +151,6 @@ async def cancel_rag_job_by_id(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-
     async with session_maker() as session, session.begin():
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
@@ -205,7 +203,6 @@ async def cancel_rag_job_by_id(
                 notification_type="warning",
             )
             session.add(notification)
-
 
 
 @delete(

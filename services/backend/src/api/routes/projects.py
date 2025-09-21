@@ -335,9 +335,7 @@ async def handle_retrieve_project(
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="DeleteProject",
 )
-async def handle_delete_project(
-    request: APIRequest, project_id: UUID, session_maker: async_sessionmaker[Any]
-) -> None:
+async def handle_delete_project(request: APIRequest, project_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -914,7 +912,6 @@ async def handle_duplicate_project(
     data: DuplicateProjectRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectResponse:
-
     async with session_maker() as session, session.begin():
         try:
             original_project = await session.scalar(
@@ -947,7 +944,6 @@ async def handle_duplicate_project(
                 )
                 .returning(Project)
             )
-
 
             for original_app in original_project.grant_applications:
                 if original_app.deleted_at is not None:
@@ -1036,9 +1032,7 @@ async def handle_duplicate_project(
                         )
                     )
 
-
             await session.commit()
-
 
         except SQLAlchemyError as e:
             logger.error("Error duplicating project", exc_info=e)

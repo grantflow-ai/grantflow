@@ -68,7 +68,6 @@ async def send_grant_alert_email(
     )
 
 
-
 async def send_application_ready_email(
     application_title: str,
     application_text: str,
@@ -108,4 +107,3 @@ async def send_application_ready_email(
         html=html_content,
         attachments=attachments,
     )
-

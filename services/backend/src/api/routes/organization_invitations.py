@@ -57,7 +57,6 @@ async def handle_list_organization_invitations(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationInvitationResponse]:
-
     async with session_maker() as session:
         organization = await session.scalar(
             select(Organization).where(Organization.id == organization_id).where(Organization.deleted_at.is_(None))
@@ -96,7 +95,6 @@ async def handle_create_organization_invitation(
     data: CreateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationTokenResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
