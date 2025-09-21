@@ -2,11 +2,11 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
+from packages.db.src.enums import GrantApplicationStageEnum
 from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.pipeline import (
     handle_grant_application_pipeline,
 )

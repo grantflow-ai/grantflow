@@ -1,6 +1,6 @@
 from typing import Final
 
-from services.rag.src.enums import GrantApplicationStageEnum
+from packages.db.src.enums import GrantApplicationStageEnum
 
 GRANT_APPLICATION_STAGES_ORDER: Final[tuple[GrantApplicationStageEnum, ...]] = (
     GrantApplicationStageEnum.GENERATE_SECTIONS,

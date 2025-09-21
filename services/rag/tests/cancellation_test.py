@@ -2,13 +2,12 @@
 
 import os
 from typing import Any
-from uuid import UUID
 
 import pytest
 
 # Ensure we're using the Pub/Sub emulator
 os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationGenerationJob,
@@ -19,7 +18,6 @@ from packages.shared_utils.src.exceptions import RagJobCancelledError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
@@ -147,7 +145,7 @@ async def test_template_pipeline_stops_when_job_cancelled(
 
     # Start the pipeline - it should create its own job or use existing
     # For this test, we'll cancel it mid-flight by updating the job status
-    async def cancel_job_after_start():
+    async def cancel_job_after_start() -> None:
         """Helper to cancel the job after pipeline starts."""
         async with async_session_maker() as session, session.begin():
             stmt = select(GrantTemplateGenerationJob).where(

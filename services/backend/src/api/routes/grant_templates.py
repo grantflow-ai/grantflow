@@ -4,7 +4,7 @@ from uuid import UUID
 
 from litestar import patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import GrantTemplateStageEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -17,7 +17,6 @@ from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
-from services.rag.src.enums import GrantTemplateStageEnum
 
 logger = get_logger(__name__)
 

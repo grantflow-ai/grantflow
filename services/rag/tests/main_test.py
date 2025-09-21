@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import (
     GrantApplicationRagRequest,
@@ -17,8 +18,6 @@ from packages.shared_utils.src.pubsub import (
 from packages.shared_utils.src.serialization import serialize
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 
 TraceId = str
 

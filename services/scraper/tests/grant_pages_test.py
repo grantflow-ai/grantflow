@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from bs4 import BeautifulSoup
 
 if TYPE_CHECKING:
@@ -11,7 +10,6 @@ from services.scraper.src.grant_pages import (
     download_grant_pages,
     save_markdown_page,
 )
-
 
 
 async def test_save_markdown_page() -> None:
