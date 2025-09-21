@@ -13,18 +13,18 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
+from services.rag.src.grant_template.dto import (
+    AnalyzeCFPContentStageDTO,
+    ExtractCFPContentStageDTO,
+    ExtractionSectionsStageDTO,
+    StageDTO,
+)
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
     handle_cfp_extraction_stage,
     handle_generate_metadata_stage,
     handle_save_grant_template,
     handle_section_extraction_stage,
-)
-from services.rag.src.grant_template.pipeline_dto import (
-    AnalyzeCFPContentStageDTO,
-    ExtractCFPContentStageDTO,
-    ExtractionSectionsStageDTO,
-    StageDTO,
 )
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
@@ -51,7 +51,6 @@ async def handle_grant_template_pipeline(
     await job_manager.ensure_not_cancelled()
 
     template_id = grant_template.id
-    job_id = job.id
 
     logger.info(
         "Grant template pipeline started",
@@ -60,17 +59,14 @@ async def handle_grant_template_pipeline(
         trace_id=trace_id,
     )
 
-    # Update job status if starting or continuing
     if job.status == RagGenerationStatusEnum.PENDING:
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     try:
-        # Load checkpoint data from job (it's already fresh from DB via get_or_create_job)
         checkpoint_data = job.checkpoint_data if job.checkpoint_data else {}
 
         match generation_stage:
             case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
-                # Stage execution tracked by job manager
                 extracted_cfp = await handle_cfp_extraction_stage(
                     grant_template=grant_template,
                     job_manager=job_manager,
@@ -78,11 +74,9 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(extracted_cfp)
-                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.ANALYZE_CFP_CONTENT:
-                # Stage execution tracked by job manager
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for CFP analysis stage")
 
@@ -93,11 +87,9 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(analyzed_cfp)
-                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.EXTRACT_SECTIONS:
-                # Stage execution tracked by job manager
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for section extraction stage")
 
@@ -108,11 +100,9 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(section_extraction_result)
-                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.GENERATE_METADATA:
-                # Final stage - keep minimal logging
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for metadata generation stage")
 
@@ -135,13 +125,12 @@ async def handle_grant_template_pipeline(
                     notification_type="info",
                 )
 
-                # This is the final stage - save to database
                 return await handle_save_grant_template(
                     grant_template=grant_template,
                     session_maker=session_maker,
                     job_manager=job_manager,
                     cfp_analysis=section_extraction_result["analysis_results"],
-                    extracted_cfp=section_extraction_result,  # Contains all accumulated data
+                    extracted_cfp=section_extraction_result,
                     grant_sections=grant_sections,
                     trace_id=trace_id,
                 )
@@ -172,7 +161,6 @@ async def handle_grant_template_pipeline(
         else:
             error_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."
             event_type = NotificationEvents.PIPELINE_ERROR
-            # Unexpected error - will be handled by error notification
 
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,
@@ -192,5 +180,4 @@ async def handle_grant_template_pipeline(
                 "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
             },
         )
-        # Error handled and notification sent
         return None

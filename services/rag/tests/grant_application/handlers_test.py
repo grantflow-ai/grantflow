@@ -1,20 +1,3 @@
-"""
-Tests for grant application pipeline stage handlers.
-
-This module tests the individual stage handlers used in the grant application
-generation pipeline. Each handler is tested for successful execution, error
-handling, and proper data flow between stages.
-
-Key areas tested:
-- Section generation with document retrieval and AI completion
-- Relationship extraction between research objectives
-- Objective enrichment with external context
-- Terminology enrichment with Wikidata integration
-- Research plan generation combining all previous stages
-
-All tests use real database fixtures and mock external AI/API calls for
-deterministic results while maintaining integration test quality.
-"""
 
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -31,12 +14,9 @@ from services.rag.src.grant_application.handlers import (
     handle_generate_sections_stage,
 )
 
-# Use research_objectives fixture from conftest.py instead of custom implementation
-
 
 @pytest.fixture
 def sample_work_plan_section() -> dict[str, Any]:
-    """Sample work plan section."""
     return {
         "id": "research_plan",
         "title": "Research Plan",
@@ -55,7 +35,6 @@ def sample_work_plan_section() -> dict[str, Any]:
 
 @pytest.fixture
 def sample_grant_sections() -> list[dict[str, Any]]:
-    """Sample grant sections."""
     return [
         {
             "id": "abstract",
@@ -100,8 +79,6 @@ async def test_generate_sections_stage_success(
     sample_grant_sections: list[dict[str, Any]],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
-    """Test successful section generation stage."""
-    # Setup grant application data
     grant_application.research_objectives = [
         ResearchObjective(
             number=1,
@@ -110,7 +87,6 @@ async def test_generate_sections_stage_success(
         )
     ]
 
-    # Mock the grant_template to avoid lazy loading issues
     mock_grant_template = AsyncMock()
     mock_grant_template.grant_sections = [*sample_grant_sections, sample_work_plan_section]
     mock_grant_template.cfp_analysis = {
@@ -120,18 +96,15 @@ async def test_generate_sections_stage_success(
     }
     grant_application.grant_template = mock_grant_template
 
-    # Setup mocks
     mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
     mock_batched_gather.return_value = ["Generated abstract text", "Generated significance text"]
 
-    # Execute
     result = await handle_generate_sections_stage(
         grant_application=grant_application,
         job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "section_texts" in result
     assert "work_plan_section" in result
@@ -140,11 +113,9 @@ async def test_generate_sections_stage_success(
     assert result["section_texts"][1]["section_id"] == "significance"
     assert result["work_plan_section"]["id"] == "research_plan"
 
-    # Verify job manager methods were called
     mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
     mock_grant_application_job_manager.add_notification.assert_called()
 
-    # Verify retrieval was called
     mock_retrieve_documents.assert_called_once()
 
 
@@ -156,11 +127,8 @@ async def test_extract_relationships_stage_success(
     research_objectives: list[ResearchObjective],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
-    """Test successful relationship extraction stage."""
-    # Setup grant application
     grant_application.research_objectives = research_objectives
 
-    # Setup input DTO
     input_dto = {
         "section_texts": [
             {"section_id": "abstract", "text": "Abstract text"},
@@ -169,14 +137,12 @@ async def test_extract_relationships_stage_success(
         "work_plan_section": sample_work_plan_section,
     }
 
-    # Setup mock
     mock_relationships = {
         "1": [("2", "provides_data_for", "Objective 1 provides data for objective 2")],
         "2": [("1", "depends_on", "Objective 2 depends on objective 1")],
     }
     mock_handle_extract_relationships.return_value = mock_relationships
 
-    # Execute
     result = await handle_extract_relationships_stage(
         grant_application=grant_application,
         dto=input_dto,
@@ -184,12 +150,10 @@ async def test_extract_relationships_stage_success(
         trace_id=str(uuid4()),
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "relationships" in result
     assert result["relationships"] == mock_relationships
 
-    # Verify job manager methods were called
     mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
     mock_grant_application_job_manager.add_notification.assert_called()
 
@@ -202,11 +166,8 @@ async def test_enrich_objectives_stage_success(
     research_objectives: list[ResearchObjective],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
-    """Test successful objective enrichment stage."""
-    # Setup grant application
     grant_application.research_objectives = research_objectives
 
-    # Setup input DTO
     input_dto = {
         "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
         "work_plan_section": sample_work_plan_section,
@@ -216,7 +177,6 @@ async def test_enrich_objectives_stage_success(
         },
     }
 
-    # Setup mock
     mock_enrichment_responses = [
         {
             "research_objective": {
@@ -253,7 +213,6 @@ async def test_enrich_objectives_stage_success(
     ]
     mock_handle_batch_enrich_objectives.return_value = mock_enrichment_responses
 
-    # Execute
     result = await handle_enrich_objectives_stage(
         grant_application=grant_application,
         dto=input_dto,
@@ -261,12 +220,10 @@ async def test_enrich_objectives_stage_success(
         trace_id=str(uuid4()),
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "enrichment_responses" in result
     assert len(result["enrichment_responses"]) == 2
 
-    # Verify job manager methods were called
     mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
     mock_grant_application_job_manager.add_notification.assert_called()
 
@@ -279,8 +236,6 @@ async def test_enrich_terminology_stage_success(
     mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
 ) -> None:
-    """Test successful terminology enrichment stage."""
-    # Setup input DTO
     input_dto = {
         "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
         "work_plan_section": {"id": "research_plan"},
@@ -321,7 +276,6 @@ async def test_enrich_terminology_stage_success(
         ],
     }
 
-    # Setup mocks
     mock_terminology_contexts = [
         {
             "core_scientific_terms": ["biomarkers", "proteomics"],
@@ -334,20 +288,17 @@ async def test_enrich_terminology_stage_success(
     ]
     mock_batched_gather.return_value = mock_terminology_contexts
 
-    # Execute
     result = await handle_enrich_terminology_stage(
         dto=input_dto,
         job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "enrichment_responses" in result
     assert "wikidata_enrichments" in result
     assert len(result["wikidata_enrichments"]) == 2
 
-    # Verify job manager methods were called
     mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
     mock_grant_application_job_manager.add_notification.assert_called()
 
@@ -358,8 +309,6 @@ async def test_generate_research_plan_stage_success(
     mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
 ) -> None:
-    """Test successful research plan generation stage."""
-    # Setup grant application research objectives
     grant_application.research_objectives = [
         ResearchObjective(
             number=1,
@@ -371,7 +320,6 @@ async def test_generate_research_plan_stage_success(
         )
     ]
 
-    # Setup input DTO with matching task count
     input_dto = {
         "section_texts": [{"section_id": "abstract", "text": "Abstract text"}],
         "work_plan_section": {"id": "research_plan", "max_words": 1500},
@@ -408,24 +356,21 @@ async def test_generate_research_plan_stage_success(
         ],
     }
 
-    # Setup mock to return the expected tuple structure: (objective, objective_text, task_results)
-    # This simulates what generate_objective_with_tasks returns
     mock_generate_objective_with_tasks.return_value = (
-        {"number": 1, "title": "Develop novel biomarkers"},  # objective dict
-        "Generated objective text",  # objective_text
-        [  # task_results: list of (task, task_text) tuples
+        {"number": 1, "title": "Develop novel biomarkers"},
+        "Generated objective text",
+        [
             (
-                {"number": 1, "title": "Identify candidate biomarkers"},  # task dict
-                "Generated task 1 text",  # task text
+                {"number": 1, "title": "Identify candidate biomarkers"},
+                "Generated task 1 text",
             ),
             (
-                {"number": 2, "title": "Validate biomarkers"},  # task dict
-                "Generated task 2 text",  # task text
+                {"number": 2, "title": "Validate biomarkers"},
+                "Generated task 2 text",
             ),
         ],
     )
 
-    # Execute
     result = await handle_generate_research_plan_stage(
         grant_application=grant_application,
         dto=input_dto,
@@ -433,14 +378,12 @@ async def test_generate_research_plan_stage_success(
         trace_id=str(uuid4()),
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "research_plan_text" in result
     assert "### Objective 1: Develop novel biomarkers" in result["research_plan_text"]
     assert "Generated objective text" in result["research_plan_text"]
     assert "Generated task 1 text" in result["research_plan_text"]
 
-    # Verify job manager methods were called
     mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
     mock_grant_application_job_manager.add_notification.assert_called()
 
@@ -451,8 +394,6 @@ async def test_handlers_preserve_data_flow(
     sample_grant_sections: list[dict[str, Any]],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
-    """Test that handlers preserve data flow correctly."""
-    # Setup grant application
     grant_application.research_objectives = [
         ResearchObjective(
             number=1,
@@ -461,7 +402,6 @@ async def test_handlers_preserve_data_flow(
         )
     ]
 
-    # Test data flow preservation
     test_dto = {
         "section_texts": [
             {"section_id": "abstract", "text": "Test abstract"},
@@ -469,7 +409,6 @@ async def test_handlers_preserve_data_flow(
         "work_plan_section": sample_work_plan_section,
     }
 
-    # Verify that the input structure is preserved
     assert "section_texts" in test_dto
     assert "work_plan_section" in test_dto
     assert test_dto["section_texts"][0]["section_id"] == "abstract"

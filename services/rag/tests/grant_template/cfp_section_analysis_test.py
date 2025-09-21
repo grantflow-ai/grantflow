@@ -25,25 +25,20 @@ def sample_cfp_content() -> str:
 
 
 async def test_handle_analyze_cfp_basic_functionality(sample_cfp_content: str) -> None:
-    """Test that handle_analyze_cfp returns a proper CFPAnalysisResult."""
     result = await handle_analyze_cfp(full_cfp_text=sample_cfp_content, trace_id="test-trace-id")
 
-    # Verify basic structure of CFPAnalysisResult
     assert isinstance(result, dict)
     assert "cfp_analysis" in result
     assert "nlp_analysis" in result
     assert "analysis_metadata" in result
 
-    # Verify cfp_analysis has the expected structure
     cfp_analysis = result["cfp_analysis"]
     assert "sections_count" in cfp_analysis
     assert "length_constraints_found" in cfp_analysis
     assert "evaluation_criteria_count" in cfp_analysis
 
-    # Verify it detected some sections from the CFP content
     assert cfp_analysis["sections_count"] > 0
 
-    # Verify analysis_metadata
     metadata = result["analysis_metadata"]
     assert "content_length" in metadata
     assert "categories_found" in metadata
@@ -52,17 +47,15 @@ async def test_handle_analyze_cfp_basic_functionality(sample_cfp_content: str) -
 
 
 async def test_handle_analyze_cfp_empty_content() -> None:
-    """Test handle_analyze_cfp with empty content should raise appropriate error."""
-    with pytest.raises(ValidationError):  # Expecting it to fail gracefully
+    with pytest.raises(ValidationError):
         await handle_analyze_cfp(full_cfp_text="", trace_id="test-trace-id")
 
 
 def test_validate_cfp_analysis_valid_data() -> None:
-    """Test validation of valid CFP analysis data."""
     valid_analysis = CFPSectionAnalysis(
-        sections_count=1,  # Must match the number of sections in the array
-        length_constraints_found=1,  # Number of length constraints
-        evaluation_criteria_count=1,  # Number of evaluation criteria
+        sections_count=1,
+        length_constraints_found=1,
+        evaluation_criteria_count=1,
         required_sections=[
             {
                 "section_name": "Project Summary",
@@ -97,12 +90,10 @@ def test_validate_cfp_analysis_valid_data() -> None:
         additional_requirements=[],
     )
 
-    # Should not raise an exception
     validate_cfp_analysis(valid_analysis)
 
 
 def test_validate_cfp_analysis_empty_sections() -> None:
-    """Test validation fails with empty sections."""
     invalid_analysis = CFPSectionAnalysis(
         sections_count=0,
         length_constraints_found=0,

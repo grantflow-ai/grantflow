@@ -232,7 +232,6 @@ async def retrieve_documents(
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
 
-    # Start retrieval - logging handled at completion with metrics
 
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
@@ -243,7 +242,6 @@ async def retrieve_documents(
     )
     time.time() - query_start
 
-    # Query preparation tracked in final metrics
 
     attempts = 0
     previous_scores: list[float] = []
@@ -260,7 +258,6 @@ async def retrieve_documents(
     )
     time.time() - retrieval_start
 
-    # Vector retrieval metrics included in final summary
 
     document_conversion_start = time.time()
     documents = [
@@ -272,7 +269,6 @@ async def retrieve_documents(
     ]
     time.time() - document_conversion_start
 
-    # Document conversion tracked in final metrics
 
     processing_start = time.time()
     processed_contents = await post_process_documents(
@@ -285,7 +281,6 @@ async def retrieve_documents(
     )
     time.time() - processing_start
 
-    # Processing metrics included in final summary
 
     if not with_guided_retrieval or not processed_contents:
         total_duration = time.time() - start_time
@@ -321,29 +316,24 @@ async def retrieve_documents(
         assessment = quality_response["assessment"]
         current_score = assessment["overall_score"]
 
-        # Quality assessment tracked in optimization metrics
 
         if current_score > best_score:
             best_score = current_score
             best_processed_contents = processed_contents
 
         if current_score >= MIN_QUALITY_SCORE:
-            # Quality threshold met - included in final metrics
             return best_processed_contents
 
         previous_scores.append(current_score)
         if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
-            # Optimization plateau detected - included in final metrics
             return best_processed_contents
 
         optimization = quality_response["optimization"]
         improved_queries = optimization["improved_queries"]
 
         if not improved_queries:
-            # No improvement possible - noted in final metrics
             return best_processed_contents
 
-        # Query improvement tracked in optimization loop
 
         new_vectors = await handle_retrieval(
             application_id=application_id,

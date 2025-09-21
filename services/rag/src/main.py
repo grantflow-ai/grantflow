@@ -37,10 +37,9 @@ logger = get_logger(__name__)
 
 
 def handle_pubsub_message(event: PubSubEvent) -> RagRequest:
-    # PubSub message decoding
     decoded_data = decode_pubsub_message(event=event)
     try:
-        return deserialize(decoded_data, RagRequest)
+        return deserialize(decoded_data, RagRequest)  # type: ignore[arg-type]
     except DeserializationError as e:
         logger.error(
             "Failed to parse PubSub message",
@@ -64,9 +63,7 @@ async def handle_request(
         trace_id=request.trace_id,
     )
 
-    # Handle autofill requests
     if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
-        # Fetch the GrantApplication from database
         async with session_maker() as session:
             application = await session.scalar(
                 select_active(GrantApplication).where(GrantApplication.id == request.application_id)
@@ -111,13 +108,10 @@ async def handle_request(
                     trace_id=request.trace_id,
                 )
                 span.set_attribute("autofill.cancelled", True)
-                # Return None to ACK the message and prevent retries
                 return
         return
 
-    # Handle grant template pipeline requests
     if isinstance(request, GrantTemplateRagRequest):
-        # Fetch the GrantTemplate from database
         async with session_maker() as session:
             grant_template = await session.scalar(
                 select_active(GrantTemplate).where(GrantTemplate.id == request.parent_id)
@@ -144,13 +138,10 @@ async def handle_request(
                 stage=request.stage,
                 trace_id=request.trace_id,
             )
-            # Return None to ACK the message and prevent retries
             return
         return
 
-    # Handle grant application pipeline requests
     if isinstance(request, GrantApplicationRagRequest):
-        # Fetch the GrantApplication from database
         async with session_maker() as session:
             grant_application = await session.scalar(
                 select_active(GrantApplication).where(GrantApplication.id == request.parent_id)
@@ -163,6 +154,12 @@ async def handle_request(
                     trace_id=request.trace_id,
                 )
                 raise ValidationError(f"Grant application {request.parent_id} not found")
+
+            if not grant_application.grant_template:
+                raise ValidationError("Grant template not found")
+
+            if not grant_application.grant_template.grant_sections:
+                raise ValidationError("Grant template has no sections")
 
         try:
             await handle_grant_application_pipeline(
@@ -177,7 +174,6 @@ async def handle_request(
                 stage=request.stage,
                 trace_id=request.trace_id,
             )
-            # Return None to ACK the message and prevent retries
             return
 
 

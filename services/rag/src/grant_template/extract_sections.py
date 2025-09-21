@@ -10,13 +10,21 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import SentenceTransformer, util
 
-from services.rag.src.grant_template.dto import CFPContentSection, OrganizationNamespace
+from services.rag.src.grant_template.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
+
+__all__ = [
+    "ExtractedSectionDTO",
+    "ExtractedSections",
+    "extract_sections",
+    "filter_extracted_sections",
+    "validate_section_extraction",
+]
 
 logger = get_logger(__name__)
 ref = Ref[SentenceTransformer]()
@@ -319,15 +327,6 @@ section_extraction_json_schema = {
 }
 
 
-class ExtractedSectionDTO(TypedDict):
-    title: str
-    id: str
-    order: int
-    parent_id: NotRequired[str]
-    is_detailed_research_plan: NotRequired[bool | None]
-    is_title_only: NotRequired[bool | None]
-    is_clinical_trial: NotRequired[bool | None]
-    is_long_form: bool
 
 
 class ExtractedSections(TypedDict):

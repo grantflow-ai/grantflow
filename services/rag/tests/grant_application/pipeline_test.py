@@ -19,7 +19,6 @@ from services.rag.src.grant_application.dto import (
 )
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
-# Use the PubSub test plugin
 pytest_plugins = ["testing.pubsub_test_plugin"]
 
 
@@ -27,9 +26,7 @@ pytest_plugins = ["testing.pubsub_test_plugin"]
 async def sample_rag_sources(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> list[RagSource]:
-    """Create real RAG sources in the database."""
     async with async_session_maker() as session:
-        # Create RAG sources
         sources = [
             RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
             RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
@@ -37,7 +34,6 @@ async def sample_rag_sources(
         session.add_all(sources)
         await session.flush()
 
-        # Link sources to grant application
         app_sources = [
             GrantApplicationSource(grant_application_id=grant_application.id, rag_source_id=source.id)
             for source in sources
@@ -52,7 +48,6 @@ async def sample_rag_sources(
 
 @pytest.fixture
 def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
-    """Sample sections generation data."""
     return GenerateSectionsStageDTO(
         section_texts=[
             SectionText(section_id="abstract", text="Sample abstract text"),
@@ -78,15 +73,13 @@ def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
 async def test_generate_sections_stage(
     mocker: MockerFixture,
     grant_application: GrantApplication,
-    grant_template: GrantTemplate,  # This ensures grant_template exists with cfp_analysis
+    grant_template: GrantTemplate,
     sample_rag_sources: list[RagSource],
     async_session_maker: async_sessionmaker[Any],
     sample_generate_sections_dto: GenerateSectionsStageDTO,
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test GENERATE_SECTIONS stage execution."""
-    # Setup mocks using mocker
     mock_verify_sources = mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -95,9 +88,7 @@ async def test_generate_sections_stage(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
         return_value=sample_generate_sections_dto,
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Execute
     result = await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -105,8 +96,7 @@ async def test_generate_sections_stage(
         trace_id=trace_id,
     )
 
-    # Verify
-    assert result is None  # Intermediate stage returns None
+    assert result is None
     mock_handle_generate_sections.assert_called_once()
     mock_verify_sources.assert_called_once()
 
@@ -120,8 +110,6 @@ async def test_extract_relationships_stage_requires_checkpoint(
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test EXTRACT_RELATIONSHIPS stage requires checkpoint data."""
-    # Setup mocks using mocker
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -129,9 +117,7 @@ async def test_extract_relationships_stage_requires_checkpoint(
     mock_handle_extract_relationships = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Execute - pipeline handles ValidationError internally and returns None
     result = await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -139,9 +125,7 @@ async def test_extract_relationships_stage_requires_checkpoint(
         trace_id=trace_id,
     )
 
-    # Verify error was handled gracefully
     assert result is None
-    # Should not call the handler if validation fails
     mock_handle_extract_relationships.assert_not_called()
 
 
@@ -154,8 +138,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test ENRICH_RESEARCH_OBJECTIVES stage requires checkpoint data."""
-    # Setup mocks using mocker
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -163,9 +145,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     mock_handle_enrich_objectives = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Execute - pipeline handles ValidationError internally and returns None
     result = await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -173,7 +153,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         trace_id=trace_id,
     )
 
-    # Verify error was handled gracefully
     assert result is None
     mock_handle_enrich_objectives.assert_not_called()
 
@@ -186,8 +165,6 @@ async def test_insufficient_context_error_handling(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    """Test InsufficientContextError handling with specific error message."""
-    # Setup mocks
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -197,7 +174,6 @@ async def test_insufficient_context_error_handling(
         side_effect=InsufficientContextError("Not enough context"),
     )
 
-    # Execute
     result = await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -205,7 +181,6 @@ async def test_insufficient_context_error_handling(
         trace_id=trace_id,
     )
 
-    # Verify
     assert result is None
 
 
@@ -217,8 +192,6 @@ async def test_indexing_timeout_error_handling(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    """Test ValidationError with indexing timeout handling."""
-    # Setup mocks
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -228,7 +201,6 @@ async def test_indexing_timeout_error_handling(
         side_effect=ValidationError("indexing timeout occurred"),
     )
 
-    # Execute
     result = await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -236,7 +208,6 @@ async def test_indexing_timeout_error_handling(
         trace_id=trace_id,
     )
 
-    # Verify
     assert result is None
 
 
@@ -248,8 +219,6 @@ async def test_generic_backend_error_handling(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    """Test generic BackendError handling."""
-    # Setup mocks
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -259,7 +228,6 @@ async def test_generic_backend_error_handling(
         side_effect=BackendError("Unexpected backend error"),
     )
 
-    # Execute
     result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -267,7 +235,6 @@ async def test_generic_backend_error_handling(
         trace_id=trace_id,
     )
 
-    # Verify
     assert result is None
 
 
@@ -279,15 +246,11 @@ async def test_missing_grant_template_validation(
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test validation error when grant template is missing."""
-    # Setup mocks using mocker
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Actually remove the grant_template from the database
     async with async_session_maker() as session:
         from packages.db.src.tables import GrantTemplate
         from sqlalchemy import delete
@@ -295,7 +258,6 @@ async def test_missing_grant_template_validation(
         await session.execute(delete(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id))
         await session.commit()
 
-    # Execute - pipeline handles ValidationError internally and returns None
     result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -303,7 +265,6 @@ async def test_missing_grant_template_validation(
         trace_id=trace_id,
     )
 
-    # Verify error was handled gracefully
     assert result is None
 
 
@@ -316,15 +277,11 @@ async def test_missing_cfp_analysis_validation(
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test validation error when CFP analysis is missing."""
-    # Setup mocks using mocker
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Actually remove CFP analysis from the database
     from packages.db.src.tables import GrantTemplate
     from sqlalchemy import update
 
@@ -334,7 +291,6 @@ async def test_missing_cfp_analysis_validation(
         )
         await session.commit()
 
-    # Execute - pipeline handles ValidationError internally and returns None
     result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -342,7 +298,6 @@ async def test_missing_cfp_analysis_validation(
         trace_id=trace_id,
     )
 
-    # Verify error was handled gracefully
     assert result is None
 
 
@@ -356,8 +311,6 @@ async def test_pipeline_creates_real_job_entry(
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
-    """Test that the pipeline creates real job entries in the database."""
-    # Setup mocks
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
@@ -366,9 +319,7 @@ async def test_pipeline_creates_real_job_entry(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
         return_value=sample_generate_sections_dto,
     )
-    # PubSub mocking handled by mock_pubsub_for_pipeline_testing fixture
 
-    # Execute
     result = await handle_grant_application_pipeline(  # type: ignore[func-returns-value]
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -376,8 +327,5 @@ async def test_pipeline_creates_real_job_entry(
         trace_id=trace_id,
     )
 
-    # Verify
     assert result is None
 
-    # The JobManager creates real database entries which we can verify
-    # but we're focusing on the pipeline logic here

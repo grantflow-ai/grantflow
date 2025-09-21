@@ -93,7 +93,6 @@ answer_response_schema = {
 
 
 def _validate_answer_response(response: AnswerResponse) -> None:
-    """Validate the answer response values (structure is already validated by deserialize)."""
     answer = response["answer"].strip()
     if len(answer) < MIN_ANSWER_LENGTH:
         raise ValidationError(
@@ -119,7 +118,7 @@ def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
     formatted = []
     for i, obj in enumerate(objectives):
         title = obj["title"]
-        description = obj.get("description", "")  # description is NotRequired
+        description = obj.get("description", "")
         formatted.append(f"{i + 1}. {title}")
         if description:
             formatted.append(f"   {description}")
@@ -162,7 +161,6 @@ async def _generate_field_answer(
 
 
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
-
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
     results = await batched_gather(
@@ -172,7 +170,7 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
             )
             for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
         ],
-        batch_size=4
+        batch_size=4,
     )
 
-    return ResearchDeepDive(**dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING, results, strict=True)))
+    return ResearchDeepDive(**dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys(), results, strict=True)))  # type: ignore[typeddict-item,no-any-return]

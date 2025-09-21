@@ -22,7 +22,6 @@ async def test_categorize_text_basic() -> None:
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
-    # Verify it detected the budget and date
     assert any("50,000" in str(item) for item in result["money"])
     assert any("2025" in str(item) for item in result["date_time"])
 
@@ -53,10 +52,8 @@ async def test_categorize_text_async() -> None:
 
     result = await categorize_text(text)
 
-    # Just verify the basic structure and that it contains expected content
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
-    # Verify money category detected the budget reference
     assert any("25,000" in str(item) for item in result["money"])
 
 

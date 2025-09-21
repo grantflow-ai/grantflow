@@ -280,7 +280,6 @@ async def analyze_cfp_sections(
     nlp_analysis: CategorizationAnalysisResult,
     trace_id: str,
 ) -> CFPSectionAnalysis:
-    # Starting CFP section analysis with NLP-enhanced extraction
 
     formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
     prompt = CFP_SECTION_ANALYZER_PROMPT.substitute(
@@ -303,15 +302,12 @@ async def analyze_cfp_sections(
 
 
 async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysisResult:
-    # Performing NLP categorization for CFP content
     nlp_analysis = await categorize_text(full_cfp_text)
 
     categories_found = sum(1 for v in nlp_analysis.values() if v)
     total_sentences = sum(len(sentences) for sentences in nlp_analysis.values() if isinstance(sentences, list))
 
-    # NLP analysis completed - categories identified
 
-    # Performing detailed CFP section requirements extraction
     cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
 
     return CFPAnalysisResult(

@@ -20,7 +20,6 @@ NIH_GRANT_BASE_URL: Final[str] = "https://grants.nih.gov/funding/nih-guide-for-g
 DEFAULT_FROM_DATE: Final[date] = date(1991, 1, 2)
 TODAY_DATE: Final[date] = datetime.now(UTC).date()
 
-# Reduced timeouts for fail-fast behavior in E2E tests
 PAGE_LOAD_TIMEOUT: Final[int] = 1000
 DIALOG_TIMEOUT: Final[int] = 2000
 SEARCH_WAIT_TIMEOUT: Final[int] = 2000
@@ -53,7 +52,7 @@ async def _navigate_to_search_page(page: Page) -> None:
     logger.info("Navigating to NIH grants page", url=url)
 
     try:
-        await page.goto(url, wait_until="domcontentloaded", timeout=10000)  # 10s timeout
+        await page.goto(url, wait_until="domcontentloaded", timeout=10000)
         logger.info("Page loaded, waiting for content")
         await page.wait_for_timeout(PAGE_LOAD_TIMEOUT)
 
@@ -61,7 +60,6 @@ async def _navigate_to_search_page(page: Page) -> None:
         current_url = page.url
         logger.info("Page loaded", title=title, current_url=current_url)
 
-        # Check if page loaded successfully
         if "error" in title.lower() or "404" in title or "not found" in title.lower():
             raise ScraperError(f"NIH page failed to load properly. Title: {title}, URL: {current_url}")
 
@@ -73,7 +71,6 @@ async def _navigate_to_search_page(page: Page) -> None:
 
     try:
         logger.info("Looking for Advanced Search link")
-        # Try multiple possible selectors for the Advanced Search link
         selectors = [
             "text=Advanced Search",
             "a:has-text('Advanced Search')",
@@ -93,7 +90,6 @@ async def _navigate_to_search_page(page: Page) -> None:
                 continue
 
         if not advanced_search:
-            # Get page content for debugging
             page_content = await page.content()
             available_links = await page.evaluate(
                 "() => Array.from(document.querySelectorAll('a')).map(a => ({ text: a.textContent?.trim(), href: a.href })).slice(0, 10)"
@@ -112,7 +108,6 @@ async def _navigate_to_search_page(page: Page) -> None:
         debug_path = TEMP_DIR / DEBUG_NO_ADVANCED_SEARCH
         await page.screenshot(path=str(debug_path), full_page=True)
 
-        # Get more debugging info
         page_html = await page.content()
         logger.error("Page HTML snippet for debugging", html_snippet=page_html[:1000])
 
@@ -156,7 +151,6 @@ async def _fill_search_form(page: Page, from_date: date, to_date: date) -> None:
 async def _submit_search_form(page: Page) -> None:
     try:
         logger.info("Looking for Search button in dialog")
-        # Try multiple selectors for the search button
         selectors = [
             "div[role='dialog'] button:has-text('Search')",
             "button:has-text('Search')",
@@ -177,7 +171,6 @@ async def _submit_search_form(page: Page) -> None:
                 continue
 
         if not search_button:
-            # Get available buttons for debugging
             available_buttons = await page.evaluate(
                 "() => Array.from(document.querySelectorAll('button, input[type=submit]')).map(b => ({ text: b.textContent?.trim() || b.value, type: b.type, disabled: b.disabled })).slice(0, 10)"
             )
@@ -192,7 +185,6 @@ async def _submit_search_form(page: Page) -> None:
         debug_path = TEMP_DIR / DEBUG_NO_SEARCH_BUTTON
         await page.screenshot(path=str(debug_path), full_page=True)
 
-        # Get dialog content for debugging
         dialog_content = await page.evaluate(
             "() => { const dialog = document.querySelector('[role=dialog]'); return dialog ? dialog.innerHTML : 'No dialog found'; }"
         )
@@ -208,12 +200,10 @@ async def _submit_search_form(page: Page) -> None:
 async def _export_and_download_results(page: Page) -> Download | None:
     download: Download | None = None
 
-    # First check if there are any results
     try:
         page_content = await page.content()
         logger.info("Checking page content for results")
 
-        # Check for common "no results" patterns
         no_results_patterns = [
             "No results found",
             "0 results",
@@ -227,7 +217,6 @@ async def _export_and_download_results(page: Page) -> Download | None:
                 logger.info("No results found on page", pattern=pattern)
                 return None
 
-        # Check for results count
         results_count = await page.evaluate(
             "() => { const text = document.body.textContent || ''; const match = text.match(/(\\d+)\\s+results?/i); return match ? match[1] : null; }"
         )
@@ -259,7 +248,6 @@ async def _export_and_download_results(page: Page) -> Download | None:
                 continue
 
         if not export_button:
-            # Get all clickable elements for debugging
             clickable_elements = await page.evaluate(
                 """() => {
                     const elements = Array.from(document.querySelectorAll('button, a[href], input[type=submit], [onclick]'));
@@ -284,7 +272,6 @@ async def _export_and_download_results(page: Page) -> Download | None:
             download = await page.wait_for_event("download", timeout=DOWNLOAD_TIMEOUT)
             logger.info("Download started successfully")
         except Exception as download_error:
-            # Check if a new page opened instead of download
             pages = page.context.pages
             if len(pages) > 1:
                 logger.info("New page opened instead of download, checking new page")
@@ -304,7 +291,6 @@ async def _export_and_download_results(page: Page) -> Download | None:
         debug_path = TEMP_DIR / "scraper_debug_export_failed.png"
         await page.screenshot(path=str(debug_path), full_page=True)
 
-        # Get final page state for debugging
         final_url = page.url
         logger.error("Export failed - final page state", url=final_url, error=str(e))
 
@@ -344,7 +330,6 @@ async def _process_csv_download(download: Download) -> list[GrantInfo]:
 
 
 async def download_search_data(*, to_date: date = TODAY_DATE, from_date: date = DEFAULT_FROM_DATE) -> list[GrantInfo]:
-    # Use environment variable for timeout, default to 60 seconds for E2E tests
     timeout_seconds = int(get_env("SCRAPER_E2E_TIMEOUT", fallback="60"))
     logger.info(
         "Starting scraper with timeout",
@@ -381,7 +366,6 @@ async def download_search_data(*, to_date: date = TODAY_DATE, from_date: date = 
                 return search_data
 
             except Exception as e:
-                # Take final screenshot for debugging
                 debug_path = TEMP_DIR / f"scraper_debug_final_error_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.png"
                 try:
                     await page.screenshot(path=str(debug_path), full_page=True)

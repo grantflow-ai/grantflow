@@ -60,16 +60,14 @@ class SectionText(TypedDict):
 
 
 class GenerateSectionsStageDTO(TypedDict):
-    """Contains only the generated section texts, not the input data"""
 
-    section_texts: list[SectionText]  # Generated texts for all sections except research plan
-    work_plan_section: GrantLongFormSection  # The research plan section to generate later
+    section_texts: list[SectionText]
+    work_plan_section: GrantLongFormSection
 
 
 class ExtractRelationshipsStageDTO(GenerateSectionsStageDTO):
-    """Adds extracted relationships to the previous stage data"""
 
-    relationships: dict[str, list[tuple[str, str]]]  # Relationships between objectives/tasks
+    relationships: dict[str, list[tuple[str, str]]]
 
 
 class ObjectiveEnrichmentResponse(TypedDict):
@@ -78,18 +76,15 @@ class ObjectiveEnrichmentResponse(TypedDict):
 
 
 class EnrichObjectivesStageDTO(ExtractRelationshipsStageDTO):
-    """Adds enrichment responses to the previous stage data"""
 
-    enrichment_responses: list[ObjectiveEnrichmentResponse]  # Enriched objectives and tasks data
+    enrichment_responses: list[ObjectiveEnrichmentResponse]
 
 
 class EnrichTerminologyStageDTO(EnrichObjectivesStageDTO):
-    """Adds Wikidata enrichments to the previous stage data"""
 
-    wikidata_enrichments: list[EnrichmentDataDTO]  # Scientific terminology enrichments
+    wikidata_enrichments: list[EnrichmentDataDTO]
 
 
 class GenerateResearchPlanStageDTO(EnrichTerminologyStageDTO):
-    """Final stage with complete application text"""
 
-    research_plan_text: str  # The generated research plan/work plan text
+    research_plan_text: str

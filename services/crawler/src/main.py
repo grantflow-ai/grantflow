@@ -157,7 +157,7 @@ async def handle_url_crawling(
         decode_start = time.time()
         crawling_request = await decode_pubsub_message(data)
         decode_duration = time.time() - decode_start
-        trace_id = crawling_request.get("trace_id")
+        trace_id = crawling_request.get("trace_id") or ""
 
         logger.debug(
             "PubSub message decoded successfully",

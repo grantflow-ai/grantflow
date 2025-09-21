@@ -68,11 +68,9 @@ class MemberActionResponse(TypedDict):
     operation_id="ListOrganizationMembers",
 )
 async def handle_list_organization_members(
-    request: APIRequest,
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationMemberResponse]:
-    # Listing organization members
 
     async with session_maker() as session:
         organization = await session.scalar(
@@ -142,7 +140,6 @@ async def handle_add_organization_member(
     data: AddMemberRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-    # Adding organization member
 
     async with session_maker() as session, session.begin():
         try:
@@ -209,7 +206,6 @@ async def handle_update_member_role(
     data: UpdateMemberRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-    # Updating member role
 
     async with session_maker() as session, session.begin():
         try:
@@ -339,7 +335,6 @@ async def handle_remove_member(
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Removing organization member
 
     async with session_maker() as session, session.begin():
         try:

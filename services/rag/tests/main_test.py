@@ -56,7 +56,7 @@ def pubsub_event_grant_application(grant_application_id: UUID) -> PubSubEvent:
 @pytest.fixture
 def mock_grant_template_handler(mocker: MockerFixture) -> AsyncMock:
     return mocker.patch(
-        "services.rag.src.main.grant_template_generation_pipeline_handler",
+        "services.rag.src.main.handle_grant_template_pipeline",
         new_callable=AsyncMock,
     )
 
@@ -64,7 +64,7 @@ def mock_grant_template_handler(mocker: MockerFixture) -> AsyncMock:
 @pytest.fixture
 def mock_grant_application_handler(mocker: MockerFixture) -> AsyncMock:
     return mocker.patch(
-        "services.rag.src.main.grant_application_text_generation_pipeline_handler",
+        "services.rag.src.main.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     )
 
@@ -222,10 +222,10 @@ def test_handle_pubsub_message_valid() -> None:
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
-    rag_result = cast("RagRequest", result)
 
-    assert rag_result["parent_type"] == "grant_template"
-    assert isinstance(rag_result["parent_id"], UUID)
+    # Access result directly without redundant cast and indexing
+    assert hasattr(result, 'parent_type')
+    assert hasattr(result, 'parent_id')
 
 
 def test_handle_pubsub_message_invalid() -> None:

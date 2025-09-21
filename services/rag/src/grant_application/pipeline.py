@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Any, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum
-from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -19,7 +18,6 @@ from packages.shared_utils.src.pubsub import publish_email_notification
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
 
 from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
@@ -52,7 +50,6 @@ async def _initialize_pipeline(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> tuple[GrantApplicationJobManager[StageDTO], Any]:
-    """Initialize the pipeline job manager and verify prerequisites."""
     application_id = grant_application.id
 
     job_manager = GrantApplicationJobManager[StageDTO](
@@ -83,27 +80,13 @@ async def _verify_prerequisites(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:
-    """Verify that prerequisites for pipeline execution are met."""
-    application_id = grant_application.id
-
-    # Load grant_template eagerly to avoid lazy loading issues
-    async with session_maker() as session:
-        result = await session.execute(
-            select_active(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template))
-            .where(GrantApplication.id == application_id)
-        )
-        fresh_application = result.scalar_one_or_none()
-        grant_template = fresh_application.grant_template if fresh_application else None
-
-    if grant_template is None:
-        raise ValidationError("Grant template is unexpectedly None")
+    grant_template = cast("GrantTemplate", grant_application.grant_template)
 
     if not grant_template.cfp_analysis:
         raise ValidationError("CFP analysis is missing from grant template")
 
     await verify_rag_sources_indexed(
-        parent_id=application_id,
+        parent_id=grant_application.id,
         session_maker=session_maker,
         entity_type=GrantApplication,
         trace_id=trace_id,
@@ -114,7 +97,6 @@ async def _verify_prerequisites(
 
 
 def _get_error_details(error: BackendError) -> tuple[str, str]:
-    """Map backend errors to user-friendly messages and notification events."""
     if isinstance(error, InsufficientContextError):
         return (
             "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives.",
@@ -166,7 +148,6 @@ async def _handle_pipeline_error(
     generation_stage: GrantApplicationStageEnum,
     trace_id: str,
 ) -> None:
-    """Handle pipeline errors with proper logging and notifications."""
     job_id = existing_job.id if existing_job else None
     logger.error(
         "Backend error in grant application generation pipeline",
@@ -215,7 +196,6 @@ async def _handle_pipeline_error(
     except SQLAlchemyError as e:
         raise DatabaseError("Failed to record pipeline error in database") from e
 
-    # Error handled and notification sent
 
 
 async def handle_grant_application_pipeline(
@@ -240,24 +220,19 @@ async def handle_grant_application_pipeline(
 
         grant_template = await _verify_prerequisites(grant_application, session_maker, trace_id)
 
-        # Match/case routing based on stage
         match generation_stage:
             case GrantApplicationStageEnum.GENERATE_SECTIONS:
-                # Stage execution logged by job manager notification
                 await job_manager.ensure_not_cancelled()
 
-                # First stage - create initial DTO
                 dto = await handle_generate_sections_stage(
                     grant_application=grant_application,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
-                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -270,11 +245,9 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
-                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -287,11 +260,9 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
-                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -303,11 +274,9 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
-                # Final stage - keep minimal logging for important milestone
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -334,8 +303,6 @@ async def handle_grant_application_pipeline(
                     notification_type="info",
                 )
 
-                # Final stage - save to database
-                # Combine section texts from DTO with research plan
                 complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
                 complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]
 
@@ -353,7 +320,6 @@ async def handle_grant_application_pipeline(
                             .values(text=application_text)
                         )
 
-                        # Update job status and add notification within the same transaction
                         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
                         await job_manager.add_notification(
                             event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,

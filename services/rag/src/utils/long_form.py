@@ -150,10 +150,8 @@ async def handle_long_form_text_generation(
 
     api_call_num = 1
 
-    # Starting multi-step text generation
     time()
     while api_call_num <= max_api_calls:
-        # API call for next text segment
 
         prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
@@ -178,11 +176,9 @@ async def handle_long_form_text_generation(
         result = concatenate_segments_with_spacy_coherence([result, response["text"]])
         current_word_count = count_words(result)
 
-        # Progress tracked - continue if not complete
 
         api_call_num += 1
         if response["is_complete"]:
-            # Generation complete
             break
 
         if api_call_num > max_api_calls:
@@ -205,7 +201,6 @@ async def handle_long_form_text_generation(
             trace_id=trace_id,
         )
 
-    # Text generation completed
 
     return normalize_markdown(result)
 
@@ -254,7 +249,6 @@ async def generate_long_form_text(
     while long_form_length > max_words and attempts < max_shortening_attempts:
         words_overflow = long_form_length - max_words
 
-        # Text exceeds limit - shortening required
 
         long_form_text = await handle_long_form_text_generation(
             max_words=max_words,
@@ -266,9 +260,7 @@ async def generate_long_form_text(
         )
 
         long_form_length = count_words(long_form_text)
-        # Shortening attempt complete
         attempts += 1
 
-    # Long-form generation finalized
 
     return long_form_text

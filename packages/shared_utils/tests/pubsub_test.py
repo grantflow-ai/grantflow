@@ -10,9 +10,10 @@ from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import (
     CrawlingRequest,
+    GrantApplicationRagRequest,
+    GrantTemplateRagRequest,
     PubSubEvent,
     PubSubMessage,
-    RagRequest,
     SourceProcessingResult,
     WebsocketMessage,
     get_publisher_client,
@@ -44,6 +45,11 @@ def mock_subscriber_client() -> Mock:
         "projects/test-project/subscriptions/test-subscription"
     )
     return client
+
+
+@pytest.fixture
+def trace_id() -> str:
+    return "test-trace-id-123"
 
 
 @pytest.fixture(autouse=True)
@@ -433,6 +439,7 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         b'{"type":"data",'
         b'"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"event":"source_processing",'
+        b'"trace_id":"test-trace-123",'
         b'"data":{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"323e4567-e89b-12d3-a456-426614174000",'
@@ -451,6 +458,7 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         b'{"type":"data",'
         b'"parent_id":"999e4567-e89b-12d3-a456-426614174000",'
         b'"event":"source_processing",'
+        b'"trace_id":"test-trace-456",'
         b'"data":{"parent_id":"999e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"423e4567-e89b-12d3-a456-426614174000",'
@@ -678,21 +686,21 @@ def test_websocket_message_typed_dict(trace_id: str) -> None:
 
 
 def test_rag_request_typed_dict(trace_id: str) -> None:
-    request: RagRequest = {
-        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "grant_application",
-        "stage": GrantApplicationStageEnum.INITIALIZE,
-        "trace_id": trace_id,
-    }
-    assert request["parent_type"] == "grant_application"
+    request = GrantApplicationRagRequest(
+        parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
+        trace_id=trace_id,
+    )
+    assert hasattr(request, "parent_id")
+    assert request.stage == GrantApplicationStageEnum.VALIDATE_CONTEXT
 
-    request_template: RagRequest = {
-        "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_type": "grant_template",
-        "stage": GrantTemplateStageEnum.INITIALIZE,
-        "trace_id": trace_id,
-    }
-    assert request_template["parent_type"] == "grant_template"
+    request_template = GrantTemplateRagRequest(
+        parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        trace_id=trace_id,
+    )
+    assert hasattr(request_template, "parent_id")
+    assert request_template.stage == GrantTemplateStageEnum.EXTRACT_CFP_CONTENT
 
 
 async def test_publish_rag_task_success(

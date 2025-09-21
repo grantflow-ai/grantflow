@@ -169,7 +169,6 @@ async def handle_source_validation(
     trace_id: str,
     **sources: Any,
 ) -> str | None:
-    # Validating sources for task based on minimum percentage threshold
 
     prompt = VALIDATE_SOURCES_USER_PROMPT.to_string(
         task_description=task_description,

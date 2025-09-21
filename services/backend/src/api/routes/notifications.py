@@ -49,7 +49,6 @@ async def list_notifications(
     session_maker: async_sessionmaker[Any],
     include_read: bool = False,
 ) -> ListNotificationsResponse:
-    # Listing notifications
 
     async with session_maker() as session:
         filters = [
@@ -91,7 +90,6 @@ async def list_notifications(
 
             notification_responses.append(response)
 
-        # Retrieved notifications successfully
 
         return ListNotificationsResponse(notifications=notification_responses, total=len(notification_responses))
 
@@ -108,7 +106,6 @@ async def dismiss_notification(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
 ) -> DismissNotificationResponse:
-    # Dismissing notification
 
     async with session_maker() as session, session.begin():
         result = await session.execute(
@@ -135,6 +132,5 @@ async def dismiss_notification(
 
         await session.commit()
 
-        # Notification dismissed successfully
 
         return DismissNotificationResponse(success=True, notification_id=str(notification_id))

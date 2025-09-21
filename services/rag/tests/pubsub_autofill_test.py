@@ -17,7 +17,6 @@ from services.rag.src.main import handle_pubsub_message
 
 
 def create_pubsub_event_from_struct(request_obj: Any) -> PubSubEvent:
-    """Create a PubSub event from a msgspec struct."""
     serialized_data = serialize(request_obj)
     encoded_data = base64.b64encode(serialized_data).decode()
     return PubSubEvent(
@@ -31,7 +30,6 @@ def create_pubsub_event_from_struct(request_obj: Any) -> PubSubEvent:
 
 
 def create_pubsub_event(data: dict[str, Any]) -> PubSubEvent:
-    """Legacy function for backward compatibility with dict data."""
     encoded_data = base64.b64encode(json.dumps(data).encode()).decode()
     return PubSubEvent(
         message=PubSubMessage(

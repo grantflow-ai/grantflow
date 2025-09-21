@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
@@ -24,7 +25,7 @@ from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.text import normalize_markdown
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import GrantLongFormSection
+    from packages.db.src.json_objects import CFPAnalysisResult, GrantLongFormSection
     from packages.db.src.tables import GrantApplication
 
 logger = get_logger(__name__)
@@ -44,13 +45,14 @@ async def handle_generate_sections_stage(
         notification_type="info",
     )
 
-    # Validation has been moved to pipeline.py
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
     work_plan_section: GrantLongFormSection | None = None
 
+    if not grant_application.grant_template:
+        raise ValidationError("Grant template not found")
+
     for section in grant_application.grant_template.grant_sections:
-        # Check if this is a GrantLongFormSection (has required fields)
         if "max_words" in section and "generation_instructions" in section:
             long_form_section = cast("GrantLongFormSection", section)
             if long_form_section["is_detailed_research_plan"]:
@@ -58,7 +60,6 @@ async def handle_generate_sections_stage(
             else:
                 long_form_sections.append(long_form_section)
 
-    # Logging handled by pipeline and notifications
 
     all_search_queries = []
     all_keywords = []
@@ -75,7 +76,6 @@ async def handle_generate_sections_stage(
 
     unique_queries = list(dict.fromkeys(all_search_queries))[:12]
 
-    # Retrieval logging handled within retrieve_documents
 
     combined_task_description = (
         f"Generate content for {len(long_form_sections)} grant application sections: "
@@ -96,7 +96,7 @@ async def handle_generate_sections_stage(
             section,
             grant_application.research_objectives or [],
             shared_context,
-            grant_application.grant_template.cfp_analysis,
+            cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
             trace_id
         )
         for section in long_form_sections
@@ -109,7 +109,6 @@ async def handle_generate_sections_stage(
         section_id = section["id"]
         section_texts[section_id] = result
 
-    # Convert dict to list of SectionText
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
 
     await job_manager.add_notification(
@@ -120,6 +119,9 @@ async def handle_generate_sections_stage(
             "sections_generated": len(section_text_list),
         },
     )
+
+    if work_plan_section is None:
+        raise ValidationError("Work plan section not found in grant template")
 
     return GenerateSectionsStageDTO(
         section_texts=section_text_list,
@@ -221,7 +223,6 @@ async def handle_enrich_terminology_stage(
         notification_type="info",
     )
 
-    # Enhance each objective with Wikidata scientific context in parallel
     wikidata_enrichment_coroutines = [
         enrich_objective_with_wikidata(enrichment_response, trace_id=trace_id)
         for enrichment_response in dto["enrichment_responses"]
