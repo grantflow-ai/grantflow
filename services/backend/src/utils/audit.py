@@ -52,7 +52,6 @@ async def log_organization_audit(
                 ip_address=ip_address,
             )
         )
-        # Audit log created successfully
     except Exception as e:
         logger.warning(
             "Failed to create audit log",

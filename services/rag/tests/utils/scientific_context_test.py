@@ -24,7 +24,7 @@ def test_format_scientific_context_empty() -> None:
 
 
 def test_format_scientific_context_none() -> None:
-    result = format_scientific_context(None)  # type: ignore
+    result = format_scientific_context(None)  # type: ignore[arg-type]
     assert result == ""
 
 
@@ -118,7 +118,7 @@ def test_validate_scientific_context_empty() -> None:
 
 
 def test_validate_scientific_context_none() -> None:
-    result = validate_scientific_context(None)  # type: ignore
+    result = validate_scientific_context(None)
 
     assert result["is_valid"] is False
     assert result["has_content"] is False

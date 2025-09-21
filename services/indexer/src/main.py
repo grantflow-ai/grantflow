@@ -39,10 +39,10 @@ class GCSNotification(TypedDict):
     event_type: str
 
 
-def get_gcs_notification_data(event: PubSubEvent) -> tuple[GCSNotification | None, str | None]:
+def get_gcs_notification_data(event: PubSubEvent) -> tuple[GCSNotification | None, str]:
     attributes = event.message.attributes or {}
 
-    trace_id = attributes.get("customMetadata_trace-id") or attributes.get("trace_id")
+    trace_id = attributes.get("customMetadata_trace-id") or attributes.get("trace_id") or ""
     logger.debug(
         "Parsing GCS notification",
         attributes_count=len(attributes),
@@ -79,7 +79,7 @@ def get_gcs_notification_data(event: PubSubEvent) -> tuple[GCSNotification | Non
 
 async def handle_pubsub_message(
     event: PubSubEvent,
-) -> tuple[URIParseResult, str, str | None]:
+) -> tuple[URIParseResult, str, str]:
     logger.debug(
         "Processing PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
     )

@@ -69,7 +69,6 @@ async def handle_search_grants(
 ) -> list[GrantInfoResponse]:
     limit = min(limit, 100)
 
-    # Public grant search request
 
     try:
         async with session_maker() as session:
@@ -133,7 +132,6 @@ async def handle_search_grants(
 
                 results.append(grant_info)
 
-            # Public grant search completed
             return results
 
     except SQLAlchemyError as e:
@@ -156,7 +154,6 @@ async def handle_search_grants(
 
 @get("/grants/{grant_id:str}", operation_id="GetGrantDetails")
 async def handle_get_grant_details(grant_id: str, session_maker: async_sessionmaker[Any]) -> GrantInfoResponse:
-    # Public grant details request
 
     try:
         async with session_maker() as session:
@@ -190,7 +187,6 @@ async def handle_get_grant_details(grant_id: str, session_maker: async_sessionma
                 "deadline": None,
             }
 
-            # Public grant details retrieved
             return grant_info
 
     except SQLAlchemyError as e:
@@ -203,7 +199,6 @@ async def handle_create_subscription(
     data: SubscriptionRequest,
     session_maker: async_sessionmaker[Any],
 ) -> SubscriptionResponse:
-    # Creating grant subscription
 
     try:
         async with session_maker() as session, session.begin():
@@ -222,7 +217,6 @@ async def handle_create_subscription(
                 )
                 subscription_id = result.scalar_one()
 
-                # Grant subscription created
 
                 return SubscriptionResponse(
                     id=str(subscription_id),
@@ -251,7 +245,6 @@ async def handle_unsubscribe(
     data: UnsubscribeRequest,
     session_maker: async_sessionmaker[Any],
 ) -> UnsubscribeResponse:
-    # Unsubscribing from grant notifications
 
     try:
         async with session_maker() as session, session.begin():
@@ -271,7 +264,6 @@ async def handle_unsubscribe(
                 .values(unsubscribed=True, unsubscribed_at=datetime.now(UTC))
             )
 
-            # Grant subscription cancelled
 
             return UnsubscribeResponse(
                 message="Successfully unsubscribed from grant notifications",

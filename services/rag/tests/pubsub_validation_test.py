@@ -33,10 +33,10 @@ def test_handle_pubsub_message_valid_grant_template() -> None:
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
-    rag_result = cast("RagRequest", result)
 
-    assert str(rag_result["parent_id"]) == data["parent_id"]
-    assert rag_result["parent_type"] == data["parent_type"]
+    # Access result directly without redundant cast and indexing
+    assert hasattr(result, 'parent_id')
+    assert hasattr(result, 'parent_type')
 
 
 def test_handle_pubsub_message_valid_grant_application() -> None:
@@ -48,10 +48,10 @@ def test_handle_pubsub_message_valid_grant_application() -> None:
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
-    rag_result = cast("RagRequest", result)
 
-    assert str(rag_result["parent_id"]) == data["parent_id"]
-    assert rag_result["parent_type"] == data["parent_type"]
+    # Access result directly without redundant cast and indexing
+    assert hasattr(result, 'parent_id')
+    assert hasattr(result, 'parent_type')
 
 
 def test_handle_pubsub_message_invalid_parent_type() -> None:

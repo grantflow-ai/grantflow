@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import partial
@@ -169,12 +170,25 @@ async def make_google_completions_request[T](
 
     content = "\n".join(message_parts)
     start_time = datetime.now(UTC)
-    response = await client._aio.models.generate_content(  # noqa: SLF001
-        model=model,
-        contents=content,
-        config=config,
-        timeout=timeout,
-    )
+
+    try:
+        async with asyncio.timeout(timeout):
+            response = await client._aio.models.generate_content(  # noqa: SLF001
+                model=model,
+                contents=content,
+                config=config,
+            )
+    except TimeoutError as e:
+        elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
+        raise LLMTimeoutError(
+            f"Google AI API request timed out after {timeout}s",
+            context={
+                "model": model,
+                "timeout_seconds": timeout,
+                "elapsed_ms": elapsed_ms,
+                "prompt_identifier": prompt_identifier,
+            },
+        ) from e
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
     usage_metadata = getattr(response, "usage_metadata", None)
@@ -358,7 +372,7 @@ def format_error_for_llm(error: Exception) -> str:
     return f"Error ({type(error).__name__}): {error!s}"
 
 
-async def handle_completions_request[T](
+async def handle_completions_request[T](  # noqa: PLR0912
     *,
     max_attempts: int = 3,
     messages: str | list[str],
@@ -469,9 +483,8 @@ async def handle_completions_request[T](
             )
             errors.append(timeout_error)
 
-            # If this is the last attempt, raise our custom timeout error
             if attempts >= max_attempts:
-                raise timeout_error
+                raise timeout_error from None
         except DeserializationError as e:
             attempts += 1
             logger.warning(
@@ -560,7 +573,7 @@ async def handle_completions_request[T](
             else:
                 errors.append(e)
                 attempts += 1
-        except (RateLimitError, APITimeoutError, APIConnectionError) as e:
+        except (RateLimitError, APIConnectionError) as e:
             logger.warning(
                 "Anthropic API temporarily unavailable, switching to Google",
                 prompt_identifier=prompt_identifier,

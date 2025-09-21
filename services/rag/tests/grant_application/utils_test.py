@@ -18,7 +18,6 @@ SAMPLE_TEXTS = {
 }
 
 
-# Tests for the simplified utils module focused on tree operations and text generation
 
 
 @pytest.fixture

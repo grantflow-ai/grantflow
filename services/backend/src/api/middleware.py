@@ -105,12 +105,10 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
             token = auth_header.removeprefix("Bearer ").strip()
 
-            # Build possible audience URLs to handle Cloud Run URL variations
             possible_audiences = [
                 f"https://{connection.url.netloc}{path}",
             ]
 
-            # Also check with X-Forwarded-Host header if present (for load balancer scenarios)
             if forwarded_host := connection.headers.get("X-Forwarded-Host"):
                 forwarded_audience = f"https://{forwarded_host}{path}"
                 if forwarded_audience not in possible_audiences:
@@ -123,7 +121,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 netloc=connection.url.netloc,
             )
 
-            # Try each possible audience URL
             for expected_audience in possible_audiences:
                 if verify_webhook_oidc_token(token, expected_audience):
                     logger.debug(
@@ -133,7 +130,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                     )
                     return AuthenticationResult(user=None, auth=None)
 
-            # If none matched, log the failure
             logger.error(
                 "Webhook authentication failed - Invalid OIDC token",
                 path=path,

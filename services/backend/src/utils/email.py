@@ -67,7 +67,6 @@ async def send_grant_alert_email(
         html=html_content,
     )
 
-    # Grant alert email sent successfully
 
 
 async def send_application_ready_email(
@@ -110,4 +109,3 @@ async def send_application_ready_email(
         attachments=attachments,
     )
 
-    # Application email sent successfully

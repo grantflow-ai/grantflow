@@ -40,9 +40,7 @@ async def handle_generate_grant_template(
 ) -> None:
     trace_id = get_trace_id(request)
 
-    # Creating grant template via RAG pipeline
 
-    # Starting grant template generation validation
 
     async with session_maker() as session:
         grant_template = await session.scalar(
@@ -53,14 +51,11 @@ async def handle_generate_grant_template(
         )
 
         if not grant_template:
-            # Grant template validation failed - template not found
             raise ValidationException("Grant template not found")
 
         if grant_template.grant_sections:
-            # Grant template already has sections, skipping generation
             return
 
-        # Grant template found, checking RAG sources
 
         rag_sources_count = await session.scalar(
             select(count())
@@ -81,10 +76,8 @@ async def handle_generate_grant_template(
         )
 
         if rag_sources_count == 0:
-            # Grant template generation validation failed - no RAG sources
             raise ValidationException("No rag sources found for grant template, cannot generate")
 
-        # Validation passed, publishing RAG task to PubSub
 
         try:
             await publish_rag_task(
@@ -94,7 +87,6 @@ async def handle_generate_grant_template(
                 trace_id=trace_id,
             )
 
-            # Successfully published grant template generation task
         except BackendError as e:
             logger.error("Error initiating grant template generation", exc_info=e)
             raise
@@ -117,7 +109,6 @@ async def handle_update_grant_template(
 ) -> None:
     get_trace_id(request)
 
-    # Updating grant template data
 
     async with session_maker() as session, session.begin():
         try:

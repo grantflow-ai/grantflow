@@ -26,7 +26,6 @@ variable "image_tag_suffix" {
   default     = "latest"
 }
 
-# Image digest variables for SHA-based deployments
 variable "backend_image_digest" {
   description = "Backend service image SHA digest (optional, takes precedence over tag)"
   type        = string

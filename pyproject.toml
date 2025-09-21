@@ -61,6 +61,7 @@ format.docstring-code-format = true
 lint.select = [ "ALL" ]
 lint.ignore = [
   "ANN401",   # Dynamically typed ANY
+  "ASYNC109", # Async function definition with a timeout parameter
   "ASYNC110", # Use Event instead of sleep in async loop
   "BLE001",   # Do not catch blind exception - we allow this pattern
   "COM812",   # Conflicts with formatter

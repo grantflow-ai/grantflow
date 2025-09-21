@@ -162,10 +162,8 @@ async def handle_create_rag_source(
                     )
                 ):
                     if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                        # Found existing rag source for URL
                         return UUID(str(rag_source.id))
 
-                    # Soft-deleting failed rag source
                     rag_source.soft_delete()
 
             source_id = await session.scalar(
@@ -182,7 +180,6 @@ async def handle_create_rag_source(
                 .returning(RagSource.id)
             )
 
-            # Created rag source successfully
 
             if url:
                 await session.execute(
@@ -197,7 +194,6 @@ async def handle_create_rag_source(
                     )
                     .returning(RagUrl.id)
                 )
-                # Created rag url successfully
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
@@ -221,11 +217,9 @@ async def handle_create_rag_source(
                         ]
                     )
                 )
-                # Created rag file successfully
 
             await _create_junction_table_entry(session, parent_type, entity_id, source_id)
 
-            # Successfully created complete rag source with junction table entry
             return UUID(str(source_id))
 
         except SQLAlchemyError as e:
@@ -257,7 +251,6 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            # Created grant application source link
         elif parent_type == "grant_template":
             await session.execute(
                 insert(GrantTemplateSource).values(
@@ -267,7 +260,6 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            # Created grant template source link
         else:
             await session.execute(
                 insert(GrantingInstitutionSource).values(
@@ -277,7 +269,6 @@ async def _create_junction_table_entry(
                     }
                 )
             )
-            # Created granting institution source link
     except SQLAlchemyError as e:
         logger.exception(
             "Critical error creating junction table entry",
@@ -479,7 +470,6 @@ async def handle_delete_rag_source(
             if isinstance(source, RagFile):
                 try:
                     await delete_blob(source.object_path)
-                    # Deleted file from GCS successfully
                 except Exception as e:
                     logger.warning(
                         "Failed to delete file from GCS, continuing with database deletion",
@@ -519,7 +509,6 @@ async def handle_delete_rag_source(
             source.soft_delete()
             await session.commit()
 
-            # Successfully soft deleted RAG source
 
         except NoResultFound as e:
             raise NotFoundException from e
@@ -617,7 +606,6 @@ async def handle_crawl_url(
     trace_id = get_trace_id(request)
     url = data["url"]
 
-    # Starting URL crawl request
 
     if not project_id and not organization_id and not granting_institution_id:
         raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
@@ -649,7 +637,6 @@ async def handle_crawl_url(
         trace_id=trace_id,
     )
 
-    # Published URL crawling task successfully
 
     return UrlCrawlingResponse(
         source_id=str(source_id),
@@ -675,4 +662,3 @@ async def _cancel_job_if_active(
         )
         session.add(notification)
 
-        # Cancelled job due to source deletion

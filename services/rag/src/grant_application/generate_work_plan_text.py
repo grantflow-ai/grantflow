@@ -164,7 +164,6 @@ async def generate_work_plan_component_text(
     work_plan_text: str,
     trace_id: str,
 ) -> str:
-    # Generating text for work plan component
 
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
@@ -232,7 +231,6 @@ async def generate_objective_with_tasks(
     work_plan_text: str,
     trace_id: str,
 ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
-    """Generate text for an objective and its associated tasks in parallel."""
     research_objective_text = await generate_work_plan_component_text(
         application_id=application_id,
         component=objective,

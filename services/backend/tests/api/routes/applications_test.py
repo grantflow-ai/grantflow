@@ -241,6 +241,7 @@ async def test_generate_application_success(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_application",
         parent_id=grant_application.id,
+        stage=ANY,
         trace_id=ANY,
     )
 
@@ -1002,6 +1003,7 @@ async def test_generate_application_status_transition_to_generating(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_application",
         parent_id=grant_application.id,
+        stage=ANY,
         trace_id=ANY,
     )
 

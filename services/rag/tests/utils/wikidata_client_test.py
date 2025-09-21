@@ -5,11 +5,15 @@ import httpx
 import pytest
 from pytest_mock import MockerFixture
 
-from services.rag.src.utils.wikidata_client import (
+from services.rag.src.grant_application.enrich_terminology_stage import (
     _build_sparql_query,
     _parse_wikidata_response,
-    expand_scientific_terms,
-    get_scientific_context,
+)
+from services.rag.src.grant_application.enrich_terminology_stage import (
+    _expand_scientific_terms as expand_scientific_terms,
+)
+from services.rag.src.grant_application.enrich_terminology_stage import (
+    _get_scientific_context as get_scientific_context,
 )
 
 
@@ -78,7 +82,7 @@ async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock
 
 
 def test_build_sparql_query() -> None:
-    terms = ["machine learning", "artificial intelligence"]
+    terms = ("machine learning", "artificial intelligence")
     query = _build_sparql_query(terms)
 
     assert "machine learning" in query

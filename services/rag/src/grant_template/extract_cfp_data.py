@@ -54,16 +54,13 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
 
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
         del _cfp_extraction_cache[cache_key]
-        # Cache entry expired
         return None
 
-    # Cache hit
     return result
 
 
 def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
     _cfp_extraction_cache[cache_key] = (result, time.time())
-    # Result cached
 
 
 TEMPERATURE: Final[float] = 0.1
@@ -162,7 +159,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             ]
             if v
         }
-        # NLP analysis completed for source
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),
@@ -353,7 +349,6 @@ async def handle_extract_cfp_data(
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
-        # Using cached result
         return cached_result
 
     rag_sources = await get_rag_sources_data(source_ids, session_maker)
@@ -363,7 +358,6 @@ async def handle_extract_cfp_data(
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
 
-    # Extracting CFP data from multiple sources
 
     result = await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data_multi_source",
@@ -419,6 +413,5 @@ async def handle_extract_cfp_data(
     )
 
     _cache_cfp_result(cache_key, result)
-    # CFP extraction completed and cached
 
     return result

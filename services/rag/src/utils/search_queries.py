@@ -202,6 +202,5 @@ async def handle_create_search_queries(
     final_queries = [q["query"] for q in query_results]
 
     [q.get("type", "unknown") for q in query_results]
-    # Search queries generated with type diversity
 
     return final_queries[:10]

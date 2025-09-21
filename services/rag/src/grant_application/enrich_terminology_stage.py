@@ -1,8 +1,3 @@
-"""Wikidata terminology enrichment stage for grant applications.
-
-This module handles the enrichment of scientific terminology using Wikidata,
-providing additional scientific context for grant applications.
-"""
 
 from collections import defaultdict
 from functools import lru_cache
@@ -25,13 +20,11 @@ WIKIDATA_MAX_RETRIES: Final[int] = 3
 
 
 class WikidataClientManager:
-    """Manages a singleton Wikidata HTTP client for connection pooling."""
 
     _instance: httpx.AsyncClient | None = None
 
     @classmethod
     def get_client(cls) -> httpx.AsyncClient:
-        """Get or create the cached Wikidata HTTP client."""
         if cls._instance is None:
             cls._instance = httpx.AsyncClient(
                 headers={"User-Agent": "GrantFlow.AI/1.0 (https://grantflow.ai)"},
@@ -41,7 +34,6 @@ class WikidataClientManager:
 
 
 class WikidataItem(TypedDict):
-    """Represents a single Wikidata item from SPARQL query results."""
     item_id: str
     label: str
     description: str
@@ -58,7 +50,6 @@ This context provides foundational scientific concepts and terminology relevant 
 
 @lru_cache(maxsize=128)
 def _build_sparql_query(terms: tuple[str, ...]) -> str:
-    """Build a SPARQL query for Wikidata to expand scientific terms."""
     quoted_terms = [f'"{term}"' for term in terms]
     terms_filter = " || ".join([f"?label = {term}" for term in quoted_terms])
 
@@ -89,7 +80,6 @@ def _build_sparql_query(terms: tuple[str, ...]) -> str:
 
 @with_exponential_backoff_retry(httpx.HTTPError, httpx.TimeoutException, max_retries=WIKIDATA_MAX_RETRIES)
 async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_id: str) -> dict[str, Any]:
-    """Make a request to Wikidata with retry logic."""
     with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
         span.set_attribute("query", query)
 
@@ -113,7 +103,6 @@ async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_
             return cast("dict[str, Any]", data)
         except httpx.HTTPStatusError as e:
             if e.response.status_code >= 500:
-                # Service unavailable - gracefully return empty result
                 logger.warning(
                     "Wikidata service unavailable",
                     status_code=e.response.status_code,
@@ -131,7 +120,6 @@ async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_
 
 
 def _parse_wikidata_response(data: dict[str, Any]) -> list[WikidataItem]:
-    """Parse the Wikidata SPARQL response."""
     results: list[WikidataItem] = []
 
     if "results" in data and "bindings" in data["results"]:
@@ -148,11 +136,9 @@ def _parse_wikidata_response(data: dict[str, Any]) -> list[WikidataItem]:
 
 
 async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[WikidataItem]:
-    """Expand scientific terms using Wikidata."""
     if not terms:
         return []
 
-    # Expanding scientific terms via Wikidata API
 
     client = WikidataClientManager.get_client()
     all_results: list[WikidataItem] = []
@@ -169,7 +155,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
                 batch_results = _parse_wikidata_response(response_data)
                 all_results.extend(batch_results)
 
-                # Batch expansion completed
 
             except (httpx.HTTPError, httpx.TimeoutException) as e:
                 logger.warning(
@@ -184,7 +169,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
 
 
 async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
-    """Get scientific context for a list of terms from Wikidata."""
     if not terms:
         return ""
 
@@ -209,14 +193,12 @@ async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
 
 @lru_cache(maxsize=128)
 def _format_scientific_context(scientific_context: str) -> str:
-    """Format scientific context using the template."""
     if not scientific_context:
         return ""
 
     try:
         return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
 
-        # Scientific context formatted for objective
 
 
     except ValueError as e:
@@ -232,10 +214,6 @@ async def enrich_objective_with_wikidata(
     enrichment_response: ObjectiveEnrichmentResponse,
     trace_id: str,
 ) -> EnrichmentDataDTO:
-    """Enrich a research objective with Wikidata scientific context.
-
-    This is the main entry point for the Wikidata enrichment stage.
-    """
     try:
         all_terms = []
         all_terms.extend(enrichment_response["research_objective"]["core_scientific_terms"])

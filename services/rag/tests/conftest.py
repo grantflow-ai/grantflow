@@ -784,7 +784,6 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
 
 @pytest.fixture
 def mock_grant_application_job_manager() -> AsyncMock:
-    """Reusable mock GrantApplicationJobManager with standard setup."""
     from services.rag.src.utils.job_manager import GrantApplicationJobManager
 
     manager = AsyncMock(spec=GrantApplicationJobManager)
@@ -797,7 +796,6 @@ def mock_grant_application_job_manager() -> AsyncMock:
 
 @pytest.fixture
 def mock_grant_template_job_manager() -> AsyncMock:
-    """Reusable mock GrantTemplateJobManager with standard setup."""
     from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
     manager = AsyncMock(spec=GrantTemplateJobManager)

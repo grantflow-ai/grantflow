@@ -109,7 +109,6 @@ async def handle_generate_section_text(
 ) -> str:
     section_title = section["title"]
 
-    # Section generation tracked via pipeline notifications
 
     research_context_parts = [
         f"""
@@ -263,5 +262,4 @@ async def handle_generate_section_text(
         trace_id=trace_id,
     )
 
-    # Section generation completed
 

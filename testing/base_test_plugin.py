@@ -50,5 +50,4 @@ def logger() -> Logger:
 
 @pytest.fixture
 def trace_id() -> str:
-    """Provide a unique trace id string for tests that require it."""
     return str(uuid4())
