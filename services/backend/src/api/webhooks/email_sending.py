@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Literal, NotRequired, TypedDict, cast
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 from litestar import post
@@ -19,62 +19,36 @@ logger = get_logger(__name__)
 
 class EmailNotificationRequest(TypedDict):
     application_id: UUID
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class EmailResponse(TypedDict):
-    status: Literal["success"]
     message: str
+    status: str
 
 
-def handle_pubsub_message(
-    event: PubSubEvent,
-) -> EmailNotificationRequest:
+def handle_pubsub_message(event: PubSubEvent) -> EmailNotificationRequest:
     logger.info(
         "Processing PubSub message",
         message_id=event.message.message_id,
         publish_time=event.message.publish_time,
-        has_attributes=bool(event.message.attributes),
-        attribute_keys=list(event.message.attributes.keys()) if event.message.attributes else [],
+        attributes=event.message.attributes,
         subscription=event.subscription,
     )
 
-    # Get data from attributes instead of message body to avoid corruption issues
     attributes = event.message.attributes or {}
-
-    application_id_str = attributes.get("application_id")
-    if not application_id_str:
-        logger.error(
-            "Missing application_id in message attributes",
-            available_attributes=list(attributes.keys()),
-            message_id=event.message.message_id,
-        )
-        raise ValidationError("Missing required attribute: application_id")
-
     try:
-        application_id = UUID(application_id_str)
-        logger.info(
-            "Successfully parsed application_id",
-            application_id=str(application_id),
-            message_id=event.message.message_id,
-        )
-    except ValueError as e:
+        application_id = UUID(attributes["application_id"])
+        trace_id = attributes["trace_id"]
+        return EmailNotificationRequest(application_id=application_id, trace_id=trace_id)
+    except (KeyError, ValueError) as e:
         logger.error(
             "Invalid application_id format",
-            application_id_str=application_id_str,
+            application_id=attributes.get("application_id", "missing"),
             error=str(e),
             message_id=event.message.message_id,
         )
-        raise ValidationError(f"Invalid application_id format: {application_id_str}") from e
-
-    request = EmailNotificationRequest(application_id=application_id)
-
-    # Add trace_id if present
-    if trace_id := attributes.get("trace_id"):
-        request["trace_id"] = trace_id
-        logger.info("Added trace_id to request", trace_id=trace_id, application_id=str(application_id))
-
-    return request
+        raise ValidationError("Invalid email request", context={"attributes": event.message.attributes}) from e
 
 
 async def get_project_users(session_maker: async_sessionmaker[Any], application_id: UUID) -> list[OrganizationUser]:

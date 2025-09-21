@@ -1,5 +1,4 @@
-import json
-from base64 import b64encode
+import base64
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
@@ -7,19 +6,36 @@ from uuid import UUID, uuid4
 import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.pubsub import PubSubEvent, PubSubMessage
+from packages.shared_utils.src.pubsub import (
+    GrantApplicationRagRequest,
+    GrantTemplateRagRequest,
+    PubSubEvent,
+    PubSubMessage,
+    RagRequest,
+)
+from packages.shared_utils.src.serialization import serialize
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+TraceId = str
 
-def create_pubsub_event(data: dict[str, Any]) -> PubSubEvent:
+
+@pytest.fixture
+def trace_id() -> TraceId:
+    return "test-trace-id"
+
+
+def create_pubsub_event(data: RagRequest) -> PubSubEvent:
+    serialized_data = serialize(data)
+    encoded_data = base64.b64encode(serialized_data).decode("utf-8")
     return PubSubEvent(
         message=PubSubMessage(
-            data=b64encode(json.dumps(data).encode("utf-8")).decode("utf-8"),
+            data=encoded_data,
             message_id="test-message-id",
             publish_time="2025-01-01T00:00:00Z",
-            attributes={},
+            attributes={"trace_id": data.trace_id},
         ),
         subscription="test-subscription",
     )
@@ -36,27 +52,29 @@ def grant_application_id() -> UUID:
 
 
 @pytest.fixture
-def pubsub_event_grant_template(grant_template_id: UUID) -> PubSubEvent:
-    data = {
-        "parent_type": "grant_template",
-        "parent_id": str(grant_template_id),
-    }
+def pubsub_event_grant_template(grant_template_id: UUID, trace_id: TraceId) -> PubSubEvent:
+    data = GrantTemplateRagRequest(
+        parent_id=grant_template_id,
+        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        trace_id=trace_id,
+    )
     return create_pubsub_event(data)
 
 
 @pytest.fixture
-def pubsub_event_grant_application(grant_application_id: UUID) -> PubSubEvent:
-    data = {
-        "parent_type": "grant_application",
-        "parent_id": str(grant_application_id),
-    }
+def pubsub_event_grant_application(grant_application_id: UUID, trace_id: TraceId) -> PubSubEvent:
+    data = GrantApplicationRagRequest(
+        parent_id=grant_application_id,
+        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        trace_id=trace_id,
+    )
     return create_pubsub_event(data)
 
 
 @pytest.fixture
 def mock_grant_template_handler(mocker: MockerFixture) -> AsyncMock:
     return mocker.patch(
-        "services.rag.src.main.grant_template_generation_pipeline_handler",
+        "services.rag.src.main.handle_grant_template_pipeline",
         new_callable=AsyncMock,
     )
 
@@ -64,7 +82,7 @@ def mock_grant_template_handler(mocker: MockerFixture) -> AsyncMock:
 @pytest.fixture
 def mock_grant_application_handler(mocker: MockerFixture) -> AsyncMock:
     return mocker.patch(
-        "services.rag.src.main.grant_application_text_generation_pipeline_handler",
+        "services.rag.src.main.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     )
 
@@ -80,6 +98,7 @@ async def test_handle_rag_request_grant_template(
     grant_template_id: UUID,
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
+    trace_id: TraceId,
 ) -> None:
     from services.rag.src.main import app
 
@@ -91,6 +110,8 @@ async def test_handle_rag_request_grant_template(
     mock_grant_template_handler.assert_called_once_with(
         grant_template_id=grant_template_id,
         session_maker=async_session_maker,
+        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        trace_id=trace_id,
     )
     mock_grant_application_handler.assert_not_called()
 
@@ -101,6 +122,7 @@ async def test_handle_rag_request_grant_application(
     grant_application_id: UUID,
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
+    trace_id: TraceId,
 ) -> None:
     from services.rag.src.main import app
 
@@ -112,15 +134,17 @@ async def test_handle_rag_request_grant_application(
     mock_grant_application_handler.assert_called_once_with(
         grant_application_id=grant_application_id,
         session_maker=async_session_maker,
+        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        trace_id=trace_id,
     )
     mock_grant_template_handler.assert_not_called()
 
 
-async def test_handle_rag_request_invalid_message() -> None:
+async def test_handle_rag_request_invalid_message(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
-    data = {"invalid": "data"}
-    invalid_event = create_pubsub_event(data)
+    data = {"invalid": "data", "trace_id": trace_id}
+    invalid_event = create_pubsub_event(data)  # type: ignore
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -129,11 +153,11 @@ async def test_handle_rag_request_invalid_message() -> None:
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
-async def test_handle_rag_request_missing_parent_type() -> None:
+async def test_handle_rag_request_missing_parent_type(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
-    data = {"parent_id": str(uuid4())}
-    invalid_event = create_pubsub_event(data)
+    data = {"parent_id": str(uuid4()), "trace_id": trace_id}
+    invalid_event = create_pubsub_event(data)  # type: ignore
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -142,11 +166,11 @@ async def test_handle_rag_request_missing_parent_type() -> None:
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
-async def test_handle_rag_request_missing_parent_id() -> None:
+async def test_handle_rag_request_missing_parent_id(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
-    data = {"parent_type": "grant_template"}
-    invalid_event = create_pubsub_event(data)
+    data = {"parent_type": "grant_template", "trace_id": trace_id}
+    invalid_event = create_pubsub_event(data)  # type: ignore
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -155,14 +179,15 @@ async def test_handle_rag_request_missing_parent_id() -> None:
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
-async def test_handle_rag_request_invalid_parent_type() -> None:
+async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
     data = {
         "parent_type": "invalid_type",
         "parent_id": str(uuid4()),
+        "trace_id": trace_id,
     }
-    invalid_event = create_pubsub_event(data)
+    invalid_event = create_pubsub_event(data)  # type: ignore
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -188,7 +213,7 @@ async def test_handle_rag_request_handler_error(
     assert response.json()["detail"] == "Internal Server Error"
 
 
-async def test_handle_rag_request_invalid_base64() -> None:
+async def test_handle_rag_request_invalid_base64(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
     invalid_event = PubSubEvent(
@@ -196,7 +221,7 @@ async def test_handle_rag_request_invalid_base64() -> None:
             data="invalid-base64!@#",
             message_id="test-message-id",
             publish_time="2025-01-01T00:00:00Z",
-            attributes={},
+            attributes={"trace_id": trace_id},
         ),
         subscription="test-subscription",
     )
@@ -208,31 +233,29 @@ async def test_handle_rag_request_invalid_base64() -> None:
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
-def test_handle_pubsub_message_valid() -> None:
-    from typing import cast
-
-    from packages.shared_utils.src.pubsub import RagRequest
-
+def test_handle_pubsub_message_valid(trace_id: TraceId) -> None:
     from services.rag.src.main import handle_pubsub_message
 
-    data = {
-        "parent_type": "grant_template",
-        "parent_id": str(uuid4()),
-    }
-    event = create_pubsub_event(data)
+    parent_id = uuid4()
+    request = GrantTemplateRagRequest(
+        parent_id=parent_id,
+        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(request)
 
     result = handle_pubsub_message(event)
-    rag_result = cast("RagRequest", result)
 
-    assert rag_result["parent_type"] == "grant_template"
-    assert isinstance(rag_result["parent_id"], UUID)
+    assert isinstance(result, GrantTemplateRagRequest)
+    assert result.parent_id == parent_id
+    assert result.trace_id == trace_id
 
 
 def test_handle_pubsub_message_invalid() -> None:
     from services.rag.src.main import handle_pubsub_message
 
     data = {"invalid": "data"}
-    event = create_pubsub_event(data)
+    event = create_pubsub_event(data)  # type: ignore
 
     with pytest.raises(ValidationError) as exc_info:
         handle_pubsub_message(event)

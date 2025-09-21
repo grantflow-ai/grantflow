@@ -1,27 +1,32 @@
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
-from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
+from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 
-from services.rag.src.grant_template.extract_cfp_data import Content
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
-from services.rag.src.utils.text import concat_extracted_cfp_content
+
+__all__ = [
+    "ExtractedSectionDTO",
+    "ExtractedSections",
+    "extract_sections",
+    "filter_extracted_sections",
+    "validate_section_extraction",
+]
 
 logger = get_logger(__name__)
-ref = Ref[SentenceTransformer]()
 exclude_embeddings_ref = Ref[list[float]]()
 
 
@@ -321,17 +326,6 @@ section_extraction_json_schema = {
 }
 
 
-class ExtractedSectionDTO(TypedDict):
-    title: str
-    id: str
-    order: int
-    parent_id: NotRequired[str | None]
-    is_detailed_research_plan: NotRequired[bool | None]
-    is_title_only: NotRequired[bool | None]
-    is_clinical_trial: NotRequired[bool | None]
-    is_long_form: bool
-
-
 class ExtractedSections(TypedDict):
     sections: list[ExtractedSectionDTO]
     error: NotRequired[str | None]
@@ -422,15 +416,15 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 "Invalid section ID format", context={"section_id": section["id"], "expected_format": "snake_case"}
             )
 
-        if section["parent_id"]:
-            if section["parent_id"] not in valid_ids:
+        if parent_id := section.get("parent_id"):
+            if parent_id not in valid_ids:
                 raise ValidationError(
-                    f"Invalid parent section reference. The section {section['id']} defines a parent section {section['parent_id']} that does not exist in the sections list.",
+                    f"Invalid parent section reference. The section {section['id']} defines a parent section {parent_id} that does not exist in the sections list.",
                 )
-            if mapped_sections[section["parent_id"]].get("is_detailed_research_plan"):
+            if mapped_sections[parent_id].get("is_detailed_research_plan"):
                 raise ValidationError(
                     "The research_plan section cannot have any sub-sections as children",
-                    context={"research_plan_id": section["parent_id"], "child_id": section["id"]},
+                    context={"research_plan_id": parent_id, "child_id": section["id"]},
                 )
 
         depth = 1
@@ -451,6 +445,7 @@ def _should_keep_section(
     sections: list[ExtractedSectionDTO],
     threshold: float,
     exclude_embeddings: list[float],
+    trace_id: str,
 ) -> bool:
     if section.get("is_detailed_research_plan"):
         return True
@@ -481,12 +476,14 @@ def _should_keep_section(
 
         return True
     except Exception as e:
-        logger.warning("Embedding calculation failed for section", title=section["title"], error=str(e))
+        logger.warning(
+            "Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id
+        )
         return True
 
 
 async def filter_extracted_sections(
-    sections: list[ExtractedSectionDTO], initial_threshold: float = 0.7
+    sections: list[ExtractedSectionDTO], trace_id: str, initial_threshold: float = 0.7
 ) -> list[ExtractedSectionDTO]:
     exclude_embeddings = await get_exclude_embeddings()
     threshold = initial_threshold
@@ -499,6 +496,7 @@ async def filter_extracted_sections(
                 sections=sections,
                 threshold=threshold,
                 exclude_embeddings=exclude_embeddings,
+                trace_id=trace_id,
             )
             for section in sections
         ]
@@ -531,7 +529,7 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
     for section in sections:
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
-            section["parent_id"] = None
+            del section["parent_id"]
 
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
@@ -540,7 +538,7 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     return sorted_sections
 
 
-async def extract_sections(task_description: str, **_: Any) -> ExtractedSections:
+async def extract_sections(task_description: str, trace_id: str, **_: Any) -> ExtractedSections:
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
@@ -549,6 +547,7 @@ async def extract_sections(task_description: str, **_: Any) -> ExtractedSections
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
+        trace_id=trace_id,
     )
 
 
@@ -643,25 +642,28 @@ evaluation_criteria = [
 
 
 async def handle_extract_sections(
-    cfp_content: list[Content], cfp_subject: str, organization: GrantingInstitution | None = None
+    cfp_content: list[CFPContentSection],
+    cfp_subject: str,
+    trace_id: str,
+    organization: OrganizationNamespace | None = None,
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
     prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_subject=cfp_subject,
-        cfp_content=concat_extracted_cfp_content(content_list),
+        cfp_content="\n".join(content_list),
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
     organization_guidelines = (
         ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results=await retrieve_documents(
-                organization_id=str(organization.id),
+                organization_id=str(organization["organization_id"]),
                 task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
                 search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
                 model=ANTHROPIC_SONNET_MODEL,
             ),
-            organization_full_name=organization.full_name,
-            organization_abbreviation=organization.abbreviation,
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
         )
         if organization
         else ""
@@ -695,6 +697,7 @@ async def handle_extract_sections(
         passing_score=75,
         increment=15,
         retries=3,
+        trace_id=trace_id,
     )
 
-    return await filter_extracted_sections(result["sections"])
+    return await filter_extracted_sections(result["sections"], trace_id)

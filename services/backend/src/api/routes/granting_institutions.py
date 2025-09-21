@@ -112,7 +112,6 @@ async def handle_delete_organization(organization_id: UUID, session_maker: async
             institution.soft_delete()
             await session.commit()
 
-            logger.info("Successfully soft deleted granting institution", organization_id=organization_id)
         except SQLAlchemyError as e:
             logger.error("Error deleting granting institution", exc_info=e)
             raise DatabaseError("Error deleting granting institution", context=str(e)) from e

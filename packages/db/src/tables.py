@@ -41,7 +41,7 @@ from packages.db.src.enums import (
     UserRoleEnum,
 )
 from packages.db.src.json_objects import (
-    CFPSectionAnalysis,
+    CFPAnalysisResult,
     Chunk,
     GrantElement,
     GrantLongFormSection,
@@ -479,9 +479,7 @@ class GrantTemplate(BaseWithUUIDPK):
         foreign_keys="[GrantTemplate.rag_job_id]",
     )
 
-    cfp_section_analysis: Mapped[CFPSectionAnalysis | None] = mapped_column(JSON, nullable=True)
-    cfp_analysis_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    cfp_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cfp_analysis: Mapped[CFPAnalysisResult | None] = mapped_column(JSON, nullable=True)
 
 
 class GrantTemplateSource(Base):

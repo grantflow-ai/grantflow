@@ -78,7 +78,6 @@ async def handle_create_organization(
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
     firebase_uid = data["firebase_uid"]
-    logger.info("Creating organization", uid=firebase_uid)
 
     org_data = {k: v for k, v in data.items() if k != "firebase_uid"}
 
@@ -114,8 +113,6 @@ async def handle_list_organizations(
     uid = firebase_uid if firebase_uid else request.auth
     if not uid:
         raise ValidationException("firebase_uid parameter required for admin API calls")
-
-    logger.info("Listing organizations for user", uid=uid)
 
     async with session_maker() as session:
         result_set = await session.execute(
@@ -153,8 +150,6 @@ async def handle_get_organization(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-    logger.info("Getting organization", organization_id=organization_id, uid=request.auth)
-
     async with session_maker() as session:
         organization = await session.scalar(
             select(Organization).where(Organization.id == organization_id).where(Organization.deleted_at.is_(None))
@@ -198,8 +193,6 @@ async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-    logger.info("Updating organization", organization_id=organization_id, uid=request.auth)
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -246,12 +239,9 @@ async def handle_update_organization(
     status_code=200,
 )
 async def handle_delete_organization(
-    request: APIRequest,
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> DeleteOrganizationResponse:
-    logger.info("Deleting organization", organization_id=organization_id, uid=request.auth)
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -279,12 +269,6 @@ async def handle_delete_organization(
             str(organization_id), ORGANIZATION_DELETION_GRACE_PERIOD_DAYS
         )
 
-        logger.info(
-            "Organization deletion scheduled",
-            organization_id=organization_id,
-            deletion_date=deletion_data["scheduled_hard_delete_at"].isoformat(),
-        )
-
         return DeleteOrganizationResponse(
             message="Organization scheduled for deletion. All members except owners have been removed.",
             scheduled_deletion_date=deletion_data["scheduled_hard_delete_at"].isoformat() + "Z",
@@ -307,8 +291,6 @@ async def handle_restore_organization(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-    logger.info("Restoring organization", organization_id=organization_id, uid=request.auth)
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(select(Organization).where(Organization.id == organization_id))
@@ -364,7 +346,6 @@ async def handle_restore_organization(
             )
         )
 
-        logger.info("Organization deletion cancelled", organization_id=organization_id)
     except Exception as e:
         logger.warning("Failed to cancel organization deletion in Firestore", exc_info=e)
 

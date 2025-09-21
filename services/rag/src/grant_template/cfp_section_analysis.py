@@ -1,12 +1,16 @@
-from pathlib import Path
-from typing import Final, NotRequired, TypedDict
+from typing import Final
 
-from packages.db.src.json_objects import CFPSectionAnalysis as CFPSectionAnalysisDB
+from packages.db.src.json_objects import (
+    CategorizationAnalysisResult,
+    CFPAnalysisMetadata,
+    CFPAnalysisResult,
+    CFPSectionAnalysis,
+)
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.grant_template.nlp_categorizer import (
-    NLPCategorizationResult,
+from services.rag.src.grant_template.category_extraction import (
+    categorize_text,
     format_nlp_analysis_for_prompt,
 )
 from services.rag.src.utils.completion import handle_completions_request
@@ -81,52 +85,6 @@ You must return a structured JSON object that pairs every requirement with its e
 - `quote_from_source`: Exact CFP text stating this requirement
 - `category`: Type - "formatting", "submission", "eligibility", "budget", "other"
 
-### Required JSON Output Structure:
-```json
-{
-  "required_sections": [
-    {
-      "section_name": "Project Summary",
-      "definition": "Executive overview of research objectives",
-      "requirements": [
-        {
-          "requirement": "Must provide comprehensive project overview",
-          "quote_from_source": "Project Summary (1 page maximum) - Executive overview of research objectives",
-          "category": "content"
-        }
-      ],
-      "dependencies": []
-    }
-  ],
-  "length_constraints": [
-    {
-      "section_name": "Project Summary",
-      "measurement_type": "pages",
-      "limit_description": "1 page maximum",
-      "quote_from_source": "Project Summary (1 page maximum)",
-      "exclusions": []
-    }
-  ],
-  "evaluation_criteria": [
-    {
-      "criterion_name": "Intellectual Merit",
-      "description": "Scientific advancement potential and methodological rigor",
-      "weight_percentage": 60,
-      "quote_from_source": "intellectual merit (60%)"
-    }
-  ],
-  "additional_requirements": [
-    {
-      "requirement": "Font and margin specifications",
-      "quote_from_source": "All text must be in 11-point Times New Roman font with 1-inch margins",
-      "category": "formatting"
-    }
-  ],
-  "sections_count": 1,
-  "length_constraints_found": 1,
-  "evaluation_criteria_count": 1
-}
-```
 
 ## Critical Instructions:
 
@@ -140,46 +98,6 @@ You must return a structured JSON object that pairs every requirement with its e
 The goal is to create a structured database where every requirement is backed by verifiable quotes from the source CFP text.
 """,
 )
-
-
-class RequirementWithQuote(TypedDict):
-    requirement: str
-    quote_from_source: str
-    category: str
-
-
-class SectionRequirement(TypedDict):
-    section_name: str
-    definition: str
-    requirements: list[RequirementWithQuote]
-    dependencies: list[str]
-
-
-class LengthConstraint(TypedDict):
-    section_name: str
-    measurement_type: str
-    limit_description: str
-    quote_from_source: str
-    exclusions: list[str]
-
-
-class EvaluationCriterion(TypedDict):
-    criterion_name: str
-    description: str
-    weight_percentage: NotRequired[int | None]
-    quote_from_source: str
-
-
-class CFPSectionAnalysis(TypedDict):
-    required_sections: list[SectionRequirement]
-    length_constraints: list[LengthConstraint]
-    evaluation_criteria: list[EvaluationCriterion]
-    additional_requirements: list[RequirementWithQuote]
-    sections_count: int
-    length_constraints_found: int
-    evaluation_criteria_count: int
-    error: NotRequired[str | None]
-
 
 CFP_SECTION_ANALYZER_SCHEMA: Final = {
     "type": "object",
@@ -357,51 +275,18 @@ def validate_cfp_analysis(response: CFPSectionAnalysis) -> None:
         )
 
 
-def transform_analysis_for_database(analysis: CFPSectionAnalysis) -> CFPSectionAnalysisDB:
-    return CFPSectionAnalysisDB(
-        section_requirements=[
-            {
-                "section": section["section_name"],
-                "requirements": [
-                    {"requirement": req["requirement"], "quote": req["quote_from_source"]}
-                    for req in section["requirements"]
-                ],
-            }
-            for section in analysis["required_sections"]
-        ],
-        length_constraints=[
-            {"description": lc["limit_description"], "quote": lc["quote_from_source"]}
-            for lc in analysis["length_constraints"]
-        ],
-        evaluation_criteria=[
-            {"criterion": ec["criterion_name"], "quote": ec["quote_from_source"]}
-            for ec in analysis["evaluation_criteria"]
-        ],
-        additional_requirements=[
-            {"requirement": ar["requirement"], "quote": ar["quote_from_source"]}
-            for ar in analysis["additional_requirements"]
-        ],
-    )
-
-
-async def analyze_cfp_sections_with_gemini(
+async def analyze_cfp_sections(
     cfp_content: str,
-    nlp_analysis: NLPCategorizationResult,
+    nlp_analysis: CategorizationAnalysisResult,
+    trace_id: str,
 ) -> CFPSectionAnalysis:
-    logger.info(
-        "Starting CFP section analysis with Gemini 2.5 Flash",
-        content_length=len(cfp_content),
-        nlp_categories_found=len([k for k, v in nlp_analysis.items() if v]),
-    )
-
     formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
-
     prompt = CFP_SECTION_ANALYZER_PROMPT.substitute(
         cfp_content=cfp_content,
         nlp_analysis=formatted_nlp,
     )
 
-    result = await handle_completions_request(
+    return await handle_completions_request(
         prompt_identifier="cfp_section_analyzer",
         model=GEMINI_2_5_FLASH_MODEL,
         messages=prompt.to_string(),
@@ -411,142 +296,24 @@ async def analyze_cfp_sections_with_gemini(
         system_prompt=CFP_SECTION_ANALYZER_SYSTEM_PROMPT,
         temperature=0.1,
         top_p=0.9,
+        trace_id=trace_id,
     )
 
-    logger.info(
-        "CFP section analysis completed",
-        sections_found=result["sections_count"],
-        length_constraints=result["length_constraints_found"],
-        evaluation_criteria=result["evaluation_criteria_count"],
-        total_requirements=len(result["additional_requirements"]),
+
+async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysisResult:
+    nlp_analysis = await categorize_text(full_cfp_text)
+
+    categories_found = sum(1 for v in nlp_analysis.values() if v)
+    total_sentences = sum(len(sentences) for sentences in nlp_analysis.values() if isinstance(sentences, list))
+
+    cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
+
+    return CFPAnalysisResult(
+        cfp_analysis=cfp_analysis,
+        nlp_analysis=nlp_analysis,
+        analysis_metadata=CFPAnalysisMetadata(
+            content_length=len(full_cfp_text),
+            categories_found=categories_found,
+            total_sentences=total_sentences,
+        ),
     )
-
-    return result
-
-
-async def generate_cfp_analysis_report(
-    cfp_content: str,
-    nlp_analysis: NLPCategorizationResult,
-    output_file: str | None = None,
-) -> str:
-    analysis_result = await analyze_cfp_sections_with_gemini(cfp_content, nlp_analysis)
-
-    report_header = f"""# CFP Analysis Report
-
-**Generated**: {__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-**Content Length**: {len(cfp_content):,} characters
-**Sections Identified**: {analysis_result["sections_count"]}
-**Length Constraints**: {analysis_result["length_constraints_found"]}
-**Evaluation Criteria**: {analysis_result["evaluation_criteria_count"]}
-
----
-
-"""
-
-    markdown_analysis = """# Required Sections Analysis
-
-"""
-
-    for i, section in enumerate(analysis_result["required_sections"], 1):
-        markdown_analysis += f"""## {i}. {section["section_name"]}
-**Definition**: {section["definition"]}
-
-**Requirements**:
-"""
-        for req in section["requirements"]:
-            markdown_analysis += f"""- {req["requirement"]}
-  > "{req["quote_from_source"]}" - ({req["category"]})
-
-"""
-        if section["dependencies"]:
-            markdown_analysis += f"""**Dependencies**: {", ".join(section["dependencies"])}
-
-"""
-        markdown_analysis += "\n"
-
-    if analysis_result["length_constraints"]:
-        markdown_analysis += """# Length Requirements Analysis
-
-"""
-        for constraint in analysis_result["length_constraints"]:
-            markdown_analysis += f"""## {constraint["section_name"]} Length Requirements
-- **Measurement Type**: {constraint["measurement_type"]}
-- **Limit**: {constraint["limit_description"]}
-- **Source Quote**: "{constraint["quote_from_source"]}"
-"""
-            if constraint["exclusions"]:
-                markdown_analysis += f"""- **Exclusions**: {", ".join(constraint["exclusions"])}
-"""
-            markdown_analysis += "\n"
-
-    if analysis_result["evaluation_criteria"]:
-        markdown_analysis += """# Evaluation Criteria Analysis
-
-"""
-        for criterion in analysis_result["evaluation_criteria"]:
-            markdown_analysis += f"""## {criterion["criterion_name"]}
-- **Description**: {criterion["description"]}
-"""
-            if weight := criterion.get("weight_percentage"):
-                markdown_analysis += f"""- **Weight**: {weight}%
-"""
-            markdown_analysis += f"""- **Source Quote**: "{criterion["quote_from_source"]}"
-
-"""
-
-    if analysis_result["additional_requirements"]:
-        markdown_analysis += """# Additional Requirements
-
-"""
-        by_category: dict[str, list[RequirementWithQuote]] = {}
-        for req in analysis_result["additional_requirements"]:
-            category = req["category"].title()
-            if category not in by_category:
-                by_category[category] = []
-            by_category[category].append(req)
-
-        for category, reqs in by_category.items():
-            markdown_analysis += f"""## {category} Requirements
-"""
-            for req in reqs:
-                markdown_analysis += f"""- **{req["requirement"]}**
-  > "{req["quote_from_source"]}"
-
-"""
-
-    full_report = report_header + markdown_analysis
-
-    nlp_summary = """
----
-
-## NLP Analysis Summary
-
-The following semantic categories were identified in the CFP content:
-
-"""
-
-    categories_with_data = {k: len(v) for k, v in nlp_analysis.items() if v and isinstance(v, list)}
-    for category, count in categories_with_data.items():
-        nlp_summary += f"- **{category}**: {count} sentences\n"
-
-    full_report += nlp_summary
-
-    formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
-    full_report += f"""
-### Detailed NLP Categorization
-
-```
-{formatted_nlp}
-```
-
----
-
-*This analysis was generated using Gemini 2.5 Flash with NLP semantic preprocessing and structured JSON output.*
-"""
-
-    if output_file:
-        output_path = Path(output_file)
-        output_path.write_text(full_report, encoding="utf-8")
-        logger.info("CFP analysis report saved", output_file=output_file)
-
-    return full_report

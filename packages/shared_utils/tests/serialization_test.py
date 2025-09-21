@@ -10,7 +10,12 @@ from packages.shared_utils.src.exceptions import (
     DeserializationError,
     SerializationError,
 )
-from packages.shared_utils.src.serialization import deserialize, encode_hook, serialize
+from packages.shared_utils.src.serialization import (
+    deserialize,
+    encode_hook,
+    serialize,
+    to_builtins,
+)
 
 
 @dataclass
@@ -58,6 +63,14 @@ def test_encode_hook_exception() -> None:
     exc = ValueError("test error")
     result = encode_hook(exc)
     assert result == {"message": "test error", "type": "ValueError"}
+
+
+def test_encode_hook_enum() -> None:
+    result = encode_hook(SampleEnum.A)
+    assert result == "a"
+
+    result = encode_hook(SampleEnum.B)
+    assert result == "b"
 
 
 def test_encode_hook_object_with_to_dict() -> None:
@@ -120,3 +133,60 @@ def test_encoder_decoder_integration() -> None:
     encoded = serialize(original)
     decoded = deserialize(encoded, SampleDict)
     assert decoded == {"name": "test", "value": 42}
+
+
+def test_to_builtins_simple_types() -> None:
+    assert to_builtins("string") == "string"
+    assert to_builtins(42) == 42
+    assert to_builtins(3.14) == 3.14
+    assert to_builtins(True) is True
+    assert to_builtins(None) is None
+
+
+def test_to_builtins_list() -> None:
+    result = to_builtins([1, 2, "three"])
+    assert result == [1, 2, "three"]
+
+
+def test_to_builtins_dict() -> None:
+    result = to_builtins({"key": "value", "number": 42})
+    assert result == {"key": "value", "number": 42}
+
+
+def test_to_builtins_enum() -> None:
+    result = to_builtins(SampleEnum.A)
+    assert result == "a"
+
+
+def test_to_builtins_dataclass() -> None:
+    model = SampleModel(name="test", value=42)
+    result = to_builtins(model)
+    assert result == {"name": "test", "value": 42}
+
+
+def test_to_builtins_complex_structure() -> None:
+    complex_data = {
+        "models": [
+            SampleModel(name="first", value=1),
+            SampleModel(name="second", value=2),
+        ],
+        "enum": SampleEnum.B,
+        "nested": {
+            "enum_model": SampleModelWithEnum(enum_field=SampleEnum.A),
+            "plain": "value",
+        },
+    }
+
+    result = to_builtins(complex_data)
+    expected = {
+        "models": [
+            {"name": "first", "value": 1},
+            {"name": "second", "value": 2},
+        ],
+        "enum": "b",
+        "nested": {
+            "enum_model": {"enum_field": "a"},
+            "plain": "value",
+        },
+    }
+    assert result == expected

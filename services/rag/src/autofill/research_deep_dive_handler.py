@@ -1,9 +1,10 @@
-from asyncio import gather
-from typing import Any, Final, Literal, TypedDict, cast
+from typing import Final, Literal, TypedDict
 
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.autofill.constants import (
     MAX_RETRIEVAL_TOKENS,
@@ -91,33 +92,32 @@ answer_response_schema = {
 }
 
 
-def _validate_answer_response(response: Any) -> None:
-    if not isinstance(response, dict):
-        raise ValueError(f"Response must be a dictionary, got {type(response).__name__}")
-
-    if "answer" not in response:
-        raise ValueError("Missing 'answer' field in response")
-
-    answer = response["answer"]
-    if not isinstance(answer, str):
-        raise ValueError(f"Answer must be a string, got {type(answer).__name__}")
-
-    answer = answer.strip()
+def _validate_answer_response(response: AnswerResponse) -> None:
+    answer = response["answer"].strip()
     if len(answer) < MIN_ANSWER_LENGTH:
-        raise ValueError(f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})")
+        raise ValidationError(
+            f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})",
+            context={"length": len(answer), "min_length": MIN_ANSWER_LENGTH, "content_preview": answer[:100]},
+        )
 
     word_count = len(answer.split())
     if word_count < 150:
-        raise ValueError(f"Answer has too few words: {word_count} (target: 200-500)")
+        raise ValidationError(
+            f"Answer has too few words: {word_count} (target: 200-500)",
+            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
+        )
 
     if word_count > 600:
-        raise ValueError(f"Answer has too many words: {word_count} (target: 200-500)")
+        raise ValidationError(
+            f"Answer has too many words: {word_count} (target: 200-500)",
+            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
+        )
 
 
 def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
     formatted = []
     for i, obj in enumerate(objectives):
-        title = obj.get("title", f"Objective {i + 1}")
+        title = obj["title"]
         description = obj.get("description", "")
         formatted.append(f"{i + 1}. {title}")
         if description:
@@ -127,7 +127,7 @@ def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
 
 
 async def _generate_field_answer(
-    application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str
+    application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str, trace_id: str
 ) -> str:
     prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
         application_title=application.title,
@@ -141,11 +141,12 @@ async def _generate_field_answer(
         search_queries=search_queries,
         task_description=str(prompt_with_title),
         max_tokens=MAX_RETRIEVAL_TOKENS,
+        trace_id=trace_id,
     )
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 
-    response = await handle_completions_request(
+    response: AnswerResponse = await handle_completions_request(
         prompt_identifier="research_deep_dive_generation",
         messages=prompt,
         system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
@@ -153,25 +154,23 @@ async def _generate_field_answer(
         response_type=AnswerResponse,
         validator=_validate_answer_response,
         temperature=TEMPERATURE,
+        trace_id=trace_id,
     )
 
     return response["answer"].strip()
 
 
-async def generate_research_deep_dive_content(application: GrantApplication) -> ResearchDeepDive:
-    logger.info(
-        "Starting research deep dive generation",
-        application_id=application.id,
-        application_title=application.title,
-    )
-
+async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
-    results = await gather(
+    results = await batched_gather(
         *[
-            _generate_field_answer(field_name=key, application=application, objectives_text=objectives_text)
+            _generate_field_answer(
+                field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id
+            )
             for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
-        ]
+        ],
+        batch_size=4,
     )
 
-    return cast("ResearchDeepDive", dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING, results, strict=True)))
+    return ResearchDeepDive(**dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys(), results, strict=True)))  # type: ignore[typeddict-item,no-any-return]

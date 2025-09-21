@@ -10,8 +10,6 @@ from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObje
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.scientific_context import format_scientific_context
-from services.rag.src.utils.wikidata_client import get_scientific_context
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +275,7 @@ def validate_enrichment_response(
 async def enrich_objective_generation(
     task_description: str,
     *,
+    trace_id: str,
     input_objective: ResearchObjective | None = None,
 ) -> ObjectiveEnrichmentDTO:
     return await handle_completions_request(
@@ -287,54 +286,8 @@ async def enrich_objective_generation(
         model=ANTHROPIC_SONNET_MODEL,
         system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
         validator=partial(validate_enrichment_response, input_objective=input_objective),
+        trace_id=trace_id,
     )
-
-
-async def enrich_objective_with_wikidata(
-    enrichment_data: ObjectiveEnrichmentDTO,
-    trace_id: str | None = None,
-) -> EnrichmentDataDTO:
-    try:
-        all_terms = []
-        all_terms.extend(enrichment_data["research_objective"]["core_scientific_terms"])
-
-        for task in enrichment_data["research_tasks"]:
-            all_terms.extend(task["core_scientific_terms"])
-
-        unique_terms = list(dict.fromkeys(all_terms))
-
-        if not unique_terms:
-            return {
-                "enriched_objective": "",
-                "search_queries": [],
-                "core_scientific_terms": [],
-                "scientific_context": "",
-            }
-
-        scientific_context = await get_scientific_context(unique_terms, trace_id)
-        formatted_context = format_scientific_context(scientific_context)
-
-        return {
-            "enriched_objective": "",
-            "search_queries": [],
-            "core_scientific_terms": unique_terms,
-            "scientific_context": formatted_context,
-        }
-
-    except Exception as e:
-        logger.error(
-            "Failed to enrich objective with Wikidata",
-            extra={
-                "error": str(e),
-                "trace_id": trace_id,
-            },
-        )
-        return {
-            "enriched_objective": "",
-            "search_queries": [],
-            "core_scientific_terms": [],
-            "scientific_context": "",
-        }
 
 
 criteria: list[EvaluationCriterion] = [
@@ -430,4 +383,5 @@ async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnri
         criteria=criteria,
         passing_score=80,
         increment=10,
+        trace_id=dto["trace_id"],
     )

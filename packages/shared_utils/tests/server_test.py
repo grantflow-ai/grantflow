@@ -5,7 +5,11 @@ from litestar import Litestar
 from litestar.connection.request import Request
 from sqlalchemy.exc import SQLAlchemyError
 
-from packages.shared_utils.src.exceptions import BackendError, DeserializationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DeserializationError,
+    LLMTimeoutError,
+)
 from packages.shared_utils.src.server import (
     create_exception_handler,
     create_litestar_app,
@@ -71,6 +75,27 @@ async def test_create_exception_handler_deserialization_error() -> None:
     assert isinstance(response.content, dict)
     assert response.content["message"] == "Failed to deserialize the request body"
     assert response.content["detail"] == "DeserializationError: Failed to parse JSON"
+
+
+async def test_create_exception_handler_llm_timeout_error() -> None:
+    logger = Mock()
+    handler = create_exception_handler(logger)
+    exception = LLMTimeoutError("LLM API request timed out after 30 seconds")
+    request = Mock(spec=Request)
+
+    response = handler(request, exception)
+
+    logger.warning.assert_called_once()
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert isinstance(response.content, dict)
+    assert (
+        response.content["message"]
+        == "LLMTimeoutError: LLM API request timed out after 30 seconds"
+    )
+    assert (
+        response.content["detail"]
+        == "LLMTimeoutError: LLM API request timed out after 30 seconds"
+    )
 
 
 async def test_create_exception_handler_generic_error() -> None:

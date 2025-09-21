@@ -401,7 +401,6 @@
     <inspection_tool class="GoVetStructTag" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GoVetUnmarshal" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GoVetUnsafePointer" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="GoVulnerableCodeUsages" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GrAnnotationReferencingUnknownIdentifiers" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GrDeprecatedAPIUsage" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GrEqualsBetweenInconvertibleTypes" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -891,6 +890,7 @@
       </option>
     </inspection_tool>
     <inspection_tool class="PyCoverageInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyInvalidCastInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyramidSetupInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="QsPrivateBeanMembersInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="QsProperties" enabled="false" level="WARNING" enabled_by_default="false" />

@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import partial
@@ -31,6 +32,7 @@ from packages.shared_utils.src.exceptions import (
     BackendError,
     DeserializationError,
     InsufficientContextError,
+    LLMTimeoutError,
     RagError,
     ValidationError,
 )
@@ -90,6 +92,7 @@ def validate_select_best_response(tool_response: BestResponseSelection, *, candi
 async def select_best_response[T](
     candidates: dict[int, T],
     prompt: str | PromptTemplate,
+    trace_id: str,
 ) -> T:
     response = await handle_completions_request(
         prompt_identifier="select_best_response_use_prompt",
@@ -103,6 +106,7 @@ async def select_best_response[T](
         top_p=0.7,
         validator=partial(validate_select_best_response, candidates=candidates),
         system_prompt=SELECT_BEST_RESPONSE_SYSTEM_PROMPT,
+        trace_id=trace_id,
     )
     return candidates[response["best_response"]]
 
@@ -120,6 +124,8 @@ async def make_google_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    trace_id: str,
+    timeout: float = 300,
 ) -> T:
     client = get_google_ai_client()
 
@@ -164,11 +170,25 @@ async def make_google_completions_request[T](
 
     content = "\n".join(message_parts)
     start_time = datetime.now(UTC)
-    response = await client._aio.models.generate_content(  # noqa: SLF001
-        model=model,
-        contents=content,
-        config=config,
-    )
+
+    try:
+        async with asyncio.timeout(timeout):
+            response = await client._aio.models.generate_content(  # noqa: SLF001
+                model=model,
+                contents=content,
+                config=config,
+            )
+    except TimeoutError as e:
+        elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
+        raise LLMTimeoutError(
+            f"Google AI API request timed out after {timeout}s",
+            context={
+                "model": model,
+                "timeout_seconds": timeout,
+                "elapsed_ms": elapsed_ms,
+                "prompt_identifier": prompt_identifier,
+            },
+        ) from e
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
     usage_metadata = getattr(response, "usage_metadata", None)
@@ -181,6 +201,7 @@ async def make_google_completions_request[T](
             prompt_tokens=getattr(usage_metadata, "prompt_token_count", None),
             completion_tokens=getattr(usage_metadata, "candidates_token_count", None),
             total_tokens=getattr(usage_metadata, "total_token_count", None),
+            trace_id=trace_id,
         )
     else:
         logger.info(
@@ -188,6 +209,7 @@ async def make_google_completions_request[T](
             prompt_identifier=prompt_identifier,
             model=model,
             elapsed_ms=round(elapsed_ms, 2),
+            trace_id=trace_id,
         )
 
     if not candidate_count:
@@ -208,6 +230,7 @@ async def make_google_completions_request[T](
     return await select_best_response(
         candidates=candidates_dict,
         prompt=prompt,
+        trace_id=trace_id,
     )
 
 
@@ -234,6 +257,8 @@ async def make_anthropic_completions_request[T](
     top_k: int | None = None,
     top_p: float | None = None,
     user_prompt: str,
+    trace_id: str,
+    timeout: float = 300,
 ) -> T:
     anthropic_client = get_anthropic_client()
 
@@ -256,6 +281,7 @@ async def make_anthropic_completions_request[T](
             temperature=temperature,
             top_p=top_p or NOT_GIVEN,
             top_k=top_k or NOT_GIVEN,
+            timeout=timeout,
         )
     except (BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError) as e:
         error_message = str(e)
@@ -267,6 +293,7 @@ async def make_anthropic_completions_request[T](
                 error_type=type(e).__name__,
                 error_message=error_message,
                 request_id=getattr(e, "request_id", None),
+                trace_id=trace_id,
             )
             raise BackendError(
                 "Anthropic API credits exhausted. Please contact operations team to add credits.",
@@ -279,6 +306,7 @@ async def make_anthropic_completions_request[T](
             error_type=type(e).__name__,
             error_message=error_message,
             elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+            trace_id=trace_id,
         )
         raise BackendError(
             f"Anthropic API configuration error: {error_message}",
@@ -291,6 +319,7 @@ async def make_anthropic_completions_request[T](
             error_type=type(e).__name__,
             error_message=str(e),
             elapsed_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
+            trace_id=trace_id,
         )
         raise
 
@@ -303,6 +332,7 @@ async def make_anthropic_completions_request[T](
         input_tokens=response.usage.input_tokens,
         output_tokens=response.usage.output_tokens,
         total_tokens=response.usage.input_tokens + response.usage.output_tokens,
+        trace_id=trace_id,
     )
 
     tool_blocks = [block for block in response.content if isinstance(block, ToolUseBlock)]
@@ -342,7 +372,7 @@ def format_error_for_llm(error: Exception) -> str:
     return f"Error ({type(error).__name__}): {error!s}"
 
 
-async def handle_completions_request[T](
+async def handle_completions_request[T](  # noqa: PLR0912
     *,
     max_attempts: int = 3,
     messages: str | list[str],
@@ -356,6 +386,8 @@ async def handle_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    timeout: float = 300,  # 5 minutes timeout for LLM API calls ~keep
+    trace_id: str,
 ) -> T:
     attempts = 0
 
@@ -385,6 +417,8 @@ async def handle_completions_request[T](
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
+                    trace_id=trace_id,
+                    timeout=timeout,
                 )
             else:
                 response = await make_google_completions_request(
@@ -398,6 +432,8 @@ async def handle_completions_request[T](
                     top_p=top_p,
                     top_k=top_k,
                     candidate_count=candidate_count,
+                    trace_id=trace_id,
+                    timeout=timeout,
                 )
 
             if validator:
@@ -412,6 +448,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_context=e.context if hasattr(e, "context") else None,
+                trace_id=trace_id,
             )
             error_message = f"""
             The last response from the API failed validation due to the following error:
@@ -430,6 +467,24 @@ async def handle_completions_request[T](
 
             response = None
             errors.append(e)
+        except (TimeoutError, APITimeoutError):
+            attempts += 1
+            logger.warning(
+                "LLM API call timed out",
+                prompt_identifier=prompt_identifier,
+                attempt=attempts,
+                max_attempts=max_attempts,
+                timeout_seconds=timeout,
+                trace_id=trace_id,
+            )
+            timeout_error = LLMTimeoutError(
+                f"LLM API call timed out after {timeout} seconds",
+                context={"timeout": timeout, "prompt_identifier": prompt_identifier},
+            )
+            errors.append(timeout_error)
+
+            if attempts >= max_attempts:
+                raise timeout_error from None
         except DeserializationError as e:
             attempts += 1
             logger.warning(
@@ -438,6 +493,7 @@ async def handle_completions_request[T](
                 attempt=attempts,
                 max_attempts=max_attempts,
                 error=str(e),
+                trace_id=trace_id,
             )
             error_message = f"""
             The last API call with the provided prompt returned an invalid JSON object.
@@ -458,6 +514,7 @@ async def handle_completions_request[T](
                     prompt_identifier=prompt_identifier,
                     attempt=attempts,
                     max_attempts=max_attempts,
+                    trace_id=trace_id,
                 )
                 if model == ANTHROPIC_SONNET_MODEL:
                     model = GENERATION_MODEL
@@ -476,6 +533,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == ANTHROPIC_SONNET_MODEL:
                 model = GENERATION_MODEL
@@ -491,6 +549,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == GENERATION_MODEL:
                 model = ANTHROPIC_SONNET_MODEL
@@ -506,6 +565,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == GENERATION_MODEL:
                 model = ANTHROPIC_SONNET_MODEL
@@ -513,7 +573,7 @@ async def handle_completions_request[T](
             else:
                 errors.append(e)
                 attempts += 1
-        except (RateLimitError, APITimeoutError, APIConnectionError) as e:
+        except (RateLimitError, APIConnectionError) as e:
             logger.warning(
                 "Anthropic API temporarily unavailable, switching to Google",
                 prompt_identifier=prompt_identifier,
@@ -521,6 +581,7 @@ async def handle_completions_request[T](
                 max_attempts=max_attempts,
                 error=str(e),
                 error_type=type(e).__name__,
+                trace_id=trace_id,
             )
             if model == ANTHROPIC_SONNET_MODEL:
                 model = GENERATION_MODEL

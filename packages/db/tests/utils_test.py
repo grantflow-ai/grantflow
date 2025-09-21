@@ -244,6 +244,7 @@ async def test_check_exists_files_being_indexed_validation_error(
 async def test_update_source_indexing_status_success(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     file_id: UUID = uuid4()
     parent_id = grant_application.id
@@ -301,6 +302,7 @@ async def test_update_source_indexing_status_success(
             text_content="Test content extracted from PDF",
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
+            trace_id=trace_id,
         )
 
         assert mock_publish.call_count == 1
@@ -311,6 +313,8 @@ async def test_update_source_indexing_status_success(
         assert call.kwargs["data"]["source_id"] == file_id
         assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
         assert call.kwargs["data"]["identifier"] == "test.pdf"
+        assert call.kwargs["data"]["trace_id"] == trace_id
+        assert call.kwargs["trace_id"] == trace_id
 
     async with async_session_maker() as session:
         source = await session.scalar(select(RagSource).where(RagSource.id == file_id))
@@ -322,6 +326,7 @@ async def test_update_source_indexing_status_success(
 async def test_update_source_indexing_status_no_vectors(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     file_id: UUID = uuid4()
     parent_id = grant_application.id
@@ -372,6 +377,7 @@ async def test_update_source_indexing_status_no_vectors(
             text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
+            trace_id=trace_id,
         )
 
         assert mock_publish.call_count == 1
@@ -389,6 +395,7 @@ async def test_update_source_indexing_status_no_vectors(
 async def test_update_source_indexing_status_database_error(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     file_id: UUID = uuid4()
     parent_id = grant_application.id
@@ -423,6 +430,7 @@ async def test_update_source_indexing_status_database_error(
             text_content="Test content",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
+            trace_id=trace_id,
         )
 
         mock_logger.exception.assert_called_once()

@@ -19,10 +19,12 @@ from services.rag.src.utils.evaluation import (
 )
 
 
+
 @performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_evaluation_framework_baseline(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
+    trace_id: str,
 ) -> None:
     performance_context.set_metadata("test_type", "baseline_performance")
     performance_context.set_metadata("evaluation_scenarios", 3)
@@ -80,6 +82,7 @@ async def test_evaluation_framework_baseline(
                 criteria=criteria,
                 prompt="Evaluate this research plan content",
                 model_output=str(test_case["content"]),
+                trace_id=trace_id,
             )
 
             end_time = time.time()
@@ -135,6 +138,7 @@ async def test_evaluation_framework_baseline(
 async def test_evaluation_consistency(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
+    trace_id: str,
 ) -> None:
     scores: list[int] = []
     avg_score = 0.0
@@ -173,6 +177,7 @@ async def test_evaluation_consistency(
                     criteria=[criterion],
                     prompt="Evaluate content quality",
                     model_output=test_content,
+                    trace_id=trace_id,
                 )
 
                 score = result["criteria"]["Content Analysis"]["score"]
@@ -221,6 +226,7 @@ async def test_evaluation_consistency(
 async def test_evaluation_optimization_performance(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
+    trace_id: str,
 ) -> None:
     clear_evaluation_cache()
     reset_adaptive_timeouts()
@@ -324,6 +330,7 @@ async def test_evaluation_optimization_performance(
                     model_output=content,
                     auto_route=True,
                     record_performance=False,
+                    trace_id=trace_id,
                 )
                 first_call_time = time.time() - start_time
                 cache_times["first_call"].append(first_call_time)
@@ -336,6 +343,7 @@ async def test_evaluation_optimization_performance(
                     model_output=content,
                     auto_route=True,
                     record_performance=False,
+                    trace_id=trace_id,
                 )
                 cached_call_time = time.time() - start_time
                 cache_times["cached_call"].append(cached_call_time)
@@ -372,6 +380,7 @@ async def test_evaluation_optimization_performance(
                     model_output=content,
                     auto_route=True,
                     record_performance=True,
+                    trace_id=trace_id,
                 )
                 routing_time = time.time() - start_time
                 performance_context.add_llm_call()
@@ -412,6 +421,7 @@ async def test_evaluation_optimization_performance(
                             model_output=content,
                             auto_route=True,
                             record_performance=True,
+                            trace_id=trace_id,
                         )
                         performance_context.add_llm_call()
                     except Exception:
@@ -591,6 +601,7 @@ async def test_content_complexity_analysis(
 async def test_smart_evaluation_routing(
     logger: logging.Logger,
     performance_context: PerformanceTestContext,
+    trace_id: str,
 ) -> None:
     criteria = [
         EvaluationCriterion(
@@ -629,6 +640,7 @@ async def test_smart_evaluation_routing(
                 prompt="Evaluate this research proposal",
                 model_output=simple_content,
                 auto_route=True,
+                trace_id=trace_id,
             )
 
         assert analysis.complexity_level == ContentComplexity.SIMPLE
@@ -660,6 +672,7 @@ async def test_smart_evaluation_routing(
                 prompt="Evaluate this research proposal",
                 model_output=complex_content,
                 auto_route=True,
+                trace_id=trace_id,
             )
 
         assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
@@ -680,6 +693,7 @@ async def test_smart_evaluation_routing(
                 auto_route=False,
                 force_mode="quick_evaluation",
                 force_timeout=30.0,
+                trace_id=trace_id,
             )
 
         assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
@@ -709,6 +723,7 @@ async def test_smart_evaluation_routing(
                 prompt="Evaluate this research proposal",
                 model_output=complex_content,
                 auto_route=True,
+                trace_id=trace_id,
             )
 
         single_criteria_analysis = analyze_content_complexity(complex_content, criteria[:1])

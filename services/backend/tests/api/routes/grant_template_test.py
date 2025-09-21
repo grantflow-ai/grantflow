@@ -109,7 +109,7 @@ async def test_update_grant_template_not_found(
 
 
 @patch(
-    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    "services.backend.src.api.routes.grant_templates.publish_rag_task",
     new_callable=AsyncMock,
 )
 async def test_generate_grant_template_success(
@@ -157,12 +157,13 @@ async def test_generate_grant_template_success(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_template",
         parent_id=grant_template_id,
+        stage=ANY,
         trace_id=ANY,
     )
 
 
 @patch(
-    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    "services.backend.src.api.routes.grant_templates.publish_rag_task",
     new_callable=AsyncMock,
 )
 async def test_generate_grant_template_with_created_status(
@@ -210,6 +211,7 @@ async def test_generate_grant_template_with_created_status(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_template",
         parent_id=grant_template_id,
+        stage=ANY,
         trace_id=ANY,
     )
 

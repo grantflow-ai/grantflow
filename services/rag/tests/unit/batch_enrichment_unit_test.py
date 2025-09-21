@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def test_batch_enrichment_calls_single_llm_request() -> None:
+async def test_batch_enrichment_calls_single_llm_request(trace_id: str) -> None:
     mock_objectives: list[ResearchObjective] = [
         {
             "number": 1,
@@ -101,6 +101,7 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
             grant_section=mock_grant_section,
             research_objectives=mock_objectives,
             form_inputs=mock_form_inputs,
+            trace_id=trace_id,
         )
 
         assert mock_retrieve.call_count == 1, "Should make exactly one retrieval call"

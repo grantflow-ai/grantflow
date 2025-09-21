@@ -18,6 +18,7 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,
     DeserializationError,
+    LLMTimeoutError,
     ValidationError,
 )
 
@@ -90,6 +91,13 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
             logger.error("Validation error", exec_info=exception)
             message = "Invalid pubsub message"
             status_code = HTTPStatus.BAD_REQUEST
+        elif isinstance(exception, LLMTimeoutError):
+            logger.warning(
+                "LLM API timeout - message will be retried by Pub/Sub",
+                exec_info=exception,
+            )
+            message = str(exception)
+            status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         else:
             logger.error("An unexpected backend error occurred.", exec_info=exception)
             message = "An unexpected backend error occurred"
@@ -124,31 +132,19 @@ def create_session_maker_server_startup(logger: FilteringBoundLogger) -> Lifespa
     return session_maker_server_startup
 
 
-async def _health_check() -> str:
+# TODO: change health to healthz, and add readyz for readiness checks.
+@get("/health", media_type="text/plain", operation_id="HealthCheck")
+async def health_check() -> str:
     return "OK"
 
 
 def create_litestar_app(
     logger: FilteringBoundLogger,
     add_session_maker: bool = True,
-    lightweight_health_check: bool = False,
     **kwargs: Any,
 ) -> Litestar:
     exception_handler = create_exception_handler(logger)
 
-    # Use lightweight health check if requested (no DB connectivity check)
-    if lightweight_health_check:
-
-        async def _lightweight_health() -> str:
-            return "OK"
-
-        health_check = get(
-            "/health", media_type="text/plain", operation_id="HealthCheck"
-        )(_lightweight_health)
-    else:
-        health_check = get(
-            "/health", media_type="text/plain", operation_id="HealthCheck"
-        )(_health_check)
     if "route_handlers" in kwargs:
         kwargs["route_handlers"].append(health_check)
     else:
@@ -185,6 +181,7 @@ def create_litestar_app(
             IntegrityError: exception_handler,
             SQLAlchemyError: exception_handler,
             BackendError: exception_handler,
+            LLMTimeoutError: exception_handler,
             ValidationError: exception_handler,
         },
         logging_config=logging_config,

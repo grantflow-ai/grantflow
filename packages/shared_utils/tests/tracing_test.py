@@ -10,7 +10,7 @@ from packages.shared_utils.src.tracing import (
 )
 
 
-def test_start_span_with_trace_id_success() -> None:
+def test_start_span_with_trace_id_success(trace_id: str) -> None:
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars") as mock_bind,
@@ -25,8 +25,6 @@ def test_start_span_with_trace_id_success() -> None:
         mock_tracer.start_as_current_span.return_value.__exit__ = Mock(
             return_value=None
         )
-
-        trace_id = "test-trace-123"
 
         with start_span_with_trace_id(
             "test_operation",
@@ -48,7 +46,7 @@ def test_start_span_with_trace_id_success() -> None:
         mock_clear.assert_called_once()
 
 
-def test_start_span_with_trace_id_without_trace_id() -> None:
+def test_start_span_with_trace_id_uses_default_tracer(trace_id: str) -> None:
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars") as mock_bind,
@@ -64,17 +62,17 @@ def test_start_span_with_trace_id_without_trace_id() -> None:
             return_value=None
         )
 
-        with start_span_with_trace_id("test_operation") as span:
+        with start_span_with_trace_id("test_operation", trace_id=trace_id) as span:
             assert span == mock_span
 
-        mock_bind.assert_not_called()
-        mock_clear.assert_not_called()
+        mock_get_tracer.assert_called_once_with(None)
+        mock_bind.assert_called_once_with(trace_id=trace_id)
+        mock_clear.assert_called_once()
 
-        calls = [call[0] for call in mock_span.set_attribute.call_args_list]
-        assert ("trace_id", "test-trace-123") not in calls
+        mock_span.set_attribute.assert_any_call("trace_id", trace_id)
 
 
-def test_start_span_with_trace_id_exception_handling() -> None:
+def test_start_span_with_trace_id_exception_handling(trace_id: str) -> None:
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars"),
@@ -93,7 +91,7 @@ def test_start_span_with_trace_id_exception_handling() -> None:
         test_exception = ValueError("Test error")
 
         with pytest.raises(ValueError, match="Test error"):
-            with start_span_with_trace_id("test_operation", trace_id="test-123"):
+            with start_span_with_trace_id("test_operation", trace_id=trace_id):
                 raise test_exception
 
         mock_span.record_exception.assert_called_once_with(test_exception)
@@ -105,7 +103,7 @@ def test_start_span_with_trace_id_exception_handling() -> None:
         mock_clear.assert_called_once()
 
 
-def test_start_span_with_none_attributes() -> None:
+def test_start_span_with_none_attributes(trace_id: str) -> None:
     with patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer:
         mock_tracer = Mock()
         mock_span = Mock()
@@ -118,11 +116,18 @@ def test_start_span_with_none_attributes() -> None:
         )
 
         with start_span_with_trace_id(
-            "test_operation", valid_attr="value", none_attr=None
+            "test_operation",
+            trace_id=trace_id,
+            valid_attr="value",
+            none_attr=None,
         ):
             pass
 
-        mock_span.set_attribute.assert_called_once_with("valid_attr", "value")
+        mock_span.set_attribute.assert_any_call("trace_id", trace_id)
+        mock_span.set_attribute.assert_any_call("valid_attr", "value")
+
+        calls = [call[0] for call in mock_span.set_attribute.call_args_list]
+        assert ("none_attr", None) not in calls
 
 
 def test_add_span_attributes_with_current_span() -> None:

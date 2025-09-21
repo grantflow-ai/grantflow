@@ -52,15 +52,25 @@ async def test_validate_select_best_response_invalid() -> None:
         validate_select_best_response(selection, candidates=candidates)
 
 
-async def test_select_best_response(mock_google_api_response: Mock) -> None:
+async def test_select_best_response(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     candidates = {1: "response1", 2: "response2"}
     mock_google_api_response.text = '{"best_response": 1}'
 
-    result = await select_best_response(candidates=candidates, prompt="test prompt")
+    result = await select_best_response(
+        candidates=candidates,
+        prompt="test prompt",
+        trace_id=trace_id,
+    )
     assert result == "response1"
 
 
-async def test_make_completions_request_with_string_message(mock_google_api_response: Mock) -> None:
+async def test_make_completions_request_with_string_message(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await make_google_completions_request(
         prompt_identifier="test",
@@ -68,11 +78,15 @@ async def test_make_completions_request_with_string_message(mock_google_api_resp
         messages="test message",
         candidate_count=None,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_make_completions_request_with_list_message(mock_google_api_response: Mock) -> None:
+async def test_make_completions_request_with_list_message(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await make_google_completions_request(
         prompt_identifier="test",
@@ -80,11 +94,15 @@ async def test_make_completions_request_with_list_message(mock_google_api_respon
         messages=["test message"],
         candidate_count=None,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_make_completions_request_with_multiple_candidates(mock_google_api_response: Mock) -> None:
+async def test_make_completions_request_with_multiple_candidates(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"best_response": 1}'
 
     candidate1 = Mock()
@@ -106,11 +124,15 @@ async def test_make_completions_request_with_multiple_candidates(mock_google_api
         messages="test message",
         candidate_count=2,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value1"}
 
 
-async def test_make_completions_request_with_schema_validation(mock_google_api_response: Mock) -> None:
+async def test_make_completions_request_with_schema_validation(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
     result = await make_google_completions_request(
@@ -120,11 +142,15 @@ async def test_make_completions_request_with_schema_validation(mock_google_api_r
         response_schema=schema,
         candidate_count=None,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_make_anthropic_completions_request(mock_anthropic_api_response: Mock) -> None:
+async def test_make_anthropic_completions_request(
+    mock_anthropic_api_response: Mock,
+    trace_id: str,
+) -> None:
     tool_use = Mock(spec=ToolUseBlock)
     tool_use.type = "tool_use"
     tool_use.name = "set_output"
@@ -143,11 +169,15 @@ async def test_make_anthropic_completions_request(mock_anthropic_api_response: M
         response_type=dict[str, str],
         user_prompt="test message",
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_make_anthropic_completions_request_with_generation_params(mock_anthropic_api_response: Mock) -> None:
+async def test_make_anthropic_completions_request_with_generation_params(
+    mock_anthropic_api_response: Mock,
+    trace_id: str,
+) -> None:
     tool_use = Mock(spec=ToolUseBlock)
     tool_use.type = "tool_use"
     tool_use.name = "set_output"
@@ -169,22 +199,30 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
         top_k=10,
         top_p=0.9,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_success(mock_google_api_response: Mock) -> None:
+async def test_handle_completions_request_success(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     result = await handle_completions_request(
         prompt_identifier="test",
         response_type=dict[str, str],
         messages="test message",
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> None:
+async def test_handle_completions_request_with_retry(
+    mocker: MockerFixture,
+    trace_id: str,
+) -> None:
     client = Mock()
     aio_client = AsyncMock()
     response = Mock()
@@ -204,11 +242,15 @@ async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> N
         messages="test message",
         max_attempts=3,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_anthropic_credit_balance_error_fails_fast(mocker: MockerFixture) -> None:
+async def test_anthropic_credit_balance_error_fails_fast(
+    mocker: MockerFixture,
+    trace_id: str,
+) -> None:
     client = AsyncMock()
     error_response = Mock(
         status_code=400,
@@ -231,6 +273,7 @@ async def test_anthropic_credit_balance_error_fails_fast(mocker: MockerFixture) 
             response_type=dict[str, str],
             user_prompt="test message",
             system_prompt="You are a helpful assistant.",
+            trace_id=trace_id,
         )
 
     assert "Anthropic API credits exhausted" in str(exc_info.value)
@@ -238,7 +281,10 @@ async def test_anthropic_credit_balance_error_fails_fast(mocker: MockerFixture) 
     client.messages.create.assert_called_once()
 
 
-async def test_anthropic_rate_limit_error_retries(mocker: MockerFixture) -> None:
+async def test_anthropic_rate_limit_error_retries(
+    mocker: MockerFixture,
+    trace_id: str,
+) -> None:
     client = AsyncMock()
     response = Mock()
     response.content = [
@@ -270,12 +316,16 @@ async def test_anthropic_rate_limit_error_retries(mocker: MockerFixture) -> None
         response_type=dict[str, str],
         user_prompt="test message",
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
 
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_fallback_on_credit_error(mocker: MockerFixture) -> None:
+async def test_handle_completions_fallback_on_credit_error(
+    mocker: MockerFixture,
+    trace_id: str,
+) -> None:
     anthropic_client = AsyncMock()
     credit_error = BadRequestError(
         "Your credit balance is too low to access the Anthropic API.",
@@ -300,6 +350,7 @@ async def test_handle_completions_fallback_on_credit_error(mocker: MockerFixture
         response_schema={"type": "object", "properties": {"key": {"type": "string"}}},
         messages="test message",
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
 
     assert result == {"key": "value"}
@@ -307,7 +358,10 @@ async def test_handle_completions_fallback_on_credit_error(mocker: MockerFixture
     aio_client.models.generate_content.assert_called_once()
 
 
-async def test_handle_completions_request_with_custom_validator(mock_google_api_response: Mock) -> None:
+async def test_handle_completions_request_with_custom_validator(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
 
     def custom_validator(data: dict[str, str]) -> None:
@@ -320,11 +374,15 @@ async def test_handle_completions_request_with_custom_validator(mock_google_api_
         messages="test message",
         validator=custom_validator,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_with_schema(mock_google_api_response: Mock) -> None:
+async def test_handle_completions_request_with_schema(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = '{"key": "value"}'
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
 
@@ -334,11 +392,15 @@ async def test_handle_completions_request_with_schema(mock_google_api_response: 
         messages="test message",
         response_schema=schema,
         system_prompt="You are a helpful assistant.",
+        trace_id=trace_id,
     )
     assert result == {"key": "value"}
 
 
-async def test_handle_completions_request_deserialization_error(mock_google_api_response: Mock) -> None:
+async def test_handle_completions_request_deserialization_error(
+    mock_google_api_response: Mock,
+    trace_id: str,
+) -> None:
     mock_google_api_response.text = "invalid json"
     response_schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
 
@@ -349,4 +411,5 @@ async def test_handle_completions_request_deserialization_error(mock_google_api_
             messages="test message",
             system_prompt="You are a helpful assistant.",
             response_schema=response_schema,
+            trace_id=trace_id,
         )

@@ -121,7 +121,7 @@ def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-def add_otel_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
+def add_otel_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:  # noqa: ARG001
     try:
         from opentelemetry import trace
 
@@ -153,7 +153,6 @@ def get_logger(name: str) -> FilteringBoundLogger:
             format_exc_info,
         )
 
-        # Determine if we're in a local development environment
         is_local_dev = get_env("DEBUG", raise_on_missing=False) and not get_env(
             "K_SERVICE", raise_on_missing=False
         )
@@ -172,7 +171,6 @@ def get_logger(name: str) -> FilteringBoundLogger:
                 add_log_level,
                 format_exc_info,
                 TimeStamper(fmt="iso"),
-                # Use colored console output only for local development
                 # Cloud Run/Cloud Logging needs JSON format even with DEBUG=1
                 ConsoleRenderer(colors=True)
                 if is_local_dev

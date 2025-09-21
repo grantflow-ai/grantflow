@@ -1,30 +1,10 @@
-import asyncio
 import re
 from collections import defaultdict
-from typing import Any, Final, Literal, TypedDict
+from typing import Any, Final, Literal
 
-from packages.shared_utils.src.logger import get_logger
+from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.shared_utils.src.nlp import get_spacy_model
-
-logger = get_logger(__name__)
-
-
-class NLPCategorizerStatus(TypedDict):
-    spacy_model_loaded: bool
-    supported_categories: list[str]
-
-
-class NLPCategorizationResult(TypedDict):
-    money: list[str]
-    date_time: list[str]
-    writing_related: list[str]
-    other_numbers: list[str]
-    recommendations: list[str]
-    orders: list[str]
-    positive_instructions: list[str]
-    negative_instructions: list[str]
-    evaluation_criteria: list[str]
-
+from packages.shared_utils.src.sync import run_sync
 
 CategoryKey = Literal[
     "money",
@@ -38,7 +18,6 @@ CategoryKey = Literal[
     "evaluation_criteria",
 ]
 
-
 MONEY_CATEGORY: Final[str] = "money"
 DATE_TIME_CATEGORY: Final[str] = "date_time"
 WRITING_CATEGORY: Final[str] = "writing_related"
@@ -48,7 +27,6 @@ ORDERS_CATEGORY: Final[str] = "orders"
 POSITIVE_INSTRUCTIONS_CATEGORY: Final[str] = "positive_instructions"
 NEGATIVE_INSTRUCTIONS_CATEGORY: Final[str] = "negative_instructions"
 EVALUATION_CRITERIA_CATEGORY: Final[str] = "evaluation_criteria"
-
 MONEY_KEYWORDS: Final[set[str]] = {
     "budget",
     "cost",
@@ -78,9 +56,7 @@ MONEY_KEYWORDS: Final[set[str]] = {
     "costs",
     "expense",
 }
-
 MONEY_SYMBOLS: Final[set[str]] = {"$", "USD", "€", "£", "¥"}
-
 ORDER_KEYWORDS: Final[set[str]] = {
     "must",
     "required",
@@ -116,7 +92,6 @@ ORDER_KEYWORDS: Final[set[str]] = {
     "satisfy",
     "comply",
 }
-
 WRITING_KEYWORDS: Final[set[str]] = {
     "page",
     "pages",
@@ -161,7 +136,6 @@ WRITING_KEYWORDS: Final[set[str]] = {
     "line",
     "lines",
 }
-
 RECOMMENDATION_KEYWORDS: Final[set[str]] = {
     "recommend",
     "suggested",
@@ -195,7 +169,6 @@ RECOMMENDATION_KEYWORDS: Final[set[str]] = {
     "we suggest",
     "it is suggested",
 }
-
 EVALUATION_KEYWORDS: Final[set[str]] = {
     "evaluate",
     "evaluation",
@@ -236,21 +209,17 @@ EVALUATION_KEYWORDS: Final[set[str]] = {
     "performance",
     "success",
 }
-
 DATE_TIME_ENTITIES: Final[set[str]] = {"DATE", "TIME"}
 PERCENTAGE_SYMBOL: Final[str] = "%"
 MIN_SENTENCE_CHARS: Final[int] = 10
-
 MAX_DISPLAY_ITEMS: Final[int] = 10
 MORE_ITEMS_FORMAT: Final[str] = "   ... and {remaining} more"
 NLP_ANALYSIS_HEADER: Final[str] = "## NLP Analysis"
 TOTAL_SENTENCES_FORMAT: Final[str] = "Total: {total_sentences} categorized sentences"
 NO_ANALYSIS_MESSAGE: Final[str] = "No NLP analysis available - no categorized content found."
-
 NOT_DONE_REGEX: Final[re.Pattern[str]] = re.compile(
     r"\b(?:not|don't|do not|cannot|can't|must not|should not|shouldn't|will not|won't|never|no)\b", re.IGNORECASE
 )
-
 CATEGORY_LABELS: Final[list[str]] = [
     MONEY_CATEGORY,
     DATE_TIME_CATEGORY,
@@ -262,10 +231,6 @@ CATEGORY_LABELS: Final[list[str]] = [
     NEGATIVE_INSTRUCTIONS_CATEGORY,
     EVALUATION_CRITERIA_CATEGORY,
 ]
-
-
-def _is_number(token: Any) -> bool:
-    return bool(token.like_num)
 
 
 def _categorize_sentence(sentence: Any, text: str) -> dict[str, bool]:
@@ -284,7 +249,7 @@ def _categorize_sentence(sentence: Any, text: str) -> dict[str, bool]:
     has_evaluation = any(token in EVALUATION_KEYWORDS for token in token_texts)
     has_writing = any(token in WRITING_KEYWORDS for token in token_texts)
     has_recommendation = any(token in RECOMMENDATION_KEYWORDS for token in token_texts)
-    has_numbers = any(_is_number(token) for token in sentence)
+    has_numbers = any(token.like_num for token in sentence)
     has_percentages = PERCENTAGE_SYMBOL in text
 
     categories = {}
@@ -310,9 +275,9 @@ def _categorize_sentence(sentence: Any, text: str) -> dict[str, bool]:
     return categories
 
 
-def _categorize_text_sync(text: str) -> NLPCategorizationResult:
+def _categorize_text_sync(text: str) -> CategorizationAnalysisResult:
     if not text or not text.strip():
-        return NLPCategorizationResult(
+        return CategorizationAnalysisResult(
             money=[],
             date_time=[],
             writing_related=[],
@@ -326,6 +291,7 @@ def _categorize_text_sync(text: str) -> NLPCategorizationResult:
 
     nlp = get_spacy_model()
     doc = nlp(text)
+
     buckets: defaultdict[CategoryKey, list[str]] = defaultdict(list)
 
     for sentence in doc.sents:
@@ -335,7 +301,7 @@ def _categorize_text_sync(text: str) -> NLPCategorizationResult:
         for category in categories:
             buckets[category].append(sentence_text)  # type: ignore[index]
 
-    return NLPCategorizationResult(
+    return CategorizationAnalysisResult(
         money=buckets["money"],
         date_time=buckets["date_time"],
         writing_related=buckets["writing_related"],
@@ -348,12 +314,8 @@ def _categorize_text_sync(text: str) -> NLPCategorizationResult:
     )
 
 
-def categorize_text(text: str) -> NLPCategorizationResult:
-    return _categorize_text_sync(text)
-
-
-async def categorize_text_async(text: str) -> NLPCategorizationResult:
-    return await asyncio.to_thread(_categorize_text_sync, text)
+async def categorize_text(text: str) -> CategorizationAnalysisResult:
+    return await run_sync(_categorize_text_sync, text)
 
 
 def _format_category_section(category: str, sentences: list[str]) -> list[str]:
@@ -370,7 +332,7 @@ def _format_category_section(category: str, sentences: list[str]) -> list[str]:
     return section_lines
 
 
-def format_nlp_analysis_for_prompt(analysis: NLPCategorizationResult) -> str:
+def format_nlp_analysis_for_prompt(analysis: CategorizationAnalysisResult) -> str:
     if not analysis or not any(sentences for sentences in analysis.values()):
         return NO_ANALYSIS_MESSAGE
 
@@ -398,13 +360,3 @@ def format_nlp_analysis_for_prompt(analysis: NLPCategorizationResult) -> str:
             sections.extend(_format_category_section(category, sentences))
 
     return "\n".join(sections)
-
-
-def get_nlp_categorizer_status() -> NLPCategorizerStatus:
-    nlp = get_spacy_model()
-    model_loaded = nlp is not None
-
-    return {
-        "spacy_model_loaded": model_loaded,
-        "supported_categories": CATEGORY_LABELS,
-    }
