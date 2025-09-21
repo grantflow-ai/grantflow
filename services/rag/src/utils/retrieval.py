@@ -225,10 +225,10 @@ async def retrieve_documents(
     task_description: str | PromptTemplate,
     with_guided_retrieval: bool = False,
     embedding_model: str | None = None,
+    trace_id: str,
     **kwargs: Any,
 ) -> list[str]:
     start_time = time.time()
-    trace_id = kwargs.get("trace_id", "")
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
 

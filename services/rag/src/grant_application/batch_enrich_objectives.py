@@ -148,7 +148,7 @@ async def handle_batch_enrich_objectives(
             for obj in batch
         ]
 
-        batch_results = await batched_gather(*batch_coroutines, batch_size=min(3, len(batch_coroutines)))
+        batch_results = await batched_gather(*batch_coroutines, batch_size=min(4, len(batch_coroutines)))
         all_deep_dives.extend(batch_results)
 
     logger.info(

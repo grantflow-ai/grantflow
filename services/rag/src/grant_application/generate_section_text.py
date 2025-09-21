@@ -19,14 +19,14 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
     section_title_lower = section_title.lower()
     relevant_requirements = [
         section_req
-        for section_req in cfp_analysis.get("section_requirements", [])
+        for section_req in cfp_analysis.get("section_requirements", [])  # type: ignore[attr-defined]
         if section_req["section"].lower() in section_title_lower
         or section_title_lower in section_req["section"].lower()
     ]
 
     relevant_constraints = [
         constraint
-        for constraint in cfp_analysis.get("length_constraints", [])
+        for constraint in cfp_analysis.get("length_constraints", [])  # type: ignore[attr-defined]
         if section_title_lower in constraint["limit_description"].lower()
         or any(word in constraint["limit_description"].lower() for word in section_title_lower.split())
     ]
