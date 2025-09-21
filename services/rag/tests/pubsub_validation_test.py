@@ -158,130 +158,120 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
 
 async def test_handle_request_grant_template_success(
     async_session_maker: Any,
+    grant_template: Any,
 ) -> None:
-    # Create a grant template ID to use
-    template_id = UUID("123e4567-e89b-12d3-a456-426614174001")
+    print(f"DEBUG: grant_template fixture ID: {grant_template.id}")
+    print(f"DEBUG: grant_template fixture deleted_at: {grant_template.deleted_at}")
+
+    # Let's verify the template actually exists in the database
+    from packages.db.src.query_helpers import select_active
+    from packages.db.src.tables import GrantTemplate
+
+    async with async_session_maker() as session:
+        from sqlalchemy import select, func
+
+        # First check without select_active
+        result_raw = await session.scalar(
+            select(GrantTemplate).where(GrantTemplate.id == grant_template.id)
+        )
+        print(f"DEBUG: Raw query result: {result_raw}")
+
+        # Then with select_active
+        active_template = await session.scalar(
+            select_active(GrantTemplate).where(GrantTemplate.id == grant_template.id)
+        )
+        print(f"DEBUG: select_active query result: {active_template}")
+
+        # Check all templates in database
+        all_count = await session.scalar(select(func.count(GrantTemplate.id)))
+        print(f"DEBUG: Total templates in DB: {all_count}")
+
+        active_count = await session.scalar(select(func.count(GrantTemplate.id)).where(GrantTemplate.deleted_at.is_(None)))
+        print(f"DEBUG: Active templates in DB: {active_count}")
 
     request = GrantTemplateRagRequest(
-        parent_id=template_id,
+        parent_id=grant_template.id,
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
+    # Only mock the actual pipeline execution, not the database
     with patch(
         "services.rag.src.grant_template.pipeline.handle_grant_template_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
-        # Mock the session maker to return a mock grant template when queried
-        mock_template = AsyncMock()
-        mock_template.id = template_id
-        mock_template.deleted_at = None
-
-        mock_session = AsyncMock()
-        mock_session.scalar = AsyncMock(return_value=mock_template)
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        mock_session_maker = AsyncMock()
-        mock_session_maker.return_value = mock_session
-
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
         # Verify the pipeline was called correctly
         mock_pipeline.assert_called_once()
         call_args = mock_pipeline.call_args
-        assert call_args.kwargs["grant_template"] == mock_template
-        assert call_args.kwargs["session_maker"] == mock_session_maker
+        assert call_args.kwargs["grant_template"].id == grant_template.id
+        assert call_args.kwargs["session_maker"] == async_session_maker
         assert call_args.kwargs["generation_stage"] == GrantTemplateStageEnum.EXTRACT_CFP_CONTENT
         assert call_args.kwargs["trace_id"] == "test-trace"
 
 
 async def test_handle_request_grant_application_success(
     async_session_maker: Any,
+    grant_application: Any,
+    grant_template: Any,
 ) -> None:
-    # Create an application ID to use
-    application_id = UUID("123e4567-e89b-12d3-a456-426614174002")
+    # The grant_template fixture is already linked to the grant_application
+    # via the grant_application_id field, so no additional setup needed
 
     request = GrantApplicationRagRequest(
-        parent_id=application_id,
+        parent_id=grant_application.id,
         stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
+    # Only mock the actual pipeline execution, not the database
     with patch(
         "services.rag.src.grant_application.pipeline.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
-        # Mock the session maker to return a mock grant application when queried
-        mock_application = AsyncMock()
-        mock_application.id = application_id
-        mock_application.deleted_at = None
-        mock_application.grant_template = AsyncMock()  # Mock template relationship
-
-        mock_session = AsyncMock()
-        mock_session.scalar = AsyncMock(return_value=mock_application)
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        mock_session_maker = AsyncMock()
-        mock_session_maker.return_value = mock_session
-
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
         # Verify the pipeline was called correctly
         mock_pipeline.assert_called_once()
         call_args = mock_pipeline.call_args
-        assert call_args.kwargs["grant_application"] == mock_application
-        assert call_args.kwargs["session_maker"] == mock_session_maker
+        assert call_args.kwargs["grant_application"].id == grant_application.id
+        assert call_args.kwargs["session_maker"] == async_session_maker
         assert call_args.kwargs["generation_stage"] == GrantApplicationStageEnum.GENERATE_SECTIONS
         assert call_args.kwargs["trace_id"] == "test-trace"
 
 
 async def test_handle_request_autofill_success(
     async_session_maker: Any,
+    grant_application: Any,
 ) -> None:
-    # Create an application ID to use
-    application_id = UUID("123e4567-e89b-12d3-a456-426614174003")
-
     request = ResearchPlanAutofillRequest(
-        application_id=application_id,
+        application_id=grant_application.id,
         trace_id="test-trace",
         field_name="background_context",
     )
     event = create_pubsub_event_from_request(request)
 
+    # Only mock the actual handler, not the database
     with patch(
         "services.rag.src.autofill.handler.handle_autofill_request",
         new_callable=AsyncMock,
     ) as mock_autofill:
-        # Mock the session maker to return a mock grant application when queried
-        mock_application = AsyncMock()
-        mock_application.id = application_id
-        mock_application.deleted_at = None
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
-        mock_session = AsyncMock()
-        mock_session.scalar = AsyncMock(return_value=mock_application)
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        mock_session_maker = AsyncMock()
-        mock_session_maker.return_value = mock_session
-
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
-
-        mock_autofill.assert_called_once_with(
-            request=request,
-            application=mock_application,
-            session_maker=mock_session_maker,
-        )
+        mock_autofill.assert_called_once()
+        call_args = mock_autofill.call_args
+        assert call_args.kwargs["request"] == request
+        assert call_args.kwargs["application"].id == grant_application.id
+        assert call_args.kwargs["session_maker"] == async_session_maker
 
 
 async def test_handle_request_grant_template_not_found(
     async_session_maker: Any,
 ) -> None:
-    # Use a non-existent ID
+    # Use a non-existent ID - this should fail with real database
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
@@ -289,46 +279,24 @@ async def test_handle_request_grant_template_not_found(
     )
     event = create_pubsub_event_from_request(request)
 
-    # Mock the session to return None (template not found)
-    mock_session = AsyncMock()
-    mock_session.scalar = AsyncMock(return_value=None)
-    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session.__aexit__ = AsyncMock(return_value=None)
-
-    mock_session_maker = AsyncMock()
-    mock_session_maker.return_value = mock_session
-
     with pytest.raises(ValidationError, match=r"Grant template .* not found"):
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
 
 async def test_handle_request_pipeline_error_propagates(
     async_session_maker: Any,
+    grant_template: Any,
 ) -> None:
-    template_id = UUID("123e4567-e89b-12d3-a456-426614174004")
-
     request = GrantTemplateRagRequest(
-        parent_id=template_id,
+        parent_id=grant_template.id,
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
-    # Mock the grant template
-    mock_template = AsyncMock()
-    mock_template.id = template_id
-    mock_template.deleted_at = None
-
-    mock_session = AsyncMock()
-    mock_session.scalar = AsyncMock(return_value=mock_template)
-    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session.__aexit__ = AsyncMock(return_value=None)
-
-    mock_session_maker = AsyncMock()
-    mock_session_maker.return_value = mock_session
-
     error = Exception("Pipeline failed")
 
+    # Only mock the pipeline to simulate an error
     with (
         patch(
             "services.rag.src.grant_template.pipeline.handle_grant_template_pipeline",
@@ -336,4 +304,4 @@ async def test_handle_request_pipeline_error_propagates(
         ),
         pytest.raises(Exception, match="Pipeline failed"),
     ):
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)

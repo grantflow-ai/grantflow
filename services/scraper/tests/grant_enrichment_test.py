@@ -199,7 +199,6 @@ def test_extract_grant_details_empty_html() -> None:
     assert result["category"] is None
 
 
-
 async def test_enrich_grant_data_with_amounts_and_eligibility() -> None:
     mock_grant = MagicMock()
     mock_grant.id = "test-id"
@@ -256,7 +255,6 @@ async def test_enrich_grant_data_with_amounts_and_eligibility() -> None:
         assert stats["skipped"] == 0
 
 
-
 async def test_enrich_grant_data_handles_fetch_failure() -> None:
     mock_grant = MagicMock()
     mock_grant.id = "test-id"
@@ -286,7 +284,6 @@ async def test_enrich_grant_data_handles_fetch_failure() -> None:
         assert stats["successfully_enriched"] == 0
         assert stats["failed"] == 1
         assert stats["skipped"] == 0
-
 
 
 async def test_enrich_grant_data_skips_grants_without_url() -> None:

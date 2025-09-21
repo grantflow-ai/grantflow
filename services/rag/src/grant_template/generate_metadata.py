@@ -1,11 +1,10 @@
 from functools import partial
 from typing import Final, NotRequired, TypedDict
 
+from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.grant_template.dto import OrganizationNamespace
-from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -139,16 +138,6 @@ grant_template_generation_json_schema: Final = {
         },
     },
 }
-
-
-class SectionMetadata(TypedDict):
-    id: str
-    keywords: list[str]
-    topics: list[str]
-    generation_instructions: str
-    depends_on: list[str]
-    max_words: int
-    search_queries: list[str]
 
 
 class TemplateSectionsResponse(TypedDict):

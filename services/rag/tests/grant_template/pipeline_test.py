@@ -171,6 +171,7 @@ async def test_pipeline_stage_execution_extract_cfp_content_stage(
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_cfp_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -195,6 +196,7 @@ async def test_pipeline_stage_execution_analyze_cfp_content_stage(
     sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
     job_with_extract_cfp_checkpoint: None,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_cfp_analysis = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage",
@@ -219,6 +221,7 @@ async def test_pipeline_stage_execution_extract_sections_stage(
     sample_sections_dto: ExtractionSectionsStageDTO,
     job_with_analyze_cfp_checkpoint: None,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_section_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_section_extraction_stage",
@@ -242,6 +245,7 @@ async def test_pipeline_stage_execution_generate_metadata_stage_final(
     async_session_maker: async_sessionmaker[Any],
     job_with_extract_sections_checkpoint: None,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_grant_sections = [{"id": "section1", "title": "Project Summary"}]
     mock_handle_generate_metadata = mocker.patch(
@@ -270,6 +274,7 @@ async def test_pipeline_error_handling_insufficient_context_error_handling(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_cfp_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -292,6 +297,7 @@ async def test_pipeline_error_handling_indexing_timeout_error_handling(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -313,6 +319,7 @@ async def test_pipeline_error_handling_indexing_failed_error_handling(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -334,6 +341,7 @@ async def test_pipeline_error_handling_generic_backend_error_handling(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -355,6 +363,7 @@ async def test_pipeline_state_management_missing_checkpoint_data_validation(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
@@ -372,6 +381,7 @@ async def test_pipeline_state_management_job_status_update_from_pending(
     async_session_maker: async_sessionmaker[Any],
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -394,6 +404,7 @@ async def test_pipeline_state_management_job_status_no_update_when_not_pending(
     async_session_maker: async_sessionmaker[Any],
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_extraction_stage",
@@ -417,6 +428,7 @@ async def test_pipeline_data_flow_checkpoint_data_casting_analyze_stage(
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
     job_with_extract_cfp_checkpoint: None,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_cfp_analysis = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage",
@@ -441,6 +453,7 @@ async def test_pipeline_data_flow_checkpoint_data_casting_sections_stage(
     sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
     job_with_analyze_cfp_checkpoint: None,
     trace_id: str,
+    create_pubsub_topics: None,
 ) -> None:
     mock_handle_section_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_section_extraction_stage",

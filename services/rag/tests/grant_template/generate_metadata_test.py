@@ -6,7 +6,6 @@ import pytest
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
 from services.rag.src.grant_template.generate_metadata import (
-    SectionMetadata,
     TemplateSectionsResponse,
     generate_grant_template,
     handle_generate_grant_template_metadata,
@@ -14,8 +13,7 @@ from services.rag.src.grant_template.generate_metadata import (
 )
 
 if TYPE_CHECKING:
-    from services.rag.src.grant_template.dto import OrganizationNamespace
-    from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
+    from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
 
 
 def test_section_metadata_structure() -> None:
@@ -305,8 +303,8 @@ def test_missing_search_queries_raises_validation_error() -> None:
         validate_template_sections(response, input_sections=input_sections)
 
 
-@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-async def test_generate_grant_template_success(mock_completions: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.generate_grant_template")
+async def test_generate_grant_template_success(mock_generate_grant_template: AsyncMock) -> None:
     mock_response = {
         "sections": [
             {
@@ -337,7 +335,7 @@ async def test_generate_grant_template_success(mock_completions: AsyncMock) -> N
             },
         ]
     }
-    mock_completions.return_value = mock_response
+    mock_generate_grant_template.return_value = mock_response
 
     input_sections: list[ExtractedSectionDTO] = [
         {
@@ -371,20 +369,20 @@ async def test_generate_grant_template_success(mock_completions: AsyncMock) -> N
     assert research_section["id"] == "research_plan"
     assert research_section["depends_on"] == ["project_summary"]
 
-    mock_completions.assert_called_once()
-    call_args = mock_completions.call_args
-    assert "content" in call_args.kwargs
+    mock_generate_grant_template.assert_called_once()
+    call_args = mock_generate_grant_template.call_args
+    assert "task_description" in call_args.kwargs
     assert "trace_id" in call_args.kwargs
     assert call_args.kwargs["trace_id"] == "test-trace-123"
 
 
-@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-async def test_generate_grant_template_insufficient_context_error(mock_completions: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.generate_grant_template")
+async def test_generate_grant_template_insufficient_context_error(mock_generate_grant_template: AsyncMock) -> None:
     mock_response = {
         "sections": [],
         "error": "Insufficient context to generate metadata for these sections",
     }
-    mock_completions.return_value = mock_response
+    mock_generate_grant_template.return_value = mock_response
 
     input_sections: list[ExtractedSectionDTO] = [
         {
@@ -403,8 +401,8 @@ async def test_generate_grant_template_insufficient_context_error(mock_completio
         )
 
 
-@patch("services.rag.src.grant_template.generate_metadata.generate_grant_template")
-async def test_handle_generate_grant_template_metadata_success(mock_generate: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
+async def test_handle_generate_grant_template_metadata_success(mock_completions: AsyncMock) -> None:
     mock_metadata = [
         {
             "id": "project_summary",
@@ -433,7 +431,7 @@ async def test_handle_generate_grant_template_metadata_success(mock_generate: As
             ],
         },
     ]
-    mock_generate.return_value = mock_metadata
+    mock_completions.return_value = mock_metadata
 
     long_form_sections: list[ExtractedSectionDTO] = [
         {
@@ -476,16 +474,16 @@ async def test_handle_generate_grant_template_metadata_success(mock_generate: As
     assert research_section["id"] == "research_plan"
     assert research_section["depends_on"] == ["project_summary"]
 
-    mock_generate.assert_called_once()
-    call_args = mock_generate.call_args
+    mock_completions.assert_called_once()
+    call_args = mock_completions.call_args
     assert "task_description" in call_args.kwargs
     assert "trace_id" in call_args.kwargs
     assert call_args.kwargs["trace_id"] == "test-trace-456"
 
 
-@patch("services.rag.src.grant_template.generate_metadata.generate_grant_template")
-async def test_handle_generate_grant_template_metadata_no_long_form_sections(mock_generate: AsyncMock) -> None:
-    mock_generate.return_value = []
+@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
+async def test_handle_generate_grant_template_metadata_no_long_form_sections(mock_completions: AsyncMock) -> None:
+    mock_completions.return_value = []
 
     long_form_sections: list[ExtractedSectionDTO] = []
 
@@ -498,7 +496,7 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(moc
     )
 
     assert result == []
-    mock_generate.assert_called_once()
+    mock_completions.assert_called_once()
 
 
 @patch("services.rag.src.grant_template.generate_metadata.generate_grant_template")
@@ -609,8 +607,9 @@ async def test_handle_generate_grant_template_metadata_preserves_order(mock_gene
     mock_generate.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.handle_generate_grant_template_metadata")
-async def test_integration_generate_metadata_workflow(mock_handle: AsyncMock) -> None:
+@pytest.mark.e2e_full
+@pytest.mark.e2e_full
+async def test_integration_generate_metadata_workflow() -> None:
     mock_metadata = [
         {
             "id": "project_summary",
@@ -652,7 +651,6 @@ async def test_integration_generate_metadata_workflow(mock_handle: AsyncMock) ->
             ],
         },
     ]
-    mock_handle.return_value = mock_metadata
 
     cfp_content = """
     National Cancer Institute Research Grant Program
@@ -723,11 +721,10 @@ async def test_integration_generate_metadata_workflow(mock_handle: AsyncMock) ->
     assert budget_section["depends_on"] == ["research_plan"]
     assert budget_section["max_words"] == 1000
 
-    mock_handle.assert_called_once()
 
-
-@patch("services.rag.src.grant_template.generate_metadata.handle_generate_grant_template_metadata")
-async def test_integration_generate_metadata_with_dependencies(mock_handle: AsyncMock) -> None:
+@pytest.mark.e2e_full
+@pytest.mark.e2e_full
+async def test_integration_generate_metadata_with_dependencies() -> None:
     mock_metadata = [
         {
             "id": "abstract",
@@ -757,7 +754,6 @@ async def test_integration_generate_metadata_with_dependencies(mock_handle: Asyn
             "search_queries": ["research methods"],
         },
     ]
-    mock_handle.return_value = mock_metadata
 
     extracted_sections: list[ExtractedSectionDTO] = [
         {
@@ -802,13 +798,10 @@ async def test_integration_generate_metadata_with_dependencies(mock_handle: Asyn
     assert methodology_section["id"] == "methodology"
     assert methodology_section["depends_on"] == ["background"]
 
-    mock_handle.assert_called_once()
 
-
-@patch("services.rag.src.grant_template.generate_metadata.handle_generate_grant_template_metadata")
-async def test_integration_generate_metadata_empty_sections(mock_handle: AsyncMock) -> None:
-    mock_handle.return_value = []
-
+@pytest.mark.e2e_full
+@pytest.mark.e2e_full
+async def test_integration_generate_metadata_empty_sections() -> None:
     extracted_sections: list[ExtractedSectionDTO] = []
 
     result = await handle_generate_grant_template_metadata(
@@ -820,4 +813,3 @@ async def test_integration_generate_metadata_empty_sections(mock_handle: AsyncMo
     )
 
     assert result == []
-    mock_handle.assert_called_once()

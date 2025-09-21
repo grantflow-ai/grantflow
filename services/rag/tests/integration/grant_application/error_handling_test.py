@@ -26,6 +26,7 @@ async def test_pipeline_missing_cfp_analysis(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
+    create_pubsub_topics: None,
 ) -> None:
     async with async_session_maker() as session:
         app = await session.get(
@@ -51,6 +52,7 @@ async def test_pipeline_missing_research_objectives(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
+    create_pubsub_topics: None,
 ) -> None:
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, test_application_with_template.id)
@@ -71,6 +73,7 @@ async def test_pipeline_validation_error_during_generation(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
+    create_pubsub_topics: None,
 ) -> None:
     job_manager: GrantApplicationJobManager[Any] = GrantApplicationJobManager(
         grant_application_id=test_application_with_template.id,
@@ -103,6 +106,7 @@ async def test_pipeline_database_error_during_save(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
+    create_pubsub_topics: None,
 ) -> None:
     job_manager: GrantApplicationJobManager[Any] = GrantApplicationJobManager(
         grant_application_id=test_application_with_template.id,
@@ -135,6 +139,7 @@ async def test_pipeline_backend_error_during_generation(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
+    create_pubsub_topics: None,
 ) -> None:
     job_manager: GrantApplicationJobManager[Any] = GrantApplicationJobManager(
         grant_application_id=test_application_with_template.id,

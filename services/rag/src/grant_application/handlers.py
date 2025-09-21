@@ -4,6 +4,7 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
+from packages.shared_utils.src.text import normalize_markdown
 
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
@@ -22,7 +23,6 @@ from services.rag.src.grant_application.generate_section_text import handle_gene
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
 from services.rag.src.utils.job_manager import GrantApplicationJobManager
 from services.rag.src.utils.retrieval import retrieve_documents
-from services.rag.src.utils.text import normalize_markdown
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import CFPAnalysisResult, GrantLongFormSection

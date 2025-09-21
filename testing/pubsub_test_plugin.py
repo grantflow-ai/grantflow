@@ -1,9 +1,13 @@
+import contextlib
 import json
+import os
 from collections.abc import Generator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from google.api_core import exceptions
+from google.cloud import pubsub_v1
 
 
 @pytest.fixture
@@ -47,9 +51,18 @@ def mock_pubsub_for_pipeline_testing() -> Generator[AsyncMock]:
         yield mock
 
 
-@pytest.fixture
-def pubsub_emulator_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("PUBSUB_EMULATOR_HOST", "localhost:8085")
+@pytest.fixture(scope="session")
+def create_pubsub_topics(pubsub_emulator_env: None) -> None:
+    """Create all Pub/Sub topics required for testing."""
+    project_id = os.environ.get("PUBSUB_PROJECT_ID", "grantflow")
+    publisher = pubsub_v1.PublisherClient()
+
+    topic_names = ["file-indexing", "url-crawling", "rag-processing", "frontend-notifications"]
+
+    for topic_name in topic_names:
+        topic_path = publisher.topic_path(project_id, topic_name)
+        with contextlib.suppress(exceptions.AlreadyExists):
+            publisher.create_topic(request={"name": topic_path})
 
 
 @pytest.fixture

@@ -1,37 +1,11 @@
-from typing import NotRequired, TypedDict
-from uuid import UUID
+from typing import TypedDict
 
 from packages.db.src.json_objects import CFPAnalysisResult
-
-
-class ExtractedSectionDTO(TypedDict):
-    title: str
-    id: str
-    order: int
-    parent_id: NotRequired[str]
-    is_detailed_research_plan: NotRequired[bool | None]
-    is_title_only: NotRequired[bool | None]
-    is_clinical_trial: NotRequired[bool | None]
-    is_long_form: bool
-
-
-class CFPContentSection(TypedDict):
-    title: str
-    subtitles: list[str]
-
-
-class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    cfp_subject: str
-    submission_date: str | None
-    content: list[CFPContentSection]
-    error: NotRequired[str | None]
-
-
-class OrganizationNamespace(TypedDict):
-    full_name: str
-    abbreviation: str
-    organization_id: UUID
+from packages.shared_utils.src.dto import (
+    ExtractedCFPData,
+    ExtractedSectionDTO,
+    OrganizationNamespace,
+)
 
 
 class ExtractCFPContentStageDTO(TypedDict):

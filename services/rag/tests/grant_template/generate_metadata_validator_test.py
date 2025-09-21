@@ -1,11 +1,8 @@
 import pytest
+from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
-from services.rag.src.grant_template.generate_metadata import (
-    SectionMetadata,
-    validate_template_sections,
-)
+from services.rag.src.grant_template.generate_metadata import validate_template_sections
 
 
 def create_extracted_section(

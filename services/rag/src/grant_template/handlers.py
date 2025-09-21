@@ -6,6 +6,7 @@ from packages.db.src.json_objects import CFPAnalysisResult, GrantElement, GrantL
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
+from packages.shared_utils.src.dto import OrganizationNamespace
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
@@ -17,7 +18,6 @@ from services.rag.src.grant_template.dto import (
     AnalyzeCFPContentStageDTO,
     ExtractCFPContentStageDTO,
     ExtractionSectionsStageDTO,
-    OrganizationNamespace,
     StageDTO,
 )
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
