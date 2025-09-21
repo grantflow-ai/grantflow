@@ -2,7 +2,6 @@ from asyncio import gather
 from typing import TYPE_CHECKING, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
@@ -47,21 +46,11 @@ async def handle_generate_sections_stage(
         notification_type="info",
     )
 
-    # Fetch the grant template with its sections
-    if not grant_application.grant_template:
-        raise ValidationError("Grant template is required")
-
+    # Validation has been moved to pipeline.py
     grant_template = grant_application.grant_template
-    if not grant_template.grant_sections:
-        raise ValidationError("Grant template has no sections")
-
     grant_sections = grant_template.grant_sections
     research_objectives = grant_application.research_objectives or []
-
-    # Get CFP analysis from grant template
     cfp_analysis = grant_template.cfp_analysis
-    if not cfp_analysis:
-        raise ValidationError("CFP analysis is required for section generation")
 
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
@@ -75,9 +64,6 @@ async def handle_generate_sections_stage(
                 work_plan_section = long_form_section
             else:
                 long_form_sections.append(long_form_section)
-
-    if not work_plan_section:
-        raise ValidationError("No research plan section found in grant template")
 
     logger.info(
         "Starting section generation",
@@ -136,7 +122,7 @@ async def handle_generate_sections_stage(
         for section in long_form_sections
     ]
 
-    section_results = await batched_gather(*generation_coroutines, batch_size=3)
+    section_results = await batched_gather(*generation_coroutines, batch_size=4)
 
     section_texts: dict[str, str] = {}
     for section, result in zip(long_form_sections, section_results, strict=False):
@@ -264,7 +250,7 @@ async def handle_enrich_terminology_stage(
         for enrichment_response in dto["enrichment_responses"]
     ]
 
-    wikidata_enrichments = await batched_gather(*wikidata_enrichment_coroutines, batch_size=3)
+    wikidata_enrichments = await batched_gather(*wikidata_enrichment_coroutines, batch_size=4)
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,

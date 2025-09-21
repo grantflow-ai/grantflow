@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
 from litestar import post
 from packages.db.src.query_helpers import select_active
@@ -10,7 +10,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.otel import configure_otel
+from packages.shared_utils.src.otel import configure_otel, get_tracer
 from packages.shared_utils.src.pubsub import (
     GrantApplicationRagRequest,
     GrantTemplateRagRequest,
@@ -28,8 +28,8 @@ from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
 
-if TYPE_CHECKING:
-    from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
+tracer = get_tracer(__name__)
+
 
 configure_otel("rag")
 
@@ -76,17 +76,27 @@ async def handle_request(
 
     # Handle autofill requests
     if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
-        try:
-            await handle_autofill_request(request=request, session_maker=session_maker)
-        except RagJobCancelledError:
-            logger.info(
-                "Autofill request job was cancelled",
-                request_type=type(request).__name__,
-                application_id=str(request.application_id),
-                trace_id=request.trace_id,
-            )
-            # Return None to ACK the message and prevent retries
-            return
+        with tracer.start_as_current_span(
+            "autofill_request",
+            attributes={
+                "request.type": type(request).__name__,
+                "application.id": str(request.application_id),
+                "trace.id": request.trace_id,
+            },
+        ) as span:
+            try:
+                await handle_autofill_request(request=request, session_maker=session_maker)
+                span.set_attribute("autofill.success", True)
+            except RagJobCancelledError:
+                logger.info(
+                    "Autofill request job was cancelled",
+                    request_type=type(request).__name__,
+                    application_id=str(request.application_id),
+                    trace_id=request.trace_id,
+                )
+                span.set_attribute("autofill.cancelled", True)
+                # Return None to ACK the message and prevent retries
+                return
         return
 
     # Handle grant template pipeline requests

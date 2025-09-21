@@ -75,13 +75,14 @@ async def _initialize_pipeline(
     else:
         try:
             await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
-        except Exception as e:
+        except SQLAlchemyError as e:
             logger.error(
-                "Failed to update job status to processing",
+                "Database error: Failed to update job status to processing",
                 error=str(e),
                 application_id=str(application_id),
                 trace_id=trace_id,
             )
+            # Continue processing since this is non-critical
 
     try:
         await job_manager.add_notification(
@@ -89,13 +90,14 @@ async def _initialize_pipeline(
             message="Starting application generation",
             notification_type="info",
         )
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(
-            "Failed to add generation started notification",
+            "Database error: Failed to add generation started notification",
             error=str(e),
             application_id=str(application_id),
             trace_id=trace_id,
         )
+        # Continue processing since this is non-critical
 
     return job_manager, existing_job
 
@@ -134,6 +136,31 @@ async def _verify_prerequisites(
     )
 
     return grant_template
+
+
+def _validate_generate_sections_prerequisites(
+    grant_application: GrantApplication,
+) -> None:
+    """Validate prerequisites for the generate sections stage."""
+    if not grant_application.grant_template:
+        raise ValidationError("Grant template is required")
+
+    grant_template = grant_application.grant_template
+    if not grant_template.grant_sections:
+        raise ValidationError("Grant template has no sections")
+
+    if not grant_template.cfp_analysis:
+        raise ValidationError("CFP analysis is required for section generation")
+
+    # Check for work plan section
+    has_work_plan = False
+    for section in grant_template.grant_sections:
+        if "max_words" in section and "generation_instructions" in section and section.get("is_detailed_research_plan"):
+            has_work_plan = True
+            break
+
+    if not has_work_plan:
+        raise ValidationError("No research plan section found in grant template")
 
 
 def _get_error_details(error: BackendError) -> tuple[str, str]:
@@ -221,7 +248,7 @@ async def _handle_pipeline_error(
                 "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
             },
         )
-    except Exception as job_error:
+    except SQLAlchemyError as job_error:
         logger.error(
             "Failed to update job status to failed",
             error=str(job_error),
@@ -241,7 +268,7 @@ async def _handle_pipeline_error(
                 "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
             },
         )
-    except Exception as notification_error:
+    except SQLAlchemyError as notification_error:
         logger.error(
             "Failed to add error notification",
             error=str(notification_error),
@@ -295,6 +322,9 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.ensure_not_cancelled()
+
+                # Validate stage-specific prerequisites
+                _validate_generate_sections_prerequisites(grant_application)
 
                 # First stage - create initial DTO
                 dto = await handle_generate_sections_stage(
@@ -479,13 +509,14 @@ async def handle_grant_application_pipeline(
                         trace_id=trace_id,
                     )
                     logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
-                except Exception as e:
+                except (SQLAlchemyError, ValidationError) as e:
                     logger.error(
                         "Failed to publish email notification",
                         application_id=str(application_id),
                         error=str(e),
                         trace_id=trace_id,
                     )
+                    # Non-critical error, continue without raising
 
                 return
 

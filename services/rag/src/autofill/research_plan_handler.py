@@ -1,5 +1,3 @@
-import asyncio
-import time
 from typing import Any, Final, TypedDict
 
 from packages.db.src.json_objects import ResearchObjective
@@ -285,7 +283,6 @@ def _validate_research_plan_response(response: Any) -> None:
 
 
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
-    start_time = time.time()
     logger.info(
         "Starting research plan generation",
         application_id=str(application.id),
@@ -295,20 +292,14 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
 
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
 
-    # Time search query generation
-    search_start = time.time()
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
-    search_duration = time.time() - search_start
     logger.debug(
         "Search queries generated",
         application_id=str(application.id),
         queries_count=len(search_queries),
-        duration_seconds=round(search_duration, 2),
         trace_id=trace_id,
     )
 
-    # Time document retrieval
-    retrieval_start = time.time()
     retrieval_results = await retrieve_documents(
         application_id=application.id,
         search_queries=search_queries,
@@ -316,55 +307,32 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         max_tokens=RESEARCH_PLAN_MAX_TOKENS,
         trace_id=trace_id,
     )
-    retrieval_duration = time.time() - retrieval_start
 
     logger.info(
         "Retrieved documents for research plan",
         application_id=str(application.id),
         documents_count=len(retrieval_results),
         search_queries_count=len(search_queries),
-        retrieval_duration_seconds=round(retrieval_duration, 2),
         trace_id=trace_id,
     )
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 
-    # Time LLM completion
-    completion_start = time.time()
-    try:
-        response = await asyncio.wait_for(
-            handle_completions_request(
-                prompt_identifier="research_plan_generation",
-                messages=prompt,
-                system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
-                response_schema=research_plan_schema,
-                response_type=ResearchPlanResponse,
-                validator=_validate_research_plan_response,
-                temperature=TEMPERATURE,
-                trace_id=trace_id,
-            ),
-            timeout=120,  # 2 minutes for LLM completion
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Research plan generation timed out after 2 minutes. Please try again or contact support.",
-            context={
-                "application_id": str(application.id),
-                "timeout_seconds": 120,
-                "operation": "research_plan_generation",
-                "trace_id": trace_id,
-            },
-        ) from None
-
-    completion_duration = time.time() - completion_start
-    total_duration = time.time() - start_time
+    response: ResearchPlanResponse = await handle_completions_request(
+        prompt_identifier="research_plan_generation",
+        messages=prompt,
+        system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
+        response_schema=research_plan_schema,
+        response_type=ResearchPlanResponse,
+        validator=_validate_research_plan_response,
+        temperature=TEMPERATURE,
+        trace_id=trace_id,
+    )
 
     logger.info(
         "Research plan generation completed successfully",
         application_id=str(application.id),
         objectives_generated=len(response["research_objectives"]),
-        completion_duration_seconds=round(completion_duration, 2),
-        total_duration_seconds=round(total_duration, 2),
         trace_id=trace_id,
     )
 
