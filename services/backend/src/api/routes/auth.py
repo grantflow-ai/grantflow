@@ -54,11 +54,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             await session.execute(
                 update(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid).values(deleted_at=None)
             )
-            logger.info(
-                "Restored soft-deleted user during login",
-                firebase_uid=firebase_uid,
-                restored_organizations=len(soft_deleted_list),
-            )
+            # Restored soft-deleted user during login
 
         user_owned_org_ids = await session.execute(
             select(OrganizationUser.organization_id).where(
@@ -79,12 +75,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                 await session.execute(
                     update(Organization).where(Organization.id.in_(owned_org_ids)).values(deleted_at=None)
                 )
-                logger.info(
-                    "Restored soft-deleted organizations during login",
-                    firebase_uid=firebase_uid,
-                    restored_organizations=len(soft_deleted_org_list),
-                    organization_ids=[str(org.id) for org in soft_deleted_org_list],
-                )
+                # Restored soft-deleted organizations during login
         result = await session.execute(
             select(OrganizationUser, Organization.updated_at)
             .join(Organization, OrganizationUser.organization_id == Organization.id)
@@ -149,13 +140,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                             .values(accepted_at=datetime.now(UTC))
                         )
 
-                        logger.info(
-                            "Auto-accepted invitation during login",
-                            invitation_id=str(invitation.id),
-                            organization_id=str(invitation.organization_id),
-                            email=user_email,
-                            firebase_uid=firebase_uid,
-                        )
+                        # Auto-accepted invitation during login
 
                     await session.flush()
 
@@ -197,12 +182,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                     default_organization_id = default_organization.id
                     default_role = UserRoleEnum.OWNER
 
-                    logger.info(
-                        "Created default organization for new user",
-                        firebase_uid=firebase_uid,
-                        organization_id=str(default_organization_id),
-                        email=user_email,
-                    )
+                    # Created default organization for new user
         else:
             default_org_user, _default_updated_at = max(
                 org_user_tuples,
@@ -211,12 +191,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             default_organization_id = default_org_user.organization_id
             default_role = default_org_user.role
 
-        logger.info(
-            "User login successful",
-            firebase_uid=firebase_uid,
-            organization_id=str(default_organization_id),
-            role=default_role.value,
-        )
+        # User login successful
 
     jwt = create_jwt(firebase_uid, default_organization_id, default_role)
     return LoginResponse(jwt_token=jwt)

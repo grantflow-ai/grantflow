@@ -54,16 +54,16 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
 
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
         del _cfp_extraction_cache[cache_key]
-        logger.debug("CFP cache entry expired", cache_key=cache_key)
+        # Cache entry expired
         return None
 
-    logger.debug("CFP cache hit", cache_key=cache_key, age_seconds=current_time - timestamp)
+    # Cache hit
     return result
 
 
 def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
     _cfp_extraction_cache[cache_key] = (result, time.time())
-    logger.debug("CFP result cached", cache_key=cache_key, cache_size=len(_cfp_extraction_cache))
+    # Result cached
 
 
 TEMPERATURE: Final[float] = 0.1
@@ -146,8 +146,8 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks = chunks_by_source.get(source_id, [])
 
         nlp_analysis = await categorize_text(text_content)
-        total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
-        categories_found = {
+        sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
+        {
             k: len(v)
             for k, v in [
                 ("money", nlp_analysis["money"]),
@@ -162,12 +162,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             ]
             if v
         }
-        logger.info(
-            "NLP analysis completed for source",
-            source_id=str(source_id),
-            total_sentences=total_sentences,
-            categories_found=categories_found,
-        )
+        # NLP analysis completed for source
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),
@@ -358,7 +353,7 @@ async def handle_extract_cfp_data(
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
-        logger.info("Using cached CFP extraction result", cache_key=cache_key, trace_id=trace_id)
+        # Using cached result
         return cached_result
 
     rag_sources = await get_rag_sources_data(source_ids, session_maker)
@@ -368,13 +363,7 @@ async def handle_extract_cfp_data(
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
 
-    logger.info(
-        "Extracting CFP data from multiple sources",
-        source_count=len(rag_sources),
-        source_types=[s["source_type"] for s in rag_sources],
-        trace_id=trace_id,
-        cache_key=cache_key,
-    )
+    # Extracting CFP data from multiple sources
 
     result = await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data_multi_source",
@@ -430,6 +419,6 @@ async def handle_extract_cfp_data(
     )
 
     _cache_cfp_result(cache_key, result)
-    logger.info("CFP extraction completed and cached", cache_key=cache_key, trace_id=trace_id)
+    # CFP extraction completed and cached
 
     return result

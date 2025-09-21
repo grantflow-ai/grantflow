@@ -23,10 +23,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.sources import _cancel_job_if_active
 from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
-from services.rag.src.grant_application.handlers import (
-    generate_work_plan_text,
-    grant_application_text_generation_pipeline_handler,
-)
+from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
+from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
@@ -211,7 +209,7 @@ async def test_application_generation_stops_at_verification_when_cancelled(
     mock_job_manager.handle_cancellation = AsyncMock()
 
     with patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed"):
-        result = await grant_application_text_generation_pipeline_handler(
+        result = await handle_grant_application_pipeline(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             stage=GrantApplicationStageEnum.INITIALIZE,
@@ -265,7 +263,7 @@ async def test_work_plan_generation_checks_cancellation_between_objectives(
             return_value="Mock text",
         ),
     ):
-        result = await generate_work_plan_text(
+        result = await generate_objective_with_tasks(
             application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
             work_plan_section=cast("GrantLongFormSection", research_plan_section),
             form_inputs={"background_context": "Test"},

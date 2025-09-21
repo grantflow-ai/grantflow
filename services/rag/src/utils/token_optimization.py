@@ -80,12 +80,6 @@ async def smart_parse_documents_with_batched_tokens(
 
     final_docs = [" ".join(sentences).strip() for sentences in doc_contents.values() if sentences]
 
-    logger.debug(
-        "Smart document parsing: %d sentences processed, %d tokens used, %d final docs",
-        len([s for s, t in zip(sentences, token_counts, strict=False) if total_tokens >= t]),
-        total_tokens,
-        len(final_docs),
-        trace_id=trace_id,
-    )
+    # Document parsing complete - optimized for token limit
 
     return final_docs, total_tokens

@@ -37,18 +37,10 @@ logger = get_logger(__name__)
 
 
 def handle_pubsub_message(event: PubSubEvent) -> RagRequest:
-    logger.debug(
-        "Decoding PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
-    )
+    # PubSub message decoding
     decoded_data = decode_pubsub_message(event=event)
     try:
-        rag_request: RagRequest = deserialize(decoded_data, RagRequest)  # type: ignore[arg-type]
-        logger.debug(
-            "PubSub message decoded as RagRequest",
-            request_type=type(rag_request).__name__,
-            trace_id=rag_request.trace_id,
-        )
-        return rag_request
+        return deserialize(decoded_data, RagRequest)
     except DeserializationError as e:
         logger.error(
             "Failed to parse PubSub message",
@@ -66,32 +58,56 @@ async def handle_request(
 ) -> None:
     request = handle_pubsub_message(data)
 
-    logger.debug(
-        "Received PubSub request",
-        message_id=data.message.message_id if data.message else "unknown",
-        publish_time=data.message.publish_time if data.message else "unknown",
+    logger.info(
+        "Processing request",
         request_type=type(request).__name__,
         trace_id=request.trace_id,
     )
 
     # Handle autofill requests
     if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
+        # Fetch the GrantApplication from database
+        async with session_maker() as session:
+            application = await session.scalar(
+                select_active(GrantApplication).where(GrantApplication.id == request.application_id)
+            )
+
+            if not application:
+                logger.error(
+                    "Grant application not found for autofill request",
+                    application_id=str(request.application_id),
+                    request_type=type(request).__name__,
+                    trace_id=request.trace_id,
+                )
+                raise ValidationError(
+                    f"Grant application {request.application_id} not found or has been deleted",
+                    context={
+                        "application_id": str(request.application_id),
+                        "request_type": type(request).__name__,
+                        "trace_id": request.trace_id,
+                    },
+                )
+
         with tracer.start_as_current_span(
             "autofill_request",
             attributes={
                 "request.type": type(request).__name__,
                 "application.id": str(request.application_id),
+                "application.title": application.title,
                 "trace.id": request.trace_id,
             },
         ) as span:
             try:
-                await handle_autofill_request(request=request, session_maker=session_maker)
+                await handle_autofill_request(
+                    request=request,
+                    application=application,
+                    session_maker=session_maker
+                )
                 span.set_attribute("autofill.success", True)
             except RagJobCancelledError:
                 logger.info(
-                    "Autofill request job was cancelled",
+                    "Job cancelled",
                     request_type=type(request).__name__,
-                    application_id=str(request.application_id),
                     trace_id=request.trace_id,
                 )
                 span.set_attribute("autofill.cancelled", True)
@@ -124,8 +140,7 @@ async def handle_request(
             )
         except RagJobCancelledError:
             logger.info(
-                "Grant template pipeline job was cancelled",
-                template_id=str(request.parent_id),
+                "Job cancelled",
                 stage=request.stage,
                 trace_id=request.trace_id,
             )
@@ -158,8 +173,7 @@ async def handle_request(
             )
         except RagJobCancelledError:
             logger.info(
-                "Grant application pipeline job was cancelled",
-                application_id=str(request.parent_id),
+                "Job cancelled",
                 stage=request.stage,
                 trace_id=request.trace_id,
             )

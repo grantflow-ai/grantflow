@@ -112,7 +112,7 @@ async def handle_cfp_extraction_stage(
         },
     )
 
-    logger.info("Extracted CFP data", template_id=str(grant_template.id), trace_id=trace_id)
+    # CFP extraction tracked via notifications
 
     return ExtractCFPContentStageDTO(extracted_data=extraction_result, organization=organization)
 
@@ -201,7 +201,7 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
-    logger.info("Starting metadata generation stage", trace_id=trace_id)
+    # Metadata generation tracked via notifications
 
     section_metadata = await handle_generate_grant_template_metadata(
         cfp_content="\n".join(
@@ -263,8 +263,6 @@ async def handle_save_grant_template(
 ) -> GrantTemplate:
     await job_manager.ensure_not_cancelled()
 
-    template_id = grant_template.id
-    job_id = job_manager.job_id
 
     async with session_maker() as session, session.begin():
         try:
@@ -305,21 +303,13 @@ async def handle_save_grant_template(
                 },
             )
 
-            logger.info(
-                "Grant template saved successfully",
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-                section_count=len(grant_sections),
-            )
+            # Template save success tracked via notifications
 
             return cast("GrantTemplate", updated_template)
         except SQLAlchemyError as e:
             logger.error(
-                "Database error generating grant template",
-                error=e,
-                template_id=template_id,
-                job_id=job_id,
+                "Failed to save grant template",
+                error=str(e),
                 trace_id=trace_id,
             )
             raise DatabaseError("Error saving grant template", context=str(e)) from e

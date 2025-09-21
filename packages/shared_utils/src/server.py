@@ -18,6 +18,7 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,
     DeserializationError,
+    LLMTimeoutError,
     ValidationError,
 )
 
@@ -90,6 +91,10 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
             logger.error("Validation error", exec_info=exception)
             message = "Invalid pubsub message"
             status_code = HTTPStatus.BAD_REQUEST
+        elif isinstance(exception, LLMTimeoutError):
+            logger.warning("LLM API timeout - message will be retried by Pub/Sub", exec_info=exception)
+            message = str(exception)
+            status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         else:
             logger.error("An unexpected backend error occurred.", exec_info=exception)
             message = "An unexpected backend error occurred"
@@ -173,6 +178,7 @@ def create_litestar_app(
             IntegrityError: exception_handler,
             SQLAlchemyError: exception_handler,
             BackendError: exception_handler,
+            LLMTimeoutError: exception_handler,
             ValidationError: exception_handler,
         },
         logging_config=logging_config,

@@ -6,8 +6,8 @@ from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from services.rag.src.grant_application.handler import (
-    grant_application_text_generation_pipeline_handler,
+from services.rag.src.grant_application.pipeline import (
+    handle_grant_application_pipeline,
 )
 
 
@@ -25,7 +25,7 @@ def create_mock_job_manager() -> MagicMock:
     return mock_job_manager
 
 
-async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
+async def test_handle_grant_application_pipeline_with_mocked_llm(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -75,7 +75,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
             return_value=None,
         ),
     ):
-        result = await grant_application_text_generation_pipeline_handler(
+        result = await handle_grant_application_pipeline(
             grant_application_id=application.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,

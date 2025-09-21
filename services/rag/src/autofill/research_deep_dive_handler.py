@@ -1,11 +1,10 @@
-from typing import Any, Final, Literal, TypedDict, cast
+from typing import Final, Literal, TypedDict
 
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
-from packages.shared_utils.src.serialization import deserialize
 
 from services.rag.src.autofill.constants import (
     MAX_RETRIEVAL_TOKENS,
@@ -95,13 +94,7 @@ answer_response_schema = {
 
 def _validate_answer_response(response: AnswerResponse) -> None:
     """Validate the answer response values (structure is already validated by deserialize)."""
-    answer = response["answer"]
-    if not isinstance(answer, str):
-        raise ValidationError(
-            f"Answer must be a string, got {type(answer).__name__}", context={"answer_type": type(answer).__name__}
-        )
-
-    answer = answer.strip()
+    answer = response["answer"].strip()
     if len(answer) < MIN_ANSWER_LENGTH:
         raise ValidationError(
             f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})",
@@ -125,8 +118,8 @@ def _validate_answer_response(response: AnswerResponse) -> None:
 def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
     formatted = []
     for i, obj in enumerate(objectives):
-        title = obj.get("title", f"Objective {i + 1}")
-        description = obj.get("description", "")
+        title = obj["title"]
+        description = obj.get("description", "")  # description is NotRequired
         formatted.append(f"{i + 1}. {title}")
         if description:
             formatted.append(f"   {description}")
@@ -137,12 +130,6 @@ def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
 async def _generate_field_answer(
     application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str, trace_id: str
 ) -> str:
-    logger.debug(
-        "Generating field answer",
-        application_id=str(application.id),
-        field_name=field_name,
-        trace_id=trace_id,
-    )
     prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
         application_title=application.title,
         objectives_text=objectives_text,
@@ -171,24 +158,10 @@ async def _generate_field_answer(
         trace_id=trace_id,
     )
 
-    logger.debug(
-        "Field answer generation completed",
-        application_id=str(application.id),
-        field_name=field_name,
-        trace_id=trace_id,
-    )
-
     return response["answer"].strip()
 
 
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
-    logger.info(
-        "Starting research deep dive generation",
-        application_id=str(application.id),
-        application_title=application.title,
-        fields_to_generate=len(RESEARCH_DEEP_DIVE_FIELD_MAPPING),
-        trace_id=trace_id,
-    )
 
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
@@ -202,11 +175,4 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
         batch_size=4
     )
 
-    logger.info(
-        "Research deep dive generation completed successfully",
-        application_id=str(application.id),
-        fields_generated=len(results),
-        trace_id=trace_id,
-    )
-
-    return cast("ResearchDeepDive", dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING, results, strict=True)))
+    return ResearchDeepDive(**dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING, results, strict=True)))

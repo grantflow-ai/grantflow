@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
 
-from services.rag.src.grant_application.handlers import grant_application_text_generation_pipeline_handler
+from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
 
 def create_mock_job_manager() -> AsyncMock:
@@ -51,7 +51,7 @@ async def test_generate_erc_application_for_dna_synthesis(
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
         patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
-        result = await grant_application_text_generation_pipeline_handler(
+        result = await handle_grant_application_pipeline(
             grant_application_id=UUID(melanoma_alliance_full_application_id),
             session_maker=async_session_maker,
             job_manager=mock_job_manager,

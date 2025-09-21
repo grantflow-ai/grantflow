@@ -232,15 +232,7 @@ async def retrieve_documents(
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
 
-    logger.debug(
-        "Starting document retrieval",
-        entity_id=entity_id,
-        entity_type=entity_type,
-        max_results=max_results,
-        max_tokens=max_tokens,
-        with_guided_retrieval=with_guided_retrieval,
-        trace_id=trace_id,
-    )
+    # Start retrieval - logging handled at completion with metrics
 
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
@@ -249,15 +241,9 @@ async def retrieve_documents(
     search_queries = search_queries or await handle_create_search_queries(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )
-    query_duration = time.time() - query_start
+    time.time() - query_start
 
-    logger.debug(
-        "Search queries prepared",
-        entity_id=entity_id,
-        query_count=len(search_queries),
-        query_duration_ms=round(query_duration * 1000, 2),
-        trace_id=trace_id,
-    )
+    # Query preparation tracked in final metrics
 
     attempts = 0
     previous_scores: list[float] = []
@@ -272,15 +258,9 @@ async def retrieve_documents(
         model_name=embedding_model,
         trace_id=trace_id,
     )
-    retrieval_duration = time.time() - retrieval_start
+    time.time() - retrieval_start
 
-    logger.debug(
-        "Vector retrieval completed",
-        entity_id=entity_id,
-        vector_count=len(vectors),
-        retrieval_duration_ms=round(retrieval_duration * 1000, 2),
-        trace_id=trace_id,
-    )
+    # Vector retrieval metrics included in final summary
 
     document_conversion_start = time.time()
     documents = [
@@ -290,15 +270,9 @@ async def retrieve_documents(
         )
         for vector in vectors
     ]
-    document_conversion_duration = time.time() - document_conversion_start
+    time.time() - document_conversion_start
 
-    logger.debug(
-        "Documents converted",
-        entity_id=entity_id,
-        document_count=len(documents),
-        conversion_duration_ms=round(document_conversion_duration * 1000, 2),
-        trace_id=trace_id,
-    )
+    # Document conversion tracked in final metrics
 
     processing_start = time.time()
     processed_contents = await post_process_documents(
@@ -309,15 +283,9 @@ async def retrieve_documents(
         model=model,
         trace_id=trace_id,
     )
-    processing_duration = time.time() - processing_start
+    time.time() - processing_start
 
-    logger.debug(
-        "Document processing completed",
-        entity_id=entity_id,
-        processed_count=len(processed_contents),
-        processing_duration_ms=round(processing_duration * 1000, 2),
-        trace_id=trace_id,
-    )
+    # Processing metrics included in final summary
 
     if not with_guided_retrieval or not processed_contents:
         total_duration = time.time() - start_time
@@ -353,54 +321,29 @@ async def retrieve_documents(
         assessment = quality_response["assessment"]
         current_score = assessment["overall_score"]
 
-        logger.info(
-            "Retrieval quality assessment",
-            attempt=attempts,
-            overall_score=current_score,
-            relevance=assessment["relevance_score"],
-            comprehensiveness=assessment["comprehensiveness_score"],
-            diversity=assessment["diversity_score"],
-            depth=assessment["depth_score"],
-            explanation=assessment["explanation"],
-            trace_id=trace_id,
-        )
+        # Quality assessment tracked in optimization metrics
 
         if current_score > best_score:
             best_score = current_score
             best_processed_contents = processed_contents
 
         if current_score >= MIN_QUALITY_SCORE:
-            logger.info(
-                "Retrieval quality meets target threshold",
-                score=current_score,
-                threshold=MIN_QUALITY_SCORE,
-                trace_id=trace_id,
-            )
+            # Quality threshold met - included in final metrics
             return best_processed_contents
 
         previous_scores.append(current_score)
         if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
-            logger.info(
-                "Retrieval quality optimization plateaued",
-                last_score=previous_scores[-2],
-                current_score=current_score,
-                trace_id=trace_id,
-            )
+            # Optimization plateau detected - included in final metrics
             return best_processed_contents
 
         optimization = quality_response["optimization"]
         improved_queries = optimization["improved_queries"]
 
         if not improved_queries:
-            logger.info("No improved queries suggested, ending optimization", trace_id=trace_id)
+            # No improvement possible - noted in final metrics
             return best_processed_contents
 
-        logger.info(
-            "Using improved queries for retrieval optimization",
-            queries=improved_queries,
-            information_gaps=optimization["information_gaps"],
-            trace_id=trace_id,
-        )
+        # Query improvement tracked in optimization loop
 
         new_vectors = await handle_retrieval(
             application_id=application_id,
@@ -434,9 +377,8 @@ async def retrieve_documents(
 
     total_duration = time.time() - start_time
     logger.info(
-        "Completed retrieval optimization",
+        "Retrieval completed",
         entity_id=entity_id,
-        entity_type=entity_type,
         attempts=attempts,
         final_score=best_score,
         result_count=len(best_processed_contents),

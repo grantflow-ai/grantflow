@@ -216,14 +216,7 @@ class AdaptiveTimeoutCalculator:
 
         self.timeout_multipliers[complexity_level] = new_multiplier
 
-        logger.debug(
-            "Updated timeout multiplier",
-            complexity_level=complexity_level.value,
-            old_multiplier=current_multiplier,
-            new_multiplier=new_multiplier,
-            performance_ratio=performance_ratio,
-            success=metrics.success,
-        )
+        # Timeout multiplier updated based on performance
 
     def get_performance_stats(self) -> dict[str, Any]:
         if not self.performance_history:
@@ -322,12 +315,7 @@ class EvaluationCache:
         entry.access_count += 1
         self._update_access_order(key)
 
-        logger.debug(
-            "Cache hit for evaluation",
-            cache_key=key[:8],
-            access_count=entry.access_count,
-            age_seconds=time.time() - entry.timestamp,
-        )
+        # Cache hit - returning cached result
 
         return entry.result
 
@@ -352,11 +340,7 @@ class EvaluationCache:
         self._cache[key] = entry
         self._update_access_order(key)
 
-        logger.debug(
-            "Cached evaluation result",
-            cache_key=key[:8],
-            cache_size=len(self._cache),
-        )
+        # Result cached for future use
 
     def clear(self) -> None:
         self._cache.clear()
@@ -695,13 +679,7 @@ async def smart_evaluate_output(
 
             _adaptive_timeout_calculator.record_performance(metrics)
 
-            logger.debug(
-                "Recorded performance metrics",
-                complexity_level=complexity_analysis.complexity_level.value,
-                actual_duration=actual_duration,
-                predicted_duration=predicted_duration,
-                success=success,
-            )
+            # Performance metrics recorded for adaptive timeout
 
     return result, complexity_analysis
 
@@ -838,15 +816,8 @@ async def optimized_prompt_evaluation[T](
             overall_score = total_weighted_score / total_weight if total_weight > 0 else 0
 
             if not failing_criteria:
-                duration = time.time() - start_time
-                logger.info(
-                    "Evaluation passed",
-                    prompt_identifier=prompt_identifier,
-                    iteration=iteration,
-                    overall_score=overall_score,
-                    duration_seconds=duration,
-                    all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
-                )
+                time.time() - start_time
+                # Evaluation passed - return result
                 return cast("T", model_output)
 
             if (
@@ -854,15 +825,8 @@ async def optimized_prompt_evaluation[T](
                 and excellent_scores >= len(criteria) // 2
                 and overall_score >= min_passing_score * 0.9
             ):
-                duration = time.time() - start_time
-                logger.info(
-                    "Early termination on excellent performance",
-                    prompt_identifier=prompt_identifier,
-                    iteration=iteration,
-                    overall_score=overall_score,
-                    excellent_scores=excellent_scores,
-                    duration_seconds=duration,
-                )
+                time.time() - start_time
+                # Early termination due to excellent scores
                 return cast("T", model_output)
 
             iteration_duration = time.time() - iteration_start

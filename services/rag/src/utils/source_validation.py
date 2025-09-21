@@ -169,13 +169,7 @@ async def handle_source_validation(
     trace_id: str,
     **sources: Any,
 ) -> str | None:
-    logger.debug(
-        "Validating sources for task.",
-        task_description_length=len(task_description),
-        sources_length=len(sources),
-        minimum_percentage=minimum_percentage,
-        trace_id=trace_id,
-    )
+    # Validating sources for task based on minimum percentage threshold
 
     prompt = VALIDATE_SOURCES_USER_PROMPT.to_string(
         task_description=task_description,

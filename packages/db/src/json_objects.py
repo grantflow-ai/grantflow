@@ -57,13 +57,13 @@ class ResearchDeepDive(TypedDict):
     scientific_infrastructure: NotRequired[str]
 
 
-class GrantTemplateRagJobCheckpoint(TypedDict, total=False):
+class GrantTemplateRagJobCheckpoint(TypedDict):
     stage: GrantTemplateStageEnum
-    organization_id: str | None
     cfp_subject: str
-    submission_date: str | None
     title: str
     subtitles: list[str]
+    organization_id: NotRequired[str | None]
+    submission_date: NotRequired[str | None]
 
 
 class CFPAnalysisRequirementWithQuote(TypedDict):
