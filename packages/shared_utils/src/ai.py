@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+import json
 import math
+import os
 from functools import lru_cache
-from typing import Any, Final
+from types import SimpleNamespace
+from typing import Any, Callable, Final
 
 from anthropic import AsyncAnthropic
 from google import genai
@@ -11,6 +16,126 @@ from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 
+
+class OfflineAnthropicResponse:
+    def __init__(self, text: str) -> None:
+        self.content = [SimpleNamespace(text=text)]
+
+
+class OfflineAnthropicMessages:
+    def __init__(self, score_calculator: Callable[[str], float]) -> None:
+        self._score_calculator = score_calculator
+
+    @staticmethod
+    def _extract_prompt(messages: list[dict[str, Any]]) -> str:
+        for message in reversed(messages):
+            content = message.get("content")
+            if isinstance(content, str):
+                return content
+        return ""
+
+    async def create(
+        self, *, messages: list[dict[str, Any]], **_: Any
+    ) -> OfflineAnthropicResponse:
+        prompt = self._extract_prompt(messages)
+        response_text = _build_offline_response(prompt, self._score_calculator)
+        return OfflineAnthropicResponse(response_text)
+
+
+class OfflineAnthropicClient:
+    def __init__(self) -> None:
+        self.messages = OfflineAnthropicMessages(_calculate_offline_quality_score)
+
+
+def _calculate_offline_quality_score(prompt: str) -> float:
+    if not prompt:
+        return 7.0
+
+    chunk_lengths: list[int] = []
+    for marker in ("Chunk 1:", "Chunk 2:", "Chunk 3:"):
+        if marker in prompt:
+            start = prompt.index(marker) + len(marker)
+            end = prompt.find("Chunk", start)
+            if end == -1:
+                end = len(prompt)
+            chunk = prompt[start:end]
+            chunk_lengths.append(len(chunk.strip()))
+
+    if not chunk_lengths:
+        chunk_lengths.append(len(prompt.strip()))
+
+    average_length = sum(chunk_lengths) / len(chunk_lengths)
+    normalized = min(max(average_length / 500.0, 0.0), 1.0)
+    return round(6.0 + normalized * 2.0, 1)
+
+
+def _build_offline_response(
+    prompt: str, score_calculator: Callable[[str], float]
+) -> str:
+    if not prompt:
+        return f"{score_calculator(prompt):.1f}"
+
+    normalized_prompt = prompt.lower()
+
+    if (
+        "respond with just a number" in normalized_prompt
+        or "respond with a number" in normalized_prompt
+    ):
+        return f"{score_calculator(prompt):.1f}"
+
+    if (
+        "respond with only a json object" in normalized_prompt
+        and "chunk" in normalized_prompt
+    ):
+        base_score = score_calculator(prompt)
+        primary = max(6, min(9, int(round(base_score))))
+        secondary = max(5, primary - 1)
+        tertiary = max(4, primary - 2)
+        payload = {
+            "chunk1": {
+                "coherence": primary,
+                "relevance": primary,
+                "specificity": secondary,
+            },
+            "chunk2": {
+                "coherence": primary,
+                "relevance": secondary,
+                "specificity": secondary,
+            },
+            "chunk3": {
+                "coherence": tertiary,
+                "relevance": tertiary,
+                "specificity": max(3, tertiary - 1),
+            },
+        }
+        return json.dumps(payload)
+
+    if "hallucination" in normalized_prompt or "fabricated" in normalized_prompt:
+        payload = {
+            "statement1": {"accurate": True, "fabricated": False, "confidence": 9},
+            "statement2": {"accurate": False, "fabricated": True, "confidence": 5},
+        }
+        return json.dumps(payload)
+
+    if "citation" in normalized_prompt and "respond with json" in normalized_prompt:
+        payload = {
+            "properly_formatted": True,
+            "appear_realistic": True,
+            "errors_found": "No obvious citation errors detected",
+        }
+        return json.dumps(payload)
+
+    score = score_calculator(prompt)
+    return json.dumps({"score": round(score, 1)})
+
+
+def _use_offline_anthropic() -> bool:
+    flag = os.getenv("USE_OFFLINE_ANTHROPIC", "").lower()
+    if flag in {"1", "true", "yes"}:
+        return True
+    return os.getenv("E2E_TESTS") == "1"
+
+
 EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.5-flash")
 GENERATION_MODEL: Final[str] = get_env("GENERATION_MODEL", fallback="gemini-2.5-flash")
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
@@ -19,7 +144,7 @@ ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
 REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-flash")
 
 init_ref = Ref[bool]()
-anthropic_client = Ref[AsyncAnthropic]()
+anthropic_client = Ref[AsyncAnthropic | OfflineAnthropicClient]()
 google_client = Ref[genai.Client | None](None)
 
 
@@ -46,11 +171,14 @@ def get_google_ai_client() -> genai.Client:
     return google_client.value  # type: ignore[return-value]
 
 
-def get_anthropic_client() -> AsyncAnthropic:
+def get_anthropic_client() -> AsyncAnthropic | OfflineAnthropicClient:
     if not anthropic_client.value:
-        anthropic_client.value = AsyncAnthropic(
-            api_key=get_env("ANTHROPIC_API_KEY"),
-        )
+        if _use_offline_anthropic():
+            anthropic_client.value = OfflineAnthropicClient()
+        else:
+            anthropic_client.value = AsyncAnthropic(
+                api_key=get_env("ANTHROPIC_API_KEY"),
+            )
     return anthropic_client.value
 
 

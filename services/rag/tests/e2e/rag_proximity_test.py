@@ -140,8 +140,7 @@ def parse_word_limit_from_cfp_constraint(constraint_description: str) -> dict[st
 
 
 def extract_section_word_limits(
-    section: GrantLongFormSection,
-    cfp_analysis: CFPSectionAnalysis | None
+    section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None
 ) -> dict[str, int | None]:
     section_title = section.get("title", "").lower()
 
@@ -154,10 +153,11 @@ def extract_section_word_limits(
         for constraint in cfp_analysis["length_constraints"]:
             constraint_section = constraint.get("description", "").lower()
 
-            if (section_title in constraint_section or
-                any(word in constraint_section for word in section_title.split()) or
-                constraint.get("quote", "").lower().find(section_title) != -1):
-
+            if (
+                section_title in constraint_section
+                or any(word in constraint_section for word in section_title.split())
+                or constraint.get("quote", "").lower().find(section_title) != -1
+            ):
                 if constraint.get("description"):
                     word_limits = parse_word_limit_from_cfp_constraint(constraint["description"])
                     if word_limits["min_words"] is not None:
@@ -251,7 +251,6 @@ def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysi
     """.strip()
 
 
-
 async def measure_section_rag_proximity(
     section: GrantLongFormSection,
     application_id: str,
@@ -289,8 +288,12 @@ async def measure_section_rag_proximity(
         "retrieval_document_count": len(retrieval_results),
         "section_to_rag_rouge_l": section_to_rag_rouge_l,
         "section_to_rag_rouge_2": section_to_rag_rouge_2,
-        "section_requirements": section_requirements[:500] + "..." if len(section_requirements) > 500 else section_requirements,
-        "retrieved_context_sample": retrieved_context[:500] + "..." if len(retrieved_context) > 500 else retrieved_context,
+        "section_requirements": section_requirements[:500] + "..."
+        if len(section_requirements) > 500
+        else section_requirements,
+        "retrieved_context_sample": retrieved_context[:500] + "..."
+        if len(retrieved_context) > 500
+        else retrieved_context,
     }
 
 
@@ -352,9 +355,7 @@ async def test_section_rag_proximity_analysis(
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section
-            for section in grant_sections
-            if isinstance(section, dict) and section.get("max_words", 0) > 100
+            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
         ]
 
         if not long_form_sections:
@@ -422,10 +423,14 @@ async def test_section_rag_proximity_analysis(
 
     aggregate_metrics = {
         "sections_analyzed": len(proximity_results),
-        "avg_section_to_rag_rouge_l": sum(r["section_to_rag_rouge_l"] for r in proximity_results) / len(proximity_results),
-        "avg_rag_to_writing_rouge_l": sum(r["rag_to_writing_rouge_l"] for r in proximity_results) / len(proximity_results),
-        "avg_section_to_writing_rouge_l": sum(r["section_to_writing_rouge_l"] for r in proximity_results) / len(proximity_results),
-        "avg_information_flow_score": sum(r["pipeline_efficiency"]["information_flow_score"] for r in proximity_results) / len(proximity_results),
+        "avg_section_to_rag_rouge_l": sum(r["section_to_rag_rouge_l"] for r in proximity_results)
+        / len(proximity_results),
+        "avg_rag_to_writing_rouge_l": sum(r["rag_to_writing_rouge_l"] for r in proximity_results)
+        / len(proximity_results),
+        "avg_section_to_writing_rouge_l": sum(r["section_to_writing_rouge_l"] for r in proximity_results)
+        / len(proximity_results),
+        "avg_information_flow_score": sum(r["pipeline_efficiency"]["information_flow_score"] for r in proximity_results)
+        / len(proximity_results),
         "total_analysis_time": total_time,
     }
 
@@ -439,7 +444,11 @@ async def test_section_rag_proximity_analysis(
         "application_id": melanoma_alliance_full_application_id,
         "methodology": {
             "rouge_metrics": ["ROUGE-L", "ROUGE-2"],
-            "measurement_points": ["section_requirements → retrieval", "retrieval → generation", "section_requirements → generation"],
+            "measurement_points": [
+                "section_requirements → retrieval",
+                "retrieval → generation",
+                "section_requirements → generation",
+            ],
             "sections_analyzed": len(proximity_results),
         },
         "aggregate_metrics": aggregate_metrics,
@@ -483,9 +492,7 @@ async def test_full_pipeline_proximity_assessment(
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section
-            for section in grant_sections
-            if isinstance(section, dict) and section.get("max_words", 0) > 100
+            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
         ]
 
     with (
@@ -525,21 +532,21 @@ async def test_full_pipeline_proximity_assessment(
         section_to_writing_rouge = calculate_rouge_l(section_requirements, generated_text)
 
         information_preservation_score = (
-            section_to_rag_rouge * 0.25
-            + rag_to_writing_rouge * 0.35
-            + section_to_writing_rouge * 0.40
+            section_to_rag_rouge * 0.25 + rag_to_writing_rouge * 0.35 + section_to_writing_rouge * 0.40
         )
 
-        pipeline_proximity_metrics.append({
-            "section_id": section_id,
-            "section_title": section.get("title", "Unknown"),
-            "section_to_rag_rouge_l": section_to_rag_rouge,
-            "rag_to_writing_rouge_l": rag_to_writing_rouge,
-            "section_to_writing_rouge_l": section_to_writing_rouge,
-            "information_preservation_score": information_preservation_score,
-            "generated_word_count": len(generated_text.split()),
-            "retrieved_documents_count": len(retrieval_results),
-        })
+        pipeline_proximity_metrics.append(
+            {
+                "section_id": section_id,
+                "section_title": section.get("title", "Unknown"),
+                "section_to_rag_rouge_l": section_to_rag_rouge,
+                "rag_to_writing_rouge_l": rag_to_writing_rouge,
+                "section_to_writing_rouge_l": section_to_writing_rouge,
+                "information_preservation_score": information_preservation_score,
+                "generated_word_count": len(generated_text.split()),
+                "retrieved_documents_count": len(retrieval_results),
+            }
+        )
 
     total_time = time.time() - start_time
 
@@ -547,10 +554,22 @@ async def test_full_pipeline_proximity_assessment(
         "total_sections_processed": len(pipeline_proximity_metrics),
         "pipeline_generation_time": pipeline_time,
         "total_analysis_time": total_time,
-        "avg_section_to_rag_proximity": sum(m["section_to_rag_rouge_l"] for m in pipeline_proximity_metrics) / len(pipeline_proximity_metrics) if pipeline_proximity_metrics else 0,
-        "avg_rag_to_writing_proximity": sum(m["rag_to_writing_rouge_l"] for m in pipeline_proximity_metrics) / len(pipeline_proximity_metrics) if pipeline_proximity_metrics else 0,
-        "avg_end_to_end_proximity": sum(m["section_to_writing_rouge_l"] for m in pipeline_proximity_metrics) / len(pipeline_proximity_metrics) if pipeline_proximity_metrics else 0,
-        "avg_information_preservation": sum(m["information_preservation_score"] for m in pipeline_proximity_metrics) / len(pipeline_proximity_metrics) if pipeline_proximity_metrics else 0,
+        "avg_section_to_rag_proximity": sum(m["section_to_rag_rouge_l"] for m in pipeline_proximity_metrics)
+        / len(pipeline_proximity_metrics)
+        if pipeline_proximity_metrics
+        else 0,
+        "avg_rag_to_writing_proximity": sum(m["rag_to_writing_rouge_l"] for m in pipeline_proximity_metrics)
+        / len(pipeline_proximity_metrics)
+        if pipeline_proximity_metrics
+        else 0,
+        "avg_end_to_end_proximity": sum(m["section_to_writing_rouge_l"] for m in pipeline_proximity_metrics)
+        / len(pipeline_proximity_metrics)
+        if pipeline_proximity_metrics
+        else 0,
+        "avg_information_preservation": sum(m["information_preservation_score"] for m in pipeline_proximity_metrics)
+        / len(pipeline_proximity_metrics)
+        if pipeline_proximity_metrics
+        else 0,
         "total_words_generated": sum(m["generated_word_count"] for m in pipeline_proximity_metrics),
     }
 
@@ -691,9 +710,7 @@ async def test_section_length_compliance_analysis(
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section
-            for section in grant_sections
-            if isinstance(section, dict) and section.get("max_words", 0) > 100
+            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
         ]
 
         if not long_form_sections:
@@ -750,11 +767,13 @@ async def test_section_length_compliance_analysis(
 
         if compliance_score["compliance_status"] == "FAIL":
             overall_compliance_status = "FAIL"
-            failed_sections.append({
-                "section": section_title,
-                "grade": compliance_score["grade"],
-                "issues": compliance_score["issues"],
-            })
+            failed_sections.append(
+                {
+                    "section": section_title,
+                    "grade": compliance_score["grade"],
+                    "issues": compliance_score["issues"],
+                }
+            )
 
         logger.info(
             "Section %s - Words: %d, Limits: min=%s max=%s, Grade: %s, Status: %s",
@@ -778,9 +797,20 @@ async def test_section_length_compliance_analysis(
         "overall_compliance_status": overall_compliance_status,
         "failed_sections_count": len(failed_sections),
         "grade_distribution": grade_distribution,
-        "avg_compliance_percentage": sum(r["compliance_score"]["compliance_percentage"] for r in length_compliance_results) / len(length_compliance_results) if length_compliance_results else 0,
-        "sections_with_cfp_limits": sum(1 for r in length_compliance_results if r["word_limits"]["cfp_max_words"] is not None),
-        "sections_with_template_only_limits": sum(1 for r in length_compliance_results if r["word_limits"]["cfp_max_words"] is None and r["word_limits"]["template_max_words"] is not None),
+        "avg_compliance_percentage": sum(
+            r["compliance_score"]["compliance_percentage"] for r in length_compliance_results
+        )
+        / len(length_compliance_results)
+        if length_compliance_results
+        else 0,
+        "sections_with_cfp_limits": sum(
+            1 for r in length_compliance_results if r["word_limits"]["cfp_max_words"] is not None
+        ),
+        "sections_with_template_only_limits": sum(
+            1
+            for r in length_compliance_results
+            if r["word_limits"]["cfp_max_words"] is None and r["word_limits"]["template_max_words"] is not None
+        ),
         "total_analysis_time": total_time,
     }
 
@@ -846,9 +876,7 @@ async def test_integrated_proximity_and_length_assessment(
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section
-            for section in grant_sections
-            if isinstance(section, dict) and section.get("max_words", 0) > 100
+            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
         ]
 
     with (
@@ -905,10 +933,15 @@ async def test_integrated_proximity_and_length_assessment(
             + (length_compliance["compliance_percentage"] / 100) * 30
         )
 
-        section_assessment = "EXCELLENT" if combined_quality_score >= 80 else \
-                           "GOOD" if combined_quality_score >= 60 else \
-                           "ADEQUATE" if combined_quality_score >= 40 else \
-                           "POOR"
+        section_assessment = (
+            "EXCELLENT"
+            if combined_quality_score >= 80
+            else "GOOD"
+            if combined_quality_score >= 60
+            else "ADEQUATE"
+            if combined_quality_score >= 40
+            else "POOR"
+        )
 
         integrated_result = {
             "section_id": section_id,
@@ -940,9 +973,18 @@ async def test_integrated_proximity_and_length_assessment(
         "total_sections_processed": len(integrated_results),
         "pipeline_generation_time": pipeline_time,
         "total_analysis_time": total_time,
-        "avg_combined_quality_score": sum(r["combined_quality_score"] for r in integrated_results) / len(integrated_results) if integrated_results else 0,
-        "avg_proximity_rouge_l": sum(r["proximity_metrics"]["section_to_writing_rouge_l"] for r in integrated_results) / len(integrated_results) if integrated_results else 0,
-        "avg_length_compliance": sum(r["length_compliance"]["compliance_percentage"] for r in integrated_results) / len(integrated_results) if integrated_results else 0,
+        "avg_combined_quality_score": sum(r["combined_quality_score"] for r in integrated_results)
+        / len(integrated_results)
+        if integrated_results
+        else 0,
+        "avg_proximity_rouge_l": sum(r["proximity_metrics"]["section_to_writing_rouge_l"] for r in integrated_results)
+        / len(integrated_results)
+        if integrated_results
+        else 0,
+        "avg_length_compliance": sum(r["length_compliance"]["compliance_percentage"] for r in integrated_results)
+        / len(integrated_results)
+        if integrated_results
+        else 0,
         "assessment_distribution": {
             "excellent": sum(1 for r in integrated_results if r["section_assessment"] == "EXCELLENT"),
             "good": sum(1 for r in integrated_results if r["section_assessment"] == "GOOD"),
@@ -988,4 +1030,3 @@ async def test_integrated_proximity_and_length_assessment(
         overall_metrics["avg_proximity_rouge_l"],
         overall_metrics["avg_length_compliance"],
     )
-
