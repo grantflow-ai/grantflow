@@ -610,48 +610,6 @@ async def test_handle_generate_grant_template_metadata_preserves_order(mock_gene
 @pytest.mark.e2e_full
 @pytest.mark.e2e_full
 async def test_integration_generate_metadata_workflow() -> None:
-    mock_metadata = [
-        {
-            "id": "project_summary",
-            "keywords": ["biomarkers", "diagnostics", "innovation"],
-            "topics": ["cancer research", "early detection"],
-            "generation_instructions": "Develop a comprehensive project summary focusing on novel biomarker discovery for early cancer detection",
-            "depends_on": [],
-            "max_words": 500,
-            "search_queries": [
-                "cancer biomarker discovery",
-                "early detection methods",
-                "diagnostic innovation",
-            ],
-        },
-        {
-            "id": "research_plan",
-            "keywords": ["proteomics", "genomics", "validation"],
-            "topics": ["experimental design", "clinical validation"],
-            "generation_instructions": "Detail the research methodology including proteomics analysis, genomic profiling, and clinical validation studies",
-            "depends_on": ["project_summary"],
-            "max_words": 3000,
-            "search_queries": [
-                "proteomics methodology",
-                "genomic analysis techniques",
-                "clinical validation protocols",
-            ],
-        },
-        {
-            "id": "budget_justification",
-            "keywords": ["equipment", "personnel", "resources"],
-            "topics": ["cost analysis", "resource allocation"],
-            "generation_instructions": "Provide detailed budget justification including equipment costs, personnel requirements, and resource allocation",
-            "depends_on": ["research_plan"],
-            "max_words": 1000,
-            "search_queries": [
-                "research budget planning",
-                "equipment cost analysis",
-                "personnel resource allocation",
-            ],
-        },
-    ]
-
     cfp_content = """
     National Cancer Institute Research Grant Program
 
@@ -725,36 +683,6 @@ async def test_integration_generate_metadata_workflow() -> None:
 @pytest.mark.e2e_full
 @pytest.mark.e2e_full
 async def test_integration_generate_metadata_with_dependencies() -> None:
-    mock_metadata = [
-        {
-            "id": "abstract",
-            "keywords": ["overview", "summary"],
-            "topics": ["project goals"],
-            "generation_instructions": "Brief project overview",
-            "depends_on": [],
-            "max_words": 250,
-            "search_queries": ["abstract examples"],
-        },
-        {
-            "id": "background",
-            "keywords": ["literature", "context"],
-            "topics": ["research background"],
-            "generation_instructions": "Research background and context",
-            "depends_on": ["abstract"],
-            "max_words": 1000,
-            "search_queries": ["research background"],
-        },
-        {
-            "id": "methodology",
-            "keywords": ["methods", "approach"],
-            "topics": ["experimental design"],
-            "generation_instructions": "Detailed research methodology",
-            "depends_on": ["background"],
-            "max_words": 2000,
-            "search_queries": ["research methods"],
-        },
-    ]
-
     extracted_sections: list[ExtractedSectionDTO] = [
         {
             "title": "Abstract",
