@@ -45,14 +45,14 @@ logger = get_logger(__name__)
 
 async def _initialize_pipeline(
     grant_application: GrantApplication,
-    generation_stage: GrantApplicationStageEnum,
+    current_stage: GrantApplicationStageEnum,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> tuple[GrantApplicationJobManager[StageDTO], Any]:
     application_id = grant_application.id
 
     job_manager = GrantApplicationJobManager[StageDTO](
-        current_stage=generation_stage,
+        current_stage=current_stage,
         grant_application_id=application_id,
         parent_id=application_id,
         pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
@@ -62,13 +62,10 @@ async def _initialize_pipeline(
 
     existing_job = await job_manager.get_or_create_job()
 
-    # Ensure the application references the job
     if grant_application.rag_job_id != existing_job.id:
         async with session_maker() as session, session.begin():
             await session.execute(
-                update(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .values(rag_job_id=existing_job.id)
+                update(GrantApplication).where(GrantApplication.id == application_id).values(rag_job_id=existing_job.id)
             )
 
     if not (existing_job and existing_job.checkpoint_data):
@@ -152,7 +149,7 @@ async def _handle_pipeline_error(
     job_manager: GrantApplicationJobManager[StageDTO],
     application_id: Any,
     existing_job: Any,
-    generation_stage: GrantApplicationStageEnum,
+    current_stage: GrantApplicationStageEnum,
     trace_id: str,
 ) -> None:
     job_id = existing_job.id if existing_job else None
@@ -164,7 +161,7 @@ async def _handle_pipeline_error(
         application_id=str(application_id),
         job_id=str(job_id) if job_id else None,
         trace_id=trace_id,
-        stage=generation_stage,
+        stage=current_stage,
     )
 
     error_message, event_type = _get_error_details(error)
@@ -179,7 +176,7 @@ async def _handle_pipeline_error(
             application_id=str(application_id),
             job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
-            stage=generation_stage,
+            stage=current_stage,
         )
 
     try:
@@ -205,28 +202,34 @@ async def _handle_pipeline_error(
 
 
 async def handle_grant_application_pipeline(
-    *,
-    generation_stage: GrantApplicationStageEnum,
     grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
+    async with session_maker() as session:
+        if grant_application.rag_job_id:
+            job = await session.get(GrantApplicationGenerationJob, grant_application.rag_job_id)
+        else:
+            job = None
+
+    current_stage = job.current_stage if job and job.current_stage is not None else GRANT_APPLICATION_STAGES_ORDER[0]
+
     application_id = grant_application.id
     logger.info(
         "Starting grant application text generation pipeline",
         application_id=application_id,
-        stage=generation_stage,
+        stage=current_stage,
         trace_id=trace_id,
     )
 
     try:
         job_manager, existing_job = await _initialize_pipeline(
-            grant_application, generation_stage, session_maker, trace_id
+            grant_application, current_stage, session_maker, trace_id
         )
 
         grant_template = await _verify_prerequisites(grant_application, session_maker, trace_id)
 
-        match generation_stage:
+        match current_stage:
             case GrantApplicationStageEnum.GENERATE_SECTIONS:
                 await job_manager.ensure_not_cancelled()
 
@@ -235,16 +238,6 @@ async def handle_grant_application_pipeline(
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
-
-                # Save the generated sections to the job for immediate access (tests and partial completion)
-                section_texts_dict = {text["section_id"]: text["text"] for text in dto["section_texts"]}
-                job = await job_manager.get_or_create_job()
-                async with session_maker() as session, session.begin():
-                    await session.execute(
-                        update(GrantApplicationGenerationJob)
-                        .where(GrantApplicationGenerationJob.id == job.id)
-                        .values(generated_sections=section_texts_dict)
-                    )
 
                 await job_manager.to_next_job_stage(dto)
                 return
@@ -337,14 +330,6 @@ async def handle_grant_application_pipeline(
                             .values(text=application_text)
                         )
 
-                        # Save the generated sections to the job
-                        job = await job_manager.get_or_create_job()
-                        await session.execute(
-                            update(GrantApplicationGenerationJob)
-                            .where(GrantApplicationGenerationJob.id == job.id)
-                            .values(generated_sections=complete_section_texts)
-                        )
-
                         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
                         await job_manager.add_notification(
                             event=NotificationEvents.GRANT_APPLICATION_GENERATION_COMPLETED,
@@ -370,7 +355,7 @@ async def handle_grant_application_pipeline(
                 return
 
             case _:
-                raise ValidationError(f"Unknown stage: {generation_stage}")
+                raise ValidationError(f"Unknown stage: {current_stage}")
 
     except BackendError as e:
-        await _handle_pipeline_error(e, job_manager, application_id, existing_job, generation_stage, trace_id)
+        await _handle_pipeline_error(e, job_manager, application_id, existing_job, current_stage, trace_id)

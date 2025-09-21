@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
-from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import (
     GrantApplicationRagRequest,
@@ -55,7 +54,6 @@ def grant_application_id() -> UUID:
 def pubsub_event_grant_template(grant_template_id: UUID, trace_id: TraceId) -> PubSubEvent:
     data = GrantTemplateRagRequest(
         parent_id=grant_template_id,
-        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
     return create_pubsub_event(data)
@@ -65,7 +63,6 @@ def pubsub_event_grant_template(grant_template_id: UUID, trace_id: TraceId) -> P
 def pubsub_event_grant_application(grant_application_id: UUID, trace_id: TraceId) -> PubSubEvent:
     data = GrantApplicationRagRequest(
         parent_id=grant_application_id,
-        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
     return create_pubsub_event(data)
@@ -110,7 +107,6 @@ async def test_handle_rag_request_grant_template(
     mock_grant_template_handler.assert_called_once_with(
         grant_template_id=grant_template_id,
         session_maker=async_session_maker,
-        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
     mock_grant_application_handler.assert_not_called()
@@ -134,7 +130,6 @@ async def test_handle_rag_request_grant_application(
     mock_grant_application_handler.assert_called_once_with(
         grant_application_id=grant_application_id,
         session_maker=async_session_maker,
-        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
     mock_grant_template_handler.assert_not_called()
@@ -239,7 +234,6 @@ def test_handle_pubsub_message_valid(trace_id: TraceId) -> None:
     parent_id = uuid4()
     request = GrantTemplateRagRequest(
         parent_id=parent_id,
-        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
     event = create_pubsub_event(request)

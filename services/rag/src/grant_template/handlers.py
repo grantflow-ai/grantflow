@@ -150,7 +150,8 @@ async def handle_cfp_analysis_stage(
     )
 
     return AnalyzeCFPContentStageDTO(
-        **extracted_cfp,
+        organization=extracted_cfp["organization"],
+        extracted_data=extracted_cfp["extracted_data"],
         analysis_results=analysis_results,
     )
 

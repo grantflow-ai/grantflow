@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from packages.db.src.enums import GrantApplicationStageEnum
 from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
@@ -56,7 +55,6 @@ async def test_generate_erc_application_for_dna_synthesis(
         await handle_grant_application_pipeline(
             grant_application=grant_application,
             session_maker=async_session_maker,
-            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
             trace_id=trace_id,
         )
 
@@ -73,16 +71,17 @@ async def test_generate_erc_application_for_dna_synthesis(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(
-                selectinload(GrantApplication.grant_template),
-                selectinload(GrantApplication.rag_job)
-            )
+            .options(selectinload(GrantApplication.grant_template), selectinload(GrantApplication.rag_job))
         )
 
         if not updated_application:
             raise ValueError("Failed to retrieve updated application")
 
-        section_texts = (updated_application.rag_job.generated_sections or {}) if updated_application.rag_job else {}
+        section_texts = {}
+        if updated_application.rag_job and updated_application.rag_job.checkpoint_data:
+            checkpoint_data = updated_application.rag_job.checkpoint_data
+            if "section_texts" in checkpoint_data:
+                section_texts = {text["section_id"]: text["text"] for text in checkpoint_data["section_texts"]}
         text = generate_application_text(
             title=updated_application.title or "Grant Application",
             grant_sections=updated_application.grant_template.grant_sections,

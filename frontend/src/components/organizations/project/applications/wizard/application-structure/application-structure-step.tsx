@@ -37,8 +37,8 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		if (!grantTemplate) return false;
 		if (grantTemplate.grant_sections.length > 0) return false;
 		if (isGeneratingTemplate) return false;
-		if (templateGenerationFailed) return false; // Don't auto-start if generation previously failed
-		return true; // Allow template generation even if other polling is active
+		if (templateGenerationFailed) return false;
+		return true;
 	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed]);
 
 	useEffect(() => {

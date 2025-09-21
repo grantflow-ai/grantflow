@@ -255,6 +255,16 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["**/src/components/ui/**/*.tsx", "**/src/components/app/**/*.tsx"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off"
+					}
+				}
+			}
 		}
 	],
 	"vcs": {

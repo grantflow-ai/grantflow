@@ -1,5 +1,3 @@
-"""Data transfer objects shared across services."""
-
 from typing import NotRequired, TypedDict
 from uuid import UUID
 

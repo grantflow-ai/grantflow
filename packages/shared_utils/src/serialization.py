@@ -18,19 +18,16 @@ def encode_hook(obj: Any) -> Any:
         return None
 
     if isinstance(obj, Exception):
-        # Handle exceptions with special serialization
         error_dict = {
             "message": str(obj),
             "type": type(obj).__name__,
         }
 
-        # For Google API exceptions, extract additional useful info
         if hasattr(obj, "code"):
-            error_dict["code"] = getattr(obj, "code", None)
+            error_dict["code"] = str(getattr(obj, "code", ""))
         if hasattr(obj, "details"):
-            error_dict["details"] = getattr(obj, "details", None)
+            error_dict["details"] = str(getattr(obj, "details", ""))
         if hasattr(obj, "response"):
-            # Some exceptions have response objects
             response = getattr(obj, "response", None)
             if response and hasattr(response, "status_code"):
                 error_dict["status_code"] = response.status_code
@@ -138,17 +135,11 @@ def _looks_like_json(string_value: str) -> bool:
 
 
 def extract_first_json_object(text: str) -> str | None:
-    """
-    Extract the first complete JSON object from a string that may contain
-    multiple concatenated JSON objects (e.g., from Gemini multi-candidate bug).
-
-    Returns the first valid JSON object as a string, or None if no valid JSON found.
-    """
     if not text or not text.strip():
         return None
 
     text = text.strip()
-    if not text.startswith('{'):
+    if not text.startswith("{"):
         return None
 
     brace_count = 0
@@ -160,7 +151,7 @@ def extract_first_json_object(text: str) -> str | None:
             escape_next = False
             continue
 
-        if char == '\\' and in_string:
+        if char == "\\" and in_string:
             escape_next = True
             continue
 
@@ -169,11 +160,11 @@ def extract_first_json_object(text: str) -> str | None:
             continue
 
         if not in_string:
-            if char == '{':
+            if char == "{":
                 brace_count += 1
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
                 if brace_count == 0:
-                    return text[:i + 1]
+                    return text[: i + 1]
 
     return None

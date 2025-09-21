@@ -12,7 +12,6 @@ from google.cloud import pubsub_v1
 
 @pytest.fixture(scope="session")
 def pubsub_emulator_env() -> None:
-    """Set up environment variables for PubSub emulator."""
     os.environ.setdefault("PUBSUB_EMULATOR_HOST", "localhost:8085")
     os.environ.setdefault("PUBSUB_PROJECT_ID", "grantflow")
 
@@ -60,7 +59,6 @@ def mock_pubsub_for_pipeline_testing() -> Generator[AsyncMock]:
 
 @pytest.fixture(scope="session")
 def create_pubsub_topics(pubsub_emulator_env: None) -> None:
-    """Create all Pub/Sub topics required for testing."""
     project_id = os.environ.get("PUBSUB_PROJECT_ID", "grantflow")
     publisher = pubsub_v1.PublisherClient()
 

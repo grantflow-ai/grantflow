@@ -1,6 +1,6 @@
 import binascii
 from base64 import b64decode
-from typing import Any, Literal, NotRequired, TypedDict, cast
+from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
@@ -8,8 +8,6 @@ import msgspec
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import (
-    GrantApplicationStageEnum,
-    GrantTemplateStageEnum,
     SourceIndexingStatusEnum,
 )
 from packages.shared_utils.src.env import get_env
@@ -80,12 +78,10 @@ class BaseRagRequest(msgspec.Struct):
 
 class GrantApplicationRagRequest(BaseRagRequest, tag="grant_application"):
     parent_id: UUID
-    stage: GrantApplicationStageEnum
 
 
 class GrantTemplateRagRequest(BaseRagRequest, tag="grant_template"):
     parent_id: UUID
-    stage: GrantTemplateStageEnum
 
 
 class ResearchPlanAutofillRequest(BaseRagRequest, tag="research_plan_autofill"):
@@ -235,7 +231,6 @@ async def publish_rag_task(
     *,
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
-    stage: GrantApplicationStageEnum | GrantTemplateStageEnum,
     trace_id: str,
 ) -> str:
     start_time = time.time()
@@ -243,7 +238,6 @@ async def publish_rag_task(
         "Starting PubSub message publishing",
         parent_type=parent_type,
         parent_id=str(parent_id),
-        stage=stage,
         trace_id=trace_id,
     )
 
@@ -253,13 +247,11 @@ async def publish_rag_task(
     if parent_type == "grant_application":
         data = GrantApplicationRagRequest(
             parent_id=UUID(str(parent_id)),
-            stage=cast("GrantApplicationStageEnum", stage),
             trace_id=trace_id,
         )
     else:
         data = GrantTemplateRagRequest(
             parent_id=UUID(str(parent_id)),
-            stage=cast("GrantTemplateStageEnum", stage),
             trace_id=trace_id,
         )
 
@@ -269,7 +261,6 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
-            stage=stage,
             message_size=len(message_data),
         )
 
@@ -288,8 +279,6 @@ async def publish_rag_task(
         with create_pubsub_publish_span(topic_path, "RagRequest") as span:
             span.set_attribute("parent_type", parent_type)
             span.set_attribute("parent_id", str(parent_id))
-            if stage is not None:
-                span.set_attribute("pipeline.stage", str(stage))
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
@@ -307,7 +296,6 @@ async def publish_rag_task(
             message_id=message_id,
             parent_type=parent_type,
             parent_id=str(parent_id),
-            stage=str(stage) if stage is not None else None,
             trace_id=trace_id,
             publish_duration_ms=round(publish_duration * 1000, 2),
         )
@@ -439,7 +427,7 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
             "subscription already exists",
             subscription_path=subscription_path,
             error_message=str(e),
-            error_type=type(e).__name__
+            error_type=type(e).__name__,
         )
 
     subscriber_paths.add(subscription_path)

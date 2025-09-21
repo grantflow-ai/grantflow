@@ -1,7 +1,7 @@
 from typing import Any, cast
 
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
-from packages.db.src.tables import GrantTemplate
+from packages.db.src.tables import GrantTemplate, GrantTemplateGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -34,14 +34,21 @@ logger = get_logger(__name__)
 async def handle_grant_template_pipeline(
     grant_template: GrantTemplate,
     session_maker: async_sessionmaker[Any],
-    generation_stage: GrantTemplateStageEnum,
     trace_id: str,
 ) -> GrantTemplate | None:
+    async with session_maker() as session:
+        if grant_template.rag_job_id:
+            job = await session.get(GrantTemplateGenerationJob, grant_template.rag_job_id)
+        else:
+            job = None
+
+    current_stage = job.current_stage if job and job.current_stage else GRANT_TEMPLATE_PIPELINE_STAGES[0]
+
     job_manager = GrantTemplateJobManager[StageDTO](
         session_maker=session_maker,
         grant_application_id=grant_template.grant_application_id,
         job_id=grant_template.rag_job_id,
-        current_stage=generation_stage,
+        current_stage=current_stage,
         pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
         parent_id=grant_template.id,
         trace_id=trace_id,
@@ -55,7 +62,7 @@ async def handle_grant_template_pipeline(
     logger.info(
         "Grant template pipeline started",
         template_id=template_id,
-        stage=generation_stage,
+        stage=current_stage,
         trace_id=trace_id,
     )
 
@@ -65,7 +72,7 @@ async def handle_grant_template_pipeline(
     try:
         checkpoint_data = job.checkpoint_data if job.checkpoint_data else {}
 
-        match generation_stage:
+        match current_stage:
             case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
                 extracted_cfp = await handle_cfp_extraction_stage(
                     grant_template=grant_template,
@@ -135,6 +142,9 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
 
+            case _:
+                raise ValidationError(f"Unknown stage: {current_stage}")
+
     except BackendError as e:
         template_id = grant_template.id
         job_id = job.id
@@ -146,7 +156,7 @@ async def handle_grant_template_pipeline(
             template_id=template_id,
             job_id=job_id,
             trace_id=trace_id,
-            stage=generation_stage,
+            stage=current_stage,
         )
 
         if isinstance(e, InsufficientContextError):
