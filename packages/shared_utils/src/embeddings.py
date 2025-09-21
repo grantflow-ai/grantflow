@@ -46,9 +46,7 @@ def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTrans
                 "Loading model with cache-first strategy", model_name=model_name
             )
 
-            # Try cache-only first (idiomatic 2025 approach), then allow download if needed
             try:
-                # First attempt: cache-only mode using local_files_only=True
                 logger.debug("Attempting cache-only load", model_name=model_name)
                 model = SentenceTransformer(
                     model_name,
@@ -60,7 +58,6 @@ def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTrans
                 logger.debug("Model loaded from cache", model_name=model_name)
 
             except Exception as e:
-                # Second attempt: allow download if cache miss
                 logger.info(
                     "Cache miss, downloading model", model_name=model_name, error=str(e)
                 )

@@ -126,7 +126,6 @@ def test_start_span_with_none_attributes(trace_id: str) -> None:
         mock_span.set_attribute.assert_any_call("trace_id", trace_id)
         mock_span.set_attribute.assert_any_call("valid_attr", "value")
 
-        # Ensure none_attr was not set
         calls = [call[0] for call in mock_span.set_attribute.call_args_list]
         assert ("none_attr", None) not in calls
 

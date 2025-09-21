@@ -43,7 +43,6 @@ async def test_application_generation_performance_baseline(
         patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
         # TODO: Fix e2e test - pipeline signature changed, needs proper GrantApplication object
-        # For now, mock the result to fix mypy errors
         result = ("Mock generated text", {"section1": "Mock section text"})
         assert result is not None, "Grant application generation should not return None"
         text, section_texts = result
@@ -113,7 +112,6 @@ async def test_generation_smoke_test(
         patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
         # TODO: Fix e2e test - pipeline signature changed, needs proper GrantApplication object
-        # For now, mock the result to fix mypy errors
         result = ("Mock generated text", {"section1": "Mock section text"})
         assert result is not None, "Grant application generation should not return None"
         text, section_texts = result

@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -24,8 +24,8 @@ from services.rag.src.utils.job_manager import GrantApplicationJobManager as Job
 
 
 @pytest.fixture
-def mock_grant_application_job_manager() -> MagicMock:
-    mock = MagicMock(spec=JobManager)
+def mock_grant_application_job_manager() -> AsyncMock:
+    mock = AsyncMock(spec=JobManager)
     mock.ensure_not_cancelled = AsyncMock()
     mock.add_notification = AsyncMock()
     return mock
@@ -129,8 +129,8 @@ async def test_generate_sections_stage_success(
     assert result["section_texts"][1]["section_id"] == "significance"
     assert result["work_plan_section"]["id"] == "research_plan"
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
-    mock_grant_application_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
     mock_retrieve_documents.assert_called_once()
 
@@ -170,8 +170,8 @@ async def test_extract_relationships_stage_success(
     assert "relationships" in result
     assert result["relationships"] == mock_relationships
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
-    mock_grant_application_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
 
 @patch("services.rag.src.grant_application.handlers.handle_batch_enrich_objectives")
@@ -252,8 +252,8 @@ async def test_enrich_objectives_stage_success(
     assert "enrichment_responses" in result
     assert len(result["enrichment_responses"]) == 2
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
-    mock_grant_application_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
 
 @patch("services.rag.src.grant_application.handlers.enrich_objective_with_wikidata")
@@ -343,8 +343,8 @@ async def test_enrich_terminology_stage_success(
     assert "wikidata_enrichments" in result
     assert len(result["wikidata_enrichments"]) == 2
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
-    mock_grant_application_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
 
 @patch("services.rag.src.grant_application.handlers.generate_objective_with_tasks")
@@ -440,8 +440,8 @@ async def test_generate_research_plan_stage_success(
     assert "Generated objective text" in result["research_plan_text"]
     assert "Generated task 1 text" in result["research_plan_text"]
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
-    mock_grant_application_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
 
 async def test_handlers_preserve_data_flow(

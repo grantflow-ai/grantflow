@@ -37,7 +37,6 @@ async def test_generate_melanoma_baseline_application_text(
 
     logger.info("📄 Generating melanoma baseline application using scenario: %s", scenario.scenario_name)
 
-    # Load the application with template relationship from database
     from packages.db.src.query_helpers import select_active
     from sqlalchemy.orm import selectinload
 
@@ -51,7 +50,6 @@ async def test_generate_melanoma_baseline_application_text(
         if not grant_application:
             raise ValueError("Grant application not found")
 
-        # Verify we have the necessary data
         if not grant_application.grant_template:
             raise ValueError("Grant application has no template")
 
@@ -60,7 +58,6 @@ async def test_generate_melanoma_baseline_application_text(
 
     performance_context.start_stage("generate_full_application_text")
 
-    # Run the actual pipeline through all stages to generate real application text
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
@@ -68,7 +65,6 @@ async def test_generate_melanoma_baseline_application_text(
         trace_id="melanoma-baseline-e2e-test",
     )
 
-    # Refresh the application from database to get the generated content
     from packages.db.src.query_helpers import select_active
     from sqlalchemy.orm import selectinload
 
@@ -82,7 +78,6 @@ async def test_generate_melanoma_baseline_application_text(
         if not updated_application:
             raise ValueError("Failed to retrieve updated application")
 
-        # Generate the final application text from the processed data
         section_texts = updated_application.section_texts or {}
         text = generate_application_text(
             title=updated_application.title or "Grant Application",
