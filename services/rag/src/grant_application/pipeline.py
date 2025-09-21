@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
+from services.rag.src.grant_application.dto import StageDTO
 from services.rag.src.grant_application.handlers import (
     handle_enrich_objectives_stage,
     handle_enrich_terminology_stage,
@@ -28,7 +29,6 @@ from services.rag.src.grant_application.handlers import (
     handle_generate_research_plan_stage,
     handle_generate_sections_stage,
 )
-from services.rag.src.grant_application.pipeline_dto import StageDTO
 from services.rag.src.grant_application.utils import generate_application_text
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantApplicationJobManager

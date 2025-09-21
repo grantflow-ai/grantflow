@@ -14,12 +14,12 @@ from services.rag.src.grant_application.dto import (
     GenerateResearchPlanStageDTO,
     GenerateSectionsStageDTO,
     SectionText,
+    StageDTO,
 )
 from services.rag.src.grant_application.enrich_terminology_stage import enrich_objective_with_wikidata
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
-from services.rag.src.grant_application.pipeline_dto import StageDTO
 from services.rag.src.utils.job_manager import GrantApplicationJobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.text import normalize_markdown
