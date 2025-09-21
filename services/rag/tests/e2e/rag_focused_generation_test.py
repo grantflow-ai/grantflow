@@ -7,7 +7,9 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.rag.src.grant_application.handlers import handle_generate_sections_stage
+from services.rag.src.utils.job_manager import GrantApplicationJobManager
+from packages.db.src.utils import retrieve_application
 
 # Import our ROUGE calculation functions
 from services.rag.tests.e2e.rag_proximity_test import calculate_rouge_l
@@ -52,14 +54,6 @@ def extract_ngrams_for_analysis(text: str, n: int) -> set[tuple[str, ...]]:
     return {tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)}
 
 
-def create_mock_job_manager() -> AsyncMock:
-    mock_job_manager = AsyncMock()
-    mock_job_manager.create_grant_application_job = AsyncMock()
-    mock_job_manager.update_job_status = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=False)
-    mock_job_manager.handle_cancellation = AsyncMock()
-    return mock_job_manager
 
 
 async def analyze_generated_content(
@@ -181,21 +175,25 @@ async def test_rag_focused_prompts_real_generation(
 
     start_time = time.time()
 
-    mock_job_manager = create_mock_job_manager()
+    # Get the application object
+    async with async_session_maker() as session:
+        application = await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
+
+    mock_job_manager = GrantApplicationJobManager(application_id=application.id, session_maker=async_session_maker)
 
     # Generate content using the RAG pipeline with our enhanced prompts
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
-        result = await grant_application_text_generation_pipeline_handler(
-            grant_application_id=UUID(melanoma_alliance_full_application_id),
-            session_maker=async_session_maker,
+        result = await handle_generate_sections_stage(
+            grant_application=application,
             job_manager=mock_job_manager,
+            trace_id="test-trace-id",
         )
 
         assert result is not None, "Grant application generation should not return None"
-        full_text, section_texts = result
+        section_texts = {st["section_id"]: st["text"] for st in result["section_texts"]}
+        full_text = "\n\n".join(section_texts.values())
 
     generation_time = time.time() - start_time
 
