@@ -23,6 +23,14 @@ runs:
           with:
               enable-cache: true
 
+        - name: Cache HuggingFace Models
+          uses: actions/cache@v4
+          with:
+              path: ~/.cache/huggingface
+              key: ${{ runner.os }}-huggingface-${{ hashFiles('**/embeddings.py') }}
+              restore-keys: |
+                  ${{ runner.os }}-huggingface-
+
         - name: Cache and Install APT Packages
           uses: awalsh128/cache-apt-pkgs-action@latest
           with:
@@ -54,8 +62,8 @@ runs:
                   sudo -u postgres createuser --superuser runner --port=5433
                   sudo -u postgres psql --port=5433 -c "ALTER USER runner WITH PASSWORD 'testpass';"
                   
-                  # Set DATABASE_URL for tests (PostgreSQL 17 runs on port 5433)
-                  echo "DATABASE_URL=postgresql://runner:testpass@localhost:5433/postgres" >> $GITHUB_ENV
+                  # Set DATABASE_CONNECTION_STRING for tests (PostgreSQL 17 runs on port 5433)
+                  echo "DATABASE_CONNECTION_STRING=postgresql+asyncpg://runner:testpass@localhost:5433/postgres" >> $GITHUB_ENV
                   
                   # Test connection and create vector extension
                   psql "postgresql://runner:testpass@localhost:5433/postgres" -c "SELECT version();"
@@ -66,6 +74,20 @@ runs:
           shell: bash
           # TODO: temporary fix, we need to handle dependencies for each target better ~keep
           run: uv sync --all-packages --all-extras --dev --upgrade
+
+        - name: Download Embedding Model
+          shell: bash
+          if: inputs.target == 'rag' || inputs.target == 'indexer' || inputs.target == 'crawler'
+          run: |
+              # Download the embedding model to cache before running tests
+              uv run python -c "
+              from sentence_transformers import SentenceTransformer
+              import os
+              os.environ['TRANSFORMERS_OFFLINE'] = '0'
+              print('Downloading/verifying embedding model...')
+              model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2', device='cpu')
+              print('Model ready in cache')
+              "
 
         - name: Install Playwright Browsers (for Scraper)
           shell: bash
