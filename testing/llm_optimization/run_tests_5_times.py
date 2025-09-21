@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import json
 import logging
 import statistics
@@ -20,13 +18,11 @@ from services.rag.tests.e2e.rag_proximity_test import (
 )
 
 
-def setup_logging():
+def setup_logging() -> logging.Logger:
     """Setup logging for the test runner"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     return logging.getLogger(__name__)
+
 
 def run_rouge_validation_tests() -> dict[str, Any]:
     """Run ROUGE algorithm validation tests"""
@@ -58,7 +54,7 @@ def run_rouge_validation_tests() -> dict[str, Any]:
             "name": "no_overlap",
             "ref": "cancer research methodology experimental design",
             "gen": "artificial intelligence machine learning deep learning",
-        }
+        },
     ]
 
     results = []
@@ -66,21 +62,24 @@ def run_rouge_validation_tests() -> dict[str, Any]:
         rouge_l = calculate_rouge_l(case["ref"], case["gen"])
         rouge_2 = calculate_rouge_n(case["ref"], case["gen"], n=2)
 
-        results.append({
-            "test_case": case["name"],
-            "reference": case["ref"],
-            "generated": case["gen"],
-            "rouge_l": rouge_l,
-            "rouge_2": rouge_2,
-        })
+        results.append(
+            {
+                "test_case": case["name"],
+                "reference": case["ref"],
+                "generated": case["gen"],
+                "rouge_l": rouge_l,
+                "rouge_2": rouge_2,
+            }
+        )
 
-        logger.info(f"Case '{case['name']}': ROUGE-L={rouge_l:.3f}, ROUGE-2={rouge_2:.3f}")
+        logger.info("ROUGE validation case completed", case_name=case["name"], rouge_l=rouge_l, rouge_2=rouge_2)
 
     return {
         "validation_type": "rouge_algorithm_validation",
         "test_cases": results,
         "timestamp": datetime.now(UTC).isoformat(),
     }
+
 
 def run_length_compliance_tests() -> dict[str, Any]:
     """Run length compliance parsing and scoring tests"""
@@ -89,27 +88,31 @@ def run_length_compliance_tests() -> dict[str, Any]:
 
     # Test CFP constraint parsing
     constraint_test_cases = [
-        "Maximum 500 words",           # This was failing - should now work
+        "Maximum 500 words",  # This was failing - should now work
         "500 words maximum",
         "Up to 1000 words",
         "No more than 750 words",
         "250-500 words",
-        "Minimum 300 words",           # Test the new minimum pattern too
+        "Minimum 300 words",  # Test the new minimum pattern too
         "At least 200 words",
         "Between 400-800 words range",
-        "Max 800 words",               # Additional test cases
+        "Max 800 words",  # Additional test cases
         "Min 200 words",
     ]
 
     parsing_results = []
     for constraint in constraint_test_cases:
         parsed = parse_word_limit_from_cfp_constraint(constraint)
-        parsing_results.append({
-            "constraint_text": constraint,
-            "parsed_min_words": parsed["min_words"],
-            "parsed_max_words": parsed["max_words"],
-        })
-        logger.info(f"Constraint '{constraint}' -> min={parsed['min_words']}, max={parsed['max_words']}")
+        parsing_results.append(
+            {
+                "constraint_text": constraint,
+                "parsed_min_words": parsed["min_words"],
+                "parsed_max_words": parsed["max_words"],
+            }
+        )
+        logger.info(
+            "CFP constraint parsed", constraint=constraint, min_words=parsed["min_words"], max_words=parsed["max_words"]
+        )
 
     # Test compliance scoring
     compliance_test_cases = [
@@ -124,26 +127,32 @@ def run_length_compliance_tests() -> dict[str, Any]:
     compliance_results = []
     for case in compliance_test_cases:
         score = calculate_length_compliance_score(
-            actual_word_count=case["actual"],
-            min_words=case["min"],
-            max_words=case["max"]
+            actual_word_count=case["actual"], min_words=case["min"], max_words=case["max"]
         )
 
-        compliance_results.append({
-            "test_scenario": f"{case['actual']} words (min={case['min']}, max={case['max']})",
-            "actual_word_count": case["actual"],
-            "min_words": case["min"],
-            "max_words": case["max"],
-            "expected_grade": case["expected_grade"],
-            "actual_grade": score["grade"],
-            "compliance_status": score["compliance_status"],
-            "compliance_percentage": score["compliance_percentage"],
-            "issues": score["issues"],
-            "matches_expected": score["grade"] == case["expected_grade"]
-        })
+        compliance_results.append(
+            {
+                "test_scenario": f"{case['actual']} words (min={case['min']}, max={case['max']})",
+                "actual_word_count": case["actual"],
+                "min_words": case["min"],
+                "max_words": case["max"],
+                "expected_grade": case["expected_grade"],
+                "actual_grade": score["grade"],
+                "compliance_status": score["compliance_status"],
+                "compliance_percentage": score["compliance_percentage"],
+                "issues": score["issues"],
+                "matches_expected": score["grade"] == case["expected_grade"],
+            }
+        )
 
         match_status = "✅" if score["grade"] == case["expected_grade"] else "❌"
-        logger.info(f"{match_status} {case['actual']} words -> Grade {score['grade']} (expected {case['expected_grade']})")
+        logger.info(
+            "Compliance score test",
+            match_status=match_status,
+            actual_words=case["actual"],
+            grade=score["grade"],
+            expected_grade=case["expected_grade"],
+        )
 
     return {
         "validation_type": "length_compliance_validation",
@@ -152,10 +161,11 @@ def run_length_compliance_tests() -> dict[str, Any]:
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
+
 def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
     """Simulate RAG pipeline tests with realistic variations"""
     logger = logging.getLogger(__name__)
-    logger.info(f"Running RAG pipeline simulation - Iteration {iteration}")
+    logger.info("Running RAG pipeline simulation", iteration=iteration)
 
     # Simulate section requirements (consistent across iterations)
     section_requirements = """
@@ -174,28 +184,24 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         PIC-seq cell-cell interaction measurement techniques for tumor-immune interactions.
         Anti-TREM2 immunocytokine design methodology combining targeted antibodies with cytokines.
         Spatial transcriptomics analysis using Stereo-seq for melanoma brain metastasis research.""",
-
         # Iteration 2 - Medium-high relevance
         """Melanoma immunotherapy approaches using CAR-T cell engineering protocols.
         Single-cell sequencing analysis for tumor immune infiltration patterns.
         Brain metastases treatment strategies with checkpoint inhibitor combinations.
         Experimental design principles for cancer immunotherapy clinical trials.
         Data analysis workflows for multi-omics melanoma research studies.""",
-
         # Iteration 3 - Medium relevance
         """Cancer research experimental methodology and statistical analysis frameworks.
         Immunotherapy treatment protocols for solid tumor malignancies including melanoma.
         Clinical trial design considerations for oncology research applications.
         Data collection and analysis strategies for translational research studies.
         Laboratory protocols for immune cell characterization and functional assays.""",
-
         # Iteration 4 - High relevance (different focus)
         """TREM2-targeted immunocytokine development for brain metastases treatment.
         Novel cytokine screening methodologies in immunocompetent melanoma models.
         Fusion protein design approaches for tumor-specific immunomodulation.
         In-vitro validation protocols for immunocytokine binding and efficacy.
         Preclinical testing frameworks for melanoma brain metastases therapeutics.""",
-
         # Iteration 5 - Medium relevance
         """General cancer immunotherapy research methodologies and experimental approaches.
         Tumor microenvironment characterization using standard molecular biology techniques.
@@ -214,7 +220,6 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         Spatial transcriptomics using Stereo-seq will provide detailed mapping of immune cell distributions and interactions
         within the brain metastatic niche. This integrated approach combines advanced single-cell technologies with innovative
         immunocytokine engineering to address the critical challenge of immunotherapy resistance in melanoma brain metastases.""",
-
         # Iteration 2 - Good quality generation
         """Our research methodology incorporates single-cell sequencing analysis to investigate tumor immune infiltration
         patterns in melanoma brain metastases. We will utilize CAR-T cell engineering protocols adapted for brain-penetrating
@@ -222,7 +227,6 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         clinical trial principles for cancer immunotherapy research, with comprehensive data analysis workflows for multi-omics
         integration. Our approach addresses the unique challenges of brain metastases treatment through targeted immunomodulation
         and systematic characterization of therapeutic responses in preclinical models.""",
-
         # Iteration 3 - Moderate quality generation
         """Our research strategy follows standard cancer research experimental methodology combined with statistical analysis
         frameworks appropriate for oncology studies. We will implement immunotherapy treatment protocols for melanoma with
@@ -230,7 +234,6 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         translational research applications. Data collection and analysis strategies will utilize proven approaches for immune
         cell characterization and functional assays. This methodology ensures rigorous scientific evaluation of treatment
         efficacy while maintaining compliance with regulatory requirements.""",
-
         # Iteration 4 - High quality (different angle)
         """Our research strategy centers on TREM2-targeted immunocytokine development specifically designed for melanoma brain
         metastases treatment. We will implement novel cytokine screening methodologies in immunocompetent models to identify
@@ -238,7 +241,6 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         minimizing off-target effects. In-vitro validation protocols will assess immunocytokine binding specificity and
         therapeutic efficacy. The preclinical testing framework ensures comprehensive evaluation of safety and efficacy before
         clinical translation for melanoma brain metastases therapeutics.""",
-
         # Iteration 5 - Lower quality generation
         """Our research approach utilizes general cancer immunotherapy methodologies adapted for melanoma studies. We will
         employ tumor microenvironment characterization using standard molecular biology techniques and established laboratory
@@ -264,9 +266,7 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
 
     # Calculate information flow score
     information_flow_score = (
-        section_to_rag_rouge_l * 0.25 +
-        rag_to_writing_rouge_l * 0.35 +
-        section_to_writing_rouge_l * 0.40
+        section_to_rag_rouge_l * 0.25 + rag_to_writing_rouge_l * 0.35 + section_to_writing_rouge_l * 0.40
     )
 
     # Calculate length compliance
@@ -277,8 +277,16 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         max_words=1200,  # CFP requirement
     )
 
-    logger.info(f"Iteration {iteration} - ROUGE-L: Req→RAG={section_to_rag_rouge_l:.3f}, RAG→Text={rag_to_writing_rouge_l:.3f}, Req→Text={section_to_writing_rouge_l:.3f}")
-    logger.info(f"Iteration {iteration} - Length: {actual_word_count} words, Grade {length_compliance['grade']}")
+    logger.info(
+        "Iteration ROUGE analysis",
+        iteration=iteration,
+        req_to_rag=section_to_rag_rouge_l,
+        rag_to_text=rag_to_writing_rouge_l,
+        req_to_text=section_to_writing_rouge_l,
+    )
+    logger.info(
+        "Iteration length analysis", iteration=iteration, word_count=actual_word_count, grade=length_compliance["grade"]
+    )
 
     return {
         "iteration": iteration,
@@ -311,6 +319,7 @@ def simulate_rag_pipeline_tests(iteration: int) -> dict[str, Any]:
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
+
 def calculate_statistics(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Calculate statistical summary of test results"""
     logger = logging.getLogger(__name__)
@@ -335,14 +344,14 @@ def calculate_statistics(results: list[dict[str, Any]]) -> dict[str, Any]:
     statuses = [r["length_compliance"]["compliance_status"] for r in results]
     status_counts = {"PASS": statuses.count("PASS"), "FAIL": statuses.count("FAIL")}
 
-    def calc_stats(values):
+    def calc_stats(values: list[float]) -> dict[str, float]:
         if not values:
             return {"mean": 0, "std_dev": 0, "min": 0, "max": 0}
         return {
             "mean": statistics.mean(values),
             "std_dev": statistics.stdev(values) if len(values) > 1 else 0,
             "min": min(values),
-            "max": max(values)
+            "max": max(values),
         }
 
     return {
@@ -369,10 +378,11 @@ def calculate_statistics(results: list[dict[str, Any]]) -> dict[str, Any]:
             "avg_length_compliance": statistics.mean(compliance_percentages),
             "pass_rate": status_counts["PASS"] / len(results) * 100,
             "grade_a_rate": grade_counts["A"] / len(results) * 100,
-        }
+        },
     }
 
-def main():
+
+def main() -> None:
     """Main test runner"""
     logger = setup_logging()
     logger.info("🔍 Starting 5-iteration ROUGE and Length Compliance Test Suite")
@@ -394,7 +404,7 @@ def main():
 
     pipeline_results = []
     for i in range(1, 6):
-        logger.info(f"\n--- Iteration {i}/5 ---")
+        logger.info("Starting iteration", iteration=i, total=5)
         result = simulate_rag_pipeline_tests(i)
         pipeline_results.append(result)
         time.sleep(0.5)  # Brief pause between iterations
@@ -415,12 +425,12 @@ def main():
             "test_environment": "Simulated RAG Pipeline",
             "test_framework": "Custom ROUGE and Length Analysis",
             "timestamp": datetime.now(UTC).isoformat(),
-        }
+        },
     }
 
     # Save results
     output_file = results_dir / "comprehensive_5_iteration_results.json"
-    with open(output_file, "w") as f:
+    with output_file.open("w") as f:
         json.dump(comprehensive_results, f, indent=2)
 
     # Print summary
@@ -429,16 +439,20 @@ def main():
     logger.info("=" * 60)
 
     stats = statistics_summary["quality_assessment"]
-    logger.info(f"Average End-to-End ROUGE-L Score: {stats['avg_rouge_l_end_to_end']:.3f}")
-    logger.info(f"Average Information Flow Score: {stats['avg_information_flow']:.3f}")
-    logger.info(f"Average Length Compliance: {stats['avg_length_compliance']:.1f}%")
-    logger.info(f"Overall Pass Rate: {stats['pass_rate']:.1f}%")
-    logger.info(f"Grade A Rate: {stats['grade_a_rate']:.1f}%")
+    logger.info(
+        "Quality assessment summary",
+        avg_rouge_l=stats["avg_rouge_l_end_to_end"],
+        avg_info_flow=stats["avg_information_flow"],
+        avg_compliance=stats["avg_length_compliance"],
+        pass_rate=stats["pass_rate"],
+        grade_a_rate=stats["grade_a_rate"],
+    )
 
-    logger.info(f"\n📊 Results saved to: {output_file}")
+    logger.info("Results saved", output_file=str(output_file))
     logger.info("✅ 5-iteration test suite completed successfully!")
 
     return comprehensive_results
+
 
 if __name__ == "__main__":
     results = main()

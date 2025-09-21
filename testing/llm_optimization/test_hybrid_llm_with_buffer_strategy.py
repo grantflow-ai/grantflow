@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import json
 import logging
@@ -19,16 +17,15 @@ load_dotenv()
 
 
 def setup_logging() -> logging.Logger:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     return logging.getLogger(__name__)
+
 
 def select_model_for_length(max_words: int) -> str:
     if max_words <= 600:
         return "gemini-2.5-flash"
     return "gemini-2.5-flash-lite"
+
 
 def apply_buffer_strategy(actual_min_words: int, actual_max_words: int, buffer_words: int = 150) -> dict[str, int]:
     llm_min_words = actual_min_words + buffer_words
@@ -39,8 +36,9 @@ def apply_buffer_strategy(actual_min_words: int, actual_max_words: int, buffer_w
         "actual_max": actual_max_words,
         "llm_min": llm_min_words,
         "llm_max": llm_max_words,
-        "buffer_applied": buffer_words
+        "buffer_applied": buffer_words,
     }
+
 
 async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
     logger = setup_logging()
@@ -82,16 +80,19 @@ async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
 
     for i, case in enumerate(length_test_cases, 1):
         word_config = apply_buffer_strategy(
-            actual_min_words=case["min_words"],
-            actual_max_words=case["max_words"],
-            buffer_words=150
+            actual_min_words=case["min_words"], actual_max_words=case["max_words"], buffer_words=150
         )
 
         selected_model = select_model_for_length(case["max_words"])
 
         logger.info("\n--- Test Case %d: %s ---", i, case["name"])
         logger.info("Actual Target: %d-%d words", case["min_words"], case["max_words"])
-        logger.info("LLM Instruction: %d-%d words (+%d buffer)", word_config["llm_min"], word_config["llm_max"], word_config["buffer_applied"])
+        logger.info(
+            "LLM Instruction: %d-%d words (+%d buffer)",
+            word_config["llm_min"],
+            word_config["llm_max"],
+            word_config["buffer_applied"],
+        )
         logger.info("Selected Model: %s", selected_model)
 
         original_model = os.environ.get("GENERATION_MODEL", "gemini-2.5-flash-lite")
@@ -113,9 +114,7 @@ async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
             actual_word_count = len(generated_text.split())
 
             compliance = calculate_length_compliance_score(
-                actual_word_count=actual_word_count,
-                min_words=case["min_words"],
-                max_words=case["max_words"]
+                actual_word_count=actual_word_count, min_words=case["min_words"], max_words=case["max_words"]
             )
 
             context_rouge = calculate_rouge_l(test_context, generated_text)
@@ -130,50 +129,60 @@ async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
             if compliance["issues"]:
                 logger.warning("Issues: %s", ", ".join(compliance["issues"]))
 
-            results.append({
-                "test_case": case["name"],
-                "selected_model": selected_model,
-                "model_selection_reason": "Flash-Lite for long content (>600w)" if case["max_words"] > 600 else "Flash for short content (≤600w)",
-                "buffer_strategy": {
-                    "actual_min_words": case["min_words"],
-                    "actual_max_words": case["max_words"],
-                    "llm_min_words": word_config["llm_min"],
-                    "llm_max_words": word_config["llm_max"],
-                    "buffer_applied": word_config["buffer_applied"]
-                },
-                "actual_word_count": actual_word_count,
-                "generation_time_seconds": generation_time,
-                "compliance_status": compliance["compliance_status"],
-                "grade": compliance["grade"],
-                "compliance_percentage": compliance["compliance_percentage"],
-                "utilization_percentage": compliance.get("utilization_percentage"),
-                "context_rouge_l": context_rouge,
-                "issues": compliance["issues"],
-                "generated_text_sample": generated_text[:300] + "..." if len(generated_text) > 300 else generated_text,
-            })
+            results.append(
+                {
+                    "test_case": case["name"],
+                    "selected_model": selected_model,
+                    "model_selection_reason": "Flash-Lite for long content (>600w)"
+                    if case["max_words"] > 600
+                    else "Flash for short content (≤600w)",
+                    "buffer_strategy": {
+                        "actual_min_words": case["min_words"],
+                        "actual_max_words": case["max_words"],
+                        "llm_min_words": word_config["llm_min"],
+                        "llm_max_words": word_config["llm_max"],
+                        "buffer_applied": word_config["buffer_applied"],
+                    },
+                    "actual_word_count": actual_word_count,
+                    "generation_time_seconds": generation_time,
+                    "compliance_status": compliance["compliance_status"],
+                    "grade": compliance["grade"],
+                    "compliance_percentage": compliance["compliance_percentage"],
+                    "utilization_percentage": compliance.get("utilization_percentage"),
+                    "context_rouge_l": context_rouge,
+                    "issues": compliance["issues"],
+                    "generated_text_sample": generated_text[:300] + "..."
+                    if len(generated_text) > 300
+                    else generated_text,
+                }
+            )
 
         except Exception as e:
             logger.error("Generation failed for %s with %s: %s", case["name"], selected_model, e)
-            results.append({
-                "test_case": case["name"],
-                "selected_model": selected_model,
-                "model_selection_reason": "Flash-Lite for long content (>600w)" if case["max_words"] > 600 else "Flash for short content (≤600w)",
-                "buffer_strategy": {
-                    "actual_min_words": case["min_words"],
-                    "actual_max_words": case["max_words"],
-                    "llm_min_words": word_config["llm_min"],
-                    "llm_max_words": word_config["llm_max"],
-                    "buffer_applied": word_config["buffer_applied"]
-                },
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "test_case": case["name"],
+                    "selected_model": selected_model,
+                    "model_selection_reason": "Flash-Lite for long content (>600w)"
+                    if case["max_words"] > 600
+                    else "Flash for short content (≤600w)",
+                    "buffer_strategy": {
+                        "actual_min_words": case["min_words"],
+                        "actual_max_words": case["max_words"],
+                        "llm_min_words": word_config["llm_min"],
+                        "llm_max_words": word_config["llm_max"],
+                        "buffer_applied": word_config["buffer_applied"],
+                    },
+                    "error": str(e),
+                }
+            )
 
         finally:
             os.environ["GENERATION_MODEL"] = original_model
 
-    logger.info("\n%s", "="*80)
+    logger.info("\n%s", "=" * 80)
     logger.info("HYBRID + BUFFER STRATEGY SUMMARY")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     successful_tests = [r for r in results if "error" not in r]
 
@@ -184,7 +193,9 @@ async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
         avg_generation_time = sum(r["generation_time_seconds"] for r in successful_tests) / len(successful_tests)
 
         logger.info("Tests completed: %d/%d", len(successful_tests), len(length_test_cases))
-        logger.info("Pass rate: %d/%d (%.1f%%)", pass_count, len(successful_tests), pass_count/len(successful_tests)*100)
+        logger.info(
+            "Pass rate: %d/%d (%.1f%%)", pass_count, len(successful_tests), pass_count / len(successful_tests) * 100
+        )
         logger.info("Average utilization: %.1f%%", avg_utilization)
         logger.info("Average context ROUGE-L: %.3f", avg_rouge)
         logger.info("Average generation time: %.1fs", avg_generation_time)
@@ -196,19 +207,33 @@ async def test_hybrid_llm_with_buffer_strategy() -> list[dict[str, Any]]:
             generated = result["actual_word_count"]
             effectiveness = min(100, (generated / actual_max) * 100)
 
-            logger.info("- %s: %dw vs %dw target = %.1f%% effectiveness", result["test_case"], generated, actual_max, effectiveness)
+            logger.info(
+                "- %s: %dw vs %dw target = %.1f%% effectiveness",
+                result["test_case"],
+                generated,
+                actual_max,
+                effectiveness,
+            )
 
         logger.info("\nDetailed Results:")
         for result in successful_tests:
             status_emoji = "✅" if result["compliance_status"] == "PASS" else "❌"
-            logger.info("%s %s (%s): %d words (Grade %s, %.1f%% utilization, %.1fs)",
-                       status_emoji, result["test_case"], result["selected_model"], result["actual_word_count"],
-                       result["grade"], result.get("utilization_percentage", 0), result["generation_time_seconds"])
+            logger.info(
+                "%s %s (%s): %d words (Grade %s, %.1f%% utilization, %.1fs)",
+                status_emoji,
+                result["test_case"],
+                result["selected_model"],
+                result["actual_word_count"],
+                result["grade"],
+                result.get("utilization_percentage", 0),
+                result["generation_time_seconds"],
+            )
 
     else:
         logger.error("All tests failed!")
 
     return results
+
 
 async def main() -> None:
     logger = setup_logging()
@@ -222,13 +247,17 @@ async def main() -> None:
 
         output_file = output_dir / "hybrid_buffer_strategy_results.json"
         with output_file.open("w") as f:
-            json.dump({
-                "test_type": "hybrid_llm_with_buffer_strategy",
-                "strategy": "Flash for ≤600 words, Flash-Lite for >600 words + 150 word buffer",
-                "buffer_explanation": "LLM receives target+150 words instruction, compliance measured against actual target",
-                "timestamp": time.time(),
-                "results": results,
-            }, f, indent=2)
+            json.dump(
+                {
+                    "test_type": "hybrid_llm_with_buffer_strategy",
+                    "strategy": "Flash for ≤600 words, Flash-Lite for >600 words + 150 word buffer",
+                    "buffer_explanation": "LLM receives target+150 words instruction, compliance measured against actual target",
+                    "timestamp": time.time(),
+                    "results": results,
+                },
+                f,
+                indent=2,
+            )
 
         logger.info("\nResults saved to: %s", output_file)
         logger.info("Hybrid + Buffer strategy test completed!")
@@ -236,6 +265,7 @@ async def main() -> None:
     except Exception as e:
         logger.error("Test suite failed: %s", e)
         raise
+
 
 if __name__ == "__main__":
     asyncio.run(main())
