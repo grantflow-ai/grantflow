@@ -10,6 +10,13 @@ from google.api_core import exceptions
 from google.cloud import pubsub_v1
 
 
+@pytest.fixture(scope="session")
+def pubsub_emulator_env() -> None:
+    """Set up environment variables for PubSub emulator."""
+    os.environ.setdefault("PUBSUB_EMULATOR_HOST", "localhost:8085")
+    os.environ.setdefault("PUBSUB_PROJECT_ID", "grantflow")
+
+
 @pytest.fixture
 def mock_publish_notification() -> Generator[AsyncMock]:
     with patch("packages.shared_utils.src.pubsub.publish_notification") as mock:
