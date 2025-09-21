@@ -55,7 +55,7 @@ async def handle_retrieve_rag_job(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> RagJobResponse:
-    logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
+    # Retrieving RAG job
 
     async with session_maker() as session:
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
@@ -153,7 +153,7 @@ async def cancel_rag_job_by_id(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Cancelling RAG job", project_id=project_id, job_id=job_id)
+    # Cancelling RAG job
 
     async with session_maker() as session, session.begin():
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
@@ -209,17 +209,9 @@ async def cancel_rag_job_by_id(
             )
             session.add(notification)
 
-            logger.info(
-                "RAG job cancelled successfully",
-                job_id=str(job_id),
-                previous_status=previous_status.value,
-            )
+            # RAG job cancelled successfully
         else:
-            logger.info(
-                "RAG job not in cancellable state",
-                job_id=str(job_id),
-                current_status=job.status.value,
-            )
+            # RAG job not in cancellable state
 
 
 @delete(

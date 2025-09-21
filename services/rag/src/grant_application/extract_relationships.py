@@ -11,6 +11,17 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 
+
+class RelationshipPair(TypedDict):
+    """A single relationship between two research elements."""
+    target_id: str
+    description: str
+
+
+# Type alias for the relationships mapping: source_id -> [relationship_pairs]
+ResearchRelationships = dict[str, list[tuple[str, str]]]
+
+
 EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to analyzing STEM grant applications.
 Your specific role is to identify and characterize relationships between research objectives and tasks,
@@ -310,7 +321,7 @@ async def handle_extract_relationships(
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
     trace_id: str,
-) -> dict[str, list[tuple[str, str]]]:
+) -> ResearchRelationships:
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
             {
@@ -348,7 +359,7 @@ async def handle_extract_relationships(
         retries=5,
         trace_id=trace_id,
     )
-    ret = defaultdict[str, list[tuple[str, str]]](list)
+    ret: ResearchRelationships = defaultdict(list)
     for dependent_id, target_id, description in result["relationships"]:
         ret[dependent_id].append((target_id, description))
 

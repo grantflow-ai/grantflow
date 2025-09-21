@@ -1,14 +1,18 @@
 import time
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
 
-from services.rag.src.grant_application.enrich_research_objective import (
-    ObjectiveEnrichmentDTO,
+from services.rag.src.grant_application.enrich_terminology_stage import (
     enrich_objective_with_wikidata,
 )
-from services.rag.src.utils.wikidata_client import get_scientific_context
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.enrich_research_objective import (
+        ObjectiveEnrichmentDTO,
+    )
 
 
 @pytest.fixture

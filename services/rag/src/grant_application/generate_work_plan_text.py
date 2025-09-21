@@ -164,13 +164,7 @@ async def generate_work_plan_component_text(
     work_plan_text: str,
     trace_id: str,
 ) -> str:
-    logger.debug(
-        "Generating text for work plan component",
-        component_type=component["type"],
-        component_title=component["title"],
-        component_number=component["number"],
-        trace_id=trace_id,
-    )
+    # Generating text for work plan component
 
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES

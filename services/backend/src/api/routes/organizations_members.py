@@ -72,7 +72,7 @@ async def handle_list_organization_members(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationMemberResponse]:
-    logger.info("Listing organization members", organization_id=organization_id, uid=request.auth)
+    # Listing organization members
 
     async with session_maker() as session:
         organization = await session.scalar(
@@ -142,7 +142,7 @@ async def handle_add_organization_member(
     data: AddMemberRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-    logger.info("Adding organization member", organization_id=organization_id, uid=request.auth)
+    # Adding organization member
 
     async with session_maker() as session, session.begin():
         try:
@@ -209,7 +209,7 @@ async def handle_update_member_role(
     data: UpdateMemberRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-    logger.info("Updating member role", organization_id=organization_id, target_uid=firebase_uid, uid=request.auth)
+    # Updating member role
 
     async with session_maker() as session, session.begin():
         try:
@@ -339,9 +339,7 @@ async def handle_remove_member(
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Removing organization member", organization_id=organization_id, target_uid=firebase_uid, uid=request.auth
-    )
+    # Removing organization member
 
     async with session_maker() as session, session.begin():
         try:

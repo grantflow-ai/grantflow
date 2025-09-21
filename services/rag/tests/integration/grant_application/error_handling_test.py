@@ -11,8 +11,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from services.rag.src.grant_application.handler import (
-    grant_application_text_generation_pipeline_handler,
+from services.rag.src.grant_application.pipeline import (
+    handle_grant_application_pipeline,
 )
 
 
@@ -47,7 +47,7 @@ async def test_pipeline_missing_grant_template(
         await session.commit()
 
     with pytest.raises(ValidationError) as exc_info:
-        await grant_application_text_generation_pipeline_handler(
+        await handle_grant_application_pipeline(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=create_mock_job_manager(),
@@ -73,7 +73,7 @@ async def test_pipeline_missing_research_objectives(
         await session.commit()
 
     with pytest.raises(ValidationError) as exc_info:
-        await grant_application_text_generation_pipeline_handler(
+        await handle_grant_application_pipeline(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=create_mock_job_manager(),
@@ -107,7 +107,7 @@ async def test_pipeline_missing_work_plan_section(
     mock_job_manager = create_mock_job_manager()
 
     with patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock):
-        result = await grant_application_text_generation_pipeline_handler(
+        result = await handle_grant_application_pipeline(
             grant_application_id=test_application.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
@@ -167,7 +167,7 @@ async def test_pipeline_database_error_during_save(
         ),
     ):
         with pytest.raises(DatabaseError) as exc_info:
-            await grant_application_text_generation_pipeline_handler(
+            await handle_grant_application_pipeline(
                 grant_application_id=test_application_with_template.id,
                 session_maker=async_session_maker,
                 job_manager=mock_job_manager,
@@ -193,7 +193,7 @@ async def test_pipeline_backend_error_during_generation(
         ),
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
     ):
-        result = await grant_application_text_generation_pipeline_handler(
+        result = await handle_grant_application_pipeline(
             grant_application_id=test_application_with_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,

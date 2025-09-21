@@ -336,7 +336,6 @@ async def test_enrich_terminology_stage_success(
 
     # Execute
     result = await handle_enrich_terminology_stage(
-        grant_application=grant_application,
         dto=input_dto,
         job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),

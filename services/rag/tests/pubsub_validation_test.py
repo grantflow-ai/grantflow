@@ -141,7 +141,7 @@ async def test_handle_request_grant_application_success() -> None:
     event = create_pubsub_event(data)
 
     with patch(
-        "services.rag.src.main.grant_application_text_generation_pipeline_handler",
+        "services.rag.src.main.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     ) as mock_handler:
         await handle_request_fn(data=event, session_maker=mock_session_maker)

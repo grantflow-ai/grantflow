@@ -38,14 +38,7 @@ def calculate_optimal_batching(
         batch = research_objectives[i : i + max_objectives_per_batch]
         batches.append(batch)
 
-    logger.info(
-        "Calculated optimal batching strategy",
-        total_objectives=len(research_objectives),
-        batch_count=len(batches),
-        batch_sizes=[len(batch) for batch in batches],
-        estimated_context_tokens=estimated_context_tokens,
-        max_per_batch=max_objectives_per_batch,
-    )
+    # Batching strategy calculated based on token limits
 
     return batches
 
@@ -77,12 +70,7 @@ async def perform_shared_retrieval(
             if len(key_terms) > 1:
                 search_queries.extend(key_terms[:2])
 
-    logger.info(
-        "Performing optimized single retrieval",
-        objectives_count=len(research_objectives),
-        search_queries_count=len(search_queries),
-        max_tokens=MAX_RETRIEVAL_TOKENS,
-    )
+    # Performing optimized single retrieval for all objectives
 
     retrieval_result = await retrieve_documents(
         application_id=application_id,
@@ -91,11 +79,7 @@ async def perform_shared_retrieval(
         max_tokens=MAX_RETRIEVAL_TOKENS,
     )
 
-    logger.info(
-        "Optimized retrieval completed",
-        result_tokens=estimate_prompt_tokens("\n".join(retrieval_result)),
-        result_length=len(retrieval_result),
-    )
+    # Retrieval completed - results will be shared across batch
 
     return "\n".join(retrieval_result)
 
@@ -110,13 +94,7 @@ async def handle_batch_enrich_objectives(
     if not research_objectives:
         return []
 
-    logger.info(
-        "Starting batch enrichment with optimizations",
-        objectives_count=len(research_objectives),
-        section_title=grant_section.get("title", "Unknown"),
-        application_id=application_id,
-        trace_id=trace_id,
-    )
+    # Starting batch enrichment with shared context optimization
 
     shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
@@ -124,13 +102,8 @@ async def handle_batch_enrich_objectives(
 
     all_deep_dives = []
 
-    for batch_idx, batch in enumerate(objective_batches):
-        logger.info(
-            "Processing objective batch",
-            batch_index=batch_idx + 1,
-            batch_size=len(batch),
-            total_batches=len(objective_batches),
-        )
+    for _batch_idx, batch in enumerate(objective_batches):
+        # Processing batch of objectives in parallel
 
         batch_coroutines = [
             handle_enrich_objective(
@@ -151,11 +124,6 @@ async def handle_batch_enrich_objectives(
         batch_results = await batched_gather(*batch_coroutines, batch_size=min(4, len(batch_coroutines)))
         all_deep_dives.extend(batch_results)
 
-    logger.info(
-        "Batch enrichment completed",
-        total_objectives=len(research_objectives),
-        total_deep_dives=len(all_deep_dives),
-        batch_count=len(objective_batches),
-    )
+    # Batch enrichment completed successfully
 
     return all_deep_dives

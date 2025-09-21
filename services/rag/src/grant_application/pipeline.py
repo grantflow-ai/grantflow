@@ -10,6 +10,7 @@ from packages.shared_utils.src.exceptions import (
     DeserializationError,
     EvaluationError,
     InsufficientContextError,
+    LLMTimeoutError,
     RagError,
     ValidationError,
 )
@@ -65,39 +66,14 @@ async def _initialize_pipeline(
 
     existing_job = await job_manager.get_or_create_job()
 
-    if existing_job and existing_job.checkpoint_data:
-        logger.info(
-            "Resuming from checkpoint",
-            application_id=str(application_id),
-            job_id=str(existing_job.id),
-            stage=generation_stage,
-        )
-    else:
-        try:
-            await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
-        except SQLAlchemyError as e:
-            logger.error(
-                "Database error: Failed to update job status to processing",
-                error=str(e),
-                application_id=str(application_id),
-                trace_id=trace_id,
-            )
-            # Continue processing since this is non-critical
+    if not (existing_job and existing_job.checkpoint_data):
+        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
-    try:
-        await job_manager.add_notification(
-            event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
-            message="Starting application generation",
-            notification_type="info",
-        )
-    except SQLAlchemyError as e:
-        logger.error(
-            "Database error: Failed to add generation started notification",
-            error=str(e),
-            application_id=str(application_id),
-            trace_id=trace_id,
-        )
-        # Continue processing since this is non-critical
+    await job_manager.add_notification(
+        event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
+        message="Starting application generation",
+        notification_type="info",
+    )
 
     return job_manager, existing_job
 
@@ -110,17 +86,15 @@ async def _verify_prerequisites(
     """Verify that prerequisites for pipeline execution are met."""
     application_id = grant_application.id
 
+    # Load grant_template eagerly to avoid lazy loading issues
     async with session_maker() as session:
-        # Load fresh instance with grant_template eagerly loaded to avoid lazy loading issues
         result = await session.execute(
             select_active(GrantApplication)
             .options(selectinload(GrantApplication.grant_template))
             .where(GrantApplication.id == application_id)
         )
         fresh_application = result.scalar_one_or_none()
-        if not fresh_application:
-            raise ValidationError(f"Grant application {application_id} not found")
-        grant_template = fresh_application.grant_template
+        grant_template = fresh_application.grant_template if fresh_application else None
 
     if grant_template is None:
         raise ValidationError("Grant template is unexpectedly None")
@@ -137,30 +111,6 @@ async def _verify_prerequisites(
 
     return grant_template
 
-
-def _validate_generate_sections_prerequisites(
-    grant_application: GrantApplication,
-) -> None:
-    """Validate prerequisites for the generate sections stage."""
-    if not grant_application.grant_template:
-        raise ValidationError("Grant template is required")
-
-    grant_template = grant_application.grant_template
-    if not grant_template.grant_sections:
-        raise ValidationError("Grant template has no sections")
-
-    if not grant_template.cfp_analysis:
-        raise ValidationError("CFP analysis is required for section generation")
-
-    # Check for work plan section
-    has_work_plan = False
-    for section in grant_template.grant_sections:
-        if "max_words" in section and "generation_instructions" in section and section.get("is_detailed_research_plan"):
-            has_work_plan = True
-            break
-
-    if not has_work_plan:
-        raise ValidationError("No research plan section found in grant template")
 
 
 def _get_error_details(error: BackendError) -> tuple[str, str]:
@@ -183,6 +133,11 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
     if isinstance(error, EvaluationError):
         return (
             "Quality evaluation failed during text generation. Please try again or contact support.",
+            NotificationEvents.PIPELINE_ERROR,
+        )
+    if isinstance(error, LLMTimeoutError):
+        return (
+            "AI text generation is taking longer than expected. This may be due to high server load. Please try again in a few minutes.",
             NotificationEvents.PIPELINE_ERROR,
         )
     if isinstance(error, DatabaseError):
@@ -227,7 +182,7 @@ async def _handle_pipeline_error(
     error_message, event_type = _get_error_details(error)
 
     if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(
-        error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError)
+        error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError, LLMTimeoutError)
     ):
         logger.error(
             "Unexpected error in grant application pipeline",
@@ -248,17 +203,6 @@ async def _handle_pipeline_error(
                 "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
             },
         )
-    except SQLAlchemyError as job_error:
-        logger.error(
-            "Failed to update job status to failed",
-            error=str(job_error),
-            original_error=str(error),
-            application_id=str(application_id),
-            job_id=str(job_id) if job_id else None,
-            trace_id=trace_id,
-        )
-
-    try:
         await job_manager.add_notification(
             event=event_type,
             message=error_message,
@@ -268,26 +212,10 @@ async def _handle_pipeline_error(
                 "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
             },
         )
-    except SQLAlchemyError as notification_error:
-        logger.error(
-            "Failed to add error notification",
-            error=str(notification_error),
-            original_error=str(error),
-            application_id=str(application_id),
-            job_id=str(job_id) if job_id else None,
-            trace_id=trace_id,
-        )
+    except SQLAlchemyError as e:
+        raise DatabaseError("Failed to record pipeline error in database") from e
 
-    logger.info(
-        "Grant application generation failed with error notification sent",
-        error_type=error.__class__.__name__,
-        event_type=event_type,
-        error_message=error_message[:200],
-        application_id=str(application_id),
-        job_id=str(job_id) if job_id else None,
-        trace_id=trace_id,
-        stage=generation_stage,
-    )
+    # Error handled and notification sent
 
 
 async def handle_grant_application_pipeline(
@@ -315,16 +243,8 @@ async def handle_grant_application_pipeline(
         # Match/case routing based on stage
         match generation_stage:
             case GrantApplicationStageEnum.GENERATE_SECTIONS:
-                logger.info(
-                    "Executing section generation stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage execution logged by job manager notification
                 await job_manager.ensure_not_cancelled()
-
-                # Validate stage-specific prerequisites
-                _validate_generate_sections_prerequisites(grant_application)
 
                 # First stage - create initial DTO
                 dto = await handle_generate_sections_stage(
@@ -333,21 +253,11 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                logger.info(
-                    "Section generation stage completed, triggering next stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
-                logger.info(
-                    "Executing relationship extraction stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -360,21 +270,11 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                logger.info(
-                    "Relationship extraction stage completed, triggering next stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
-                logger.info(
-                    "Executing research objectives enrichment stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -387,51 +287,27 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                logger.info(
-                    "Research objectives enrichment stage completed, triggering next stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
-                logger.info(
-                    "Executing terminology enrichment stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage execution logged by job manager notification
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
                 await job_manager.ensure_not_cancelled()
 
                 dto = await handle_enrich_terminology_stage(
-                    grant_application=grant_application,
                     dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(dto)
-                logger.info(
-                    "Terminology enrichment stage completed, triggering next stage",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return
 
             case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
-                logger.info(
-                    "Executing research plan generation stage (final)",
-                    application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
-                    trace_id=trace_id,
-                    checkpoint_keys=list(existing_job.checkpoint_data.keys())
-                    if existing_job and existing_job.checkpoint_data
-                    else [],
-                )
+                # Final stage - keep minimal logging for important milestone
                 if not existing_job or not existing_job.checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
@@ -445,27 +321,18 @@ async def handle_grant_application_pipeline(
                 )
 
                 logger.info(
-                    "All stages completed, saving application to database",
+                    "Pipeline completed, saving application",
                     application_id=str(application_id),
-                    job_id=str(existing_job.id) if existing_job else None,
                     trace_id=trace_id,
                 )
 
                 await job_manager.ensure_not_cancelled()
 
-                try:
-                    await job_manager.add_notification(
-                        event=NotificationEvents.SAVING_GRANT_APPLICATION,
-                        message="Finalizing grant application",
-                        notification_type="info",
-                    )
-                except Exception as e:
-                    logger.error(
-                        "Failed to add finalization notification",
-                        error=str(e),
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
+                await job_manager.add_notification(
+                    event=NotificationEvents.SAVING_GRANT_APPLICATION,
+                    message="Finalizing grant application",
+                    notification_type="info",
+                )
 
                 # Final stage - save to database
                 # Combine section texts from DTO with research plan
@@ -503,20 +370,11 @@ async def handle_grant_application_pipeline(
                         context={"application_id": str(application_id), "sql_error": str(sql_error)},
                     ) from sql_error
 
-                try:
-                    await publish_email_notification(
-                        application_id=application_id,
-                        trace_id=trace_id,
-                    )
-                    logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
-                except (SQLAlchemyError, ValidationError) as e:
-                    logger.error(
-                        "Failed to publish email notification",
-                        application_id=str(application_id),
-                        error=str(e),
-                        trace_id=trace_id,
-                    )
-                    # Non-critical error, continue without raising
+                await publish_email_notification(
+                    application_id=application_id,
+                    trace_id=trace_id,
+                )
+                logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
 
                 return
 

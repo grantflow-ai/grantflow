@@ -76,7 +76,7 @@ async def post_process_documents(
     if not documents:
         return []
 
-    logger.info("Post-processing retrieved documents", document_count=len(documents), query=query, trace_id=trace_id)
+    # Post-processing start - metrics tracked at retrieval level
 
     nlp = get_spacy_model()
     all_sentences: list[SentenceInfo] = []
@@ -125,20 +125,12 @@ async def post_process_documents(
     filtered_sentences.sort(key=lambda s: s["relevance_score"], reverse=True)
 
     adjusted_max_tokens = max_tokens - await count_tokens(task_description)
-    processed_docs, actual_token_count = await smart_parse_documents_with_batched_tokens(
+    processed_docs, _actual_token_count = await smart_parse_documents_with_batched_tokens(
         sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens, trace_id=trace_id
     )
 
-    token_count = actual_token_count
 
-    logger.info(
-        "Post-processing complete",
-        original_docs=len(documents),
-        processed_docs=len(processed_docs),
-        token_count=token_count,
-        filtered_docs=len(documents) - len(processed_docs),
-        trace_id=trace_id,
-    )
+    # Post-processing complete - metrics tracked at retrieval level
 
     return processed_docs
 

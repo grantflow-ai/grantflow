@@ -28,7 +28,7 @@ async def verify_rag_sources_indexed(
     trace_id: str,
     total_sleep_duration: int = 0,
 ) -> None:
-    logger.debug("Verifying rag sources indexed", parent_id=str(parent_id), trace_id=trace_id)
+    # Verification start - only log failures
     async with session_maker() as session:
         try:
             if entity_type == GrantApplication:
@@ -56,12 +56,7 @@ async def verify_rag_sources_indexed(
                 source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
                 for source in rag_sources
             ):
-                logger.debug(
-                    "Rag sources indexing",
-                    parent_id=str(parent_id),
-                    total_sleep_duration=total_sleep_duration,
-                    trace_id=trace_id,
-                )
+                # Sources still indexing - will retry
                 await publish_notification(
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_IN_PROGRESS,
@@ -88,13 +83,7 @@ async def verify_rag_sources_indexed(
                 ]
                 total_sources = len(list(rag_sources))
 
-                logger.debug(
-                    "Rag sources indexing failed",
-                    parent_id=str(parent_id),
-                    failed_sources=len(failed_sources),
-                    total_sources=total_sources,
-                    trace_id=trace_id,
-                )
+                # Indexing failed - error will be raised
 
                 await publish_notification(
                     parent_id=parent_id,

@@ -54,27 +54,15 @@ async def handle_grant_template_pipeline(
     job_id = job.id
 
     logger.info(
-        "Starting grant template generation pipeline stage",
+        "Grant template pipeline started",
         template_id=template_id,
-        job_id=job_id,
-        trace_id=trace_id,
         stage=generation_stage,
-        job_current_stage=job.current_stage,
-        job_checkpoint_data=bool(job.checkpoint_data),
+        trace_id=trace_id,
     )
 
     # Update job status if starting or continuing
     if job.status == RagGenerationStatusEnum.PENDING:
-        try:
-            await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
-        except Exception as e:
-            logger.error(
-                "Failed to update job status to processing",
-                error=str(e),
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-            )
+        await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     try:
         # Load checkpoint data from job (it's already fresh from DB via get_or_create_job)
@@ -82,12 +70,7 @@ async def handle_grant_template_pipeline(
 
         match generation_stage:
             case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
-                logger.info(
-                    "Executing CFP extraction stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                )
+                # Stage execution tracked by job manager
                 extracted_cfp = await handle_cfp_extraction_stage(
                     grant_template=grant_template,
                     job_manager=job_manager,
@@ -95,22 +78,11 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(extracted_cfp)
-                logger.info(
-                    "CFP extraction stage completed, triggering next stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.ANALYZE_CFP_CONTENT:
-                logger.info(
-                    "Executing CFP analysis stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                    checkpoint_keys=list(checkpoint_data.keys()) if checkpoint_data else [],
-                )
+                # Stage execution tracked by job manager
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for CFP analysis stage")
 
@@ -121,22 +93,11 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(analyzed_cfp)
-                logger.info(
-                    "CFP analysis stage completed, triggering next stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.EXTRACT_SECTIONS:
-                logger.info(
-                    "Executing section extraction stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                    checkpoint_keys=list(checkpoint_data.keys()) if checkpoint_data else [],
-                )
+                # Stage execution tracked by job manager
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for section extraction stage")
 
@@ -147,22 +108,11 @@ async def handle_grant_template_pipeline(
                     trace_id=trace_id,
                 )
                 await job_manager.to_next_job_stage(section_extraction_result)
-                logger.info(
-                    "Section extraction stage completed, triggering next stage",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                )
+                # Stage completion handled by job manager
                 return None
 
             case GrantTemplateStageEnum.GENERATE_METADATA:
-                logger.info(
-                    "Executing metadata generation stage (final)",
-                    template_id=template_id,
-                    job_id=job_id,
-                    trace_id=trace_id,
-                    checkpoint_keys=list(checkpoint_data.keys()) if checkpoint_data else [],
-                )
+                # Final stage - keep minimal logging
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for metadata generation stage")
 
@@ -174,26 +124,16 @@ async def handle_grant_template_pipeline(
                 )
 
                 logger.info(
-                    "All stages completed, saving grant template to database",
+                    "Pipeline completed, saving template",
                     template_id=template_id,
-                    job_id=job_id,
                     trace_id=trace_id,
                 )
 
-                try:
-                    await job_manager.add_notification(
-                        event=NotificationEvents.SAVING_GRANT_TEMPLATE,
-                        message="Finalizing grant template",
-                        notification_type="info",
-                    )
-                except Exception as e:
-                    logger.error(
-                        "Failed to add finalization notification",
-                        error=str(e),
-                        template_id=template_id,
-                        job_id=job_id,
-                        trace_id=trace_id,
-                    )
+                await job_manager.add_notification(
+                    event=NotificationEvents.SAVING_GRANT_TEMPLATE,
+                    message="Finalizing grant template",
+                    notification_type="info",
+                )
 
                 # This is the final stage - save to database
                 return await handle_save_grant_template(
@@ -232,62 +172,25 @@ async def handle_grant_template_pipeline(
         else:
             error_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."
             event_type = NotificationEvents.PIPELINE_ERROR
-            logger.error(
-                "Unexpected error in grant template pipeline",
-                error=e,
-                context=getattr(e, "context", None),
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-                stage=generation_stage,
-            )
+            # Unexpected error - will be handled by error notification
 
-        try:
-            await job_manager.update_job_status(
-                status=RagGenerationStatusEnum.FAILED,
-                error_message=error_message,
-                error_details={
-                    "error_type": e.__class__.__name__,
-                    "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
-                },
-            )
-        except Exception as job_error:
-            logger.error(
-                "Failed to update job status to failed",
-                error=str(job_error),
-                original_error=str(e),
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-            )
-
-        try:
-            await job_manager.add_notification(
-                event=event_type,
-                message=error_message,
-                notification_type="error",
-                data={
-                    "error_type": e.__class__.__name__,
-                    "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
-                },
-            )
-        except Exception as notification_error:
-            logger.error(
-                "Failed to add error notification",
-                error=str(notification_error),
-                original_error=str(e),
-                template_id=template_id,
-                job_id=job_id,
-                trace_id=trace_id,
-            )
-        logger.info(
-            "Grant template generation failed with error notification sent",
-            error_type=e.__class__.__name__,
-            event_type=event_type,
-            error_message=error_message[:200],
-            template_id=template_id,
-            job_id=job_id,
-            trace_id=trace_id,
-            stage=generation_stage,
+        await job_manager.update_job_status(
+            status=RagGenerationStatusEnum.FAILED,
+            error_message=error_message,
+            error_details={
+                "error_type": e.__class__.__name__,
+                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+            },
         )
+
+        await job_manager.add_notification(
+            event=event_type,
+            message=error_message,
+            notification_type="error",
+            data={
+                "error_type": e.__class__.__name__,
+                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+            },
+        )
+        # Error handled and notification sent
         return None
