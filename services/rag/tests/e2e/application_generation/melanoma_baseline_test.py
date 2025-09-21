@@ -73,13 +73,16 @@ async def test_generate_melanoma_baseline_application_text(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(selectinload(GrantApplication.grant_template))
+            .options(
+                selectinload(GrantApplication.grant_template),
+                selectinload(GrantApplication.rag_job)
+            )
         )
 
         if not updated_application:
             raise ValueError("Failed to retrieve updated application")
 
-        section_texts = updated_application.section_texts or {}
+        section_texts = (updated_application.rag_job.generated_sections or {}) if updated_application.rag_job else {}
         text = generate_application_text(
             title=updated_application.title or "Grant Application",
             grant_sections=updated_application.grant_template.grant_sections,

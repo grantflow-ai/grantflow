@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, cast
 
 from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
-from packages.db.src.tables import GrantApplication, GrantTemplate
+from packages.db.src.tables import GrantApplication, GrantApplicationGenerationJob, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -61,6 +61,15 @@ async def _initialize_pipeline(
     )
 
     existing_job = await job_manager.get_or_create_job()
+
+    # Ensure the application references the job
+    if grant_application.rag_job_id != existing_job.id:
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(rag_job_id=existing_job.id)
+            )
 
     if not (existing_job and existing_job.checkpoint_data):
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
@@ -226,6 +235,17 @@ async def handle_grant_application_pipeline(
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
+
+                # Save the generated sections to the job for immediate access (tests and partial completion)
+                section_texts_dict = {text["section_id"]: text["text"] for text in dto["section_texts"]}
+                job = await job_manager.get_or_create_job()
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(GrantApplicationGenerationJob)
+                        .where(GrantApplicationGenerationJob.id == job.id)
+                        .values(generated_sections=section_texts_dict)
+                    )
+
                 await job_manager.to_next_job_stage(dto)
                 return
 
@@ -315,6 +335,14 @@ async def handle_grant_application_pipeline(
                             update(GrantApplication)
                             .where(GrantApplication.id == application_id)
                             .values(text=application_text)
+                        )
+
+                        # Save the generated sections to the job
+                        job = await job_manager.get_or_create_job()
+                        await session.execute(
+                            update(GrantApplicationGenerationJob)
+                            .where(GrantApplicationGenerationJob.id == job.id)
+                            .values(generated_sections=complete_section_texts)
                         )
 
                         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)

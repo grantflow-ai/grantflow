@@ -208,7 +208,7 @@ async def handle_generate_metadata_stage(
         ),
         cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
         organization=section_extraction_result["organization"],
-        long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s["is_title_only"]],
+        long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s.get("is_title_only")],
         trace_id=trace_id,
     )
 
@@ -216,7 +216,7 @@ async def handle_generate_metadata_stage(
 
     ret: list[GrantElement | GrantLongFormSection] = []
     for section in section_extraction_result["extracted_sections"]:
-        if section["is_title_only"]:
+        if section.get("is_title_only"):
             ret.append(
                 GrantElement(
                     id=section["id"],

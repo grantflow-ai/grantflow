@@ -31,8 +31,6 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
     async_session_maker: async_sessionmaker[Any],
     create_pubsub_topics: None,
 ) -> None:
-    application = test_application_with_template
-
     mocked_section_texts = {
         "abstract": "This is the abstract text.",
         "research_plan": "This is the research plan text.",
@@ -43,55 +41,64 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
 
     create_mock_job_manager()
 
-    with (
-        patch(
-            "services.rag.src.utils.checks.verify_rag_sources_indexed",
-            return_value=None,
-        ),
-        patch(
-            "services.rag.src.grant_application.batch_enrich_objectives.handle_batch_enrich_objectives",
-            return_value=[],
-        ),
-        patch(
-            "services.rag.src.grant_application.extract_relationships.handle_extract_relationships",
-            return_value=[],
-        ),
-        patch(
-            "services.rag.src.grant_application.enrich_terminology_stage.enrich_objective_with_wikidata",
-            return_value={"enriched": True},
-        ),
-        patch(
-            "services.rag.src.grant_application.generate_work_plan_text.generate_objective_with_tasks",
-            return_value="Mocked work plan component",
-        ),
-        patch(
-            "services.rag.src.grant_application.generate_section_text.handle_generate_section_text",
-            return_value=mocked_section_texts,
-        ),
-        patch(
-            "services.rag.src.grant_application.utils.generate_application_text",
-            return_value="Complete application text",
-        ),
-        patch(
-            "packages.shared_utils.src.pubsub.publish_email_notification",
-            return_value=None,
-        ),
-        patch(
-            "packages.shared_utils.src.pubsub.publish_notification",
-            return_value=None,
-        ),
-    ):
-        await handle_grant_application_pipeline(
-            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-            grant_application=application,
-            session_maker=async_session_maker,
-            trace_id="test-trace-id",
+    # Load the application with relationships
+    async with async_session_maker() as session:
+        application = await session.get(
+            GrantApplication,
+            test_application_with_template.id,
+            options=[selectinload(GrantApplication.grant_template)],
         )
+        assert application
+
+        with (
+            patch(
+                "services.rag.src.utils.checks.verify_rag_sources_indexed",
+                return_value=None,
+            ),
+            patch(
+                "services.rag.src.grant_application.batch_enrich_objectives.handle_batch_enrich_objectives",
+                return_value=[],
+            ),
+            patch(
+                "services.rag.src.grant_application.extract_relationships.handle_extract_relationships",
+                return_value=[],
+            ),
+            patch(
+                "services.rag.src.grant_application.enrich_terminology_stage.enrich_objective_with_wikidata",
+                return_value={"enriched": True},
+            ),
+            patch(
+                "services.rag.src.grant_application.generate_work_plan_text.generate_objective_with_tasks",
+                return_value="Mocked work plan component",
+            ),
+            patch(
+                "services.rag.src.grant_application.generate_section_text.handle_generate_section_text",
+                return_value=mocked_section_texts,
+            ),
+            patch(
+                "services.rag.src.grant_application.utils.generate_application_text",
+                return_value="Complete application text",
+            ),
+            patch(
+                "packages.shared_utils.src.pubsub.publish_email_notification",
+                return_value=None,
+            ),
+            patch(
+                "packages.shared_utils.src.pubsub.publish_notification",
+                return_value=None,
+            ),
+        ):
+            await handle_grant_application_pipeline(
+                generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+                grant_application=application,
+                session_maker=async_session_maker,
+                trace_id="test-trace-id",
+            )
 
     async with async_session_maker() as session:
         updated_app = await session.get(
             GrantApplication,
-            application.id,
+            test_application_with_template.id,
             options=[selectinload(GrantApplication.grant_template)],
         )
         assert updated_app is not None

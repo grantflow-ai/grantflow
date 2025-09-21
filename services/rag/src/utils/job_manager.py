@@ -241,13 +241,30 @@ class GrantTemplateJobManager[DTOType](
                 existing_job = cast("GrantTemplateGenerationJob | None", existing_job_result.scalar_one_or_none())
 
                 if existing_job:
-                    logger.info(
-                        "Job already exists for template, returning existing job",
-                        template_id=str(self.parent_id),
-                        job_id=str(existing_job.id),
-                        job_status=existing_job.status.value,
-                        trace_id=self.trace_id,
-                    )
+                    # If job is FAILED, reset it to PROCESSING for retry
+                    if existing_job.status == RagGenerationStatusEnum.FAILED:
+                        logger.info(
+                            "Found FAILED job for template, resetting to PROCESSING",
+                            template_id=str(self.parent_id),
+                            job_id=str(existing_job.id),
+                            trace_id=self.trace_id,
+                        )
+                        existing_job.status = RagGenerationStatusEnum.PROCESSING
+                        existing_job.error_message = None
+                        existing_job.error_details = None
+                        existing_job.failed_at = None
+                        existing_job.retry_count = (existing_job.retry_count or 0) + 1
+                        session.add(existing_job)
+                        await session.flush()
+                    else:
+                        logger.info(
+                            "Job already exists for template, returning existing job",
+                            template_id=str(self.parent_id),
+                            job_id=str(existing_job.id),
+                            job_status=existing_job.status.value,
+                            trace_id=self.trace_id,
+                        )
+
                     self.job_id = existing_job.id
                     self.job = existing_job
                     return existing_job
@@ -305,12 +322,29 @@ class GrantApplicationJobManager[DTOType](
                 existing_job = cast("GrantApplicationGenerationJob | None", existing_job_result.scalar_one_or_none())
 
                 if existing_job:
-                    logger.info(
-                        "Job already exists for application, returning existing job",
-                        application_id=str(self.parent_id),
-                        job_id=str(existing_job.id),
-                        trace_id=self.trace_id,
-                    )
+                    # If job is FAILED, reset it to PROCESSING for retry
+                    if existing_job.status == RagGenerationStatusEnum.FAILED:
+                        logger.info(
+                            "Found FAILED job for application, resetting to PROCESSING",
+                            application_id=str(self.parent_id),
+                            job_id=str(existing_job.id),
+                            trace_id=self.trace_id,
+                        )
+                        existing_job.status = RagGenerationStatusEnum.PROCESSING
+                        existing_job.error_message = None
+                        existing_job.error_details = None
+                        existing_job.failed_at = None
+                        existing_job.retry_count = (existing_job.retry_count or 0) + 1
+                        session.add(existing_job)
+                        await session.flush()
+                    else:
+                        logger.info(
+                            "Job already exists for application, returning existing job",
+                            application_id=str(self.parent_id),
+                            job_id=str(existing_job.id),
+                            trace_id=self.trace_id,
+                        )
+
                     self.job_id = existing_job.id
                     self.job = existing_job
                     return existing_job
