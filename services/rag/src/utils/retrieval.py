@@ -2,12 +2,13 @@ import time
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSource, RagSource, TextVector
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ttl_cache import ttl_lru_cache
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.completion import handle_completions_request
@@ -140,6 +141,7 @@ async def retrieve_vectors_for_embedding(
     iteration: int = 1,
     limit: int = MAX_RESULTS,
     organization_id: str | None = None,
+    trace_id: str,
 ) -> list[TextVector]:
     session_maker = get_session_maker()
 
@@ -150,7 +152,7 @@ async def retrieve_vectors_for_embedding(
     async with session_maker() as session:
         result = list(
             await session.scalars(
-                select(TextVector)
+                select_active(TextVector)
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
                 .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
                 .where(
@@ -172,10 +174,11 @@ async def retrieve_vectors_for_embedding(
             embeddings=embeddings,
             limit=limit,
             iteration=iteration + 1,
+            trace_id=trace_id,
         )
 
     if not result and threshold >= max_threshold:
-        logger.warning("No results found within the threshold range.")
+        logger.warning("No results found within the threshold range.", trace_id=trace_id)
 
     return result
 
@@ -187,6 +190,7 @@ async def handle_retrieval(
     organization_id: str | None = None,
     search_queries: list[str],
     model_name: str | None = None,
+    trace_id: str,
 ) -> list[TextVector]:
     query_embeddings = (
         await generate_embeddings(search_queries, model_name=model_name)
@@ -202,6 +206,7 @@ async def handle_retrieval(
             organization_id=organization_id,
             embeddings=query_embeddings,
             limit=max_results,
+            trace_id=trace_id,
         )
         if len(query_embeddings)
         else []
@@ -220,20 +225,12 @@ async def retrieve_documents(
     task_description: str | PromptTemplate,
     with_guided_retrieval: bool = False,
     embedding_model: str | None = None,
+    trace_id: str,
     **kwargs: Any,
 ) -> list[str]:
     start_time = time.time()
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
-
-    logger.debug(
-        "Starting document retrieval",
-        entity_id=entity_id,
-        entity_type=entity_type,
-        max_results=max_results,
-        max_tokens=max_tokens,
-        with_guided_retrieval=with_guided_retrieval,
-    )
 
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
@@ -242,14 +239,7 @@ async def retrieve_documents(
     search_queries = search_queries or await handle_create_search_queries(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )
-    query_duration = time.time() - query_start
-
-    logger.debug(
-        "Search queries prepared",
-        entity_id=entity_id,
-        query_count=len(search_queries),
-        query_duration_ms=round(query_duration * 1000, 2),
-    )
+    time.time() - query_start
 
     attempts = 0
     previous_scores: list[float] = []
@@ -262,15 +252,9 @@ async def retrieve_documents(
         search_queries=search_queries,
         max_results=max_results,
         model_name=embedding_model,
+        trace_id=trace_id,
     )
-    retrieval_duration = time.time() - retrieval_start
-
-    logger.debug(
-        "Vector retrieval completed",
-        entity_id=entity_id,
-        vector_count=len(vectors),
-        retrieval_duration_ms=round(retrieval_duration * 1000, 2),
-    )
+    time.time() - retrieval_start
 
     document_conversion_start = time.time()
     documents = [
@@ -280,14 +264,7 @@ async def retrieve_documents(
         )
         for vector in vectors
     ]
-    document_conversion_duration = time.time() - document_conversion_start
-
-    logger.debug(
-        "Documents converted",
-        entity_id=entity_id,
-        document_count=len(documents),
-        conversion_duration_ms=round(document_conversion_duration * 1000, 2),
-    )
+    time.time() - document_conversion_start
 
     processing_start = time.time()
     processed_contents = await post_process_documents(
@@ -296,15 +273,9 @@ async def retrieve_documents(
         task_description=str(task_description),
         max_tokens=max_tokens,
         model=model,
+        trace_id=trace_id,
     )
-    processing_duration = time.time() - processing_start
-
-    logger.debug(
-        "Document processing completed",
-        entity_id=entity_id,
-        processed_count=len(processed_contents),
-        processing_duration_ms=round(processing_duration * 1000, 2),
-    )
+    time.time() - processing_start
 
     if not with_guided_retrieval or not processed_contents:
         total_duration = time.time() - start_time
@@ -315,6 +286,7 @@ async def retrieve_documents(
             result_count=len(processed_contents),
             guided_retrieval=with_guided_retrieval,
             total_duration_ms=round(total_duration * 1000, 2),
+            trace_id=trace_id,
         )
         return processed_contents
 
@@ -333,49 +305,28 @@ async def retrieve_documents(
                 queries=search_queries,
                 rag_results=processed_contents,
             ),
+            trace_id=trace_id,
         )
 
         assessment = quality_response["assessment"]
         current_score = assessment["overall_score"]
-
-        logger.info(
-            "Retrieval quality assessment",
-            attempt=attempts,
-            overall_score=current_score,
-            relevance=assessment["relevance_score"],
-            comprehensiveness=assessment["comprehensiveness_score"],
-            diversity=assessment["diversity_score"],
-            depth=assessment["depth_score"],
-            explanation=assessment["explanation"],
-        )
 
         if current_score > best_score:
             best_score = current_score
             best_processed_contents = processed_contents
 
         if current_score >= MIN_QUALITY_SCORE:
-            logger.info("Retrieval quality meets target threshold", score=current_score, threshold=MIN_QUALITY_SCORE)
             return best_processed_contents
 
         previous_scores.append(current_score)
         if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
-            logger.info(
-                "Retrieval quality optimization plateaued", last_score=previous_scores[-2], current_score=current_score
-            )
             return best_processed_contents
 
         optimization = quality_response["optimization"]
         improved_queries = optimization["improved_queries"]
 
         if not improved_queries:
-            logger.info("No improved queries suggested, ending optimization")
             return best_processed_contents
-
-        logger.info(
-            "Using improved queries for retrieval optimization",
-            queries=improved_queries,
-            information_gaps=optimization["information_gaps"],
-        )
 
         new_vectors = await handle_retrieval(
             application_id=application_id,
@@ -383,6 +334,7 @@ async def retrieve_documents(
             search_queries=improved_queries,
             max_results=max_results,
             model_name=embedding_model,
+            trace_id=trace_id,
         )
 
         new_documents = [
@@ -401,19 +353,20 @@ async def retrieve_documents(
             task_description=str(task_description),
             max_tokens=max_tokens,
             model=model,
+            trace_id=trace_id,
         )
 
         search_queries = improved_queries
 
     total_duration = time.time() - start_time
     logger.info(
-        "Completed retrieval optimization",
+        "Retrieval completed",
         entity_id=entity_id,
-        entity_type=entity_type,
         attempts=attempts,
         final_score=best_score,
         result_count=len(best_processed_contents),
         total_duration_ms=round(total_duration * 1000, 2),
+        trace_id=trace_id,
     )
 
     return best_processed_contents

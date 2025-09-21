@@ -1,15 +1,13 @@
 import logging
 import time
 from typing import Any
-from unittest.mock import AsyncMock, patch
-from uuid import UUID
+from unittest.mock import AsyncMock
 
 import pytest
+from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
-
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 
 
 def create_mock_job_manager() -> AsyncMock:
@@ -23,7 +21,7 @@ def create_mock_job_manager() -> AsyncMock:
 @performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_APPLICATION, timeout=600)
 async def test_application_generation_performance_baseline(
     logger: logging.Logger,
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
@@ -38,20 +36,46 @@ async def test_application_generation_performance_baseline(
 
     performance_context.start_stage("baseline_generation_timing")
 
-    mock_job_manager = create_mock_job_manager()
+    from packages.db.src.enums import GrantApplicationStageEnum
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
+
+    from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+    from services.rag.src.grant_application.utils import generate_application_text
+
+    grant_application = melanoma_alliance_full_application
+
+    if not grant_application.grant_template:
+        raise ValueError("Grant application has no template")
+
+    if not grant_application.grant_template.grant_sections:
+        raise ValueError("Grant template has no sections")
+
     start_time = time.time()
 
-    with (
-        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
-    ):
-        result = await grant_application_text_generation_pipeline_handler(
-            grant_application_id=UUID(melanoma_alliance_full_application_id),
-            session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+    await handle_grant_application_pipeline(
+        grant_application=grant_application,
+        session_maker=async_session_maker,
+        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        trace_id="performance-baseline-e2e-test",
+    )
+
+    async with async_session_maker() as session:
+        updated_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
         )
-        assert result is not None, "Grant application generation should not return None"
-        text, section_texts = result
+
+        if not updated_application:
+            raise ValueError("Failed to retrieve updated application")
+
+        section_texts = updated_application.section_texts or {}
+        text = generate_application_text(
+            title=updated_application.title or "Grant Application",
+            grant_sections=updated_application.grant_template.grant_sections,
+            section_texts=section_texts,
+        )
 
     end_time = time.time()
     generation_time = end_time - start_time
@@ -90,14 +114,11 @@ async def test_application_generation_performance_baseline(
     )
 
 
-@pytest.mark.skip(
-    reason="Test fixture setup incomplete - missing grant template/research objectives causing early None return"
-)
 @performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.GRANT_APPLICATION, timeout=120)
 @pytest.mark.e2e
 async def test_generation_smoke_test(
     logger: logging.Logger,
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
@@ -111,19 +132,44 @@ async def test_generation_smoke_test(
 
     performance_context.start_stage("smoke_test_generation")
 
-    mock_job_manager = create_mock_job_manager()
+    from packages.db.src.enums import GrantApplicationStageEnum
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
 
-    with (
-        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_application.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
-    ):
-        result = await grant_application_text_generation_pipeline_handler(
-            grant_application_id=UUID(melanoma_alliance_full_application_id),
-            session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+    from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+    from services.rag.src.grant_application.utils import generate_application_text
+
+    grant_application = melanoma_alliance_full_application
+
+    if not grant_application.grant_template:
+        raise ValueError("Grant application has no template")
+
+    if not grant_application.grant_template.grant_sections:
+        raise ValueError("Grant template has no sections")
+
+    await handle_grant_application_pipeline(
+        grant_application=grant_application,
+        session_maker=async_session_maker,
+        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        trace_id="smoke-test-e2e-test",
+    )
+
+    async with async_session_maker() as session:
+        updated_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
         )
-        assert result is not None, "Grant application generation should not return None"
-        text, section_texts = result
+
+        if not updated_application:
+            raise ValueError("Failed to retrieve updated application")
+
+        section_texts = updated_application.section_texts or {}
+        text = generate_application_text(
+            title=updated_application.title or "Grant Application",
+            grant_sections=updated_application.grant_template.grant_sections,
+            section_texts=section_texts,
+        )
 
     performance_context.end_stage()
 

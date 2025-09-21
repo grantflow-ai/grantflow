@@ -132,11 +132,6 @@ DEFAULT_CSS: Final[str] = """
 
 async def html_to_pdf(html_content: str) -> bytes:
     try:
-        logger.info(
-            "Starting PDF conversion",
-            html_length=len(html_content),
-        )
-
         html_content = DEFAULT_HTML_TEMPLATE.format(html_content=html_content)
         font_config = FontConfiguration()
         css = CSS(
@@ -146,11 +141,6 @@ async def html_to_pdf(html_content: str) -> bytes:
 
         html_doc = HTML(string=html_content)
         pdf_bytes: bytes = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
-
-        logger.info(
-            "PDF conversion completed successfully",
-            pdf_size=len(pdf_bytes),
-        )
 
         return pdf_bytes
     except MemoryError as e:

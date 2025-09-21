@@ -7,29 +7,54 @@ import type { RagProcessingStatusMessage } from "@/hooks/use-application-notific
 type ToastId = number | string | undefined;
 
 const ERROR_EVENTS = new Set([
+	"auto_cancelled",
 	"generation_error",
 	"indexing_failed",
 	"internal_error",
+	"job_cancelled",
 	"missing_prerequisites",
 	"pipeline_error",
 	"template_incomplete",
 ]);
 
-const WARNING_EVENTS = new Set(["indexing_timeout", "insufficient_context_error", "low_retrieval_quality"]);
+const WARNING_EVENTS = new Set([
+	"cancellation_acknowledged",
+	"indexing_timeout",
+	"insufficient_context_error",
+	"llm_timeout",
+	"low_retrieval_quality",
+]);
 
 const SUCCESS_EVENTS = new Set([
 	"application_saved",
+	"cfp_data_extracted",
 	"grant_application_generation_completed",
 	"grant_template_created",
 	"grant_template_generation_completed",
+	"metadata_generated",
+	"objective_completed",
+	"objectives_enriched",
+	"relationships_extracted",
+	"research_plan_completed",
+	"section_texts_generated",
+	"sections_extracted",
+	"wikidata_enhancement_complete",
 ]);
 
 const PROGRESS_EVENTS = new Set([
 	"assembling_application",
+	"enhancing_with_wikidata",
+	"enriching_objectives",
 	"extracting_cfp_data",
+	"extracting_relationships",
+	"generating_objective",
+	"generating_research_plan",
 	"generating_section_texts",
 	"grant_application_generation_started",
+	"grant_template_extraction",
 	"grant_template_generation_started",
+	"grant_template_metadata",
+	"indexing_in_progress",
 	"restored_progress",
 	"saving_application",
 	"saving_grant_template",

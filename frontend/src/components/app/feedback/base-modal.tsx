@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
+import * as React from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BaseModalProps {
-	children: ReactNode;
+	children: React.ReactNode;
 	className?: string;
 	isOpen: boolean;
 	onClose: () => void;
@@ -25,7 +25,7 @@ export function BaseModal({ children, className, isOpen, onClose, title }: BaseM
 						{title ? `${title} modal dialog` : "Modal dialog"}
 					</DialogDescription>
 				</DialogHeader>
-				{children}
+				{children as any}
 			</DialogContent>
 		</Dialog>
 	);

@@ -1,11 +1,8 @@
 import pytest
+from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
-from services.rag.src.grant_template.determine_longform_metadata import (
-    SectionMetadata,
-    validate_template_sections,
-)
+from services.rag.src.grant_template.generate_metadata import validate_template_sections
 
 
 def create_extracted_section(
@@ -19,16 +16,21 @@ def create_extracted_section(
     is_title_only: bool | None = None,
     is_clinical_trial: bool | None = None,
 ) -> ExtractedSectionDTO:
-    return {
+    result: ExtractedSectionDTO = {
         "id": section_id,
         "title": title,
         "order": order,
-        "parent_id": parent_id,
-        "is_detailed_research_plan": is_detailed_research_plan,
         "is_long_form": is_long_form,
-        "is_title_only": is_title_only,
-        "is_clinical_trial": is_clinical_trial,
     }
+    if parent_id is not None:
+        result["parent_id"] = parent_id
+    if is_detailed_research_plan is not None:
+        result["is_detailed_research_plan"] = is_detailed_research_plan
+    if is_title_only is not None:
+        result["is_title_only"] = is_title_only
+    if is_clinical_trial is not None:
+        result["is_clinical_trial"] = is_clinical_trial
+    return result
 
 
 def create_section_metadata(

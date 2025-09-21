@@ -69,11 +69,6 @@ def verify_webhook_oidc_token(token: str, expected_audience: str) -> bool:
         return True
 
     except ValueError as e:
-        # Common ValueError reasons:
-        # - Token expired
-        # - Audience mismatch
-        # - Invalid token signature
-        # - Token not yet valid (nbf claim)
         error_msg = str(e).lower()
         if "expired" in error_msg:
             logger.error(

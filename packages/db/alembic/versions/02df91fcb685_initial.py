@@ -1,19 +1,40 @@
 from collections.abc import Sequence
 
-import pgvector.sqlalchemy
+import pgvector
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "701e07131937"
+revision: str = "02df91fcb685"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
-    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
-
+    op.create_table(
+        "grant_matching_subscriptions",
+        sa.Column("email", sa.String(length=255), nullable=False),
+        sa.Column("search_params", sa.JSON(), nullable=False),
+        sa.Column("frequency", sa.String(length=20), nullable=False),
+        sa.Column("last_notification_sent", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("unsubscribed", sa.Boolean(), nullable=False),
+        sa.Column("unsubscribed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.CheckConstraint("frequency IN ('daily', 'weekly', 'monthly')", name="check_subscription_frequency"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        op.f("ix_grant_matching_subscriptions_created_at"), "grant_matching_subscriptions", ["created_at"], unique=False
+    )
+    op.create_index(
+        op.f("ix_grant_matching_subscriptions_deleted_at"), "grant_matching_subscriptions", ["deleted_at"], unique=False
+    )
+    op.create_index(
+        op.f("ix_grant_matching_subscriptions_email"), "grant_matching_subscriptions", ["email"], unique=True
+    )
     op.create_table(
         "granting_institutions",
         sa.Column("full_name", sa.String(length=255), nullable=False),
@@ -44,7 +65,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name", name="uq_organization_name"),
     )
     op.create_index(op.f("ix_organizations_created_at"), "organizations", ["created_at"], unique=False)
     op.create_index(op.f("ix_organizations_deleted_at"), "organizations", ["deleted_at"], unique=False)
@@ -149,6 +169,62 @@ def upgrade() -> None:
         op.f("ix_granting_institution_sources_deleted_at"), "granting_institution_sources", ["deleted_at"], unique=False
     )
     op.create_table(
+        "grants",
+        sa.Column("granting_institution_id", sa.UUID(), nullable=False),
+        sa.Column("title", sa.String(length=500), nullable=False),
+        sa.Column("description", sa.Text(), nullable=False),
+        sa.Column("release_date", sa.String(length=50), nullable=False),
+        sa.Column("expired_date", sa.String(length=50), nullable=False),
+        sa.Column("activity_code", sa.String(length=50), nullable=False),
+        sa.Column("organization", sa.String(length=255), nullable=False),
+        sa.Column("parent_organization", sa.String(length=255), nullable=False),
+        sa.Column("participating_orgs", sa.Text(), nullable=False),
+        sa.Column("document_number", sa.String(length=100), nullable=False),
+        sa.Column("document_type", sa.String(length=100), nullable=False),
+        sa.Column("clinical_trials", sa.Text(), nullable=False),
+        sa.Column("url", sa.Text(), nullable=False),
+        sa.Column("amount", sa.String(length=100), nullable=True),
+        sa.Column("amount_min", sa.BigInteger(), nullable=True),
+        sa.Column("amount_max", sa.BigInteger(), nullable=True),
+        sa.Column("category", sa.String(length=100), nullable=True),
+        sa.Column("eligibility", sa.Text(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.CheckConstraint("amount_max IS NULL OR amount_max >= 0", name="check_amount_max_non_negative"),
+        sa.CheckConstraint(
+            "amount_min IS NULL OR amount_max IS NULL OR amount_min <= amount_max", name="check_amount_min_le_max"
+        ),
+        sa.CheckConstraint("amount_min IS NULL OR amount_min >= 0", name="check_amount_min_non_negative"),
+        sa.ForeignKeyConstraint(["granting_institution_id"], ["granting_institutions.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("idx_grants_activity_code", "grants", ["activity_code"], unique=False)
+    op.create_index(
+        "idx_grants_description_fts",
+        "grants",
+        [sa.literal_column("to_tsvector('english', description)")],
+        unique=False,
+        postgresql_using="gin",
+    )
+    op.create_index(
+        "idx_grants_institution_expired", "grants", ["granting_institution_id", "expired_date"], unique=False
+    )
+    op.create_index(
+        "idx_grants_institution_release", "grants", ["granting_institution_id", "release_date"], unique=False
+    )
+    op.create_index("idx_grants_release_expired", "grants", ["release_date", "expired_date"], unique=False)
+    op.create_index(op.f("ix_grants_activity_code"), "grants", ["activity_code"], unique=False)
+    op.create_index(op.f("ix_grants_category"), "grants", ["category"], unique=False)
+    op.create_index(op.f("ix_grants_created_at"), "grants", ["created_at"], unique=False)
+    op.create_index(op.f("ix_grants_deleted_at"), "grants", ["deleted_at"], unique=False)
+    op.create_index(op.f("ix_grants_document_number"), "grants", ["document_number"], unique=True)
+    op.create_index(op.f("ix_grants_expired_date"), "grants", ["expired_date"], unique=False)
+    op.create_index(op.f("ix_grants_granting_institution_id"), "grants", ["granting_institution_id"], unique=False)
+    op.create_index(op.f("ix_grants_release_date"), "grants", ["release_date"], unique=False)
+    op.create_index(op.f("ix_grants_title"), "grants", ["title"], unique=False)
+    op.create_table(
         "organization_audit_logs",
         sa.Column("organization_id", sa.UUID(), nullable=False),
         sa.Column("user_firebase_uid", sa.String(length=128), nullable=False),
@@ -251,7 +327,6 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("organization_id", "name", name="uq_project_org_name"),
     )
     op.create_index("idx_project_org_name", "projects", ["organization_id", "name"], unique=False)
     op.create_index(op.f("ix_projects_created_at"), "projects", ["created_at"], unique=False)
@@ -401,6 +476,23 @@ def upgrade() -> None:
     op.create_index(op.f("ix_project_access_created_at"), "project_access", ["created_at"], unique=False)
     op.create_index(op.f("ix_project_access_deleted_at"), "project_access", ["deleted_at"], unique=False)
     op.create_table(
+        "editor_documents",
+        sa.Column("grant_application_id", sa.UUID(), nullable=True),
+        sa.Column("document_metadata", sa.JSON(), server_default=sa.text("'{}'::jsonb"), nullable=True),
+        sa.Column("crdt", sa.LargeBinary(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="SET NULL"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_editor_documents_created_at"), "editor_documents", ["created_at"], unique=False)
+    op.create_index(op.f("ix_editor_documents_deleted_at"), "editor_documents", ["deleted_at"], unique=False)
+    op.create_index(
+        op.f("ix_editor_documents_grant_application_id"), "editor_documents", ["grant_application_id"], unique=False
+    )
+    op.create_table(
         "grant_application_generation_jobs",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("grant_application_id", sa.UUID(), nullable=False),
@@ -440,6 +532,7 @@ def upgrade() -> None:
         sa.Column("granting_institution_id", sa.UUID(), nullable=True),
         sa.Column("rag_job_id", sa.UUID(), nullable=True),
         sa.Column("submission_date", sa.Date(), nullable=True),
+        sa.Column("cfp_analysis", sa.JSON(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -511,6 +604,10 @@ def downgrade() -> None:
         table_name="grant_application_generation_jobs",
     )
     op.drop_table("grant_application_generation_jobs")
+    op.drop_index(op.f("ix_editor_documents_grant_application_id"), table_name="editor_documents")
+    op.drop_index(op.f("ix_editor_documents_deleted_at"), table_name="editor_documents")
+    op.drop_index(op.f("ix_editor_documents_created_at"), table_name="editor_documents")
+    op.drop_table("editor_documents")
     op.drop_index(op.f("ix_project_access_deleted_at"), table_name="project_access")
     op.drop_index(op.f("ix_project_access_created_at"), table_name="project_access")
     op.drop_index("idx_project_access_user", table_name="project_access")
@@ -573,6 +670,21 @@ def downgrade() -> None:
     op.drop_index("idx_audit_org_user_action", table_name="organization_audit_logs")
     op.drop_index("idx_audit_org_created", table_name="organization_audit_logs")
     op.drop_table("organization_audit_logs")
+    op.drop_index(op.f("ix_grants_title"), table_name="grants")
+    op.drop_index(op.f("ix_grants_release_date"), table_name="grants")
+    op.drop_index(op.f("ix_grants_granting_institution_id"), table_name="grants")
+    op.drop_index(op.f("ix_grants_expired_date"), table_name="grants")
+    op.drop_index(op.f("ix_grants_document_number"), table_name="grants")
+    op.drop_index(op.f("ix_grants_deleted_at"), table_name="grants")
+    op.drop_index(op.f("ix_grants_created_at"), table_name="grants")
+    op.drop_index(op.f("ix_grants_category"), table_name="grants")
+    op.drop_index(op.f("ix_grants_activity_code"), table_name="grants")
+    op.drop_index("idx_grants_release_expired", table_name="grants")
+    op.drop_index("idx_grants_institution_release", table_name="grants")
+    op.drop_index("idx_grants_institution_expired", table_name="grants")
+    op.drop_index("idx_grants_description_fts", table_name="grants", postgresql_using="gin")
+    op.drop_index("idx_grants_activity_code", table_name="grants")
+    op.drop_table("grants")
     op.drop_index(op.f("ix_granting_institution_sources_deleted_at"), table_name="granting_institution_sources")
     op.drop_index(op.f("ix_granting_institution_sources_created_at"), table_name="granting_institution_sources")
     op.drop_table("granting_institution_sources")
@@ -600,3 +712,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_granting_institutions_created_at"), table_name="granting_institutions")
     op.drop_index(op.f("ix_granting_institutions_abbreviation"), table_name="granting_institutions")
     op.drop_table("granting_institutions")
+    op.drop_index(op.f("ix_grant_matching_subscriptions_email"), table_name="grant_matching_subscriptions")
+    op.drop_index(op.f("ix_grant_matching_subscriptions_deleted_at"), table_name="grant_matching_subscriptions")
+    op.drop_index(op.f("ix_grant_matching_subscriptions_created_at"), table_name="grant_matching_subscriptions")
+    op.drop_table("grant_matching_subscriptions")

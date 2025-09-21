@@ -11,16 +11,15 @@ from .otel import get_tracer
 @contextmanager
 def start_span_with_trace_id(
     span_name: str,
-    trace_id: str | None = None,
+    trace_id: str,
     tracer_name: str | None = None,
     **attributes: Any,
 ) -> Iterator[trace.Span]:
     tracer = get_tracer(tracer_name)
 
     with tracer.start_as_current_span(span_name) as span:
-        if trace_id:
-            span.set_attribute("trace_id", trace_id)
-            bind_contextvars(trace_id=trace_id)
+        span.set_attribute("trace_id", trace_id)
+        bind_contextvars(trace_id=trace_id)
 
         for key, value in attributes.items():
             if value is not None:
@@ -33,8 +32,7 @@ def start_span_with_trace_id(
             span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
         finally:
-            if trace_id:
-                clear_contextvars()
+            clear_contextvars()
 
 
 def add_span_attributes(**attributes: Any) -> None:

@@ -54,12 +54,9 @@ class InvitationTokenResponse(TypedDict):
     operation_id="ListOrganizationInvitations",
 )
 async def handle_list_organization_invitations(
-    request: APIRequest,
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationInvitationResponse]:
-    logger.info("Listing organization invitations", organization_id=organization_id, uid=request.auth)
-
     async with session_maker() as session:
         organization = await session.scalar(
             select(Organization).where(Organization.id == organization_id).where(Organization.deleted_at.is_(None))
@@ -98,10 +95,6 @@ async def handle_create_organization_invitation(
     data: CreateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationTokenResponse:
-    logger.info(
-        "Creating organization invitation", organization_id=organization_id, email=data["email"], uid=request.auth
-    )
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -186,7 +179,6 @@ async def handle_update_organization_invitation(
 ) -> OrganizationInvitationResponse:
     logger.info(
         "Updating organization invitation",
-        organization_id=organization_id,
         invitation_id=invitation_id,
         uid=request.auth,
     )
@@ -274,7 +266,6 @@ async def handle_delete_organization_invitation(
 ) -> None:
     logger.info(
         "Deleting organization invitation",
-        organization_id=organization_id,
         invitation_id=invitation_id,
         uid=request.auth,
     )

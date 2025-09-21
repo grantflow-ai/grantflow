@@ -1,51 +1,46 @@
-from contextlib import suppress
-from typing import Any, cast
+from typing import Any
 
 from litestar import post
+from packages.db.src.query_helpers import select_active
+from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.ai import init_llm_connection
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
+    RagJobCancelledError,
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.otel import configure_otel
-from packages.shared_utils.src.pubsub import AutofillRequest, PubSubEvent, RagRequest, decode_pubsub_message
+from packages.shared_utils.src.otel import configure_otel, get_tracer
+from packages.shared_utils.src.pubsub import (
+    GrantApplicationRagRequest,
+    GrantTemplateRagRequest,
+    PubSubEvent,
+    RagRequest,
+    ResearchDeepDiveAutofillRequest,
+    ResearchPlanAutofillRequest,
+    decode_pubsub_message,
+)
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from services.rag.src.autofill.handler import handle_autofill_request
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
-from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
+from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+
+tracer = get_tracer(__name__)
+
 
 configure_otel("rag")
 
 logger = get_logger(__name__)
 
 
-def handle_pubsub_message(event: PubSubEvent) -> RagRequest | AutofillRequest:
-    logger.debug(
-        "Decoding PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
-    )
+def handle_pubsub_message(event: PubSubEvent) -> RagRequest:
     decoded_data = decode_pubsub_message(event=event)
     try:
-        with suppress(DeserializationError):
-            autofill_request = deserialize(decoded_data, AutofillRequest)
-            logger.debug(
-                "PubSub message decoded as AutofillRequest",
-                autofill_type=autofill_request["autofill_type"],
-                trace_id=autofill_request.get("trace_id"),
-            )
-            return autofill_request
-
-        rag_request = deserialize(decoded_data, RagRequest)
-        logger.debug(
-            "PubSub message decoded as RagRequest",
-            parent_type=rag_request["parent_type"],
-            parent_id=str(rag_request["parent_id"]),
-            trace_id=rag_request.get("trace_id"),
-        )
-        return rag_request
+        return deserialize(decoded_data, RagRequest)  # type: ignore[arg-type]
     except DeserializationError as e:
         logger.error(
             "Failed to parse PubSub message",
@@ -62,31 +57,123 @@ async def handle_request(
     session_maker: async_sessionmaker[Any],
 ) -> None:
     request = handle_pubsub_message(data)
-    trace_id = request.get("trace_id")
 
-    logger.debug(
-        "Received PubSub request",
-        message_id=data.message.message_id if data.message else "unknown",
-        publish_time=data.message.publish_time if data.message else "unknown",
-        trace_id=trace_id,
-        request=request,
+    logger.info(
+        "Processing request",
+        request_type=type(request).__name__,
+        trace_id=request.trace_id,
     )
 
-    if "autofill_type" in request:
-        await handle_autofill_request(request=cast("AutofillRequest", request), session_maker=session_maker)
+    if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
+        async with session_maker() as session:
+            application = await session.scalar(
+                select_active(GrantApplication).where(GrantApplication.id == request.application_id)
+            )
+
+            if not application:
+                logger.error(
+                    "Grant application not found for autofill request",
+                    application_id=str(request.application_id),
+                    request_type=type(request).__name__,
+                    trace_id=request.trace_id,
+                )
+                raise ValidationError(
+                    f"Grant application {request.application_id} not found or has been deleted",
+                    context={
+                        "application_id": str(request.application_id),
+                        "request_type": type(request).__name__,
+                        "trace_id": request.trace_id,
+                    },
+                )
+
+        with tracer.start_as_current_span(
+            "autofill_request",
+            attributes={
+                "request.type": type(request).__name__,
+                "application.id": str(request.application_id),
+                "application.title": application.title,
+                "trace.id": request.trace_id,
+            },
+        ) as span:
+            try:
+                await handle_autofill_request(request=request, application=application, session_maker=session_maker)
+                span.set_attribute("autofill.success", True)
+            except RagJobCancelledError:
+                logger.info(
+                    "Job cancelled",
+                    request_type=type(request).__name__,
+                    trace_id=request.trace_id,
+                )
+                span.set_attribute("autofill.cancelled", True)
+                return
         return
 
-    if request["parent_type"] == "grant_template":
-        await grant_template_generation_pipeline_handler(
-            grant_template_id=request["parent_id"],
-            session_maker=session_maker,
-        )
+    if isinstance(request, GrantTemplateRagRequest):
+        async with session_maker() as session:
+            grant_template = await session.scalar(
+                select_active(GrantTemplate).where(GrantTemplate.id == request.parent_id)
+            )
+
+            if not grant_template:
+                logger.error(
+                    "Grant template not found",
+                    template_id=str(request.parent_id),
+                    trace_id=request.trace_id,
+                )
+                raise ValidationError(f"Grant template {request.parent_id} not found")
+
+        try:
+            await handle_grant_template_pipeline(
+                grant_template=grant_template,
+                session_maker=session_maker,
+                generation_stage=request.stage,
+                trace_id=request.trace_id,
+            )
+        except RagJobCancelledError:
+            logger.info(
+                "Job cancelled",
+                stage=request.stage,
+                trace_id=request.trace_id,
+            )
+            return
         return
 
-    await grant_application_text_generation_pipeline_handler(
-        grant_application_id=request["parent_id"],
-        session_maker=session_maker,
-    )
+    if isinstance(request, GrantApplicationRagRequest):
+        async with session_maker() as session:
+            grant_application = await session.scalar(
+                select_active(GrantApplication)
+                .where(GrantApplication.id == request.parent_id)
+                .options(selectinload(GrantApplication.grant_template))
+            )
+
+            if not grant_application:
+                logger.error(
+                    "Grant application not found",
+                    application_id=str(request.parent_id),
+                    trace_id=request.trace_id,
+                )
+                raise ValidationError(f"Grant application {request.parent_id} not found")
+
+            if not grant_application.grant_template:
+                raise ValidationError("Grant template not found")
+
+            if not grant_application.grant_template.grant_sections:
+                raise ValidationError("Grant template has no sections")
+
+        try:
+            await handle_grant_application_pipeline(
+                grant_application=grant_application,
+                session_maker=session_maker,
+                generation_stage=request.stage,
+                trace_id=request.trace_id,
+            )
+        except RagJobCancelledError:
+            logger.info(
+                "Job cancelled",
+                stage=request.stage,
+                trace_id=request.trace_id,
+            )
+            return
 
 
 async def before_server_start() -> None:
@@ -99,6 +186,4 @@ app = create_litestar_app(
         handle_request,
     ],
     on_startup=[before_server_start],
-    # ~keep Use lightweight health check for RAG service to prevent timeouts under load
-    lightweight_health_check=True,
 )

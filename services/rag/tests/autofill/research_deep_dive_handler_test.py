@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from packages.shared_utils.src.pubsub import AutofillRequest
+from packages.shared_utils.src.pubsub import ResearchDeepDiveAutofillRequest
 
 from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
 
@@ -35,13 +35,13 @@ def mock_session_maker() -> MagicMock:
 
 
 @pytest.fixture
-def sample_request() -> AutofillRequest:
+def sample_request(trace_id: str) -> ResearchDeepDiveAutofillRequest:
     from uuid import UUID
 
-    return {
-        "application_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "autofill_type": "research_deep_dive",
-    }
+    return ResearchDeepDiveAutofillRequest(
+        application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        trace_id=trace_id,
+    )
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def sample_application() -> dict[str, Any]:
     }
 
 
-async def test_generate_field_answer(mock_logger: MagicMock) -> None:
+async def test_generate_field_answer(mock_logger: MagicMock, trace_id: str) -> None:
     from packages.db.src.tables import GrantApplication
 
     from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer
@@ -78,7 +78,10 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 
         app = GrantApplication(id="test-id", title="Test Application")
         result = await _generate_field_answer(
-            application=app, field_name="background_context", objectives_text="Test objectives"
+            application=app,
+            field_name="background_context",
+            objectives_text="Test objectives",
+            trace_id=trace_id,
         )
 
         assert len(result) >= 50
@@ -147,25 +150,25 @@ def test_format_research_objectives(mock_logger: MagicMock) -> None:
 
 
 def test_validate_answer_response(mock_logger: MagicMock) -> None:
-    from services.rag.src.autofill.research_deep_dive_handler import _validate_answer_response
+    from services.rag.src.autofill.research_deep_dive_handler import AnswerResponse, _validate_answer_response
 
-    valid_response = {"answer": "This is a valid answer that meets the minimum length requirement. " * 30}
+    valid_response = AnswerResponse(answer="This is a valid answer that meets the minimum length requirement. " * 30)
     _validate_answer_response(valid_response)
 
-    with pytest.raises(ValueError, match="Missing 'answer' field"):
-        _validate_answer_response({"something_else": "value"})
+    with pytest.raises(KeyError):
+        _validate_answer_response({"something_else": "value"})  # type: ignore[typeddict-unknown-key,typeddict-item]
 
-    with pytest.raises(ValueError, match="Answer must be a string"):
-        _validate_answer_response({"answer": 123})
+    with pytest.raises(TypeError):
+        _validate_answer_response({"answer": 123})  # type: ignore[typeddict-item]
 
     with pytest.raises(ValueError, match="Answer too short"):
-        _validate_answer_response({"answer": "Too short"})
+        _validate_answer_response(AnswerResponse(answer="Too short"))
 
     with pytest.raises(ValueError, match="Answer has too few words"):
-        _validate_answer_response({"answer": "word " * 50})
+        _validate_answer_response(AnswerResponse(answer="word " * 50))
 
     with pytest.raises(ValueError, match="Answer has too many words"):
-        _validate_answer_response({"answer": "word " * 700})
+        _validate_answer_response(AnswerResponse(answer="word " * 700))
 
 
 def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
@@ -193,7 +196,10 @@ def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
 
 
 async def test_generate_research_deep_dive_content_with_mocks(
-    mock_logger: MagicMock, mock_session_maker: AsyncMock, sample_application: dict[str, Any]
+    mock_logger: MagicMock,
+    mock_session_maker: AsyncMock,
+    sample_application: dict[str, Any],
+    trace_id: str,
 ) -> None:
     from packages.db.src.tables import GrantApplication
 
@@ -214,7 +220,10 @@ async def test_generate_research_deep_dive_content_with_mocks(
         mock_retrieve.return_value = ["Document content 1", "Document content 2"]
         mock_generate.return_value = "Generated answer text " * 30
 
-        result = await generate_research_deep_dive_content(application=app)
+        result = await generate_research_deep_dive_content(
+            application=app,
+            trace_id=trace_id,
+        )
 
         assert isinstance(result, dict)
         assert "background_context" in result

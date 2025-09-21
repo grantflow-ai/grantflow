@@ -109,12 +109,10 @@ class UpdateMemberRoleRequestBody(TypedDict):
 
 @post("/organizations/{organization_id:uuid}/projects", operation_id="CreateProject")
 async def handle_create_project(
-    request: APIRequest,
     organization_id: UUID,
     data: CreateProjectRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
-    logger.info("Creating project by user", uid=request.auth, organization_id=organization_id)
     async with session_maker() as session, session.begin():
         try:
             project_data = {**data, "organization_id": organization_id}
@@ -136,7 +134,6 @@ async def handle_retrieve_projects(
     session_maker: async_sessionmaker[Any],
 ) -> list[ProjectListItemResponse]:
     store = request.app.stores.get("firebase_user_cache")
-    logger.info("Retrieving projects for user", uid=request.auth, organization_id=organization_id)
 
     async with session_maker() as session:
         projects = list(
@@ -211,12 +208,10 @@ async def handle_retrieve_projects(
     operation_id="UpdateProject",
 )
 async def handle_update_project(
-    organization_id: UUID,
     data: UpdateProjectRequestBody,
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectBaseResponse:
-    logger.info("Updating project", project_id=project_id, organization_id=organization_id)
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -250,7 +245,6 @@ async def handle_retrieve_project(
     request: APIRequest, organization_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ProjectResponse:
     store = request.app.stores.get("firebase_user_cache")
-    logger.info("Retrieving project", project_id=project_id, organization_id=organization_id)
 
     async with session_maker() as session:
         project = await session.scalar(
@@ -341,10 +335,7 @@ async def handle_retrieve_project(
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="DeleteProject",
 )
-async def handle_delete_project(
-    request: APIRequest, organization_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
-) -> None:
-    logger.info("Deleting project", project_id=project_id, organization_id=organization_id)
+async def handle_delete_project(request: APIRequest, project_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -383,12 +374,6 @@ async def handle_create_invitation_redirect_url(
     data: CreateInvitationRedirectUrlRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info(
-        "Creating invitation redirect URL",
-        project_id=project_id,
-        organization_id=organization_id,
-        email=data["email"],
-    )
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -456,11 +441,11 @@ async def handle_create_invitation_redirect_url(
             await session.commit()
             return InvitationRedirectUrlResponse(token=jwt_token)
 
-        except (SQLAlchemyError, ValidationException) as e:
-            if isinstance(e, SQLAlchemyError):
-                logger.error("Error creating invitation", exc_info=e)
-                raise DatabaseError("Error creating invitation", context=str(e)) from e
-            raise e
+        except SQLAlchemyError as e:
+            logger.error("Error creating invitation", exc_info=e)
+            raise DatabaseError("Error creating invitation", context=str(e)) from e
+        except ValidationException:
+            raise
 
 
 @delete(
@@ -475,9 +460,6 @@ async def handle_delete_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Deleting invitation", project_id=project_id, organization_id=organization_id, invitation_id=invitation_id
-    )
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -528,12 +510,6 @@ async def handle_update_invitation_role(
     data: UpdateInvitationRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info(
-        "Updating invitation role",
-        project_id=project_id,
-        organization_id=organization_id,
-        invitation_id=invitation_id,
-    )
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -593,11 +569,11 @@ async def handle_update_invitation_role(
             await session.commit()
             return InvitationRedirectUrlResponse(token=jwt_token)
 
-        except (SQLAlchemyError, ValidationException) as e:
-            if isinstance(e, SQLAlchemyError):
-                logger.error("Error updating invitation role", exc_info=e)
-                raise DatabaseError("Error updating invitation role", context=str(e)) from e
-            raise e
+        except SQLAlchemyError as e:
+            logger.error("Error updating invitation role", exc_info=e)
+            raise DatabaseError("Error updating invitation role", context=str(e)) from e
+        except ValidationException:
+            raise
 
 
 class AcceptInvitationRequestBody(TypedDict):
@@ -615,7 +591,6 @@ async def handle_accept_invitation(
     data: AcceptInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
-    logger.info("Accepting invitation", invitation_id=invitation_id)
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
@@ -711,11 +686,11 @@ async def handle_accept_invitation(
             await session.commit()
             return InvitationRedirectUrlResponse(token=jwt_token)
 
-        except (SQLAlchemyError, ValidationException) as e:
-            if isinstance(e, SQLAlchemyError):
-                logger.error("Error accepting invitation", exc_info=e)
-                raise DatabaseError("Error accepting invitation", context=str(e)) from e
-            raise e
+        except SQLAlchemyError as e:
+            logger.error("Error accepting invitation", exc_info=e)
+            raise DatabaseError("Error accepting invitation", context=str(e)) from e
+        except ValidationException:
+            raise
 
 
 @get(
@@ -728,7 +703,6 @@ async def handle_list_project_members(
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[ProjectMemberResponse]:
-    logger.info("Listing project members", project_id=project_id, organization_id=organization_id)
     async with session_maker() as session:
         project = await session.scalar(
             select(Project).where(
@@ -794,13 +768,6 @@ async def handle_update_member_role(
     data: UpdateMemberRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectMemberResponse:
-    logger.info(
-        "Updating member role",
-        project_id=project_id,
-        organization_id=organization_id,
-        firebase_uid=firebase_uid,
-        new_role=data["role"],
-    )
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -857,11 +824,11 @@ async def handle_update_member_role(
                 joined_at=datetime.now(UTC).isoformat(),
             )
 
-        except (SQLAlchemyError, ValidationException) as e:
-            if isinstance(e, SQLAlchemyError):
-                logger.error("Error updating member role", exc_info=e)
-                raise DatabaseError("Error updating member role", context=str(e)) from e
-            raise e
+        except SQLAlchemyError as e:
+            logger.error("Error updating member role", exc_info=e)
+            raise DatabaseError("Error updating member role", context=str(e)) from e
+        except ValidationException:
+            raise
 
 
 @delete(
@@ -876,12 +843,6 @@ async def handle_remove_project_member(
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Removing project member",
-        project_id=project_id,
-        organization_id=organization_id,
-        firebase_uid=firebase_uid,
-    )
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
@@ -928,11 +889,11 @@ async def handle_remove_project_member(
             )
             await session.commit()
 
-        except (SQLAlchemyError, ValidationException) as e:
-            if isinstance(e, SQLAlchemyError):
-                logger.error("Error removing project member", exc_info=e)
-                raise DatabaseError("Error removing project member", context=str(e)) from e
-            raise e
+        except SQLAlchemyError as e:
+            logger.error("Error removing project member", exc_info=e)
+            raise DatabaseError("Error removing project member", context=str(e)) from e
+        except ValidationException:
+            raise
 
 
 class DuplicateProjectRequestBody(TypedDict):
@@ -951,13 +912,6 @@ async def handle_duplicate_project(
     data: DuplicateProjectRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ProjectResponse:
-    logger.info(
-        "Duplicating project",
-        organization_id=organization_id,
-        project_id=project_id,
-        new_title=data.get("title"),
-    )
-
     async with session_maker() as session, session.begin():
         try:
             original_project = await session.scalar(
@@ -989,13 +943,6 @@ async def handle_duplicate_project(
                     }
                 )
                 .returning(Project)
-            )
-
-            logger.info(
-                "Created new project",
-                original_project_id=str(project_id),
-                new_project_id=str(new_project.id),
-                applications_to_duplicate=len(original_project.grant_applications),
             )
 
             for original_app in original_project.grant_applications:
@@ -1085,24 +1032,7 @@ async def handle_duplicate_project(
                         )
                     )
 
-                logger.info(
-                    "Duplicated application",
-                    original_app_id=str(original_app.id),
-                    new_app_id=str(new_app.id),
-                    has_template=original_app.grant_template is not None,
-                    rag_sources_count=len(app_rag_source_ids),
-                )
-
             await session.commit()
-
-            logger.info(
-                "Project duplication completed successfully",
-                original_project_id=str(project_id),
-                new_project_id=str(new_project.id),
-                duplicated_applications=len(
-                    [app for app in original_project.grant_applications if app.deleted_at is None]
-                ),
-            )
 
         except SQLAlchemyError as e:
             logger.error("Error duplicating project", exc_info=e)

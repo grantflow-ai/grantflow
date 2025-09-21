@@ -42,11 +42,33 @@ def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTrans
             )
             model_source = "local_directory"
         else:
-            logger.debug("Loading model from default cache", model_name=model_name)
-            model = SentenceTransformer(
-                model_name, device="cpu", trust_remote_code=False
+            logger.debug(
+                "Loading model with cache-first strategy", model_name=model_name
             )
-            model_source = "default_cache"
+
+            try:
+                logger.debug("Attempting cache-only load", model_name=model_name)
+                model = SentenceTransformer(
+                    model_name,
+                    device="cpu",
+                    trust_remote_code=False,
+                    local_files_only=True,
+                )
+                model_source = "cache"
+                logger.debug("Model loaded from cache", model_name=model_name)
+
+            except Exception as e:
+                logger.info(
+                    "Cache miss, downloading model", model_name=model_name, error=str(e)
+                )
+                model = SentenceTransformer(
+                    model_name,
+                    device="cpu",
+                    trust_remote_code=False,
+                    local_files_only=False,
+                )
+                model_source = "downloaded"
+                logger.info("Model downloaded and cached", model_name=model_name)
 
         load_duration = time.time() - start_time
         embedding_model_ref.value = model
