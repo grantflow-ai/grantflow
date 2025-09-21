@@ -25,8 +25,8 @@ interface ApplicationStructureStepProps {
 
 export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStepProps) {
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
-	const pollingIsActive = useWizardStore((state) => state.polling.isActive);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const templateGenerationFailed = useWizardStore((state) => state.templateGenerationFailed);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
 
@@ -37,8 +37,9 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		if (!grantTemplate) return false;
 		if (grantTemplate.grant_sections.length > 0) return false;
 		if (isGeneratingTemplate) return false;
-		return !pollingIsActive;
-	}, [grantTemplate, isGeneratingTemplate, pollingIsActive]);
+		if (templateGenerationFailed) return false; // Don't auto-start if generation previously failed
+		return true; // Allow template generation even if other polling is active
+	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed]);
 
 	useEffect(() => {
 		if (templateRagSources.length === 0) return;
