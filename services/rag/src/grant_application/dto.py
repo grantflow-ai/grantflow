@@ -83,3 +83,12 @@ class EnrichTerminologyStageDTO(EnrichObjectivesStageDTO):
 
 class GenerateResearchPlanStageDTO(EnrichTerminologyStageDTO):
     research_plan_text: str
+
+
+StageDTO = (
+    GenerateSectionsStageDTO
+    | ExtractRelationshipsStageDTO
+    | EnrichObjectivesStageDTO
+    | EnrichTerminologyStageDTO
+    | GenerateResearchPlanStageDTO
+)

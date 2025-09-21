@@ -11,12 +11,6 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 
-
-class RelationshipPair(TypedDict):
-    target_id: str
-    description: str
-
-
 ResearchRelationships = dict[str, list[tuple[str, str]]]
 
 

@@ -1,6 +1,6 @@
 import base64
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
@@ -64,7 +64,7 @@ def test_handle_pubsub_message_valid_grant_template() -> None:
 def test_handle_pubsub_message_valid_grant_application() -> None:
     request = GrantApplicationRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-        stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
+        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
@@ -73,7 +73,7 @@ def test_handle_pubsub_message_valid_grant_application() -> None:
 
     assert isinstance(result, GrantApplicationRagRequest)
     assert result.parent_id == UUID("123e4567-e89b-12d3-a456-426614174000")
-    assert result.stage == GrantApplicationStageEnum.VALIDATE_CONTEXT
+    assert result.stage == GrantApplicationStageEnum.GENERATE_SECTIONS
     assert result.trace_id == "test-trace"
 
 
@@ -158,10 +158,12 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
 async def test_handle_request_grant_template_success() -> None:
     from packages.db.src.tables import GrantTemplate
 
-    mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
-    mock_session_maker.return_value.__aenter__.return_value = mock_session
-    mock_session_maker.return_value.__aexit__.return_value = None
+    mock_session_maker = Mock()
+
+    # Mock the session maker to return an async context manager
+    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
 
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_grant_template.id = UUID("123e4567-e89b-12d3-a456-426614174000")
@@ -191,10 +193,12 @@ async def test_handle_request_grant_template_success() -> None:
 async def test_handle_request_grant_application_success() -> None:
     from packages.db.src.tables import GrantApplication, GrantTemplate
 
-    mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
-    mock_session_maker.return_value.__aenter__.return_value = mock_session
-    mock_session_maker.return_value.__aexit__.return_value = None
+    mock_session_maker = Mock()
+
+    # Mock the session maker to return an async context manager
+    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
 
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_grant_template.grant_sections = [{"id": "section1"}]
@@ -206,7 +210,7 @@ async def test_handle_request_grant_application_success() -> None:
 
     request = GrantApplicationRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-        stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
+        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
@@ -220,7 +224,7 @@ async def test_handle_request_grant_application_success() -> None:
         mock_pipeline.assert_called_once_with(
             grant_application=mock_grant_application,
             session_maker=mock_session_maker,
-            generation_stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
+            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
             trace_id="test-trace",
         )
 
@@ -228,10 +232,12 @@ async def test_handle_request_grant_application_success() -> None:
 async def test_handle_request_autofill_success() -> None:
     from packages.db.src.tables import GrantApplication
 
-    mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
-    mock_session_maker.return_value.__aenter__.return_value = mock_session
-    mock_session_maker.return_value.__aexit__.return_value = None
+    mock_session_maker = Mock()
+
+    # Mock the session maker to return an async context manager
+    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
 
     mock_grant_application = AsyncMock(spec=GrantApplication)
     mock_grant_application.id = UUID("123e4567-e89b-12d3-a456-426614174000")
@@ -258,10 +264,12 @@ async def test_handle_request_autofill_success() -> None:
 
 
 async def test_handle_request_grant_template_not_found() -> None:
-    mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
-    mock_session_maker.return_value.__aenter__.return_value = mock_session
-    mock_session_maker.return_value.__aexit__.return_value = None
+    mock_session_maker = Mock()
+
+    # Mock the session maker to return an async context manager
+    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
     mock_session.scalar.return_value = None
 
     request = GrantTemplateRagRequest(
@@ -278,10 +286,12 @@ async def test_handle_request_grant_template_not_found() -> None:
 async def test_handle_request_pipeline_error_propagates() -> None:
     from packages.db.src.tables import GrantTemplate
 
-    mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
-    mock_session_maker.return_value.__aenter__.return_value = mock_session
-    mock_session_maker.return_value.__aexit__.return_value = None
+    mock_session_maker = Mock()
+
+    # Mock the session maker to return an async context manager
+    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
 
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_session.scalar.return_value = mock_grant_template
