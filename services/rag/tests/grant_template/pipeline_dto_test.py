@@ -4,10 +4,15 @@ from uuid import uuid4
 if TYPE_CHECKING:
     from packages.db.src.json_objects import CFPAnalysisResult
 
-    from services.rag.src.grant_template.dto import ExtractedCFPData, OrganizationNamespace
+    from services.rag.src.grant_template.dto import (
+        AnalyzeCFPContentStageDTO,
+        ExtractCFPContentStageDTO,
+        ExtractedCFPData,
+        ExtractionSectionsStageDTO,
+        OrganizationNamespace,
+        StageDTO,
+    )
     from services.rag.src.grant_template.extract_sections import ExtractedSectionDTO
-    from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO, AnalyzeCFPContentStageDTO, \
-        ExtractionSectionsStageDTO, StageDTO
 
 
 def test_extract_cfp_content_stage_dto_structure() -> None:

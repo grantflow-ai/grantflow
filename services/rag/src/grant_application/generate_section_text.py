@@ -109,7 +109,6 @@ async def handle_generate_section_text(
 ) -> str:
     section_title = section["title"]
 
-
     research_context_parts = [
         f"""
         ## Research Objective {research_objective["number"]}: {research_objective["title"]}
@@ -149,9 +148,7 @@ async def handle_generate_section_text(
     6. Professional academic writing quality
     """
 
-    task_description = (
-        f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
-    )
+    task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
         task_description=task_description,
         max_length=section["max_words"],
@@ -261,5 +258,3 @@ async def handle_generate_section_text(
         ],
         trace_id=trace_id,
     )
-
-

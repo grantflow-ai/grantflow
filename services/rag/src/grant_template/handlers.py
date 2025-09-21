@@ -13,12 +13,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_template.cfp_section_analysis import handle_analyze_cfp
-from services.rag.src.grant_template.dto import OrganizationNamespace
+from services.rag.src.grant_template.dto import (
+    AnalyzeCFPContentStageDTO,
+    ExtractCFPContentStageDTO,
+    ExtractionSectionsStageDTO,
+    OrganizationNamespace,
+    StageDTO,
+)
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
 from services.rag.src.grant_template.extract_sections import handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
-from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO, AnalyzeCFPContentStageDTO, ExtractionSectionsStageDTO, \
-    StageDTO
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
@@ -108,7 +112,6 @@ async def handle_cfp_extraction_stage(
         },
     )
 
-
     return ExtractCFPContentStageDTO(extracted_data=extraction_result, organization=organization)
 
 
@@ -196,7 +199,6 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
-
     section_metadata = await handle_generate_grant_template_metadata(
         cfp_content="\n".join(
             [
@@ -257,7 +259,6 @@ async def handle_save_grant_template(
 ) -> GrantTemplate:
     await job_manager.ensure_not_cancelled()
 
-
     async with session_maker() as session, session.begin():
         try:
             update_values = {
@@ -296,7 +297,6 @@ async def handle_save_grant_template(
                     else "Unknown",
                 },
             )
-
 
             return cast("GrantTemplate", updated_template)
         except SQLAlchemyError as e:

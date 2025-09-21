@@ -1,11 +1,10 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
-from services.rag.src.grant_template.dto import CFPContentSection
 from services.rag.src.grant_template.extract_sections import (
     EXCLUDE_CATEGORIES,
     ExtractedSectionDTO,
@@ -18,6 +17,9 @@ from services.rag.src.grant_template.extract_sections import (
     handle_extract_sections,
     validate_section_extraction,
 )
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import CFPContentSection
 
 
 def test_extracted_section_dto_required_fields() -> None:
@@ -406,6 +408,7 @@ async def test_filter_extracted_sections_success(
     ]
 
     with patch("services.rag.src.grant_template.extract_sections._should_keep_section") as mock_should_keep:
+
         def mock_keep(section: ExtractedSectionDTO, **kwargs: Any) -> bool:
             return section["title"] == "Research Methods"
 

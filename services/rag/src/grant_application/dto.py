@@ -60,13 +60,11 @@ class SectionText(TypedDict):
 
 
 class GenerateSectionsStageDTO(TypedDict):
-
     section_texts: list[SectionText]
     work_plan_section: GrantLongFormSection
 
 
 class ExtractRelationshipsStageDTO(GenerateSectionsStageDTO):
-
     relationships: dict[str, list[tuple[str, str]]]
 
 
@@ -76,15 +74,12 @@ class ObjectiveEnrichmentResponse(TypedDict):
 
 
 class EnrichObjectivesStageDTO(ExtractRelationshipsStageDTO):
-
     enrichment_responses: list[ObjectiveEnrichmentResponse]
 
 
 class EnrichTerminologyStageDTO(EnrichObjectivesStageDTO):
-
     wikidata_enrichments: list[EnrichmentDataDTO]
 
 
 class GenerateResearchPlanStageDTO(EnrichTerminologyStageDTO):
-
     research_plan_text: str

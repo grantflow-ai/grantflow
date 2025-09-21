@@ -87,7 +87,7 @@ async def test_generate_melanoma_baseline_application_text(
         text = generate_application_text(
             title=updated_application.title or "Grant Application",
             grant_sections=updated_application.grant_template.grant_sections,
-            section_texts=section_texts
+            section_texts=section_texts,
         )
 
     performance_context.end_stage()
@@ -118,7 +118,9 @@ async def test_generate_melanoma_baseline_application_text(
 
     character_count = len(text)
     section_count = len(section_texts)
-    avg_section_length = sum(len(content) for content in section_texts.values()) / len(section_texts) if section_texts else 0
+    avg_section_length = (
+        sum(len(content) for content in section_texts.values()) / len(section_texts) if section_texts else 0
+    )
 
     performance_context.set_metadata("generated_word_count", word_count)
     performance_context.set_metadata("generated_character_count", character_count)

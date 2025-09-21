@@ -25,7 +25,7 @@ from testing.utils import create_grant_application_data, process_granting_instit
 
 load_dotenv()
 
-pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
+pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.pubsub_test_plugin"]
 
 
 @pytest.fixture(scope="session", autouse=True)

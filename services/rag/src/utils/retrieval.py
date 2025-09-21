@@ -232,7 +232,6 @@ async def retrieve_documents(
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
 
-
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
 
@@ -241,7 +240,6 @@ async def retrieve_documents(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )
     time.time() - query_start
-
 
     attempts = 0
     previous_scores: list[float] = []
@@ -258,7 +256,6 @@ async def retrieve_documents(
     )
     time.time() - retrieval_start
 
-
     document_conversion_start = time.time()
     documents = [
         cast(
@@ -268,7 +265,6 @@ async def retrieve_documents(
         for vector in vectors
     ]
     time.time() - document_conversion_start
-
 
     processing_start = time.time()
     processed_contents = await post_process_documents(
@@ -280,7 +276,6 @@ async def retrieve_documents(
         trace_id=trace_id,
     )
     time.time() - processing_start
-
 
     if not with_guided_retrieval or not processed_contents:
         total_duration = time.time() - start_time
@@ -316,7 +311,6 @@ async def retrieve_documents(
         assessment = quality_response["assessment"]
         current_score = assessment["overall_score"]
 
-
         if current_score > best_score:
             best_score = current_score
             best_processed_contents = processed_contents
@@ -333,7 +327,6 @@ async def retrieve_documents(
 
         if not improved_queries:
             return best_processed_contents
-
 
         new_vectors = await handle_retrieval(
             application_id=application_id,

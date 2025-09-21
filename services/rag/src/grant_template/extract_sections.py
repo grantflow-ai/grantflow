@@ -8,7 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 
 from services.rag.src.grant_template.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
 from services.rag.src.grant_template.utils import detect_cycle
@@ -27,7 +27,6 @@ __all__ = [
 ]
 
 logger = get_logger(__name__)
-ref = Ref[SentenceTransformer]()
 exclude_embeddings_ref = Ref[list[float]]()
 
 
@@ -325,8 +324,6 @@ section_extraction_json_schema = {
         },
     },
 }
-
-
 
 
 class ExtractedSections(TypedDict):

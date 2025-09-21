@@ -12,6 +12,11 @@ from packages.shared_utils.src.exceptions import DatabaseError
 from sqlalchemy.exc import SQLAlchemyError
 from testing.factories import RagSourceFactory
 
+from services.rag.src.grant_template.dto import (
+    AnalyzeCFPContentStageDTO,
+    ExtractCFPContentStageDTO,
+    ExtractionSectionsStageDTO,
+)
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
     handle_cfp_extraction_stage,
@@ -19,7 +24,6 @@ from services.rag.src.grant_template.handlers import (
     handle_save_grant_template,
     handle_section_extraction_stage,
 )
-from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO, AnalyzeCFPContentStageDTO, ExtractionSectionsStageDTO
 
 
 @pytest.fixture
@@ -601,8 +605,34 @@ async def test_save_grant_template_success(
     nih_organization: Any,
 ) -> None:
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
-        GrantLongFormSection(id="section1", title="Project Summary", order=1, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False),
-        GrantLongFormSection(id="section2", title="Research Plan", order=2, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False),
+        GrantLongFormSection(
+            id="section1",
+            title="Project Summary",
+            order=1,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
+        GrantLongFormSection(
+            id="section2",
+            title="Research Plan",
+            order=2,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     if sample_sections_dto["organization"]:
@@ -652,7 +682,20 @@ async def test_save_grant_template_no_organization(
     sections_dto_no_org["organization"] = None
 
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
-        GrantLongFormSection(id="section1", title="Project Summary", order=1, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False)
+        GrantLongFormSection(
+            id="section1",
+            title="Project Summary",
+            order=1,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        )
     ]
 
     await handle_save_grant_template(
@@ -696,7 +739,20 @@ async def test_save_grant_template_no_submission_date(
     sections_dto_no_date["extracted_data"]["organization_id"] = str(nih_organization.id)
 
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
-        GrantLongFormSection(id="section1", title="Project Summary", order=1, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False)
+        GrantLongFormSection(
+            id="section1",
+            title="Project Summary",
+            order=1,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        )
     ]
 
     await handle_save_grant_template(
@@ -726,7 +782,20 @@ async def test_save_grant_template_date_parsing(
     sample_sections_dto["extracted_data"]["organization_id"] = str(nih_organization.id)
 
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
-        GrantLongFormSection(id="section1", title="Project Summary", order=1, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False)
+        GrantLongFormSection(
+            id="section1",
+            title="Project Summary",
+            order=1,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        )
     ]
 
     await handle_save_grant_template(
@@ -751,7 +820,20 @@ async def test_save_grant_template_database_error(
     async_session_maker: Any,
 ) -> None:
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
-        GrantLongFormSection(id="section1", title="Project Summary", order=1, parent_id=None, keywords=[], topics=[], generation_instructions="", depends_on=[], max_words=100, search_queries=[], is_clinical_trial=None, is_detailed_research_plan=False)
+        GrantLongFormSection(
+            id="section1",
+            title="Project Summary",
+            order=1,
+            parent_id=None,
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=100,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        )
     ]
 
     with patch("services.rag.src.grant_template.handlers.update") as mock_update:

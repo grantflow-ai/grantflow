@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from functools import lru_cache
 from typing import Any, Final, TypedDict, cast
@@ -20,7 +19,6 @@ WIKIDATA_MAX_RETRIES: Final[int] = 3
 
 
 class WikidataClientManager:
-
     _instance: httpx.AsyncClient | None = None
 
     @classmethod
@@ -38,6 +36,7 @@ class WikidataItem(TypedDict):
     label: str
     description: str
     scientific_field: str
+
 
 SCIENTIFIC_CONTEXT_TEMPLATE: Final[PromptTemplate] = PromptTemplate(
     name="scientific_context",
@@ -139,7 +138,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
     if not terms:
         return []
 
-
     client = WikidataClientManager.get_client()
     all_results: list[WikidataItem] = []
     for i in range(0, len(terms), WIKIDATA_BATCH_SIZE):
@@ -154,7 +152,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
                 response_data = await _make_request_with_retry(client, query, trace_id)
                 batch_results = _parse_wikidata_response(response_data)
                 all_results.extend(batch_results)
-
 
             except (httpx.HTTPError, httpx.TimeoutException) as e:
                 logger.warning(
@@ -198,8 +195,6 @@ def _format_scientific_context(scientific_context: str) -> str:
 
     try:
         return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
-
-
 
     except ValueError as e:
         logger.warning(

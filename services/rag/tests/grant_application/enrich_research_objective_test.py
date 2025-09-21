@@ -29,67 +29,67 @@ def sample_research_objective() -> ResearchObjective:
 @pytest.fixture
 def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
     return cast(
-        ObjectiveEnrichmentDTO,
+        "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
-            "core_scientific_terms": ["biomarkers", "proteomics", "mass spectrometry", "validation", "specificity"],
-            "instructions": "Write a comprehensive description focusing on scientific rigor and methodological precision. Emphasize the innovative approach and potential impact on cancer research. Use formal academic tone with technical detail appropriate for grant reviewers.",
-            "description": "This research objective aims to discover and validate novel protein biomarkers for early cancer detection using advanced proteomics techniques. The methodology involves mass spectrometry analysis of patient samples to identify differentially expressed proteins.",
-            "guiding_questions": [
-                "What biomarkers show the highest specificity for early detection?",
-                "How can we ensure reproducibility across different patient populations?",
-                "What validation strategies will provide the strongest evidence?",
-            ],
-            "search_queries": [
-                "cancer biomarker discovery",
-                "proteomics mass spectrometry",
-                "biomarker validation methods",
-            ],
-        },
-        "research_tasks": [
-            {
-                "core_scientific_terms": [
-                    "proteomics",
-                    "mass spectrometry",
-                    "differential expression",
-                    "protein analysis",
-                    "biomarker discovery",
-                ],
-                "instructions": "Focus on technical methodology and experimental design for biomarker identification. Emphasize innovative proteomics approaches and data analysis techniques.",
-                "description": "Systematic identification of candidate biomarkers through comprehensive proteomics analysis using mass spectrometry techniques to detect differentially expressed proteins in cancer versus control samples.",
+                "core_scientific_terms": ["biomarkers", "proteomics", "mass spectrometry", "validation", "specificity"],
+                "instructions": "Write a comprehensive description focusing on scientific rigor and methodological precision. Emphasize the innovative approach and potential impact on cancer research. Use formal academic tone with technical detail appropriate for grant reviewers.",
+                "description": "This research objective aims to discover and validate novel protein biomarkers for early cancer detection using advanced proteomics techniques. The methodology involves mass spectrometry analysis of patient samples to identify differentially expressed proteins.",
                 "guiding_questions": [
-                    "Which proteomics platform provides optimal sensitivity?",
-                    "How do we control for biological variability?",
-                    "What statistical methods best identify significant differences?",
+                    "What biomarkers show the highest specificity for early detection?",
+                    "How can we ensure reproducibility across different patient populations?",
+                    "What validation strategies will provide the strongest evidence?",
                 ],
                 "search_queries": [
-                    "proteomics biomarker identification",
-                    "mass spectrometry cancer",
-                    "differential protein expression",
+                    "cancer biomarker discovery",
+                    "proteomics mass spectrometry",
+                    "biomarker validation methods",
                 ],
             },
-            {
-                "core_scientific_terms": [
-                    "biomarker validation",
-                    "clinical sensitivity",
-                    "specificity",
-                    "assay development",
-                    "clinical trials",
-                ],
-                "instructions": "Emphasize clinical validation methodology and regulatory considerations. Focus on translational aspects and clinical utility of identified biomarkers.",
-                "description": "Comprehensive validation of identified biomarkers through clinical studies to establish sensitivity, specificity, and clinical utility for cancer detection in diverse patient populations.",
-                "guiding_questions": [
-                    "What sample size ensures adequate statistical power?",
-                    "How do we address population diversity in validation?",
-                    "What regulatory requirements must be considered?",
-                ],
-                "search_queries": [
-                    "biomarker clinical validation",
-                    "diagnostic test sensitivity",
-                    "clinical trial design",
-                ],
-            },
-        ],
+            "research_tasks": [
+                {
+                    "core_scientific_terms": [
+                        "proteomics",
+                        "mass spectrometry",
+                        "differential expression",
+                        "protein analysis",
+                        "biomarker discovery",
+                    ],
+                    "instructions": "Focus on technical methodology and experimental design for biomarker identification. Emphasize innovative proteomics approaches and data analysis techniques.",
+                    "description": "Systematic identification of candidate biomarkers through comprehensive proteomics analysis using mass spectrometry techniques to detect differentially expressed proteins in cancer versus control samples.",
+                    "guiding_questions": [
+                        "Which proteomics platform provides optimal sensitivity?",
+                        "How do we control for biological variability?",
+                        "What statistical methods best identify significant differences?",
+                    ],
+                    "search_queries": [
+                        "proteomics biomarker identification",
+                        "mass spectrometry cancer",
+                        "differential protein expression",
+                    ],
+                },
+                {
+                    "core_scientific_terms": [
+                        "biomarker validation",
+                        "clinical sensitivity",
+                        "specificity",
+                        "assay development",
+                        "clinical trials",
+                    ],
+                    "instructions": "Emphasize clinical validation methodology and regulatory considerations. Focus on translational aspects and clinical utility of identified biomarkers.",
+                    "description": "Comprehensive validation of identified biomarkers through clinical studies to establish sensitivity, specificity, and clinical utility for cancer detection in diverse patient populations.",
+                    "guiding_questions": [
+                        "What sample size ensures adequate statistical power?",
+                        "How do we address population diversity in validation?",
+                        "What regulatory requirements must be considered?",
+                    ],
+                    "search_queries": [
+                        "biomarker clinical validation",
+                        "diagnostic test sensitivity",
+                        "clinical trial design",
+                    ],
+                },
+            ],
         },
     )
 
@@ -139,168 +139,198 @@ async def test_validate_enrichment_response_valid_data(
 
 
 async def test_validate_enrichment_response_missing_objective() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {"research_tasks": []})
+    invalid_response: ObjectiveEnrichmentDTO = cast("ObjectiveEnrichmentDTO", {"research_tasks": []})
 
     with pytest.raises(ValidationError, match="Missing objective in response"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_invalid_objective_type() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {"research_objective": "not a dict", "research_tasks": []})
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO", {"research_objective": "not a dict", "research_tasks": []}
+    )
 
     with pytest.raises(ValidationError, match="Objective must be a dictionary"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_missing_objective_fields() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-        },        "research_tasks": [],
-    })
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+            },
+            "research_tasks": [],
+        },
+    )
 
     with pytest.raises(ValidationError, match="Missing instructions in objective"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_wrong_terms_count() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     with pytest.raises(ValidationError, match="Objective must have exactly 5 core scientific terms"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_insufficient_questions() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2"],
-            "search_queries": ["Q1", "Q2", "Q3"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     with pytest.raises(ValidationError, match="Objective must have at least 3 guiding questions"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_insufficient_queries() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     with pytest.raises(ValidationError, match="Objective must have at least 3 search queries"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_short_instructions() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Short",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Short",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     with pytest.raises(ValidationError, match="Objective instructions too short"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_short_description() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Short",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Short",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     with pytest.raises(ValidationError, match="Objective description too short"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
 async def test_validate_enrichment_response_missing_tasks() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
-        }
-    })
-
-    with pytest.raises(ValidationError, match="Missing tasks in response"):
-        validate_enrichment_response(invalid_response, input_objective=None)
-
-
-async def test_validate_enrichment_response_mismatched_task_count(sample_research_objective: ResearchObjective) -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
-        },
-        "research_tasks": [
-            {
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
                 "search_queries": ["Q1", "Q2", "Q3"],
             }
-        ],
-    })
+        },
+    )
+
+    with pytest.raises(ValidationError, match="Missing tasks in response"):
+        validate_enrichment_response(invalid_response, input_objective=None)
+
+
+async def test_validate_enrichment_response_mismatched_task_count(sample_research_objective: ResearchObjective) -> None:
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [
+                {
+                    "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                    "instructions": "Test instructions that are longer than fifty characters",
+                    "description": "Test description that is longer than fifty characters",
+                    "guiding_questions": ["Q1", "Q2", "Q3"],
+                    "search_queries": ["Q1", "Q2", "Q3"],
+                }
+            ],
+        },
+    )
 
     with pytest.raises(ValidationError, match="Number of enriched tasks doesn't match input objective tasks"):
         validate_enrichment_response(invalid_response, input_objective=sample_research_objective)
 
 
 async def test_validate_enrichment_response_invalid_task_fields() -> None:
-    invalid_response: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
-        },
-        "research_tasks": [
-            {
-                "core_scientific_terms": ["term1", "term2"],
+    invalid_response: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
                 "search_queries": ["Q1", "Q2", "Q3"],
-            }
-        ],
-    })
+            },
+            "research_tasks": [
+                {
+                    "core_scientific_terms": ["term1", "term2"],
+                    "instructions": "Test instructions that are longer than fifty characters",
+                    "description": "Test description that is longer than fifty characters",
+                    "guiding_questions": ["Q1", "Q2", "Q3"],
+                    "search_queries": ["Q1", "Q2", "Q3"],
+                }
+            ],
+        },
+    )
 
     with pytest.raises(ValidationError, match="Task at index 0 must have exactly 5 core scientific terms"):
         validate_enrichment_response(invalid_response, input_objective=None)
@@ -324,7 +354,9 @@ async def test_enrich_objective_generation_success(
 
 @patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation")
 async def test_handle_enrich_objective_success(
-    mock_with_prompt_evaluation: AsyncMock, sample_dto_input: EnrichObjectiveInputDTO, valid_enrichment_response: ObjectiveEnrichmentDTO
+    mock_with_prompt_evaluation: AsyncMock,
+    sample_dto_input: EnrichObjectiveInputDTO,
+    valid_enrichment_response: ObjectiveEnrichmentDTO,
 ) -> None:
     mock_with_prompt_evaluation.return_value = valid_enrichment_response
 
@@ -353,16 +385,19 @@ async def test_handle_enrich_objective_error_handling(
 
 
 async def test_validation_with_empty_research_objective() -> None:
-    response_with_empty_tasks: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
+    response_with_empty_tasks: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
+                "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "instructions": "Test instructions that are longer than fifty characters",
+                "description": "Test description that is longer than fifty characters",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["Q1", "Q2", "Q3"],
+            },
+            "research_tasks": [],
         },
-        "research_tasks": [],
-    })
+    )
 
     objective_with_no_tasks = ResearchObjective(number=1, title="Test objective", research_tasks=[])
 
@@ -370,24 +405,27 @@ async def test_validation_with_empty_research_objective() -> None:
 
 
 async def test_validation_comprehensive_task_validation() -> None:
-    response_with_invalid_task: ObjectiveEnrichmentDTO = cast(ObjectiveEnrichmentDTO, {
-        "research_objective": {
-            "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-            "instructions": "Test instructions that are longer than fifty characters",
-            "description": "Test description that is longer than fifty characters",
-            "guiding_questions": ["Q1", "Q2", "Q3"],
-            "search_queries": ["Q1", "Q2", "Q3"],
-        },
-        "research_tasks": [
-            {
+    response_with_invalid_task: ObjectiveEnrichmentDTO = cast(
+        "ObjectiveEnrichmentDTO",
+        {
+            "research_objective": {
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
-                "instructions": "Short",
+                "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
                 "search_queries": ["Q1", "Q2", "Q3"],
-            }
-        ],
-    })
+            },
+            "research_tasks": [
+                {
+                    "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                    "instructions": "Short",
+                    "description": "Test description that is longer than fifty characters",
+                    "guiding_questions": ["Q1", "Q2", "Q3"],
+                    "search_queries": ["Q1", "Q2", "Q3"],
+                }
+            ],
+        },
+    )
 
     with pytest.raises(ValidationError, match="Task at index 0 instructions too short"):
         validate_enrichment_response(response_with_invalid_task, input_objective=None)

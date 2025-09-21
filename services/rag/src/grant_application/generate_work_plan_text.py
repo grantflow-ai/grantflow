@@ -164,7 +164,6 @@ async def generate_work_plan_component_text(
     work_plan_text: str,
     trace_id: str,
 ) -> str:
-
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
     )

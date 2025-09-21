@@ -3,19 +3,21 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
+import pytest
+from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
 
+from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
+TraceId = str
 
-def create_mock_job_manager() -> AsyncMock:
-    mock_job_manager = AsyncMock()
-    mock_job_manager.create_grant_application_job = AsyncMock()
-    mock_job_manager.update_job_status = AsyncMock()
-    mock_job_manager.add_notification = AsyncMock()
-    return mock_job_manager
+
+@pytest.fixture
+def trace_id() -> TraceId:
+    return "test-trace-id"
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
@@ -24,6 +26,7 @@ async def test_generate_erc_application_for_dna_synthesis(
     melanoma_alliance_full_application_id: str,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
+    trace_id: TraceId,
 ) -> None:
     scenario = load_scenario("erc_poc_dna_synthesis")
 
@@ -45,24 +48,30 @@ async def test_generate_erc_application_for_dna_synthesis(
 
     performance_context.start_stage("generate_application_text")
 
-    mock_job_manager = create_mock_job_manager()
+    async with async_session_maker() as session:
+        grant_application = await session.get(GrantApplication, UUID(melanoma_alliance_full_application_id))
+        assert grant_application is not None
 
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
         patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed", new_callable=AsyncMock),
     ):
-        result = await handle_grant_application_pipeline(
-            grant_application_id=UUID(melanoma_alliance_full_application_id),
+        await handle_grant_application_pipeline(
+            grant_application=grant_application,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            trace_id=trace_id,
         )
-
-        assert result is not None, "Grant application generation should not return None"
-        text, section_texts = result
 
     performance_context.end_stage()
 
     performance_context.start_stage("validate_generated_content")
+
+    async with async_session_maker() as session:
+        grant_application = await session.get(GrantApplication, UUID(melanoma_alliance_full_application_id))
+        assert grant_application is not None
+        text = grant_application.text
+        section_texts = grant_application.section_texts
 
     assert text, "Generated text should not be empty"
     assert len(text) > 1000, f"Generated text too short: {len(text)} characters"

@@ -1,4 +1,3 @@
-
 import json
 from collections.abc import Generator
 from typing import Any
@@ -83,7 +82,6 @@ def mock_pubsub_publisher() -> Generator[MagicMock]:
 
 
 class PubSubTestHelper:
-
     @staticmethod
     def create_pubsub_message(data: dict[str, Any], attributes: dict[str, str] | None = None) -> Any:
         message = MagicMock()

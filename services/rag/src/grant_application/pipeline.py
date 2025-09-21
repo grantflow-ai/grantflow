@@ -95,7 +95,6 @@ async def _verify_prerequisites(
     return grant_template
 
 
-
 def _get_error_details(error: BackendError) -> tuple[str, str]:
     if isinstance(error, InsufficientContextError):
         return (
@@ -195,7 +194,6 @@ async def _handle_pipeline_error(
         )
     except SQLAlchemyError as e:
         raise DatabaseError("Failed to record pipeline error in database") from e
-
 
 
 async def handle_grant_application_pipeline(

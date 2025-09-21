@@ -280,7 +280,6 @@ async def analyze_cfp_sections(
     nlp_analysis: CategorizationAnalysisResult,
     trace_id: str,
 ) -> CFPSectionAnalysis:
-
     formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
     prompt = CFP_SECTION_ANALYZER_PROMPT.substitute(
         cfp_content=cfp_content,
@@ -306,7 +305,6 @@ async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysi
 
     categories_found = sum(1 for v in nlp_analysis.values() if v)
     total_sentences = sum(len(sentences) for sentences in nlp_analysis.values() if isinstance(sentences, list))
-
 
     cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
 

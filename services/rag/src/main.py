@@ -95,11 +95,7 @@ async def handle_request(
             },
         ) as span:
             try:
-                await handle_autofill_request(
-                    request=request,
-                    application=application,
-                    session_maker=session_maker
-                )
+                await handle_autofill_request(request=request, application=application, session_maker=session_maker)
                 span.set_attribute("autofill.success", True)
             except RagJobCancelledError:
                 logger.info(

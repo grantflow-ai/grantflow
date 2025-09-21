@@ -358,7 +358,6 @@ async def handle_extract_cfp_data(
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
 
-
     result = await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data_multi_source",
         prompt_handler=extract_cfp_data_multi_source,
