@@ -1,0 +1,71 @@
+{
+  "test_type": "hybrid_llm_with_buffer_strategy",
+  "strategy": "Flash for \u2264600 words, Flash-Lite for >600 words + 150 word buffer",
+  "buffer_explanation": "LLM receives target+150 words instruction, compliance measured against actual target",
+  "timestamp": 1758200146.896728,
+  "results": [
+    {
+      "test_case": "Standard Grant Section",
+      "selected_model": "gemini-2.5-flash-lite",
+      "model_selection_reason": "Flash-Lite for long content (>600w)",
+      "buffer_strategy": {
+        "actual_min_words": 800,
+        "actual_max_words": 1200,
+        "llm_min_words": 950,
+        "llm_max_words": 1350,
+        "buffer_applied": 150
+      },
+      "actual_word_count": 1040,
+      "generation_time_seconds": 39.530312061309814,
+      "compliance_status": "PASS",
+      "grade": "A",
+      "compliance_percentage": 100.0,
+      "utilization_percentage": 86.66666666666667,
+      "context_rouge_l": 0.06480648064806481,
+      "issues": [],
+      "generated_text_sample": "The development of brain metastases represents a critical and often terminal stage in the progression of malignant melanoma, posing significant treatment challenges that are not adequately addressed by current therapeutic paradigms. Despite the success of immune checkpoint inhibitors in a subset of ..."
+    },
+    {
+      "test_case": "Short Section",
+      "selected_model": "gemini-2.5-flash",
+      "model_selection_reason": "Flash for short content (\u2264600w)",
+      "buffer_strategy": {
+        "actual_min_words": 400,
+        "actual_max_words": 600,
+        "llm_min_words": 550,
+        "llm_max_words": 750,
+        "buffer_applied": 150
+      },
+      "actual_word_count": 481,
+      "generation_time_seconds": 26.41428518295288,
+      "compliance_status": "PASS",
+      "grade": "A",
+      "compliance_percentage": 100.0,
+      "utilization_percentage": 80.16666666666666,
+      "context_rouge_l": 0.15217391304347827,
+      "issues": [],
+      "generated_text_sample": "The development of melanoma brain metastases (MBM) represents a critical clinical challenge, frequently associated with poor prognosis and significant morbidity. Current therapeutic strategies, including targeted therapies and immune checkpoint inhibitors, face substantial hurdles, primarily due to ..."
+    },
+    {
+      "test_case": "Brief Summary",
+      "selected_model": "gemini-2.5-flash",
+      "model_selection_reason": "Flash for short content (\u2264600w)",
+      "buffer_strategy": {
+        "actual_min_words": 200,
+        "actual_max_words": 300,
+        "llm_min_words": 350,
+        "llm_max_words": 450,
+        "buffer_applied": 150
+      },
+      "actual_word_count": 286,
+      "generation_time_seconds": 24.438182830810547,
+      "compliance_status": "PASS",
+      "grade": "A",
+      "compliance_percentage": 100.0,
+      "utilization_percentage": 95.33333333333334,
+      "context_rouge_l": 0.16246498599439776,
+      "issues": [],
+      "generated_text_sample": "Melanoma brain metastasis (MBM) presents a formidable clinical challenge, primarily due to potent immunotherapy resistance mechanisms within the unique tumor microenvironment of the central nervous system. A significant gap exists in our understanding of the dynamic, spatially-resolved cellular inte..."
+    }
+  ]
+}
