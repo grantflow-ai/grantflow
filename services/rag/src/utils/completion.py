@@ -453,7 +453,7 @@ async def handle_completions_request[T](
 
             response = None
             errors.append(e)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             attempts += 1
             logger.warning(
                 "LLM API call timed out",

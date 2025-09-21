@@ -1,4 +1,3 @@
-import time
 from typing import Any
 
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
@@ -21,7 +20,6 @@ async def handle_autofill_request(
 ) -> list[ResearchObjective] | ResearchDeepDive:
     trace_id = request.trace_id
 
-    start_time = time.time()
     logger.info(
         "Starting autofill request",
         request_type=type(request).__name__,
@@ -57,63 +55,32 @@ async def handle_autofill_request(
                 },
             )
 
-    try:
-        if isinstance(request, ResearchPlanAutofillRequest):
-            logger.info(
-                "Generating research plan content",
-                application_id=str(application.id),
-                application_title=application.title,
-                trace_id=trace_id,
-            )
-            result = await generate_research_plan_content(application=application, trace_id=trace_id)
-            duration = time.time() - start_time
-            logger.info(
-                "Research plan generation completed",
-                application_id=str(application.id),
-                objectives_count=len(result),
-                duration_seconds=round(duration, 2),
-                trace_id=trace_id,
-            )
-            return result
+    if isinstance(request, ResearchPlanAutofillRequest):
         logger.info(
-            "Generating research deep dive content",
+            "Generating research plan content",
             application_id=str(application.id),
             application_title=application.title,
             trace_id=trace_id,
         )
-        deep_dive_result = await generate_research_deep_dive_content(application=application, trace_id=trace_id)
-        duration = time.time() - start_time
+        result = await generate_research_plan_content(application=application, trace_id=trace_id)
         logger.info(
-            "Research deep dive generation completed",
+            "Research plan generation completed",
             application_id=str(application.id),
-            fields_count=len(deep_dive_result),
-            duration_seconds=round(duration, 2),
+            objectives_count=len(result),
             trace_id=trace_id,
         )
-        return deep_dive_result
-    except ValidationError:
-        logger.error(
-            "Autofill request failed with validation error",
-            request_type=type(request).__name__,
-            application_id=str(request.application_id),
-            trace_id=trace_id,
-        )
-        raise
-    except Exception as e:
-        logger.error(
-            "Autofill request failed with unexpected error",
-            request_type=type(request).__name__,
-            application_id=str(request.application_id),
-            error=str(e),
-            error_type=type(e).__name__,
-            trace_id=trace_id,
-        )
-        raise ValidationError(
-            f"Autofill request failed: {e!s}",
-            context={
-                "request_type": type(request).__name__,
-                "application_id": str(request.application_id),
-                "error_type": type(e).__name__,
-                "trace_id": trace_id,
-            },
-        ) from e
+        return result
+    logger.info(
+        "Generating research deep dive content",
+        application_id=str(application.id),
+        application_title=application.title,
+        trace_id=trace_id,
+    )
+    deep_dive_result = await generate_research_deep_dive_content(application=application, trace_id=trace_id)
+    logger.info(
+        "Research deep dive generation completed",
+        application_id=str(application.id),
+        fields_count=len(deep_dive_result),
+        trace_id=trace_id,
+    )
+    return deep_dive_result
