@@ -40,6 +40,7 @@ class NotificationEvents(StrEnum):
     INDEXING_IN_PROGRESS = "indexing_in_progress"
     INDEXING_TIMEOUT = "indexing_timeout"
     INSUFFICIENT_CONTEXT_ERROR = "insufficient_context_error"
+    LLM_TIMEOUT = "llm_timeout"
     INTERNAL_ERROR = "internal_error"
     JOB_CANCELLED = "job_cancelled"
     METADATA_GENERATED = "metadata_generated"

@@ -5,7 +5,14 @@ import { logger } from "@/utils/logger";
 import { HealthCheckExtension } from "./health-check";
 
 vi.mock("@/db");
-vi.mock("@/utils/logger");
+vi.mock("@/utils/logger", () => ({
+	logger: {
+		debug: vi.fn(),
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
 
 describe("HealthCheckExtension", () => {
 	let extension: HealthCheckExtension;

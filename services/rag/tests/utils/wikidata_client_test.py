@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -47,8 +47,10 @@ async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock
     }
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await get_scientific_context(["machine learning"], "test-trace")
 
     assert "machine learning" in result
@@ -61,21 +63,28 @@ async def test_get_scientific_context_empty_terms() -> None:
 
 
 async def test_get_scientific_context_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    mock_httpx_response.raise_for_status.side_effect = httpx.HTTPError("HTTP Error")
+    # Mock a 500 server error which should be handled gracefully
+    mock_httpx_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "Server Error", request=MagicMock(), response=MagicMock(status_code=500)
+    )
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await get_scientific_context(["test"], "test-trace")
 
     assert result == ""
 
 
 async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock) -> None:
-    mock_httpx_client.get.side_effect = httpx.HTTPError("Network error")
+    mock_httpx_client.get.side_effect = httpx.NetworkError("Network error")
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await get_scientific_context(["test"], "test-trace")
 
     assert result == ""
@@ -142,8 +151,10 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
 
     terms = ["term1", "term2", "term3", "term4", "term5", "term6"]
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         await get_scientific_context(terms, "test-trace")
 
     assert mock_httpx_client.get.call_count > 1
@@ -164,8 +175,10 @@ async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, moc
     }
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await expand_scientific_terms(["test"], "test-trace")
 
     assert len(result) == 1
@@ -179,21 +192,28 @@ async def test_expand_scientific_terms_empty() -> None:
 
 
 async def test_expand_scientific_terms_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    mock_httpx_response.raise_for_status.side_effect = httpx.HTTPError("HTTP Error")
+    # Mock a 500 server error which should be handled gracefully
+    mock_httpx_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "Server Error", request=MagicMock(), response=MagicMock(status_code=500)
+    )
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await expand_scientific_terms(["test"], "test-trace")
 
     assert result == []
 
 
 async def test_expand_scientific_terms_network_error(mock_httpx_client: AsyncMock) -> None:
-    mock_httpx_client.get.side_effect = httpx.HTTPError("Network error")
+    mock_httpx_client.get.side_effect = httpx.NetworkError("Network error")
 
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+    with patch(
+        "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+        return_value=mock_httpx_client,
+    ):
         result = await expand_scientific_terms(["test"], "test-trace")
 
     assert result == []

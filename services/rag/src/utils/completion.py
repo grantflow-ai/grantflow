@@ -125,7 +125,7 @@ async def make_google_completions_request[T](
     top_k: int | None = None,
     candidate_count: int | None = None,
     trace_id: str,
-    timeout: float = 120,
+    timeout: float = 300,
 ) -> T:
     client = get_google_ai_client()
 
@@ -258,7 +258,7 @@ async def make_anthropic_completions_request[T](
     top_p: float | None = None,
     user_prompt: str,
     trace_id: str,
-    timeout: float = 120,
+    timeout: float = 300,
 ) -> T:
     anthropic_client = get_anthropic_client()
 
@@ -386,7 +386,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
-    timeout: float = 120,  # 2 minutes timeout for LLM API calls ~keep
+    timeout: float = 300,  # 5 minutes timeout for LLM API calls ~keep
     trace_id: str,
 ) -> T:
     attempts = 0
