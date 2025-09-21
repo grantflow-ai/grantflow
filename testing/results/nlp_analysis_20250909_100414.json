@@ -1,0 +1,70 @@
+{
+  "summary": {
+    "test_name": "NLP Analysis",
+    "start_time": "2025-09-09T10:04:14.817743",
+    "end_time": "2025-09-09T10:04:15.218494",
+    "duration_ms": 400,
+    "cfp_content_length": 1251,
+    "categories_found": 8,
+    "total_sentences": 30,
+    "categories_detail": {
+      "money": 4,
+      "date_time": 1,
+      "writing_related": 8,
+      "other_numbers": 4,
+      "orders": 5,
+      "positive_instructions": 3,
+      "negative_instructions": 2,
+      "evaluation_criteria": 3
+    }
+  },
+  "nlp_result": {
+    "money": [
+      "National Science Foundation Research Grant Program - Collaborative Research\n\nSUBMISSION REQUIREMENTS:",
+      "Applications must not exceed 15 pages total, excluding references and figures.",
+      "Budget Justification (3 pages maximum) - Personnel costs, equipment, and supplies\n4.",
+      "SUBMISSION DEADLINE: March 31, 2025 at 5:00 PM EST\nBudget limit: $750,000 over 3 years for collaborative projects."
+    ],
+    "date_time": [
+      "SUBMISSION DEADLINE: March 31, 2025 at 5:00 PM EST\nBudget limit: $750,000 over 3 years for collaborative projects."
+    ],
+    "writing_related": [
+      "National Science Foundation Research Grant Program - Collaborative Research\n\nSUBMISSION REQUIREMENTS:",
+      "Applications must not exceed 15 pages total, excluding references and figures.",
+      "All text must be in 11-point Times New Roman font with 1-inch margins.",
+      "Project Summary (1 page maximum) - Executive overview of research objectives\n2. Research Plan (10 pages maximum) - Detailed methodology and implementation approach  \n3.",
+      "Budget Justification (3 pages maximum) - Personnel costs, equipment, and supplies\n4.",
+      "Biographical Sketches (2 pages per PI) - CV and research experience\n\nEVALUATION CRITERIA:\nProposals will be evaluated based on intellectual merit (60%) and broader impacts (40%).",
+      "SUBMISSION DEADLINE: March 31, 2025 at 5:00 PM EST\nBudget limit: $750,000 over 3 years for collaborative projects.",
+      "FORMAT REQUIREMENTS:\n- PDF format only for electronic submission\n- File naming convention: LastName_ProjectTitle_2025.pdf  \n- No page numbers in headers or footers\n- Figures must be integrated within page limits"
+    ],
+    "other_numbers": [
+      "All text must be in 11-point Times New Roman font with 1-inch margins.",
+      "REQUIRED SECTIONS:\n1.",
+      "Project Summary (1 page maximum) - Executive overview of research objectives\n2. Research Plan (10 pages maximum) - Detailed methodology and implementation approach  \n3.",
+      "Biographical Sketches (2 pages per PI) - CV and research experience\n\nEVALUATION CRITERIA:\nProposals will be evaluated based on intellectual merit (60%) and broader impacts (40%)."
+    ],
+    "recommendations": [],
+    "orders": [
+      "Applications must not exceed 15 pages total, excluding references and figures.",
+      "All text must be in 11-point Times New Roman font with 1-inch margins.",
+      "REQUIRED SECTIONS:\n1.",
+      "Eligibility: Principal investigators must be affiliated with US institutions.",
+      "FORMAT REQUIREMENTS:\n- PDF format only for electronic submission\n- File naming convention: LastName_ProjectTitle_2025.pdf  \n- No page numbers in headers or footers\n- Figures must be integrated within page limits"
+    ],
+    "positive_instructions": [
+      "All text must be in 11-point Times New Roman font with 1-inch margins.",
+      "REQUIRED SECTIONS:\n1.",
+      "Eligibility: Principal investigators must be affiliated with US institutions."
+    ],
+    "negative_instructions": [
+      "Applications must not exceed 15 pages total, excluding references and figures.",
+      "FORMAT REQUIREMENTS:\n- PDF format only for electronic submission\n- File naming convention: LastName_ProjectTitle_2025.pdf  \n- No page numbers in headers or footers\n- Figures must be integrated within page limits"
+    ],
+    "evaluation_criteria": [
+      "Biographical Sketches (2 pages per PI) - CV and research experience\n\nEVALUATION CRITERIA:\nProposals will be evaluated based on intellectual merit (60%) and broader impacts (40%).",
+      "Applications evaluated by peer review panel of domain experts.",
+      "Review process considers innovation potential and methodological rigor."
+    ]
+  }
+}

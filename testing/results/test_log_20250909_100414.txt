@@ -1,0 +1,21 @@
+=== TEST 1: NLP ANALYSIS ===
+NLP Analysis completed in 400ms
+Categories found: 8, Sentences: 30
+
+=== TEST 2: CFP JSON ANALYSIS ===
+CFP Analysis completed in 4ms
+Validation: PASSED
+Total quotes extracted: 20
+
+=== TEST 3: MARKDOWN REPORT GENERATION ===
+Report generation completed in 0ms
+Report length: 7772 characters
+
+=== TEST 4: QUOTE VERIFICATION ===
+Quote verification: 100.0% accuracy
+Quotes checked: 20
+
+=== TEST SUITE COMPLETED ===
+Total duration: 406ms
+All tests passed: True
+Files generated in: cfp_analyzer_test_results/
