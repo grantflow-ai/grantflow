@@ -23,6 +23,7 @@ from packages.shared_utils.src.pubsub import (
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
@@ -140,7 +141,9 @@ async def handle_request(
     if isinstance(request, GrantApplicationRagRequest):
         async with session_maker() as session:
             grant_application = await session.scalar(
-                select_active(GrantApplication).where(GrantApplication.id == request.parent_id)
+                select_active(GrantApplication)
+                .where(GrantApplication.id == request.parent_id)
+                .options(selectinload(GrantApplication.grant_template))
             )
 
             if not grant_application:

@@ -19,7 +19,7 @@ from services.rag.src.grant_template.extract_sections import (
 )
 
 if TYPE_CHECKING:
-    from services.rag.src.grant_template.dto import CFPContentSection
+    from packages.shared_utils.src.dto import CFPContentSection
 
 
 def test_extracted_section_dto_required_fields() -> None:

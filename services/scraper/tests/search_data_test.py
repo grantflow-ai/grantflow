@@ -37,7 +37,6 @@ def test_constants() -> None:
     assert isinstance(TODAY_DATE, date)
 
 
-
 async def test_download_search_data_success() -> None:
     mock_download = AsyncMock()
     mock_download.suggested_filename = "test_grants.csv"
@@ -93,7 +92,6 @@ async def test_download_search_data_success() -> None:
         assert called_grants[0]["title"] == "Test Grant"
 
 
-
 async def test_download_search_data_no_advanced_search_link() -> None:
     mock_page = AsyncMock()
     mock_page.goto = AsyncMock()
@@ -118,7 +116,6 @@ async def test_download_search_data_no_advanced_search_link() -> None:
 
         with pytest.raises(ScraperError, match="Failed to find or click Advanced Search link"):
             await download_search_data()
-
 
 
 async def test_download_search_data_no_results() -> None:
@@ -150,7 +147,6 @@ async def test_download_search_data_no_results() -> None:
         result = await download_search_data()
 
         assert result == []
-
 
 
 async def test_download_search_data_export_fails() -> None:

@@ -30,7 +30,6 @@ async def test_save_markdown_page() -> None:
         mock_save.assert_called_once_with("PA-24-123", "# Test Grant\n\nGrant description")
 
 
-
 async def test_download_and_save_pages() -> None:
     urls = [
         "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html",
@@ -53,7 +52,6 @@ async def test_download_and_save_pages() -> None:
         calls = mock_save.call_args_list
         assert calls[0][1]["result_name"] == "PA-24-123"
         assert calls[1][1]["result_name"] == "PA-24-124"
-
 
 
 async def test_download_grant_pages_with_existing_files() -> None:
@@ -83,7 +81,6 @@ async def test_download_grant_pages_with_existing_files() -> None:
         mock_download_save.assert_called_once_with(urls=expected_urls)
 
 
-
 async def test_download_grant_pages_no_new_files() -> None:
     search_results = cast(
         "list[GrantInfo]",
@@ -104,7 +101,6 @@ async def test_download_grant_pages_no_new_files() -> None:
         assert result == 0
 
         mock_download_save.assert_not_called()
-
 
 
 async def test_download_grant_pages_chunking() -> None:
@@ -131,7 +127,6 @@ async def test_download_grant_pages_chunking() -> None:
         assert len(call_args[0]) == 100
         assert len(call_args[1]) == 100
         assert len(call_args[2]) == 50
-
 
 
 async def test_download_grant_pages_empty_search_results() -> None:
