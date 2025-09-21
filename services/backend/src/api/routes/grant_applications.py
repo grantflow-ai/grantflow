@@ -160,7 +160,6 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         "status": rag_source.indexing_status,
     }
 
-
     if isinstance(rag_source, RagUrl):
         source_response["url"] = rag_source.url
     elif isinstance(rag_source, RagFile):
@@ -277,7 +276,6 @@ async def handle_create_application(
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-
     async with session_maker() as session, session.begin():
         try:
             application = await session.scalar(
@@ -335,7 +333,6 @@ async def handle_update_application(
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-
     async with session_maker() as session, session.begin():
         try:
             application = await session.scalar(
@@ -360,9 +357,7 @@ async def handle_update_application(
             logger.error("Error updating application", exc_info=e)
             raise DatabaseError("Error updating application", context=str(e)) from e
 
-    return await _handle_retrieve_application(
-        application_id, project_id, session_maker
-    )
+    return await _handle_retrieve_application(application_id, project_id, session_maker)
 
 
 @delete(
@@ -376,7 +371,6 @@ async def handle_delete_application(
     application_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-
     async with session_maker() as session, session.begin():
         try:
             application = await session.scalar(
@@ -529,7 +523,6 @@ async def handle_list_applications(
         ge=0,
     ),
 ) -> ApplicationListResponse:
-
     async with session_maker() as session:
         query = (
             select(GrantApplication, GrantTemplate.submission_date)
@@ -613,7 +606,6 @@ async def handle_trigger_autofill(
 ) -> AutofillResponse:
     trace_id = get_trace_id(request)
 
-
     async with session_maker() as session:
         application = await retrieve_application(
             session=session,
@@ -630,7 +622,6 @@ async def handle_trigger_autofill(
         context=data.get("context"),
         trace_id=trace_id,
     )
-
 
     response: AutofillResponse = {
         "message_id": message_id,
@@ -655,7 +646,6 @@ async def handle_duplicate_application(
     data: DuplicateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-
     new_app_id = None
 
     async with session_maker() as session, session.begin():
@@ -742,7 +732,6 @@ async def handle_duplicate_application(
 
             await session.commit()
 
-
         except SQLAlchemyError as e:
             logger.error("Error duplicating application", exc_info=e)
             raise DatabaseError("Error duplicating application", context=str(e)) from e
@@ -765,7 +754,6 @@ async def handle_list_organization_applications(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationListResponse:
-
     async with session_maker() as session:
         ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
 

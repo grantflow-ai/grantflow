@@ -31,10 +31,7 @@ def mock_pubsub_event(grant_application: GrantApplication) -> PubSubEvent:
             data="",
             message_id="test-message-id",
             publish_time="2023-01-01T00:00:00Z",
-            attributes={
-                "application_id": str(grant_application.id),
-                "trace_id": "test-trace-id"
-            },
+            attributes={"application_id": str(grant_application.id), "trace_id": "test-trace-id"},
         )
     )
 
@@ -79,7 +76,9 @@ async def test_get_project_users_with_project_access(
     assert "collaborator-uid" in firebase_uids
 
 
-async def test_get_project_users_empty_result_for_nonexistent_application(async_session_maker: async_sessionmaker[Any]) -> None:
+async def test_get_project_users_empty_result_for_nonexistent_application(
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
     with pytest.raises(ValidationError):
         await get_project_users(async_session_maker, uuid4())
 

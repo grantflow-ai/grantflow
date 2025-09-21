@@ -14,10 +14,13 @@ from packages.shared_utils.src.pubsub import (
     GrantTemplateRagRequest,
     PubSubEvent,
     PubSubMessage,
+    ResearchDeepDiveAutofillRequest,
+    ResearchPlanAutofillRequest,
     SourceProcessingResult,
     WebsocketMessage,
     get_publisher_client,
     get_subscriber_client,
+    publish_autofill_task,
     publish_notification,
     publish_rag_task,
     publish_url_crawling_task,
@@ -45,11 +48,6 @@ def mock_subscriber_client() -> Mock:
         "projects/test-project/subscriptions/test-subscription"
     )
     return client
-
-
-@pytest.fixture
-def trace_id() -> str:
-    return "test-trace-id-123"
 
 
 @pytest.fixture(autouse=True)
@@ -512,6 +510,7 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
         b'{"type":"data",'
         b'"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"event":"source_processing",'
+        b'"trace_id":"test-trace-789",'
         b'"data":{"parent_id":"123e4567-e89b-12d3-a456-426614174000",'
         b'"parent_type":"grant_application",'
         b'"rag_source_id":"323e4567-e89b-12d3-a456-426614174000",'
@@ -738,7 +737,7 @@ async def test_publish_rag_task_success(
         mock_publisher_client.publish.assert_called_once()
 
         published_data = mock_publisher_client.publish.call_args[0][1]
-        assert b'"parent_type":"grant_application"' in published_data
+        assert b'"type":"grant_application"' in published_data
         assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
 
 
@@ -777,7 +776,7 @@ async def test_publish_rag_task_grant_template(
         mock_publisher_client.publish.assert_called_once()
 
         published_data = mock_publisher_client.publish.call_args[0][1]
-        assert b'"parent_type":"grant_template"' in published_data
+        assert b'"type":"grant_template"' in published_data
         assert b'"parent_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
 
 
@@ -848,3 +847,191 @@ async def test_publish_rag_task_message_too_large(
         )
 
     assert "Error publishing RAG processing message" in str(exc_info.value)
+
+
+def test_research_plan_autofill_request_typed_dict() -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    trace_id = "test-trace-id"
+
+    request = ResearchPlanAutofillRequest(
+        application_id=application_id,
+        trace_id=trace_id,
+        field_name="research_goals",
+        context={"key": "value"},
+    )
+
+    assert request.application_id == application_id
+    assert request.trace_id == trace_id
+    assert request.field_name == "research_goals"
+    assert request.context == {"key": "value"}
+
+
+def test_research_plan_autofill_request_minimal() -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    trace_id = "test-trace-id"
+
+    request = ResearchPlanAutofillRequest(
+        application_id=application_id,
+        trace_id=trace_id,
+    )
+
+    assert request.application_id == application_id
+    assert request.trace_id == trace_id
+    assert request.field_name is None
+    assert request.context is None
+
+
+def test_research_deep_dive_autofill_request_typed_dict() -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    trace_id = "test-trace-id"
+
+    request = ResearchDeepDiveAutofillRequest(
+        application_id=application_id,
+        trace_id=trace_id,
+        field_name="methodology",
+        context={"section": "research_plan"},
+    )
+
+    assert request.application_id == application_id
+    assert request.trace_id == trace_id
+    assert request.field_name == "methodology"
+    assert request.context == {"section": "research_plan"}
+
+
+def test_research_deep_dive_autofill_request_minimal() -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+    trace_id = "test-trace-id"
+
+    request = ResearchDeepDiveAutofillRequest(
+        application_id=application_id,
+        trace_id=trace_id,
+    )
+
+    assert request.application_id == application_id
+    assert request.trace_id == trace_id
+    assert request.field_name is None
+    assert request.context is None
+
+
+async def test_publish_autofill_task_research_plan(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
+        ),
+    ):
+        result = await publish_autofill_task(
+            parent_id=application_id,
+            autofill_type="research_plan",
+            field_name="research_goals",
+            context={"key": "value"},
+            trace_id=trace_id,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow",
+            topic="rag-processing",
+        )
+        mock_publisher_client.publish.assert_called_once()
+
+        published_data = mock_publisher_client.publish.call_args[0][1]
+        assert b'"type":"research_plan_autofill"' in published_data
+        assert (
+            b'"application_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+        )
+        assert b'"field_name":"research_goals"' in published_data
+
+
+async def test_publish_autofill_task_research_deep_dive(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
+        ),
+    ):
+        result = await publish_autofill_task(
+            parent_id=application_id,
+            autofill_type="research_deep_dive",
+            field_name="methodology",
+            context={"section": "research_plan"},
+            trace_id=trace_id,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.topic_path.assert_called_once_with(
+            project="grantflow",
+            topic="rag-processing",
+        )
+        mock_publisher_client.publish.assert_called_once()
+
+        published_data = mock_publisher_client.publish.call_args[0][1]
+        assert b'"type":"research_deep_dive_autofill"' in published_data
+        assert (
+            b'"application_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+        )
+        assert b'"field_name":"methodology"' in published_data
+
+
+async def test_publish_autofill_task_minimal_parameters(
+    mock_publisher_client: Mock,
+    trace_id: str,
+) -> None:
+    application_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
+        ),
+    ):
+        result = await publish_autofill_task(
+            parent_id=application_id,
+            autofill_type="research_plan",
+            trace_id=trace_id,
+        )
+
+        assert result == "test-message-id"
+        mock_publisher_client.publish.assert_called_once()
+
+        published_data = mock_publisher_client.publish.call_args[0][1]
+        assert b'"type":"research_plan_autofill"' in published_data
+        assert (
+            b'"application_id":"123e4567-e89b-12d3-a456-426614174000"' in published_data
+        )
+        assert b'"field_name":null' in published_data
+        assert b'"context":null' in published_data

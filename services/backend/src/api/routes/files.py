@@ -31,7 +31,6 @@ async def handle_convert_file(
     output_format = data["output_format"].lower()
     filename = data.get("filename", "converted_document")
 
-
     if not html_content.strip():
         raise ValidationError("HTML content cannot be empty")
 
@@ -55,7 +54,6 @@ async def handle_convert_file(
                 heading_style="atx",
                 strip=["colgroup", "col"],
             ).encode("utf-8")
-
 
         return Response[bytes](
             content=file_content,

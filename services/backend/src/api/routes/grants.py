@@ -69,7 +69,6 @@ async def handle_search_grants(
 ) -> list[GrantInfoResponse]:
     limit = min(limit, 100)
 
-
     try:
         async with session_maker() as session:
             query = select_active(Grant)
@@ -154,7 +153,6 @@ async def handle_search_grants(
 
 @get("/grants/{grant_id:str}", operation_id="GetGrantDetails")
 async def handle_get_grant_details(grant_id: str, session_maker: async_sessionmaker[Any]) -> GrantInfoResponse:
-
     try:
         async with session_maker() as session:
             query = select_active(Grant).where(Grant.document_number == grant_id)
@@ -199,7 +197,6 @@ async def handle_create_subscription(
     data: SubscriptionRequest,
     session_maker: async_sessionmaker[Any],
 ) -> SubscriptionResponse:
-
     try:
         async with session_maker() as session, session.begin():
             subscription_data = {
@@ -216,7 +213,6 @@ async def handle_create_subscription(
                     .returning(GrantMatchingSubscription.id)
                 )
                 subscription_id = result.scalar_one()
-
 
                 return SubscriptionResponse(
                     id=str(subscription_id),
@@ -245,7 +241,6 @@ async def handle_unsubscribe(
     data: UnsubscribeRequest,
     session_maker: async_sessionmaker[Any],
 ) -> UnsubscribeResponse:
-
     try:
         async with session_maker() as session, session.begin():
             subscription = await session.scalar(
@@ -263,7 +258,6 @@ async def handle_unsubscribe(
                 .where(GrantMatchingSubscription.id == subscription.id)
                 .values(unsubscribed=True, unsubscribed_at=datetime.now(UTC))
             )
-
 
             return UnsubscribeResponse(
                 message="Successfully unsubscribed from grant notifications",

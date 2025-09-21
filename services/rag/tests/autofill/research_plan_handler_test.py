@@ -121,54 +121,55 @@ async def test_generate_research_plan_content_with_mocks(
 
 def test_validate_research_plan_response(mock_logger: MagicMock) -> None:
     from packages.shared_utils.src.exceptions import ValidationError
+    from packages.db.src.json_objects import ResearchObjective, ResearchTask
 
-    from services.rag.src.autofill.research_plan_handler import _validate_research_plan_response
+    from services.rag.src.autofill.research_plan_handler import ResearchPlanResponse, _validate_research_plan_response
 
-    valid_response = {
-        "research_objectives": [
-            {
-                "number": 1,
-                "title": "Test Objective Title",
-                "description": "This is a detailed description of the test objective that meets the minimum length requirement",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "First Test Task",
-                        "description": "This is a detailed description of the first test task with sufficient content",
-                    },
-                    {
-                        "number": 2,
-                        "title": "Second Test Task",
-                        "description": "This is a detailed description of the second test task with sufficient content",
-                    },
+    valid_response = ResearchPlanResponse(
+        research_objectives=[
+            ResearchObjective(
+                number=1,
+                title="Test Objective Title",
+                description="This is a detailed description of the test objective that meets the minimum length requirement",
+                research_tasks=[
+                    ResearchTask(
+                        number=1,
+                        title="First Test Task",
+                        description="This is a detailed description of the first test task with sufficient content",
+                    ),
+                    ResearchTask(
+                        number=2,
+                        title="Second Test Task",
+                        description="This is a detailed description of the second test task with sufficient content",
+                    ),
                 ],
-            },
-            {
-                "number": 2,
-                "title": "Second Objective Title",
-                "description": "This is a detailed description of the second test objective that meets the minimum length requirement",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "Another Test Task",
-                        "description": "This is a detailed description of another test task with sufficient content",
-                    },
-                    {
-                        "number": 2,
-                        "title": "Final Test Task",
-                        "description": "This is a detailed description of the final test task with sufficient content",
-                    },
+            ),
+            ResearchObjective(
+                number=2,
+                title="Second Objective Title",
+                description="This is a detailed description of the second test objective that meets the minimum length requirement",
+                research_tasks=[
+                    ResearchTask(
+                        number=1,
+                        title="Another Test Task",
+                        description="This is a detailed description of another test task with sufficient content",
+                    ),
+                    ResearchTask(
+                        number=2,
+                        title="Final Test Task",
+                        description="This is a detailed description of the final test task with sufficient content",
+                    ),
                 ],
-            },
+            ),
         ]
-    }
+    )
 
     _validate_research_plan_response(valid_response)
 
     invalid_response = {"research_objectives": [{"number": 1}]}
 
     with pytest.raises(ValidationError):
-        _validate_research_plan_response(invalid_response)
+        _validate_research_plan_response(invalid_response)  # type: ignore[arg-type]
 
 
 def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
@@ -176,15 +177,15 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
 
     from services.rag.src.autofill.research_plan_handler import _validate_research_plan_response
 
-    with pytest.raises(ValidationError, match="Missing 'research_objectives'"):
-        _validate_research_plan_response({"something_else": []})
+    with pytest.raises(KeyError):
+        _validate_research_plan_response({"something_else": []})  # type: ignore[typeddict-item,typeddict-unknown-key]
 
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 0"):
-        _validate_research_plan_response({"research_objectives": []})
+        _validate_research_plan_response({"research_objectives": []})  # type: ignore[arg-type]
 
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 4"):
         _validate_research_plan_response(
-            {
+            {  # type: ignore[arg-type]
                 "research_objectives": [
                     {
                         "number": 1,
