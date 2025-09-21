@@ -24,9 +24,13 @@ def encode_hook(obj: Any) -> Any:
         }
 
         if hasattr(obj, "code"):
-            error_dict["code"] = str(getattr(obj, "code", ""))
+            code_value = getattr(obj, "code", None)
+            error_dict["code"] = code_value if code_value is not None else ""
         if hasattr(obj, "details"):
-            error_dict["details"] = str(getattr(obj, "details", ""))
+            details_value = getattr(obj, "details", None)
+            error_dict["details"] = (
+                str(details_value) if details_value is not None else ""
+            )
         if hasattr(obj, "response"):
             response = getattr(obj, "response", None)
             if response and hasattr(response, "status_code"):

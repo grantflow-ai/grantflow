@@ -88,11 +88,23 @@ async def test_generate_sections_stage(
         return_value=sample_generate_sections_dto,
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
     mock_handle_generate_sections.assert_called_once()
     mock_verify_sources.assert_called_once()
@@ -115,11 +127,23 @@ async def test_extract_relationships_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
     mock_handle_extract_relationships.assert_not_called()
 
@@ -141,11 +165,23 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
     mock_handle_enrich_objectives.assert_not_called()
 
@@ -167,11 +203,23 @@ async def test_insufficient_context_error_handling(
         side_effect=InsufficientContextError("Not enough context"),
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
 
 async def test_indexing_timeout_error_handling(
@@ -191,11 +239,23 @@ async def test_indexing_timeout_error_handling(
         side_effect=ValidationError("indexing timeout occurred"),
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
 
 async def test_generic_backend_error_handling(
@@ -215,38 +275,23 @@ async def test_generic_backend_error_handling(
         side_effect=BackendError("Unexpected backend error"),
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
-
-
-async def test_missing_grant_template_validation(
-    mocker: MockerFixture,
-    grant_application: GrantApplication,
-    sample_rag_sources: list[RagSource],
-    async_session_maker: async_sessionmaker[Any],
-    trace_id: str,
-    mock_pubsub_for_pipeline_testing: Any,
-) -> None:
-    mocker.patch(
-        "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
-        return_value=None,
-    )
-
+    # Load the grant application with the template relationship
     async with async_session_maker() as session:
-        from packages.db.src.tables import GrantTemplate
-        from sqlalchemy import delete
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
 
-        await session.execute(delete(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id))
-        await session.commit()
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
 
 async def test_missing_cfp_analysis_validation(
@@ -272,11 +317,23 @@ async def test_missing_cfp_analysis_validation(
         )
         await session.commit()
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )
 
 
 async def test_pipeline_creates_real_job_entry(
@@ -298,8 +355,20 @@ async def test_pipeline_creates_real_job_entry(
         return_value=sample_generate_sections_dto,
     )
 
-    await handle_grant_application_pipeline(
-        grant_application=grant_application,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    # Load the grant application with the template relationship
+    async with async_session_maker() as session:
+        from packages.db.src.query_helpers import select_active
+        from sqlalchemy.orm import selectinload
+
+        loaded_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+        assert loaded_application
+
+        await handle_grant_application_pipeline(
+            grant_application=loaded_application,
+            session_maker=async_session_maker,
+            trace_id=trace_id,
+        )

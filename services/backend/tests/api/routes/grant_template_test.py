@@ -157,7 +157,6 @@ async def test_generate_grant_template_success(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_template",
         parent_id=grant_template_id,
-        stage=ANY,
         trace_id=ANY,
     )
 
@@ -211,7 +210,6 @@ async def test_generate_grant_template_with_created_status(
     mock_publish_rag_task.assert_called_once_with(
         parent_type="grant_template",
         parent_id=grant_template_id,
-        stage=ANY,
         trace_id=ANY,
     )
 
