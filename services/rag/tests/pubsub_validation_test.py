@@ -163,7 +163,6 @@ async def test_handle_request_grant_template_success() -> None:
     mock_session_maker.return_value.__aenter__.return_value = mock_session
     mock_session_maker.return_value.__aexit__.return_value = None
 
-    # Create mock grant template
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_grant_template.id = UUID("123e4567-e89b-12d3-a456-426614174000")
     mock_session.scalar.return_value = mock_grant_template
@@ -197,7 +196,6 @@ async def test_handle_request_grant_application_success() -> None:
     mock_session_maker.return_value.__aenter__.return_value = mock_session
     mock_session_maker.return_value.__aexit__.return_value = None
 
-    # Create mock grant application with template
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_grant_template.grant_sections = [{"id": "section1"}]
 
@@ -235,7 +233,6 @@ async def test_handle_request_autofill_success() -> None:
     mock_session_maker.return_value.__aenter__.return_value = mock_session
     mock_session_maker.return_value.__aexit__.return_value = None
 
-    # Create mock grant application
     mock_grant_application = AsyncMock(spec=GrantApplication)
     mock_grant_application.id = UUID("123e4567-e89b-12d3-a456-426614174000")
     mock_session.scalar.return_value = mock_grant_application
@@ -265,7 +262,7 @@ async def test_handle_request_grant_template_not_found() -> None:
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
     mock_session_maker.return_value.__aexit__.return_value = None
-    mock_session.scalar.return_value = None  # Grant template not found
+    mock_session.scalar.return_value = None
 
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
