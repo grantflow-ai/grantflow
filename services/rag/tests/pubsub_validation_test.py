@@ -160,35 +160,6 @@ async def test_handle_request_grant_template_success(
     async_session_maker: Any,
     grant_template: Any,
 ) -> None:
-    print(f"DEBUG: grant_template fixture ID: {grant_template.id}")
-    print(f"DEBUG: grant_template fixture deleted_at: {grant_template.deleted_at}")
-
-    # Let's verify the template actually exists in the database
-    from packages.db.src.query_helpers import select_active
-    from packages.db.src.tables import GrantTemplate
-
-    async with async_session_maker() as session:
-        from sqlalchemy import select, func
-
-        # First check without select_active
-        result_raw = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.id == grant_template.id)
-        )
-        print(f"DEBUG: Raw query result: {result_raw}")
-
-        # Then with select_active
-        active_template = await session.scalar(
-            select_active(GrantTemplate).where(GrantTemplate.id == grant_template.id)
-        )
-        print(f"DEBUG: select_active query result: {active_template}")
-
-        # Check all templates in database
-        all_count = await session.scalar(select(func.count(GrantTemplate.id)))
-        print(f"DEBUG: Total templates in DB: {all_count}")
-
-        active_count = await session.scalar(select(func.count(GrantTemplate.id)).where(GrantTemplate.deleted_at.is_(None)))
-        print(f"DEBUG: Active templates in DB: {active_count}")
-
     request = GrantTemplateRagRequest(
         parent_id=grant_template.id,
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
@@ -198,7 +169,7 @@ async def test_handle_request_grant_template_success(
 
     # Only mock the actual pipeline execution, not the database
     with patch(
-        "services.rag.src.grant_template.pipeline.handle_grant_template_pipeline",
+        "services.rag.src.main.handle_grant_template_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
         await handle_request_fn(data=event, session_maker=async_session_maker)
@@ -229,7 +200,7 @@ async def test_handle_request_grant_application_success(
 
     # Only mock the actual pipeline execution, not the database
     with patch(
-        "services.rag.src.grant_application.pipeline.handle_grant_application_pipeline",
+        "services.rag.src.main.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
         await handle_request_fn(data=event, session_maker=async_session_maker)
@@ -256,7 +227,7 @@ async def test_handle_request_autofill_success(
 
     # Only mock the actual handler, not the database
     with patch(
-        "services.rag.src.autofill.handler.handle_autofill_request",
+        "services.rag.src.main.handle_autofill_request",
         new_callable=AsyncMock,
     ) as mock_autofill:
         await handle_request_fn(data=event, session_maker=async_session_maker)
@@ -299,7 +270,7 @@ async def test_handle_request_pipeline_error_propagates(
     # Only mock the pipeline to simulate an error
     with (
         patch(
-            "services.rag.src.grant_template.pipeline.handle_grant_template_pipeline",
+            "services.rag.src.main.handle_grant_template_pipeline",
             side_effect=error,
         ),
         pytest.raises(Exception, match="Pipeline failed"),
