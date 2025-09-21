@@ -25,7 +25,6 @@ logger = get_logger(__name__)
 
 
 def _serialize_checkpoint_data[DTOType](data: DTOType) -> dict[str, Any]:
-    """Convert stage DTOs into JSON-safe dictionaries."""
     return cast("dict[str, Any]", to_builtins(data))
 
 
@@ -70,7 +69,6 @@ class BaseJobManager[
     async def get_or_create_job(self) -> JobT: ...
 
     async def to_next_job_stage(self, dto: DTOType) -> None:
-        """Persist checkpoint data and publish the next stage."""
         current_index = self.pipeline_stages.index(self.current_stage)
         if current_index >= len(self.pipeline_stages) - 1:
             raise ValueError(f"No next stage after {self.current_stage}")
@@ -89,7 +87,6 @@ class BaseJobManager[
             job.current_stage = current_index + 1
             await session.commit()
 
-        # Stage transition handled by pubsub and notifications
 
         await publish_rag_task(
             parent_type=self.parent_type,
@@ -135,7 +132,6 @@ class BaseJobManager[
         if self.job_id is None:
             raise RuntimeError("Job ID not set. Create a job first.")
 
-        # Notification tracking handled by database and pubsub
 
         current_pipeline_stage = self.pipeline_stages.index(self.current_stage)
         total_pipeline_stages = len(self.pipeline_stages)

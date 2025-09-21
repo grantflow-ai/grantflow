@@ -30,7 +30,6 @@ def _make_enrichment_data(
 
 @pytest.fixture
 def sample_enrichment_response() -> ObjectiveEnrichmentResponse:
-    """Sample enrichment response for testing."""
     research_objective = _make_enrichment_data(
         description="Develop novel biomarkers for early cancer detection",
         instructions="Focus on identifying protein-based biomarkers",
@@ -59,7 +58,6 @@ def sample_enrichment_response() -> ObjectiveEnrichmentResponse:
 async def test_enrich_objective_with_wikidata_success(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
-    """Test successful Wikidata enrichment."""
     mock_get_scientific_context.return_value = (
         "**Biochemistry:** biomarkers, proteomics\n**Analytical Chemistry:** mass spectrometry"
     )
@@ -82,7 +80,6 @@ async def test_enrich_objective_with_wikidata_success(
 async def test_enrich_objective_with_wikidata_empty_tasks(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
-    """Test Wikidata enrichment with empty research tasks."""
     enrichment_response_no_tasks = deepcopy(sample_enrichment_response)
     enrichment_response_no_tasks["research_tasks"] = []
     enrichment_response_no_tasks["research_objective"]["core_scientific_terms"] = ["biomarkers"]
@@ -102,7 +99,6 @@ async def test_enrich_objective_with_wikidata_empty_tasks(
 async def test_enrich_objective_with_wikidata_multiple_tasks(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
-    """Test Wikidata enrichment with multiple research tasks."""
     enrichment_response_multi_tasks = deepcopy(sample_enrichment_response)
     enrichment_response_multi_tasks["research_objective"]["core_scientific_terms"] = [
         "biomarkers",
@@ -161,7 +157,6 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
 async def test_enrich_objective_with_wikidata_error_handling(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
-    """Test error handling when Wikidata service fails."""
     enrichment_response_with_terms = deepcopy(sample_enrichment_response)
     enrichment_response_with_terms["research_objective"]["core_scientific_terms"] = ["biomarkers"]
     enrichment_response_with_terms["research_tasks"] = [

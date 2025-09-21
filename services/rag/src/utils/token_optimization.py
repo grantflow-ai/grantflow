@@ -53,7 +53,7 @@ class SentenceInfo(TypedDict):
 
 
 async def smart_parse_documents_with_batched_tokens(
-    sentence_infos: list[SentenceInfo], max_tokens: int, trace_id: str
+    sentence_infos: list[SentenceInfo], max_tokens: int, trace_id: str  # noqa: ARG001
 ) -> tuple[list[str], int]:
     if not sentence_infos:
         return [], 0
@@ -80,6 +80,5 @@ async def smart_parse_documents_with_batched_tokens(
 
     final_docs = [" ".join(sentences).strip() for sentences in doc_contents.values() if sentences]
 
-    # Document parsing complete - optimized for token limit
 
     return final_docs, total_tokens

@@ -255,7 +255,7 @@ async def publish_rag_task(
             stage=cast("GrantApplicationStageEnum", stage),
             trace_id=trace_id,
         )
-    else:  # grant_template
+    else:  
         data = GrantTemplateRagRequest(
             parent_id=UUID(str(parent_id)),
             stage=cast("GrantTemplateStageEnum", stage),
@@ -268,7 +268,7 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
-            stage=stage,  # msgspec handles enum serialization via encode_hook
+            stage=stage,  
             message_size=len(message_data),
         )
 
@@ -338,7 +338,7 @@ async def publish_autofill_task(
             field_name=field_name,
             context=context,
         )
-    else:  # research_deep_dive
+    else:  
         autofill_request = ResearchDeepDiveAutofillRequest(
             application_id=UUID(str(parent_id)),
             trace_id=trace_id,
@@ -514,7 +514,6 @@ async def publish_email_notification(
 ) -> str:
     client = get_publisher_client()
 
-    # Use empty message body and send data as attributes to avoid corruption issues
     message_data = b""
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
@@ -529,7 +528,6 @@ async def publish_email_notification(
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
-            # Put data in attributes instead of message body
             attributes = {"application_id": str(application_id)}
             if trace_id:
                 attributes["trace_id"] = trace_id

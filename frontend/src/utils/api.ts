@@ -81,7 +81,6 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				(request, options) => {
-					// Ensure every request has a trace_id
 					if (!request.headers.get("X-Trace-ID")) {
 						const traceId = generateTraceId();
 						request.headers.set("X-Trace-ID", traceId);
@@ -92,7 +91,6 @@ export function getClient(): KyInstance {
 						});
 					}
 
-					// Log request details
 					let requestBody: unknown;
 					if (options.body) {
 						try {

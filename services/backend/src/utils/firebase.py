@@ -268,7 +268,6 @@ async def delete_user(uid: str) -> None:
     handler = as_async_callable(firebase_delete_user)
     try:
         await handler(uid, app=get_firebase_app())
-        # Deleted Firebase user successfully
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             logger.warning("User not found for deletion", firebase_uid=uid)
@@ -300,7 +299,6 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
 
     try:
         await db.collection("user-deletion-requests").document(uid).set(doc_data)
-        # Scheduled user for deletion successfully
         return doc_data
     except Exception as e:
         logger.warning("Error scheduling user deletion", firebase_uid=uid, exc_info=e)
@@ -345,7 +343,6 @@ async def cancel_user_deletion(uid: str) -> bool:
             }
         )
 
-        # Cancelled user deletion successfully
         return True
     except Exception as e:
         logger.warning("Error cancelling user deletion", firebase_uid=uid, exc_info=e)
@@ -368,7 +365,6 @@ async def schedule_organization_deletion(organization_id: str, grace_period_days
 
     try:
         await db.collection("organization-deletion-requests").document(organization_id).set(doc_data)
-        # Scheduled organization for deletion successfully
         return doc_data
     except Exception as e:
         logger.warning("Error scheduling organization deletion", organization_id=organization_id, exc_info=e)
@@ -413,7 +409,6 @@ async def cancel_organization_deletion(organization_id: str) -> bool:
             }
         )
 
-        # Cancelled organization deletion successfully
         return True
     except Exception as e:
         logger.warning("Error cancelling organization deletion", organization_id=organization_id, exc_info=e)

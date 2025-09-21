@@ -17,12 +17,8 @@ from services.rag.src.grant_template.dto import OrganizationNamespace
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
 from services.rag.src.grant_template.extract_sections import handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
-from services.rag.src.grant_template.pipeline_dto import (
-    AnalyzeCFPContentStageDTO,
-    ExtractCFPContentStageDTO,
-    ExtractionSectionsStageDTO,
-    StageDTO,
-)
+from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO, AnalyzeCFPContentStageDTO, ExtractionSectionsStageDTO, \
+    StageDTO
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
@@ -88,7 +84,7 @@ async def handle_cfp_extraction_stage(
                 for org in funding_organizations
                 if str(org.id) == extraction_result["organization_id"]
             ),
-            None,  # Default value when no match found
+            None,
         )
         if extraction_result["organization_id"]
         else None
@@ -112,7 +108,6 @@ async def handle_cfp_extraction_stage(
         },
     )
 
-    # CFP extraction tracked via notifications
 
     return ExtractCFPContentStageDTO(extracted_data=extraction_result, organization=organization)
 
@@ -201,7 +196,6 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
-    # Metadata generation tracked via notifications
 
     section_metadata = await handle_generate_grant_template_metadata(
         cfp_content="\n".join(
@@ -303,7 +297,6 @@ async def handle_save_grant_template(
                 },
             )
 
-            # Template save success tracked via notifications
 
             return cast("GrantTemplate", updated_template)
         except SQLAlchemyError as e:

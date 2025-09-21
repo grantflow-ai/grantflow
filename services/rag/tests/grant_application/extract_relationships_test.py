@@ -10,7 +10,6 @@ from services.rag.src.grant_application.extract_relationships import handle_extr
 
 @pytest.fixture
 def sample_research_objectives() -> list[ResearchObjective]:
-    """Sample research objectives for testing."""
     return [
         ResearchObjective(
             number=1,
@@ -41,7 +40,6 @@ def sample_research_objectives() -> list[ResearchObjective]:
 
 @pytest.fixture
 def sample_grant_section() -> dict[str, Any]:
-    """Sample grant section for testing."""
     return {
         "id": "research_plan",
         "title": "Research Plan",
@@ -60,7 +58,6 @@ def sample_grant_section() -> dict[str, Any]:
 
 @pytest.fixture
 def sample_form_inputs() -> dict[str, Any]:
-    """Sample form inputs for testing."""
     return {
         "background_context": "This is a cancer research project focusing on biomarker discovery",
         "institution": "University of Research",
@@ -77,8 +74,6 @@ async def test_handle_extract_relationships_success(
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    """Test successful relationship extraction."""
-    # Setup mock responses
     mock_relationships_response = {
         "relationships": [
             ("1", "2", "The biomarkers identified in objective 1 will be used as features in the ML model"),
@@ -96,7 +91,6 @@ async def test_handle_extract_relationships_success(
     test_app_id = str(uuid4())
     test_trace_id = str(uuid4())
 
-    # Execute
     result = await handle_extract_relationships(
         application_id=test_app_id,
         research_objectives=sample_research_objectives,
@@ -105,7 +99,6 @@ async def test_handle_extract_relationships_success(
         trace_id=test_trace_id,
     )
 
-    # Verify result structure
     assert isinstance(result, dict)
     assert "1" in result
     assert "2" in result
@@ -114,20 +107,16 @@ async def test_handle_extract_relationships_success(
     assert "2.1" in result
     assert "2.2" in result
 
-    # Verify relationship data
     assert len(result["1"]) == 2
     assert result["1"][0] == ("2", "The biomarkers identified in objective 1 will be used as features in the ML model")
     assert result["1"][1] == ("3", "Validated biomarkers are needed for clinical validation")
 
-    # Verify service calls
     mock_with_prompt_evaluation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
-    # Verify retrieval was called with correct parameters
     retrieval_call = mock_retrieve_documents.call_args
     assert retrieval_call.kwargs["application_id"] == test_app_id
 
-    # Verify prompt evaluation was called with correct parameters
     eval_call = mock_with_prompt_evaluation.call_args
     assert eval_call.kwargs["prompt_identifier"] == "extract_relationships"
     assert eval_call.kwargs["research_objectives"] == sample_research_objectives
@@ -141,12 +130,9 @@ async def test_handle_extract_relationships_empty_objectives(
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    """Test relationship extraction with empty objectives list."""
-    # Setup mock response for empty objectives
     mock_with_prompt_evaluation.return_value = {"relationships": []}
     mock_retrieve_documents.return_value = []
 
-    # Execute with empty objectives
     result = await handle_extract_relationships(
         application_id=str(uuid4()),
         research_objectives=[],
@@ -155,11 +141,9 @@ async def test_handle_extract_relationships_empty_objectives(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, dict)
     assert len(result) == 0
 
-    # Verify service call
     mock_with_prompt_evaluation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
@@ -172,8 +156,6 @@ async def test_handle_extract_relationships_single_objective(
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    """Test relationship extraction with single objective."""
-    # Single objective with single task
     single_objective = [
         ResearchObjective(
             number=1,
@@ -184,14 +166,12 @@ async def test_handle_extract_relationships_single_objective(
         )
     ]
 
-    # Setup mock response
-    mock_relationships_response = {
-        "relationships": []  # No relationships for single objective
+    mock_relationships_response: dict[str, list[Any]] = {
+        "relationships": []
     }
     mock_with_prompt_evaluation.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
-    # Execute
     result = await handle_extract_relationships(
         application_id=str(uuid4()),
         research_objectives=single_objective,
@@ -200,11 +180,9 @@ async def test_handle_extract_relationships_single_objective(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, dict)
-    assert len(result) == 0  # No relationships for single objective
+    assert len(result) == 0
 
-    # Verify service call
     mock_with_prompt_evaluation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
@@ -218,8 +196,6 @@ async def test_handle_extract_relationships_complex_dependencies(
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    """Test relationship extraction with complex interdependencies."""
-    # Setup mock response with complex relationships
     mock_relationships_response = {
         "relationships": [
             ("1", "2", "Biomarkers serve as ML features"),
@@ -239,7 +215,6 @@ async def test_handle_extract_relationships_complex_dependencies(
     mock_with_prompt_evaluation.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
-    # Execute
     result = await handle_extract_relationships(
         application_id=str(uuid4()),
         research_objectives=sample_research_objectives,
@@ -248,7 +223,6 @@ async def test_handle_extract_relationships_complex_dependencies(
         trace_id=str(uuid4()),
     )
 
-    # Verify complex relationships are captured
     assert len(result["1"]) == 2
     assert len(result["2"]) == 2
     assert len(result["3"]) == 2
@@ -256,7 +230,6 @@ async def test_handle_extract_relationships_complex_dependencies(
     assert len(result["1.2"]) == 2
     assert len(result["2.1"]) == 2
 
-    # Verify bidirectional relationships
     assert ("2", "Biomarkers serve as ML features") in result["1"]
     assert ("1", "ML model depends on biomarker data quality") in result["2"]
 
@@ -269,8 +242,6 @@ async def test_handle_extract_relationships_no_form_inputs(
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
 ) -> None:
-    """Test relationship extraction with minimal form inputs."""
-    # Setup mock response
     mock_relationships_response = {
         "relationships": [
             ("1", "2", "Basic relationship without context"),
@@ -279,7 +250,6 @@ async def test_handle_extract_relationships_no_form_inputs(
     mock_with_prompt_evaluation.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
-    # Execute with empty form inputs
     result = await handle_extract_relationships(
         application_id=str(uuid4()),
         research_objectives=sample_research_objectives,
@@ -288,12 +258,10 @@ async def test_handle_extract_relationships_no_form_inputs(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, dict)
     assert len(result["1"]) == 1
     assert result["1"][0] == ("2", "Basic relationship without context")
 
-    # Verify service call with empty form inputs
     mock_with_prompt_evaluation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
@@ -307,12 +275,9 @@ async def test_handle_extract_relationships_error_handling(
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    """Test error handling when relationship extraction fails."""
-    # Setup mock to raise exception
     mock_with_prompt_evaluation.side_effect = Exception("Relationship extraction service error")
     mock_retrieve_documents.return_value = []
 
-    # Execute and verify exception is propagated
     with pytest.raises(Exception, match="Relationship extraction service error"):
         await handle_extract_relationships(
             application_id=str(uuid4()),
@@ -322,6 +287,5 @@ async def test_handle_extract_relationships_error_handling(
             trace_id=str(uuid4()),
         )
 
-    # Verify service was called
     mock_with_prompt_evaluation.assert_called_once()
     mock_retrieve_documents.assert_called_once()

@@ -54,11 +54,9 @@ class InvitationTokenResponse(TypedDict):
     operation_id="ListOrganizationInvitations",
 )
 async def handle_list_organization_invitations(
-    request: APIRequest,
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationInvitationResponse]:
-    # Listing organization invitations
 
     async with session_maker() as session:
         organization = await session.scalar(
@@ -98,7 +96,6 @@ async def handle_create_organization_invitation(
     data: CreateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationTokenResponse:
-    # Creating organization invitation
 
     async with session_maker() as session, session.begin():
         try:
@@ -182,7 +179,8 @@ async def handle_update_organization_invitation(
     data: UpdateOrganizationInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationInvitationResponse:
-    # Updating organization invitation
+    logger.info(
+        "Updating organization invitation",
         invitation_id=invitation_id,
         uid=request.auth,
     )
@@ -268,7 +266,8 @@ async def handle_delete_organization_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Deleting organization invitation
+    logger.info(
+        "Deleting organization invitation",
         invitation_id=invitation_id,
         uid=request.auth,
     )

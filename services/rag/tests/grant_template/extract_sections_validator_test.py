@@ -19,14 +19,17 @@ def create_section(
     title: str = "Test Section",
     order: int = 1,
 ) -> ExtractedSectionDTO:
-    return {
+    result: ExtractedSectionDTO = {
         "id": section_id,
         "title": title,
-        "parent_id": parent_section_id,
-        "is_detailed_research_plan": is_detailed_research_plan,
         "is_long_form": is_long_form,
         "order": order,
     }
+    if parent_section_id is not None:
+        result["parent_id"] = parent_section_id
+    if is_detailed_research_plan is not None:
+        result["is_detailed_research_plan"] = is_detailed_research_plan
+    return result
 
 
 def test_validate_empty_sections() -> None:

@@ -13,12 +13,10 @@ from services.rag.src.utils.retrieval import retrieve_documents
 
 
 class RelationshipPair(TypedDict):
-    """A single relationship between two research elements."""
     target_id: str
     description: str
 
 
-# Type alias for the relationships mapping: source_id -> [relationship_pairs]
 ResearchRelationships = dict[str, list[tuple[str, str]]]
 
 

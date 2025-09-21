@@ -216,7 +216,6 @@ class AdaptiveTimeoutCalculator:
 
         self.timeout_multipliers[complexity_level] = new_multiplier
 
-        # Timeout multiplier updated based on performance
 
     def get_performance_stats(self) -> dict[str, Any]:
         if not self.performance_history:
@@ -315,7 +314,6 @@ class EvaluationCache:
         entry.access_count += 1
         self._update_access_order(key)
 
-        # Cache hit - returning cached result
 
         return entry.result
 
@@ -340,7 +338,6 @@ class EvaluationCache:
         self._cache[key] = entry
         self._update_access_order(key)
 
-        # Result cached for future use
 
     def clear(self) -> None:
         self._cache.clear()
@@ -679,7 +676,6 @@ async def smart_evaluate_output(
 
             _adaptive_timeout_calculator.record_performance(metrics)
 
-            # Performance metrics recorded for adaptive timeout
 
     return result, complexity_analysis
 
@@ -817,7 +813,6 @@ async def optimized_prompt_evaluation[T](
 
             if not failing_criteria:
                 time.time() - start_time
-                # Evaluation passed - return result
                 return cast("T", model_output)
 
             if (
@@ -826,7 +821,6 @@ async def optimized_prompt_evaluation[T](
                 and overall_score >= min_passing_score * 0.9
             ):
                 time.time() - start_time
-                # Early termination due to excellent scores
                 return cast("T", model_output)
 
             iteration_duration = time.time() - iteration_start

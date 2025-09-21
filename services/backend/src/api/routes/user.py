@@ -110,12 +110,10 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
                 {"uid": firebase_uid},
             )
 
-            # Soft deleted user from organizations
 
         grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
         await schedule_user_deletion(firebase_uid, grace_period_days)
 
-        # User deletion scheduled successfully
 
         return {
             "message": "Account scheduled for deletion. You will be removed from all projects immediately.",

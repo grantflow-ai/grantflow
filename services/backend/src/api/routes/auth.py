@@ -54,7 +54,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             await session.execute(
                 update(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid).values(deleted_at=None)
             )
-            # Restored soft-deleted user during login
 
         user_owned_org_ids = await session.execute(
             select(OrganizationUser.organization_id).where(
@@ -75,7 +74,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                 await session.execute(
                     update(Organization).where(Organization.id.in_(owned_org_ids)).values(deleted_at=None)
                 )
-                # Restored soft-deleted organizations during login
         result = await session.execute(
             select(OrganizationUser, Organization.updated_at)
             .join(Organization, OrganizationUser.organization_id == Organization.id)
@@ -140,7 +138,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                             .values(accepted_at=datetime.now(UTC))
                         )
 
-                        # Auto-accepted invitation during login
 
                     await session.flush()
 
@@ -182,7 +179,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                     default_organization_id = default_organization.id
                     default_role = UserRoleEnum.OWNER
 
-                    # Created default organization for new user
         else:
             default_org_user, _default_updated_at = max(
                 org_user_tuples,
@@ -191,7 +187,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             default_organization_id = default_org_user.organization_id
             default_role = default_org_user.role
 
-        # User login successful
 
     jwt = create_jwt(firebase_uid, default_organization_id, default_role)
     return LoginResponse(jwt_token=jwt)

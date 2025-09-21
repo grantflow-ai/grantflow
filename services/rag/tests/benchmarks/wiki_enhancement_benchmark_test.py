@@ -6,6 +6,9 @@ import pytest
 from pytest_mock import MockerFixture
 
 from services.rag.src.grant_application.enrich_terminology_stage import (
+    _get_scientific_context as get_scientific_context,
+)
+from services.rag.src.grant_application.enrich_terminology_stage import (
     enrich_objective_with_wikidata,
 )
 

@@ -76,7 +76,6 @@ async def post_process_documents(
     if not documents:
         return []
 
-    # Post-processing start - metrics tracked at retrieval level
 
     nlp = get_spacy_model()
     all_sentences: list[SentenceInfo] = []
@@ -130,7 +129,6 @@ async def post_process_documents(
     )
 
 
-    # Post-processing complete - metrics tracked at retrieval level
 
     return processed_docs
 

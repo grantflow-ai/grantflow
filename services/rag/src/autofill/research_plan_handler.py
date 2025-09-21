@@ -117,7 +117,6 @@ research_plan_schema = {
 
 
 def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
-    """Validate the research plan response values (structure is already validated by deserialize)."""
     objectives = response["research_objectives"]
 
     if len(objectives) < 2 or len(objectives) > 3:
@@ -130,7 +129,6 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
     for i, obj in enumerate(objectives):
         obj_number = obj["number"]
 
-        # Check for duplicate objective numbers
         if obj_number in seen_numbers:
             raise ValidationError(
                 f"Duplicate objective number: {obj_number}",
@@ -138,7 +136,6 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
             )
         seen_numbers.add(obj_number)
 
-        # Validate objective content
         if len(obj["title"]) < 10:
             raise ValidationError(
                 f"Objective {obj_number} title too short (min 10 chars)",
@@ -151,7 +148,6 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                 context={"description": obj["description"][:50], "length": len(obj["description"])},
             )
 
-        # Validate tasks
         tasks = obj["research_tasks"]
         if len(tasks) < 2 or len(tasks) > 5:
             raise ValidationError(
@@ -163,7 +159,6 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
         for task in tasks:
             task_number = task["number"]
 
-            # Check for duplicate task numbers
             if task_number in seen_task_numbers:
                 raise ValidationError(
                     f"Duplicate task number {task_number} in objective {obj_number}",
@@ -171,7 +166,6 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                 )
             seen_task_numbers.add(task_number)
 
-            # Validate task content
             if len(task["title"]) < 10:
                 raise ValidationError(
                     f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
@@ -187,12 +181,10 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
 
 
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
-    # Starting research plan generation
 
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
 
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
-    # Query generation tracked in retrieval
 
     retrieval_results = await retrieve_documents(
         application_id=application.id,
@@ -202,7 +194,6 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    # Retrieval metrics logged in retrieve_documents
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 
@@ -219,5 +210,4 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
 
     return response["research_objectives"]
 
-    # Research plan generation completed
 

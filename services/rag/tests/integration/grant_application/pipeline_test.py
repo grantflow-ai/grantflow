@@ -6,6 +6,7 @@ from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
+from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.pipeline import (
     handle_grant_application_pipeline,
 )
@@ -39,49 +40,52 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
         "risks_and_mitigations": "This is the risks and mitigations text.",
     }
 
-    mock_job_manager = create_mock_job_manager()
+    create_mock_job_manager()
 
     with (
         patch(
-            "services.rag.src.grant_application.handler.verify_rag_sources_indexed",
+            "services.rag.src.utils.checks.verify_rag_sources_indexed",
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
+            "services.rag.src.grant_application.batch_enrich_objectives.handle_batch_enrich_objectives",
             return_value=[],
         ),
         patch(
-            "services.rag.src.grant_application.handler.handle_extract_relationships",
+            "services.rag.src.grant_application.extract_relationships.handle_extract_relationships",
             return_value=[],
         ),
         patch(
-            "services.rag.src.grant_application.handler.enrich_objective_with_wikidata",
+            "services.rag.src.grant_application.enrich_terminology_stage.enrich_objective_with_wikidata",
             return_value={"enriched": True},
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_work_plan_component_text",
+            "services.rag.src.grant_application.generate_work_plan_text.generate_objective_with_tasks",
             return_value="Mocked work plan component",
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_section_text",
+            "services.rag.src.grant_application.generate_section_text.handle_generate_section_text",
             return_value=mocked_section_texts,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_application_text",
+            "services.rag.src.grant_application.utils.generate_application_text",
             return_value="Complete application text",
         ),
         patch(
-            "services.rag.src.grant_application.handler.publish_email_notification",
+            "packages.shared_utils.src.pubsub.publish_email_notification",
+            return_value=None,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.publish_notification",
             return_value=None,
         ),
     ):
-        result = await handle_grant_application_pipeline(
-            grant_application_id=application.id,
+        await handle_grant_application_pipeline(
+            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            grant_application=application,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            trace_id="test-trace-id",
         )
-
-    assert result is not None
 
     async with async_session_maker() as session:
         updated_app = await session.get(

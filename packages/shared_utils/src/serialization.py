@@ -20,7 +20,6 @@ def encode_hook(obj: Any) -> Any:
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
 
-    # Handle Enum types directly - this is key for union enum serialization
     if isinstance(obj, Enum):
         return obj.value
 
@@ -108,7 +107,6 @@ def fix_string_json_values(
 
 
 def to_builtins(obj: Any) -> Any:
-    """Convert object to builtin types using our encoding hooks."""
     return msgspec_to_builtins(obj, enc_hook=encode_hook)
 
 

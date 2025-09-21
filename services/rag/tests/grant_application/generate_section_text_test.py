@@ -1,16 +1,14 @@
-from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import ResearchObjective, ResearchTask
+from packages.db.src.json_objects import CFPAnalysisResult, GrantLongFormSection, ResearchObjective, ResearchTask
 
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
 
 
 @pytest.fixture
 def sample_research_objectives() -> list[ResearchObjective]:
-    """Sample research objectives for testing."""
     return [
         ResearchObjective(
             number=1,
@@ -32,27 +30,25 @@ def sample_research_objectives() -> list[ResearchObjective]:
 
 
 @pytest.fixture
-def sample_grant_section() -> dict[str, Any]:
-    """Sample grant section for testing."""
-    return {
-        "id": "abstract",
-        "title": "Abstract",
-        "order": 1,
-        "parent_id": None,
-        "keywords": ["summary", "overview"],
-        "topics": ["project summary", "objectives"],
-        "generation_instructions": "Write a comprehensive abstract summarizing the project objectives, methods, and expected outcomes",
-        "depends_on": [],
-        "max_words": 250,
-        "search_queries": ["abstract", "project summary", "research overview"],
-        "is_detailed_research_plan": False,
-        "is_clinical_trial": None,
-    }
+def sample_grant_section() -> GrantLongFormSection:
+    return GrantLongFormSection(
+        id="abstract",
+        title="Abstract",
+        order=1,
+        parent_id=None,
+        keywords=["summary", "overview"],
+        topics=["project summary", "objectives"],
+        generation_instructions="Write a comprehensive abstract summarizing the project objectives, methods, and expected outcomes",
+        depends_on=[],
+        max_words=250,
+        search_queries=["abstract", "project summary", "research overview"],
+        is_detailed_research_plan=False,
+        is_clinical_trial=None,
+    )
 
 
 @pytest.fixture
 def sample_shared_context() -> str:
-    """Sample shared context for testing."""
     return """
     Recent advances in cancer biomarker discovery have shown that proteomics-based approaches
     can identify novel diagnostic markers. Machine learning models have proven effective at
@@ -62,29 +58,72 @@ def sample_shared_context() -> str:
 
 
 @pytest.fixture
-def sample_cfp_analysis() -> dict[str, Any]:
-    """Sample CFP analysis for testing."""
-    return {
-        "sections_count": 5,
-        "length_constraints_found": 3,
-        "evaluation_criteria_count": 4,
-        "section_requirements": [
-            {
-                "section": "Abstract",
-                "requirements": [
-                    {"requirement": "Summarize project goals", "quote": "Provide a clear summary of objectives"}
-                ],
-            }
-        ],
-        "length_constraints": [
-            {"description": "Abstract section", "quote": "Maximum 250 words for abstract"},
-            {"description": "Research Plan section", "quote": "Maximum 2000 words for research plan"},
-        ],
-        "evaluation_criteria": [
-            {"criterion": "Innovation and significance", "quote": "Evaluate innovation"},
-            {"criterion": "Technical approach", "quote": "Assess technical merit"},
-        ],
-    }
+def sample_cfp_analysis() -> CFPAnalysisResult:
+    from packages.db.src.json_objects import (
+        CategorizationAnalysisResult,
+        CFPAnalysisEvaluationCriterion,
+        CFPAnalysisMetadata,
+        CFPAnalysisRequirementWithQuote,
+        CFPAnalysisResult,
+        CFPSectionAnalysis,
+        CFPSectionLengthConstraint,
+        CFPSectionRequirement,
+    )
+
+    return CFPAnalysisResult(
+        cfp_analysis=CFPSectionAnalysis(
+            required_sections=[
+                CFPSectionRequirement(
+                    section_name="Abstract",
+                    definition="Project summary",
+                    requirements=[
+                        CFPAnalysisRequirementWithQuote(
+                            requirement="Summarize project goals",
+                            quote_from_source="Provide a clear summary of objectives",
+                            category="summary"
+                        )
+                    ],
+                    dependencies=[]
+                )
+            ],
+            length_constraints=[
+                CFPSectionLengthConstraint(
+                    section_name="Abstract",
+                    measurement_type="words",
+                    limit_description="Maximum 250 words",
+                    quote_from_source="Maximum 250 words for abstract",
+                    exclusions=[]
+                )
+            ],
+            evaluation_criteria=[
+                CFPAnalysisEvaluationCriterion(
+                    criterion_name="Innovation and significance",
+                    description="Evaluate innovation",
+                    quote_from_source="Assess innovation"
+                )
+            ],
+            additional_requirements=[],
+            sections_count=5,
+            length_constraints_found=3,
+            evaluation_criteria_count=4
+        ),
+        nlp_analysis=CategorizationAnalysisResult(
+            money=[],
+            date_time=[],
+            writing_related=[],
+            other_numbers=[],
+            recommendations=[],
+            orders=[],
+            positive_instructions=[],
+            negative_instructions=[],
+            evaluation_criteria=[]
+        ),
+        analysis_metadata=CFPAnalysisMetadata(
+            content_length=1000,
+            categories_found=8,
+            total_sentences=50
+        )
+    )
 
 
 @patch("services.rag.src.grant_application.generate_section_text.handle_source_validation")
@@ -92,13 +131,11 @@ def sample_cfp_analysis() -> dict[str, Any]:
 async def test_handle_generate_section_text_success(
     mock_with_prompt_evaluation: AsyncMock,
     mock_handle_source_validation: AsyncMock,
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_shared_context: str,
-    sample_cfp_analysis: dict[str, Any],
+    sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test successful section text generation."""
-    # Setup mock response
     mock_section_text = """
     This project aims to develop novel biomarkers for early cancer detection through
     innovative proteomics approaches. We will identify and validate candidate biomarkers
@@ -107,9 +144,8 @@ async def test_handle_generate_section_text_success(
     with clinical validation to translate findings into practical diagnostic tools.
     """
     mock_with_prompt_evaluation.return_value = mock_section_text
-    mock_handle_source_validation.return_value = None  # No validation error
+    mock_handle_source_validation.return_value = None
 
-    # Execute
     result = await handle_generate_section_text(
         section=sample_grant_section,
         research_deep_dives=sample_research_objectives,
@@ -118,12 +154,10 @@ async def test_handle_generate_section_text_success(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, str)
     assert result == mock_section_text
     assert len(result.strip()) > 0
 
-    # Verify service call
     mock_with_prompt_evaluation.assert_called_once()
     mock_handle_source_validation.assert_called_once()
 
@@ -133,17 +167,14 @@ async def test_handle_generate_section_text_success(
 async def test_handle_generate_section_text_empty_research_objectives(
     mock_with_prompt_evaluation: AsyncMock,
     mock_handle_source_validation: AsyncMock,
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
     sample_shared_context: str,
-    sample_cfp_analysis: dict[str, Any],
+    sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test section text generation with empty research objectives."""
-    # Setup mock response
     mock_section_text = "General project abstract without specific research objectives."
     mock_with_prompt_evaluation.return_value = mock_section_text
     mock_handle_source_validation.return_value = None
 
-    # Execute with empty research objectives
     result = await handle_generate_section_text(
         section=sample_grant_section,
         research_deep_dives=[],
@@ -152,11 +183,9 @@ async def test_handle_generate_section_text_empty_research_objectives(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, str)
     assert result == mock_section_text
 
-    # Verify service calls
     mock_with_prompt_evaluation.assert_called_once()
     mock_handle_source_validation.assert_called_once()
 
@@ -166,16 +195,13 @@ async def test_handle_generate_section_text_empty_research_objectives(
 async def test_handle_generate_section_text_validation_error(
     mock_with_prompt_evaluation: AsyncMock,
     mock_handle_source_validation: AsyncMock,
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_shared_context: str,
-    sample_cfp_analysis: dict[str, Any],
+    sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test section text generation when source validation fails."""
-    # Setup mock to return validation error
     mock_handle_source_validation.return_value = "Insufficient context for reliable generation"
 
-    # Execute
     result = await handle_generate_section_text(
         section=sample_grant_section,
         research_deep_dives=sample_research_objectives,
@@ -184,10 +210,8 @@ async def test_handle_generate_section_text_validation_error(
         trace_id=str(uuid4()),
     )
 
-    # Verify result is empty when validation fails
     assert result == ""
 
-    # Verify validation was called but prompt evaluation was not
     mock_handle_source_validation.assert_called_once()
     mock_with_prompt_evaluation.assert_not_called()
 
@@ -197,17 +221,14 @@ async def test_handle_generate_section_text_validation_error(
 async def test_handle_generate_section_text_error_handling(
     mock_with_prompt_evaluation: AsyncMock,
     mock_handle_source_validation: AsyncMock,
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_shared_context: str,
-    sample_cfp_analysis: dict[str, Any],
+    sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test error handling when section text generation fails."""
-    # Setup mock to raise exception
     mock_with_prompt_evaluation.side_effect = Exception("Section generation service error")
     mock_handle_source_validation.return_value = None
 
-    # Execute and verify exception is propagated
     with pytest.raises(Exception, match="Section generation service error"):
         await handle_generate_section_text(
             section=sample_grant_section,
@@ -217,7 +238,6 @@ async def test_handle_generate_section_text_error_handling(
             trace_id=str(uuid4()),
         )
 
-    # Verify services were called
     mock_handle_source_validation.assert_called_once()
     mock_with_prompt_evaluation.assert_called_once()
 
@@ -227,12 +247,10 @@ async def test_handle_generate_section_text_error_handling(
 async def test_handle_generate_section_text_single_research_objective(
     mock_with_prompt_evaluation: AsyncMock,
     mock_handle_source_validation: AsyncMock,
-    sample_grant_section: dict[str, Any],
+    sample_grant_section: GrantLongFormSection,
     sample_shared_context: str,
-    sample_cfp_analysis: dict[str, Any],
+    sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test section text generation with single research objective."""
-    # Single research objective
     single_objective = [
         ResearchObjective(
             number=1,
@@ -252,7 +270,6 @@ async def test_handle_generate_section_text_single_research_objective(
     mock_with_prompt_evaluation.return_value = mock_section_text
     mock_handle_source_validation.return_value = None
 
-    # Execute
     result = await handle_generate_section_text(
         section=sample_grant_section,
         research_deep_dives=single_objective,
@@ -261,10 +278,8 @@ async def test_handle_generate_section_text_single_research_objective(
         trace_id=str(uuid4()),
     )
 
-    # Verify result
     assert isinstance(result, str)
     assert result == mock_section_text
 
-    # Verify service calls
     mock_with_prompt_evaluation.assert_called_once()
     mock_handle_source_validation.assert_called_once()

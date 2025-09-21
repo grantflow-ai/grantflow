@@ -160,7 +160,6 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         "status": rag_source.indexing_status,
     }
 
-    # Building source response based on type
 
     if isinstance(rag_source, RagUrl):
         source_response["url"] = rag_source.url
@@ -171,9 +170,8 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 
 
 async def _handle_retrieve_application(
-    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    application_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    # Retrieving application with validation
     async with session_maker() as session:
         try:
             grant_application = await retrieve_application(application_id=application_id, session=session)
@@ -275,12 +273,10 @@ async def _handle_retrieve_application(
     operation_id="CreateApplication",
 )
 async def handle_create_application(
-    organization_id: UUID,
     project_id: UUID,
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    # Creating new grant application
 
     async with session_maker() as session, session.begin():
         try:
@@ -322,9 +318,8 @@ async def handle_create_application(
             raise DatabaseError("Error creating application and template", context=str(e)) from e
 
     return await _handle_retrieve_application(
-        organization_id=organization_id,
-        project_id=project_id,
         application_id=application.id,
+        project_id=project_id,
         session_maker=session_maker,
     )
 
@@ -335,13 +330,11 @@ async def handle_create_application(
     operation_id="UpdateApplication",
 )
 async def handle_update_application(
-    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    # Updating application data
 
     async with session_maker() as session, session.begin():
         try:
@@ -368,10 +361,7 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
-        organization_id=organization_id,
-        project_id=project_id,
-        application_id=application_id,
-        session_maker=session_maker,
+        application_id, project_id, session_maker
     )
 
 
@@ -382,12 +372,10 @@ async def handle_update_application(
 )
 async def handle_delete_application(
     request: APIRequest,
-    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Deleting application with audit logging
 
     async with session_maker() as session, session.begin():
         try:
@@ -436,10 +424,9 @@ async def handle_delete_application(
     operation_id="GenerateApplication",
 )
 async def handle_generate_application(
-    organization_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
+    application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
 ) -> None:
     trace_id = get_trace_id(request)
-    # Generating application via RAG pipeline
     async with session_maker() as session:
         try:
             application = await retrieve_application(application_id=application_id, session=session)
@@ -502,9 +489,9 @@ async def handle_generate_application(
     operation_id="RetrieveApplication",
 )
 async def handle_retrieve_application(
-    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    return await _handle_retrieve_application(organization_id, project_id, application_id, session_maker)
+    return await _handle_retrieve_application(application_id, project_id, session_maker)
 
 
 @get(
@@ -513,7 +500,6 @@ async def handle_retrieve_application(
     operation_id="ListApplications",
 )
 async def handle_list_applications(
-    organization_id: UUID,
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
     search: str | None = Parameter(
@@ -543,7 +529,6 @@ async def handle_list_applications(
         ge=0,
     ),
 ) -> ApplicationListResponse:
-    # Listing applications with search and pagination
 
     async with session_maker() as session:
         query = (
@@ -621,7 +606,6 @@ async def handle_list_applications(
 )
 async def handle_trigger_autofill(
     request: APIRequest,
-    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: AutofillRequestBody,
@@ -629,7 +613,6 @@ async def handle_trigger_autofill(
 ) -> AutofillResponse:
     trace_id = get_trace_id(request)
 
-    # Triggering autofill via pub/sub
 
     async with session_maker() as session:
         application = await retrieve_application(
@@ -648,7 +631,6 @@ async def handle_trigger_autofill(
         trace_id=trace_id,
     )
 
-    # Autofill task published successfully
 
     response: AutofillResponse = {
         "message_id": message_id,
@@ -668,13 +650,11 @@ async def handle_trigger_autofill(
     operation_id="DuplicateApplication",
 )
 async def handle_duplicate_application(
-    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: DuplicateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    # Duplicating application with new title
 
     new_app_id = None
 
@@ -738,7 +718,6 @@ async def handle_duplicate_application(
                     )
                     .returning(GrantTemplate)
                 )
-                # Grant template duplicated successfully
 
             rag_sources_result = await session.execute(
                 select(GrantApplicationSource.rag_source_id).where(
@@ -763,7 +742,6 @@ async def handle_duplicate_application(
 
             await session.commit()
 
-            # Application duplicated successfully
 
         except SQLAlchemyError as e:
             logger.error("Error duplicating application", exc_info=e)
@@ -772,9 +750,8 @@ async def handle_duplicate_application(
     await asyncio.sleep(0.2)
 
     return await _handle_retrieve_application(
-        organization_id=organization_id,
-        project_id=project_id,
         application_id=new_app_id,
+        project_id=project_id,
         session_maker=session_maker,
     )
 
@@ -788,7 +765,6 @@ async def handle_list_organization_applications(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationListResponse:
-    # Listing recent organization applications
 
     async with session_maker() as session:
         ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
