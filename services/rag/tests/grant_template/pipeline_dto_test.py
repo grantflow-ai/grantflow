@@ -577,7 +577,6 @@ def test_pipeline_dto_integration_data_flow_through_pipeline_stages() -> None:
     assert analyze_stage["extracted_data"]["cfp_subject"] == "Pipeline Test Grant"
     assert sections_stage["extracted_data"]["cfp_subject"] == "Pipeline Test Grant"
 
-    # Check that different stage DTOs have appropriate fields
     assert hasattr(analyze_stage, "__getitem__")
     assert "analysis_results" in analyze_stage
     assert hasattr(sections_stage, "__getitem__")

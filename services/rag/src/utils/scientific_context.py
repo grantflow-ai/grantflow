@@ -1,5 +1,3 @@
-"""Scientific context utilities for RAG processing."""
-
 import re
 from typing import Any, TypedDict
 
@@ -7,8 +5,6 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 
 
 class ValidationResult(TypedDict):
-    """Validation result for scientific context."""
-
     is_valid: bool
     has_content: bool
     has_scientific_terms: bool
@@ -26,19 +22,15 @@ This context provides foundational scientific concepts and terminology relevant 
 
 
 def extract_scientific_terms_from_context(context: str) -> list[str]:
-    """Extract scientific terms from a context string formatted with **term** markdown."""
     if not context:
         return []
 
-    # Extract terms from markdown bold format **term**
     bold_pattern = r"\*\*([^*]+)\*\*"
     terms = re.findall(bold_pattern, context)
 
-    # Also extract capitalized scientific terms
     scientific_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b"
     capitalized_terms = re.findall(scientific_pattern, context)
 
-    # Combine and filter for scientific relevance
     all_terms = terms + capitalized_terms
 
     scientific_keywords = [
@@ -76,19 +68,16 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
 
 
 def format_scientific_context(context: str) -> str:
-    """Format scientific context using the template."""
     if not context:
         return ""
 
     try:
         return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=context)
     except Exception:
-        # If template fails, return original context
         return context
 
 
 def validate_scientific_context(context: Any) -> ValidationResult:
-    """Validate that the provided context is scientifically relevant and return detailed results."""
     errors: list[str] = []
 
     if not isinstance(context, str):
@@ -103,7 +92,6 @@ def validate_scientific_context(context: Any) -> ValidationResult:
             is_valid=False, has_content=False, has_scientific_terms=False, term_count=0, errors=errors
         )
 
-    # Check for scientific content
     scientific_keywords = [
         "research",
         "study",
@@ -127,7 +115,6 @@ def validate_scientific_context(context: Any) -> ValidationResult:
     context_lower = context.lower()
     has_scientific_keywords = any(keyword in context_lower for keyword in scientific_keywords)
 
-    # Extract scientific terms
     terms = extract_scientific_terms_from_context(context)
     term_count = len(terms)
     has_scientific_terms = term_count > 0
