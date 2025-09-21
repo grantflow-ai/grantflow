@@ -16,7 +16,7 @@ class ExtractedSectionDTO(TypedDict):
     title: str
     id: str
     order: int
-    parent_id: NotRequired[str]
+    parent_id: NotRequired[str | None]
     is_detailed_research_plan: NotRequired[bool | None]
     is_title_only: NotRequired[bool | None]
     is_clinical_trial: NotRequired[bool | None]

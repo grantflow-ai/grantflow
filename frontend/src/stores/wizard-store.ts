@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { create } from "zustand";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
 import { WizardStep } from "@/constants";
@@ -83,11 +84,15 @@ interface WizardActions {
 	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
 	resetApplicationGenerationComplete: () => void;
+	resetApplicationGenerationFailed: () => void;
+	resetTemplateGenerationFailed: () => void;
+	setApplicationGenerationFailed: (failed: boolean) => void;
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
-
 	setGeneratingApplication: (isGenerating: boolean) => void;
+
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	setTemplateGenerationFailed: (failed: boolean) => void;
 	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
 
@@ -107,6 +112,7 @@ interface WizardActions {
 
 interface WizardState {
 	applicationGenerationComplete: boolean;
+	applicationGenerationFailed: boolean;
 	currentStep: WizardStep;
 	isAutofillLoading: {
 		research_deep_dive: boolean;
@@ -116,6 +122,7 @@ interface WizardState {
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationFailed: boolean;
 	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
@@ -168,6 +175,7 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 
 const initialWizardState: WizardState = {
 	applicationGenerationComplete: false,
+	applicationGenerationFailed: false,
 	currentStep: WizardStep.APPLICATION_DETAILS,
 	isAutofillLoading: {
 		research_deep_dive: false,
@@ -180,6 +188,7 @@ const initialWizardState: WizardState = {
 		isActive: false,
 	},
 	showResearchPlanInfoBanner: true,
+	templateGenerationFailed: false,
 	templateGenerationStatus: null,
 };
 
@@ -224,9 +233,7 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 	}));
 };
 
-const validateAutofillRequirements = async (
-	application: API.RetrieveApplication.Http200.ResponseBody | null,
-): Promise<boolean> => {
+const validateAutofillRequirements = (application: API.RetrieveApplication.Http200.ResponseBody | null): boolean => {
 	if (!application) {
 		log.error("triggerAutofill: No application found");
 		return true;
@@ -237,13 +244,11 @@ const validateAutofillRequirements = async (
 	);
 
 	if (hasIndexingInProgress) {
-		const { toast } = await import("sonner");
 		toast.error("Please wait for all documents to finish processing before using autofill");
 		return true;
 	}
 
 	if (application.rag_sources.length === 0) {
-		const { toast } = await import("sonner");
 		toast.error("Please upload at least one document before using autofill");
 		return true;
 	}
@@ -279,14 +284,13 @@ const trackAutofillEvent = async (
 	}
 };
 
-const handleAutofillError = async (
+const handleAutofillError = (
 	error: unknown,
 	type: "research_deep_dive" | "research_plan",
 	fieldName?: string,
-): Promise<void> => {
+): void => {
 	log.error("triggerAutofill failed", { error, fieldName, type });
 
-	const { toast } = await import("sonner");
 	const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
 	toast.error(`Autofill error: ${errorMessage}`);
 
@@ -429,8 +433,15 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			} catch (error) {
 				log.error("checkApplicationGeneration", error);
 				polling.stop();
+
+				// Show user notification about the failure
+				toast.error(
+					"Application generation failed. Please check your research plan and try again, or contact support.",
+				);
+
 				set((state) => ({
 					...state,
+					applicationGenerationFailed: true,
 					isGeneratingApplication: false,
 				}));
 			}
@@ -463,9 +474,14 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			} catch (error) {
 				log.error("checkTemplateGeneration", error);
 				polling.stop();
+
+				// Show user notification about the failure
+				toast.error("Template generation failed. Please try uploading different documents or contact support.");
+
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: false,
+					templateGenerationFailed: true,
 				}));
 			}
 		},
@@ -521,6 +537,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 				set((state) => ({
 					...state,
+					applicationGenerationFailed: false,
 					isGeneratingApplication: true,
 				}));
 
@@ -552,8 +569,13 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				return true;
 			} catch (error) {
 				log.error("generateApplication", error);
+
+				// Show user notification about the failure
+				toast.error("Failed to start application generation. Please try again or contact support.");
+
 				set((state) => ({
 					...state,
+					applicationGenerationFailed: true,
 					isGeneratingApplication: false,
 				}));
 				return false;
@@ -658,6 +680,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}
 			set({
 				applicationGenerationComplete: initialWizardState.applicationGenerationComplete,
+				applicationGenerationFailed: initialWizardState.applicationGenerationFailed,
 				currentStep: initialWizardState.currentStep,
 				isAutofillLoading: initialWizardState.isAutofillLoading,
 				isGeneratingApplication: initialWizardState.isGeneratingApplication,
@@ -666,6 +689,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					...currentState.polling,
 					...initialWizardState.polling,
 				},
+				templateGenerationFailed: initialWizardState.templateGenerationFailed,
 				templateGenerationStatus: initialWizardState.templateGenerationStatus,
 			});
 		},
@@ -674,6 +698,27 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			set((state) => ({
 				...state,
 				applicationGenerationComplete: false,
+			}));
+		},
+
+		resetApplicationGenerationFailed: () => {
+			set((state) => ({
+				...state,
+				applicationGenerationFailed: false,
+			}));
+		},
+
+		resetTemplateGenerationFailed: () => {
+			set((state) => ({
+				...state,
+				templateGenerationFailed: false,
+			}));
+		},
+
+		setApplicationGenerationFailed: (failed: boolean) => {
+			set((state) => ({
+				...state,
+				applicationGenerationFailed: failed,
 			}));
 		},
 
@@ -708,6 +753,13 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}));
 		},
 
+		setTemplateGenerationFailed: (failed: boolean) => {
+			set((state) => ({
+				...state,
+				templateGenerationFailed: failed,
+			}));
+		},
+
 		setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
 			set((state) => ({
 				...state,
@@ -725,6 +777,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: true,
+					templateGenerationFailed: false,
 				}));
 
 				polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
@@ -797,7 +850,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			const { application } = useApplicationStore.getState();
 			const { selectedOrganizationId } = useOrganizationStore.getState();
 
-			const validationError = await validateAutofillRequirements(application);
+			const validationError = validateAutofillRequirements(application);
 			if (validationError) return;
 
 			if (!(application && selectedOrganizationId)) return;
@@ -839,10 +892,9 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					fieldName,
 				);
 
-				const { toast } = await import("sonner");
 				toast.success("Autofill request sent. Processing your documents...");
 			} catch (error) {
-				await handleAutofillError(error, type, fieldName);
+				handleAutofillError(error, type, fieldName);
 			}
 		},
 
