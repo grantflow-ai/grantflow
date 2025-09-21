@@ -1,0 +1,49 @@
+{
+  "test_type": "hybrid_llm_model_selection",
+  "strategy": "Flash for \u2264600 words, Flash-Lite for >600 words",
+  "timestamp": 1758199264.711514,
+  "results": [
+    {
+      "test_case": "Standard Grant Section",
+      "selected_model": "gemini-2.5-flash-lite",
+      "model_selection_reason": "Flash-Lite for long content (>600w)",
+      "error": "Streaming is required for operations that may take longer than 10 minutes. See https://github.com/anthropics/anthropic-sdk-python#long-requests for more details",
+      "target_min_words": 800,
+      "target_max_words": 1200
+    },
+    {
+      "test_case": "Short Section",
+      "selected_model": "gemini-2.5-flash",
+      "model_selection_reason": "Flash for short content (\u2264600w)",
+      "target_min_words": 400,
+      "target_max_words": 600,
+      "actual_word_count": 373,
+      "generation_time_seconds": 24.74400806427002,
+      "compliance_status": "FAIL",
+      "grade": "F",
+      "compliance_percentage": 93.25,
+      "utilization_percentage": 62.16666666666667,
+      "context_rouge_l": 0.14414414414414414,
+      "issues": [
+        "Below minimum by 27 words"
+      ],
+      "generated_text_sample": "The proposed research directly addresses the significant clinical challenge of treating melanoma brain metastases (MBM), a setting where current therapeutic options are limited by potent and often uncharacterized immunotherapy resistance mechanisms. Our central hypothesis is that the unique cellular..."
+    },
+    {
+      "test_case": "Brief Summary",
+      "selected_model": "gemini-2.5-flash",
+      "model_selection_reason": "Flash for short content (\u2264600w)",
+      "target_min_words": 200,
+      "target_max_words": 300,
+      "actual_word_count": 224,
+      "generation_time_seconds": 19.01919913291931,
+      "compliance_status": "PASS",
+      "grade": "B",
+      "compliance_percentage": 85.0,
+      "utilization_percentage": 74.66666666666667,
+      "context_rouge_l": 0.21694915254237285,
+      "issues": [],
+      "generated_text_sample": "Melanoma brain metastases (MBM) represent a formidable clinical challenge, largely driven by complex immunotherapy resistance mechanisms within the unique melanoma tumor microenvironment of the central nervous system. A comprehensive understanding of the dynamic tumor-immune interactions is essentia..."
+    }
+  ]
+}
