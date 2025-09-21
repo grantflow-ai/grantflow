@@ -38,7 +38,6 @@ def calculate_optimal_batching(
         batch = research_objectives[i : i + max_objectives_per_batch]
         batches.append(batch)
 
-
     return batches
 
 
@@ -69,14 +68,12 @@ async def perform_shared_retrieval(
             if len(key_terms) > 1:
                 search_queries.extend(key_terms[:2])
 
-
     retrieval_result = await retrieve_documents(
         application_id=application_id,
         search_queries=search_queries[:15],
         task_description=combined_context,
         max_tokens=MAX_RETRIEVAL_TOKENS,
     )
-
 
     return "\n".join(retrieval_result)
 
@@ -91,7 +88,6 @@ async def handle_batch_enrich_objectives(
     if not research_objectives:
         return []
 
-
     shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
     objective_batches = calculate_optimal_batching(research_objectives, estimated_context_tokens)
@@ -99,7 +95,6 @@ async def handle_batch_enrich_objectives(
     all_deep_dives = []
 
     for _batch_idx, batch in enumerate(objective_batches):
-
         batch_coroutines = [
             handle_enrich_objective(
                 EnrichObjectiveInputDTO(
@@ -118,6 +113,5 @@ async def handle_batch_enrich_objectives(
 
         batch_results = await batched_gather(*batch_coroutines, batch_size=min(4, len(batch_coroutines)))
         all_deep_dives.extend(batch_results)
-
 
     return all_deep_dives

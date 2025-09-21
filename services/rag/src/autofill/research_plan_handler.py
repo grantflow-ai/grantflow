@@ -179,9 +179,7 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                 )
 
 
-
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
-
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
 
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
@@ -193,7 +191,6 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         max_tokens=RESEARCH_PLAN_MAX_TOKENS,
         trace_id=trace_id,
     )
-
 
     prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
 
@@ -209,5 +206,3 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
     )
 
     return response["research_objectives"]
-
-

@@ -13,8 +13,12 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.enums import GrantTemplateStageEnum
+from services.rag.src.grant_template.dto import (
+    AnalyzeCFPContentStageDTO,
+    ExtractCFPContentStageDTO,
+    ExtractionSectionsStageDTO,
+)
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
-from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO, AnalyzeCFPContentStageDTO, ExtractionSectionsStageDTO
 
 pytest_plugins = ["testing.pubsub_test_plugin"]
 

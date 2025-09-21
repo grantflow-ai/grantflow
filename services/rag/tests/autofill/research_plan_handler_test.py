@@ -120,8 +120,8 @@ async def test_generate_research_plan_content_with_mocks(
 
 
 def test_validate_research_plan_response(mock_logger: MagicMock) -> None:
-    from packages.shared_utils.src.exceptions import ValidationError
     from packages.db.src.json_objects import ResearchObjective, ResearchTask
+    from packages.shared_utils.src.exceptions import ValidationError
 
     from services.rag.src.autofill.research_plan_handler import ResearchPlanResponse, _validate_research_plan_response
 
@@ -181,11 +181,11 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
         _validate_research_plan_response({"something_else": []})  # type: ignore[typeddict-item,typeddict-unknown-key]
 
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 0"):
-        _validate_research_plan_response({"research_objectives": []})  # type: ignore[arg-type]
+        _validate_research_plan_response({"research_objectives": []})
 
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 4"):
         _validate_research_plan_response(
-            {  # type: ignore[arg-type]
+            {
                 "research_objectives": [
                     {
                         "number": 1,

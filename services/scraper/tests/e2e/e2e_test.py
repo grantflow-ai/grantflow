@@ -70,9 +70,7 @@ async def _verify_postgresql_changes(
     )
 
 
-@performance_test(
-    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.SCRAPER, timeout=120
-)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.SCRAPER, timeout=120)
 @pytest.mark.e2e
 async def test_scraper_smoke(logger: logging.Logger) -> None:
     if not os.environ.get("RUN_SCRAPER_E2E_TESTS"):

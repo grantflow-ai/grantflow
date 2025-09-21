@@ -2,14 +2,11 @@ import logging
 import time
 from typing import Any
 from unittest.mock import AsyncMock, patch
-from uuid import UUID
 
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
-
-from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
 
 def create_mock_job_manager() -> AsyncMock:
@@ -38,7 +35,7 @@ async def test_application_generation_performance_baseline(
 
     performance_context.start_stage("baseline_generation_timing")
 
-    mock_job_manager = create_mock_job_manager()
+    create_mock_job_manager()
     start_time = time.time()
 
     with (
@@ -109,7 +106,7 @@ async def test_generation_smoke_test(
 
     performance_context.start_stage("smoke_test_generation")
 
-    mock_job_manager = create_mock_job_manager()
+    create_mock_job_manager()
 
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),

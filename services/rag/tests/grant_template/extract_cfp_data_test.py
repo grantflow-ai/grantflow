@@ -212,7 +212,9 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_minimal_content
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-async def test_cfp_data_extraction_extract_cfp_data_multi_source_empty_task_description(mock_completions: AsyncMock) -> None:
+async def test_cfp_data_extraction_extract_cfp_data_multi_source_empty_task_description(
+    mock_completions: AsyncMock,
+) -> None:
     mock_response: dict[str, Any] = {
         "organization_id": None,
         "cfp_subject": "",

@@ -18,8 +18,6 @@ SAMPLE_TEXTS = {
 }
 
 
-
-
 @pytest.fixture
 def grant_sections() -> list[GrantLongFormSection]:
     return [

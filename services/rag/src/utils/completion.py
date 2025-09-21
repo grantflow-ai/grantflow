@@ -479,7 +479,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
             )
             timeout_error = LLMTimeoutError(
                 f"LLM API call timed out after {timeout} seconds",
-                context={"timeout": timeout, "prompt_identifier": prompt_identifier}
+                context={"timeout": timeout, "prompt_identifier": prompt_identifier},
             )
             errors.append(timeout_error)
 

@@ -49,7 +49,7 @@ def test_handle_pubsub_message_valid_grant_template() -> None:
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -65,7 +65,7 @@ def test_handle_pubsub_message_valid_grant_application() -> None:
     request = GrantApplicationRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -81,7 +81,7 @@ def test_handle_pubsub_message_valid_autofill_request() -> None:
     request = ResearchPlanAutofillRequest(
         application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         trace_id="test-trace",
-        field_name="background_context"
+        field_name="background_context",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -161,6 +161,7 @@ async def test_handle_request_grant_template_success() -> None:
     mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
+    mock_session_maker.return_value.__aexit__.return_value = None
 
     # Create mock grant template
     mock_grant_template = AsyncMock(spec=GrantTemplate)
@@ -170,7 +171,7 @@ async def test_handle_request_grant_template_success() -> None:
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -194,6 +195,7 @@ async def test_handle_request_grant_application_success() -> None:
     mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
+    mock_session_maker.return_value.__aexit__.return_value = None
 
     # Create mock grant application with template
     mock_grant_template = AsyncMock(spec=GrantTemplate)
@@ -207,7 +209,7 @@ async def test_handle_request_grant_application_success() -> None:
     request = GrantApplicationRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -231,6 +233,7 @@ async def test_handle_request_autofill_success() -> None:
     mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
+    mock_session_maker.return_value.__aexit__.return_value = None
 
     # Create mock grant application
     mock_grant_application = AsyncMock(spec=GrantApplication)
@@ -240,7 +243,7 @@ async def test_handle_request_autofill_success() -> None:
     request = ResearchPlanAutofillRequest(
         application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         trace_id="test-trace",
-        field_name="background_context"
+        field_name="background_context",
     )
     event = create_pubsub_event_from_request(request)
 
@@ -261,16 +264,17 @@ async def test_handle_request_grant_template_not_found() -> None:
     mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
+    mock_session_maker.return_value.__aexit__.return_value = None
     mock_session.scalar.return_value = None  # Grant template not found
 
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
-    with pytest.raises(ValidationError, match="Grant template .* not found"):
+    with pytest.raises(ValidationError, match=r"Grant template .* not found"):
         await handle_request_fn(data=event, session_maker=mock_session_maker)
 
 
@@ -280,6 +284,7 @@ async def test_handle_request_pipeline_error_propagates() -> None:
     mock_session_maker = AsyncMock()
     mock_session = AsyncMock()
     mock_session_maker.return_value.__aenter__.return_value = mock_session
+    mock_session_maker.return_value.__aexit__.return_value = None
 
     mock_grant_template = AsyncMock(spec=GrantTemplate)
     mock_session.scalar.return_value = mock_grant_template
@@ -287,7 +292,7 @@ async def test_handle_request_pipeline_error_propagates() -> None:
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-        trace_id="test-trace"
+        trace_id="test-trace",
     )
     event = create_pubsub_event_from_request(request)
 
