@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,7 @@ function BreadcrumbLink({
 		<Comp
 			className={cn("hover:text-foreground transition-colors", className)}
 			data-slot="breadcrumb-link"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 }

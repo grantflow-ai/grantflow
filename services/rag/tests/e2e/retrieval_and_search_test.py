@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
+from packages.db.src.tables import GrantApplication
 from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
@@ -28,9 +29,11 @@ from services.rag.tests.e2e.utils_test import create_rag_sources_from_cfp_file
 async def test_retrieval_smoke(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     async with async_session_maker() as session:
         await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
@@ -40,6 +43,7 @@ async def test_retrieval_smoke(
             application_id=melanoma_alliance_full_application_id,
             task_description="Test retrieval functionality",
             search_queries=["melanoma research", "cancer treatment", "immunotherapy"],
+            trace_id=trace_id,
         )
 
     end_time = time.time()
@@ -61,9 +65,11 @@ async def test_retrieval_smoke(
 async def test_retrieval_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     async with async_session_maker() as session:
         await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
@@ -74,6 +80,7 @@ async def test_retrieval_quality_assessment(
             rerank=True,
             application_id=melanoma_alliance_full_application_id,
             task_description=task_description,
+            trace_id=trace_id,
         )
 
     end_time = time.time()
@@ -107,9 +114,11 @@ async def test_retrieval_quality_assessment(
 async def test_retrieval_semantic_evaluation(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     async with async_session_maker() as session:
         await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
@@ -120,6 +129,7 @@ async def test_retrieval_semantic_evaluation(
             rerank=True,
             application_id=melanoma_alliance_full_application_id,
             task_description=task_description,
+            trace_id=trace_id,
         )
 
     end_time = time.time()
@@ -159,9 +169,11 @@ async def test_retrieval_semantic_evaluation(
 async def test_retrieval_with_custom_queries(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     query_patterns = {
         "specific_terms": ["BRAF mutation", "PD-1 inhibitor", "ipilimumab"],
@@ -182,6 +194,7 @@ async def test_retrieval_with_custom_queries(
                 application_id=melanoma_alliance_full_application_id,
                 task_description=f"Testing {pattern_name} query pattern",
                 search_queries=queries,
+                trace_id=trace_id,
             )
 
             pattern_time = time.time() - pattern_start
@@ -248,9 +261,11 @@ async def test_search_query_generation_basic(
 async def test_search_query_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     template_id = str(uuid4())
     source_ids = await create_rag_sources_from_cfp_file(
@@ -338,9 +353,11 @@ async def test_search_query_context_sensitivity(
 async def test_search_and_retrieval_integration(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
+    trace_id: str,
 ) -> None:
     start_time = time.time()
+    melanoma_alliance_full_application_id = str(melanoma_alliance_full_application.id)
 
     context = "Comprehensive melanoma research grant application focusing on immunotherapy"
 
@@ -358,6 +375,7 @@ async def test_search_and_retrieval_integration(
             application_id=melanoma_alliance_full_application_id,
             task_description=context,
             search_queries=queries,
+            trace_id=trace_id,
         )
 
     end_time = time.time()

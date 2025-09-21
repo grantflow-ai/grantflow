@@ -19,7 +19,7 @@ def create_mock_job_manager() -> AsyncMock:
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
 async def test_generate_melanoma_baseline_application_text(
     logger: logging.Logger,
-    test_application_with_template: GrantApplication,
+    melanoma_alliance_full_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
@@ -44,7 +44,7 @@ async def test_generate_melanoma_baseline_application_text(
     async with async_session_maker() as session:
         grant_application = await session.scalar(
             select_active(GrantApplication)
-            .where(GrantApplication.id == test_application_with_template.id)
+            .where(GrantApplication.id == melanoma_alliance_full_application.id)
             .options(selectinload(GrantApplication.grant_template))
         )
 

@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ComponentProps, ReactNode } from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const iconButtonVariants = cva(
@@ -25,14 +25,14 @@ const iconButtonVariants = cva(
 );
 
 export interface IconButtonProps
-	extends Omit<ComponentProps<"button">, "children">,
+	extends Omit<React.ComponentProps<"button">, "children">,
 		VariantProps<typeof iconButtonVariants> {
 	asChild?: boolean;
-	children?: ReactNode;
+	children?: React.ReactNode;
 }
 
 export function IconButton({ asChild = false, className, size, variant, ...props }: IconButtonProps) {
 	const Comp = asChild ? Slot : "button";
 
-	return <Comp className={cn(iconButtonVariants({ className, size, variant }))} {...props} />;
+	return <Comp className={cn(iconButtonVariants({ className, size, variant }))} {...(props as any)} />;
 }
