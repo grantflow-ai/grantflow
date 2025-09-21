@@ -13,6 +13,7 @@ from packages.db.src.json_objects import (
     ResearchDeepDive,
     ResearchObjective,
 )
+from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from polyfactory.factories import TypedDictFactory
 from testing.factories import faker
 
@@ -52,10 +53,6 @@ from services.backend.src.api.routes.projects import (
 )
 from services.backend.src.api.routes.rag_jobs import RagJobResponse
 from services.backend.src.common_types import TableIdResponse
-from services.rag.src.grant_template.extract_sections import (
-    ExtractedSectionDTO,
-)
-from services.rag.src.grant_template.generate_metadata import SectionMetadata
 
 
 class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):

@@ -29,6 +29,7 @@ def create_mock_job_manager() -> MagicMock:
 async def test_handle_grant_application_pipeline_with_mocked_llm(
     test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
+    create_pubsub_topics: None,
 ) -> None:
     application = test_application_with_template
 

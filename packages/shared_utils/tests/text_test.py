@@ -1,6 +1,6 @@
 import pytest
 
-from services.rag.src.utils.text import (
+from packages.shared_utils.src.text import (
     concatenate_segments_with_spacy_coherence,
     normalize_markdown,
     normalize_punctuation,
@@ -29,7 +29,9 @@ from services.rag.src.utils.text import (
         ),
     ],
 )
-def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected: str) -> None:
+def test_concatenate_segments_with_spacy_coherence(
+    segments: list[str], expected: str
+) -> None:
     result = concatenate_segments_with_spacy_coherence(segments)
     assert result == expected
 
