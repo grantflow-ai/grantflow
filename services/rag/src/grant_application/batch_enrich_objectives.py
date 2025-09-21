@@ -38,15 +38,6 @@ def calculate_optimal_batching(
         batch = research_objectives[i : i + max_objectives_per_batch]
         batches.append(batch)
 
-    logger.info(
-        "Calculated optimal batching strategy",
-        total_objectives=len(research_objectives),
-        batch_count=len(batches),
-        batch_sizes=[len(batch) for batch in batches],
-        estimated_context_tokens=estimated_context_tokens,
-        max_per_batch=max_objectives_per_batch,
-    )
-
     return batches
 
 
@@ -77,24 +68,11 @@ async def perform_shared_retrieval(
             if len(key_terms) > 1:
                 search_queries.extend(key_terms[:2])
 
-    logger.info(
-        "Performing optimized single retrieval",
-        objectives_count=len(research_objectives),
-        search_queries_count=len(search_queries),
-        max_tokens=MAX_RETRIEVAL_TOKENS,
-    )
-
     retrieval_result = await retrieve_documents(
         application_id=application_id,
         search_queries=search_queries[:15],
         task_description=combined_context,
         max_tokens=MAX_RETRIEVAL_TOKENS,
-    )
-
-    logger.info(
-        "Optimized retrieval completed",
-        result_tokens=estimate_prompt_tokens("\n".join(retrieval_result)),
-        result_length=len(retrieval_result),
     )
 
     return "\n".join(retrieval_result)
@@ -105,15 +83,10 @@ async def handle_batch_enrich_objectives(
     grant_section: GrantLongFormSection,
     application_id: str,
     form_inputs: ResearchDeepDive,
+    trace_id: str,
 ) -> list[ObjectiveEnrichmentDTO]:
     if not research_objectives:
         return []
-
-    logger.info(
-        "Starting batch enrichment with optimizations",
-        objectives_count=len(research_objectives),
-        section_title=grant_section.get("title", "Unknown"),
-    )
 
     shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
@@ -121,14 +94,7 @@ async def handle_batch_enrich_objectives(
 
     all_deep_dives = []
 
-    for batch_idx, batch in enumerate(objective_batches):
-        logger.info(
-            "Processing objective batch",
-            batch_index=batch_idx + 1,
-            batch_size=len(batch),
-            total_batches=len(objective_batches),
-        )
-
+    for _batch_idx, batch in enumerate(objective_batches):
         batch_coroutines = [
             handle_enrich_objective(
                 EnrichObjectiveInputDTO(
@@ -139,19 +105,13 @@ async def handle_batch_enrich_objectives(
                     retrieval_context=shared_context,
                     keywords=grant_section["keywords"],
                     topics=grant_section["topics"],
+                    trace_id=trace_id,
                 )
             )
             for obj in batch
         ]
 
-        batch_results = await batched_gather(*batch_coroutines, batch_size=min(3, len(batch_coroutines)))
+        batch_results = await batched_gather(*batch_coroutines, batch_size=min(4, len(batch_coroutines)))
         all_deep_dives.extend(batch_results)
-
-    logger.info(
-        "Batch enrichment completed",
-        total_objectives=len(research_objectives),
-        total_deep_dives=len(all_deep_dives),
-        batch_count=len(objective_batches),
-    )
 
     return all_deep_dives

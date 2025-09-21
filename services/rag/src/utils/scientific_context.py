@@ -1,18 +1,7 @@
-import logging
 import re
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from services.rag.src.utils.prompt_template import PromptTemplate
-
-logger = logging.getLogger(__name__)
-
-SCIENTIFIC_CONTEXT_TEMPLATE = PromptTemplate(
-    name="scientific_context",
-    template="""## Scientific Foundation Context
-${scientific_context}
-
-This context provides foundational scientific concepts and terminology relevant to the research objective. Use these terms and concepts to enhance the depth and accuracy of your response.""",
-)
 
 
 class ValidationResult(TypedDict):
@@ -23,110 +12,122 @@ class ValidationResult(TypedDict):
     errors: list[str]
 
 
-def format_scientific_context(scientific_context: str) -> str:
-    if not scientific_context:
-        return ""
+SCIENTIFIC_CONTEXT_TEMPLATE = PromptTemplate(
+    name="scientific_context",
+    template="""## Scientific Foundation Context
+${scientific_context}
 
-    try:
-        formatted_template = SCIENTIFIC_CONTEXT_TEMPLATE.substitute(scientific_context=scientific_context)
-        formatted_context = formatted_template.to_string()
-
-        logger.info(
-            "Scientific context formatted successfully",
-            extra={
-                "context_length": len(scientific_context),
-                "formatted_length": len(formatted_context),
-            },
-        )
-
-        return formatted_context
-
-    except Exception as e:
-        logger.error(
-            "Failed to format scientific context",
-            extra={
-                "error": str(e),
-                "context_length": len(scientific_context),
-            },
-        )
-        return scientific_context
+This context provides foundational scientific concepts and terminology relevant to the research objective. Use these terms and concepts to enhance the depth and accuracy of your response.""",
+)
 
 
 def extract_scientific_terms_from_context(context: str) -> list[str]:
     if not context:
         return []
 
+    bold_pattern = r"\*\*([^*]+)\*\*"
+    terms = re.findall(bold_pattern, context)
+
+    scientific_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b"
+    capitalized_terms = re.findall(scientific_pattern, context)
+
+    all_terms = terms + capitalized_terms
+
+    scientific_keywords = [
+        "acid",
+        "protein",
+        "enzyme",
+        "cell",
+        "gene",
+        "dna",
+        "rna",
+        "molecule",
+        "compound",
+        "synthesis",
+        "analysis",
+        "study",
+        "research",
+        "method",
+        "technique",
+        "process",
+        "system",
+        "learning",
+        "intelligence",
+        "network",
+        "algorithm",
+        "data",
+    ]
+
+    scientific_terms = [
+        term.strip()
+        for term in all_terms
+        if term.strip() and any(keyword in term.lower() for keyword in scientific_keywords)
+    ]
+
+    return list(set(scientific_terms))
+
+
+def format_scientific_context(context: str) -> str:
+    if not context:
+        return ""
+
     try:
-        terms = re.findall(r"\*\*([^*]+)\*\*", context)
-        unique_terms = list({term.strip() for term in terms if term.strip()})
+        return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=context)
+    except Exception:
+        return context
 
-        logger.info(
-            "Extracted scientific terms from context",
-            extra={
-                "context_length": len(context),
-                "terms_count": len(unique_terms),
-            },
+
+def validate_scientific_context(context: Any) -> ValidationResult:
+    errors: list[str] = []
+
+    if not isinstance(context, str):
+        errors.append("Context must be a string")
+        return ValidationResult(
+            is_valid=False, has_content=False, has_scientific_terms=False, term_count=0, errors=errors
         )
 
-        return unique_terms
-
-    except Exception as e:
-        logger.error(
-            "Failed to extract scientific terms",
-            extra={
-                "error": str(e),
-                "context_length": len(context),
-            },
-        )
-        return []
-
-
-def validate_scientific_context(context: str) -> ValidationResult:
-    validation_result: ValidationResult = {
-        "is_valid": False,
-        "has_content": False,
-        "has_scientific_terms": False,
-        "term_count": 0,
-        "errors": [],
-    }
-
-    try:
-        if not context:
-            validation_result["errors"].append("Context is empty")
-            return validation_result
-
-        validation_result["has_content"] = True
-
-        if "## Scientific Foundation Context" not in context:
-            validation_result["errors"].append("Missing scientific context header")
-
-        terms = extract_scientific_terms_from_context(context)
-        validation_result["term_count"] = len(terms)
-        validation_result["has_scientific_terms"] = len(terms) > 0
-
-        if not terms:
-            validation_result["errors"].append("No scientific terms found")
-
-        validation_result["is_valid"] = len(validation_result["errors"]) == 0
-
-        logger.info(
-            "Scientific context validation completed",
-            extra={
-                "is_valid": validation_result["is_valid"],
-                "term_count": validation_result["term_count"],
-                "error_count": len(validation_result["errors"]),
-            },
+    if not context.strip():
+        errors.append("Context is empty")
+        return ValidationResult(
+            is_valid=False, has_content=False, has_scientific_terms=False, term_count=0, errors=errors
         )
 
-        return validation_result
+    scientific_keywords = [
+        "research",
+        "study",
+        "analysis",
+        "method",
+        "technique",
+        "experiment",
+        "hypothesis",
+        "theory",
+        "model",
+        "data",
+        "result",
+        "conclusion",
+        "investigation",
+        "observation",
+        "measurement",
+        "assessment",
+        "evaluation",
+    ]
 
-    except Exception as e:
-        validation_result["errors"].append(f"Validation error: {e!s}")
-        logger.error(
-            "Scientific context validation failed",
-            extra={
-                "error": str(e),
-                "context_length": len(context),
-            },
-        )
-        return validation_result
+    context_lower = context.lower()
+    has_scientific_keywords = any(keyword in context_lower for keyword in scientific_keywords)
+
+    terms = extract_scientific_terms_from_context(context)
+    term_count = len(terms)
+    has_scientific_terms = term_count > 0
+
+    if not has_scientific_keywords and not has_scientific_terms:
+        errors.append("No scientific terms found")
+
+    is_valid = len(errors) == 0 and (has_scientific_keywords or has_scientific_terms)
+
+    return ValidationResult(
+        is_valid=is_valid,
+        has_content=True,
+        has_scientific_terms=has_scientific_terms,
+        term_count=term_count,
+        errors=errors,
+    )

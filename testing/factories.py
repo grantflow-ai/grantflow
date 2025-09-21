@@ -71,6 +71,7 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     rag_job_id = None
+    deleted_at = None  # Explicitly set to None for soft delete
     grant_sections = Use(
         lambda: [
             GrantSectionFactory.build(
@@ -267,6 +268,7 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __set_association_proxy__ = False
     rag_job_id = None
     parent_id = None
+    deleted_at = None  # Explicitly set to None for soft delete
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):

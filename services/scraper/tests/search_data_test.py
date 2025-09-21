@@ -37,7 +37,6 @@ def test_constants() -> None:
     assert isinstance(TODAY_DATE, date)
 
 
-@pytest.mark.asyncio
 async def test_download_search_data_success() -> None:
     mock_download = AsyncMock()
     mock_download.suggested_filename = "test_grants.csv"
@@ -93,7 +92,6 @@ async def test_download_search_data_success() -> None:
         assert called_grants[0]["title"] == "Test Grant"
 
 
-@pytest.mark.asyncio
 async def test_download_search_data_no_advanced_search_link() -> None:
     mock_page = AsyncMock()
     mock_page.goto = AsyncMock()
@@ -120,7 +118,6 @@ async def test_download_search_data_no_advanced_search_link() -> None:
             await download_search_data()
 
 
-@pytest.mark.asyncio
 async def test_download_search_data_no_results() -> None:
     mock_page = AsyncMock()
     mock_page.goto = AsyncMock()
@@ -152,7 +149,6 @@ async def test_download_search_data_no_results() -> None:
         assert result == []
 
 
-@pytest.mark.asyncio
 async def test_download_search_data_export_fails() -> None:
     mock_page = AsyncMock()
     mock_page.goto = AsyncMock()

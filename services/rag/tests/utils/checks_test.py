@@ -51,6 +51,7 @@ async def test_all_sources_finished_grant_application(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     async with async_session_maker() as session:
         source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
@@ -61,7 +62,12 @@ async def test_all_sources_finished_grant_application(
         await session.commit()
 
     with patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification):
-        await verify_rag_sources_indexed(grant_application.id, async_session_maker, GrantApplication)
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
 
     mock_publish_notification.assert_not_called()
 
@@ -70,6 +76,7 @@ async def test_all_sources_finished_grant_template(
     grant_template_with_sections: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     async with async_session_maker() as session:
         source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
@@ -80,7 +87,12 @@ async def test_all_sources_finished_grant_template(
         await session.commit()
 
     with patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification):
-        await verify_rag_sources_indexed(grant_template_with_sections.id, async_session_maker, GrantTemplate)
+        await verify_rag_sources_indexed(
+            grant_template_with_sections.id,
+            async_session_maker,
+            GrantTemplate,
+            trace_id,
+        )
 
     mock_publish_notification.assert_not_called()
 
@@ -94,6 +106,7 @@ async def test_all_sources_failed_grant_application(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     async with async_session_maker() as session:
         source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
@@ -107,7 +120,12 @@ async def test_all_sources_failed_grant_application(
         patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification),
         pytest.raises(ValidationError) as exc_info,
     ):
-        await verify_rag_sources_indexed(grant_application.id, async_session_maker, GrantApplication)
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
 
     assert mock_publish_notification.call_count == 1
     notification_call = mock_publish_notification.call_args
@@ -116,6 +134,7 @@ async def test_all_sources_failed_grant_application(
     assert "Document indexing failed" in notification_call.kwargs["data"]["message"]
     assert notification_call.kwargs["data"]["data"]["failed_count"] == 2
     assert notification_call.kwargs["data"]["data"]["total_count"] == 2
+    assert notification_call.kwargs["trace_id"] == trace_id
     assert notification_call.kwargs["data"]["data"]["recoverable"] is True
 
     assert "All rag sources have failed to be indexed" in str(exc_info.value)
@@ -129,6 +148,7 @@ async def test_all_sources_failed_grant_template(
     grant_template_with_sections: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     async with async_session_maker() as session:
         source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
@@ -144,13 +164,19 @@ async def test_all_sources_failed_grant_template(
         patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification),
         pytest.raises(ValidationError) as exc_info,
     ):
-        await verify_rag_sources_indexed(grant_template_with_sections.id, async_session_maker, GrantTemplate)
+        await verify_rag_sources_indexed(
+            grant_template_with_sections.id,
+            async_session_maker,
+            GrantTemplate,
+            trace_id,
+        )
 
     assert mock_publish_notification.call_count == 1
     notification_call = mock_publish_notification.call_args
     assert notification_call.kwargs["event"] == NotificationEvents.INDEXING_FAILED
     assert notification_call.kwargs["data"]["data"]["failed_count"] == 3
     assert notification_call.kwargs["data"]["data"]["total_count"] == 3
+    assert notification_call.kwargs["trace_id"] == trace_id
 
     assert exc_info.value.context["grant_template_id"] == str(grant_template_with_sections.id)
     assert exc_info.value.context["failed_sources"] == 3
@@ -167,24 +193,32 @@ async def test_empty_sources_list(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     with (
         patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification),
         pytest.raises(ValidationError),
     ):
-        await verify_rag_sources_indexed(grant_application.id, async_session_maker, GrantApplication)
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
 
     assert mock_publish_notification.call_count == 1
     notification_call = mock_publish_notification.call_args
     assert notification_call.kwargs["event"] == NotificationEvents.INDEXING_FAILED
     assert notification_call.kwargs["data"]["data"]["failed_count"] == 0
     assert notification_call.kwargs["data"]["data"]["total_count"] == 0
+    assert notification_call.kwargs["trace_id"] == trace_id
 
 
 async def test_mixed_statuses_with_at_least_one_finished(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     mock_publish_notification: AsyncMock,
+    trace_id: str,
 ) -> None:
     async with async_session_maker() as session:
         source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
@@ -197,6 +231,11 @@ async def test_mixed_statuses_with_at_least_one_finished(
         await session.commit()
 
     with patch("services.rag.src.utils.checks.publish_notification", mock_publish_notification):
-        await verify_rag_sources_indexed(grant_application.id, async_session_maker, GrantApplication)
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
 
     mock_publish_notification.assert_not_called()

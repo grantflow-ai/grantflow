@@ -70,12 +70,9 @@ async def _verify_postgresql_changes(
     )
 
 
-@performance_test(
-    execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.SCRAPER, timeout=120
-)  # Reduced from 600 to 120 seconds
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.SCRAPER, timeout=120)
 @pytest.mark.e2e
 async def test_scraper_smoke(logger: logging.Logger) -> None:
-    # Skip E2E tests by default unless explicitly enabled
     if not os.environ.get("RUN_SCRAPER_E2E_TESTS"):
         pytest.skip(
             "Scraper E2E tests disabled by default due to external dependency on NIH website. Set RUN_SCRAPER_E2E_TESTS=1 to enable."
@@ -83,8 +80,7 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
 
     _setup_test_environment("smoke-test")
 
-    # Set shorter timeout for E2E test
-    os.environ["SCRAPER_E2E_TIMEOUT"] = "45"  # Reduced to 45 seconds for faster failure
+    os.environ["SCRAPER_E2E_TIMEOUT"] = "45"
 
     logger.info("Getting initial grant count")
     initial_grants = await get_existing_grant_identifiers()
@@ -92,7 +88,7 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
     logger.info("Initial grant count in PostgreSQL: %d", initial_count)
 
     logger.info("Running scraper with recent date range")
-    recent_date = datetime.now(UTC).date() - timedelta(days=7)  # Reduced from 30 to 7 days for faster testing
+    recent_date = datetime.now(UTC).date() - timedelta(days=7)
     today = datetime.now(UTC).date()
 
     try:
@@ -110,7 +106,6 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
     except Exception as e:
         logger.error("Scraper smoke test failed: %s (%s)", e, type(e).__name__)
 
-        # Check if it's a timeout or site structure change
         if "timed out" in str(e).lower():
             logger.error(
                 "SCRAPER TIMEOUT: The NIH website may have changed structure or is responding slowly. "
@@ -128,7 +123,6 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
         else:
             logger.error("SCRAPER UNKNOWN ERROR: %s", e)
 
-        # Re-raise with more context
         screenshot_path = Path(tempfile.gettempdir()) / "scraper_debug_*.png"
         raise AssertionError(
             f"Scraper E2E test failed: {e}. Check logs for debugging screenshots in {screenshot_path}"
@@ -138,7 +132,6 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.SCRAPER, timeout=1800)
 @pytest.mark.e2e
 async def test_scraper_full_e2e(logger: logging.Logger) -> None:
-    # Skip E2E tests by default unless explicitly enabled
     if not os.environ.get("RUN_SCRAPER_E2E_TESTS"):
         pytest.skip(
             "Scraper E2E tests disabled by default due to external dependency on NIH website. Set RUN_SCRAPER_E2E_TESTS=1 to enable."

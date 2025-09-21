@@ -181,7 +181,7 @@ function SidebarGroupAction({
 			)}
 			data-sidebar="group-action"
 			data-slot="sidebar-group-action"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 }
@@ -213,7 +213,7 @@ function SidebarGroupLabel({
 			)}
 			data-sidebar="group-label"
 			data-slot="sidebar-group-label"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 }
@@ -458,7 +458,7 @@ function SidebarMenuAction({
 			)}
 			data-sidebar="menu-action"
 			data-slot="sidebar-menu-action"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 }
@@ -506,7 +506,7 @@ function SidebarMenuButton({
 			data-sidebar="menu-button"
 			data-size={size}
 			data-slot="sidebar-menu-button"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 
@@ -608,7 +608,7 @@ function SidebarMenuSubButton({
 			data-sidebar="menu-sub-button"
 			data-size={size}
 			data-slot="sidebar-menu-sub-button"
-			{...props}
+			{...(props as any)}
 		/>
 	);
 }

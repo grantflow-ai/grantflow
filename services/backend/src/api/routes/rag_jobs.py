@@ -55,8 +55,6 @@ async def handle_retrieve_rag_job(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> RagJobResponse:
-    logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
-
     async with session_maker() as session:
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
@@ -153,8 +151,6 @@ async def cancel_rag_job_by_id(
     job_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Cancelling RAG job", project_id=project_id, job_id=job_id)
-
     async with session_maker() as session, session.begin():
         job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
@@ -196,7 +192,6 @@ async def cancel_rag_job_by_id(
             raise NotFoundException("RAG job not found")
 
         if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
-            previous_status = job.status
             job.status = RagGenerationStatusEnum.CANCELLED
             job.failed_at = datetime.now(UTC)
             job.error_message = "Cancelled by user request"
@@ -208,18 +203,6 @@ async def cancel_rag_job_by_id(
                 notification_type="warning",
             )
             session.add(notification)
-
-            logger.info(
-                "RAG job cancelled successfully",
-                job_id=str(job_id),
-                previous_status=previous_status.value,
-            )
-        else:
-            logger.info(
-                "RAG job not in cancellable state",
-                job_id=str(job_id),
-                current_status=job.status.value,
-            )
 
 
 @delete(

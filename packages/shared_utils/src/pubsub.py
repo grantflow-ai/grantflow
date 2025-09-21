@@ -1,13 +1,17 @@
 import binascii
 from base64 import b64decode
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
 import msgspec
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import (
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
+    SourceIndexingStatusEnum,
+)
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -51,14 +55,14 @@ class CrawlingRequest(TypedDict):
     entity_type: EntityType
     entity_id: UUID
     url: str
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class SourceProcessingResult(TypedDict):
     source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class RagProcessingStatus(TypedDict):
@@ -67,21 +71,43 @@ class RagProcessingStatus(TypedDict):
     data: NotRequired[dict[str, Any]]
     current_pipeline_stage: NotRequired[int]
     total_pipeline_stages: NotRequired[int]
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
-class RagRequest(TypedDict):
-    parent_type: Literal["grant_application", "grant_template"]
+class BaseRagRequest(msgspec.Struct):
+    trace_id: str
+
+
+class GrantApplicationRagRequest(BaseRagRequest, tag="grant_application"):
     parent_id: UUID
-    trace_id: NotRequired[str]
+    stage: GrantApplicationStageEnum
 
 
-class AutofillRequest(TypedDict):
+class GrantTemplateRagRequest(BaseRagRequest, tag="grant_template"):
+    parent_id: UUID
+    stage: GrantTemplateStageEnum
+
+
+class ResearchPlanAutofillRequest(BaseRagRequest, tag="research_plan_autofill"):
     application_id: UUID
-    autofill_type: Literal["research_plan", "research_deep_dive"]
-    field_name: NotRequired[str]
-    context: NotRequired[dict[str, Any]]
-    trace_id: NotRequired[str]
+    field_name: str | None = None
+    context: dict[str, Any] | None = None
+
+
+class ResearchDeepDiveAutofillRequest(
+    BaseRagRequest, tag="research_deep_dive_autofill"
+):
+    application_id: UUID
+    field_name: str | None = None
+    context: dict[str, Any] | None = None
+
+
+RagRequest = (
+    GrantApplicationRagRequest
+    | GrantTemplateRagRequest
+    | ResearchPlanAutofillRequest
+    | ResearchDeepDiveAutofillRequest
+)
 
 
 class WebsocketMessage[T](TypedDict):
@@ -89,12 +115,12 @@ class WebsocketMessage[T](TypedDict):
     parent_id: UUID
     event: str
     data: T
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class EmailNotificationRequest(TypedDict):
     application_id: UUID
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 class SubscriptionVerificationRequest(TypedDict):
@@ -104,7 +130,7 @@ class SubscriptionVerificationRequest(TypedDict):
     template_type: Literal["subscription_verification"]
     search_params: NotRequired[dict[str, Any]]
     frequency: NotRequired[str]
-    trace_id: NotRequired[str]
+    trace_id: str
 
 
 def get_publisher_client() -> pubsub.PublisherClient:
@@ -157,7 +183,7 @@ async def publish_url_crawling_task(
     source_id: str | UUID,
     entity_type: EntityType,
     entity_id: str | UUID,
-    trace_id: str | None = None,
+    trace_id: str,
 ) -> str:
     client = get_publisher_client()
 
@@ -166,10 +192,8 @@ async def publish_url_crawling_task(
         source_id=UUID(str(source_id)),
         entity_type=entity_type,
         entity_id=UUID(str(entity_id)),
+        trace_id=trace_id,
     )
-
-    if trace_id:
-        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)
@@ -211,25 +235,33 @@ async def publish_rag_task(
     *,
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
-    trace_id: str | None = None,
+    stage: GrantApplicationStageEnum | GrantTemplateStageEnum,
+    trace_id: str,
 ) -> str:
     start_time = time.time()
     logger.debug(
         "Starting PubSub message publishing",
         parent_type=parent_type,
         parent_id=str(parent_id),
+        stage=stage,
         trace_id=trace_id,
     )
 
     client = get_publisher_client()
 
-    data = RagRequest(
-        parent_type=parent_type,
-        parent_id=UUID(str(parent_id)),
-    )
-
-    if trace_id:
-        data["trace_id"] = trace_id
+    data: GrantApplicationRagRequest | GrantTemplateRagRequest
+    if parent_type == "grant_application":
+        data = GrantApplicationRagRequest(
+            parent_id=UUID(str(parent_id)),
+            stage=cast("GrantApplicationStageEnum", stage),
+            trace_id=trace_id,
+        )
+    else:
+        data = GrantTemplateRagRequest(
+            parent_id=UUID(str(parent_id)),
+            stage=cast("GrantTemplateStageEnum", stage),
+            trace_id=trace_id,
+        )
 
     try:
         message_data = serialize(data)
@@ -237,6 +269,7 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
+            stage=stage,
             message_size=len(message_data),
         )
 
@@ -255,6 +288,8 @@ async def publish_rag_task(
         with create_pubsub_publish_span(topic_path, "RagRequest") as span:
             span.set_attribute("parent_type", parent_type)
             span.set_attribute("parent_id", str(parent_id))
+            if stage is not None:
+                span.set_attribute("pipeline.stage", str(stage))
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
@@ -272,6 +307,7 @@ async def publish_rag_task(
             message_id=message_id,
             parent_type=parent_type,
             parent_id=str(parent_id),
+            stage=str(stage) if stage is not None else None,
             trace_id=trace_id,
             publish_duration_ms=round(publish_duration * 1000, 2),
         )
@@ -289,32 +325,36 @@ async def publish_autofill_task(
     autofill_type: Literal["research_plan", "research_deep_dive"],
     field_name: str | None = None,
     context: dict[str, Any] | None = None,
-    trace_id: str | None = None,
+    trace_id: str,
 ) -> str:
     start_time = time.time()
 
     client = get_publisher_client()
 
-    autofill_request = AutofillRequest(
-        application_id=UUID(str(parent_id)),
-        autofill_type=autofill_type,
-    )
-
-    if field_name:
-        autofill_request["field_name"] = field_name
-    if context:
-        autofill_request["context"] = context
-    if trace_id:
-        autofill_request["trace_id"] = trace_id
+    autofill_request: ResearchPlanAutofillRequest | ResearchDeepDiveAutofillRequest
+    if autofill_type == "research_plan":
+        autofill_request = ResearchPlanAutofillRequest(
+            application_id=UUID(str(parent_id)),
+            trace_id=trace_id,
+            field_name=field_name,
+            context=context,
+        )
+    else:
+        autofill_request = ResearchDeepDiveAutofillRequest(
+            application_id=UUID(str(parent_id)),
+            trace_id=trace_id,
+            field_name=field_name,
+            context=context,
+        )
 
     try:
         message_data = serialize(autofill_request)
 
         logger.debug(
             "Publishing autofill task",
-            parent_id=str(parent_id),
-            autofill_type=autofill_type,
-            field_name=field_name,
+            parent_id=str(autofill_request.application_id),
+            request_type=type(autofill_request).__name__,
+            field_name=autofill_request.field_name,
             trace_id=trace_id,
             message_size=len(message_data),
         )
@@ -408,7 +448,7 @@ async def publish_notification[T](
     parent_id: UUID,
     event: str,
     data: T,
-    trace_id: str | None = None,
+    trace_id: str,
 ) -> str:
     client = get_publisher_client()
 
@@ -432,10 +472,8 @@ async def publish_notification[T](
             data=data,
             parent_id=parent_id,
             type="data",
+            trace_id=trace_id,
         )
-
-        if trace_id:
-            websocket_message["trace_id"] = trace_id
 
         message_data = serialize(websocket_message)
 
@@ -473,11 +511,10 @@ async def publish_notification[T](
 async def publish_email_notification(
     *,
     application_id: str | UUID,
-    trace_id: str | None = None,
+    trace_id: str,
 ) -> str:
     client = get_publisher_client()
 
-    # Use empty message body and send data as attributes to avoid corruption issues
     message_data = b""
     topic_path = client.topic_path(
         project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
@@ -492,7 +529,6 @@ async def publish_email_notification(
             if trace_id:
                 span.set_attribute("trace_id", trace_id)
 
-            # Put data in attributes instead of message body
             attributes = {"application_id": str(application_id)}
             if trace_id:
                 attributes["trace_id"] = trace_id
@@ -525,7 +561,7 @@ async def publish_subscription_verification_email(
     verification_token: str,
     search_params: dict[str, Any] | None = None,
     frequency: str = "daily",
-    trace_id: str | None = None,
+    trace_id: str,
 ) -> str:
     client = get_publisher_client()
 
@@ -534,14 +570,13 @@ async def publish_subscription_verification_email(
         subscription_id=subscription_id,
         verification_token=verification_token,
         template_type="subscription_verification",
+        trace_id=trace_id,
     )
 
     if search_params:
         data["search_params"] = search_params
     if frequency:
         data["frequency"] = frequency
-    if trace_id:
-        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)

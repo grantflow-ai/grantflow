@@ -1,5 +1,7 @@
 from typing import NotRequired, TypedDict
 
+from packages.db.src.enums import GrantTemplateStageEnum
+
 
 class TableContext(TypedDict):
     row_index: int | None
@@ -55,28 +57,73 @@ class ResearchDeepDive(TypedDict):
     scientific_infrastructure: NotRequired[str]
 
 
-class RequirementWithQuote(TypedDict):
+class GrantTemplateRagJobCheckpoint(TypedDict):
+    stage: GrantTemplateStageEnum
+    cfp_subject: str
+    title: str
+    subtitles: list[str]
+    organization_id: NotRequired[str | None]
+    submission_date: NotRequired[str | None]
+
+
+class CFPAnalysisRequirementWithQuote(TypedDict):
     requirement: str
-    quote: str
+    quote_from_source: str
+    category: str
 
 
-class SectionRequirement(TypedDict):
-    section: str
-    requirements: list[RequirementWithQuote]
+class CFPSectionRequirement(TypedDict):
+    section_name: str
+    definition: str
+    requirements: list[CFPAnalysisRequirementWithQuote]
+    dependencies: list[str]
 
 
-class LengthConstraint(TypedDict):
+class CFPSectionLengthConstraint(TypedDict):
+    section_name: str
+    measurement_type: str
+    limit_description: str
+    quote_from_source: str
+    exclusions: list[str]
+
+
+class CFPAnalysisEvaluationCriterion(TypedDict):
+    criterion_name: str
     description: str
-    quote: str
+    weight_percentage: NotRequired[int | None]
+    quote_from_source: str
 
 
-class EvaluationCriterion(TypedDict):
-    criterion: str
-    quote: str
+class CategorizationAnalysisResult(TypedDict):
+    money: list[str]
+    date_time: list[str]
+    writing_related: list[str]
+    other_numbers: list[str]
+    recommendations: list[str]
+    orders: list[str]
+    positive_instructions: list[str]
+    negative_instructions: list[str]
+    evaluation_criteria: list[str]
+
+
+class CFPAnalysisMetadata(TypedDict):
+    content_length: int
+    categories_found: int
+    total_sentences: int
 
 
 class CFPSectionAnalysis(TypedDict):
-    section_requirements: list[SectionRequirement]
-    length_constraints: list[LengthConstraint]
-    evaluation_criteria: list[EvaluationCriterion]
-    additional_requirements: list[RequirementWithQuote]
+    required_sections: list[CFPSectionRequirement]
+    length_constraints: list[CFPSectionLengthConstraint]
+    evaluation_criteria: list[CFPAnalysisEvaluationCriterion]
+    additional_requirements: list[CFPAnalysisRequirementWithQuote]
+    sections_count: int
+    length_constraints_found: int
+    evaluation_criteria_count: int
+    error: NotRequired[str | None]
+
+
+class CFPAnalysisResult(TypedDict):
+    cfp_analysis: CFPSectionAnalysis
+    nlp_analysis: CategorizationAnalysisResult
+    analysis_metadata: CFPAnalysisMetadata

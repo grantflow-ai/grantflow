@@ -47,7 +47,6 @@ runs:
           image=moby/buildkit:master
           network=host
         buildkitd-flags: --debug
-        # Enable GitHub Actions cache API v2 if available
         config-inline: |
           [worker.oci]
             max-parallelism = 4
@@ -102,19 +101,15 @@ runs:
           ${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ steps.meta.outputs.env_latest }}
           ${{ steps.meta.outputs.registry }}/${{ inputs.service }}:${{ inputs.image_tag }}
         build-args: ${{ inputs.build_args }}
-        # Platform: Cloud Run only supports linux/amd64
         platforms: linux/amd64
-        # Optimized caching strategy (mode=min exports only final layers)
         cache-from: |
           type=gha,scope=${{ steps.meta.outputs.cache_scope }}
           type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache
         cache-to: |
           type=gha,mode=min,scope=${{ steps.meta.outputs.cache_scope }}
           type=registry,ref=${{ steps.meta.outputs.registry }}/${{ inputs.service }}:buildcache,mode=min
-        # Enable provenance and SBOM for security
         provenance: true
         sbom: true
-        # Build annotations
         annotations: |
           index:org.opencontainers.image.source=https://github.com/${{ github.repository }}
           index:org.opencontainers.image.revision=${{ github.sha }}
@@ -122,7 +117,6 @@ runs:
           index:org.opencontainers.image.authors=grantflow-ci
           index:org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/README.md
           index:org.opencontainers.image.description=${{ inputs.service }} service for GrantFlow platform
-        # Labels for better tracking
         labels: |
           org.opencontainers.image.source=https://github.com/${{ github.repository }}
           org.opencontainers.image.revision=${{ github.sha }}

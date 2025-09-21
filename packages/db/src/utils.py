@@ -113,6 +113,7 @@ async def update_source_indexing_status(
     vectors: list[VectorDTO] | None,
     indexing_status: SourceIndexingStatusEnum,
     should_send_notifications: bool = True,
+    trace_id: str,
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
@@ -137,7 +138,9 @@ async def update_source_indexing_status(
                         source_id=source_id,
                         indexing_status=indexing_status,
                         identifier=identifier,
+                        trace_id=trace_id,
                     ),
+                    trace_id=trace_id,
                 )
         except SQLAlchemyError as e:
             logger.exception(
@@ -154,5 +157,7 @@ async def update_source_indexing_status(
                         source_id=source_id,
                         indexing_status=SourceIndexingStatusEnum.FAILED,
                         identifier=identifier,
+                        trace_id=trace_id,
                     ),
+                    trace_id=trace_id,
                 )

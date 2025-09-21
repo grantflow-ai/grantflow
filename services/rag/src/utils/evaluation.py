@@ -216,15 +216,6 @@ class AdaptiveTimeoutCalculator:
 
         self.timeout_multipliers[complexity_level] = new_multiplier
 
-        logger.debug(
-            "Updated timeout multiplier",
-            complexity_level=complexity_level.value,
-            old_multiplier=current_multiplier,
-            new_multiplier=new_multiplier,
-            performance_ratio=performance_ratio,
-            success=metrics.success,
-        )
-
     def get_performance_stats(self) -> dict[str, Any]:
         if not self.performance_history:
             return {"total_evaluations": 0}
@@ -322,13 +313,6 @@ class EvaluationCache:
         entry.access_count += 1
         self._update_access_order(key)
 
-        logger.debug(
-            "Cache hit for evaluation",
-            cache_key=key[:8],
-            access_count=entry.access_count,
-            age_seconds=time.time() - entry.timestamp,
-        )
-
         return entry.result
 
     def put(
@@ -351,12 +335,6 @@ class EvaluationCache:
 
         self._cache[key] = entry
         self._update_access_order(key)
-
-        logger.debug(
-            "Cached evaluation result",
-            cache_key=key[:8],
-            cache_size=len(self._cache),
-        )
 
     def clear(self) -> None:
         self._cache.clear()
@@ -387,7 +365,7 @@ score_object_schema = {
 
 
 async def evaluate_prompt_output(
-    *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any]
+    *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any], trace_id: str
 ) -> EvaluationToolResponse:
     cached_result = _evaluation_cache.get(prompt, model_output, criteria)
     if cached_result is not None:
@@ -431,6 +409,7 @@ async def evaluate_prompt_output(
         messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
         temperature=0.2,
         top_p=0.7,
+        trace_id=trace_id,
     )
 
     _evaluation_cache.put(prompt, model_output, criteria, result)
@@ -615,6 +594,7 @@ async def smart_evaluate_output(
     criteria: list[EvaluationCriterion],
     prompt: str,
     model_output: str | dict[str, Any],
+    trace_id: str,
     auto_route: bool = True,
     force_mode: str | None = None,
     force_timeout: float | None = None,
@@ -646,23 +626,25 @@ async def smart_evaluate_output(
         word_count=complexity_analysis.word_count,
         technical_terms=complexity_analysis.technical_terms_count,
         confidence=complexity_analysis.confidence_score,
+        trace_id=trace_id,
     )
 
     success = True
     try:
         if evaluation_mode == "quick_evaluation":
-            result = await quick_evaluation(criteria, prompt, model_output)
+            result = await quick_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "thorough_evaluation":
-            result = await thorough_evaluation(criteria, prompt, model_output)
+            result = await thorough_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "optimized_prompt_evaluation":
             result = await fast_evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
                 model_output=model_output,
                 evaluation_timeout=timeout,
+                trace_id=trace_id,
             )
         else:
-            result = await standard_evaluation(criteria, prompt, model_output)
+            result = await standard_evaluation(criteria, prompt, model_output, trace_id)
     except (EvaluationError, TimeoutError) as e:
         success = False
         logger.warning(
@@ -691,14 +673,6 @@ async def smart_evaluate_output(
 
             _adaptive_timeout_calculator.record_performance(metrics)
 
-            logger.debug(
-                "Recorded performance metrics",
-                complexity_level=complexity_analysis.complexity_level.value,
-                actual_duration=actual_duration,
-                predicted_duration=predicted_duration,
-                success=success,
-            )
-
     return result, complexity_analysis
 
 
@@ -707,6 +681,7 @@ async def fast_evaluate_output(
     criteria: list[EvaluationCriterion],
     prompt: str,
     model_output: str | dict[str, Any],
+    trace_id: str,
     evaluation_timeout: float = FAST_EVALUATION_TIMEOUT,
 ) -> EvaluationToolResponse:
     start_time = time.time()
@@ -717,6 +692,7 @@ async def fast_evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
                 model_output=model_output,
+                trace_id=trace_id,
             ),
             timeout=evaluation_timeout,
         )
@@ -774,6 +750,7 @@ async def optimized_prompt_evaluation[T](
     retries: int = 2,
     increment: float = 10.0,
     criteria: list[EvaluationCriterion],
+    trace_id: str,
     timeout_per_attempt: float = STANDARD_EVALUATION_TIMEOUT,
     early_termination: bool = True,
     **kwargs: Any,
@@ -793,6 +770,7 @@ async def optimized_prompt_evaluation[T](
         max_retries=retries,
         timeout_per_attempt=timeout_per_attempt,
         early_termination=early_termination,
+        trace_id=trace_id,
     )
 
     while iteration <= retries:
@@ -806,6 +784,7 @@ async def optimized_prompt_evaluation[T](
                 prompt=current_prompt,
                 model_output=model_output,
                 evaluation_timeout=timeout_per_attempt,
+                trace_id=trace_id,
             )
 
             failing_criteria = {}
@@ -829,15 +808,7 @@ async def optimized_prompt_evaluation[T](
             overall_score = total_weighted_score / total_weight if total_weight > 0 else 0
 
             if not failing_criteria:
-                duration = time.time() - start_time
-                logger.info(
-                    "Evaluation passed",
-                    prompt_identifier=prompt_identifier,
-                    iteration=iteration,
-                    overall_score=overall_score,
-                    duration_seconds=duration,
-                    all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
-                )
+                time.time() - start_time
                 return cast("T", model_output)
 
             if (
@@ -845,15 +816,7 @@ async def optimized_prompt_evaluation[T](
                 and excellent_scores >= len(criteria) // 2
                 and overall_score >= min_passing_score * 0.9
             ):
-                duration = time.time() - start_time
-                logger.info(
-                    "Early termination on excellent performance",
-                    prompt_identifier=prompt_identifier,
-                    iteration=iteration,
-                    overall_score=overall_score,
-                    excellent_scores=excellent_scores,
-                    duration_seconds=duration,
-                )
+                time.time() - start_time
                 return cast("T", model_output)
 
             iteration_duration = time.time() - iteration_start
@@ -945,6 +908,7 @@ async def batch_evaluate_outputs(
                 criteria=task["criteria"],
                 prompt=task["prompt"],
                 model_output=task["model_output"],
+                trace_id=task["trace_id"],
                 evaluation_timeout=timeout_per_task,
             )
         except (EvaluationError, TimeoutError) as e:
@@ -996,6 +960,7 @@ async def with_prompt_evaluation[T, **P](
     retries: int = 4,
     increment: float = 2.5,
     criteria: list[EvaluationCriterion],
+    trace_id: str,
     **kwargs: Any,
 ) -> T:
     current_prompt = str(prompt)
@@ -1012,11 +977,15 @@ async def with_prompt_evaluation[T, **P](
             iteration=iteration,
             max_retries=retries,
             passing_score=min_passing_score,
+            trace_id=trace_id,
         )
 
-        model_output = await prompt_handler(current_prompt, **kwargs)  # type: ignore[arg-type]
+        model_output = await prompt_handler(current_prompt, trace_id=trace_id, **kwargs)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
-            prompt=current_prompt, model_output=cast("dict[str, Any] | str", model_output), criteria=criteria
+            prompt=current_prompt,
+            model_output=cast("dict[str, Any] | str", model_output),
+            criteria=criteria,
+            trace_id=trace_id,
         )
 
         failing_criteria = {
@@ -1031,6 +1000,7 @@ async def with_prompt_evaluation[T, **P](
                 prompt_identifier=prompt_identifier,
                 iteration=iteration,
                 all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                trace_id=trace_id,
             )
             return model_output
 
@@ -1040,6 +1010,7 @@ async def with_prompt_evaluation[T, **P](
             iteration=iteration,
             failing_criteria={k: v["score"] for k, v in failing_criteria.items()},
             all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+            trace_id=trace_id,
         )
 
         failures.append(failing_criteria)
@@ -1068,11 +1039,13 @@ async def quick_evaluation(
     criteria: list[EvaluationCriterion],
     prompt: str,
     model_output: str | dict[str, Any],
+    trace_id: str,
 ) -> EvaluationToolResponse:
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
+        trace_id=trace_id,
         evaluation_timeout=FAST_EVALUATION_TIMEOUT,
     )
 
@@ -1081,11 +1054,13 @@ async def standard_evaluation(
     criteria: list[EvaluationCriterion],
     prompt: str,
     model_output: str | dict[str, Any],
+    trace_id: str,
 ) -> EvaluationToolResponse:
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
+        trace_id=trace_id,
         evaluation_timeout=STANDARD_EVALUATION_TIMEOUT,
     )
 
@@ -1094,11 +1069,13 @@ async def thorough_evaluation(
     criteria: list[EvaluationCriterion],
     prompt: str,
     model_output: str | dict[str, Any],
+    trace_id: str,
 ) -> EvaluationToolResponse:
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
+        trace_id=trace_id,
         evaluation_timeout=COMPREHENSIVE_EVALUATION_TIMEOUT,
     )
 

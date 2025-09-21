@@ -142,6 +142,7 @@ async def deduplicate_queries(queries: list[str], model_name: str | None = None)
 async def handle_create_search_queries(
     *, user_prompt: str | PromptTemplate, embedding_model: str | None = None, **kwargs: Any
 ) -> list[str]:
+    trace_id = kwargs.get("trace_id", "")
     messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
     if kwargs:
         messages.append(
@@ -165,6 +166,7 @@ async def handle_create_search_queries(
             response_schema=response_schema,
             response_type=DiverseQueryResponse,
             model=EVALUATION_MODEL,
+            trace_id=trace_id,
         )
 
         current_query_texts = [q["text"] for q in response["queries"]]
@@ -199,7 +201,6 @@ async def handle_create_search_queries(
 
     final_queries = [q["query"] for q in query_results]
 
-    query_types = [q.get("type", "unknown") for q in query_results]
-    logger.info("Generated diverse search queries", query_count=len(final_queries), query_types=query_types)
+    [q.get("type", "unknown") for q in query_results]
 
     return final_queries[:10]

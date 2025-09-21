@@ -25,7 +25,7 @@ from testing.utils import create_grant_application_data, process_granting_instit
 
 load_dotenv()
 
-pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
+pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.pubsub_test_plugin"]
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -176,15 +176,16 @@ def baseline_performance_targets() -> dict[str, float]:
 
 
 @pytest.fixture
-def mock_job_manager() -> Any:
-    from services.rag.src.utils.job_manager import JobManager
-
-    async def create_mock_job_manager(session_maker: Any, application_id: UUID) -> JobManager:
-        job_manager = JobManager(session_maker)
-        await job_manager.create_grant_application_job(grant_application_id=application_id, total_stages=5)
-        return job_manager
-
-    return create_mock_job_manager
+def mock_job_manager() -> AsyncMock:
+    manager = AsyncMock()
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    manager.to_next_job_stage = AsyncMock(return_value=None)
+    manager.get_or_create_job = AsyncMock()
+    manager.job = None
+    manager.job_id = None
+    return manager
 
 
 @pytest.fixture
@@ -454,11 +455,15 @@ def research_objectives() -> list[ResearchObjective]:
 
 
 @pytest.fixture
-async def melanoma_alliance_full_application_id(
+async def melanoma_alliance_full_application(
     project: Project,
     research_objectives: list[ResearchObjective],
     async_session_maker: async_sessionmaker[Any],
-) -> str:
+) -> GrantApplication:
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
+    from uuid import UUID
+
     form_inputs: ResearchDeepDive = {
         "background_context": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Immunotherapy has revolutionized treatment for melanoma patients, extending median survival from 6 months to nearly 6 years for patients in advanced disease stages. However, many patients still face early relapse or do not respond to treatments. Particularly in BMs, the milieu of the brain creates a highly immunosuppressive tumor microenvironment (TME). Single-cell technologies together with machine learning have emerged as powerful tools to decipher complex interactions between cells in the TME, enabling development of data driven designs of immunotherapies. Using our advanced technologies to study cells in the tumor microenvironment at a single-cell resolution, we identified a subtype of immune cell which is a central part of the TME coined regulatory (TREM2+) macrophages. These cells play a crucial role in suppressing the body's ability to fight cancer, especially in subsets of immunotherapy-resistant tumors such as melanoma. We have already developed an antibody that blocks the suppressive action of these cells.",
         "hypothesis": "Our hypothesis is that using our advanced single cell technologies, including cell temporal tracking (ZMAN-seq, differentiation flows), cell-cell interactions (PIC-seq), and improved strategies for AI analysis of spatial transcriptomics with Stereo-seq, we can to get an in-depth understanding of the BM TME and identify cytokines capable of remodulating the TME towards anti-tumor activity. This understanding will enable us to design novel immunocytokines combining the most promising cytokines with our antiTREM2 antibody to modulate both the myeloid and T and NK cell compartments. Our hypothesis is that our single cell and AI analysis will also enable us to identify biomarkers to design masking strategies to increase the specificity of the immunocytokine to the BM TME.",
@@ -470,7 +475,7 @@ async def melanoma_alliance_full_application_id(
         "impact": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Development of effective novel therapies for melanoma BMs could significantly increase life expectancy and not less important - life quality of metastatic melanoma patients.",
         "scientific_infrastructure": "Our lab is equipped with the state-of-the-art single cell and molecular biology technologies and is supported by the vast scientific infrastructure of the Weizmann Institute of Science.",
     }
-    return await create_grant_application_data(
+    application_id = await create_grant_application_data(
         project=project,
         research_objectives=research_objectives,
         form_inputs=form_inputs,
@@ -479,6 +484,19 @@ async def melanoma_alliance_full_application_id(
         cfp_markdown_file_name="melanoma_alliance.md",
         source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
+
+    # Retrieve and return the GrantApplication object
+    async with async_session_maker() as session:
+        grant_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == UUID(application_id))
+            .options(selectinload(GrantApplication.grant_template))
+        )
+
+        if not grant_application:
+            raise ValueError(f"Grant application not found with ID: {application_id}")
+
+        return grant_application
 
 
 @pytest.fixture
@@ -779,3 +797,27 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
         await session.refresh(application)
 
         return application
+
+
+@pytest.fixture
+def mock_grant_application_job_manager() -> AsyncMock:
+    from services.rag.src.utils.job_manager import GrantApplicationJobManager
+
+    manager = AsyncMock(spec=GrantApplicationJobManager)
+    manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    return manager
+
+
+@pytest.fixture
+def mock_grant_template_job_manager() -> AsyncMock:
+    from services.rag.src.utils.job_manager import GrantTemplateJobManager
+
+    manager = AsyncMock(spec=GrantTemplateJobManager)
+    manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    return manager

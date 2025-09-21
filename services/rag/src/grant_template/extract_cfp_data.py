@@ -2,19 +2,20 @@ import hashlib
 import re
 import time
 from collections import defaultdict
-from typing import Any, Final, NotRequired, TypedDict
+from typing import Any, Final, TypedDict
 
+from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
+from packages.shared_utils.src.dto import ExtractedCFPData
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
-from services.rag.src.grant_template.nlp_categorizer import (
-    NLPCategorizationResult,
-    categorize_text_async,
+from services.rag.src.grant_template.category_extraction import (
+    categorize_text,
     format_nlp_analysis_for_prompt,
 )
 from services.rag.src.utils.completion import handle_completions_request
@@ -23,18 +24,8 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-
-class Content(TypedDict):
-    title: str
-    subtitles: list[str]
-
-
-class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    error: NotRequired[str | None]
-    cfp_subject: str
-    submission_date: str | None
-    content: list[Content]
+_cfp_extraction_cache: dict[str, tuple["ExtractedCFPData", float]] = {}
+CFP_CACHE_TTL_SECONDS = 3600
 
 
 class RagSourceData(TypedDict):
@@ -42,11 +33,7 @@ class RagSourceData(TypedDict):
     source_type: str
     text_content: str
     chunks: list[str]
-    nlp_analysis: NotRequired[NLPCategorizationResult]
-
-
-_cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
-CFP_CACHE_TTL_SECONDS = 3600
+    nlp_analysis: CategorizationAnalysisResult
 
 
 def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
@@ -67,16 +54,13 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
 
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
         del _cfp_extraction_cache[cache_key]
-        logger.debug("CFP cache entry expired", cache_key=cache_key)
         return None
 
-    logger.debug("CFP cache hit", cache_key=cache_key, age_seconds=current_time - timestamp)
     return result
 
 
 def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
     _cfp_extraction_cache[cache_key] = (result, time.time())
-    logger.debug("CFP result cached", cache_key=cache_key, cache_size=len(_cfp_extraction_cache))
 
 
 TEMPERATURE: Final[float] = 0.1
@@ -135,12 +119,16 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessionmaker[Any]) -> list[RagSourceData]:
     async with session_maker() as session:
         sources_result = await session.execute(
-            select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
+            select(RagSource.id, RagSource.source_type, RagSource.text_content)
+            .where(RagSource.id.in_(source_ids))
+            .where(RagSource.deleted_at.is_(None))
         )
         sources = sources_result.fetchall()
 
         chunks_result = await session.execute(
-            select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
+            select(TextVector.rag_source_id, TextVector.chunk)
+            .where(TextVector.rag_source_id.in_(source_ids))
+            .where(TextVector.deleted_at.is_(None))
         )
 
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
@@ -154,46 +142,23 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         text_content = source_text_content or ""
         chunks = chunks_by_source.get(source_id, [])
 
-        try:
-            nlp_analysis = await categorize_text_async(text_content)
-            total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
-            categories_found = {
-                k: len(v)
-                for k, v in [
-                    ("money", nlp_analysis["money"]),
-                    ("date_time", nlp_analysis["date_time"]),
-                    ("writing_related", nlp_analysis["writing_related"]),
-                    ("other_numbers", nlp_analysis["other_numbers"]),
-                    ("recommendations", nlp_analysis["recommendations"]),
-                    ("orders", nlp_analysis["orders"]),
-                    ("positive_instructions", nlp_analysis["positive_instructions"]),
-                    ("negative_instructions", nlp_analysis["negative_instructions"]),
-                    ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
-                ]
-                if v
-            }
-            logger.debug(
-                "NLP analysis completed for source",
-                source_id=str(source_id),
-                total_sentences=total_sentences,
-                categories_found=categories_found,
-            )
-        except Exception as e:
-            logger.warning(
-                "NLP analysis failed for source, using empty analysis", source_id=str(source_id), error=str(e)
-            )
-            nlp_analysis = NLPCategorizationResult(
-                money=[],
-                date_time=[],
-                writing_related=[],
-                other_numbers=[],
-                recommendations=[],
-                orders=[],
-                positive_instructions=[],
-                negative_instructions=[],
-                evaluation_criteria=[],
-            )
-
+        nlp_analysis = await categorize_text(text_content)
+        sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
+        {
+            k: len(v)
+            for k, v in [
+                ("money", nlp_analysis["money"]),
+                ("date_time", nlp_analysis["date_time"]),
+                ("writing_related", nlp_analysis["writing_related"]),
+                ("other_numbers", nlp_analysis["other_numbers"]),
+                ("recommendations", nlp_analysis["recommendations"]),
+                ("orders", nlp_analysis["orders"]),
+                ("positive_instructions", nlp_analysis["positive_instructions"]),
+                ("negative_instructions", nlp_analysis["negative_instructions"]),
+                ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
+            ]
+            if v
+        }
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),
@@ -253,7 +218,7 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
         nlp_analysis = source.get(
             "nlp_analysis",
-            NLPCategorizationResult(
+            CategorizationAnalysisResult(
                 money=[],
                 date_time=[],
                 writing_related=[],
@@ -345,7 +310,7 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
                 error,
                 context={
                     "cfp_subject": response.get("cfp_subject", ""),
-                    "organization_id": response.get("organization_id", None),
+                    "organization_id": response.get("organization_id"),
                     "recovery_instruction": "The CFP content appears to be insufficient or unclear. Try extracting more specific guidelines or requirements from all available sources.",
                 },
             )
@@ -353,13 +318,13 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
             "No content extracted from any source. Please provide an error message.",
             context={
                 "cfp_subject": response.get("cfp_subject", ""),
-                "organization_id": response.get("organization_id", None),
+                "organization_id": response.get("organization_id"),
                 "recovery_instruction": "Extract at least 3-5 relevant guidelines or requirements from the available RAG sources, or provide a specific error message.",
             },
         )
 
 
-async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> ExtractedCFPData:
+async def extract_cfp_data_multi_source(task_description: str, trace_id: str, **_: Any) -> ExtractedCFPData:
     return await handle_completions_request(
         prompt_identifier="extract_cfp_data_multi_source",
         response_type=ExtractedCFPData,
@@ -370,16 +335,20 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
         temperature=TEMPERATURE,
         model=REASONING_MODEL,
         top_p=0.9,
+        trace_id=trace_id,
     )
 
 
-async def handle_extract_cfp_data_from_rag_sources(
-    *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any]
+async def handle_extract_cfp_data(
+    *,
+    source_ids: list[str],
+    organization_mapping: dict[str, dict[str, str]],
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
 ) -> ExtractedCFPData:
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
-        logger.info("Using cached CFP extraction result", cache_key=cache_key)
         return cached_result
 
     rag_sources = await get_rag_sources_data(source_ids, session_maker)
@@ -388,13 +357,6 @@ async def handle_extract_cfp_data_from_rag_sources(
         raise ValidationError("No RAG sources found for the provided IDs", context={"source_ids": source_ids})
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
-
-    logger.info(
-        "Extracting CFP data from multiple sources",
-        source_count=len(rag_sources),
-        source_types=[s["source_type"] for s in rag_sources],
-        cache_key=cache_key,
-    )
 
     result = await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data_multi_source",
@@ -446,9 +408,9 @@ async def handle_extract_cfp_data_from_rag_sources(
                 weight=0.7,
             ),
         ],
+        trace_id=trace_id,
     )
 
     _cache_cfp_result(cache_key, result)
-    logger.info("CFP extraction completed and cached", cache_key=cache_key)
 
     return result

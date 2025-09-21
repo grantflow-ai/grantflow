@@ -5,6 +5,7 @@ from typing import Any
 
 from msgspec import MsgspecError
 from msgspec.json import decode, encode
+from msgspec import to_builtins as msgspec_to_builtins
 
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
@@ -18,6 +19,9 @@ def encode_hook(obj: Any) -> Any:
 
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
+
+    if isinstance(obj, Enum):
+        return obj.value
 
     for key in (
         "to_dict",
@@ -44,11 +48,12 @@ def deserialize[T](value: str | bytes, target_type: type[T]) -> T:
     try:
         return decode(value, type=target_type, strict=False)
     except MsgspecError as e:
+        type_name = getattr(target_type, "__name__", str(target_type))
         raise DeserializationError(
             str(e),
             context={
                 "value": value,
-                "target_type": target_type.__name__,
+                "target_type": type_name,
             },
         ) from e
 
@@ -100,6 +105,10 @@ def fix_string_json_values(
                 fix_string_json_values(input_data[i])
 
     return input_data
+
+
+def to_builtins(obj: Any) -> Any:
+    return msgspec_to_builtins(obj, enc_hook=encode_hook)
 
 
 def _looks_like_json(string_value: str) -> bool:

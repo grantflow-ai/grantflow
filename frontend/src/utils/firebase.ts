@@ -1,7 +1,7 @@
 "use client";
 
 import { type FirebaseApp, initializeApp } from "firebase/app";
-import { type Auth, browserSessionPersistence, getAuth, setPersistence, updateProfile, type User } from "firebase/auth";
+import { type Auth, browserSessionPersistence, getAuth, setPersistence, type User, updateProfile } from "firebase/auth";
 import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
 import type { UserInfo } from "@/types/user";

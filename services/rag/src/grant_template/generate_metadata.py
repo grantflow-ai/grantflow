@@ -1,11 +1,10 @@
 from functools import partial
 from typing import Final, NotRequired, TypedDict
 
-from packages.db.src.tables import GrantingInstitution
+from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -139,16 +138,6 @@ grant_template_generation_json_schema: Final = {
         },
     },
 }
-
-
-class SectionMetadata(TypedDict):
-    id: str
-    keywords: list[str]
-    topics: list[str]
-    generation_instructions: str
-    depends_on: list[str]
-    max_words: int
-    search_queries: list[str]
 
 
 class TemplateSectionsResponse(TypedDict):
@@ -321,7 +310,7 @@ def validate_template_sections(
 
 
 async def generate_grant_template(
-    task_description: str, *, input_sections: list[ExtractedSectionDTO]
+    task_description: str, *, trace_id: str, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
     return await handle_completions_request(
         prompt_identifier="grant_template_extraction",
@@ -333,6 +322,7 @@ async def generate_grant_template(
         temperature=0.1,
         top_p=0.9,
         candidate_count=2,
+        trace_id=trace_id,
     )
 
 
@@ -372,12 +362,13 @@ evaluation_criteria = [
 ]
 
 
-async def handle_generate_grant_template(
+async def handle_generate_grant_template_metadata(
     *,
     cfp_content: str,
     cfp_subject: str,
-    organization: GrantingInstitution | None,
+    organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
+    trace_id: str,
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
@@ -396,11 +387,12 @@ async def handle_generate_grant_template(
     organization_guidelines = (
         ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results=await retrieve_documents(
-                organization_id=str(organization.id),
+                organization_id=str(organization["organization_id"]),
                 task_description=str(prompt),
+                trace_id=trace_id,
             ),
-            organization_full_name=organization.full_name,
-            organization_abbreviation=organization.abbreviation,
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
         )
         if organization
         else ""
@@ -432,5 +424,6 @@ async def handle_generate_grant_template(
         retries=3,
         criteria=criteria,
         passing_score=70,
+        trace_id=trace_id,
     )
     return result["sections"]

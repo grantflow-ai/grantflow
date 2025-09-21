@@ -139,10 +139,3 @@ def _finalize_normalized_lines(normalized_lines: list[str]) -> str:
     while result and not result[-1]:
         result.pop()
     return "\n".join(result)
-
-
-def concat_extracted_cfp_content(extracted_result_content: list[str]) -> str:
-    extracted_content_all: str = ""
-    for content in extracted_result_content:
-        extracted_content_all += content
-    return extracted_content_all

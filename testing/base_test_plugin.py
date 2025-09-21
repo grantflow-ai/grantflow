@@ -1,5 +1,6 @@
 import os
 from logging import Logger, getLogger
+from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
@@ -45,3 +46,8 @@ def configure_structlog(log_output: LogCapture) -> None:
 @pytest.fixture(scope="session")
 def logger() -> Logger:
     return getLogger("e2e")
+
+
+@pytest.fixture
+def trace_id() -> str:
+    return str(uuid4())

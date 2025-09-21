@@ -4,7 +4,7 @@ from uuid import UUID
 
 from litestar import patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import GrantTemplateStageEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -39,19 +39,6 @@ async def handle_generate_grant_template(
 ) -> None:
     trace_id = get_trace_id(request)
 
-    logger.info(
-        "Creating grant template",
-        grant_template_id=grant_template_id,
-        trace_id=trace_id,
-        operation="grant_template_generation_start",
-    )
-
-    logger.debug(
-        "Starting grant template generation validation",
-        grant_template_id=str(grant_template_id),
-        trace_id=trace_id,
-    )
-
     async with session_maker() as session:
         grant_template = await session.scalar(
             select(GrantTemplate).where(
@@ -61,25 +48,10 @@ async def handle_generate_grant_template(
         )
 
         if not grant_template:
-            logger.debug(
-                "Grant template validation failed - template not found",
-                grant_template_id=str(grant_template_id),
-            )
             raise ValidationException("Grant template not found")
 
         if grant_template.grant_sections:
-            logger.info(
-                "Grant template already has sections, skipping generation",
-                grant_template_id=str(grant_template_id),
-                section_count=len(grant_template.grant_sections),
-            )
             return
-
-        logger.debug(
-            "Grant template found, checking RAG sources",
-            grant_template_id=str(grant_template_id),
-            grant_application_id=str(grant_template.grant_application_id),
-        )
 
         rag_sources_count = await session.scalar(
             select(count())
@@ -100,30 +72,16 @@ async def handle_generate_grant_template(
         )
 
         if rag_sources_count == 0:
-            logger.debug(
-                "Grant template generation validation failed - no RAG sources",
-                grant_template_id=str(grant_template_id),
-                rag_sources_count=rag_sources_count,
-            )
             raise ValidationException("No rag sources found for grant template, cannot generate")
-
-        logger.debug(
-            "Validation passed, publishing RAG task to PubSub",
-            grant_template_id=str(grant_template_id),
-            rag_sources_count=rag_sources_count,
-        )
 
         try:
             await publish_rag_task(
                 parent_type="grant_template",
                 parent_id=grant_template.id,
+                stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
                 trace_id=trace_id,
             )
 
-            logger.debug(
-                "Successfully published grant template generation task",
-                grant_template_id=str(grant_template_id),
-            )
         except BackendError as e:
             logger.error("Error initiating grant template generation", exc_info=e)
             raise
@@ -144,14 +102,7 @@ async def handle_update_grant_template(
     session_maker: async_sessionmaker[Any],
     request: APIRequest,
 ) -> None:
-    trace_id = get_trace_id(request)
-
-    logger.info(
-        "Updating grant template",
-        grant_template_id=grant_template_id,
-        data=data,
-        trace_id=trace_id,
-    )
+    get_trace_id(request)
 
     async with session_maker() as session, session.begin():
         try:

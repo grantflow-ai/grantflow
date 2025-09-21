@@ -67,12 +67,6 @@ async def send_grant_alert_email(
         html=html_content,
     )
 
-    logger.info(
-        "Grant alert email sent",
-        email=email,
-        grant_count=grant_count,
-    )
-
 
 async def send_application_ready_email(
     application_title: str,
@@ -112,10 +106,4 @@ async def send_application_ready_email(
         subject=subject,
         html=html_content,
         attachments=attachments,
-    )
-
-    logger.info(
-        "Application email sent",
-        application_id=application_id,
-        email=user_email,
     )

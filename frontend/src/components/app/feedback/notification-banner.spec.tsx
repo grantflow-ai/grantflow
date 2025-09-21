@@ -111,7 +111,7 @@ describe.sequential("NotificationBanner", () => {
 	it("displays only message when project name is null/undefined", () => {
 		const notificationWithNullProject: NotificationData = {
 			...mockNotification,
-			projectName: "" as any, // simulating empty/null project name
+			projectName: "" as any,
 		};
 
 		render(<NotificationBanner notification={notificationWithNullProject} />);

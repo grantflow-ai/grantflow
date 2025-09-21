@@ -49,8 +49,6 @@ async def list_notifications(
     session_maker: async_sessionmaker[Any],
     include_read: bool = False,
 ) -> ListNotificationsResponse:
-    logger.info("Listing notifications", firebase_uid=request.auth, include_read=include_read)
-
     async with session_maker() as session:
         filters = [
             Notification.firebase_uid == request.auth,
@@ -91,12 +89,6 @@ async def list_notifications(
 
             notification_responses.append(response)
 
-        logger.info(
-            "Retrieved notifications",
-            firebase_uid=request.auth,
-            count=len(notification_responses),
-        )
-
         return ListNotificationsResponse(notifications=notification_responses, total=len(notification_responses))
 
 
@@ -112,12 +104,6 @@ async def dismiss_notification(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
 ) -> DismissNotificationResponse:
-    logger.info(
-        "Dismissing notification",
-        notification_id=str(notification_id),
-        firebase_uid=request.auth,
-    )
-
     async with session_maker() as session, session.begin():
         result = await session.execute(
             select(Notification).where(
@@ -142,11 +128,5 @@ async def dismiss_notification(
         notification.updated_at = datetime.now(UTC)
 
         await session.commit()
-
-        logger.info(
-            "Notification dismissed successfully",
-            notification_id=str(notification_id),
-            firebase_uid=request.auth,
-        )
 
         return DismissNotificationResponse(success=True, notification_id=str(notification_id))

@@ -129,6 +129,7 @@ export default eslintTS.config(
 			"object-shorthand": "error",
 			"paths/alias": "error",
 			"perfectionist/sort-imports": "off",
+			"perfectionist/sort-named-imports": "off",
 			"prefer-const": ["error", { destructuring: "all" }],
 			"prefer-destructuring": "error",
 			"prefer-template": "warn",

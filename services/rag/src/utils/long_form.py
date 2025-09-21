@@ -3,10 +3,10 @@ from typing import Any, Final, TypedDict
 
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
 logger = get_logger(__name__)
 
@@ -143,24 +143,15 @@ async def handle_long_form_text_generation(
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
+    trace_id: str,
     **sources: Any,
 ) -> str:
     result = ""
 
     api_call_num = 1
 
-    logger.info(
-        "Starting text generation", entity_identifier=prompt_identifier, min_words=min_words, max_words=max_words
-    )
-    start_time = time()
+    time()
     while api_call_num <= max_api_calls:
-        logger.info(
-            "Making API call for text generation",
-            entity_identifier=prompt_identifier,
-            api_call_num=api_call_num,
-            current_word_count=count_words(result),
-        )
-
         prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
             min_words=min_words,
@@ -178,27 +169,14 @@ async def handle_long_form_text_generation(
             system_prompt=LONG_FORM_GENERATION_SYSTEM_PROMPT,
             temperature=0.4,
             top_p=0.9,
+            trace_id=trace_id,
         )
 
         result = concatenate_segments_with_spacy_coherence([result, response["text"]])
         current_word_count = count_words(result)
 
-        logger.info(
-            "Text generation progress",
-            entity_identifier=prompt_identifier,
-            api_call_num=api_call_num,
-            current_word_count=current_word_count,
-            min_words=min_words,
-            is_complete=response["is_complete"],
-        )
-
         api_call_num += 1
         if response["is_complete"]:
-            logger.info(
-                "Text generation marked as complete by LLM",
-                entity_identifier=prompt_identifier,
-                word_count=current_word_count,
-            )
             break
 
         if api_call_num > max_api_calls:
@@ -207,6 +185,7 @@ async def handle_long_form_text_generation(
                 entity_identifier=prompt_identifier,
                 max_api_calls=max_api_calls,
                 word_count=current_word_count,
+                trace_id=trace_id,
             )
             break
 
@@ -217,15 +196,8 @@ async def handle_long_form_text_generation(
             entity_identifier=prompt_identifier,
             word_count=word_count,
             min_words=min_words,
+            trace_id=trace_id,
         )
-
-    logger.info(
-        "Completed text generation",
-        prompt_identifier=prompt_identifier,
-        api_call_num=api_call_num - 1,
-        generation_duration=int(time() - start_time),
-        word_count=word_count,
-    )
 
     return normalize_markdown(result)
 
@@ -238,6 +210,7 @@ async def generate_long_form_text(
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
+    trace_id: str,
     **sources: Any,
 ) -> str:
     logger.info(
@@ -245,6 +218,7 @@ async def generate_long_form_text(
         prompt_identifier=prompt_identifier,
         min_words=min_words,
         max_words=max_words,
+        trace_id=trace_id,
     )
 
     long_form_text = await handle_long_form_text_generation(
@@ -254,6 +228,7 @@ async def generate_long_form_text(
         task_description=task_description,
         max_api_calls=max_api_calls,
         model=model,
+        trace_id=trace_id,
         **sources,
     )
 
@@ -263,6 +238,7 @@ async def generate_long_form_text(
         prompt_identifier=prompt_identifier,
         word_count=long_form_length,
         max_words=max_words,
+        trace_id=trace_id,
     )
 
     max_shortening_attempts = 3
@@ -270,39 +246,16 @@ async def generate_long_form_text(
     while long_form_length > max_words and attempts < max_shortening_attempts:
         words_overflow = long_form_length - max_words
 
-        logger.info(
-            "Text too long, attempting to shorten",
-            prompt_identifier=prompt_identifier,
-            attempt=attempts,
-            max_attempts=max_shortening_attempts,
-            words_overflow=words_overflow,
-            current_length=long_form_length,
-            target_max=max_words,
-        )
-
         long_form_text = await handle_long_form_text_generation(
             max_words=max_words,
             min_words=min_words,
             prompt_identifier=f"{prompt_identifier}_shorten_{attempts}",
             task_description=SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow),
             model=ANTHROPIC_SONNET_MODEL,
+            trace_id=trace_id,
         )
 
         long_form_length = count_words(long_form_text)
-        logger.info(
-            "Shortening attempt result",
-            prompt_identifier=prompt_identifier,
-            attempt=attempts,
-            new_word_count=long_form_length,
-        )
         attempts += 1
-
-    logger.info(
-        "Long-form text generation completed successfully",
-        prompt_identifier=prompt_identifier,
-        final_word_count=count_words(long_form_text),
-        min_words=min_words,
-        max_words=max_words,
-    )
 
     return long_form_text

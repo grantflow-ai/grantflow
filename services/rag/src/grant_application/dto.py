@@ -1,6 +1,10 @@
 from typing import Literal, NotRequired, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+)
 
 
 class ResearchComponentGenerationDTO(TypedDict):
@@ -23,6 +27,7 @@ class EnrichObjectiveInputDTO(TypedDict):
     retrieval_context: str
     keywords: list[str]
     topics: list[str]
+    trace_id: str
 
 
 class EnrichmentDataDTO(TypedDict):
@@ -47,3 +52,43 @@ class WikidataBatchResponse(TypedDict):
     total_terms_processed: int
     successful_expansions: int
     failed_expansions: int
+
+
+class SectionText(TypedDict):
+    section_id: str
+    text: str
+
+
+class GenerateSectionsStageDTO(TypedDict):
+    section_texts: list[SectionText]
+    work_plan_section: GrantLongFormSection
+
+
+class ExtractRelationshipsStageDTO(GenerateSectionsStageDTO):
+    relationships: dict[str, list[tuple[str, str]]]
+
+
+class ObjectiveEnrichmentResponse(TypedDict):
+    research_objective: EnrichmentDataDTO
+    research_tasks: list[EnrichmentDataDTO]
+
+
+class EnrichObjectivesStageDTO(ExtractRelationshipsStageDTO):
+    enrichment_responses: list[ObjectiveEnrichmentResponse]
+
+
+class EnrichTerminologyStageDTO(EnrichObjectivesStageDTO):
+    wikidata_enrichments: list[EnrichmentDataDTO]
+
+
+class GenerateResearchPlanStageDTO(EnrichTerminologyStageDTO):
+    research_plan_text: str
+
+
+StageDTO = (
+    GenerateSectionsStageDTO
+    | ExtractRelationshipsStageDTO
+    | EnrichObjectivesStageDTO
+    | EnrichTerminologyStageDTO
+    | GenerateResearchPlanStageDTO
+)
