@@ -5,8 +5,6 @@ import pytest
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import (
-    GrantApplicationStageEnum,
-    GrantTemplateStageEnum,
     SourceIndexingStatusEnum,
 )
 from packages.shared_utils.src.exceptions import BackendError
@@ -690,19 +688,15 @@ def test_websocket_message_typed_dict(trace_id: str) -> None:
 def test_rag_request_typed_dict(trace_id: str) -> None:
     request = GrantApplicationRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-        stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
         trace_id=trace_id,
     )
     assert hasattr(request, "parent_id")
-    assert request.stage == GrantApplicationStageEnum.VALIDATE_CONTEXT
 
     request_template = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
     assert hasattr(request_template, "parent_id")
-    assert request_template.stage == GrantTemplateStageEnum.EXTRACT_CFP_CONTENT
 
 
 async def test_publish_rag_task_success(
@@ -728,7 +722,6 @@ async def test_publish_rag_task_success(
         result = await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id,
-            stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
             trace_id=trace_id,
         )
 
@@ -767,7 +760,6 @@ async def test_publish_rag_task_grant_template(
         result = await publish_rag_task(
             parent_type="grant_template",
             parent_id=parent_id,
-            stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             trace_id=trace_id,
         )
 
@@ -806,7 +798,6 @@ async def test_publish_rag_task_with_string_id(
         result = await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id_str,
-            stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
             trace_id=trace_id,
         )
 
@@ -845,7 +836,6 @@ async def test_publish_rag_task_message_too_large(
         await publish_rag_task(
             parent_type="grant_application",
             parent_id=parent_id,
-            stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
             trace_id=trace_id,
         )
 

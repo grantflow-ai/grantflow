@@ -82,13 +82,26 @@ class BaseJobManager[
                 raise RuntimeError(f"Job {self.job_id} not found")
 
             job.checkpoint_data = _serialize_checkpoint_data(dto)
-            job.current_stage = current_index + 1
+            job.current_stage_name = str(next_stage)
+
+            if hasattr(job, "grant_template_id"):
+                template_job = await session.scalar(
+                    select_active(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == self.job_id)
+                )
+                if template_job:
+                    template_job.current_stage = next_stage
+            elif hasattr(job, "grant_application_id"):
+                app_job = await session.scalar(
+                    select_active(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == self.job_id)
+                )
+                if app_job:
+                    app_job.current_stage = next_stage
+
             await session.commit()
 
         await publish_rag_task(
             parent_type=self.parent_type,
             parent_id=self.parent_id,
-            stage=cast("GrantApplicationStageEnum | GrantTemplateStageEnum", next_stage),
             trace_id=self.trace_id,
         )
 
@@ -241,7 +254,6 @@ class GrantTemplateJobManager[DTOType](
                 existing_job = cast("GrantTemplateGenerationJob | None", existing_job_result.scalar_one_or_none())
 
                 if existing_job:
-                    # If job is FAILED, reset it to PROCESSING for retry
                     if existing_job.status == RagGenerationStatusEnum.FAILED:
                         logger.info(
                             "Found FAILED job for template, resetting to PROCESSING",
@@ -271,9 +283,9 @@ class GrantTemplateJobManager[DTOType](
 
                 job = GrantTemplateGenerationJob(
                     grant_template_id=self.parent_id,
-                    total_stages=len(self.pipeline_stages),
                     status=RagGenerationStatusEnum.PENDING,
-                    current_stage=0,
+                    current_stage=self.current_stage,
+                    current_stage_name=str(self.current_stage),
                     retry_count=0,
                 )
                 session.add(job)
@@ -322,7 +334,6 @@ class GrantApplicationJobManager[DTOType](
                 existing_job = cast("GrantApplicationGenerationJob | None", existing_job_result.scalar_one_or_none())
 
                 if existing_job:
-                    # If job is FAILED, reset it to PROCESSING for retry
                     if existing_job.status == RagGenerationStatusEnum.FAILED:
                         logger.info(
                             "Found FAILED job for application, resetting to PROCESSING",
@@ -351,9 +362,9 @@ class GrantApplicationJobManager[DTOType](
 
                 job = GrantApplicationGenerationJob(
                     grant_application_id=self.parent_id,
-                    total_stages=len(self.pipeline_stages),
                     status=RagGenerationStatusEnum.PENDING,
-                    current_stage=0,
+                    current_stage=self.current_stage,
+                    current_stage_name=str(self.current_stage),
                     retry_count=0,
                 )
                 session.add(job)
@@ -382,9 +393,12 @@ class GrantApplicationJobManager[DTOType](
         if job_instance is None:
             raise ValueError("No job available to update")
 
-        current_stage = self.pipeline_stages[job_instance.current_stage]
+        current_stage_index = (
+            self.pipeline_stages.index(job_instance.current_stage) if job_instance.current_stage else 0
+        )
+        current_stage = self.pipeline_stages[current_stage_index]
 
-        if job_instance.current_stage >= len(self.pipeline_stages) - 1:
+        if current_stage_index >= len(self.pipeline_stages) - 1:
             logger.warning(
                 "Attempted to advance past final stage",
                 application_id=str(self.parent_id),
@@ -393,12 +407,13 @@ class GrantApplicationJobManager[DTOType](
             )
             return
 
-        next_stage_index = job_instance.current_stage + 1
+        next_stage_index = current_stage_index + 1
         next_stage = self.pipeline_stages[next_stage_index]
 
         async with self.session_maker() as session, session.begin():
             job_instance.checkpoint_data = _serialize_checkpoint_data(dto)
-            job_instance.current_stage = next_stage_index
+            job_instance.current_stage = next_stage
+            job_instance.current_stage_name = str(next_stage)
             session.add(job_instance)
             await session.flush()
 
@@ -416,6 +431,5 @@ class GrantApplicationJobManager[DTOType](
         await publish_rag_task(
             parent_id=self.parent_id,
             parent_type=self.parent_type,
-            stage=cast("GrantApplicationStageEnum | GrantTemplateStageEnum", next_stage),
             trace_id=self.trace_id,
         )

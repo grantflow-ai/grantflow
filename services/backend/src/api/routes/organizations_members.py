@@ -19,7 +19,6 @@ from services.backend.src.utils.firebase import FirebaseUser, get_users
 
 logger = get_logger(__name__)
 
-
 ADD_MEMBER = "add_member"
 UPDATE_MEMBER_ROLE = "update_member_role"
 REMOVE_MEMBER = "remove_member"

@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from packages.db.src.enums import GrantApplicationStageEnum, SourceIndexingStatusEnum
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, RagSource
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -91,7 +91,6 @@ async def test_generate_sections_stage(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -119,7 +118,6 @@ async def test_extract_relationships_stage_requires_checkpoint(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS,
         trace_id=trace_id,
     )
 
@@ -146,7 +144,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES,
         trace_id=trace_id,
     )
 
@@ -173,7 +170,6 @@ async def test_insufficient_context_error_handling(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -198,7 +194,6 @@ async def test_indexing_timeout_error_handling(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -223,7 +218,6 @@ async def test_generic_backend_error_handling(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -251,7 +245,6 @@ async def test_missing_grant_template_validation(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -282,7 +275,6 @@ async def test_missing_cfp_analysis_validation(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -309,6 +301,5 @@ async def test_pipeline_creates_real_job_entry(
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=async_session_maker,
-        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )

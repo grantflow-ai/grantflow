@@ -1,5 +1,3 @@
-"""Text processing utilities shared across services."""
-
 from re import compile as re_compile
 
 from packages.shared_utils.src.nlp import get_spacy_model

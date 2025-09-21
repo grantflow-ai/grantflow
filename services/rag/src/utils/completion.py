@@ -38,7 +38,12 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.retry import with_exponential_backoff_retry
-from packages.shared_utils.src.serialization import deserialize, fix_string_json_values, serialize
+from packages.shared_utils.src.serialization import (
+    deserialize,
+    extract_first_json_object,
+    fix_string_json_values,
+    serialize,
+)
 
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -216,11 +221,7 @@ async def make_google_completions_request[T](
         try:
             return deserialize(response.text or "", response_type)
         except DeserializationError as e:
-            # Handle Gemini 2.5 Flash bug where multiple JSON objects are concatenated
-            # when candidate_count is used (September 2025 issue)
             if "JSON is malformed: trailing characters" in str(e):
-                from packages.shared_utils.src.serialization import extract_first_json_object
-
                 first_json = extract_first_json_object(response.text or "")
                 if first_json:
                     logger.warning(
@@ -232,15 +233,11 @@ async def make_google_completions_request[T](
                     )
                     return deserialize(first_json, response_type)
 
-            # If extraction fails or it's a different error, try the fix_string_json_values approach
-            # similar to how Anthropic handles it
             try:
-                from packages.shared_utils.src.serialization import fix_string_json_values
-
                 fixed_response = fix_string_json_values({"text": response.text or ""})
-                return deserialize(serialize(fixed_response["text"]), response_type)
+                if isinstance(fixed_response, dict) and "text" in fixed_response:
+                    return deserialize(serialize(fixed_response["text"]), response_type)
             except:
-                # If all recovery attempts fail, re-raise the original error
                 raise
 
     prompt = "\n".join([message if isinstance(message, str) else str(message) for message in messages])

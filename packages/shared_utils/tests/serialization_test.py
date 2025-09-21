@@ -194,59 +194,49 @@ def test_to_builtins_complex_structure() -> None:
 
 
 def test_extract_first_json_object_single_object() -> None:
-    """Test extracting a single complete JSON object."""
     json_str = '{"key": "value", "number": 123}'
     result = extract_first_json_object(json_str)
     assert result == json_str
 
 
 def test_extract_first_json_object_concatenated() -> None:
-    """Test extracting first JSON from concatenated objects (Gemini bug scenario)."""
-    # Simulate the Gemini 2.5 Flash bug with concatenated JSON objects
     json_str = '{"sections": [{"id": "summary", "content": "test"}]}{"sections": [{"id": "aims", "content": "test2"}]}'
     result = extract_first_json_object(json_str)
     assert result == '{"sections": [{"id": "summary", "content": "test"}]}'
 
 
 def test_extract_first_json_object_with_nested_objects() -> None:
-    """Test extraction with deeply nested objects."""
     json_str = '{"outer": {"inner": {"deep": "value"}, "array": [{"item": 1}]}}{"extra": "should be ignored"}'
     result = extract_first_json_object(json_str)
     assert result == '{"outer": {"inner": {"deep": "value"}, "array": [{"item": 1}]}}'
 
 
 def test_extract_first_json_object_with_escaped_quotes() -> None:
-    """Test extraction with escaped quotes in strings."""
     json_str = '{"text": "This is a \\"quoted\\" string", "normal": "value"}{"extra": "ignored"}'
     result = extract_first_json_object(json_str)
     assert result == '{"text": "This is a \\"quoted\\" string", "normal": "value"}'
 
 
 def test_extract_first_json_object_with_braces_in_strings() -> None:
-    """Test extraction with braces inside string values."""
     json_str = '{"code": "function() { return {}; }", "value": 123}{"extra": "data"}'
     result = extract_first_json_object(json_str)
     assert result == '{"code": "function() { return {}; }", "value": 123}'
 
 
 def test_extract_first_json_object_empty_input() -> None:
-    """Test extraction with empty or invalid input."""
     assert extract_first_json_object("") is None
     assert extract_first_json_object("   ") is None
     assert extract_first_json_object("not json") is None
-    assert extract_first_json_object("[1, 2, 3]") is None  # Array, not object
+    assert extract_first_json_object("[1, 2, 3]") is None
 
 
 def test_extract_first_json_object_incomplete() -> None:
-    """Test extraction with incomplete JSON."""
     json_str = '{"key": "value", "incomplete":'
     result = extract_first_json_object(json_str)
-    assert result is None  # Returns None if can't find complete object
+    assert result is None
 
 
 def test_encode_hook_google_api_exception() -> None:
-    """Test encoding Google API exceptions with code and details."""
-    # Mock a Google API exception
     class MockGoogleAPIException(Exception):
         def __init__(self, message: str):
             super().__init__(message)
@@ -260,12 +250,11 @@ def test_encode_hook_google_api_exception() -> None:
         "message": "409 Subscription already exists",
         "type": "MockGoogleAPIException",
         "code": 409,
-        "details": "Resource already exists"
+        "details": "Resource already exists",
     }
 
 
 def test_encode_hook_exception_with_response() -> None:
-    """Test encoding exceptions with response objects."""
     class MockResponse:
         status_code = 500
 
@@ -280,16 +269,12 @@ def test_encode_hook_exception_with_response() -> None:
     assert result == {
         "message": "Internal Server Error",
         "type": "MockHTTPException",
-        "status_code": 500
+        "status_code": 500,
     }
 
 
 def test_encode_hook_regular_exception() -> None:
-    """Test encoding regular exceptions without extra attributes."""
     exc = ValueError("Invalid value")
     result = encode_hook(exc)
 
-    assert result == {
-        "message": "Invalid value",
-        "type": "ValueError"
-    }
+    assert result == {"message": "Invalid value", "type": "ValueError"}

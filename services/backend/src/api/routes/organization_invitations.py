@@ -18,7 +18,6 @@ from services.backend.src.utils.jwt import create_jwt
 
 logger = get_logger(__name__)
 
-
 CREATE_INVITATION = "create_invitation"
 UPDATE_INVITATION = "update_invitation"
 DELETE_INVITATION = "delete_invitation"

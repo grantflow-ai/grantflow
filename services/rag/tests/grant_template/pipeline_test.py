@@ -2,7 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -181,7 +181,6 @@ async def test_pipeline_stage_execution_extract_cfp_content_stage(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -206,7 +205,6 @@ async def test_pipeline_stage_execution_analyze_cfp_content_stage(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -231,7 +229,6 @@ async def test_pipeline_stage_execution_extract_sections_stage(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
         trace_id=trace_id,
     )
 
@@ -260,7 +257,6 @@ async def test_pipeline_stage_execution_generate_metadata_stage_final(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.GENERATE_METADATA,
         trace_id=trace_id,
     )
 
@@ -284,7 +280,6 @@ async def test_pipeline_error_handling_insufficient_context_error_handling(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -307,7 +302,6 @@ async def test_pipeline_error_handling_indexing_timeout_error_handling(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -329,7 +323,6 @@ async def test_pipeline_error_handling_indexing_failed_error_handling(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -351,7 +344,6 @@ async def test_pipeline_error_handling_generic_backend_error_handling(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -368,7 +360,6 @@ async def test_pipeline_state_management_missing_checkpoint_data_validation(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -391,7 +382,6 @@ async def test_pipeline_state_management_job_status_update_from_pending(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -414,7 +404,6 @@ async def test_pipeline_state_management_job_status_no_update_when_not_pending(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -438,7 +427,6 @@ async def test_pipeline_data_flow_checkpoint_data_casting_analyze_stage(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
         trace_id=trace_id,
     )
 
@@ -463,7 +451,6 @@ async def test_pipeline_data_flow_checkpoint_data_casting_sections_stage(
     result = await handle_grant_template_pipeline(
         grant_template=grant_template,
         session_maker=async_session_maker,
-        generation_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
         trace_id=trace_id,
     )
 
