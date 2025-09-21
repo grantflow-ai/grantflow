@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from services.scraper.src.grant_enrichment import (
     _clean_html_content,
     _extract_amounts_from_html,

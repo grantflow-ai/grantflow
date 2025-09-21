@@ -67,7 +67,7 @@ def test_handle_pubsub_message_autofill_research_deep_dive(trace_id: TraceId) ->
 
 
 def test_handle_pubsub_message_rag_request_not_confused_with_autofill(trace_id: TraceId) -> None:
-    from services.rag.src.enums import GrantTemplateStageEnum
+    from packages.db.src.enums import GrantTemplateStageEnum
 
     parent_id = uuid4()
     request = GrantTemplateRagRequest(
@@ -86,7 +86,7 @@ def test_handle_pubsub_message_rag_request_not_confused_with_autofill(trace_id: 
 
 
 def test_handle_pubsub_message_grant_application_without_autofill(trace_id: TraceId) -> None:
-    from services.rag.src.enums import GrantApplicationStageEnum
+    from packages.db.src.enums import GrantApplicationStageEnum
 
     parent_id = uuid4()
     request = GrantApplicationRagRequest(

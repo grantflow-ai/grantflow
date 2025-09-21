@@ -780,7 +780,7 @@ describe.sequential("wizard store", () => {
 				vi.mocked(mockTriggerAutofill).mockResolvedValue({
 					application_id: "app-123",
 					autofill_type: "research_deep_dive",
-					field_name: "hypothesis",
+					context: "hypothesis",
 					message_id: "msg-456",
 				});
 
@@ -796,7 +796,7 @@ describe.sequential("wizard store", () => {
 
 				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_deep_dive",
-					field_name: "hypothesis",
+					context: "hypothesis",
 				});
 			});
 

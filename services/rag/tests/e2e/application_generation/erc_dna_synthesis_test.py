@@ -4,12 +4,12 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import GrantApplicationStageEnum
 from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
 TraceId = str

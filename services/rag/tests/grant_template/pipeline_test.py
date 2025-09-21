@@ -2,7 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -12,7 +12,6 @@ from packages.shared_utils.src.exceptions import (
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.dto import (
     AnalyzeCFPContentStageDTO,
     ExtractCFPContentStageDTO,

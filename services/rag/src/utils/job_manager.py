@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import UUID
 
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
     GenerationNotification,
@@ -18,8 +18,6 @@ from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notifi
 from packages.shared_utils.src.serialization import to_builtins
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum
 
 logger = get_logger(__name__)
 

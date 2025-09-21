@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, SourceIndexingStatusEnum
 from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, RagSource
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -12,7 +12,6 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import RagSourceFactory
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.dto import (
     GenerateSectionsStageDTO,
     SectionText,
