@@ -4,6 +4,7 @@ from typing import Any, Final, TypedDict, cast
 
 import httpx
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.retry import with_exponential_backoff_retry
 from packages.shared_utils.src.tracing import start_span_with_trace_id
 
@@ -17,18 +18,16 @@ WIKIDATA_BATCH_SIZE: Final[int] = 5
 WIKIDATA_TIMEOUT: Final[int] = 30
 WIKIDATA_MAX_RETRIES: Final[int] = 3
 
+_client_ref = Ref[httpx.AsyncClient]()
 
-class WikidataClientManager:
-    _instance: httpx.AsyncClient | None = None
 
-    @classmethod
-    def get_client(cls) -> httpx.AsyncClient:
-        if cls._instance is None:
-            cls._instance = httpx.AsyncClient(
-                headers={"User-Agent": "GrantFlow.AI/1.0 (https://grantflow.ai)"},
-                timeout=httpx.Timeout(WIKIDATA_TIMEOUT),
-            )
-        return cls._instance
+def get_wikimedia_client() -> httpx.AsyncClient:
+    if _client_ref.value is None:
+        _client_ref.value = httpx.AsyncClient(
+            headers={"User-Agent": "GrantFlow.AI/1.0 (https://grantflow.ai)"},
+            timeout=httpx.Timeout(WIKIDATA_TIMEOUT),
+        )
+    return _client_ref.value
 
 
 class WikidataItem(TypedDict):
@@ -47,7 +46,7 @@ This context provides foundational scientific concepts and terminology relevant 
 )
 
 
-@lru_cache(maxsize=128)
+@lru_cache
 def _build_sparql_query(terms: tuple[str, ...]) -> str:
     quoted_terms = [f'"{term}"' for term in terms]
     terms_filter = " || ".join([f"?label = {term}" for term in quoted_terms])
@@ -138,7 +137,7 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
     if not terms:
         return []
 
-    client = WikidataClientManager.get_client()
+    client = get_wikimedia_client()
     all_results: list[WikidataItem] = []
     for i in range(0, len(terms), WIKIDATA_BATCH_SIZE):
         batch = terms[i : i + WIKIDATA_BATCH_SIZE]
@@ -188,23 +187,6 @@ async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
     return "\n".join(context_parts)
 
 
-@lru_cache(maxsize=128)
-def _format_scientific_context(scientific_context: str) -> str:
-    if not scientific_context:
-        return ""
-
-    try:
-        return SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
-
-    except ValueError as e:
-        logger.warning(
-            "Failed to format scientific context - returning raw context",
-            error=str(e),
-            context_length=len(scientific_context),
-        )
-        return scientific_context
-
-
 async def enrich_objective_with_wikidata(
     enrichment_response: ObjectiveEnrichmentResponse,
     trace_id: str,
@@ -227,7 +209,7 @@ async def enrich_objective_with_wikidata(
             }
 
         scientific_context = await _get_scientific_context(unique_terms, trace_id)
-        formatted_context = _format_scientific_context(scientific_context)
+        formatted_context = SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
 
         return {
             "enriched_objective": "",

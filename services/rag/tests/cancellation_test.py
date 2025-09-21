@@ -153,23 +153,22 @@ async def test_template_generation_stops_at_verification_when_cancelled(
     grant_template_with_sections: GrantTemplate,
     mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
-    mock_job_manager = MagicMock()
-    mock_job_manager.create_grant_template_job = AsyncMock()
+    mock_job_manager = AsyncMock(spec=GrantTemplateJobManager)
+    mock_job_manager.get_or_create_job.return_value = AsyncMock()
+    mock_job_manager.ensure_not_cancelled.side_effect = RagJobCancelledError("Job cancelled")
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=True)
-    mock_job_manager.handle_cancellation = AsyncMock()
 
-    with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed"):
-        result = await handle_grant_template_pipeline(
+    with patch("services.rag.src.grant_template.pipeline.GrantTemplateJobManager", return_value=mock_job_manager):
+        await handle_grant_template_pipeline(
             grant_template=grant_template_with_sections,
             session_maker=async_session_maker,
             generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             trace_id="test-trace-id",
         )
 
-    assert result is None
-    mock_job_manager.handle_cancellation.assert_called_once_with(grant_template_with_sections.grant_application_id)
+    mock_job_manager.update_job_status.assert_called_once()
+    assert mock_job_manager.update_job_status.call_args.kwargs["status"] == RagGenerationStatusEnum.FAILED
 
 
 @pytest.mark.asyncio
@@ -179,30 +178,26 @@ async def test_template_extraction_stops_when_cancelled(
     nih_organization: Any,
     mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
-    UUID("550e8400-e29b-41d4-a716-446655440000")
-
-    mock_job_manager = MagicMock()
+    mock_job_manager = MagicMock(spec=GrantTemplateJobManager)
+    mock_job_manager.ensure_not_cancelled.side_effect = RagJobCancelledError("Cancelled")
     mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=True)
-    mock_job_manager.handle_cancellation = AsyncMock()
 
-    with patch("services.rag.src.grant_template.handler.handle_extract_sections"):
-        mock_analysis_result: AnalyzeCFPContentStageDTO = AnalyzeCFPContentStageDTO(
-            extracted_data=ExtractedCFPData(
-                organization_id=str(nih_organization["organization_id"]),
-                cfp_subject=cfp_subject,
-                submission_date=None,
-                content=cast("list[Content]", sample_cfp_content),
-            ),
-            organization=nih_organization,
-            analysis_results=cast("CFPAnalysisResult", {"analysis": "mock analysis"}),
+    mock_analysis_result: AnalyzeCFPContentStageDTO = AnalyzeCFPContentStageDTO(
+        extracted_data=ExtractedCFPData(
+            organization_id=str(nih_organization["organization_id"]),
+            cfp_subject=cfp_subject,
+            submission_date=None,
+            content=cast("list[Content]", sample_cfp_content),
+        ),
+        organization=nih_organization,
+        analysis_results=cast("CFPAnalysisResult", {"analysis": "mock analysis"}),
+    )
+    with pytest.raises(RagJobCancelledError):
+        await handle_section_extraction_stage(
+            analysis_result=mock_analysis_result,
+            job_manager=mock_job_manager,
+            trace_id="test-trace-id",
         )
-        with pytest.raises(RagJobCancelledError):
-            await handle_section_extraction_stage(
-                analysis_result=mock_analysis_result,
-                job_manager=mock_job_manager,
-                trace_id="test-trace-id",
-            )
 
 
 @pytest.mark.asyncio
@@ -211,24 +206,22 @@ async def test_application_generation_stops_at_verification_when_cancelled(
     async_session_maker: async_sessionmaker[Any],
     mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
-    mock_job_manager = MagicMock()
-    mock_job_manager.create_grant_application_job = AsyncMock()
+    mock_job_manager = AsyncMock(spec=GrantApplicationJobManager)
+    mock_job_manager.get_or_create_job.return_value = AsyncMock()
+    mock_job_manager.ensure_not_cancelled.side_effect = RagJobCancelledError("Job cancelled")
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(return_value=True)
-    mock_job_manager.handle_cancellation = AsyncMock()
 
-    with (
-        patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed"),
-        pytest.raises(RagJobCancelledError),
-    ):
+    with patch("services.rag.src.grant_application.pipeline._initialize_pipeline", return_value=(mock_job_manager, None)):
         await handle_grant_application_pipeline(
             grant_application=test_application_with_template,
             session_maker=async_session_maker,
             generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
             trace_id="test-trace-id",
         )
-    mock_job_manager.handle_cancellation.assert_called_once_with(test_application_with_template.id)
+
+    mock_job_manager.update_job_status.assert_called_once()
+    assert mock_job_manager.update_job_status.call_args.kwargs["status"] == RagGenerationStatusEnum.FAILED
 
 
 @pytest.mark.asyncio
@@ -238,81 +231,47 @@ async def test_work_plan_generation_checks_cancellation_between_objectives(
     mock_grant_sections: list[Any],
     mock_all_pubsub: tuple[AsyncMock, AsyncMock, AsyncMock],
 ) -> None:
-    research_plan_section = None
-    for s in mock_grant_sections:
-        if s.get("is_detailed_research_plan"):
-            research_plan_section = s
-            break
-
-    if not research_plan_section:
-        research_plan_section = {
-            "id": "research_plan",
-            "title": "Research Plan",
-            "is_detailed_research_plan": True,
-            "type": "section",
-            "order": 1,
-        }
-
-    mock_job_manager = MagicMock()
+    mock_job_manager = AsyncMock(spec=GrantApplicationJobManager)
+    mock_job_manager.ensure_not_cancelled.side_effect = [None, RagJobCancelledError("Cancelled")]
     mock_job_manager.add_notification = AsyncMock()
-    mock_job_manager.check_if_cancelled = AsyncMock(side_effect=[False, True])
-    mock_job_manager.handle_cancellation = AsyncMock()
 
-    with (
-        patch(
-            "services.rag.src.grant_application.handlers.handle_extract_relationships",
-            new_callable=AsyncMock,
-            return_value={},
-        ),
-        patch(
-            "services.rag.src.grant_application.handlers.handle_batch_enrich_objectives",
-            new_callable=AsyncMock,
-            return_value=[mock_enrichment_response, mock_enrichment_response],
-        ),
-        patch(
-            "services.rag.src.grant_application.handlers.generate_work_plan_component_text",
-            new_callable=AsyncMock,
-            return_value="Mock text",
-        ),
-    ):
-        mock_objective = ResearchComponentGenerationDTO(
-            number="1",
-            title="Test Objective",
-            description="Test description",
-            instructions="Test instructions",
+    mock_objective = ResearchComponentGenerationDTO(
+        number="1",
+        title="Test Objective",
+        description="Test description",
+        instructions="Test instructions",
+        guiding_questions=["Q1", "Q2", "Q3"],
+        search_queries=["query1", "query2", "query3"],
+        relationships=[],
+        max_words=500,
+        type="objective",
+    )
+    mock_tasks = [
+        ResearchComponentGenerationDTO(
+            number="1.1",
+            title="Test Task",
+            description="Test task description",
+            instructions="Test task instructions",
             guiding_questions=["Q1", "Q2", "Q3"],
             search_queries=["query1", "query2", "query3"],
             relationships=[],
             max_words=500,
-            type="objective",
+            type="task",
         )
+    ]
 
-        mock_tasks = [
-            ResearchComponentGenerationDTO(
-                number="1.1",
-                title="Test Task",
-                description="Test task description",
-                instructions="Test task instructions",
-                guiding_questions=["Q1", "Q2", "Q3"],
-                search_queries=["query1", "query2", "query3"],
-                relationships=[],
-                max_words=500,
-                type="task",
-            )
-        ]
-
-        result = await generate_objective_with_tasks(
+    with pytest.raises(RagJobCancelledError):
+        await generate_objective_with_tasks(
             application_id=str(UUID("550e8400-e29b-41d4-a716-446655440000")),
             form_inputs=ResearchDeepDive(background_context="Test"),
             objective=mock_objective,
             tasks=mock_tasks,
             work_plan_text="",
             trace_id="test-trace-id",
+            job_manager=mock_job_manager,
         )
 
-    assert mock_job_manager.check_if_cancelled.call_count >= 1
-    assert isinstance(result, tuple)
-    assert len(result) == 3
+    assert mock_job_manager.ensure_not_cancelled.call_count == 2
 
 
 @pytest.mark.asyncio
