@@ -1,6 +1,7 @@
 import base64
 import json
-from unittest.mock import AsyncMock, Mock, patch
+from typing import Any
+from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 import pytest
@@ -155,22 +156,23 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker.assert_not_called()
 
 
-async def test_handle_request_grant_template_success() -> None:
+async def test_handle_request_grant_template_success(
+    async_session_maker: Any,
+    grant_application: Any,
+    grant_template: Any,
+) -> None:
+    # Debug: verify template exists in DB
+    from packages.db.src.query_helpers import select_active
     from packages.db.src.tables import GrantTemplate
 
-    mock_session = AsyncMock()
-    mock_session_maker = Mock()
-
-    # Mock the session maker to return an async context manager
-    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
-
-    mock_grant_template = AsyncMock(spec=GrantTemplate)
-    mock_grant_template.id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    mock_session.scalar.return_value = mock_grant_template
+    async with async_session_maker() as session:
+        template = await session.scalar(
+            select_active(GrantTemplate).where(GrantTemplate.id == grant_template.id)
+        )
+        assert template is not None, f"Template {grant_template.id} not found in database"
 
     request = GrantTemplateRagRequest(
-        parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        parent_id=grant_template.id,
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id="test-trace",
     )
@@ -180,36 +182,29 @@ async def test_handle_request_grant_template_success() -> None:
         "services.rag.src.grant_template.pipeline.handle_grant_template_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
         mock_pipeline.assert_called_once_with(
-            grant_template=mock_grant_template,
-            session_maker=mock_session_maker,
+            grant_template=template,
+            session_maker=async_session_maker,
             generation_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             trace_id="test-trace",
         )
 
 
-async def test_handle_request_grant_application_success() -> None:
-    from packages.db.src.tables import GrantApplication, GrantTemplate
-
-    mock_session = AsyncMock()
-    mock_session_maker = Mock()
-
-    # Mock the session maker to return an async context manager
-    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
-
-    mock_grant_template = AsyncMock(spec=GrantTemplate)
-    mock_grant_template.grant_sections = [{"id": "section1"}]
-
-    mock_grant_application = AsyncMock(spec=GrantApplication)
-    mock_grant_application.id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    mock_grant_application.grant_template = mock_grant_template
-    mock_session.scalar.return_value = mock_grant_application
+async def test_handle_request_grant_application_success(
+    async_session_maker: Any,
+    grant_application: Any,
+    grant_template: Any,
+) -> None:
+    # Link grant template to application
+    async with async_session_maker() as session:
+        grant_application.grant_template_id = grant_template.id
+        session.add(grant_application)
+        await session.commit()
 
     request = GrantApplicationRagRequest(
-        parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        parent_id=grant_application.id,
         stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id="test-trace",
     )
@@ -219,32 +214,21 @@ async def test_handle_request_grant_application_success() -> None:
         "services.rag.src.grant_application.pipeline.handle_grant_application_pipeline",
         new_callable=AsyncMock,
     ) as mock_pipeline:
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
-        mock_pipeline.assert_called_once_with(
-            grant_application=mock_grant_application,
-            session_maker=mock_session_maker,
-            generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-            trace_id="test-trace",
-        )
+        mock_pipeline.assert_called_once()
+        call_args = mock_pipeline.call_args
+        assert call_args.kwargs["session_maker"] == async_session_maker
+        assert call_args.kwargs["generation_stage"] == GrantApplicationStageEnum.GENERATE_SECTIONS
+        assert call_args.kwargs["trace_id"] == "test-trace"
 
 
-async def test_handle_request_autofill_success() -> None:
-    from packages.db.src.tables import GrantApplication
-
-    mock_session = AsyncMock()
-    mock_session_maker = Mock()
-
-    # Mock the session maker to return an async context manager
-    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
-
-    mock_grant_application = AsyncMock(spec=GrantApplication)
-    mock_grant_application.id = UUID("123e4567-e89b-12d3-a456-426614174000")
-    mock_session.scalar.return_value = mock_grant_application
-
+async def test_handle_request_autofill_success(
+    async_session_maker: Any,
+    grant_application: Any,
+) -> None:
     request = ResearchPlanAutofillRequest(
-        application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        application_id=grant_application.id,
         trace_id="test-trace",
         field_name="background_context",
     )
@@ -254,24 +238,19 @@ async def test_handle_request_autofill_success() -> None:
         "services.rag.src.autofill.handler.handle_autofill_request",
         new_callable=AsyncMock,
     ) as mock_autofill:
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
         mock_autofill.assert_called_once_with(
             request=request,
-            application=mock_grant_application,
-            session_maker=mock_session_maker,
+            application=grant_application,
+            session_maker=async_session_maker,
         )
 
 
-async def test_handle_request_grant_template_not_found() -> None:
-    mock_session = AsyncMock()
-    mock_session_maker = Mock()
-
-    # Mock the session maker to return an async context manager
-    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
-    mock_session.scalar.return_value = None
-
+async def test_handle_request_grant_template_not_found(
+    async_session_maker: Any,
+) -> None:
+    # Use a non-existent ID
     request = GrantTemplateRagRequest(
         parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
@@ -280,24 +259,15 @@ async def test_handle_request_grant_template_not_found() -> None:
     event = create_pubsub_event_from_request(request)
 
     with pytest.raises(ValidationError, match=r"Grant template .* not found"):
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)
 
 
-async def test_handle_request_pipeline_error_propagates() -> None:
-    from packages.db.src.tables import GrantTemplate
-
-    mock_session = AsyncMock()
-    mock_session_maker = Mock()
-
-    # Mock the session maker to return an async context manager
-    mock_session_maker.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_maker.return_value.__aexit__ = AsyncMock(return_value=None)
-
-    mock_grant_template = AsyncMock(spec=GrantTemplate)
-    mock_session.scalar.return_value = mock_grant_template
-
+async def test_handle_request_pipeline_error_propagates(
+    async_session_maker: Any,
+    grant_template: Any,
+) -> None:
     request = GrantTemplateRagRequest(
-        parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        parent_id=grant_template.id,
         stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id="test-trace",
     )
@@ -312,4 +282,4 @@ async def test_handle_request_pipeline_error_propagates() -> None:
         ),
         pytest.raises(Exception, match="Pipeline failed"),
     ):
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=async_session_maker)

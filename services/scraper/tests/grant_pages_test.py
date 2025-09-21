@@ -13,7 +13,7 @@ from services.scraper.src.grant_pages import (
 )
 
 
-@pytest.mark.asyncio
+
 async def test_save_markdown_page() -> None:
     soup = BeautifulSoup("<h1>Test Grant</h1><p>Grant description</p>", "html.parser")
     result_name = "PA-24-123"
@@ -32,7 +32,7 @@ async def test_save_markdown_page() -> None:
         mock_save.assert_called_once_with("PA-24-123", "# Test Grant\n\nGrant description")
 
 
-@pytest.mark.asyncio
+
 async def test_download_and_save_pages() -> None:
     urls = [
         "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html",
@@ -57,7 +57,7 @@ async def test_download_and_save_pages() -> None:
         assert calls[1][1]["result_name"] == "PA-24-124"
 
 
-@pytest.mark.asyncio
+
 async def test_download_grant_pages_with_existing_files() -> None:
     search_results = cast(
         "list[GrantInfo]",
@@ -85,7 +85,7 @@ async def test_download_grant_pages_with_existing_files() -> None:
         mock_download_save.assert_called_once_with(urls=expected_urls)
 
 
-@pytest.mark.asyncio
+
 async def test_download_grant_pages_no_new_files() -> None:
     search_results = cast(
         "list[GrantInfo]",
@@ -108,7 +108,7 @@ async def test_download_grant_pages_no_new_files() -> None:
         mock_download_save.assert_not_called()
 
 
-@pytest.mark.asyncio
+
 async def test_download_grant_pages_chunking() -> None:
     search_results = cast(
         "list[GrantInfo]",
@@ -135,7 +135,7 @@ async def test_download_grant_pages_chunking() -> None:
         assert len(call_args[2]) == 50
 
 
-@pytest.mark.asyncio
+
 async def test_download_grant_pages_empty_search_results() -> None:
     search_results: list[GrantInfo] = []
     existing_file_identifiers: set[str] = set()
