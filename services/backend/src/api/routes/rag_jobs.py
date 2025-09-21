@@ -25,8 +25,7 @@ class RagJobResponse(TypedDict):
     id: str
     job_type: str
     status: RagGenerationStatusEnum
-    current_stage: int
-    total_stages: int
+    current_stage: str | None
     retry_count: int
     error_message: NotRequired[str]
     error_details: NotRequired[dict[str, Any]]
@@ -100,7 +99,6 @@ async def handle_retrieve_rag_job(
             "job_type": job.job_type,
             "status": job.status,
             "current_stage": job.current_stage,
-            "total_stages": job.total_stages,
             "retry_count": job.retry_count,
             "created_at": job.created_at.isoformat(),
             "updated_at": job.updated_at.isoformat(),
@@ -127,10 +125,12 @@ async def handle_retrieve_rag_job(
             )
             if template_job:
                 response["grant_template_id"] = str(template_job.grant_template_id)
-                if template_job.extracted_sections:
-                    response["extracted_sections"] = template_job.extracted_sections
-                if template_job.extracted_metadata:
-                    response["extracted_metadata"] = template_job.extracted_metadata
+                # Extract data from checkpoint_data if available
+                if job.checkpoint_data:
+                    if "extracted_sections" in job.checkpoint_data:
+                        response["extracted_sections"] = job.checkpoint_data["extracted_sections"]
+                    if "extracted_metadata" in job.checkpoint_data:
+                        response["extracted_metadata"] = job.checkpoint_data["extracted_metadata"]
 
         elif job.job_type == "grant_application_generation":
             app_job = await session.scalar(
@@ -138,10 +138,12 @@ async def handle_retrieve_rag_job(
             )
             if app_job:
                 response["grant_application_id"] = str(app_job.grant_application_id)
-                if app_job.generated_sections:
-                    response["generated_sections"] = app_job.generated_sections
-                if app_job.validation_results:
-                    response["validation_results"] = app_job.validation_results
+                # Extract data from checkpoint_data if available
+                if job.checkpoint_data:
+                    if "generated_sections" in job.checkpoint_data:
+                        response["generated_sections"] = job.checkpoint_data["generated_sections"]
+                    if "validation_results" in job.checkpoint_data:
+                        response["validation_results"] = job.checkpoint_data["validation_results"]
 
         return response
 

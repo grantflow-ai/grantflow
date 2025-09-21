@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
+from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import (
     GrantApplicationRagRequest,
@@ -255,3 +256,209 @@ def test_handle_pubsub_message_invalid() -> None:
         handle_pubsub_message(event)
 
     assert "Invalid pubsub message" in str(exc_info.value)
+
+
+async def test_grant_application_missing_application(
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: TraceId,
+) -> None:
+    """Test that missing grant application returns proper error"""
+    from services.rag.src.main import app
+
+    nonexistent_id = uuid4()
+    data = GrantApplicationRagRequest(
+        parent_id=nonexistent_id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    assert response.status_code == 400
+    assert f"Grant application {nonexistent_id} not found" in response.json()["detail"]
+
+
+async def test_grant_application_missing_grant_template(
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: TraceId,
+) -> None:
+    """Test that missing grant template returns proper error"""
+    from packages.db.src.tables import GrantApplication
+    from testing.factories import OrganizationFactory, ProjectFactory
+
+    from services.rag.src.main import app
+
+    # Create grant application without grant template
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplication(
+            title="Test Application",
+            project_id=project.id,
+        )
+        session.add(application)
+        await session.commit()
+        await session.refresh(application)
+
+        data = GrantApplicationRagRequest(
+            parent_id=application.id,
+            trace_id=trace_id,
+        )
+        event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    assert response.status_code == 400
+    assert "Grant template not found" in response.json()["detail"]
+
+
+async def test_grant_application_missing_grant_sections(
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: TraceId,
+) -> None:
+    """Test that grant template without sections returns proper error"""
+    from packages.db.src.tables import GrantApplication, GrantTemplate
+    from testing.factories import OrganizationFactory, ProjectFactory
+
+    from services.rag.src.main import app
+
+    # Create grant application with template but no sections
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplication(
+            title="Test Application",
+            project_id=project.id,
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=application.id,
+            granting_institution_id=None,
+            grant_sections=[],  # Empty sections
+            cfp_analysis={"test": "data"},
+        )
+        session.add(template)
+        application.grant_template = template
+
+        await session.commit()
+        await session.refresh(application)
+
+        data = GrantApplicationRagRequest(
+            parent_id=application.id,
+            trace_id=trace_id,
+        )
+        event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    assert response.status_code == 400
+    assert "Grant template has no sections" in response.json()["detail"]
+
+
+async def test_grant_application_missing_cfp_analysis(
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: TraceId,
+) -> None:
+    """Test that grant template without CFP analysis returns proper error"""
+    from packages.db.src.tables import GrantApplication, GrantTemplate
+    from testing.factories import OrganizationFactory, ProjectFactory
+
+    from services.rag.src.main import app
+
+    # Create grant application with template but no CFP analysis
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplication(
+            title="Test Application",
+            project_id=project.id,
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=application.id,
+            granting_institution_id=None,
+            grant_sections=[
+                {
+                    "id": "test_section",
+                    "title": "Test Section",
+                    "order": 1,
+                    "keywords": ["test"],
+                    "topics": ["test"],
+                    "generation_instructions": "Test instructions",
+                    "depends_on": [],
+                    "max_words": 100,
+                    "search_queries": ["test"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                }
+            ],
+            cfp_analysis=None,  # No CFP analysis
+        )
+        session.add(template)
+        application.grant_template = template
+
+        await session.commit()
+        await session.refresh(application)
+
+        data = GrantApplicationRagRequest(
+            parent_id=application.id,
+            trace_id=trace_id,
+        )
+        event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    assert response.status_code == 400
+    assert "CFP analysis is missing from grant template" in response.json()["detail"]
+
+
+async def test_grant_application_valid_request(
+    test_application_with_template: GrantApplication,
+    trace_id: TraceId,
+    mock_grant_application_handler: AsyncMock,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    """Test that valid grant application request calls the handler"""
+    from services.rag.src.main import app
+
+    data = GrantApplicationRagRequest(
+        parent_id=test_application_with_template.id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    assert response.status_code == 201
+    mock_grant_application_handler.assert_called_once_with(
+        grant_application_id=test_application_with_template.id,
+        session_maker=async_session_maker,
+        trace_id=trace_id,
+    )

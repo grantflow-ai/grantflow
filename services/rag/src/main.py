@@ -158,6 +158,9 @@ async def handle_request(
             if not grant_application.grant_template.grant_sections:
                 raise ValidationError("Grant template has no sections")
 
+            if not grant_application.grant_template.cfp_analysis:
+                raise ValidationError("CFP analysis is missing from grant template")
+
         try:
             await handle_grant_application_pipeline(
                 grant_application=grant_application,
