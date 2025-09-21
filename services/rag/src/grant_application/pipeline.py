@@ -117,8 +117,8 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
         )
     if isinstance(error, LLMTimeoutError):
         return (
-            "AI text generation is taking longer than expected. This may be due to high server load. Please try again in a few minutes.",
-            NotificationEvents.PIPELINE_ERROR,
+            "AI processing took longer than expected. The request will be retried automatically. Please wait a moment and check back.",
+            NotificationEvents.LLM_TIMEOUT,
         )
     if isinstance(error, DatabaseError):
         return (
@@ -179,7 +179,7 @@ async def _handle_pipeline_error(
             error_message=error_message,
             error_details={
                 "error_type": error.__class__.__name__,
-                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
             },
         )
         await job_manager.add_notification(
@@ -188,7 +188,7 @@ async def _handle_pipeline_error(
             notification_type="error",
             data={
                 "error_type": error.__class__.__name__,
-                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
             },
         )
     except SQLAlchemyError as e:

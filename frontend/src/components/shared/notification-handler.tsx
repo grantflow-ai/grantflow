@@ -21,6 +21,7 @@ const WARNING_EVENTS = new Set([
 	"cancellation_acknowledged",
 	"indexing_timeout",
 	"insufficient_context_error",
+	"llm_timeout",
 	"low_retrieval_quality",
 ]);
 
