@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import UUID
 
-import msgspec
 from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplicationGenerationJob,
@@ -15,8 +15,7 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification, publish_rag_task
-from packages.shared_utils.src.serialization import encode_hook
-from sqlalchemy import select
+from packages.shared_utils.src.serialization import to_builtins
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -25,15 +24,15 @@ from services.rag.src.enums import GrantApplicationStageEnum, GrantTemplateStage
 logger = get_logger(__name__)
 
 
-def _serialize_checkpoint_data[DTOType: dict[str, Any]](data: DTOType) -> dict[str, Any]:
+def _serialize_checkpoint_data[DTOType](data: DTOType) -> dict[str, Any]:
     """Convert stage DTOs into JSON-safe dictionaries."""
-    return cast("dict[str, Any]", msgspec.to_builtins(data, enc_hook=encode_hook))
+    return cast("dict[str, Any]", to_builtins(data))
 
 
 class BaseJobManager[
     JobT: RagGenerationJob,
     StageT: GrantApplicationStageEnum | GrantTemplateStageEnum,
-    DTOType: dict[str, Any],
+    DTOType,
 ](ABC):
     __slots__ = (
         "current_stage",
@@ -82,7 +81,7 @@ class BaseJobManager[
         next_stage = self.pipeline_stages[current_index + 1]
 
         async with self.session_maker() as session:
-            job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
+            job = await session.scalar(select_active(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             if not job:
                 raise RuntimeError(f"Job {self.job_id} not found")
 
@@ -115,7 +114,7 @@ class BaseJobManager[
             raise RuntimeError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
-            result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
+            result = await session.execute(select_active(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             job = result.scalar_one()
 
             job.status = status
@@ -189,7 +188,7 @@ class BaseJobManager[
             raise RuntimeError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
-            result = await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
+            result = await session.execute(select_active(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
             job = result.scalar_one()
 
             job.retry_count += 1
@@ -202,7 +201,7 @@ class BaseJobManager[
 
         async with self.session_maker() as session:
             query = (
-                select(GenerationNotification)
+                select_active(GenerationNotification)
                 .where(GenerationNotification.rag_job_id == self.job_id)
                 .order_by(GenerationNotification.created_at.desc())
             )
@@ -235,7 +234,7 @@ class BaseJobManager[
             raise RagJobCancelledError("Job cancelled")
 
 
-class GrantTemplateJobManager[DTOType: dict[str, Any]](
+class GrantTemplateJobManager[DTOType](
     BaseJobManager[GrantTemplateGenerationJob, GrantTemplateStageEnum, DTOType],
 ):
     parent_type: Literal["grant_template"] = "grant_template"
@@ -255,7 +254,7 @@ class GrantTemplateJobManager[DTOType: dict[str, Any]](
             )
             try:
                 existing_job_result = await session.execute(
-                    select(GrantTemplateGenerationJob).where(
+                    select_active(GrantTemplateGenerationJob).where(
                         GrantTemplateGenerationJob.grant_template_id == self.parent_id
                     )
                 )
@@ -299,7 +298,7 @@ class GrantTemplateJobManager[DTOType: dict[str, Any]](
                 raise DatabaseError("Error inserting rag job into db") from e
 
 
-class GrantApplicationJobManager[DTOType: dict[str, Any]](
+class GrantApplicationJobManager[DTOType](
     BaseJobManager[GrantApplicationGenerationJob, GrantApplicationStageEnum, DTOType],
 ):
     parent_type: Literal["grant_application"] = "grant_application"
@@ -319,7 +318,7 @@ class GrantApplicationJobManager[DTOType: dict[str, Any]](
             )
             try:
                 existing_job_result = await session.execute(
-                    select(GrantApplicationGenerationJob).where(
+                    select_active(GrantApplicationGenerationJob).where(
                         GrantApplicationGenerationJob.grant_application_id == self.parent_id
                     )
                 )

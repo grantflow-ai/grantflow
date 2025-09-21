@@ -27,11 +27,11 @@ from services.rag.src.grant_application.handlers import (
     generate_work_plan_text,
     grant_application_text_generation_pipeline_handler,
 )
+from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.handler import (
     extract_and_enrich_sections,
     grant_template_generation_pipeline_handler,
 )
-from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.utils.job_manager import GrantTemplateJobManager
 
 if TYPE_CHECKING:
@@ -130,9 +130,11 @@ async def test_ensure_not_cancelled_emits_cancellation_notification(
         status=RagGenerationStatusEnum.CANCELLED,
     )
 
-    with patch("services.rag.src.utils.job_manager.publish_notification") as mock_publish:
-        with pytest.raises(RagJobCancelledError):
-            await manager.ensure_not_cancelled()
+    with (
+        patch("services.rag.src.utils.job_manager.publish_notification") as mock_publish,
+        pytest.raises(RagJobCancelledError),
+    ):
+        await manager.ensure_not_cancelled()
 
     async with async_session_maker() as session:
         notifications = await session.scalars(

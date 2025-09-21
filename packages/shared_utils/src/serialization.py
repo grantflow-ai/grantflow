@@ -5,6 +5,7 @@ from typing import Any
 
 from msgspec import MsgspecError
 from msgspec.json import decode, encode
+from msgspec import to_builtins as msgspec_to_builtins
 
 from packages.shared_utils.src.exceptions import (
     DeserializationError,
@@ -18,6 +19,10 @@ def encode_hook(obj: Any) -> Any:
 
     if isinstance(obj, Exception):
         return {"message": str(obj), "type": type(obj).__name__}
+
+    # Handle Enum types directly - this is key for union enum serialization
+    if isinstance(obj, Enum):
+        return obj.value
 
     for key in (
         "to_dict",
@@ -100,6 +105,11 @@ def fix_string_json_values(
                 fix_string_json_values(input_data[i])
 
     return input_data
+
+
+def to_builtins(obj: Any) -> Any:
+    """Convert object to builtin types using our encoding hooks."""
+    return msgspec_to_builtins(obj, enc_hook=encode_hook)
 
 
 def _looks_like_json(string_value: str) -> bool:

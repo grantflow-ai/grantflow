@@ -27,35 +27,57 @@ def mock_text_vectors() -> list[TextVector]:
     return [vector1, vector2]
 
 
-async def test_handle_retrieval(mock_text_vectors: list[TextVector], mocker: MockFixture) -> None:
+async def test_handle_retrieval(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_generate_embeddings = mocker.patch("services.rag.src.utils.retrieval.generate_embeddings")
     mock_generate_embeddings.return_value = [[0.1, 0.2, 0.3]]
 
     mock_retrieve_vectors = mocker.patch("services.rag.src.utils.retrieval.retrieve_vectors_for_embedding")
     mock_retrieve_vectors.return_value = mock_text_vectors
 
-    result = await handle_retrieval(application_id="test-app-id", max_results=10, search_queries=["test query"])
+    result = await handle_retrieval(
+        application_id="test-app-id",
+        max_results=10,
+        search_queries=["test query"],
+        trace_id=trace_id,
+    )
 
     assert result == mock_text_vectors
     mock_generate_embeddings.assert_called_once_with(["test query"])
     mock_retrieve_vectors.assert_called_once()
 
 
-async def test_handle_retrieval_with_organization_id(mock_text_vectors: list[TextVector], mocker: MockFixture) -> None:
+async def test_handle_retrieval_with_organization_id(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_generate_embeddings = mocker.patch("services.rag.src.utils.retrieval.generate_embeddings")
     mock_generate_embeddings.return_value = [[0.1, 0.2, 0.3]]
 
     mock_retrieve_vectors = mocker.patch("services.rag.src.utils.retrieval.retrieve_vectors_for_embedding")
     mock_retrieve_vectors.return_value = mock_text_vectors
 
-    result = await handle_retrieval(organization_id="test-org-id", max_results=10, search_queries=["test query"])
+    result = await handle_retrieval(
+        organization_id="test-org-id",
+        max_results=10,
+        search_queries=["test query"],
+        trace_id=trace_id,
+    )
 
     assert result == mock_text_vectors
     mock_retrieve_vectors.assert_called_once()
     assert mock_retrieve_vectors.call_args[1]["file_table_cls"] == GrantingInstitutionSource
 
 
-async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], mocker: MockFixture) -> None:
+async def test_retrieve_documents_basic(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
     mock_handle_retrieval.return_value = mock_text_vectors
 
@@ -69,6 +91,7 @@ async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], moc
     result = await retrieve_documents(
         application_id="test-app-id",
         task_description="Test task",
+        trace_id=trace_id,
     )
 
     assert result == processed_docs  # type: ignore[comparison-overlap]
@@ -78,7 +101,10 @@ async def test_retrieve_documents_basic(mock_text_vectors: list[TextVector], moc
     mock_post_process.assert_called_once()
 
 
-async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: MockFixture) -> None:
+async def test_retrieve_documents_with_guided_retrieval_insufficient(
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
     mock_text_vectors1 = [
         MagicMock(chunk={"content": "Content 1"}),
@@ -138,6 +164,7 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
         application_id="test-app-id",
         task_description="Test task",
         with_guided_retrieval=True,
+        trace_id=trace_id,
     )
 
     assert result == processed_docs2  # type: ignore[comparison-overlap]
@@ -146,7 +173,10 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(mocker: Moc
     assert mock_handle_retrieval.call_args_list[1][1]["search_queries"] == ["better query"]
 
 
-async def test_retrieve_documents_guided_retrieval_max_attempts(mocker: MockFixture) -> None:
+async def test_retrieve_documents_guided_retrieval_max_attempts(
+    mocker: MockFixture,
+    trace_id: str,
+) -> None:
     mock_handle_create_queries = mocker.patch("services.rag.src.utils.retrieval.handle_create_search_queries")
     mock_handle_create_queries.return_value = ["initial query"]
 
@@ -167,6 +197,7 @@ async def test_retrieve_documents_guided_retrieval_max_attempts(mocker: MockFixt
             application_id="test-app-id",
             task_description="Test task",
             with_guided_retrieval=True,
+            trace_id=trace_id,
         )
 
     assert mock_handle_create_queries.call_count >= 1

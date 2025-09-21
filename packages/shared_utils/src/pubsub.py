@@ -1,6 +1,6 @@
 import binascii
 from base64 import b64decode
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
@@ -73,19 +73,40 @@ class RagProcessingStatus(TypedDict):
     trace_id: str
 
 
-class RagRequest(TypedDict):
-    parent_type: Literal["grant_application", "grant_template"]
+class BaseRagRequest(msgspec.Struct):
+    trace_id: str
+
+
+class GrantApplicationRagRequest(BaseRagRequest, tag="grant_application"):
     parent_id: UUID
-    stage: GrantApplicationStageEnum | GrantTemplateStageEnum
-    trace_id: str
+    stage: GrantApplicationStageEnum
 
 
-class AutofillRequest(TypedDict):
+class GrantTemplateRagRequest(BaseRagRequest, tag="grant_template"):
+    parent_id: UUID
+    stage: GrantTemplateStageEnum
+
+
+class ResearchPlanAutofillRequest(BaseRagRequest, tag="research_plan_autofill"):
     application_id: UUID
-    autofill_type: Literal["research_plan", "research_deep_dive"]
-    field_name: NotRequired[str]
-    context: NotRequired[dict[str, Any]]
-    trace_id: str
+    field_name: str | None = None
+    context: dict[str, Any] | None = None
+
+
+class ResearchDeepDiveAutofillRequest(
+    BaseRagRequest, tag="research_deep_dive_autofill"
+):
+    application_id: UUID
+    field_name: str | None = None
+    context: dict[str, Any] | None = None
+
+
+RagRequest = (
+    GrantApplicationRagRequest
+    | GrantTemplateRagRequest
+    | ResearchPlanAutofillRequest
+    | ResearchDeepDiveAutofillRequest
+)
 
 
 class WebsocketMessage[T](TypedDict):
@@ -227,12 +248,19 @@ async def publish_rag_task(
 
     client = get_publisher_client()
 
-    data = RagRequest(
-        parent_type=parent_type,
-        parent_id=UUID(str(parent_id)),
-        stage=stage,
-        trace_id=trace_id,
-    )
+    data: GrantApplicationRagRequest | GrantTemplateRagRequest
+    if parent_type == "grant_application":
+        data = GrantApplicationRagRequest(
+            parent_id=UUID(str(parent_id)),
+            stage=cast("GrantApplicationStageEnum", stage),
+            trace_id=trace_id,
+        )
+    else:  # grant_template
+        data = GrantTemplateRagRequest(
+            parent_id=UUID(str(parent_id)),
+            stage=cast("GrantTemplateStageEnum", stage),
+            trace_id=trace_id,
+        )
 
     try:
         message_data = serialize(data)
@@ -304,25 +332,30 @@ async def publish_autofill_task(
 
     client = get_publisher_client()
 
-    autofill_request = AutofillRequest(
-        application_id=UUID(str(parent_id)),
-        autofill_type=autofill_type,
-        trace_id=trace_id,
-    )
-
-    if field_name:
-        autofill_request["field_name"] = field_name
-    if context:
-        autofill_request["context"] = context
+    autofill_request: ResearchPlanAutofillRequest | ResearchDeepDiveAutofillRequest
+    if autofill_type == "research_plan":
+        autofill_request = ResearchPlanAutofillRequest(
+            application_id=UUID(str(parent_id)),
+            trace_id=trace_id,
+            field_name=field_name,
+            context=context,
+        )
+    else:  # research_deep_dive
+        autofill_request = ResearchDeepDiveAutofillRequest(
+            application_id=UUID(str(parent_id)),
+            trace_id=trace_id,
+            field_name=field_name,
+            context=context,
+        )
 
     try:
         message_data = serialize(autofill_request)
 
         logger.debug(
             "Publishing autofill task",
-            parent_id=str(parent_id),
-            autofill_type=autofill_type,
-            field_name=field_name,
+            parent_id=str(autofill_request.application_id),
+            request_type=type(autofill_request).__name__,
+            field_name=autofill_request.field_name,
             trace_id=trace_id,
             message_size=len(message_data),
         )

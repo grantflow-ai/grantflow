@@ -780,3 +780,29 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
         await session.refresh(application)
 
         return application
+
+
+@pytest.fixture
+def mock_grant_application_job_manager() -> AsyncMock:
+    """Reusable mock GrantApplicationJobManager with standard setup."""
+    from services.rag.src.utils.job_manager import GrantApplicationJobManager
+
+    manager = AsyncMock(spec=GrantApplicationJobManager)
+    manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    return manager
+
+
+@pytest.fixture
+def mock_grant_template_job_manager() -> AsyncMock:
+    """Reusable mock GrantTemplateJobManager with standard setup."""
+    from services.rag.src.utils.job_manager import GrantTemplateJobManager
+
+    manager = AsyncMock(spec=GrantTemplateJobManager)
+    manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
+    manager.ensure_not_cancelled = AsyncMock(return_value=None)
+    manager.add_notification = AsyncMock(return_value=None)
+    manager.update_job_status = AsyncMock(return_value=None)
+    return manager

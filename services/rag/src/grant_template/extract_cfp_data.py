@@ -122,12 +122,16 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessionmaker[Any]) -> list[RagSourceData]:
     async with session_maker() as session:
         sources_result = await session.execute(
-            select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
+            select(RagSource.id, RagSource.source_type, RagSource.text_content)
+            .where(RagSource.id.in_(source_ids))
+            .where(RagSource.deleted_at.is_(None))
         )
         sources = sources_result.fetchall()
 
         chunks_result = await session.execute(
-            select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
+            select(TextVector.rag_source_id, TextVector.chunk)
+            .where(TextVector.rag_source_id.in_(source_ids))
+            .where(TextVector.deleted_at.is_(None))
         )
 
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
