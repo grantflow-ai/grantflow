@@ -4,8 +4,11 @@ from uuid import UUID
 import pytest
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
-from packages.db.src.enums import SourceIndexingStatusEnum
-from services.rag.src.enums import GrantTemplateStageEnum, GrantApplicationStageEnum
+from packages.db.src.enums import (
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
+    SourceIndexingStatusEnum,
+)
 from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import (

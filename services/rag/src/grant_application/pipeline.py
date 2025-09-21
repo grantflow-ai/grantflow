@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, cast
 
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -19,7 +19,6 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 from services.rag.src.grant_application.dto import StageDTO
 from services.rag.src.grant_application.handlers import (

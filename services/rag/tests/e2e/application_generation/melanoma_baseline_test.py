@@ -23,7 +23,8 @@ async def test_generate_melanoma_baseline_application_text(
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
-    from services.rag.src.enums import GrantApplicationStageEnum
+    from packages.db.src.enums import GrantApplicationStageEnum
+
     from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
     from services.rag.src.grant_application.utils import generate_application_text
 

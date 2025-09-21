@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from services.rag.src.enums import GrantTemplateStageEnum
+from packages.db.src.enums import GrantTemplateStageEnum
 
 
 class TableContext(TypedDict):

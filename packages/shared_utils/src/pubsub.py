@@ -8,9 +8,10 @@ import msgspec
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import (
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
     SourceIndexingStatusEnum,
 )
-from services.rag.src.enums import GrantTemplateStageEnum, GrantApplicationStageEnum
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import (
     BackendError,

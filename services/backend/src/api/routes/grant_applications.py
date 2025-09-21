@@ -8,6 +8,7 @@ from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import Parameter
 from packages.db.src.enums import (
     ApplicationStatusEnum,
+    GrantApplicationStageEnum,
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
@@ -43,7 +44,6 @@ from sqlalchemy.sql.functions import count
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
-from services.rag.src.enums import GrantApplicationStageEnum
 
 logger = get_logger(__name__)
 

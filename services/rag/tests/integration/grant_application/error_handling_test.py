@@ -2,14 +2,13 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.pipeline import (
     handle_grant_application_pipeline,
 )

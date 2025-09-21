@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -11,7 +11,6 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.enums import GrantTemplateStageEnum
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.dto import (
     AnalyzeCFPContentStageDTO,
