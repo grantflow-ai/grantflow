@@ -40,8 +40,6 @@ async def handle_generate_grant_template(
 ) -> None:
     trace_id = get_trace_id(request)
 
-
-
     async with session_maker() as session:
         grant_template = await session.scalar(
             select(GrantTemplate).where(
@@ -55,7 +53,6 @@ async def handle_generate_grant_template(
 
         if grant_template.grant_sections:
             return
-
 
         rag_sources_count = await session.scalar(
             select(count())
@@ -77,7 +74,6 @@ async def handle_generate_grant_template(
 
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for grant template, cannot generate")
-
 
         try:
             await publish_rag_task(
@@ -108,7 +104,6 @@ async def handle_update_grant_template(
     request: APIRequest,
 ) -> None:
     get_trace_id(request)
-
 
     async with session_maker() as session, session.begin():
         try:

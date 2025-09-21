@@ -1,13 +1,11 @@
 import logging
 from typing import Any
-from unittest.mock import AsyncMock, patch
-from uuid import UUID
+from unittest.mock import AsyncMock
 
+from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
-
-from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
 
 def create_mock_job_manager() -> AsyncMock:
@@ -21,10 +19,14 @@ def create_mock_job_manager() -> AsyncMock:
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
 async def test_generate_melanoma_baseline_application_text(
     logger: logging.Logger,
-    melanoma_alliance_full_application_id: str,
+    test_application_with_template: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
+    from services.rag.src.enums import GrantApplicationStageEnum
+    from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
+    from services.rag.src.grant_application.utils import generate_application_text
+
     scenario = load_scenario("melanoma_alliance_baseline")
 
     performance_context.set_metadata("scenario_name", scenario.scenario_name)
@@ -35,19 +37,58 @@ async def test_generate_melanoma_baseline_application_text(
 
     logger.info("📄 Generating melanoma baseline application using scenario: %s", scenario.scenario_name)
 
+    # Load the application with template relationship from database
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
+
+    async with async_session_maker() as session:
+        grant_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == test_application_with_template.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+
+        if not grant_application:
+            raise ValueError("Grant application not found")
+
+        # Verify we have the necessary data
+        if not grant_application.grant_template:
+            raise ValueError("Grant application has no template")
+
+        if not grant_application.grant_template.grant_sections:
+            raise ValueError("Grant template has no sections")
+
     performance_context.start_stage("generate_full_application_text")
 
-    mock_job_manager = create_mock_job_manager()
+    # Run the actual pipeline through all stages to generate real application text
+    await handle_grant_application_pipeline(
+        grant_application=grant_application,
+        session_maker=async_session_maker,
+        generation_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        trace_id="melanoma-baseline-e2e-test",
+    )
 
-    with (
-        patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
-        patch("services.rag.src.grant_application.handlers.verify_rag_sources_indexed", new_callable=AsyncMock),
-    ):
-        # TODO: Fix e2e test - pipeline signature changed, needs proper GrantApplication object
-        # For now, mock the result to fix mypy errors
-        result = ("Mock generated text", {"section1": "Mock section text"})
-        assert result is not None, "Grant application generation should not return None"
-        text, section_texts = result
+    # Refresh the application from database to get the generated content
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
+
+    async with async_session_maker() as session:
+        updated_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+
+        if not updated_application:
+            raise ValueError("Failed to retrieve updated application")
+
+        # Generate the final application text from the processed data
+        section_texts = updated_application.section_texts or {}
+        text = generate_application_text(
+            title=updated_application.title or "Grant Application",
+            grant_sections=updated_application.grant_template.grant_sections,
+            section_texts=section_texts
+        )
 
     performance_context.end_stage()
 
@@ -77,7 +118,7 @@ async def test_generate_melanoma_baseline_application_text(
 
     character_count = len(text)
     section_count = len(section_texts)
-    avg_section_length = sum(len(content) for content in section_texts.values()) / len(section_texts)
+    avg_section_length = sum(len(content) for content in section_texts.values()) / len(section_texts) if section_texts else 0
 
     performance_context.set_metadata("generated_word_count", word_count)
     performance_context.set_metadata("generated_character_count", character_count)

@@ -263,14 +263,10 @@ async def test_soft_delete_integration_public_grant_endpoints_security(
     response = await public_grants_client.get(f"/grants/{data['deleted_grant'].document_number}")
     assert response.status_code == HTTPStatus.NOT_FOUND
 
-    response = await public_grants_client.post(
-        "/grants/unsubscribe", json={"email": "active-subscriber@example.com"}
-    )
+    response = await public_grants_client.post("/grants/unsubscribe", json={"email": "active-subscriber@example.com"})
     assert response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED]
 
-    response = await public_grants_client.post(
-        "/grants/unsubscribe", json={"email": "deleted-subscriber@example.com"}
-    )
+    response = await public_grants_client.post("/grants/unsubscribe", json={"email": "deleted-subscriber@example.com"})
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert "No active subscription found" in response.json()["detail"]
 
@@ -397,9 +393,7 @@ async def test_soft_delete_integration_count_queries_exclude_soft_deleted(
     from sqlalchemy import func
 
     async with async_session_maker() as session:
-        active_project_count = await session.scalar(
-            select(func.count(Project.id)).where(Project.deleted_at.is_(None))
-        )
+        active_project_count = await session.scalar(select(func.count(Project.id)).where(Project.deleted_at.is_(None)))
 
         assert active_project_count == 1
 

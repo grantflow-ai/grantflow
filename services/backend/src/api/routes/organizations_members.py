@@ -71,7 +71,6 @@ async def handle_list_organization_members(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[OrganizationMemberResponse]:
-
     async with session_maker() as session:
         organization = await session.scalar(
             select(Organization).where(Organization.id == organization_id).where(Organization.deleted_at.is_(None))
@@ -140,7 +139,6 @@ async def handle_add_organization_member(
     data: AddMemberRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -206,7 +204,6 @@ async def handle_update_member_role(
     data: UpdateMemberRoleRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> MemberActionResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -335,7 +332,6 @@ async def handle_remove_member(
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(

@@ -92,7 +92,10 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
             message = "Invalid pubsub message"
             status_code = HTTPStatus.BAD_REQUEST
         elif isinstance(exception, LLMTimeoutError):
-            logger.warning("LLM API timeout - message will be retried by Pub/Sub", exec_info=exception)
+            logger.warning(
+                "LLM API timeout - message will be retried by Pub/Sub",
+                exec_info=exception,
+            )
             message = str(exception)
             status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         else:

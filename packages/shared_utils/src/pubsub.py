@@ -255,7 +255,7 @@ async def publish_rag_task(
             stage=cast("GrantApplicationStageEnum", stage),
             trace_id=trace_id,
         )
-    else:  
+    else:
         data = GrantTemplateRagRequest(
             parent_id=UUID(str(parent_id)),
             stage=cast("GrantTemplateStageEnum", stage),
@@ -268,7 +268,7 @@ async def publish_rag_task(
             "Serialized RAG request data",
             parent_type=parent_type,
             parent_id=str(parent_id),
-            stage=stage,  
+            stage=stage,
             message_size=len(message_data),
         )
 
@@ -338,7 +338,7 @@ async def publish_autofill_task(
             field_name=field_name,
             context=context,
         )
-    else:  
+    else:
         autofill_request = ResearchDeepDiveAutofillRequest(
             application_id=UUID(str(parent_id)),
             trace_id=trace_id,

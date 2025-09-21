@@ -114,7 +114,6 @@ async def handle_list_organizations(
     if not uid:
         raise ValidationException("firebase_uid parameter required for admin API calls")
 
-
     async with session_maker() as session:
         result_set = await session.execute(
             select(Organization)
@@ -151,7 +150,6 @@ async def handle_get_organization(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-
     async with session_maker() as session:
         organization = await session.scalar(
             select(Organization).where(Organization.id == organization_id).where(Organization.deleted_at.is_(None))
@@ -195,7 +193,6 @@ async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -245,7 +242,6 @@ async def handle_delete_organization(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> DeleteOrganizationResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -273,7 +269,6 @@ async def handle_delete_organization(
             str(organization_id), ORGANIZATION_DELETION_GRACE_PERIOD_DAYS
         )
 
-
         return DeleteOrganizationResponse(
             message="Organization scheduled for deletion. All members except owners have been removed.",
             scheduled_deletion_date=deletion_data["scheduled_hard_delete_at"].isoformat() + "Z",
@@ -296,7 +291,6 @@ async def handle_restore_organization(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(select(Organization).where(Organization.id == organization_id))

@@ -138,7 +138,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                             .values(accepted_at=datetime.now(UTC))
                         )
 
-
                     await session.flush()
 
                     result = await session.execute(
@@ -186,7 +185,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             )
             default_organization_id = default_org_user.organization_id
             default_role = default_org_user.role
-
 
     jwt = create_jwt(firebase_uid, default_organization_id, default_role)
     return LoginResponse(jwt_token=jwt)

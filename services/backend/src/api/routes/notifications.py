@@ -49,7 +49,6 @@ async def list_notifications(
     session_maker: async_sessionmaker[Any],
     include_read: bool = False,
 ) -> ListNotificationsResponse:
-
     async with session_maker() as session:
         filters = [
             Notification.firebase_uid == request.auth,
@@ -90,7 +89,6 @@ async def list_notifications(
 
             notification_responses.append(response)
 
-
         return ListNotificationsResponse(notifications=notification_responses, total=len(notification_responses))
 
 
@@ -106,7 +104,6 @@ async def dismiss_notification(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
 ) -> DismissNotificationResponse:
-
     async with session_maker() as session, session.begin():
         result = await session.execute(
             select(Notification).where(
@@ -131,6 +128,5 @@ async def dismiss_notification(
         notification.updated_at = datetime.now(UTC)
 
         await session.commit()
-
 
         return DismissNotificationResponse(success=True, notification_id=str(notification_id))

@@ -150,25 +150,25 @@ def test_format_research_objectives(mock_logger: MagicMock) -> None:
 
 
 def test_validate_answer_response(mock_logger: MagicMock) -> None:
-    from services.rag.src.autofill.research_deep_dive_handler import _validate_answer_response
+    from services.rag.src.autofill.research_deep_dive_handler import AnswerResponse, _validate_answer_response
 
-    valid_response = {"answer": "This is a valid answer that meets the minimum length requirement. " * 30}
+    valid_response = AnswerResponse(answer="This is a valid answer that meets the minimum length requirement. " * 30)
     _validate_answer_response(valid_response)
 
-    with pytest.raises(ValueError, match="Missing 'answer' field"):
-        _validate_answer_response({"something_else": "value"})
+    with pytest.raises(KeyError):
+        _validate_answer_response({"something_else": "value"})  # type: ignore[typeddict-unknown-key,typeddict-item]
 
-    with pytest.raises(ValueError, match="Answer must be a string"):
-        _validate_answer_response({"answer": 123})
+    with pytest.raises(TypeError):
+        _validate_answer_response({"answer": 123})  # type: ignore[typeddict-item]
 
     with pytest.raises(ValueError, match="Answer too short"):
-        _validate_answer_response({"answer": "Too short"})
+        _validate_answer_response(AnswerResponse(answer="Too short"))
 
     with pytest.raises(ValueError, match="Answer has too few words"):
-        _validate_answer_response({"answer": "word " * 50})
+        _validate_answer_response(AnswerResponse(answer="word " * 50))
 
     with pytest.raises(ValueError, match="Answer has too many words"):
-        _validate_answer_response({"answer": "word " * 700})
+        _validate_answer_response(AnswerResponse(answer="word " * 700))
 
 
 def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
