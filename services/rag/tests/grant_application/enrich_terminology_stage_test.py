@@ -69,7 +69,7 @@ async def test_enrich_objective_with_wikidata_success(
         trace_id=test_trace_id,
     )
 
-    expected_terms = ["biomarkers", "proteomics", "mass spectrometry"]
+    expected_terms = ["biomarkers", "mass spectrometry", "proteomics"]  # Sorted alphabetically
     assert result["core_scientific_terms"] == expected_terms
     assert "scientific_context" in result
     assert "Biochemistry" in result["scientific_context"]

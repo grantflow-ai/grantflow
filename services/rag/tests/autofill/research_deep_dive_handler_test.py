@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import ResearchDeepDiveAutofillRequest
 
 from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
@@ -158,16 +159,16 @@ def test_validate_answer_response(mock_logger: MagicMock) -> None:
     with pytest.raises(KeyError):
         _validate_answer_response({"something_else": "value"})  # type: ignore[typeddict-unknown-key,typeddict-item]
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         _validate_answer_response({"answer": 123})  # type: ignore[typeddict-item]
 
-    with pytest.raises(ValueError, match="Answer too short"):
-        _validate_answer_response(AnswerResponse(answer="Too short"))
+    with pytest.raises(ValidationError, match="Answer too short"):
+        _validate_answer_response(AnswerResponse(answer="x" * 49))  # 49 chars < 50 min
 
-    with pytest.raises(ValueError, match="Answer has too few words"):
+    with pytest.raises(ValidationError, match="Answer has too few words"):
         _validate_answer_response(AnswerResponse(answer="word " * 50))
 
-    with pytest.raises(ValueError, match="Answer has too many words"):
+    with pytest.raises(ValidationError, match="Answer has too many words"):
         _validate_answer_response(AnswerResponse(answer="word " * 700))
 
 

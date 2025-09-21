@@ -264,7 +264,7 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
         trace_id=test_trace_id,
     )
 
-    mock_perform_shared_retrieval.assert_called_once_with(sample_research_objectives, sample_grant_section, test_app_id)
+    mock_perform_shared_retrieval.assert_called_once_with(sample_research_objectives, sample_grant_section, test_app_id, test_trace_id)
 
     mock_batched_gather.assert_called_once()
     call_args = mock_batched_gather.call_args

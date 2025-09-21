@@ -198,7 +198,7 @@ async def enrich_objective_with_wikidata(
         for task in enrichment_response["research_tasks"]:
             all_terms.extend(task["core_scientific_terms"])
 
-        unique_terms = list(set(all_terms))
+        unique_terms = sorted(set(all_terms))
 
         if not unique_terms:
             return {

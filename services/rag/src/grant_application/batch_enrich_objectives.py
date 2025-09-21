@@ -45,6 +45,7 @@ async def perform_shared_retrieval(
     research_objectives: list[ResearchObjective],
     grant_section: GrantLongFormSection,
     application_id: str,
+    trace_id: str,
 ) -> str:
     combined_context = "\n\n".join(
         [
@@ -73,6 +74,7 @@ async def perform_shared_retrieval(
         search_queries=search_queries[:15],
         task_description=combined_context,
         max_tokens=MAX_RETRIEVAL_TOKENS,
+        trace_id=trace_id,
     )
 
     return "\n".join(retrieval_result)
@@ -88,7 +90,7 @@ async def handle_batch_enrich_objectives(
     if not research_objectives:
         return []
 
-    shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)
+    shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id, trace_id)
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
     objective_batches = calculate_optimal_batching(research_objectives, estimated_context_tokens)
 
