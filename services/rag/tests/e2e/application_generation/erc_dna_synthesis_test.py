@@ -23,7 +23,7 @@ def trace_id() -> TraceId:
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
 async def test_generate_erc_application_for_dna_synthesis(
     logger: logging.Logger,
-    melanoma_alliance_full_application_id: str,
+    melanoma_alliance_full_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
     trace_id: TraceId,
@@ -48,9 +48,7 @@ async def test_generate_erc_application_for_dna_synthesis(
 
     performance_context.start_stage("generate_application_text")
 
-    async with async_session_maker() as session:
-        grant_application = await session.get(GrantApplication, UUID(melanoma_alliance_full_application_id))
-        assert grant_application is not None
+    grant_application = melanoma_alliance_full_application
 
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
@@ -67,11 +65,27 @@ async def test_generate_erc_application_for_dna_synthesis(
 
     performance_context.start_stage("validate_generated_content")
 
+    from packages.db.src.query_helpers import select_active
+    from sqlalchemy.orm import selectinload
+
+    from services.rag.src.grant_application.utils import generate_application_text
+
     async with async_session_maker() as session:
-        grant_application = await session.get(GrantApplication, UUID(melanoma_alliance_full_application_id))
-        assert grant_application is not None
-        text = grant_application.text
-        section_texts = grant_application.section_texts
+        updated_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == grant_application.id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+
+        if not updated_application:
+            raise ValueError("Failed to retrieve updated application")
+
+        section_texts = updated_application.section_texts or {}
+        text = generate_application_text(
+            title=updated_application.title or "Grant Application",
+            grant_sections=updated_application.grant_template.grant_sections,
+            section_texts=section_texts,
+        )
 
     assert text, "Generated text should not be empty"
     assert len(text) > 1000, f"Generated text too short: {len(text)} characters"

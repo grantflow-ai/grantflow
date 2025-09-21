@@ -626,7 +626,7 @@ tasks:
       PYTHONPATH: "{{.PYTHON_PATH}}"
       PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
-      - uv run pytest services/rag/tests -v -n0
+      - uv run pytest services/rag/tests -v
 
   service:rag:test:e2e:
     desc: Run RAG service end-to-end tests
