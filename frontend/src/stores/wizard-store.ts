@@ -434,7 +434,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				log.error("checkApplicationGeneration", error);
 				polling.stop();
 
-				// Show user notification about the failure
 				toast.error(
 					"Application generation failed. Please check your research plan and try again, or contact support.",
 				);
@@ -475,7 +474,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				log.error("checkTemplateGeneration", error);
 				polling.stop();
 
-				// Show user notification about the failure
 				toast.error("Template generation failed. Please try uploading different documents or contact support.");
 
 				set((state) => ({
@@ -570,7 +568,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			} catch (error) {
 				log.error("generateApplication", error);
 
-				// Show user notification about the failure
 				toast.error("Failed to start application generation. Please try again or contact support.");
 
 				set((state) => ({

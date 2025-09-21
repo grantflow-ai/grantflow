@@ -4,7 +4,7 @@ from uuid import UUID
 
 from litestar import patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import GrantTemplateStageEnum, SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -78,7 +78,6 @@ async def handle_generate_grant_template(
             await publish_rag_task(
                 parent_type="grant_template",
                 parent_id=grant_template.id,
-                stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
                 trace_id=trace_id,
             )
 

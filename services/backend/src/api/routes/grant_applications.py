@@ -8,7 +8,6 @@ from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import Parameter
 from packages.db.src.enums import (
     ApplicationStatusEnum,
-    GrantApplicationStageEnum,
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
@@ -466,7 +465,6 @@ async def handle_generate_application(
             await publish_rag_task(
                 parent_type="grant_application",
                 parent_id=application.id,
-                stage=GrantApplicationStageEnum.VALIDATE_CONTEXT,
                 trace_id=trace_id,
             )
         except BackendError as e:

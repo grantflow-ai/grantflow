@@ -126,13 +126,11 @@ async def handle_request(
             await handle_grant_template_pipeline(
                 grant_template=grant_template,
                 session_maker=session_maker,
-                generation_stage=request.stage,
                 trace_id=request.trace_id,
             )
         except RagJobCancelledError:
             logger.info(
                 "Job cancelled",
-                stage=request.stage,
                 trace_id=request.trace_id,
             )
             return
@@ -164,13 +162,11 @@ async def handle_request(
             await handle_grant_application_pipeline(
                 grant_application=grant_application,
                 session_maker=session_maker,
-                generation_stage=request.stage,
                 trace_id=request.trace_id,
             )
         except RagJobCancelledError:
             logger.info(
                 "Job cancelled",
-                stage=request.stage,
                 trace_id=request.trace_id,
             )
             return

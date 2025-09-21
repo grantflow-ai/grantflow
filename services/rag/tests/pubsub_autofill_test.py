@@ -67,12 +67,9 @@ def test_handle_pubsub_message_autofill_research_deep_dive(trace_id: TraceId) ->
 
 
 def test_handle_pubsub_message_rag_request_not_confused_with_autofill(trace_id: TraceId) -> None:
-    from packages.db.src.enums import GrantTemplateStageEnum
-
     parent_id = uuid4()
     request = GrantTemplateRagRequest(
         parent_id=parent_id,
-        stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
         trace_id=trace_id,
     )
     event = create_pubsub_event(request)
@@ -81,17 +78,13 @@ def test_handle_pubsub_message_rag_request_not_confused_with_autofill(trace_id: 
 
     assert isinstance(result, GrantTemplateRagRequest)
     assert result.parent_id == parent_id
-    assert result.stage == GrantTemplateStageEnum.EXTRACT_CFP_CONTENT
     assert result.trace_id == trace_id
 
 
 def test_handle_pubsub_message_grant_application_without_autofill(trace_id: TraceId) -> None:
-    from packages.db.src.enums import GrantApplicationStageEnum
-
     parent_id = uuid4()
     request = GrantApplicationRagRequest(
         parent_id=parent_id,
-        stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
         trace_id=trace_id,
     )
     event = create_pubsub_event(request)
@@ -100,5 +93,4 @@ def test_handle_pubsub_message_grant_application_without_autofill(trace_id: Trac
 
     assert isinstance(result, GrantApplicationRagRequest)
     assert result.parent_id == parent_id
-    assert result.stage == GrantApplicationStageEnum.GENERATE_SECTIONS
     assert result.trace_id == trace_id

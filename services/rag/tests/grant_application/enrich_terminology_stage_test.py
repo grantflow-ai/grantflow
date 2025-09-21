@@ -69,7 +69,7 @@ async def test_enrich_objective_with_wikidata_success(
         trace_id=test_trace_id,
     )
 
-    expected_terms = ["biomarkers", "mass spectrometry", "proteomics"]  # Sorted alphabetically
+    expected_terms = ["biomarkers", "mass spectrometry", "proteomics"]
     assert result["core_scientific_terms"] == expected_terms
     assert "scientific_context" in result
     assert "Biochemistry" in result["scientific_context"]
@@ -137,14 +137,15 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
         trace_id=str(uuid4()),
     )
 
+    # Terms are sorted alphabetically by the implementation
     expected_terms = [
         "biomarkers",
-        "proteomics",
+        "clinical validation",
+        "diagnostic assay",
         "mass spectrometry",
         "protein analysis",
-        "clinical validation",
+        "proteomics",
         "sensitivity",
-        "diagnostic assay",
         "standardization",
     ]
     assert result["core_scientific_terms"] == expected_terms
@@ -157,6 +158,8 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
 async def test_enrich_objective_with_wikidata_error_handling(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
+    import httpx
+
     enrichment_response_with_terms = deepcopy(sample_enrichment_response)
     enrichment_response_with_terms["research_objective"]["core_scientific_terms"] = ["biomarkers"]
     enrichment_response_with_terms["research_tasks"] = [
@@ -169,7 +172,7 @@ async def test_enrich_objective_with_wikidata_error_handling(
         )
     ]
 
-    mock_get_scientific_context.side_effect = Exception("Wikidata service unavailable")
+    mock_get_scientific_context.side_effect = httpx.HTTPError("Wikidata service unavailable")
 
     result = await enrich_objective_with_wikidata(
         enrichment_response=enrichment_response_with_terms,

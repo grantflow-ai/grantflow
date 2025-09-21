@@ -35,6 +35,8 @@ from packages.db.src.constants import (
 )
 from packages.db.src.enums import (
     ApplicationStatusEnum,
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
     NotificationTypeEnum,
     RagGenerationStatusEnum,
     SourceIndexingStatusEnum,
@@ -503,8 +505,7 @@ class RagGenerationJob(BaseWithUUIDPK):
         Enum(RagGenerationStatusEnum), index=True, default=RagGenerationStatusEnum.PENDING
     )
 
-    current_stage: Mapped[int] = mapped_column(BigInteger, default=0)
-    total_stages: Mapped[int] = mapped_column(BigInteger)
+    current_stage_name: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     retry_count: Mapped[int] = mapped_column(BigInteger, default=0)
 
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -527,8 +528,6 @@ class RagGenerationJob(BaseWithUUIDPK):
         Index("idx_rag_generation_jobs_status_created", "status", "created_at"),
         Index("idx_rag_generation_jobs_status_retry", "status", "retry_count"),
         CheckConstraint("retry_count >= 0", name="check_retry_count_non_negative"),
-        CheckConstraint("current_stage >= 0", name="check_current_stage_non_negative"),
-        CheckConstraint("total_stages > 0", name="check_total_stages_positive"),
     )
 
 
@@ -543,8 +542,7 @@ class GrantTemplateGenerationJob(RagGenerationJob):
         SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), index=True, unique=True
     )
 
-    extracted_sections: Mapped[list[GrantElement] | None] = mapped_column(JSON, nullable=True)
-    extracted_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    current_stage: Mapped[GrantTemplateStageEnum | None] = mapped_column(Enum(GrantTemplateStageEnum), nullable=True)
 
     grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", viewonly=True, overlaps="rag_job")
 
@@ -564,8 +562,9 @@ class GrantApplicationGenerationJob(RagGenerationJob):
         SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True, unique=True
     )
 
-    generated_sections: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
-    validation_results: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    current_stage: Mapped[GrantApplicationStageEnum | None] = mapped_column(
+        Enum(GrantApplicationStageEnum), nullable=True
+    )
 
     grant_application: Relationship["GrantApplication"] = relationship(
         "GrantApplication", viewonly=True, overlaps="rag_job"

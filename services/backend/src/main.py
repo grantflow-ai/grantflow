@@ -175,7 +175,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_entity_cleanup_webhook,
 ]
 
-
 route_handlers: (
     list[HTTPRouteHandler | WebsocketRouteHandler] | list[HTTPRouteHandler | WebsocketRouteHandler | Router]
 ) = api_routes

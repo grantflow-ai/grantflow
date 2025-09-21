@@ -460,9 +460,10 @@ async def melanoma_alliance_full_application(
     research_objectives: list[ResearchObjective],
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantApplication:
+    from uuid import UUID
+
     from packages.db.src.query_helpers import select_active
     from sqlalchemy.orm import selectinload
-    from uuid import UUID
 
     form_inputs: ResearchDeepDive = {
         "background_context": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients. Immunotherapy has revolutionized treatment for melanoma patients, extending median survival from 6 months to nearly 6 years for patients in advanced disease stages. However, many patients still face early relapse or do not respond to treatments. Particularly in BMs, the milieu of the brain creates a highly immunosuppressive tumor microenvironment (TME). Single-cell technologies together with machine learning have emerged as powerful tools to decipher complex interactions between cells in the TME, enabling development of data driven designs of immunotherapies. Using our advanced technologies to study cells in the tumor microenvironment at a single-cell resolution, we identified a subtype of immune cell which is a central part of the TME coined regulatory (TREM2+) macrophages. These cells play a crucial role in suppressing the body's ability to fight cancer, especially in subsets of immunotherapy-resistant tumors such as melanoma. We have already developed an antibody that blocks the suppressive action of these cells.",
@@ -485,9 +486,8 @@ async def melanoma_alliance_full_application(
         source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
 
-    # Retrieve and return the GrantApplication object
     async with async_session_maker() as session:
-        grant_application = await session.scalar(
+        grant_application: GrantApplication | None = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == UUID(application_id))
             .options(selectinload(GrantApplication.grant_template))
@@ -788,6 +788,33 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
                     "is_clinical_trial": False,
                 },
             ],
+            cfp_analysis={
+                "cfp_analysis": {
+                    "required_sections": [],
+                    "length_constraints": [],
+                    "evaluation_criteria": [],
+                    "additional_requirements": [],
+                    "sections_count": 0,
+                    "length_constraints_found": 0,
+                    "evaluation_criteria_count": 0,
+                },
+                "nlp_analysis": {
+                    "money": [],
+                    "date_time": [],
+                    "writing_related": [],
+                    "other_numbers": [],
+                    "recommendations": [],
+                    "orders": [],
+                    "positive_instructions": [],
+                    "negative_instructions": [],
+                    "evaluation_criteria": [],
+                },
+                "analysis_metadata": {
+                    "content_length": 100,
+                    "categories_found": 0,
+                    "total_sentences": 5,
+                },
+            },
         )
         session.add(template)
 

@@ -63,7 +63,6 @@ async def test_get_scientific_context_empty_terms() -> None:
 
 
 async def test_get_scientific_context_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    # Mock a 500 server error which should be handled gracefully
     mock_httpx_response.raise_for_status.side_effect = httpx.HTTPStatusError(
         "Server Error", request=MagicMock(), response=MagicMock(status_code=500)
     )
@@ -192,7 +191,6 @@ async def test_expand_scientific_terms_empty() -> None:
 
 
 async def test_expand_scientific_terms_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    # Mock a 500 server error which should be handled gracefully
     mock_httpx_response.raise_for_status.side_effect = httpx.HTTPStatusError(
         "Server Error", request=MagicMock(), response=MagicMock(status_code=500)
     )

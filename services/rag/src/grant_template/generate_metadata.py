@@ -321,7 +321,6 @@ async def generate_grant_template(
         system_prompt=GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT,
         temperature=0.1,
         top_p=0.9,
-        candidate_count=2,
         trace_id=trace_id,
     )
 

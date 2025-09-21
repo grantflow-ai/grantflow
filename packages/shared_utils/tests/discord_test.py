@@ -7,7 +7,6 @@ from packages.shared_utils.src.discord import (
     send_scraper_report,
 )
 
-
 """Test suite for Discord utility functions."""
 
 
