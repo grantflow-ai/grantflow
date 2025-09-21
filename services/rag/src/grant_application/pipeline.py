@@ -85,7 +85,10 @@ async def _verify_prerequisites(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:
-    grant_template = cast("GrantTemplate", grant_application.grant_template)
+    if not grant_application.grant_template:
+        raise ValidationError("Grant template is missing from grant application")
+
+    grant_template = grant_application.grant_template
 
     if not grant_template.cfp_analysis:
         raise ValidationError("CFP analysis is missing from grant template")
