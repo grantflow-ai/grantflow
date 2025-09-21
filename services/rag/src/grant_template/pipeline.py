@@ -6,6 +6,7 @@ from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
     InsufficientContextError,
+    LLMTimeoutError,
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -151,6 +152,9 @@ async def handle_grant_template_pipeline(
         if isinstance(e, InsufficientContextError):
             error_message = "The uploaded document doesn't contain sufficient information about the required application sections. Please upload a complete Call for Proposals (CFP) document that includes details about application requirements and sections."
             event_type = NotificationEvents.INSUFFICIENT_CONTEXT_ERROR
+        elif isinstance(e, LLMTimeoutError):
+            error_message = "AI processing took longer than expected. The request will be retried automatically. Please wait a moment and check back."
+            event_type = NotificationEvents.LLM_TIMEOUT
         elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
             error_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
             event_type = NotificationEvents.INDEXING_TIMEOUT
@@ -166,7 +170,7 @@ async def handle_grant_template_pipeline(
             error_message=error_message,
             error_details={
                 "error_type": e.__class__.__name__,
-                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
             },
         )
 
@@ -176,7 +180,7 @@ async def handle_grant_template_pipeline(
             notification_type="error",
             data={
                 "error_type": e.__class__.__name__,
-                "recoverable": event_type != NotificationEvents.PIPELINE_ERROR,
+                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
             },
         )
         return None
