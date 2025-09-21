@@ -2,12 +2,13 @@ import time
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSource, RagSource, TextVector
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ttl_cache import ttl_lru_cache
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.completion import handle_completions_request
@@ -151,7 +152,7 @@ async def retrieve_vectors_for_embedding(
     async with session_maker() as session:
         result = list(
             await session.scalars(
-                select(TextVector)
+                select_active(TextVector)
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
                 .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
                 .where(

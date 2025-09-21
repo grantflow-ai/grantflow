@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from packages.shared_utils.src.pubsub import AutofillRequest
+from packages.shared_utils.src.pubsub import ResearchPlanAutofillRequest
 
 from services.rag.src.autofill.research_plan_handler import generate_research_plan_content
 
@@ -32,13 +32,13 @@ def mock_session_maker() -> MagicMock:
 
 
 @pytest.fixture
-def sample_request() -> AutofillRequest:
+def sample_request(trace_id: str) -> ResearchPlanAutofillRequest:
     from uuid import UUID
 
-    return {
-        "application_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "autofill_type": "research_plan",
-    }
+    return ResearchPlanAutofillRequest(
+        application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        trace_id=trace_id,
+    )
 
 
 @pytest.fixture
@@ -67,7 +67,10 @@ async def test_function_import() -> None:
 
 
 async def test_generate_research_plan_content_with_mocks(
-    mock_logger: MagicMock, mock_session_maker: MagicMock, sample_application: dict[str, Any]
+    mock_logger: MagicMock,
+    mock_session_maker: MagicMock,
+    sample_application: dict[str, Any],
+    trace_id: str,
 ) -> None:
     from packages.db.src.tables import GrantApplication
 
@@ -109,7 +112,7 @@ async def test_generate_research_plan_content_with_mocks(
             ]
         }
 
-        result = await generate_research_plan_content(application=app)
+        result = await generate_research_plan_content(application=app, trace_id=trace_id)
 
         assert isinstance(result, list)
         assert len(result) == 2

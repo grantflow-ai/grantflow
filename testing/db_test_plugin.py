@@ -378,6 +378,11 @@ async def grant_template(
         grant_template_data = GrantTemplateFactory.build(
             grant_application_id=grant_application.id,
             granting_institution_id=granting_institution_id,
+            cfp_analysis={
+                "sections_count": 3,
+                "length_constraints_found": 2,
+                "evaluation_criteria_count": 2,
+            },
             grant_sections=[
                 {
                     "title": "Executive Summary",

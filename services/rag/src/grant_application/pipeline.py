@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, cast
 
 from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication, GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -109,10 +110,8 @@ async def _verify_prerequisites(
 
     async with session_maker() as session:
         # Load fresh instance with grant_template eagerly loaded to avoid lazy loading issues
-        from sqlalchemy import select
-
         result = await session.execute(
-            select(GrantApplication)
+            select_active(GrantApplication)
             .options(selectinload(GrantApplication.grant_template))
             .where(GrantApplication.id == application_id)
         )

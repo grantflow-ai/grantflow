@@ -1,4 +1,3 @@
-import asyncio
 from asyncio import gather
 from typing import TYPE_CHECKING, cast
 
@@ -7,7 +6,6 @@ from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
-from services.rag.src.enums import GrantApplicationStageEnum
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.dto import (
     EnrichObjectivesStageDTO,
@@ -138,15 +136,7 @@ async def handle_generate_sections_stage(
         for section in long_form_sections
     ]
 
-    try:
-        section_results = await asyncio.wait_for(
-            batched_gather(*generation_coroutines, batch_size=3),
-            timeout=600,  # 10 minutes timeout for section generation
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Section generation timed out after 10 minutes. Please try again or contact support."
-        ) from None
+    section_results = await batched_gather(*generation_coroutines, batch_size=3)
 
     section_texts: dict[str, str] = {}
     for section, result in zip(long_form_sections, section_results, strict=False):
@@ -274,15 +264,7 @@ async def handle_enrich_terminology_stage(
         for enrichment_response in dto["enrichment_responses"]
     ]
 
-    try:
-        wikidata_enrichments = await asyncio.wait_for(
-            batched_gather(*wikidata_enrichment_coroutines, batch_size=3),
-            timeout=300,  # 5 minutes timeout for Wikidata enrichments
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Wikidata enrichment timed out after 5 minutes. Please try again or contact support."
-        ) from None
+    wikidata_enrichments = await batched_gather(*wikidata_enrichment_coroutines, batch_size=3)
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
@@ -387,27 +369,19 @@ async def handle_generate_research_plan_stage(
         notification_type="info",
     )
 
-    try:
-        objective_results = await asyncio.wait_for(
-            gather(
-                *[
-                    generate_objective_with_tasks(
-                        application_id=application_id,
-                        form_inputs=form_inputs,
-                        objective=objective,
-                        tasks=tasks,
-                        work_plan_text=work_plan_text,
-                        trace_id=trace_id,
-                    )
-                    for objective, tasks in objective_task_groups
-                ]
-            ),
-            timeout=900,  # 15 minutes timeout for research plan generation
-        )
-    except TimeoutError:
-        raise ValidationError(
-            "Research plan generation timed out after 15 minutes. Please try again or contact support."
-        ) from None
+    objective_results = await gather(
+        *[
+            generate_objective_with_tasks(
+                application_id=application_id,
+                form_inputs=form_inputs,
+                objective=objective,
+                tasks=tasks,
+                work_plan_text=work_plan_text,
+                trace_id=trace_id,
+            )
+            for objective, tasks in objective_task_groups
+        ]
+    )
 
     for objective, objective_text, task_results in objective_results:
         await job_manager.ensure_not_cancelled()

@@ -1,11 +1,27 @@
+"""
+Tests for grant application pipeline stage handlers.
+
+This module tests the individual stage handlers used in the grant application
+generation pipeline. Each handler is tested for successful execution, error
+handling, and proper data flow between stages.
+
+Key areas tested:
+- Section generation with document retrieval and AI completion
+- Relationship extraction between research objectives
+- Objective enrichment with external context
+- Terminology enrichment with Wikidata integration
+- Research plan generation combining all previous stages
+
+All tests use real database fixtures and mock external AI/API calls for
+deterministic results while maintaining integration test quality.
+"""
+
 from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
-from packages.db.src.tables import GrantApplication, GrantTemplate
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_application.handlers import (
     handle_enrich_objectives_stage,
@@ -14,40 +30,8 @@ from services.rag.src.grant_application.handlers import (
     handle_generate_research_plan_stage,
     handle_generate_sections_stage,
 )
-from services.rag.src.utils.job_manager import GrantApplicationJobManager
 
-
-@pytest.fixture
-def mock_job_manager() -> AsyncMock:
-    """Create a mock job manager for testing."""
-    mock = AsyncMock(spec=GrantApplicationJobManager)
-    mock.ensure_not_cancelled = AsyncMock(return_value=None)
-    mock.add_notification = AsyncMock(return_value=None)
-    mock.update_job_status = AsyncMock(return_value=None)
-    return mock
-
-
-@pytest.fixture
-def sample_research_objectives() -> list[ResearchObjective]:
-    """Sample research objectives."""
-    return [
-        ResearchObjective(
-            number=1,
-            title="Develop novel biomarkers",
-            research_tasks=[
-                ResearchTask(number=1, title="Identify candidate biomarkers"),
-                ResearchTask(number=2, title="Validate biomarkers"),
-            ],
-        ),
-        ResearchObjective(
-            number=2,
-            title="Create ML model",
-            research_tasks=[
-                ResearchTask(number=1, title="Design algorithms"),
-                ResearchTask(number=2, title="Train model"),
-            ],
-        ),
-    ]
+# Use research_objectives fixture from conftest.py instead of custom implementation
 
 
 @pytest.fixture
@@ -111,7 +95,7 @@ async def test_generate_sections_stage_success(
     mock_batched_gather: AsyncMock,
     mock_handle_generate_section_text: AsyncMock,
     mock_retrieve_documents: AsyncMock,
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
     sample_grant_sections: list[dict[str, Any]],
     sample_work_plan_section: dict[str, Any],
@@ -143,7 +127,7 @@ async def test_generate_sections_stage_success(
     # Execute
     result = await handle_generate_sections_stage(
         grant_application=grant_application,
-        job_manager=mock_job_manager,
+        job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
@@ -157,8 +141,8 @@ async def test_generate_sections_stage_success(
     assert result["work_plan_section"]["id"] == "research_plan"
 
     # Verify job manager methods were called
-    mock_job_manager.ensure_not_cancelled.assert_called()
-    mock_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
     # Verify retrieval was called
     mock_retrieve_documents.assert_called_once()
@@ -167,14 +151,14 @@ async def test_generate_sections_stage_success(
 @patch("services.rag.src.grant_application.handlers.handle_extract_relationships")
 async def test_extract_relationships_stage_success(
     mock_handle_extract_relationships: AsyncMock,
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
-    sample_research_objectives: list[ResearchObjective],
+    research_objectives: list[ResearchObjective],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test successful relationship extraction stage."""
     # Setup grant application
-    grant_application.research_objectives = sample_research_objectives
+    grant_application.research_objectives = research_objectives
 
     # Setup input DTO
     input_dto = {
@@ -196,7 +180,7 @@ async def test_extract_relationships_stage_success(
     result = await handle_extract_relationships_stage(
         grant_application=grant_application,
         dto=input_dto,
-        job_manager=mock_job_manager,
+        job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
@@ -206,21 +190,21 @@ async def test_extract_relationships_stage_success(
     assert result["relationships"] == mock_relationships
 
     # Verify job manager methods were called
-    mock_job_manager.ensure_not_cancelled.assert_called()
-    mock_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.handle_batch_enrich_objectives")
 async def test_enrich_objectives_stage_success(
     mock_handle_batch_enrich_objectives: AsyncMock,
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
-    sample_research_objectives: list[ResearchObjective],
+    research_objectives: list[ResearchObjective],
     sample_work_plan_section: dict[str, Any],
 ) -> None:
     """Test successful objective enrichment stage."""
     # Setup grant application
-    grant_application.research_objectives = sample_research_objectives
+    grant_application.research_objectives = research_objectives
 
     # Setup input DTO
     input_dto = {
@@ -273,7 +257,7 @@ async def test_enrich_objectives_stage_success(
     result = await handle_enrich_objectives_stage(
         grant_application=grant_application,
         dto=input_dto,
-        job_manager=mock_job_manager,
+        job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
@@ -283,8 +267,8 @@ async def test_enrich_objectives_stage_success(
     assert len(result["enrichment_responses"]) == 2
 
     # Verify job manager methods were called
-    mock_job_manager.ensure_not_cancelled.assert_called()
-    mock_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.enrich_objective_with_wikidata")
@@ -292,7 +276,7 @@ async def test_enrich_objectives_stage_success(
 async def test_enrich_terminology_stage_success(
     mock_batched_gather: AsyncMock,
     mock_enrich_objective_with_wikidata: AsyncMock,
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
 ) -> None:
     """Test successful terminology enrichment stage."""
@@ -354,7 +338,7 @@ async def test_enrich_terminology_stage_success(
     result = await handle_enrich_terminology_stage(
         grant_application=grant_application,
         dto=input_dto,
-        job_manager=mock_job_manager,
+        job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
@@ -365,14 +349,14 @@ async def test_enrich_terminology_stage_success(
     assert len(result["wikidata_enrichments"]) == 2
 
     # Verify job manager methods were called
-    mock_job_manager.ensure_not_cancelled.assert_called()
-    mock_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.generate_objective_with_tasks")
 async def test_generate_research_plan_stage_success(
     mock_generate_objective_with_tasks: AsyncMock,
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
 ) -> None:
     """Test successful research plan generation stage."""
@@ -433,20 +417,20 @@ async def test_generate_research_plan_stage_success(
         [  # task_results: list of (task, task_text) tuples
             (
                 {"number": 1, "title": "Identify candidate biomarkers"},  # task dict
-                "Generated task 1 text"  # task text
+                "Generated task 1 text",  # task text
             ),
             (
                 {"number": 2, "title": "Validate biomarkers"},  # task dict
-                "Generated task 2 text"  # task text
-            )
-        ]
+                "Generated task 2 text",  # task text
+            ),
+        ],
     )
 
     # Execute
     result = await handle_generate_research_plan_stage(
         grant_application=grant_application,
         dto=input_dto,
-        job_manager=mock_job_manager,
+        job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
 
@@ -458,12 +442,12 @@ async def test_generate_research_plan_stage_success(
     assert "Generated task 1 text" in result["research_plan_text"]
 
     # Verify job manager methods were called
-    mock_job_manager.ensure_not_cancelled.assert_called()
-    mock_job_manager.add_notification.assert_called()
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 async def test_handlers_preserve_data_flow(
-    mock_job_manager: AsyncMock,
+    mock_grant_application_job_manager: AsyncMock,
     grant_application: Any,
     sample_grant_sections: list[dict[str, Any]],
     sample_work_plan_section: dict[str, Any],

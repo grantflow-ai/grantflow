@@ -1,3 +1,22 @@
+"""
+Tests for grant template pipeline stage handlers.
+
+This module tests the individual stage handlers used in the grant template
+creation pipeline. The pipeline extracts and analyzes CFP (Call for Proposals)
+documents to generate structured grant application templates.
+
+Key areas tested:
+- CFP data extraction from multiple RAG sources
+- CFP content analysis using NLP categorization
+- Section structure extraction from analyzed content
+- Metadata generation for grant sections
+- Database persistence with proper error handling
+
+The tests validate both successful execution paths and comprehensive error
+handling including timeouts, validation errors, and database failures.
+All tests use real database fixtures for strong integration guarantees.
+"""
+
 from datetime import date
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -23,18 +42,6 @@ from services.rag.src.grant_template.pipeline_dto import (
     ExtractCFPContentStageDTO,
     ExtractionSectionsStageDTO,
 )
-
-
-@pytest.fixture
-def mock_job_manager() -> AsyncMock:
-    """Mock job manager with all required methods."""
-    manager = AsyncMock()
-    manager.job_id = uuid4()
-    manager.ensure_not_cancelled = AsyncMock()
-    manager.add_notification = AsyncMock()
-    manager.update_job_status = AsyncMock()
-    return manager
-
 
 # Use existing fixtures from testing framework instead of creating custom ones
 
@@ -159,7 +166,7 @@ class TestCFPExtractionStage:
         self,
         mock_handle_extract_cfp_data: AsyncMock,
         mock_verify_rag_sources: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         nih_organization: Any,
         sample_rag_sources: list[Any],
@@ -177,7 +184,7 @@ class TestCFPExtractionStage:
         # Execute
         result = await handle_cfp_extraction_stage(
             grant_template=grant_template,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             session_maker=async_session_maker,
             trace_id="test-trace",
         )
@@ -190,16 +197,16 @@ class TestCFPExtractionStage:
         assert result["extracted_data"]["submission_date"] == "2025-03-31"
 
         # Verify cancellation checks
-        assert mock_job_manager.ensure_not_cancelled.call_count == 2
+        assert mock_grant_template_job_manager.ensure_not_cancelled.call_count == 2
 
         # Verify notifications
-        assert mock_job_manager.add_notification.call_count == 2
-        mock_job_manager.add_notification.assert_any_call(
+        assert mock_grant_template_job_manager.add_notification.call_count == 2
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.EXTRACTING_CFP_DATA,
             message="Analyzing call for proposals document",
             notification_type="info",
         )
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.CFP_DATA_EXTRACTED,
             message="Document analysis complete",
             notification_type="success",
@@ -230,7 +237,7 @@ class TestCFPExtractionStage:
         self,
         mock_handle_extract_cfp_data: AsyncMock,
         mock_verify_rag_sources: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         nih_organization: Any,
         sample_rag_sources: list[Any],
@@ -248,7 +255,7 @@ class TestCFPExtractionStage:
         # Execute
         result = await handle_cfp_extraction_stage(
             grant_template=grant_template,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             session_maker=async_session_maker,
             trace_id="test-trace",
         )
@@ -257,7 +264,7 @@ class TestCFPExtractionStage:
         assert result["organization"] is None
 
         # Verify notification shows "Unknown" for organization
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.CFP_DATA_EXTRACTED,
             message="Document analysis complete",
             notification_type="success",
@@ -274,7 +281,7 @@ class TestCFPExtractionStage:
         self,
         mock_handle_extract_cfp_data: AsyncMock,
         mock_verify_rag_sources: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         nih_organization: Any,
         sample_rag_sources: list[Any],
@@ -292,7 +299,7 @@ class TestCFPExtractionStage:
         # Execute
         result = await handle_cfp_extraction_stage(
             grant_template=grant_template,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             session_maker=async_session_maker,
             trace_id="test-trace",
         )
@@ -301,7 +308,7 @@ class TestCFPExtractionStage:
         assert result["extracted_data"]["submission_date"] is None
 
         # Verify notification shows None for deadline
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.CFP_DATA_EXTRACTED,
             message="Document analysis complete",
             notification_type="success",
@@ -314,7 +321,7 @@ class TestCFPExtractionStage:
 
     async def test_cfp_extraction_stage_database_queries(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         nih_organization: Any,
         sample_rag_sources: list[Any],
@@ -335,7 +342,7 @@ class TestCFPExtractionStage:
             # Execute
             result = await handle_cfp_extraction_stage(
                 grant_template=grant_template,
-                job_manager=mock_job_manager,
+                job_manager=mock_grant_template_job_manager,
                 session_maker=async_session_maker,
                 trace_id="test-trace",
             )
@@ -360,7 +367,7 @@ class TestCFPAnalysisStage:
     async def test_cfp_analysis_stage_success(
         self,
         mock_handle_analyze_cfp: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_extract_cfp_dto: Any,
     ) -> None:
@@ -398,7 +405,7 @@ class TestCFPAnalysisStage:
         # Execute
         result = await handle_cfp_analysis_stage(
             extracted_cfp=sample_extract_cfp_dto,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             trace_id="test-trace",
         )
 
@@ -408,16 +415,16 @@ class TestCFPAnalysisStage:
         assert result["analysis_results"] == mock_analysis_result
 
         # Verify cancellation check
-        mock_job_manager.ensure_not_cancelled.assert_called_once()
+        mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
         # Verify notifications
-        assert mock_job_manager.add_notification.call_count == 2
-        mock_job_manager.add_notification.assert_any_call(
+        assert mock_grant_template_job_manager.add_notification.call_count == 2
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
             message="Analyzing application requirements",
             notification_type="info",
         )
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.SECTIONS_EXTRACTED,
             message="Requirements analysis complete",
             notification_type="success",
@@ -437,7 +444,7 @@ class TestCFPAnalysisStage:
     async def test_cfp_analysis_stage_limited_disciplines(
         self,
         mock_handle_analyze_cfp: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_extract_cfp_dto: Any,
     ) -> None:
@@ -472,12 +479,12 @@ class TestCFPAnalysisStage:
         # Execute
         await handle_cfp_analysis_stage(
             extracted_cfp=sample_extract_cfp_dto,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             trace_id="test-trace",
         )
 
         # Verify notification uses analysis metadata
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.SECTIONS_EXTRACTED,
             message="Requirements analysis complete",
             notification_type="success",
@@ -491,7 +498,7 @@ class TestCFPAnalysisStage:
     async def test_cfp_analysis_stage_no_disciplines(
         self,
         mock_handle_analyze_cfp: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_extract_cfp_dto: Any,
     ) -> None:
@@ -526,12 +533,12 @@ class TestCFPAnalysisStage:
         # Execute
         await handle_cfp_analysis_stage(
             extracted_cfp=sample_extract_cfp_dto,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             trace_id="test-trace",
         )
 
         # Verify notification uses analysis metadata
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.SECTIONS_EXTRACTED,
             message="Requirements analysis complete",
             notification_type="success",
@@ -549,7 +556,7 @@ class TestSectionExtractionStage:
     async def test_section_extraction_stage_success(
         self,
         mock_handle_extract_sections: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_analyze_cfp_dto: Any,
     ) -> None:
@@ -578,7 +585,7 @@ class TestSectionExtractionStage:
         # Execute
         result = await handle_section_extraction_stage(
             analysis_result=sample_analyze_cfp_dto,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             trace_id="test-trace",
         )
 
@@ -589,16 +596,16 @@ class TestSectionExtractionStage:
         assert result["extracted_sections"] == mock_extracted_sections
 
         # Verify cancellation check
-        mock_job_manager.ensure_not_cancelled.assert_called_once()
+        mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
         # Verify notifications
-        assert mock_job_manager.add_notification.call_count == 2
-        mock_job_manager.add_notification.assert_any_call(
+        assert mock_grant_template_job_manager.add_notification.call_count == 2
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.GRANT_TEMPLATE_METADATA,
             message="Extracting application sections",
             notification_type="info",
         )
-        mock_job_manager.add_notification.assert_any_call(
+        mock_grant_template_job_manager.add_notification.assert_any_call(
             event=NotificationEvents.METADATA_GENERATED,
             message="Section extraction complete",
             notification_type="success",
@@ -623,7 +630,7 @@ class TestGenerateMetadataStage:
     async def test_generate_metadata_stage_success(
         self,
         mock_handle_generate_metadata: AsyncMock,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         sample_sections_dto: Any,
     ) -> None:
         """Test successful metadata generation stage."""
@@ -653,7 +660,7 @@ class TestGenerateMetadataStage:
         # Execute
         result = await handle_generate_metadata_stage(
             section_extraction_result=sample_sections_dto,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             trace_id="test-trace",
         )
 
@@ -674,7 +681,7 @@ class TestGenerateMetadataStage:
         assert research_section["order"] == 2
 
         # Verify cancellation check
-        mock_job_manager.ensure_not_cancelled.assert_called_once()
+        mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
         # Verify service call - now called with cfp_content, cfp_subject, organization, long_form_sections
         mock_handle_generate_metadata.assert_called_once()
@@ -690,7 +697,7 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_success(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_sections_dto: Any,
         async_session_maker: Any,
@@ -711,7 +718,7 @@ class TestSaveGrantTemplate:
         result = await handle_save_grant_template(
             grant_template=grant_template,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             cfp_analysis=sample_sections_dto["analysis_results"],
             extracted_cfp=sample_sections_dto,
             grant_sections=mock_grant_sections,
@@ -730,10 +737,10 @@ class TestSaveGrantTemplate:
             assert updated_template.granting_institution_id == sample_sections_dto["organization"]["organization_id"]
 
         # Verify job status update
-        mock_job_manager.update_job_status.assert_called_once_with(RagGenerationStatusEnum.COMPLETED)
+        mock_grant_template_job_manager.update_job_status.assert_called_once_with(RagGenerationStatusEnum.COMPLETED)
 
         # Verify success notification
-        mock_job_manager.add_notification.assert_called_once_with(
+        mock_grant_template_job_manager.add_notification.assert_called_once_with(
             event=NotificationEvents.GRANT_TEMPLATE_CREATED,
             message="Grant template ready",
             notification_type="success",
@@ -746,7 +753,7 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_no_organization(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_sections_dto: Any,
         async_session_maker: Any,
@@ -762,7 +769,7 @@ class TestSaveGrantTemplate:
         await handle_save_grant_template(
             grant_template=grant_template,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             cfp_analysis=sections_dto_no_org["analysis_results"],
             extracted_cfp=sections_dto_no_org,
             grant_sections=mock_grant_sections,
@@ -775,7 +782,7 @@ class TestSaveGrantTemplate:
             assert updated_template.granting_institution_id is None
 
         # Verify notification shows "Unknown" for organization
-        mock_job_manager.add_notification.assert_called_once_with(
+        mock_grant_template_job_manager.add_notification.assert_called_once_with(
             event=NotificationEvents.GRANT_TEMPLATE_CREATED,
             message="Grant template ready",
             notification_type="success",
@@ -788,7 +795,7 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_no_submission_date(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_sections_dto: Any,
         async_session_maker: Any,
@@ -809,7 +816,7 @@ class TestSaveGrantTemplate:
         await handle_save_grant_template(
             grant_template=grant_template,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             cfp_analysis=sections_dto_no_date["analysis_results"],
             extracted_cfp=sections_dto_no_date,
             grant_sections=mock_grant_sections,
@@ -823,7 +830,7 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_date_parsing(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_sections_dto: Any,
         async_session_maker: Any,
@@ -840,7 +847,7 @@ class TestSaveGrantTemplate:
         await handle_save_grant_template(
             grant_template=grant_template,
             session_maker=async_session_maker,
-            job_manager=mock_job_manager,
+            job_manager=mock_grant_template_job_manager,
             cfp_analysis=sample_sections_dto["analysis_results"],
             extracted_cfp=sample_sections_dto,
             grant_sections=mock_grant_sections,
@@ -854,7 +861,7 @@ class TestSaveGrantTemplate:
 
     async def test_save_grant_template_database_error(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         sample_sections_dto: Any,
         async_session_maker: Any,
@@ -871,7 +878,7 @@ class TestSaveGrantTemplate:
                 await handle_save_grant_template(
                     grant_template=grant_template,
                     session_maker=async_session_maker,
-                    job_manager=mock_job_manager,
+                    job_manager=mock_grant_template_job_manager,
                     cfp_analysis=sample_sections_dto["analysis_results"],
                     extracted_cfp=sample_sections_dto,
                     grant_sections=mock_grant_sections,
@@ -884,7 +891,7 @@ class TestHandlersIntegration:
 
     async def test_handlers_preserve_data_flow(
         self,
-        mock_job_manager: AsyncMock,
+        mock_grant_template_job_manager: AsyncMock,
         grant_template: Any,
         nih_organization: Any,
         sample_rag_sources: list[Any],
@@ -950,7 +957,7 @@ class TestHandlersIntegration:
             # Execute CFP extraction
             extraction_result = await handle_cfp_extraction_stage(
                 grant_template=grant_template,
-                job_manager=mock_job_manager,
+                job_manager=mock_grant_template_job_manager,
                 session_maker=async_session_maker,
                 trace_id="test-trace",
             )
@@ -958,14 +965,14 @@ class TestHandlersIntegration:
             # Execute CFP analysis using extraction result
             analysis_result = await handle_cfp_analysis_stage(
                 extracted_cfp=extraction_result,
-                job_manager=mock_job_manager,
+                job_manager=mock_grant_template_job_manager,
                 trace_id="test-trace",
             )
 
             # Execute section extraction using analysis result
             sections_result = await handle_section_extraction_stage(
                 analysis_result=analysis_result,
-                job_manager=mock_job_manager,
+                job_manager=mock_grant_template_job_manager,
                 trace_id="test-trace",
             )
 
