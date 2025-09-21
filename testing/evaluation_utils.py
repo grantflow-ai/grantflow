@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Final, cast
 
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.serialization import deserialize
@@ -51,6 +51,63 @@ def calculate_embedding_statistics(vectors: list[VectorDTO]) -> dict[str, float]
         "min_embedding_norm": min(norms),
         "max_embedding_norm": max(norms),
     }
+
+
+_NOISE_CHARACTERS: Final[frozenset[str]] = frozenset("|*#[]{}<>`")
+_MIN_ALPHA_RATIO: Final[float] = 0.45
+_MAX_NOISE_RATIO: Final[float] = 0.12
+
+
+def _chunk_metrics(content: str) -> tuple[float, float, int]:
+    text = content.strip()
+    if not text:
+        return 0.0, 1.0, 0
+
+    length = len(text)
+    alpha_ratio = sum(ch.isalnum() for ch in text) / length
+    noise_ratio = sum(1 for ch in text if ch in _NOISE_CHARACTERS) / length
+
+    return alpha_ratio, noise_ratio, length
+
+
+def select_representative_chunks(vectors: list[VectorDTO], limit: int = 3) -> list[VectorDTO]:
+    if limit <= 0 or not vectors:
+        return []
+
+    normalized_limit = min(limit, len(vectors))
+
+    preferred_indices: list[int] = []
+    scored_indices: list[tuple[float, int]] = []
+
+    for idx, vector in enumerate(vectors):
+        content = vector["chunk"].get("content", "")
+        alpha_ratio, noise_ratio, length = _chunk_metrics(content)
+
+        score = (alpha_ratio - noise_ratio) + min(length, 1200) / 4000
+
+        if "![" in content or "media/" in content:
+            score -= 0.15
+
+        if alpha_ratio >= _MIN_ALPHA_RATIO and noise_ratio <= _MAX_NOISE_RATIO:
+            preferred_indices.append(idx)
+
+        scored_indices.append((score, idx))
+
+    selected_indices: list[int] = []
+
+    selected_indices.extend(preferred_indices[:normalized_limit])
+
+    if len(selected_indices) < normalized_limit:
+        for _score, idx in sorted(scored_indices, key=lambda item: item[0], reverse=True):
+            if idx in selected_indices:
+                continue
+            selected_indices.append(idx)
+            if len(selected_indices) == normalized_limit:
+                break
+
+    selected_indices.sort()
+
+    return [vectors[idx] for idx in selected_indices]
 
 
 def assess_chunk_quality(vectors: list[VectorDTO]) -> dict[str, Any]:
