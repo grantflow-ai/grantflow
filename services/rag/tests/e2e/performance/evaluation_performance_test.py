@@ -19,6 +19,7 @@ from services.rag.src.utils.evaluation import (
 )
 
 
+
 @performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_evaluation_framework_baseline(
     logger: logging.Logger,
