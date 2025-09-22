@@ -4,9 +4,13 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
-import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
-type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+import { ResearchDeepDiveContent } from "./research-deep-dive-content";
+import { AiAutofillButton } from "../ai-autofill-button.";
+
+type FormInputs = NonNullable<
+	API.RetrieveApplication.Http200.ResponseBody["form_inputs"]
+>;
 
 const handleResetFormInputs = async () => {
 	if (process.env.NODE_ENV === "development") {
@@ -39,8 +43,16 @@ export function ResearchDeepDiveStep() {
 	);
 }
 
-function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () => void }) {
+function ResearchDeepDiveHeader({
+	onResetFormInputs,
+}: {
+	onResetFormInputs: () => void;
+}) {
 	const isDevelopment = process.env.NODE_ENV === "development";
+	const isAutofillLoading = useWizardStore(
+		(state) => state.isAutofillLoading.research_deep_dive,
+	);
+	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 
 	return (
 		<div className="flex items-center justify-between mt-5 px-17 gap-4">
@@ -55,8 +67,8 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 					className="text-app-black font-normal text-base leading-tight -mt-2"
 					data-testid="research-deep-dive-description"
 				>
-					Before generating your grant application draft, it would be helpful to learn a bit more about your
-					research to ensure more accurate results.
+					Before generating your grant application draft, it would be helpful to
+					learn a bit more about your research to ensure more accurate results.
 				</p>
 			</div>
 			<div className="flex items-center gap-3">
@@ -70,7 +82,13 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 						🔄 Reset (Dev)
 					</AppButton>
 				)}
-				{}
+				{
+					<AiAutofillButton
+						disabled={isAutofillLoading}
+						isLoading={isAutofillLoading}
+						onClick={() => triggerAutofill("research_deep_dive")}
+					/>
+				}
 			</div>
 		</div>
 	);
