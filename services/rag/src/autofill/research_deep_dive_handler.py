@@ -12,6 +12,7 @@ from services.rag.src.autofill.constants import (
     TEMPERATURE,
 )
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
@@ -137,18 +138,20 @@ async def _generate_field_answer(
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
 
     retrieval_results = await retrieve_documents(
-        application_id=application.id,
+        application_id=str(application.id),
         search_queries=search_queries,
         task_description=str(prompt_with_title),
         max_tokens=MAX_RETRIEVAL_TOKENS,
         trace_id=trace_id,
     )
 
-    prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
+    # Compress the prompt after to_string() to reduce token usage
+    full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
+    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
     response: AnswerResponse = await handle_completions_request(
         prompt_identifier="research_deep_dive_generation",
-        messages=prompt,
+        messages=compressed_prompt,
         system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
         response_schema=answer_response_schema,
         response_type=AnswerResponse,
