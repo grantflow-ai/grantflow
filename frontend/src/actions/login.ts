@@ -14,6 +14,7 @@ import { routes } from "@/utils/navigation";
 export async function login(idToken: string) {
 	const started = Date.now();
 	log.info("action_start", { action: "login" });
+
 	try {
 		const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 		const requestBody: API.Login.RequestBody = { id_token: idToken };
@@ -33,6 +34,7 @@ export async function login(idToken: string) {
 		});
 
 		const defaultOrganizationId = getOrganizationFromJWT(jwt_token);
+
 		if (defaultOrganizationId && !cookieStore.get(SELECTED_ORGANIZATION_COOKIE)) {
 			cookieStore.set({
 				httpOnly: false,
@@ -46,6 +48,7 @@ export async function login(idToken: string) {
 
 		try {
 			const verifyUrl = new URL("/organizations", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
+
 			await getClient()
 				.get(verifyUrl, {
 					headers: { Authorization: `Bearer ${jwt_token}` },
