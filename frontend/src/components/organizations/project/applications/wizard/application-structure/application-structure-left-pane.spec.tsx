@@ -187,7 +187,7 @@ describe("ApplicationStructureLeftPane", () => {
 		expect(screen.queryByText(/Analyzing the documents/)).not.toBeInTheDocument();
 	});
 
-	it("shows step details for extraction events", () => {
+	it("does not show step details for indexing events", () => {
 		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 		useApplicationStore.setState({ application: mockApplication });
@@ -201,6 +201,26 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
+		// For indexing events like sections_extracted, step details should not be shown
+		expect(screen.queryByText(/Analyzing the documents/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Translating the requirements/)).not.toBeInTheDocument();
+	});
+
+	it("shows step details for non-indexing events", () => {
+		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
+		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+		useApplicationStore.setState({ application: mockApplication });
+
+		useWizardStore.setState({
+			templateGenerationStatus: {
+				event: "metadata_generated",
+				message: "Generating metadata",
+			},
+		});
+
+		render(<ApplicationStructureLeftPane />);
+
+		// For non-indexing events, step details should be shown
 		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 		expect(screen.getByText(/Translating the requirements/)).toBeInTheDocument();
 	});
