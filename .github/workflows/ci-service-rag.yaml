@@ -7,6 +7,7 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-rag.yaml"
+            - ".github/actions/run-python-tests/**"
             - "packages/db/**"
             - "packages/shared_utils/**"
             - "services/rag/**"
@@ -17,6 +18,7 @@ on:
             - development
         paths:
             - ".github/workflows/ci-service-rag.yaml"
+            - ".github/actions/run-python-tests/**"
             - "packages/db/**"
             - "packages/shared_utils/**"
             - "services/rag/**"

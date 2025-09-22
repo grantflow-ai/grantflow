@@ -7,6 +7,7 @@ on:
         paths:
             - "frontend/**"
             - ".github/workflows/deploy-storybook.yaml"
+            - ".github/actions/setup-node-workspace/**"
     workflow_dispatch:
 
 permissions:
