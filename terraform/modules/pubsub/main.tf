@@ -211,61 +211,13 @@ resource "google_pubsub_topic_iam_member" "backend_rag_publisher" {
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-resource "google_pubsub_topic" "frontend_notifications" {
-  name = "frontend-notifications"
 
-  message_retention_duration = var.message_retention_duration
 
-  lifecycle {
-    ignore_changes = all
-  }
-}
 
-resource "google_pubsub_topic" "frontend_notifications_dlq" {
-  name = "frontend-notifications-dlq"
 
-  labels = {
-    purpose = "dead-letter-queue"
-  }
-}
 
-resource "google_pubsub_subscription" "frontend_notifications_dlq_subscription" {
-  name  = "frontend-notifications-dlq-subscription"
-  topic = google_pubsub_topic.frontend_notifications_dlq.name
 
-  ack_deadline_seconds = var.dlq_ack_deadline
 
-  message_retention_duration = "604800s"
-
-  retain_acked_messages = true
-}
-
-# NOTE: Subscriptions for frontend-notifications are created dynamically
-
-resource "google_pubsub_topic_iam_member" "frontend_notifications_publisher" {
-  topic  = google_pubsub_topic.frontend_notifications.name
-  role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
-}
-
-resource "google_pubsub_topic_iam_member" "rag_frontend_notifications_publisher" {
-  count  = var.rag_service_account_email != "" ? 1 : 0
-  topic  = google_pubsub_topic.frontend_notifications.name
-  role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${var.rag_service_account_email}"
-}
-
-resource "google_pubsub_topic_iam_member" "backend_subscriber" {
-  topic  = google_pubsub_topic.frontend_notifications.name
-  role   = "roles/pubsub.subscriber"
-  member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
-}
-
-resource "google_project_iam_member" "backend_pubsub_editor" {
-  project = var.project_id
-  role    = "roles/pubsub.editor"
-  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
-}
 
 data "google_project" "project" {
   project_id = var.project_id
@@ -289,11 +241,6 @@ resource "google_pubsub_topic_iam_member" "rag_processing_dlq_publisher" {
   member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
-resource "google_pubsub_topic_iam_member" "frontend_notifications_dlq_publisher" {
-  topic  = google_pubsub_topic.frontend_notifications_dlq.name
-  role   = "roles/pubsub.publisher"
-  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
-}
 
 resource "google_pubsub_topic" "email_notifications" {
   name = "email-notifications"
