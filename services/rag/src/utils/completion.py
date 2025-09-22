@@ -325,6 +325,20 @@ async def make_anthropic_completions_request[T](
                 context={"error_type": "CREDIT_EXHAUSTED", "provider": "anthropic"},
             ) from e
 
+        if isinstance(e, BadRequestError) and "prompt is too long" in error_message.lower():
+            logger.warning(
+                "Anthropic prompt too long, raising for fallback to Google",
+                model=model,
+                error_type=type(e).__name__,
+                error_message=error_message,
+                request_id=getattr(e, "request_id", None),
+                trace_id=trace_id,
+            )
+            raise BackendError(
+                "Anthropic prompt token limit exceeded",
+                context={"error_type": "PROMPT_TOO_LONG", "provider": "anthropic"},
+            ) from e
+
         logger.error(
             "Non-retryable Anthropic API error",
             model=model,
@@ -548,6 +562,22 @@ async def handle_completions_request[T](  # noqa: PLR0912
                 raise BackendError(
                     "All AI providers unavailable. Please contact operations.",
                     context={"error_type": "ALL_PROVIDERS_FAILED"},
+                ) from e
+            if e.context and e.context.get("error_type") == "PROMPT_TOO_LONG":
+                logger.warning(
+                    "Anthropic prompt too long, attempting fallback to Google",
+                    prompt_identifier=prompt_identifier,
+                    attempt=attempts,
+                    max_attempts=max_attempts,
+                    trace_id=trace_id,
+                )
+                if model == ANTHROPIC_SONNET_MODEL:
+                    model = GENERATION_MODEL
+                    attempts -= 1
+                    continue
+                raise BackendError(
+                    "Prompt too long for all AI providers. Please reduce prompt size.",
+                    context={"error_type": "PROMPT_TOO_LONG_ALL_PROVIDERS"},
                 ) from e
             raise
         except AnthropicInternalServerError as e:

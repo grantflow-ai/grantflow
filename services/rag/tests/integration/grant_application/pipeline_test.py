@@ -4,7 +4,7 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
-from packages.db.src.tables import GrantApplication, GrantApplicationGenerationJob
+from packages.db.src.tables import GrantApplication, RagGenerationJob
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
@@ -122,8 +122,8 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
 
     async with async_session_maker() as session:
         result = await session.execute(
-            select_active(GrantApplicationGenerationJob).where(
-                GrantApplicationGenerationJob.grant_application_id == test_application_with_template.id
+            select_active(RagGenerationJob).where(
+                RagGenerationJob.grant_application_id == test_application_with_template.id
             )
         )
         job = result.scalar_one_or_none()

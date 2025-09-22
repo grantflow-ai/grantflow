@@ -62,7 +62,7 @@ async def test_application_generation_performance_baseline(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(selectinload(GrantApplication.grant_template), selectinload(GrantApplication.rag_job))
+            .options(selectinload(GrantApplication.grant_template))
         )
 
         if not updated_application:
@@ -158,7 +158,7 @@ async def test_generation_smoke_test(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(selectinload(GrantApplication.grant_template), selectinload(GrantApplication.rag_job))
+            .options(selectinload(GrantApplication.grant_template))
         )
 
         if not updated_application:

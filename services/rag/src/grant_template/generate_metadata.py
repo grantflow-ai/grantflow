@@ -7,6 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -413,12 +414,16 @@ async def handle_generate_grant_template_metadata(
             )
         )
 
+    # Compress the prompt after to_string() to reduce token usage
+    full_prompt = prompt.to_string(
+        organization_guidelines=organization_guidelines,
+    )
+    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+
     result: TemplateSectionsResponse = await with_prompt_evaluation(
         prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
-        prompt=prompt.to_string(
-            organization_guidelines=organization_guidelines,
-        ),
+        prompt=compressed_prompt,
         increment=15,
         retries=3,
         criteria=criteria,

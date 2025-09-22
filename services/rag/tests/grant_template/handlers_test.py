@@ -168,7 +168,7 @@ async def test_cfp_extraction_stage_success(
 
     assert mock_grant_template_job_manager.add_notification.call_count == 2
     mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.EXTRACTING_CFP_DATA,
+        event=NotificationEvents.CFP_DATA_EXTRACTED,
         message="Analyzing call for proposals document",
         notification_type="info",
     )
@@ -359,7 +359,7 @@ async def test_cfp_analysis_stage_success(
 
     assert mock_grant_template_job_manager.add_notification.call_count == 2
     mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
+        event=NotificationEvents.SECTIONS_EXTRACTED,
         message="Analyzing application requirements",
         notification_type="info",
     )
@@ -519,7 +519,7 @@ async def test_section_extraction_stage_success(
 
     assert mock_grant_template_job_manager.add_notification.call_count == 2
     mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.GRANT_TEMPLATE_METADATA,
+        event=NotificationEvents.METADATA_GENERATED,
         message="Extracting application sections",
         notification_type="info",
     )

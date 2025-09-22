@@ -11,10 +11,8 @@ from packages.db.src.tables import (
     GrantTemplateSource,
     RagSource,
 )
-from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -55,17 +53,6 @@ async def verify_rag_sources_indexed(
                 source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
                 for source in rag_sources
             ):
-                await publish_notification(
-                    parent_id=parent_id,
-                    event=NotificationEvents.INDEXING_IN_PROGRESS,
-                    data=RagProcessingStatus(
-                        event=NotificationEvents.INDEXING_IN_PROGRESS,
-                        message="Document indexing in progress. This may take a few minutes for large documents.",
-                        data={"wait_time": total_sleep_duration, "max_wait": 30},
-                        trace_id=trace_id,
-                    ),
-                    trace_id=trace_id,
-                )
                 await sleep(10)
                 return await verify_rag_sources_indexed(
                     parent_id=parent_id,
@@ -81,19 +68,12 @@ async def verify_rag_sources_indexed(
                 ]
                 total_sources = len(list(rag_sources))
 
-                await publish_notification(
-                    parent_id=parent_id,
-                    event=NotificationEvents.INDEXING_FAILED,
-                    data=RagProcessingStatus(
-                        event=NotificationEvents.INDEXING_FAILED,
-                        message="Document indexing failed. Please upload new documents and try again.",
-                        data={
-                            "failed_count": len(failed_sources),
-                            "total_count": total_sources,
-                            "recoverable": True,
-                        },
-                        trace_id=trace_id,
-                    ),
+                logger.warning(
+                    "Document indexing failed",
+                    parent_id=str(parent_id),
+                    entity_type=entity_type.__name__,
+                    failed_count=len(failed_sources),
+                    total_count=total_sources,
                     trace_id=trace_id,
                 )
 

@@ -71,7 +71,7 @@ async def test_generate_erc_application_for_dna_synthesis(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(selectinload(GrantApplication.grant_template), selectinload(GrantApplication.rag_job))
+            .options(selectinload(GrantApplication.grant_template))
         )
 
         if not updated_application:
