@@ -5,6 +5,12 @@ from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
+from services.rag.src.constants import (
+    CUSTOM_MODEL_REASON,
+    GEMINI_FLASH_LITE_MODEL,
+    GEMINI_FLASH_MODEL,
+    MODEL_SELECTION_REASON,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -17,8 +23,8 @@ MAX_API_CALLS: Final[int] = 5
 
 def select_optimal_model_for_length(max_words: int) -> str:
     if max_words <= 600:
-        return "gemini-2.5-flash"
-    return "gemini-2.5-flash-lite"
+        return GEMINI_FLASH_MODEL
+    return GEMINI_FLASH_LITE_MODEL
 
 
 LONG_FORM_GENERATION_SYSTEM_PROMPT: Final[str] = """
@@ -234,20 +240,17 @@ async def handle_long_form_text_generation(
 
 
 async def generate_long_form_text(
-    prompt_or_task_description: str,
     *,
     max_words: int,
     min_words: int,
     prompt_identifier: str,
-    task_description: str = "",
+    task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
     buffer_words: int = 150,
     trace_id: str,
     **sources: Any,
 ) -> str:
-    effective_task_description = task_description if task_description else prompt_or_task_description
-
     buffered_min_words = min_words + buffer_words
     buffered_max_words = max_words + buffer_words
 
@@ -263,9 +266,7 @@ async def generate_long_form_text(
         buffered_min_words=buffered_min_words,
         buffered_max_words=buffered_max_words,
         selected_model=selected_model,
-        model_selection_reason="Flash for ≤600w, Flash-Lite for >600w"
-        if model == GENERATION_MODEL
-        else "Custom model specified",
+        model_selection_reason=MODEL_SELECTION_REASON if model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
         trace_id=trace_id,
     )
 
@@ -273,7 +274,7 @@ async def generate_long_form_text(
         max_words=buffered_max_words,
         min_words=buffered_min_words,
         prompt_identifier=prompt_identifier,
-        task_description=effective_task_description,
+        task_description=task_description,
         max_api_calls=max_api_calls,
         model=selected_model,
         trace_id=trace_id,
