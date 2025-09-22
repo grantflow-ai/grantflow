@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
@@ -8,9 +7,7 @@ from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
-    GrantApplicationGenerationJob,
     GrantTemplate,
-    GrantTemplateGenerationJob,
     RagGenerationJob,
 )
 from packages.shared_utils.src.constants import NotificationEvents
@@ -61,44 +58,43 @@ async def handle_retrieve_rag_job(
             raise NotFoundException("RAG job not found")
 
         project_match = False
-        if job.job_type == "grant_template_generation":
-            template_job = await session.scalar(
-                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
-            )
-            if template_job:
-                template = await session.scalar(
-                    select(GrantTemplate)
-                    .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
-                    .where(
-                        GrantTemplate.id == template_job.grant_template_id,
-                        GrantTemplate.deleted_at.is_(None),
-                        GrantApplication.project_id == project_id,
-                        GrantApplication.deleted_at.is_(None),
-                    )
+        job_type = "unknown"
+        current_stage = None
+
+        if job.grant_template_id:
+            template = await session.scalar(
+                select(GrantTemplate)
+                .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
+                .where(
+                    GrantTemplate.id == job.grant_template_id,
+                    GrantTemplate.deleted_at.is_(None),
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
                 )
-                project_match = template is not None
-        elif job.job_type == "grant_application_generation":
-            app_job = await session.scalar(
-                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
             )
-            if app_job:
-                application = await session.scalar(
-                    select(GrantApplication).where(
-                        GrantApplication.id == app_job.grant_application_id,
-                        GrantApplication.project_id == project_id,
-                        GrantApplication.deleted_at.is_(None),
-                    )
+            project_match = template is not None
+            job_type = "grant_template_generation"
+            current_stage = job.template_stage.value if job.template_stage else None
+        elif job.grant_application_id:
+            application = await session.scalar(
+                select(GrantApplication).where(
+                    GrantApplication.id == job.grant_application_id,
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
                 )
-                project_match = application is not None
+            )
+            project_match = application is not None
+            job_type = "grant_application_generation"
+            current_stage = job.application_stage.value if job.application_stage else None
 
         if not project_match:
             raise NotFoundException("RAG job not found")
 
         response: RagJobResponse = {
             "id": str(job.id),
-            "job_type": job.job_type,
+            "job_type": job_type,
             "status": job.status,
-            "current_stage": job.current_stage,
+            "current_stage": current_stage,
             "retry_count": job.retry_count,
             "created_at": job.created_at.isoformat(),
             "updated_at": job.updated_at.isoformat(),
@@ -119,29 +115,21 @@ async def handle_retrieve_rag_job(
         if job.failed_at:
             response["failed_at"] = job.failed_at.isoformat()
 
-        if job.job_type == "grant_template_generation":
-            template_job = await session.scalar(
-                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
-            )
-            if template_job:
-                response["grant_template_id"] = str(template_job.grant_template_id)
-                if job.checkpoint_data:
-                    if "extracted_sections" in job.checkpoint_data:
-                        response["extracted_sections"] = job.checkpoint_data["extracted_sections"]
-                    if "extracted_metadata" in job.checkpoint_data:
-                        response["extracted_metadata"] = job.checkpoint_data["extracted_metadata"]
+        if job.grant_template_id:
+            response["grant_template_id"] = str(job.grant_template_id)
+            if job.checkpoint_data:
+                if "extracted_sections" in job.checkpoint_data:
+                    response["extracted_sections"] = job.checkpoint_data["extracted_sections"]
+                if "extracted_metadata" in job.checkpoint_data:
+                    response["extracted_metadata"] = job.checkpoint_data["extracted_metadata"]
 
-        elif job.job_type == "grant_application_generation":
-            app_job = await session.scalar(
-                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
-            )
-            if app_job:
-                response["grant_application_id"] = str(app_job.grant_application_id)
-                if job.checkpoint_data:
-                    if "generated_sections" in job.checkpoint_data:
-                        response["generated_sections"] = job.checkpoint_data["generated_sections"]
-                    if "validation_results" in job.checkpoint_data:
-                        response["validation_results"] = job.checkpoint_data["validation_results"]
+        elif job.grant_application_id:
+            response["grant_application_id"] = str(job.grant_application_id)
+            if job.checkpoint_data:
+                if "generated_sections" in job.checkpoint_data:
+                    response["generated_sections"] = job.checkpoint_data["generated_sections"]
+                if "validation_results" in job.checkpoint_data:
+                    response["validation_results"] = job.checkpoint_data["validation_results"]
 
         return response
 
@@ -158,56 +146,52 @@ async def cancel_rag_job_by_id(
             raise NotFoundException("RAG job not found")
 
         project_match = False
-        if job.job_type == "grant_template_generation":
-            template_job = await session.scalar(
-                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
-            )
-            if template_job:
-                template = await session.scalar(
-                    select(GrantTemplate)
-                    .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
-                    .where(
-                        GrantTemplate.id == template_job.grant_template_id,
-                        GrantTemplate.deleted_at.is_(None),
-                        GrantApplication.project_id == project_id,
-                        GrantApplication.deleted_at.is_(None),
-                    )
+        if job.grant_template_id:
+            template = await session.scalar(
+                select(GrantTemplate)
+                .join(GrantApplication, GrantTemplate.grant_application_id == GrantApplication.id)
+                .where(
+                    GrantTemplate.id == job.grant_template_id,
+                    GrantTemplate.deleted_at.is_(None),
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
                 )
-                project_match = template is not None
-        elif job.job_type == "grant_application_generation":
-            app_job = await session.scalar(
-                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
             )
-            if app_job:
-                application = await session.scalar(
-                    select(GrantApplication).where(
-                        GrantApplication.id == app_job.grant_application_id,
-                        GrantApplication.project_id == project_id,
-                        GrantApplication.deleted_at.is_(None),
-                    )
+            project_match = template is not None
+        elif job.grant_application_id:
+            application = await session.scalar(
+                select(GrantApplication).where(
+                    GrantApplication.id == job.grant_application_id,
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
                 )
-                project_match = application is not None
+            )
+            project_match = application is not None
 
         if not project_match:
             raise NotFoundException("RAG job not found")
 
-        if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
-            job.status = RagGenerationStatusEnum.CANCELLED
-            job.failed_at = datetime.now(UTC)
-            job.error_message = "Cancelled by user request"
+        if job.status in [RagGenerationStatusEnum.COMPLETED, RagGenerationStatusEnum.CANCELLED]:
+            logger.info("Job already complete or cancelled", job_id=str(job.id), status=job.status.value)
+            return
 
-            notification = GenerationNotification(
-                rag_job_id=job_id,
-                event=NotificationEvents.JOB_CANCELLED,
-                message="Generation cancelled by user",
-                notification_type="warning",
-            )
-            session.add(notification)
+        job.status = RagGenerationStatusEnum.CANCELLED
+
+        notification = GenerationNotification(
+            rag_job_id=job.id,
+            event=NotificationEvents.JOB_CANCELLED,
+            message="Job has been cancelled by user request",
+            notification_type="warning",
+        )
+        session.add(notification)
+
+        logger.info("Job cancelled successfully", job_id=str(job.id))
 
 
 @delete(
     "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    status_code=204,
     operation_id="CancelRagJob",
 )
 async def handle_cancel_rag_job(
