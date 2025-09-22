@@ -21,8 +21,8 @@ vi.mock("@/actions/grant-applications", () => ({
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
-vi.mock("@/hooks/use-organization", () => ({
-	useOrganization: vi.fn(),
+vi.mock("@/hooks/use-organization-validation", () => ({
+	useOrganizationValidation: vi.fn(),
 }));
 vi.mock("@/stores/navigation-store", () => ({
 	useNavigationStore: vi.fn(),
@@ -103,7 +103,6 @@ const mockRouter = {
 	replace: vi.fn(),
 };
 const mockNavigateToProject = vi.fn();
-const mockSwitchOrganization = vi.fn();
 const mockSetOrganizations = vi.fn();
 const mockGetOrganization = vi.fn();
 const mockDeleteProject = vi.fn();
@@ -114,7 +113,9 @@ const mockMutate = vi.fn();
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
 const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
 const mockUseNavigation = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
-const mockUseOrganization = vi.mocked(await import("@/hooks/use-organization").then((m) => m.useOrganization));
+const mockUseOrganizationValidation = vi.mocked(
+	await import("@/hooks/use-organization-validation").then((m) => m.useOrganizationValidation),
+);
 const mockUseOrganizationStore = vi.mocked(
 	await import("@/stores/organization-store").then((m) => m.useOrganizationStore),
 );
@@ -148,7 +149,6 @@ describe("DashboardClient", () => {
 	const defaultProps = {
 		initialOrganizations: ListOrganizationsResponseFactory.build(),
 		initialProjects: ProjectListItemFactory.batch(3),
-		initialSelectedOrganizationId: "org-123",
 	};
 
 	beforeEach(() => {
@@ -157,11 +157,7 @@ describe("DashboardClient", () => {
 
 		mockUseRouter.mockReturnValue(mockRouter);
 		mockUseNavigation.mockReturnValue({ navigateToProject: mockNavigateToProject });
-		mockUseOrganization.mockReturnValue({
-			clearOrganization: vi.fn(),
-			selectedOrganizationId: "org-123",
-			switchOrganization: mockSwitchOrganization,
-		});
+		mockUseOrganizationValidation.mockReturnValue("org-123");
 		mockUseOrganizationStore.mockReturnValue({
 			getOrganization: mockGetOrganization,
 			selectOrganization: vi.fn(),
@@ -291,22 +287,18 @@ describe("DashboardClient", () => {
 		expect(createButton).toBeDisabled();
 	});
 
-	it("should initialize organization store with server data", () => {
+	it("should initialize organization validation with server data", () => {
 		render(<DashboardClient {...defaultProps} />);
 
-		expect(mockSetOrganizations).toHaveBeenCalledWith(defaultProps.initialOrganizations);
+		expect(mockUseOrganizationValidation).toHaveBeenCalledWith(defaultProps.initialOrganizations);
 	});
 
-	it("should switch organization when none selected but initial provided", () => {
-		mockUseOrganization.mockReturnValue({
-			clearOrganization: vi.fn(),
-			selectedOrganizationId: null,
-			switchOrganization: mockSwitchOrganization,
-		});
+	it("should handle organization validation", () => {
+		mockUseOrganizationValidation.mockReturnValue(null);
 
 		render(<DashboardClient {...defaultProps} />);
 
-		expect(mockSwitchOrganization).toHaveBeenCalledWith("org-123");
+		expect(mockUseOrganizationValidation).toHaveBeenCalledWith(defaultProps.initialOrganizations);
 	});
 
 	it("should handle create project from empty state", async () => {
@@ -345,13 +337,9 @@ describe("DashboardClient", () => {
 	});
 
 	it("should handle no organization selected scenario", () => {
-		mockUseOrganization.mockReturnValue({
-			clearOrganization: vi.fn(),
-			selectedOrganizationId: null,
-			switchOrganization: mockSwitchOrganization,
-		});
+		mockUseOrganizationValidation.mockReturnValue(null);
 
-		render(<DashboardClient {...defaultProps} initialSelectedOrganizationId={null} />);
+		render(<DashboardClient {...defaultProps} />);
 
 		expect(screen.getByTestId("dashboard-title")).toBeInTheDocument();
 	});
