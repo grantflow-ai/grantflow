@@ -5,8 +5,6 @@ from faker import Faker
 from numpy.random import default_rng
 from packages.db.src.constants import (
     EMBEDDING_DIMENSIONS,
-    GRANT_APPLICATION_GENERATION,
-    GRANT_TEMPLATE_GENERATION,
     RAG_FILE,
     RAG_URL,
 )
@@ -15,12 +13,10 @@ from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSecti
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
-    GrantApplicationGenerationJob,
     GrantApplicationSource,
     GrantingInstitution,
     GrantingInstitutionSource,
     GrantTemplate,
-    GrantTemplateGenerationJob,
     GrantTemplateSource,
     Organization,
     OrganizationInvitation,
@@ -216,39 +212,10 @@ class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
 
     __set_relationships__ = False
     __set_association_proxy__ = False
-    total_stages = 5
-    current_stage = 0
     retry_count = 0
     status = RagGenerationStatusEnum.PENDING
-    job_type = "rag_generation_job"
-
-
-class GrantTemplateGenerationJobFactory(SQLAlchemyFactory[GrantTemplateGenerationJob]):
-    __model__ = GrantTemplateGenerationJob
-
-    __set_relationships__ = False
-    __set_association_proxy__ = False
-    total_stages = 4
-    current_stage = 0
-    retry_count = 0
-    status = RagGenerationStatusEnum.PENDING
-    job_type = GRANT_TEMPLATE_GENERATION
-    extracted_sections = None
-    extracted_metadata = None
-
-
-class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGenerationJob]):
-    __model__ = GrantApplicationGenerationJob
-
-    __set_relationships__ = False
-    __set_association_proxy__ = False
-    total_stages = 5
-    current_stage = 0
-    retry_count = 0
-    status = RagGenerationStatusEnum.PENDING
-    job_type = GRANT_APPLICATION_GENERATION
-    generated_sections = None
-    validation_results = None
+    checkpoint_data = None
+    parent_job_id = None
 
 
 class GenerationNotificationFactory(SQLAlchemyFactory[GenerationNotification]):
@@ -266,8 +233,6 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
 
     __set_relationships__ = False
     __set_association_proxy__ = False
-    rag_job_id = None
-    parent_id = None
     deleted_at = None
 
 

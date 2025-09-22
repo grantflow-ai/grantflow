@@ -472,6 +472,18 @@ wheels = [
 ]
 
 [[package]]
+name = "colorlog"
+version = "6.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/7a/359f4d5df2353f26172b3cc39ea32daa39af8de522205f512f458923e677/colorlog-6.9.0.tar.gz", hash = "sha256:bfba54a1b93b94f54e1f4fe48395725a3d92fd2a4af702f6bd70946bdc0c6ac2", size = 16624, upload-time = "2024-10-29T18:34:51.011Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/51/9b208e85196941db2f0654ad0357ca6388ab3ed67efdbfc799f35d1f83aa/colorlog-6.9.0-py3-none-any.whl", hash = "sha256:5906e71acd67cb07a71e779c47c4bcb45fb8c2993eebe9e5adcd6a6f1b283eff", size = 11424, upload-time = "2024-10-29T18:34:49.815Z" },
+]
+
+[[package]]
 name = "confection"
 version = "0.1.5"
 source = { registry = "https://pypi.org/simple" }
@@ -552,9 +564,8 @@ source = { virtual = "services/crawler" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "db" },
-    { name = "html-to-markdown" },
     { name = "httpx" },
-    { name = "shared-utils", extra = ["chunking", "embeddings", "gcs", "pubsub", "server"] },
+    { name = "shared-utils", extra = ["embeddings", "gcs", "pubsub", "server"] },
     { name = "trafilatura" },
 ]
 
@@ -562,9 +573,8 @@ dependencies = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "db", editable = "packages/db" },
-    { name = "html-to-markdown", specifier = ">=1.3.2" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "shared-utils", extras = ["server", "chunking", "embeddings", "gcs", "pubsub"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["server", "embeddings", "gcs", "pubsub"], editable = "packages/shared_utils" },
     { name = "trafilatura", specifier = ">=2" },
 ]
 
@@ -691,6 +701,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "alembic" },
+    { name = "kreuzberg" },
     { name = "psycopg", extra = ["binary"] },
 ]
 
@@ -706,7 +717,21 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "alembic", specifier = ">=1.15.1" },
+    { name = "kreuzberg", specifier = ">=3.1.7" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.6" },
+]
+
+[[package]]
+name = "deep-translator"
+version = "1.11.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7d/03/8fa7635c729a01de71151894cdf002ad6d245bfd6d1a731da864cf534dcf/deep_translator-1.11.4.tar.gz", hash = "sha256:801260c69231138707ea88a0955e484db7d40e210c9e0ae0f77372ffda5f4bf5", size = 36043, upload-time = "2023-06-28T19:55:23.499Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/3f/61a8ef73236dbea83a1a063a8af2f8e1e41a0df64f122233938391d0f175/deep_translator-1.11.4-py3-none-any.whl", hash = "sha256:d635df037e23fa35d12fd42dab72a0b55c9dd19e6292009ee7207e3f30b9e60a", size = 42285, upload-time = "2023-06-28T19:55:20.928Z" },
 ]
 
 [[package]]
@@ -766,6 +791,52 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3a/da/1336008d39e5d4076dddb4e0f3a52ada41429274bf558a3cc28030d324a3/faker-37.8.0.tar.gz", hash = "sha256:090bb5abbec2b30949a95ce1ba6b20d1d0ed222883d63483a0d4be4a970d6fb8", size = 1912113, upload-time = "2025-09-15T20:24:13.592Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f5/11/02ebebb09ff2104b690457cb7bc6ed700c9e0ce88cf581486bb0a5d3c88b/faker-37.8.0-py3-none-any.whl", hash = "sha256:b08233118824423b5fc239f7dd51f145e7018082b4164f8da6a9994e1f1ae793", size = 1953940, upload-time = "2025-09-15T20:24:11.482Z" },
+]
+
+[[package]]
+name = "fast-langdetect"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fasttext-predict" },
+    { name = "requests" },
+    { name = "robust-downloader" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/15/85b0137066be418b6249d8e8d98e2b16c072c65b80c293b9438fdea1be5e/fast_langdetect-1.0.0.tar.gz", hash = "sha256:ea8ac6a8914e0ff1bfc1bbc0f25992eb913ddb69e63ea1b24e907e263d0cd113", size = 796192, upload-time = "2025-09-17T06:32:26.86Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/71/0db1ac89f8661048ebc22d62f503a2e147cb6872c5f2aeb659c1f02c1694/fast_langdetect-1.0.0-py3-none-any.whl", hash = "sha256:aab9e3435cc667ac8ba8b1a38872f75492f65b7087901d0f3a02a88d436cd22a", size = 789944, upload-time = "2025-09-17T06:32:25.363Z" },
+]
+
+[[package]]
+name = "fasttext-predict"
+version = "0.9.2.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/0e/9defbb9385bcb1104cc1d686a14f7d9fafe5fe43f220cccb00f33d91bb47/fasttext_predict-0.9.2.4.tar.gz", hash = "sha256:18a6fb0d74c7df9280db1f96cb75d990bfd004fa9d669493ea3dd3d54f84dbc7", size = 16332, upload-time = "2024-11-23T17:24:44.801Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/fc/5cd65224c33e33d6faec3fa1047162dc266ed2213016139d936bd36fb7c3/fasttext_predict-0.9.2.4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:ddb85e62c95e4e02d417c782e3434ef65554df19e3522f5230f6be15a9373c05", size = 104916, upload-time = "2024-11-23T17:23:43.367Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/53/8d542773e32c9d98dd8c680e390fe7e6d4fc92ab3439dc1bb8e70c46c7ad/fasttext_predict-0.9.2.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:102129d45cf98dda871e83ae662f71d999b9ef6ff26bc842ffc1520a1f82930c", size = 97502, upload-time = "2024-11-23T17:23:44.447Z" },
+    { url = "https://files.pythonhosted.org/packages/50/99/049fd6b01937705889bd9a00c31e5c55f0ae4b7704007b2ef7a82bf2b867/fasttext_predict-0.9.2.4-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:05ba6a0fbf8cb2141b8ca2bc461db97af8ac31a62341e4696a75048b9de39e10", size = 282951, upload-time = "2024-11-23T17:23:46.31Z" },
+    { url = "https://files.pythonhosted.org/packages/83/cb/79b71709edbb53c3c5f8a8b60fe2d3bc98d28a8e75367c89afedf3307aa9/fasttext_predict-0.9.2.4-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0c7a779215571296ecfcf86545cb30ec3f1c6f43cbcd69f83cc4f67049375ea1", size = 307377, upload-time = "2024-11-23T17:23:47.685Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/4a/b15b7be003e76613173cc77d9c6cce4bf086073079354e0177deaa768f59/fasttext_predict-0.9.2.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ddd2f03f3f206585543f5274b1dbc5f651bae141a1b14c9d5225c2a12e5075c2", size = 295746, upload-time = "2024-11-23T17:23:49.024Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/d3/f030cd45bdd4b052fcf23e730fdf0804e024b0cad43d7c7f8704faaec2f5/fasttext_predict-0.9.2.4-cp313-cp313-manylinux_2_31_armv7l.whl", hash = "sha256:748f9edc3222a1fb7a61331c4e06d3b7f2390ae493f91f09d372a00b81762a8d", size = 236939, upload-time = "2024-11-23T17:23:50.306Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/01/6f2985afd58fdc5f4ecd058d5d9427d03081d468960982df97316c03f6bb/fasttext_predict-0.9.2.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:1aee47a40757cd24272b34eaf9ceeea86577fd0761b0fd0e41599c6549abdf04", size = 1214189, upload-time = "2024-11-23T17:23:51.647Z" },
+    { url = "https://files.pythonhosted.org/packages/75/07/931bcdd4e2406e45e54d57e056c2e0766616a5280a18fbf6ef078aa439ab/fasttext_predict-0.9.2.4-cp313-cp313-musllinux_1_2_armv7l.whl", hash = "sha256:6ff0f152391ee03ffc18495322100c01735224f7843533a7c4ff33c8853d7be1", size = 1099889, upload-time = "2024-11-23T17:23:53.127Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/eb/6521b4bbf387252a96a6dc0f54986f078a93db0a9d4ba77258dcf1fa8be7/fasttext_predict-0.9.2.4-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:4d92f5265318b41d6e68659fd459babbff692484e492c5013995b90a56b517c9", size = 1383959, upload-time = "2024-11-23T17:23:54.521Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/6b/d56606761afb3a3912c52971f0f804e2e9065f049c412b96c47d6fca6218/fasttext_predict-0.9.2.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3a7720cce1b8689d88df76cac1425e84f9911c69a4e40a5309d7d3435e1bb97c", size = 1281097, upload-time = "2024-11-23T17:23:55.9Z" },
+    { url = "https://files.pythonhosted.org/packages/91/83/55bb4a37bb3b3a428941f4e1323c345a662254f576f8860b3098d9742510/fasttext_predict-0.9.2.4-cp313-cp313-win32.whl", hash = "sha256:d16acfced7871ed0cd55b476f0dbdddc7a5da1ffc9745a3c5674846cf1555886", size = 91137, upload-time = "2024-11-23T17:23:57.886Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/1d/c1ccc8790ce54200c84164d99282f088dddb9760aeefc8860856aafa40b4/fasttext_predict-0.9.2.4-cp313-cp313-win_amd64.whl", hash = "sha256:96a23328729ce62a851f8953582e576ca075ee78d637df4a78a2b3609784849e", size = 104896, upload-time = "2024-11-23T17:23:59.028Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/c9/a1ccc749c59e2480767645ecc03bd842a7fa5b2b780d69ac370e6f8298d2/fasttext_predict-0.9.2.4-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:b1357d0d9d8568db84668b57e7c6880b9c46f757e8954ad37634402d36f09dba", size = 109401, upload-time = "2024-11-23T17:24:00.191Z" },
+    { url = "https://files.pythonhosted.org/packages/90/1f/33182b76eb0524155e8ff93e7939feaf5325385e5ff2a154f383d9a02317/fasttext_predict-0.9.2.4-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:9604c464c5d86c7eba34b040080be7012e246ef512b819e428b7deb817290dae", size = 102131, upload-time = "2024-11-23T17:24:02.052Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/df/1886daea373382e573f28ce49e3fc8fb6b0ee0c84e2b0becf5b254cd93fb/fasttext_predict-0.9.2.4-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cc6da186c2e4497cbfaba9c5424e58c7b72728b25d980829eb96daccd7cface1", size = 287396, upload-time = "2024-11-23T17:24:03.294Z" },
+    { url = "https://files.pythonhosted.org/packages/35/8f/d1c2c0f0251bee898d508253a437683b0480a1074cfb25ded1f7fdbb925a/fasttext_predict-0.9.2.4-cp313-cp313t-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:366ed2ca4f4170418f3585e92059cf17ee2c963bf179111c5b8ba48f06cd69d1", size = 311090, upload-time = "2024-11-23T17:24:04.625Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/52/07d6ed46148662fae84166bc69d944caca87fabc850ebfbd9640b20dafe7/fasttext_predict-0.9.2.4-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2f1877edbb815a43e7d38cc7332202e759054cf0b5a4b7e34a743c0f5d6e7333", size = 300359, upload-time = "2024-11-23T17:24:06.486Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/a1/751ff471a991e5ed0bae9e7fa6fc8d8ab76b233a7838a27d70d62bed0c8e/fasttext_predict-0.9.2.4-cp313-cp313t-manylinux_2_31_armv7l.whl", hash = "sha256:f63c31352ba6fc910290b0fe12733770acd8cfa0945fcb9cf3984d241abcfc9d", size = 241164, upload-time = "2024-11-23T17:24:08.501Z" },
+    { url = "https://files.pythonhosted.org/packages/94/19/e251f699a0e9c001fa672ea0929c456160faa68ecfafc19e8def09982b6a/fasttext_predict-0.9.2.4-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:898e14b03fbfb0a8d9a5185a0a00ff656772b3baa37cad122e06e8e4d6da3832", size = 1218629, upload-time = "2024-11-23T17:24:10.04Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/46/1af2f779f8cfd746496a226581f747d3051888e3e3c5b2ca37231e5d04f8/fasttext_predict-0.9.2.4-cp313-cp313t-musllinux_1_2_armv7l.whl", hash = "sha256:a33bb5832a69fc54d18cadcf015677c1acb5ccc7f0125d261df2a89f8aff01f6", size = 1100535, upload-time = "2024-11-23T17:24:11.5Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/b7/900ccd74a9ba8be7ca6d04bba684e9c43fb0dbed8a3d12ec0536228e2c32/fasttext_predict-0.9.2.4-cp313-cp313t-musllinux_1_2_i686.whl", hash = "sha256:7fe9e98bd0701d598bf245eb2fbf592145cd03551684a2102a4b301294b9bd87", size = 1387651, upload-time = "2024-11-23T17:24:13.135Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/5a/99fdaed054079f7c96e70df0d7016c4eb6b9e487a614396dd8f849244a52/fasttext_predict-0.9.2.4-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:dcb8c5a74c1785f005fd83d445137437b79ac70a2dfbfe4bb1b09aa5643be545", size = 1286189, upload-time = "2024-11-23T17:24:14.615Z" },
+    { url = "https://files.pythonhosted.org/packages/87/6a/9114d65b3f7a9c20a62b9d2ca3b770ee65de849e4131cc7aa58cdc50cb07/fasttext_predict-0.9.2.4-cp313-cp313t-win32.whl", hash = "sha256:a85c7de3d4480faa12b930637fca9c23144d1520786fedf9ba8edd8642ed4aea", size = 95905, upload-time = "2024-11-23T17:24:15.868Z" },
+    { url = "https://files.pythonhosted.org/packages/31/fb/6d251f3fdfe3346ee60d091f55106513e509659ee005ad39c914182c96f4/fasttext_predict-0.9.2.4-cp313-cp313t-win_amd64.whl", hash = "sha256:be0933fa4af7abae09c703d28f9e17c80e7069eb6f92100b21985b777f4ea275", size = 110325, upload-time = "2024-11-23T17:24:16.984Z" },
 ]
 
 [[package]]
@@ -1546,13 +1617,13 @@ version = "0.1.0"
 source = { virtual = "services/indexer" }
 dependencies = [
     { name = "db" },
-    { name = "shared-utils", extra = ["chunking", "embeddings", "extraction", "gcs", "pubsub", "server"] },
+    { name = "shared-utils", extra = ["embeddings", "extraction", "gcs", "pubsub", "server"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "db", editable = "packages/db" },
-    { name = "shared-utils", extras = ["server", "chunking", "embeddings", "extraction", "gcs", "pubsub"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["server", "embeddings", "extraction", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
 
 [[package]]
@@ -1657,6 +1728,21 @@ wheels = [
 ]
 
 [[package]]
+name = "keybert"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "rich" },
+    { name = "scikit-learn" },
+    { name = "sentence-transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/a8/a73003cc0f6a606eb30c9e19a85b5a89bef076e9adcb642aed29e47c693c/keybert-0.9.0.tar.gz", hash = "sha256:eec8ebd37d3d9fa238d7075e727adb993de4f3ed67c94112840e4cc0e55d7657", size = 32235, upload-time = "2025-02-07T08:45:13.187Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/07/e2f42a8ec3ff1935debbf2a5255570d22033fca3fe3180d5af99a6c9ee8c/keybert-0.9.0-py3-none-any.whl", hash = "sha256:afa2f300a72f69d279e4482bc85d8b34493b119876dc0818cb4f260466285b36", size = 41364, upload-time = "2025-02-07T08:45:08.093Z" },
+]
+
+[[package]]
 name = "kreuzberg"
 version = "3.17.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1678,6 +1764,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/de/10/bfbd0687009625a8883beec27b45a0d3e7a8425f214b18a13466eaae1631/kreuzberg-3.17.2.tar.gz", hash = "sha256:737e7e4010e0476996209e6f4ba40576bc5d9c2c77bd6e9fb2f2a29942aef165", size = 16316004, upload-time = "2025-09-22T09:09:16.431Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/f4/b60c5f0e306d7aafb41157ef4bc29058bf9563876fd55b0a5eee8d72452c/kreuzberg-3.17.2-py3-none-any.whl", hash = "sha256:bd03429bc84ef49b14e2bd95bf9f13f5fd60e22debf7e999a21109bb1454de96", size = 218761, upload-time = "2025-09-22T09:09:14.257Z" },
+]
+
+[package.optional-dependencies]
+chunking = [
+    { name = "semantic-text-splitter" },
+]
+document-classification = [
+    { name = "deep-translator" },
+]
+entity-extraction = [
+    { name = "keybert" },
+    { name = "spacy" },
+]
+langdetect = [
+    { name = "fast-langdetect" },
 ]
 
 [[package]]
@@ -1706,11 +1807,11 @@ wheels = [
 
 [[package]]
 name = "lefthook"
-version = "1.13.1"
+version = "1.13.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7f/2a/35f14703d068ddf4044a568c23fb2d46242d84b5bafd246e645b72bf64ca/lefthook-1.13.1.tar.gz", hash = "sha256:2a18c50fa07151c44c9a4274f2b2fbd66e1f544a83a58bfaa9eb15ee6a857599", size = 51904564, upload-time = "2025-09-17T13:30:01.986Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/29/79708f0c19d3e0a880673b127b0fcaca8f5c9d17e435516fc5ab33983b8e/lefthook-1.13.2.tar.gz", hash = "sha256:2d2072dc34a3fd10984c1842e2f3a54f7cffbc664bd44ca771acd3f3582760a9", size = 51888895, upload-time = "2025-09-22T09:41:32.33Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/a4/38e105dac41f1a1ac17cbec20cdaeba8ccac5592b6eb4e4466b332d1a6e7/lefthook-1.13.1-py3-none-any.whl", hash = "sha256:b7c74db6947445a36cdb6624f61fca8a7ddeae29334a3b90e637ce1f6da6f960", size = 52151168, upload-time = "2025-09-17T13:29:58.765Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/30/dcb20f1852685386574f02d5d75085b4bd4bcf1a8f092548596c88137314/lefthook-1.13.2-py3-none-any.whl", hash = "sha256:a2447c6b4129afb7ad3ea15ee83cc3ed0ef329beab7cf1ef2838d9d3391bc885", size = 52135560, upload-time = "2025-09-22T09:41:28.181Z" },
 ]
 
 [[package]]
@@ -3352,6 +3453,20 @@ wheels = [
 ]
 
 [[package]]
+name = "robust-downloader"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorlog" },
+    { name = "requests" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/20/8d28efa080f58fa06f6378875ac482ee511c076369e5293a2e65128cf9a0/robust-downloader-0.0.2.tar.gz", hash = "sha256:08c938b96e317abe6b037e34230a91bda9b5d613f009bca4a47664997c61de90", size = 15785, upload-time = "2023-11-13T03:00:20.637Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/a1/779e9d0ebbdc704411ce30915a1105eb01aeaa9e402d7e446613ff8fb121/robust_downloader-0.0.2-py3-none-any.whl", hash = "sha256:8fe08bfb64d714fd1a048a7df6eb7b413eb4e624309a49db2c16fbb80a62869d", size = 15534, upload-time = "2023-11-13T03:00:18.957Z" },
+]
+
+[[package]]
 name = "rpds-py"
 version = "0.27.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3551,7 +3666,7 @@ wheels = [
 
 [[package]]
 name = "sentence-transformers"
-version = "5.1.0"
+version = "5.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -3563,9 +3678,9 @@ dependencies = [
     { name = "transformers" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/46/b8/1b99379b730bc403d8e9ddc2db56f8ac9ce743734b44a1dbeebb900490d4/sentence_transformers-5.1.0.tar.gz", hash = "sha256:70c7630697cc1c64ffca328d6e8688430ebd134b3c2df03dc07cb3a016b04739", size = 370745, upload-time = "2025-08-06T13:48:55.226Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/47/7d61a19ba7e6b5f36f0ffff5bbf032a1c1913612caac611e12383069eda0/sentence_transformers-5.1.1.tar.gz", hash = "sha256:8af3f844b2ecf9a6c2dfeafc2c02938a87f61202b54329d70dfd7dfd7d17a84e", size = 374434, upload-time = "2025-09-22T11:28:27.54Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/70/2b5b76e98191ec3b8b0d1dde52d00ddcc3806799149a9ce987b0d2d31015/sentence_transformers-5.1.0-py3-none-any.whl", hash = "sha256:fc803929f6a3ce82e2b2c06e0efed7a36de535c633d5ce55efac0b710ea5643e", size = 483377, upload-time = "2025-08-06T13:48:53.627Z" },
+    { url = "https://files.pythonhosted.org/packages/48/21/4670d03ab8587b0ab6f7d5fa02a95c3dd6b1f39d0e40e508870201f3d76c/sentence_transformers-5.1.1-py3-none-any.whl", hash = "sha256:5ed544629eafe89ca668a8910ebff96cf0a9c5254ec14b05c66c086226c892fd", size = 486574, upload-time = "2025-09-22T11:28:26.311Z" },
 ]
 
 [package.optional-dependencies]
@@ -3599,14 +3714,11 @@ ai = [
     { name = "google-genai" },
     { name = "prompt-template" },
 ]
-chunking = [
-    { name = "semantic-text-splitter" },
-]
 embeddings = [
     { name = "sentence-transformers", extra = ["onnx"] },
 ]
 extraction = [
-    { name = "kreuzberg" },
+    { name = "kreuzberg", extra = ["chunking", "document-classification", "entity-extraction", "langdetect"] },
 ]
 gcs = [
     { name = "google-cloud-storage" },
@@ -3642,7 +3754,7 @@ requires-dist = [
     { name = "google-cloud-pubsub", marker = "extra == 'pubsub'", specifier = ">=2.30" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
     { name = "google-genai", marker = "extra == 'ai'", specifier = ">=0.1" },
-    { name = "kreuzberg", marker = "extra == 'extraction'", specifier = ">=3.1.7" },
+    { name = "kreuzberg", extras = ["chunking", "langdetect", "entity-extraction", "document-classification"], marker = "extra == 'extraction'", specifier = ">=3.1.7" },
     { name = "litestar", extras = ["opentelemetry"], marker = "extra == 'server'", specifier = ">=2.16" },
     { name = "msgspec", specifier = ">=0.19" },
     { name = "opentelemetry-exporter-gcp-monitoring", marker = "extra == 'server'", specifier = ">=1.6" },
@@ -3651,7 +3763,6 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-sqlalchemy", marker = "extra == 'server'", specifier = ">=0.41b0" },
     { name = "prompt-template", marker = "extra == 'ai'", specifier = ">=1.2" },
     { name = "rank-bm25", marker = "extra == 'nlp'", specifier = ">=0.2.2" },
-    { name = "semantic-text-splitter", marker = "extra == 'chunking'", specifier = ">=0.27" },
     { name = "sentence-transformers", extras = ["onnx"], marker = "extra == 'embeddings'", specifier = ">=4.1" },
     { name = "spacy", marker = "extra == 'nlp'", specifier = ">=3.8.7" },
     { name = "structlog", specifier = ">=25.2" },
@@ -3659,7 +3770,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'nlp'", specifier = ">=2.7.1" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.34.3" },
 ]
-provides-extras = ["ai", "chunking", "embeddings", "extraction", "gcs", "nlp", "pubsub", "server"]
+provides-extras = ["ai", "embeddings", "extraction", "gcs", "nlp", "pubsub", "server"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "db", editable = "packages/db" }]
