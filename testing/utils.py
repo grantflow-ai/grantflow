@@ -267,7 +267,12 @@ async def create_funding_application(
 
 async def ensure_cfp_content_exists(cfp_markdown_file: Path, cfp_source_file: Path) -> None:
     if not cfp_markdown_file.exists():
-        content, _ = await extract_file_content(content=cfp_source_file.read_bytes(), mime_type="application/pdf")
+        content, _, _, _ = await extract_file_content(
+            content=cfp_source_file.read_bytes(),
+            mime_type="application/pdf",
+            enable_chunking=False,
+            enable_token_reduction=False,
+        )
         cfp_markdown_file.write_text(content)
 
 

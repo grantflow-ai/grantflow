@@ -233,7 +233,7 @@ async def test_comprehensive_quality_with_ai_validation(
     )
 
     try:
-        vectors, text_content = await process_source(
+        vectors, text_content, _ = await process_source(
             content=data_file.read_bytes(),
             filename=data_file.name,
             mime_type=mime_type,

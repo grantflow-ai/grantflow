@@ -27,7 +27,7 @@ async def test_parse_application_file(
         pytest.skip(f"Test file {SMALL_PDF_TEST_FILE} does not exist")
 
     try:
-        vectors, text_content = await process_source(
+        vectors, text_content, _ = await process_source(
             content=SMALL_PDF_TEST_FILE.read_bytes(),
             filename="test.pdf",
             mime_type="application/pdf",
