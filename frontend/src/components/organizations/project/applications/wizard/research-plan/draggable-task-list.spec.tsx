@@ -110,7 +110,6 @@ describe("DraggableTaskList", () => {
 		it("renders empty state when no tasks", () => {
 			render(<DraggableTaskList {...defaultProps} tasks={[]} />);
 
-			// Tasks header should not be shown when no tasks and not editing
 			expect(screen.queryByText("Tasks")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("task-item-0")).not.toBeInTheDocument();
 		});
@@ -202,7 +201,6 @@ describe("DraggableTaskList", () => {
 
 			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskValuesChange={onTaskValuesChange} />);
 
-			// Click the update button on the first task
 			const updateButton = screen.getByTestId("update-task-0");
 			await user.click(updateButton);
 
@@ -296,7 +294,6 @@ describe("DraggableTaskList", () => {
 		it("handles empty tasks array", () => {
 			render(<DraggableTaskList {...defaultProps} tasks={[]} />);
 
-			// Tasks header should not show when no tasks and not editing
 			expect(screen.queryByText("Tasks")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("task-item-0")).not.toBeInTheDocument();
 		});

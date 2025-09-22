@@ -131,7 +131,6 @@ def test_validate_scientific_context_missing_header() -> None:
 
     result = validate_scientific_context(test_context)
 
-    # This should be valid because it has scientific terms
     assert result["is_valid"] is True
     assert result["has_content"] is True
     assert result["has_scientific_terms"] is True

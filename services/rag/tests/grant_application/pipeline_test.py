@@ -88,7 +88,6 @@ async def test_generate_sections_stage(
         return_value=sample_generate_sections_dto,
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -127,7 +126,6 @@ async def test_extract_relationships_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -165,7 +163,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -203,7 +200,6 @@ async def test_insufficient_context_error_handling(
         side_effect=InsufficientContextError("Not enough context"),
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -239,7 +235,6 @@ async def test_indexing_timeout_error_handling(
         side_effect=ValidationError("indexing timeout occurred"),
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -275,7 +270,6 @@ async def test_generic_backend_error_handling(
         side_effect=BackendError("Unexpected backend error"),
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -317,7 +311,6 @@ async def test_missing_cfp_analysis_validation(
         )
         await session.commit()
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload
@@ -355,7 +348,6 @@ async def test_pipeline_creates_real_job_entry(
         return_value=sample_generate_sections_dto,
     )
 
-    # Load the grant application with the template relationship
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
         from sqlalchemy.orm import selectinload

@@ -125,7 +125,6 @@ async def handle_retrieve_rag_job(
             )
             if template_job:
                 response["grant_template_id"] = str(template_job.grant_template_id)
-                # Extract data from checkpoint_data if available
                 if job.checkpoint_data:
                     if "extracted_sections" in job.checkpoint_data:
                         response["extracted_sections"] = job.checkpoint_data["extracted_sections"]
@@ -138,7 +137,6 @@ async def handle_retrieve_rag_job(
             )
             if app_job:
                 response["grant_application_id"] = str(app_job.grant_application_id)
-                # Extract data from checkpoint_data if available
                 if job.checkpoint_data:
                     if "generated_sections" in job.checkpoint_data:
                         response["generated_sections"] = job.checkpoint_data["generated_sections"]

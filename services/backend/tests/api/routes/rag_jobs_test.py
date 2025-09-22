@@ -100,7 +100,6 @@ async def test_retrieve_grant_template_job_success(
     assert data["current_stage"] == "ANALYZE_CFP_CONTENT"
     assert data["retry_count"] == 0
     assert data["grant_template_id"] == str(grant_template.id)
-    # Data is now stored in checkpoint_data
     if "extracted_sections" in data:
         assert data["extracted_sections"] == [{"id": "section1", "title": "Introduction"}]
     if "extracted_metadata" in data:
@@ -143,7 +142,6 @@ async def test_retrieve_grant_application_job_success(
     assert data["status"] == "COMPLETED"
     assert data["current_stage"] == "GENERATE_RESEARCH_PLAN"
     assert data["grant_application_id"] == str(grant_application.id)
-    # Data is now stored in checkpoint_data
     if "generated_sections" in data:
         assert data["generated_sections"] == {"introduction": "This is the introduction..."}
     if "validation_results" in data:

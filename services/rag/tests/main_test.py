@@ -102,10 +102,8 @@ async def test_handle_rag_request_grant_template(
 ) -> None:
     from services.rag.src.main import app
 
-    # Use the fixed grant template ID from test_application_with_template fixture
     template_id = UUID("00000000-0000-0000-0000-000000000001")
 
-    # Create event with the correct template ID
     data = GrantTemplateRagRequest(
         parent_id=template_id,
         trace_id=trace_id,
@@ -135,7 +133,6 @@ async def test_handle_rag_request_grant_application(
 ) -> None:
     from services.rag.src.main import app
 
-    # Update the event to use the test application ID
     data = GrantApplicationRagRequest(
         parent_id=test_application_with_template.id,
         trace_id=trace_id,
@@ -218,10 +215,8 @@ async def test_handle_rag_request_handler_error(
 ) -> None:
     from services.rag.src.main import app
 
-    # Use the fixed grant template ID from test_application_with_template fixture
     template_id = UUID("00000000-0000-0000-0000-000000000001")
 
-    # Create event with the correct template ID
     data = GrantTemplateRagRequest(
         parent_id=template_id,
         trace_id=trace_id,
@@ -291,7 +286,6 @@ async def test_grant_template_missing_template(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that missing grant template logs error and returns 201"""
     from services.rag.src.main import app
 
     nonexistent_id = uuid4()
@@ -304,7 +298,6 @@ async def test_grant_template_missing_template(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    # Should return 201 (no error raised to prevent PubSub retries)
     assert response.status_code == 201
 
 
@@ -312,7 +305,6 @@ async def test_grant_application_missing_application(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that missing grant application logs error and returns 201"""
     from services.rag.src.main import app
 
     nonexistent_id = uuid4()
@@ -325,7 +317,6 @@ async def test_grant_application_missing_application(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    # Should return 201 (no error raised to prevent PubSub retries)
     assert response.status_code == 201
 
 
@@ -333,13 +324,11 @@ async def test_grant_application_missing_grant_template(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that missing grant template logs error and returns 201"""
     from packages.db.src.tables import GrantApplication
     from testing.factories import OrganizationFactory, ProjectFactory
 
     from services.rag.src.main import app
 
-    # Create grant application without grant template
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -366,7 +355,6 @@ async def test_grant_application_missing_grant_template(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    # Should return 201 (no error raised to prevent PubSub retries)
     assert response.status_code == 201
 
 
@@ -374,13 +362,11 @@ async def test_grant_application_missing_grant_sections(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that grant template without sections logs error and returns 201"""
     from packages.db.src.tables import GrantApplication, GrantTemplate
     from testing.factories import OrganizationFactory, ProjectFactory
 
     from services.rag.src.main import app
 
-    # Create grant application with template but no sections
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -400,7 +386,7 @@ async def test_grant_application_missing_grant_sections(
         template = GrantTemplate(
             grant_application_id=application.id,
             granting_institution_id=None,
-            grant_sections=[],  # Empty sections
+            grant_sections=[],
             cfp_analysis={"test": "data"},
         )
         session.add(template)
@@ -418,7 +404,6 @@ async def test_grant_application_missing_grant_sections(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    # Should return 201 (no error raised to prevent PubSub retries)
     assert response.status_code == 201
 
 
@@ -426,13 +411,11 @@ async def test_grant_application_missing_cfp_analysis(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that grant template without CFP analysis logs error and returns 201"""
     from packages.db.src.tables import GrantApplication, GrantTemplate
     from testing.factories import OrganizationFactory, ProjectFactory
 
     from services.rag.src.main import app
 
-    # Create grant application with template but no CFP analysis
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -467,7 +450,7 @@ async def test_grant_application_missing_cfp_analysis(
                     "is_clinical_trial": False,
                 }
             ],
-            cfp_analysis=None,  # No CFP analysis
+            cfp_analysis=None,
         )
         session.add(template)
         application.grant_template = template
@@ -484,7 +467,6 @@ async def test_grant_application_missing_cfp_analysis(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    # Should return 201 (no error raised to prevent PubSub retries)
     assert response.status_code == 201
 
 
@@ -494,7 +476,6 @@ async def test_grant_application_valid_request(
     mock_grant_application_handler: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test that valid grant application request calls the handler"""
     from services.rag.src.main import app
 
     data = GrantApplicationRagRequest(

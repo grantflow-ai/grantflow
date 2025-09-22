@@ -100,7 +100,10 @@ async def _handle_grant_template_request(
                 template_id=str(request.parent_id),
                 trace_id=request.trace_id,
             )
-            return
+            raise ValidationError(
+                f"Grant template {request.parent_id} not found",
+                context={"template_id": str(request.parent_id), "trace_id": request.trace_id},
+            )
 
     await handle_grant_template_pipeline(
         grant_template=grant_template,
