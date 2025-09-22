@@ -234,6 +234,7 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     deleted_at = None
+    parent_id = None  # Explicitly set parent_id to None to avoid foreign key constraint issues
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):
