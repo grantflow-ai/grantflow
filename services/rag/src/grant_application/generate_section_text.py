@@ -6,6 +6,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.source_validation import handle_source_validation
 
@@ -159,12 +160,11 @@ async def handle_generate_section_text(
     )
     if validation_error:
         logger.warning(
-            "Source validation failed",
+            "Source validation identified missing information, proceeding with available context",
             section=section_title,
+            missing_info=validation_error,
             trace_id=trace_id,
         )
-
-        return ""
 
     validated_context = combined_context
 
@@ -172,17 +172,19 @@ async def handle_generate_section_text(
         section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
     )
 
-    prompt = SECTION_PROMPT.to_string(
+    # Compress the prompt after to_string() to reduce token usage
+    full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         instructions=section["generation_instructions"],
         cfp_requirements=cfp_requirements_text,
         context=validated_context,
     )
+    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
     return await with_prompt_evaluation(
         prompt_identifier="optimized_section_generation",
         prompt_handler=generate_long_form_text,
-        prompt=prompt,
+        prompt=compressed_prompt,
         increment=15,
         retries=3,
         passing_score=80,
