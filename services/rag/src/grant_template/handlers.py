@@ -24,7 +24,7 @@ from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_
 from services.rag.src.grant_template.extract_sections import handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-from services.rag.src.utils.job_manager import GrantTemplateJobManager
+from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
 
@@ -32,17 +32,12 @@ logger = get_logger(__name__)
 async def handle_cfp_extraction_stage(
     *,
     grant_template: GrantTemplate,
-    job_manager: GrantTemplateJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.EXTRACTING_CFP_DATA,
-        message="Analyzing call for proposals document",
-        notification_type="info",
-    )
     # this can take a while, that's why we are rechecking cancellation ~keep
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
@@ -118,16 +113,10 @@ async def handle_cfp_extraction_stage(
 async def handle_cfp_analysis_stage(
     *,
     extracted_cfp: ExtractCFPContentStageDTO,
-    job_manager: GrantTemplateJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.GRANT_TEMPLATE_EXTRACTION,
-        message="Analyzing application requirements",
-        notification_type="info",
-    )
 
     analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
         full_cfp_text="\n".join(
@@ -159,16 +148,10 @@ async def handle_cfp_analysis_stage(
 async def handle_section_extraction_stage(
     *,
     analysis_result: AnalyzeCFPContentStageDTO,
-    job_manager: GrantTemplateJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.GRANT_TEMPLATE_METADATA,
-        message="Extracting application sections",
-        notification_type="info",
-    )
 
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
@@ -195,7 +178,7 @@ async def handle_section_extraction_stage(
 async def handle_generate_metadata_stage(
     *,
     section_extraction_result: ExtractionSectionsStageDTO,
-    job_manager: GrantTemplateJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
@@ -222,7 +205,7 @@ async def handle_generate_metadata_stage(
                 GrantElement(
                     id=section["id"],
                     order=section["order"],
-                    parent_id=section["parent_id"],
+                    parent_id=section.get("parent_id"),
                     title=section["title"],
                 )
             )
@@ -233,12 +216,12 @@ async def handle_generate_metadata_stage(
                     depends_on=metadata["depends_on"],
                     generation_instructions=metadata["generation_instructions"],
                     id=section["id"],
-                    is_clinical_trial=section["is_clinical_trial"],
-                    is_detailed_research_plan=section["is_detailed_research_plan"],
+                    is_clinical_trial=section.get("is_clinical_trial"),
+                    is_detailed_research_plan=section.get("is_detailed_research_plan"),
                     keywords=metadata["keywords"],
                     max_words=metadata["max_words"],
                     order=section["order"],
-                    parent_id=section["parent_id"],
+                    parent_id=section.get("parent_id"),
                     search_queries=metadata["search_queries"],
                     title=section["title"],
                     topics=metadata["topics"],
@@ -254,7 +237,7 @@ async def handle_save_grant_template(
     extracted_cfp: ExtractionSectionsStageDTO,
     grant_sections: list[GrantElement | GrantLongFormSection],
     grant_template: GrantTemplate,
-    job_manager: GrantTemplateJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:

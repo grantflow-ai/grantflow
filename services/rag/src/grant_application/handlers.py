@@ -21,7 +21,7 @@ from services.rag.src.grant_application.enrich_terminology_stage import enrich_o
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
-from services.rag.src.utils.job_manager import GrantApplicationJobManager
+from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
@@ -34,16 +34,10 @@ logger = get_logger(__name__)
 async def handle_generate_sections_stage(
     *,
     grant_application: "GrantApplication",
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.GENERATING_SECTION_TEXTS,
-        message="Generating application sections",
-        notification_type="info",
-    )
 
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
@@ -55,7 +49,7 @@ async def handle_generate_sections_stage(
     for section in grant_application.grant_template.grant_sections:
         if "max_words" in section and "generation_instructions" in section:
             long_form_section = cast("GrantLongFormSection", section)
-            if long_form_section["is_detailed_research_plan"]:
+            if long_form_section.get("is_detailed_research_plan"):
                 work_plan_section = long_form_section
             else:
                 long_form_sections.append(long_form_section)
@@ -131,16 +125,10 @@ async def handle_extract_relationships_stage(
     *,
     grant_application: "GrantApplication",
     dto: GenerateSectionsStageDTO,
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> ExtractRelationshipsStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.EXTRACTING_RELATIONSHIPS,
-        message="Analyzing research dependencies",
-        notification_type="info",
-    )
 
     relationships = await handle_extract_relationships(
         application_id=str(grant_application.id),
@@ -170,16 +158,10 @@ async def handle_enrich_objectives_stage(
     *,
     grant_application: "GrantApplication",
     dto: ExtractRelationshipsStageDTO,
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> EnrichObjectivesStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.ENRICHING_OBJECTIVES,
-        message="Enhancing research objectives",
-        notification_type="info",
-    )
 
     enrichment_responses = await handle_batch_enrich_objectives(
         research_objectives=grant_application.research_objectives or [],
@@ -210,16 +192,10 @@ async def handle_enrich_objectives_stage(
 async def handle_enrich_terminology_stage(
     *,
     dto: EnrichObjectivesStageDTO,
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> EnrichTerminologyStageDTO:
     await job_manager.ensure_not_cancelled()
-
-    await job_manager.add_notification(
-        event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
-        message="Adding scientific terminology",
-        notification_type="info",
-    )
 
     wikidata_enrichment_coroutines = [
         enrich_objective_with_wikidata(enrichment_response, trace_id=trace_id)
@@ -250,7 +226,7 @@ async def handle_generate_research_plan_stage(
     *,
     grant_application: "GrantApplication",
     dto: EnrichTerminologyStageDTO,
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> GenerateResearchPlanStageDTO:
     await job_manager.ensure_not_cancelled()
@@ -300,12 +276,6 @@ async def handle_generate_research_plan_stage(
 
     work_plan_text = ""
 
-    await job_manager.add_notification(
-        event=NotificationEvents.GENERATING_RESEARCH_PLAN,
-        message="Writing research plan",
-        notification_type="info",
-    )
-
     total_objectives = len(research_objectives)
 
     objective_task_groups = []
@@ -313,12 +283,6 @@ async def handle_generate_research_plan_stage(
         objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
         tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
         objective_task_groups.append((objective, tasks))
-
-    await job_manager.add_notification(
-        event=NotificationEvents.GENERATING_OBJECTIVE,
-        message=f"Generating {total_objectives} research objectives",
-        notification_type="info",
-    )
 
     objective_results = await batched_gather(
         *[
@@ -340,18 +304,6 @@ async def handle_generate_research_plan_stage(
 
         for research_task, research_task_text in task_results:
             work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
-
-        await job_manager.add_notification(
-            event=NotificationEvents.OBJECTIVE_COMPLETED,
-            message=f"Objective {objective['number']}/{total_objectives} complete",
-            notification_type="info",
-            data={
-                "number": objective["number"],
-                "title": objective["title"][:50],
-                "tasks": len(task_results),
-                "progress": int(float(objective["number"]) / total_objectives * 100),
-            },
-        )
 
     await job_manager.add_notification(
         event=NotificationEvents.RESEARCH_PLAN_COMPLETED,

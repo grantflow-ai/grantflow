@@ -70,7 +70,7 @@ async def test_generate_melanoma_baseline_application_text(
         updated_application = await session.scalar(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
-            .options(selectinload(GrantApplication.grant_template), selectinload(GrantApplication.rag_job))
+            .options(selectinload(GrantApplication.grant_template))
         )
 
         if not updated_application:

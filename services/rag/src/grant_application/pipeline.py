@@ -1,7 +1,9 @@
+import traceback
 from typing import TYPE_CHECKING, Any, cast
 
 from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationGenerationJob, GrantTemplate
+from packages.db.src.query_helpers import select_active
+from packages.db.src.tables import GrantApplication, GrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -30,7 +32,7 @@ from services.rag.src.grant_application.handlers import (
 )
 from services.rag.src.grant_application.utils import generate_application_text
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-from services.rag.src.utils.job_manager import GrantApplicationJobManager
+from services.rag.src.utils.job_manager import JobManager
 
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import (
@@ -43,39 +45,67 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+async def _determine_current_stage(
+    application_id: Any, session_maker: async_sessionmaker[Any]
+) -> GrantApplicationStageEnum:
+    async with session_maker() as session:
+        result = await session.execute(
+            select_active(RagGenerationJob)
+            .where(
+                RagGenerationJob.grant_application_id == application_id,
+                RagGenerationJob.status.in_(
+                    [
+                        RagGenerationStatusEnum.PENDING,
+                        RagGenerationStatusEnum.PROCESSING,
+                        RagGenerationStatusEnum.COMPLETED,
+                    ]
+                ),
+            )
+            .order_by(RagGenerationJob.created_at.asc())
+        )
+        jobs = result.scalars().all()
+
+        if not jobs:
+            return GRANT_APPLICATION_STAGES_ORDER[0]
+
+        processed_stages = set()
+
+        for job in jobs:
+            if job.application_stage:
+                if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
+                    return cast("GrantApplicationStageEnum", job.application_stage)
+                if job.status == RagGenerationStatusEnum.COMPLETED:
+                    processed_stages.add(job.application_stage)
+
+        for stage in GRANT_APPLICATION_STAGES_ORDER:
+            if stage not in processed_stages:
+                return stage
+
+        return GRANT_APPLICATION_STAGES_ORDER[-1]
+
+
 async def _initialize_pipeline(
     grant_application: GrantApplication,
     current_stage: GrantApplicationStageEnum,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
-) -> tuple[GrantApplicationJobManager[StageDTO], Any]:
+) -> tuple[JobManager[StageDTO], Any]:
     application_id = grant_application.id
 
-    job_manager = GrantApplicationJobManager[StageDTO](
-        current_stage=current_stage,
+    job_manager = JobManager[StageDTO](
+        entity_type="grant_application",
+        entity_id=application_id,
         grant_application_id=application_id,
-        parent_id=application_id,
+        current_stage=current_stage,
         pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
         session_maker=session_maker,
         trace_id=trace_id,
     )
 
-    existing_job = await job_manager.get_or_create_job()
+    existing_job = await job_manager.get_or_create_job_for_stage()
 
-    if grant_application.rag_job_id != existing_job.id:
-        async with session_maker() as session, session.begin():
-            await session.execute(
-                update(GrantApplication).where(GrantApplication.id == application_id).values(rag_job_id=existing_job.id)
-            )
-
-    if not (existing_job and existing_job.checkpoint_data):
+    if not await job_manager.get_checkpoint_data():
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
-
-    await job_manager.add_notification(
-        event=NotificationEvents.GRANT_APPLICATION_GENERATION_STARTED,
-        message="Starting application generation",
-        notification_type="info",
-    )
 
     return job_manager, existing_job
 
@@ -149,13 +179,18 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
 
 async def _handle_pipeline_error(
     error: BackendError,
-    job_manager: GrantApplicationJobManager[StageDTO],
+    job_manager: JobManager[StageDTO],
     application_id: Any,
     existing_job: Any,
     current_stage: GrantApplicationStageEnum,
     trace_id: str,
 ) -> None:
     job_id = existing_job.id if existing_job else None
+
+    # Capture detailed error information for debugging
+    error_traceback = traceback.format_exc()
+    error_context = getattr(error, "context", None)
+
     logger.error(
         "Backend error in grant application generation pipeline",
         error=error,
@@ -167,7 +202,12 @@ async def _handle_pipeline_error(
         stage=current_stage,
     )
 
-    error_message, event_type = _get_error_details(error)
+    user_message, event_type = _get_error_details(error)
+
+    # Create detailed error message for database storage
+    detailed_error_message = f"{type(error).__name__}: {error!s}"
+    if error_context:
+        detailed_error_message += f"\nContext: {error_context}"
 
     if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(
         error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError, LLMTimeoutError)
@@ -175,7 +215,7 @@ async def _handle_pipeline_error(
         logger.error(
             "Unexpected error in grant application pipeline",
             error=error,
-            context=getattr(error, "context", None),
+            context=error_context,
             application_id=str(application_id),
             job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
@@ -185,15 +225,20 @@ async def _handle_pipeline_error(
     try:
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,
-            error_message=error_message,
+            error_message=detailed_error_message,
             error_details={
                 "error_type": error.__class__.__name__,
+                "error_message": str(error),
+                "context": error_context,
+                "traceback": error_traceback,
+                "stage": current_stage.value,
                 "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
+                "user_message": user_message,
             },
         )
         await job_manager.add_notification(
             event=event_type,
-            message=error_message,
+            message=user_message,
             notification_type="error",
             data={
                 "error_type": error.__class__.__name__,
@@ -209,13 +254,7 @@ async def handle_grant_application_pipeline(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    async with session_maker() as session:
-        if grant_application.rag_job_id:
-            job = await session.get(GrantApplicationGenerationJob, grant_application.rag_job_id)
-        else:
-            job = None
-
-    current_stage = job.current_stage if job and job.current_stage is not None else GRANT_APPLICATION_STAGES_ORDER[0]
+    current_stage = await _determine_current_stage(grant_application.id, session_maker)
 
     application_id = grant_application.id
     logger.info(
@@ -242,62 +281,66 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
-                await job_manager.to_next_job_stage(dto)
+                await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
-                if not existing_job or not existing_job.checkpoint_data:
+                checkpoint_data = await job_manager.get_checkpoint_data()
+                if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
                 await job_manager.ensure_not_cancelled()
 
                 dto = await handle_extract_relationships_stage(
                     grant_application=grant_application,
-                    dto=cast("GenerateSectionsStageDTO", existing_job.checkpoint_data),
+                    dto=cast("GenerateSectionsStageDTO", checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
-                await job_manager.to_next_job_stage(dto)
+                await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
-                if not existing_job or not existing_job.checkpoint_data:
+                checkpoint_data = await job_manager.get_checkpoint_data()
+                if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
                 await job_manager.ensure_not_cancelled()
 
                 dto = await handle_enrich_objectives_stage(
                     grant_application=grant_application,
-                    dto=cast("ExtractRelationshipsStageDTO", existing_job.checkpoint_data),
+                    dto=cast("ExtractRelationshipsStageDTO", checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
-                await job_manager.to_next_job_stage(dto)
+                await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
-                if not existing_job or not existing_job.checkpoint_data:
+                checkpoint_data = await job_manager.get_checkpoint_data()
+                if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
                 await job_manager.ensure_not_cancelled()
 
                 dto = await handle_enrich_terminology_stage(
-                    dto=cast("EnrichObjectivesStageDTO", existing_job.checkpoint_data),
+                    dto=cast("EnrichObjectivesStageDTO", checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
-                await job_manager.to_next_job_stage(dto)
+                await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
-                if not existing_job or not existing_job.checkpoint_data:
+                checkpoint_data = await job_manager.get_checkpoint_data()
+                if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
                 await job_manager.ensure_not_cancelled()
 
                 final_dto = await handle_generate_research_plan_stage(
                     grant_application=grant_application,
-                    dto=cast("EnrichTerminologyStageDTO", existing_job.checkpoint_data),
+                    dto=cast("EnrichTerminologyStageDTO", checkpoint_data),
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
@@ -309,12 +352,6 @@ async def handle_grant_application_pipeline(
                 )
 
                 await job_manager.ensure_not_cancelled()
-
-                await job_manager.add_notification(
-                    event=NotificationEvents.SAVING_GRANT_APPLICATION,
-                    message="Finalizing grant application",
-                    notification_type="info",
-                )
 
                 complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
                 complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]

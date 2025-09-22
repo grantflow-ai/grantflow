@@ -837,9 +837,9 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
 
 @pytest.fixture
 def mock_grant_application_job_manager() -> AsyncMock:
-    from services.rag.src.utils.job_manager import GrantApplicationJobManager
+    from services.rag.src.utils.job_manager import JobManager
 
-    manager = AsyncMock(spec=GrantApplicationJobManager)
+    manager = AsyncMock(spec=JobManager)
     manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
     manager.ensure_not_cancelled = AsyncMock(return_value=None)
     manager.add_notification = AsyncMock(return_value=None)
@@ -849,9 +849,9 @@ def mock_grant_application_job_manager() -> AsyncMock:
 
 @pytest.fixture
 def mock_grant_template_job_manager() -> AsyncMock:
-    from services.rag.src.utils.job_manager import GrantTemplateJobManager
+    from services.rag.src.utils.job_manager import JobManager
 
-    manager = AsyncMock(spec=GrantTemplateJobManager)
+    manager = AsyncMock(spec=JobManager)
     manager.job_id = UUID("12345678-1234-5678-9012-123456789012")
     manager.ensure_not_cancelled = AsyncMock(return_value=None)
     manager.add_notification = AsyncMock(return_value=None)

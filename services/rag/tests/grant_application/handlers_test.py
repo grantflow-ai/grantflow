@@ -20,7 +20,7 @@ from services.rag.src.grant_application.handlers import (
     handle_generate_research_plan_stage,
     handle_generate_sections_stage,
 )
-from services.rag.src.utils.job_manager import GrantApplicationJobManager as JobManager
+from services.rag.src.utils.job_manager import JobManager
 
 
 @pytest.fixture
