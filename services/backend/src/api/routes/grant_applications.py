@@ -210,9 +210,6 @@ async def _handle_retrieve_application(
         if grant_application.text:
             response["text"] = grant_application.text
 
-        if grant_application.rag_job_id:
-            response["rag_job_id"] = str(grant_application.rag_job_id)
-
         if grant_application.parent_id:
             response["parent_id"] = str(grant_application.parent_id)
 
@@ -234,9 +231,6 @@ async def _handle_retrieve_application(
                 template_response["submission_date"] = template.submission_date.isoformat()
 
                 response["deadline"] = template.submission_date.isoformat()
-
-            if template.rag_job_id:
-                template_response["rag_job_id"] = str(template.rag_job_id)
 
             if template.granting_institution:
                 org = template.granting_institution

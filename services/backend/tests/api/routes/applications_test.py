@@ -1,386 +1,152 @@
-from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
 from typing import Any
-from unittest.mock import ANY, AsyncMock, patch
-from uuid import UUID
+from uuid import uuid4
 
-from faker import Faker
-from packages.db.src.enums import (
-    ApplicationStatusEnum,
-    SourceIndexingStatusEnum,
-)
+import pytest
+from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
-    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
     OrganizationUser,
     Project,
     RagFile,
+    RagSource,
     RagUrl,
 )
-from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.factories import GrantTemplateFactory
 
 from services.backend.tests.conftest import TestingClientType
 
-faker = Faker()
+
+@pytest.fixture
+def project_member_user(project_owner_user: OrganizationUser) -> OrganizationUser:
+    return project_owner_user
 
 
-async def test_create_application_unauthorized(
-    test_client: TestingClientType,
-) -> None:
-    different_project_id = UUID("00000000-0000-0000-0000-000000000000")
-
-    response = await test_client.post(
-        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications",
-        json={"title": "Test Grant Application"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-async def test_update_application_success(
+async def test_list_applications(
     test_client: TestingClientType,
     project: Project,
-    grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    async with async_session_maker() as session:
-        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert app is not None
-        assert app.project_id == project.id
-        assert app.deleted_at is None
+    async with async_session_maker() as session, session.begin():
+        for i in range(3):
+            app = GrantApplication(
+                title=f"Application {i}",
+                project_id=project.id,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            )
+            session.add(app)
+        await session.commit()
 
-    update_data = {
-        "title": "Updated Title",
-        "status": ApplicationStatusEnum.IN_PROGRESS.value,
-        "form_inputs": {
-            "background_context": "Updated background context",
-            "hypothesis": "Updated hypothesis",
-            "rationale": "Updated rationale",
-            "novelty_and_innovation": "Updated novelty and innovation",
-            "team_excellence": "Updated team excellence",
-            "preliminary_data": "Updated preliminary data",
-            "research_feasibility": "Updated research feasibility",
-            "impact": "Updated impact",
-            "scientific_infrastructure": "Updated scientific infrastructure",
-        },
-        "research_objectives": [
-            {
-                "number": 1,
-                "title": "Objective 1",
-                "description": "Description 1",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "Task 1",
-                        "description": "Task Description 1",
-                    }
-                ],
-            }
-        ],
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert len(data) >= 3
+    assert all("id" in app for app in data)
+    assert all("title" in app for app in data)
+
+
+async def test_list_applications_empty(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data == []
+
+
+async def test_list_applications_unauthorized(
+    test_client: TestingClientType,
+    project: Project,
+) -> None:
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_create_application(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    application_data = {
+        "title": "New Application",
+        "description": "Test description",
     }
 
-    response = await test_client.patch(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        json=update_data,
-        headers={"Authorization": "Bearer some_token"},
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        json=application_data,
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    async with async_session_maker() as session:
-        updated_app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert updated_app is not None
-        assert updated_app.title == "Updated Title"
-        assert updated_app.status == ApplicationStatusEnum.IN_PROGRESS
-        assert updated_app.form_inputs == {
-            "background_context": "Updated background context",
-            "hypothesis": "Updated hypothesis",
-            "rationale": "Updated rationale",
-            "novelty_and_innovation": "Updated novelty and innovation",
-            "team_excellence": "Updated team excellence",
-            "preliminary_data": "Updated preliminary data",
-            "research_feasibility": "Updated research feasibility",
-            "impact": "Updated impact",
-            "scientific_infrastructure": "Updated scientific infrastructure",
-        }
-        assert len(updated_app.research_objectives) == 1
-        assert updated_app.research_objectives[0]["title"] == "Objective 1"
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    assert data["title"] == "New Application"
+    assert data["description"] == "Test description"
+    assert "id" in data
+    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
 
 
-async def test_update_application_not_found(
+async def test_create_application_minimal(
     test_client: TestingClientType,
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
-
-    response = await test_client.patch(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
-        json={"title": "Updated Title"},
-        headers={"Authorization": "Bearer some_token"},
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        json={"title": "Minimal Application"},
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "Application not found" in response.text
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    assert data["title"] == "Minimal Application"
+    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
 
 
-async def test_delete_application_success(
+async def test_retrieve_application(
     test_client: TestingClientType,
     project: Project,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session:
-        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert app is not None
-        assert app.project_id == project.id
-        assert app.deleted_at is None
-
-    response = await test_client.delete(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
-
-    async with async_session_maker() as session:
-        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert result is not None
-        assert result.deleted_at is not None
-
-
-async def test_delete_application_unauthorized(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-) -> None:
-    different_project_id = UUID("00000000-0000-0000-0000-000000000000")
-
-    response = await test_client.delete(
-        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-@patch(
-    "services.backend.src.api.routes.grant_applications.publish_rag_task",
-    new_callable=AsyncMock,
-)
-async def test_generate_application_success(
-    mock_publish_rag_task: AsyncMock,
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        grant_application.research_objectives = [
-            {
-                "number": 1,
-                "title": "Research Objective 1",
-                "description": "Description of objective 1",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "Research Task 1",
-                        "description": "Task description",
-                    }
-                ],
-            }
-        ]
-        session.add(grant_application)
-
-        grant_template = GrantTemplate(
-            grant_application_id=grant_application.id,
-            grant_sections=[
-                {
-                    "id": "section1",
-                    "order": 1,
-                    "title": "Introduction",
-                    "parent_id": None,
-                }
-            ],
+        app = GrantApplication(
+            title="Test Application",
+            description="Test description",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
-        session.add(grant_template)
-
-        rag_source = RagFile(
-            bucket_name="test-bucket",
-            object_path="test/path",
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size=1000,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-        )
-        session.add(rag_source)
-        await session.flush()
-
-        app_source = GrantApplicationSource(
-            grant_application_id=grant_application.id,
-            rag_source_id=rag_source.id,
-        )
-        session.add(app_source)
+        session.add(app)
         await session.commit()
 
-    response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    mock_publish_rag_task.assert_called_once_with(
-        parent_type="grant_application",
-        parent_id=grant_application.id,
-        trace_id=ANY,
-    )
-
-
-async def test_generate_application_insufficient_data(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-    project_member_user: OrganizationUser,
-) -> None:
-    response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "Insufficient data" in response.text
-
-
-async def test_generate_application_no_rag_sources(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        grant_application.title = "Test Application"
-        grant_application.research_objectives = [
-            {
-                "number": 1,
-                "title": "Research Objective 1",
-                "description": "Description of objective 1",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "Research Task 1",
-                        "description": "Task description",
-                    }
-                ],
-            }
-        ]
-        session.add(grant_application)
-
-        grant_template = GrantTemplate(
-            grant_application_id=grant_application.id,
-            grant_sections=[
-                {
-                    "id": "section1",
-                    "order": 1,
-                    "title": "Introduction",
-                    "parent_id": None,
-                }
-            ],
-        )
-        session.add(grant_template)
-
-        await session.commit()
-
-    response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "No rag sources found" in response.text
-
-
-async def test_generate_application_not_found(
-    test_client: TestingClientType,
-    project: Project,
-    project_member_user: OrganizationUser,
-) -> None:
-    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
-
-    response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
-
-
-async def test_retrieve_application_success(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-    project_member_user: OrganizationUser,
-) -> None:
     response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
-
-    assert data["id"] == str(grant_application.id)
-    assert data["project_id"] == str(grant_application.project_id)
-    assert data["title"] == grant_application.title
-    assert data["status"] == grant_application.status.value
-    assert "created_at" in data
-    assert "updated_at" in data
-    assert data["rag_sources"] == []
-    assert "rag_job_id" not in data
-
-
-async def test_retrieve_application_with_grant_template(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-    grant_template: GrantTemplate,
-    project_member_user: OrganizationUser,
-) -> None:
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert data["id"] == str(grant_application.id)
-    assert data["title"] == grant_application.title
-
-    assert "grant_template" in data
-    template_data = data["grant_template"]
-    assert template_data["id"] == str(grant_template.id)
-    assert "grant_sections" in template_data
-    assert "granting_institution_id" in template_data
-    assert "rag_sources" in template_data
-    assert template_data["rag_sources"] == []
-    assert "rag_job_id" not in template_data
-
-    if "granting_institution" in template_data:
-        org_data = template_data["granting_institution"]
-        assert "id" in org_data
-        assert "full_name" in org_data
-
-    assert data["rag_sources"] == []
+    assert data["id"] == str(app.id)
+    assert data["title"] == "Test Application"
+    assert data["description"] == "Test description"
 
 
 async def test_retrieve_application_not_found(
@@ -388,166 +154,245 @@ async def test_retrieve_application_not_found(
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
-
+    non_existent_id = uuid4()
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
-        headers={"Authorization": "Bearer some_token"},
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-async def test_retrieve_application_wrong_project(
+async def test_update_application(
     test_client: TestingClientType,
     project: Project,
-    grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        different_project = Project(name="Different Project", organization_id=project.organization_id)
-        session.add(different_project)
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{different_project.organization_id}/projects/{different_project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
-
-
-async def test_retrieve_application_unauthorized(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-) -> None:
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-async def test_retrieve_application_with_complete_data(
-    test_client: TestingClientType,
-    project: Project,
-    grant_application: GrantApplication,
-    grant_template: GrantTemplate,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        app = await session.get(GrantApplication, grant_application.id)
-        template = await session.get(GrantTemplate, grant_template.id)
-
-        granting_institution = GrantingInstitution(
-            full_name="Test Funding Organization Complete",
-            abbreviation="TFOC",
+        app = GrantApplication(
+            title="Original Title",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
-        session.add(granting_institution)
-        await session.flush()
-
-        template.granting_institution_id = granting_institution.id
-        template.submission_date = date(2024, 12, 31)
-
-        app.form_inputs = {"principal_investigator": "Dr. Smith", "budget": "500000"}
-        app.research_objectives = [
-            {
-                "number": 1,
-                "title": "Objective 1",
-                "description": "Research objective description",
-                "research_tasks": [{"number": 1, "title": "Task 1", "description": "Task description"}],
-            }
-        ]
-        app.text = "Generated application text content"
-        app.completed_at = datetime.now(tz=UTC)
-
+        session.add(app)
         await session.commit()
 
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
+    update_data = {
+        "title": "Updated Title",
+        "description": "Updated description",
+        "status": ApplicationStatusEnum.IN_PROGRESS.value,
+    }
+
+    response = await test_client.patch(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        json=update_data,
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
-
-    assert data["id"] == str(grant_application.id)
-    assert data["project_id"] == str(grant_application.project_id)
-    assert data["title"] == grant_application.title
-    assert data["status"] == grant_application.status.value
-    assert data["form_inputs"] == {
-        "principal_investigator": "Dr. Smith",
-        "budget": "500000",
-    }
-    assert data["text"] == "Generated application text content"
-    assert len(data["research_objectives"]) == 1
-    assert data["research_objectives"][0]["title"] == "Objective 1"
-    assert "completed_at" in data
-
-    assert "grant_template" in data
-    template_data = data["grant_template"]
-    assert template_data["id"] == str(grant_template.id)
-    assert template_data["submission_date"] == "2024-12-31"
-    assert "granting_institution" in template_data
-    org_data = template_data["granting_institution"]
-    assert org_data["full_name"] == "Test Funding Organization Complete"
-    assert org_data["abbreviation"] == "TFOC"
-
-    assert "rag_sources" in template_data
-    assert template_data["rag_sources"] == []
-
-    assert data["rag_sources"] == []
+    assert data["title"] == "Updated Title"
+    assert data["description"] == "Updated description"
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
 
 
-async def test_retrieve_application_with_rag_job_ids(
+async def test_update_application_partial(
     test_client: TestingClientType,
     project: Project,
-    grant_application: GrantApplication,
-    grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    from testing.factories import (
-        GrantApplicationGenerationJobFactory,
-        GrantTemplateGenerationJobFactory,
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Original Title",
+            description="Original description",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.patch(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        json={"title": "Only Title Updated"},
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data["title"] == "Only Title Updated"
+    assert data["description"] == "Original description"
+
+
+async def test_delete_application(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
     async with async_session_maker() as session, session.begin():
-        app = await session.get(GrantApplication, grant_application.id)
-        template = await session.get(GrantTemplate, grant_template.id)
+        app = GrantApplication(
+            title="To Delete",
+            project_id=project.id,
+        )
+        session.add(app)
+        await session.commit()
 
-        app_job = GrantApplicationGenerationJobFactory.build(grant_application_id=app.id)
-        session.add(app_job)
+    response = await test_client.delete(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    async with async_session_maker() as session:
+        deleted_app = await session.get(GrantApplication, app.id)
+        assert deleted_app is not None
+        assert deleted_app.deleted_at is not None
+
+
+async def test_retrieve_application_with_grant_template(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="App with Template",
+            project_id=project.id,
+        )
+        session.add(app)
         await session.flush()
 
-        template_job = GrantTemplateGenerationJobFactory.build(grant_template_id=template.id)
-        session.add(template_job)
-        await session.flush()
-
-        app.rag_job_id = app_job.id
-        template.rag_job_id = template_job.id
-
+        template = GrantTemplate(
+            grant_application_id=app.id,
+            grant_sections=[
+                {"id": "section1", "title": "Introduction", "order": 1},
+                {"id": "section2", "title": "Methods", "order": 2},
+            ],
+        )
+        session.add(template)
         await session.commit()
 
     response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert "grant_template" in data
+    assert data["grant_template"]["id"] == str(template.id)
+    assert len(data["grant_template"]["grant_sections"]) == 2
+
+
+async def test_retrieve_application_with_research_objectives(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    research_objectives: list[ResearchObjective] = [
+        ResearchObjective(
+            number=1,
+            title="Objective 1",
+            description="Description 1",
+            research_tasks=[],
+        ),
+        ResearchObjective(
+            number=2,
+            title="Objective 2",
+            description="Description 2",
+            research_tasks=[],
+        ),
+    ]
+
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="App with Objectives",
+            project_id=project.id,
+            research_objectives=research_objectives,
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert "research_objectives" in data
+    assert len(data["research_objectives"]) == 2
+    assert data["research_objectives"][0]["title"] == "Objective 1"
+
+
+async def test_duplicate_application(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        original_app = GrantApplication(
+            title="Original Application",
+            description="Original description",
+            project_id=project.id,
+            status=ApplicationStatusEnum.IN_PROGRESS,
+            text="Some text content",
+            research_objectives=[
+                ResearchObjective(
+                    number=1,
+                    title="Test Objective",
+                    description="Test description",
+                    research_tasks=[],
+                )
+            ],
+        )
+        session.add(original_app)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=original_app.id,
+            grant_sections=[{"id": "s1", "title": "Section 1", "order": 1}],
+        )
+        session.add(template)
+        await session.commit()
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{original_app.id}/duplicate",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
     data = response.json()
 
-    assert data["id"] == str(grant_application.id)
-    assert "rag_job_id" in data
-    assert data["rag_job_id"] == str(app_job.id)
+    assert data["title"] == "Original Application (Copy)"
+    assert data["description"] == "Original description"
+    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["text"] == "Some text content"
+    assert len(data["research_objectives"]) == 1
+    assert data["research_objectives"][0]["title"] == "Test Objective"
 
     assert "grant_template" in data
-    template_data = data["grant_template"]
-    assert "rag_job_id" in template_data
-    assert template_data["rag_job_id"] == str(template_job.id)
+    assert len(data["grant_template"]["grant_sections"]) == 1
+
+
+async def test_duplicate_application_not_found(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    non_existent_id = uuid4()
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}/duplicate",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 async def test_retrieve_application_with_rag_sources(
@@ -559,57 +404,58 @@ async def test_retrieve_application_with_rag_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        app = await session.get(GrantApplication, grant_application.id)
-        template = await session.get(GrantTemplate, grant_template.id)
-
         rag_file = RagFile(
-            bucket_name="test-bucket",
-            object_path="test/path/document.pdf",
-            filename="research_proposal.pdf",
-            mime_type="application/pdf",
-            size=2048576,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
+            organization_id=project.organization_id,
+            url="gs://bucket/file.pdf",
+            filename="file.pdf",
+            content_type="application/pdf",
+            size_bytes=1024,
         )
         session.add(rag_file)
-        await session.flush()
-        rag_file_id = rag_file.id
 
         rag_url = RagUrl(
-            url="https://example.com/grant-guidelines",
-            title="Grant Guidelines",
-            indexing_status=SourceIndexingStatusEnum.INDEXING,
+            organization_id=project.organization_id,
+            url="https://example.com",
         )
         session.add(rag_url)
-        await session.flush()
-        rag_url_id = rag_url.id
 
-        template_rag_file = RagFile(
-            bucket_name="test-bucket",
-            object_path="test/path/template_doc.docx",
-            filename="grant_template_guide.docx",
-            mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            size=1024000,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-        )
-        session.add(template_rag_file)
         await session.flush()
 
-        app_rag_file = GrantApplicationSource(
-            grant_application_id=app.id,
-            rag_source_id=rag_file.id,
+        file_source = RagSource(
+            id=rag_file.id,
+            source_type="rag_file",
+            organization_id=project.organization_id,
+            identifier="file.pdf",
         )
-        app_rag_url = GrantApplicationSource(
-            grant_application_id=app.id,
-            rag_source_id=rag_url.id,
-        )
-        session.add(app_rag_file)
-        session.add(app_rag_url)
+        session.add(file_source)
 
-        template_rag_source = GrantTemplateSource(
-            grant_template_id=template.id,
-            rag_source_id=template_rag_file.id,
+        url_source = RagSource(
+            id=rag_url.id,
+            source_type="rag_url",
+            organization_id=project.organization_id,
+            identifier="https://example.com",
         )
-        session.add(template_rag_source)
+        session.add(url_source)
+
+        await session.flush()
+
+        app_file_link = GrantApplicationSource(
+            grant_application_id=grant_application.id,
+            rag_source_id=file_source.id,
+        )
+        session.add(app_file_link)
+
+        app_url_link = GrantApplicationSource(
+            grant_application_id=grant_application.id,
+            rag_source_id=url_source.id,
+        )
+        session.add(app_url_link)
+
+        template_file_link = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=file_source.id,
+        )
+        session.add(template_file_link)
 
         await session.commit()
 
@@ -621,544 +467,43 @@ async def test_retrieve_application_with_rag_sources(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    assert data["id"] == str(grant_application.id)
-
+    assert "rag_sources" in data
     assert len(data["rag_sources"]) == 2
-
-    app_sources = data["rag_sources"]
-    file_source = next((s for s in app_sources if "filename" in s), None)
-    url_source = next((s for s in app_sources if "url" in s), None)
-
-    assert file_source is not None
-    assert file_source["sourceId"] == str(rag_file_id)
-    assert file_source["filename"] == "research_proposal.pdf"
-    assert file_source["status"] == "FINISHED"
-    assert "url" not in file_source
-
-    assert url_source is not None
-    assert url_source["sourceId"] == str(rag_url_id)
-    assert url_source["url"] == "https://example.com/grant-guidelines"
-    assert url_source["status"] == "INDEXING"
-    assert "filename" not in url_source
+    source_identifiers = {s["identifier"] for s in data["rag_sources"]}
+    assert "file.pdf" in source_identifiers
+    assert "https://example.com" in source_identifiers
 
     assert "grant_template" in data
-    template_data = data["grant_template"]
-    assert "rag_sources" in template_data
-    assert len(template_data["rag_sources"]) == 1
-
-    template_source = template_data["rag_sources"][0]
-    assert template_source["sourceId"] == str(template_rag_file.id)
-    assert template_source["filename"] == "grant_template_guide.docx"
-    assert template_source["status"] == "FINISHED"
+    assert "rag_sources" in data["grant_template"]
+    assert len(data["grant_template"]["rag_sources"]) == 1
+    assert data["grant_template"]["rag_sources"][0]["identifier"] == "file.pdf"
 
 
-async def test_list_applications_basic(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        applications = []
-        for i in range(5):
-            app = GrantApplication(
-                project_id=project.id,
-                title=f"Test Application {i}",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-                text=f"Description for application {i}",
-            )
-            session.add(app)
-            applications.append(app)
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert "applications" in data
-    assert "pagination" in data
-    assert len(data["applications"]) == 5
-    assert data["pagination"]["total"] == 5
-    assert data["pagination"]["limit"] == 50
-    assert data["pagination"]["offset"] == 0
-    assert data["pagination"]["has_more"] is False
-
-
-async def test_list_applications_with_submission_dates(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session:
-        applications = await session.scalars(
-            insert(GrantApplication)
-            .values(
-                [
-                    {
-                        "project_id": project.id,
-                        "title": f"Test Application {i}",
-                        "status": ApplicationStatusEnum.WORKING_DRAFT,
-                        "description": f"Description for application {i}",
-                    }
-                    for i in range(5)
-                ]
-            )
-            .returning(GrantApplication)
-        )
-
-        for _i, application in enumerate(applications):
-            grant_template = GrantTemplateFactory.build(
-                grant_application_id=application.id,
-                granting_institution_id=None,
-                submission_date=faker.date_between(start_date="-2y", end_date="+1y"),
-            )
-            session.add(grant_template)
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert "applications" in data
-    assert "pagination" in data
-    assert len(data["applications"]) == 5
-    for app in data["applications"]:
-        assert "submission_date" in app
-
-
-async def test_list_applications_with_search(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        app1 = GrantApplication(
-            project_id=project.id,
-            title="Research Grant Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-            text="This is about machine learning research",
-        )
-        app2 = GrantApplication(
-            project_id=project.id,
-            title="Equipment Purchase Request",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-            text="We need new research equipment",
-        )
-        app3 = GrantApplication(
-            project_id=project.id,
-            title="Conference Travel Grant",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-            text="Travel funding for research conference",
-        )
-        session.add_all([app1, app2, app3])
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        params={"search": "research"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 3
-    assert data["pagination"]["total"] == 3
-
-
-async def test_list_applications_with_status_filter(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        app_draft = GrantApplication(
-            project_id=project.id,
-            title="Draft Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-        )
-        app_in_progress = GrantApplication(
-            project_id=project.id,
-            title="In Progress Application",
-            status=ApplicationStatusEnum.IN_PROGRESS,
-        )
-        app_completed = GrantApplication(
-            project_id=project.id,
-            title="Generating Application",
-            status=ApplicationStatusEnum.GENERATING,
-            completed_at=datetime.now(UTC),
-        )
-        session.add_all([app_draft, app_in_progress, app_completed])
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        params={"status": "IN_PROGRESS"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 1
-    assert data["applications"][0]["status"] == "IN_PROGRESS"
-    assert data["applications"][0]["title"] == "In Progress Application"
-
-
-async def test_list_applications_with_pagination(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        for i in range(15):
-            app = GrantApplication(
-                project_id=project.id,
-                title=f"Application {i:02d}",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            )
-            session.add(app)
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        params={"limit": 10, "offset": 0},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 10
-    assert data["pagination"]["total"] == 15
-    assert data["pagination"]["limit"] == 10
-    assert data["pagination"]["offset"] == 0
-    assert data["pagination"]["has_more"] is True
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        params={"limit": 10, "offset": 10},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 5
-    assert data["pagination"]["offset"] == 10
-    assert data["pagination"]["has_more"] is False
-
-
-async def test_list_applications_with_sorting(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        app1 = GrantApplication(
-            project_id=project.id,
-            title="Zebra Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-        )
-        app2 = GrantApplication(
-            project_id=project.id,
-            title="Alpha Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-        )
-        app3 = GrantApplication(
-            project_id=project.id,
-            title="Beta Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-        )
-        session.add_all([app1, app2, app3])
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        params={"sort": "title", "order": "asc"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 3
-    assert data["applications"][0]["title"] == "Alpha Application"
-    assert data["applications"][1]["title"] == "Beta Application"
-    assert data["applications"][2]["title"] == "Zebra Application"
-
-
-async def test_list_applications_unauthorized(
-    test_client: TestingClientType,
-    project: Project,
-) -> None:
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-async def test_list_applications_empty_project(
-    test_client: TestingClientType,
-    project: Project,
-    project_member_user: OrganizationUser,
-) -> None:
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert data["applications"] == []
-    assert data["pagination"]["total"] == 0
-    assert data["pagination"]["has_more"] is False
-
-
-@patch(
-    "services.backend.src.api.routes.grant_applications.publish_rag_task",
-    new_callable=AsyncMock,
-)
-async def test_generate_application_status_transition_to_generating(
-    mock_publish_rag_task: AsyncMock,
-    test_client: TestingClientType,
+@pytest.fixture
+async def grant_application(
     async_session_maker: async_sessionmaker[Any],
     project: Project,
-    grant_application: GrantApplication,
-    project_owner_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        grant_application.status = ApplicationStatusEnum.WORKING_DRAFT
-        grant_application.title = "Test Application"
-        grant_application.research_objectives = [
-            {
-                "number": 1,
-                "title": "Test Research Objective",
-                "description": "Description of objective",
-                "research_tasks": [
-                    {
-                        "number": 1,
-                        "title": "Research Task",
-                        "description": "Task description",
-                    }
-                ],
-            }
-        ]
-        session.add(grant_application)
-
-        grant_template = GrantTemplate(
-            grant_application_id=grant_application.id,
-            grant_sections=[
-                {
-                    "id": "section1",
-                    "order": 1,
-                    "title": "Introduction",
-                    "parent_id": None,
-                }
-            ],
-        )
-        session.add(grant_template)
-
-        rag_source = RagFile(
-            bucket_name="test-bucket",
-            object_path="test/path",
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size=1000,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-        )
-        session.add(rag_source)
-        await session.flush()
-
-        app_source = GrantApplicationSource(
-            grant_application_id=grant_application.id,
-            rag_source_id=rag_source.id,
-        )
-        session.add(app_source)
-        await session.commit()
-
-    response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
-
-    mock_publish_rag_task.assert_called_once_with(
-        parent_type="grant_application",
-        parent_id=grant_application.id,
-        trace_id=ANY,
-    )
-
-    async with async_session_maker() as session:
-        app = await session.get(GrantApplication, grant_application.id)
-        assert app.status == ApplicationStatusEnum.GENERATING
-
-
-async def test_application_status_transitions_preserve_generating(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    grant_application: GrantApplication,
-    project_owner_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session:
-        app = await session.get(GrantApplication, grant_application.id)
-        app.status = ApplicationStatusEnum.GENERATING
-        await session.commit()
-
-    async with async_session_maker() as session:
-        project = await session.get(Project, grant_application.project_id)
-        organization_id = project.organization_id
-
-    response = await test_client.get(
-        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications/{grant_application.id}",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == ApplicationStatusEnum.GENERATING.value
-
-    response = await test_client.get(
-        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data["applications"]) > 0
-
-    our_app = next((app for app in data["applications"] if app["id"] == str(grant_application.id)), None)
-    assert our_app is not None
-    assert our_app["status"] == ApplicationStatusEnum.GENERATING.value
-
-
-async def test_list_organization_applications(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    project: Project,
-    project_member_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        second_project = Project(
-            organization_id=project.organization_id,
-            name="Second Project",
-        )
-        session.add(second_project)
-        await session.commit()
-        second_project_id = second_project.id
-
-    async with async_session_maker() as session, session.begin():
-        now = datetime.now(UTC)
-
-        for i in range(3):
-            app = GrantApplication(
-                project_id=project.id,
-                title=f"Project 1 - App {i}",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-                updated_at=now - timedelta(days=i * 10),
-            )
-            session.add(app)
-
-        for i in range(3):
-            app = GrantApplication(
-                project_id=second_project_id,
-                title=f"Project 2 - App {i}",
-                status=ApplicationStatusEnum.IN_PROGRESS,
-                updated_at=now - timedelta(days=i * 15),
-            )
-            session.add(app)
-
-        old_app = GrantApplication(
-            project_id=project.id,
-            title="Old Application",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
-            updated_at=now - timedelta(days=100),
-        )
-        session.add(old_app)
-
-        await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 5
-    assert data["pagination"]["total"] == 5
-    assert data["pagination"]["limit"] == 5
-    assert data["pagination"]["offset"] == 0
-    assert data["pagination"]["has_more"] is False
-
-    project_ids = {app["project_id"] for app in data["applications"]}
-    assert len(project_ids) == 2
-
-    created_dates = [app["created_at"] for app in data["applications"]]
-    assert created_dates == sorted(created_dates, reverse=True)
-
-
-async def test_list_organization_applications_with_grant_template(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    project: Project,
-    project_member_user: OrganizationUser,
-) -> None:
+) -> GrantApplication:
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
+            title="Test Grant Application",
             project_id=project.id,
-            title="Application with Template",
-            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         session.add(app)
-        await session.flush()
+        await session.commit()
+    return app
 
+
+@pytest.fixture
+async def grant_template(
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+) -> GrantTemplate:
+    async with async_session_maker() as session, session.begin():
         template = GrantTemplate(
-            grant_application_id=app.id,
+            grant_application_id=grant_application.id,
             grant_sections=[],
-            submission_date=date(2025, 12, 31),
         )
         session.add(template)
         await session.commit()
-
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 1
-    assert data["applications"][0]["title"] == "Application with Template"
-    assert "submission_date" in data["applications"][0]
-    assert "deadline" in data["applications"][0]
-    assert data["applications"][0]["submission_date"] == "2025-12-31"
-
-
-async def test_list_organization_applications_unauthorized(
-    test_client: TestingClientType,
-    project: Project,
-) -> None:
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+    return template

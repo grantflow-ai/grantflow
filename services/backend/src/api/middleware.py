@@ -52,26 +52,29 @@ def _matches_source_pattern(path: str, pattern: str) -> bool:
     )
 
 
+def _is_public_path(path: str) -> bool:
+    if any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema"):
+        return True
+    if path.startswith("/grants"):
+        return True
+    return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
+
+
+def _is_admin_path(path: str) -> bool:
+    if any(
+        path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
+        for admin_path in ADMIN_PATHS
+    ):
+        return True
+
+    return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
+
+
+def _is_webhook_path(path: str) -> bool:
+    return path in WEBHOOK_PATHS
+
+
 class AuthMiddleware(AbstractAuthenticationMiddleware):
-    def _is_public_path(self, path: str) -> bool:
-        if any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema"):
-            return True
-        if path.startswith("/grants"):
-            return True
-        return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
-
-    def _is_admin_path(self, path: str) -> bool:
-        if any(
-            path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
-            for admin_path in ADMIN_PATHS
-        ):
-            return True
-
-        return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
-
-    def _is_webhook_path(self, path: str) -> bool:
-        return path in WEBHOOK_PATHS
-
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
@@ -81,10 +84,10 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         path = connection.url.path
         auth_header = connection.headers.get("Authorization", "").strip()
 
-        if self._is_public_path(path):
+        if _is_public_path(path):
             return AuthenticationResult(user=None, auth=None)
 
-        if self._is_webhook_path(path):
+        if _is_webhook_path(path):
             logger.debug(
                 "Processing webhook authentication",
                 path=path,
@@ -114,13 +117,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 if forwarded_audience not in possible_audiences:
                     possible_audiences.append(forwarded_audience)
 
-            logger.debug(
-                "Verifying webhook OIDC token",
-                path=path,
-                audience_count=len(possible_audiences),
-                netloc=connection.url.netloc,
-            )
-
             for expected_audience in possible_audiences:
                 if verify_webhook_oidc_token(token, expected_audience):
                     logger.debug(
@@ -138,7 +134,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             )
             raise NotAuthorizedException("Invalid OIDC token")
 
-        if self._is_admin_path(path):
+        if _is_admin_path(path):
             access_code = get_env("ADMIN_ACCESS_CODE")
             if auth_header and auth_header == access_code:
                 return AuthenticationResult(user=None, auth=None)
@@ -156,10 +152,12 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             project_id = connection.path_params.get("project_id")
 
             if not organization_id:
+                logger.error("Organization context required", path=path)
                 raise NotAuthorizedException("Organization context required")
 
             if not firebase_uid:
-                raise NotAuthorizedException
+                logger.error("Firebase UID required", path=path)
+                raise NotAuthorizedException("Firebase UID required")
 
             async with connection.app.state.session_maker() as session:
                 stmt = select(OrganizationUser).where(
@@ -187,6 +185,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                             )
                         )
                         if not project_access:
+                            logger.error("Project access required", path=path)
                             raise NotAuthorizedException("Project access required")
 
                     return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
@@ -217,6 +216,7 @@ class TraceIdMiddleware(ASGIMiddleware):
 
         if "state" not in scope:
             scope["state"] = {}
+
         scope["state"]["trace_id"] = trace_id
 
         logger.debug(
