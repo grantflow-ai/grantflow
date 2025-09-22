@@ -277,18 +277,14 @@ Available profiles:
 
 ### Service-Specific Development
 
-You can also start individual services using Task:
+For frontend development:
 
 ```bash
-# Start just the backend service
-task service:backend:dev
-
-# Start just the indexer service
-task service:indexer:dev
-
 # Start just the frontend
 task frontend:dev
 ```
+
+Backend services are managed collectively through `task dev`.
 
 For a complete list of available commands:
 
@@ -301,12 +297,6 @@ task --list
 ```bash
 # Generate requirements.txt files from pyproject.toml for cloud functions
 task cloud-functions:generate-requirements
-
-# Sync dependencies for cloud functions
-task cloud-functions:sync
-
-# Run tests for cloud functions
-task cloud-functions:test
 ```
 
 ### Testing Variations
@@ -315,48 +305,14 @@ task cloud-functions:test
 # Run all tests (default, parallel execution)
 task test
 
-# Run all tests in serial mode (no parallelization)
-task test:serial
-
 # Run tests in CI mode (serial execution)
 task test:ci
 
 # Run all end-to-end tests
 task test:e2e
-
-# Service-specific granular E2E testing
-task service:indexer:test:e2e:smoke     # < 1 min
-task service:indexer:test:e2e:quality   # 2-5 min
-task service:indexer:test:e2e:full      # 10+ min
-task service:indexer:test:e2e:semantic  # Semantic evaluation
-task service:indexer:test:e2e:ai        # AI-powered evaluation
-
-task service:rag:test:e2e:smoke         # < 1 min
-task service:rag:test:e2e:quality       # 2-5 min
-task service:rag:test:e2e:full          # 10+ min
-task service:rag:test:e2e:semantic      # Semantic evaluation
-task service:rag:test:e2e:ai            # AI evaluation
-task service:rag:test:serial            # Serial mode for debugging
 ```
 
-### GitHub Actions Deployment
 
-```bash
-# Deploy individual services via GitHub Actions
-task gh:deploy:backend
-task gh:deploy:crawler
-task gh:deploy:indexer
-task gh:deploy:rag
-task gh:deploy:scraper
-```
-
-### Local Development Emulators
-
-```bash
-# Start individual emulators
-task emulator:pubsub:up    # Pub/Sub emulator
-task emulator:gcs:up       # Google Cloud Storage emulator
-```
 
 ## Windows Setup (WSL)
 

@@ -84,3 +84,7 @@ openapi.json
 
 # Temporary files and logs
 temp*
+
+# AI Rules generated files
+.cursor/rules/
+AGENTS.md
