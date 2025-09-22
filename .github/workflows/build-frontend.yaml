@@ -7,7 +7,8 @@ on:
             - development
         paths:
             - ".github/workflows/build-frontend.yaml"
-            - ".github/actions/**"
+            - ".github/actions/setup-node-workspace/**"
+            - ".github/actions/resolve-environment/**"
             - "editor/**"
             - "frontend/**"
             - "package.json"
@@ -19,7 +20,8 @@ on:
             - development
         paths:
             - ".github/workflows/build-frontend.yaml"
-            - ".github/actions/**"
+            - ".github/actions/setup-node-workspace/**"
+            - ".github/actions/resolve-environment/**"
             - "editor/**"
             - "frontend/**"
             - "package.json"
