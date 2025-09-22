@@ -297,7 +297,6 @@ async def test_update_source_indexing_status_success(
             logger=mock_logger,
             session_maker=async_session_maker,
             source_id=file_id,
-            parent_id=parent_id,
             identifier="test.pdf",
             text_content="Test content extracted from PDF",
             vectors=vectors,
@@ -372,7 +371,6 @@ async def test_update_source_indexing_status_no_vectors(
             logger=mock_logger,
             session_maker=async_session_maker,
             source_id=file_id,
-            parent_id=parent_id,
             identifier="empty.pdf",
             text_content="",
             vectors=None,
@@ -398,7 +396,6 @@ async def test_update_source_indexing_status_database_error(
     trace_id: str,
 ) -> None:
     file_id: UUID = uuid4()
-    parent_id = grant_application.id
 
     mock_logger = Mock(spec=BoundLogger)
     mock_logger.exception = Mock()
@@ -425,7 +422,6 @@ async def test_update_source_indexing_status_database_error(
             logger=mock_logger,
             session_maker=mock_session_maker,
             source_id=file_id,
-            parent_id=parent_id,
             identifier="test.pdf",
             text_content="Test content",
             vectors=None,

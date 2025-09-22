@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.json_objects import DocumentMetadata
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
@@ -23,6 +22,7 @@ from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.exceptions import ValidationError
 
 if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
     from structlog.typing import FilteringBoundLogger
 
 
@@ -112,7 +112,7 @@ async def update_source_indexing_status(
     vectors: list[VectorDTO] | None,
     indexing_status: SourceIndexingStatusEnum,
     trace_id: str,
-    document_metadata: DocumentMetadata | None = None,
+    document_metadata: "DocumentMetadata | None" = None,
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
