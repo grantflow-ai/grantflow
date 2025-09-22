@@ -484,12 +484,14 @@ async def handle_delete_rag_source(
                         GrantTemplate.deleted_at.is_(None),
                     )
                 )
-                if template and template.rag_job_id:
-                    await _cancel_job_if_active(
-                        session=session,
-                        job_id=template.rag_job_id,
-                        reason="Template source deleted",
-                    )
+                if template and template.rag_jobs:
+                    # Cancel any active RAG jobs for this template
+                    for job in template.rag_jobs:
+                        await _cancel_job_if_active(
+                            session=session,
+                            job_id=job.id,
+                            reason="Template source deleted",
+                        )
 
             elif application_id:
                 application = await session.scalar(
@@ -498,12 +500,14 @@ async def handle_delete_rag_source(
                         GrantApplication.deleted_at.is_(None),
                     )
                 )
-                if application and application.rag_job_id:
-                    await _cancel_job_if_active(
-                        session=session,
-                        job_id=application.rag_job_id,
-                        reason="Application source deleted",
-                    )
+                if application and application.rag_jobs:
+                    # Cancel any active RAG jobs for this application
+                    for job in application.rag_jobs:
+                        await _cancel_job_if_active(
+                            session=session,
+                            job_id=job.id,
+                            reason="Application source deleted",
+                        )
 
             source.soft_delete()
             await session.commit()
