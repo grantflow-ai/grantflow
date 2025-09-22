@@ -22,57 +22,65 @@ describe.sequential("ObjectiveForm", () => {
 	it("renders all form fields", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
-		expect(screen.getByTestId("objective-name-input")).toBeInTheDocument();
+		expect(screen.getByTestId("objective-title-input")).toBeInTheDocument();
 		expect(screen.getByTestId("objective-description-input")).toBeInTheDocument();
-		expect(screen.getByTestId("task-description-0")).toBeInTheDocument();
+		expect(screen.queryByTestId("task-title-0")).not.toBeInTheDocument();
 		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
 	});
 
-	it("starts with one task by default", () => {
+	it("starts with no tasks by default", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
-		expect(screen.getByTestId("task-description-0")).toBeInTheDocument();
-		expect(screen.queryByTestId("task-description-1")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("task-title-0")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("task-description-0")).not.toBeInTheDocument();
 	});
 
-	it("adds new task when add task button is clicked", async () => {
+	it("adds new task when add task button is clicked with valid objective data", async () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		await user.type(screen.getByTestId("task-description-0"), "First task description");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+
 		await user.click(screen.getByTestId("add-task-button"));
 
-		expect(screen.getByTestId("task-description-0")).toBeInTheDocument();
-		expect(screen.getByTestId("task-description-1")).toBeInTheDocument();
+		expect(screen.getByTestId("task-title-0")).toBeInTheDocument();
+		expect(screen.queryByTestId("task-description-0")).toBeInTheDocument();
 	});
 
 	it("allows adding multiple tasks", async () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "First task title");
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
 		await user.click(screen.getByTestId("add-task-button"));
-		expect(screen.getByTestId("task-description-1")).toBeInTheDocument();
+		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
 
-		expect(screen.getByTestId("task-description-0")).toBeInTheDocument();
-		expect(screen.getByTestId("task-description-1")).toBeInTheDocument();
+		expect(screen.getByTestId("task-title-0")).toBeInTheDocument();
+		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
 	});
 
-	it("does not show remove button when only one task exists", () => {
+	it("does not show remove button (auto-cleanup handles empty tasks)", () => {
 		render(<ObjectiveForm {...defaultProps} />);
 
 		expect(screen.queryByTestId("remove-task-0")).not.toBeInTheDocument();
 	});
 
-	it("shows validation errors when attempting to save partially completed form", async () => {
+	it("disables save button when no complete tasks exist", async () => {
 		const user = userEvent.setup();
 		const onSaveAction = vi.fn();
 		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+
 		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
@@ -83,38 +91,48 @@ describe.sequential("ObjectiveForm", () => {
 		const onSaveAction = vi.fn();
 		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
-		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
+		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
 
 		await user.click(screen.getByTestId("add-objective-button"));
 
 		expect(onSaveAction).toHaveBeenCalledWith({
 			description: "Test Description",
-			name: "Test Objective",
+			number: 1,
 			tasks: [
 				expect.objectContaining({
-					description: "Test Task",
+					description: "Test Task Description",
+					id: expect.any(String),
+					number: 1,
+					title: "Test Task Title",
 				}),
 			],
+			title: "Test Objective",
 		});
 	});
 
 	it("populates form with initial data when provided", () => {
 		const initialData: ObjectiveFormData = {
 			description: "Initial Description",
-			name: "Initial Objective",
+			number: 1,
 			tasks: [
-				{ description: "Initial Task 1", id: "1" },
-				{ description: "Initial Task 2", id: "2" },
+				{ description: "Initial Task 1", id: "1", number: 1, title: "Task 1" },
+				{ description: "Initial Task 2", id: "2", number: 2, title: "Task 2" },
 			],
+			title: "Initial Objective",
 		};
 
 		render(<ObjectiveForm {...defaultProps} initialData={initialData} />);
 
-		expect(screen.getByTestId("objective-name-input")).toHaveValue("Initial Objective");
+		expect(screen.getByTestId("objective-title-input")).toHaveValue("Initial Objective");
 		expect(screen.getByTestId("objective-description-input")).toHaveValue("Initial Description");
+		expect(screen.getByTestId("task-title-0")).toHaveValue("Task 1");
 		expect(screen.getByTestId("task-description-0")).toHaveValue("Initial Task 1");
+		expect(screen.getByTestId("task-title-1")).toHaveValue("Task 2");
 		expect(screen.getByTestId("task-description-1")).toHaveValue("Initial Task 2");
 	});
 
@@ -125,13 +143,17 @@ describe.sequential("ObjectiveForm", () => {
 		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
+		expect(saveButton).not.toBeDisabled();
+
+		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
 		expect(saveButton).toBeEnabled();
 	});
 
@@ -142,9 +164,11 @@ describe.sequential("ObjectiveForm", () => {
 		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("objective-name-input"), "   ");
+		await user.type(screen.getByTestId("objective-title-input"), "   ");
 		await user.type(screen.getByTestId("objective-description-input"), "   ");
-		await user.type(screen.getByTestId("task-description-0"), "   ");
+
+		const addTaskButton = screen.getByTestId("add-task-button");
+		expect(addTaskButton).toBeDisabled();
 		expect(saveButton).toBeDisabled();
 	});
 
@@ -162,9 +186,12 @@ describe.sequential("ObjectiveForm", () => {
 		const saveButton = screen.getByTestId("add-objective-button");
 		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
-		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
+		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
 
 		expect(saveButton).toBeEnabled();
 	});
@@ -177,16 +204,19 @@ describe.sequential("ObjectiveForm", () => {
 
 		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("objective-name-input"), "   ");
+		await user.type(screen.getByTestId("objective-title-input"), "   ");
 		expect(saveButton).toBeDisabled();
 
-		await user.clear(screen.getByTestId("objective-name-input"));
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.clear(screen.getByTestId("objective-title-input"));
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
 		expect(saveButton).toBeDisabled();
 
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 		expect(saveButton).toBeDisabled();
-		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "Test Task Title");
+		await user.type(screen.getByTestId("task-description-0"), "Test Task Description");
 		expect(saveButton).toBeEnabled();
 	});
 
@@ -195,17 +225,16 @@ describe.sequential("ObjectiveForm", () => {
 		const onSaveAction = vi.fn();
 		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+
 		await user.click(screen.getByTestId("add-task-button"));
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
-		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
-		await user.type(screen.getByTestId("task-description-0"), "First task");
+		await user.type(screen.getByTestId("task-title-0"), "First task title");
+		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
 		const saveButton = screen.getByTestId("add-objective-button");
-		expect(saveButton).toBeDisabled();
-
-		await user.type(screen.getByTestId("task-description-1"), "Second task");
-		expect(saveButton).toBeEnabled();
+		expect(saveButton).not.toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
 	});
 
@@ -213,11 +242,16 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		await user.type(screen.getByTestId("task-description-0"), "First task");
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "First task title");
+		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
 		await user.click(screen.getByTestId("add-task-button"));
 
-		expect(screen.getByTestId("task-description-0")).toHaveValue("First task");
+		expect(screen.getByTestId("task-description-0")).toHaveValue("First task description");
 		expect(screen.getByTestId("task-description-1")).toHaveValue("");
 	});
 
@@ -225,15 +259,21 @@ describe.sequential("ObjectiveForm", () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("objective-title-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
 
-		await user.type(screen.getByTestId("task-description-0"), "First task");
-		await user.type(screen.getByTestId("task-description-1"), "Second task");
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-0"), "First task title");
+		await user.type(screen.getByTestId("task-description-0"), "First task description");
+
+		await user.click(screen.getByTestId("add-task-button"));
+		await user.type(screen.getByTestId("task-title-1"), "Second task title");
+		await user.type(screen.getByTestId("task-description-1"), "Second task description");
 
 		await user.clear(screen.getByTestId("task-description-0"));
-		await user.type(screen.getByTestId("task-description-0"), "Updated first task");
+		await user.type(screen.getByTestId("task-description-0"), "Updated first task description");
 
-		expect(screen.getByTestId("task-description-0")).toHaveValue("Updated first task");
-		expect(screen.getByTestId("task-description-1")).toHaveValue("Second task");
+		expect(screen.getByTestId("task-description-0")).toHaveValue("Updated first task description");
+		expect(screen.getByTestId("task-description-1")).toHaveValue("Second task description");
 	});
 });
