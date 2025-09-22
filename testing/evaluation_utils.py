@@ -70,41 +70,56 @@ def _chunk_metrics(content: str) -> tuple[float, float, int]:
     return alpha_ratio, noise_ratio, length
 
 
+def _calculate_chunk_score(content: str) -> float:
+    alpha_ratio, noise_ratio, length = _chunk_metrics(content)
+    score = (alpha_ratio - noise_ratio) + min(length, 1200) / 4000
+
+    if "![" in content or "media/" in content:
+        score -= 0.15
+
+    return score
+
+
+def _is_preferred_chunk(content: str) -> bool:
+    alpha_ratio, noise_ratio, _length = _chunk_metrics(content)
+    return alpha_ratio >= _MIN_ALPHA_RATIO and noise_ratio <= _MAX_NOISE_RATIO
+
+
+def _select_indices_by_score_and_preference(
+    scored_indices: list[tuple[float, int]], preferred_indices: list[int], limit: int
+) -> list[int]:
+    selected_indices: list[int] = []
+    selected_indices.extend(preferred_indices[:limit])
+
+    if len(selected_indices) < limit:
+        for _score, idx in sorted(scored_indices, key=lambda item: item[0], reverse=True):
+            if idx in selected_indices:
+                continue
+            selected_indices.append(idx)
+            if len(selected_indices) == limit:
+                break
+
+    return selected_indices
+
+
 def select_representative_chunks(vectors: list[VectorDTO], limit: int = 3) -> list[VectorDTO]:
     if limit <= 0 or not vectors:
         return []
 
     normalized_limit = min(limit, len(vectors))
-
     preferred_indices: list[int] = []
     scored_indices: list[tuple[float, int]] = []
 
     for idx, vector in enumerate(vectors):
         content = vector["chunk"].get("content", "")
-        alpha_ratio, noise_ratio, length = _chunk_metrics(content)
+        score = _calculate_chunk_score(content)
 
-        score = (alpha_ratio - noise_ratio) + min(length, 1200) / 4000
-
-        if "![" in content or "media/" in content:
-            score -= 0.15
-
-        if alpha_ratio >= _MIN_ALPHA_RATIO and noise_ratio <= _MAX_NOISE_RATIO:
+        if _is_preferred_chunk(content):
             preferred_indices.append(idx)
 
         scored_indices.append((score, idx))
 
-    selected_indices: list[int] = []
-
-    selected_indices.extend(preferred_indices[:normalized_limit])
-
-    if len(selected_indices) < normalized_limit:
-        for _score, idx in sorted(scored_indices, key=lambda item: item[0], reverse=True):
-            if idx in selected_indices:
-                continue
-            selected_indices.append(idx)
-            if len(selected_indices) == normalized_limit:
-                break
-
+    selected_indices = _select_indices_by_score_and_preference(scored_indices, preferred_indices, normalized_limit)
     selected_indices.sort()
 
     return [vectors[idx] for idx in selected_indices]
