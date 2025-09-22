@@ -9,3 +9,9 @@ INITIAL_PASSING_SCORE: Final[int] = 60
 MIN_PASSING_SCORE: Final[int] = 40
 SCORE_INCREMENT: Final[int] = 10
 MAX_RETRIES: Final[int] = 2
+
+# Model selection constants
+GEMINI_FLASH_MODEL: Final[str] = "gemini-2.5-flash"
+GEMINI_FLASH_LITE_MODEL: Final[str] = "gemini-2.5-flash-lite"
+MODEL_SELECTION_REASON: Final[str] = "Flash for ≤600w, Flash-Lite for >600w"
+CUSTOM_MODEL_REASON: Final[str] = "Custom model specified"

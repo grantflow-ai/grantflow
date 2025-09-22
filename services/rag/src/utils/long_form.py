@@ -1,16 +1,16 @@
 from time import time
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import (
-    CUSTOM_MODEL_REASON,
-    GEMINI_FLASH_LITE_MODEL,
-    GEMINI_FLASH_MODEL,
-    GENERATION_MODEL,
-    MODEL_SELECTION_REASON,
-)
+from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
+from services.rag.src.constants import (
+    CUSTOM_MODEL_REASON,
+    GEMINI_FLASH_LITE_MODEL,
+    GEMINI_FLASH_MODEL,
+    MODEL_SELECTION_REASON,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -242,12 +242,11 @@ async def handle_long_form_text_generation(
 
 
 async def generate_long_form_text(
-    prompt_or_task_description: str,
     *,
     max_words: int,
     min_words: int,
     prompt_identifier: str,
-    task_description: str = "",
+    task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
     buffer_words: int = 150,
@@ -255,8 +254,6 @@ async def generate_long_form_text(
     trace_id: str,
     **sources: Any,
 ) -> str:
-    effective_task_description = task_description if task_description else prompt_or_task_description
-
     buffered_min_words = min_words + buffer_words
     buffered_max_words = max_words + buffer_words
 
@@ -272,7 +269,7 @@ async def generate_long_form_text(
         buffered_min_words=buffered_min_words,
         buffered_max_words=buffered_max_words,
         selected_model=selected_model,
-        model_selection_reason=MODEL_SELECTION_REASON if selected_model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
+        model_selection_reason=MODEL_SELECTION_REASON if model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
         trace_id=trace_id,
     )
 
@@ -280,7 +277,7 @@ async def generate_long_form_text(
         max_words=buffered_max_words,
         min_words=buffered_min_words,
         prompt_identifier=prompt_identifier,
-        task_description=effective_task_description,
+        task_description=task_description,
         max_api_calls=max_api_calls,
         model=selected_model,
         timeout=timeout,
