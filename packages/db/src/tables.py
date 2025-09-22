@@ -28,8 +28,6 @@ from sqlalchemy.sql.functions import now
 
 from packages.db.src.constants import (
     EMBEDDING_DIMENSIONS,
-    GRANT_APPLICATION_GENERATION,
-    GRANT_TEMPLATE_GENERATION,
     RAG_FILE,
     RAG_URL,
 )
@@ -45,6 +43,7 @@ from packages.db.src.enums import (
 from packages.db.src.json_objects import (
     CFPAnalysisResult,
     Chunk,
+    DocumentMetadata,
     GrantElement,
     GrantLongFormSection,
     ResearchDeepDive,
@@ -227,6 +226,7 @@ class RagSource(BaseWithUUIDPK):
         Enum(SourceIndexingStatusEnum), index=True, default=SourceIndexingStatusEnum.CREATED
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
@@ -398,9 +398,6 @@ class GrantApplication(BaseWithUUIDPK):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
-    rag_job_id: Mapped[UUID | None] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True
-    )
     parent_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("grant_applications.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -412,11 +409,11 @@ class GrantApplication(BaseWithUUIDPK):
         "GrantTemplate", back_populates="grant_application", cascade="all, delete-orphan", uselist=False
     )
     project: Relationship[Project] = relationship("Project", back_populates="grant_applications")
-    rag_job: Relationship["GrantApplicationGenerationJob | None"] = relationship(
-        "GrantApplicationGenerationJob",
+    rag_jobs: Relationship[list["RagGenerationJob"]] = relationship(
+        "RagGenerationJob",
         back_populates="grant_application",
-        uselist=False,
-        foreign_keys="[GrantApplication.rag_job_id]",
+        cascade="all, delete-orphan",
+        foreign_keys="[RagGenerationJob.grant_application_id]",
     )
     parent: Relationship["GrantApplication | None"] = relationship(
         "GrantApplication", remote_side="[GrantApplication.id]", back_populates="children"
@@ -459,9 +456,6 @@ class GrantTemplate(BaseWithUUIDPK):
     granting_institution_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("granting_institutions.id", ondelete="SET NULL"), nullable=True
     )
-    rag_job_id: Mapped[UUID | None] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True
-    )
 
     submission_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
@@ -474,11 +468,11 @@ class GrantTemplate(BaseWithUUIDPK):
     rag_sources: Relationship[list["GrantTemplateSource"]] = relationship(
         "GrantTemplateSource", back_populates="grant_template", cascade="all, delete-orphan"
     )
-    rag_job: Relationship["GrantTemplateGenerationJob | None"] = relationship(
-        "GrantTemplateGenerationJob",
+    rag_jobs: Relationship[list["RagGenerationJob"]] = relationship(
+        "RagGenerationJob",
         back_populates="grant_template",
-        uselist=False,
-        foreign_keys="[GrantTemplate.rag_job_id]",
+        cascade="all, delete-orphan",
+        foreign_keys="[RagGenerationJob.grant_template_id]",
     )
 
     cfp_analysis: Mapped[CFPAnalysisResult | None] = mapped_column(JSON, nullable=True)
@@ -501,6 +495,24 @@ class GrantTemplateSource(Base):
 class RagGenerationJob(BaseWithUUIDPK):
     __tablename__ = "rag_generation_jobs"
 
+    parent_job_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    grant_template_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    grant_application_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+
+    template_stage: Mapped[GrantTemplateStageEnum | None] = mapped_column(
+        Enum(GrantTemplateStageEnum), nullable=True, index=True
+    )
+    application_stage: Mapped[GrantApplicationStageEnum | None] = mapped_column(
+        Enum(GrantApplicationStageEnum), nullable=True, index=True
+    )
+
     status: Mapped[RagGenerationStatusEnum] = mapped_column(
         Enum(RagGenerationStatusEnum), index=True, default=RagGenerationStatusEnum.PENDING
     )
@@ -515,62 +527,47 @@ class RagGenerationJob(BaseWithUUIDPK):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    job_type: Mapped[Literal["grant_template_generation", "grant_application_generation"]] = mapped_column(String(50))
+    parent_job: Relationship["RagGenerationJob | None"] = relationship(
+        "RagGenerationJob", remote_side="RagGenerationJob.id", back_populates="child_jobs"
+    )
+    child_jobs: Relationship[list["RagGenerationJob"]] = relationship(
+        "RagGenerationJob", back_populates="parent_job", cascade="all, delete-orphan"
+    )
 
-    __mapper_args__ = {  # noqa: RUF012
-        "polymorphic_identity": "rag_generation_job",
-        "polymorphic_on": "job_type",
-    }
+    grant_template: Relationship["GrantTemplate | None"] = relationship("GrantTemplate", viewonly=True)
+    grant_application: Relationship["GrantApplication | None"] = relationship("GrantApplication", viewonly=True)
 
     __table_args__ = (
         Index("idx_rag_generation_jobs_status_created", "status", "created_at"),
         Index("idx_rag_generation_jobs_status_retry", "status", "retry_count"),
+        Index("idx_rag_generation_jobs_parent", "parent_job_id"),
+        Index("idx_rag_jobs_template_stage", "grant_template_id", "template_stage"),
+        Index("idx_rag_jobs_application_stage", "grant_application_id", "application_stage"),
+        Index(
+            "idx_unique_template_stage",
+            "grant_template_id",
+            "template_stage",
+            unique=True,
+            postgresql_where=text(
+                "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_template_id IS NOT NULL AND template_stage IS NOT NULL"
+            ),
+        ),
+        Index(
+            "idx_unique_application_stage",
+            "grant_application_id",
+            "application_stage",
+            unique=True,
+            postgresql_where=text(
+                "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_application_id IS NOT NULL AND application_stage IS NOT NULL"
+            ),
+        ),
         CheckConstraint("retry_count >= 0", name="check_retry_count_non_negative"),
+        CheckConstraint(
+            "(grant_template_id IS NOT NULL AND grant_application_id IS NULL AND template_stage IS NOT NULL AND application_stage IS NULL) OR "
+            "(grant_template_id IS NULL AND grant_application_id IS NOT NULL AND template_stage IS NULL AND application_stage IS NOT NULL)",
+            name="check_exactly_one_entity_and_stage",
+        ),
     )
-
-
-class GrantTemplateGenerationJob(RagGenerationJob):
-    __tablename__ = "grant_template_generation_jobs"
-
-    id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), primary_key=True
-    )
-
-    grant_template_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), index=True, unique=True
-    )
-
-    current_stage: Mapped[GrantTemplateStageEnum | None] = mapped_column(Enum(GrantTemplateStageEnum), nullable=True)
-
-    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", viewonly=True, overlaps="rag_job")
-
-    __mapper_args__ = {  # noqa: RUF012
-        "polymorphic_identity": GRANT_TEMPLATE_GENERATION,
-    }
-
-
-class GrantApplicationGenerationJob(RagGenerationJob):
-    __tablename__ = "grant_application_generation_jobs"
-
-    id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), primary_key=True
-    )
-
-    grant_application_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True, unique=True
-    )
-
-    current_stage: Mapped[GrantApplicationStageEnum | None] = mapped_column(
-        Enum(GrantApplicationStageEnum), nullable=True
-    )
-
-    grant_application: Relationship["GrantApplication"] = relationship(
-        "GrantApplication", viewonly=True, overlaps="rag_job"
-    )
-
-    __mapper_args__ = {  # noqa: RUF012
-        "polymorphic_identity": GRANT_APPLICATION_GENERATION,
-    }
 
 
 class GenerationNotification(BaseWithUUIDPK):
@@ -580,13 +577,10 @@ class GenerationNotification(BaseWithUUIDPK):
         SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), index=True
     )
 
+    data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     event: Mapped[str] = mapped_column(String(100), index=True)
     message: Mapped[str] = mapped_column(Text)
-    data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-
-    current_pipeline_stage: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    total_pipeline_stages: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-
     notification_type: Mapped[str] = mapped_column(String(20), default="info")
 
     rag_job: Relationship["RagGenerationJob"] = relationship("RagGenerationJob")
