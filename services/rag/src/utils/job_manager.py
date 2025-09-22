@@ -82,7 +82,6 @@ class BaseJobManager[
                 raise RuntimeError(f"Job {self.job_id} not found")
 
             job.checkpoint_data = _serialize_checkpoint_data(dto)
-            job.current_stage_name = str(next_stage)
 
             if hasattr(job, "grant_template_id"):
                 template_job = await session.scalar(
@@ -285,7 +284,6 @@ class GrantTemplateJobManager[DTOType](
                     grant_template_id=self.parent_id,
                     status=RagGenerationStatusEnum.PENDING,
                     current_stage=self.current_stage,
-                    current_stage_name=str(self.current_stage),
                     retry_count=0,
                 )
                 session.add(job)
@@ -364,7 +362,6 @@ class GrantApplicationJobManager[DTOType](
                     grant_application_id=self.parent_id,
                     status=RagGenerationStatusEnum.PENDING,
                     current_stage=self.current_stage,
-                    current_stage_name=str(self.current_stage),
                     retry_count=0,
                 )
                 session.add(job)
@@ -413,7 +410,6 @@ class GrantApplicationJobManager[DTOType](
         async with self.session_maker() as session, session.begin():
             job_instance.checkpoint_data = _serialize_checkpoint_data(dto)
             job_instance.current_stage = next_stage
-            job_instance.current_stage_name = str(next_stage)
             session.add(job_instance)
             await session.flush()
 

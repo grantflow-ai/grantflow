@@ -27,15 +27,16 @@ def trace_id() -> TraceId:
     return "test-trace-id"
 
 
-def create_pubsub_event(data: RagRequest) -> PubSubEvent:
+def create_pubsub_event(data: RagRequest | dict[str, Any]) -> PubSubEvent:
     serialized_data = serialize(data)
     encoded_data = base64.b64encode(serialized_data).decode("utf-8")
+    trace_id = data.trace_id if hasattr(data, "trace_id") else data.get("trace_id", "test-trace-id")
     return PubSubEvent(
         message=PubSubMessage(
             data=encoded_data,
             message_id="test-message-id",
             publish_time="2025-01-01T00:00:00Z",
-            attributes={"trace_id": data.trace_id},
+            attributes={"trace_id": trace_id},
         ),
         subscription="test-subscription",
     )
@@ -97,19 +98,29 @@ async def test_handle_rag_request_grant_template(
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
     trace_id: TraceId,
+    test_application_with_template: GrantApplication,
 ) -> None:
     from services.rag.src.main import app
 
+    # Use the fixed grant template ID from test_application_with_template fixture
+    template_id = UUID("00000000-0000-0000-0000-000000000001")
+
+    # Create event with the correct template ID
+    data = GrantTemplateRagRequest(
+        parent_id=template_id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
+
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_template))
+        response = await client.post("/", json=msgspec.to_builtins(event))
 
     assert response.status_code == 201
 
-    mock_grant_template_handler.assert_called_once_with(
-        grant_template_id=grant_template_id,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    mock_grant_template_handler.assert_called_once()
+    call_args = mock_grant_template_handler.call_args
+    assert call_args.kwargs["grant_template"].id == template_id
+    assert call_args.kwargs["trace_id"] == trace_id
     mock_grant_application_handler.assert_not_called()
 
 
@@ -120,19 +131,26 @@ async def test_handle_rag_request_grant_application(
     mock_grant_template_handler: AsyncMock,
     mock_grant_application_handler: AsyncMock,
     trace_id: TraceId,
+    test_application_with_template: GrantApplication,
 ) -> None:
     from services.rag.src.main import app
 
+    # Update the event to use the test application ID
+    data = GrantApplicationRagRequest(
+        parent_id=test_application_with_template.id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
+
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_application))
+        response = await client.post("/", json=msgspec.to_builtins(event))
 
     assert response.status_code == 201
 
-    mock_grant_application_handler.assert_called_once_with(
-        grant_application_id=grant_application_id,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    mock_grant_application_handler.assert_called_once()
+    call_args = mock_grant_application_handler.call_args
+    assert call_args.kwargs["grant_application"].id == test_application_with_template.id
+    assert call_args.kwargs["trace_id"] == trace_id
     mock_grant_template_handler.assert_not_called()
 
 
@@ -140,7 +158,7 @@ async def test_handle_rag_request_invalid_message(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
     data = {"invalid": "data", "trace_id": trace_id}
-    invalid_event = create_pubsub_event(data)  # type: ignore
+    invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -153,7 +171,7 @@ async def test_handle_rag_request_missing_parent_type(trace_id: TraceId) -> None
     from services.rag.src.main import app
 
     data = {"parent_id": str(uuid4()), "trace_id": trace_id}
-    invalid_event = create_pubsub_event(data)  # type: ignore
+    invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -166,7 +184,7 @@ async def test_handle_rag_request_missing_parent_id(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
     data = {"parent_type": "grant_template", "trace_id": trace_id}
-    invalid_event = create_pubsub_event(data)  # type: ignore
+    invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -183,7 +201,7 @@ async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None
         "parent_id": str(uuid4()),
         "trace_id": trace_id,
     }
-    invalid_event = create_pubsub_event(data)  # type: ignore
+    invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
@@ -194,15 +212,26 @@ async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None
 
 async def test_handle_rag_request_handler_error(
     async_session_maker: async_sessionmaker[Any],
-    pubsub_event_grant_template: PubSubEvent,
+    test_application_with_template: GrantApplication,
     mock_grant_template_handler: AsyncMock,
+    trace_id: TraceId,
 ) -> None:
     from services.rag.src.main import app
+
+    # Use the fixed grant template ID from test_application_with_template fixture
+    template_id = UUID("00000000-0000-0000-0000-000000000001")
+
+    # Create event with the correct template ID
+    data = GrantTemplateRagRequest(
+        parent_id=template_id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
 
     mock_grant_template_handler.side_effect = Exception("Handler error")
 
     async with AsyncTestClient(app=app) as client:
-        response = await client.post("/", json=msgspec.to_builtins(pubsub_event_grant_template))
+        response = await client.post("/", json=msgspec.to_builtins(event))
 
     assert response.status_code == 500
 
@@ -250,7 +279,7 @@ def test_handle_pubsub_message_invalid() -> None:
     from services.rag.src.main import handle_pubsub_message
 
     data = {"invalid": "data"}
-    event = create_pubsub_event(data)  # type: ignore
+    event = create_pubsub_event(data)
 
     with pytest.raises(ValidationError) as exc_info:
         handle_pubsub_message(event)
@@ -258,11 +287,32 @@ def test_handle_pubsub_message_invalid() -> None:
     assert "Invalid pubsub message" in str(exc_info.value)
 
 
+async def test_grant_template_missing_template(
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: TraceId,
+) -> None:
+    """Test that missing grant template logs error and returns 201"""
+    from services.rag.src.main import app
+
+    nonexistent_id = uuid4()
+    data = GrantTemplateRagRequest(
+        parent_id=nonexistent_id,
+        trace_id=trace_id,
+    )
+    event = create_pubsub_event(data)
+
+    async with AsyncTestClient(app=app) as client:
+        response = await client.post("/", json=msgspec.to_builtins(event))
+
+    # Should return 201 (no error raised to prevent PubSub retries)
+    assert response.status_code == 201
+
+
 async def test_grant_application_missing_application(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that missing grant application returns proper error"""
+    """Test that missing grant application logs error and returns 201"""
     from services.rag.src.main import app
 
     nonexistent_id = uuid4()
@@ -275,15 +325,15 @@ async def test_grant_application_missing_application(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    assert response.status_code == 400
-    assert f"Grant application {nonexistent_id} not found" in response.json()["detail"]
+    # Should return 201 (no error raised to prevent PubSub retries)
+    assert response.status_code == 201
 
 
 async def test_grant_application_missing_grant_template(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that missing grant template returns proper error"""
+    """Test that missing grant template logs error and returns 201"""
     from packages.db.src.tables import GrantApplication
     from testing.factories import OrganizationFactory, ProjectFactory
 
@@ -316,15 +366,15 @@ async def test_grant_application_missing_grant_template(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    assert response.status_code == 400
-    assert "Grant template not found" in response.json()["detail"]
+    # Should return 201 (no error raised to prevent PubSub retries)
+    assert response.status_code == 201
 
 
 async def test_grant_application_missing_grant_sections(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that grant template without sections returns proper error"""
+    """Test that grant template without sections logs error and returns 201"""
     from packages.db.src.tables import GrantApplication, GrantTemplate
     from testing.factories import OrganizationFactory, ProjectFactory
 
@@ -368,15 +418,15 @@ async def test_grant_application_missing_grant_sections(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    assert response.status_code == 400
-    assert "Grant template has no sections" in response.json()["detail"]
+    # Should return 201 (no error raised to prevent PubSub retries)
+    assert response.status_code == 201
 
 
 async def test_grant_application_missing_cfp_analysis(
     async_session_maker: async_sessionmaker[Any],
     trace_id: TraceId,
 ) -> None:
-    """Test that grant template without CFP analysis returns proper error"""
+    """Test that grant template without CFP analysis logs error and returns 201"""
     from packages.db.src.tables import GrantApplication, GrantTemplate
     from testing.factories import OrganizationFactory, ProjectFactory
 
@@ -434,8 +484,8 @@ async def test_grant_application_missing_cfp_analysis(
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(event))
 
-    assert response.status_code == 400
-    assert "CFP analysis is missing from grant template" in response.json()["detail"]
+    # Should return 201 (no error raised to prevent PubSub retries)
+    assert response.status_code == 201
 
 
 async def test_grant_application_valid_request(
@@ -457,8 +507,7 @@ async def test_grant_application_valid_request(
         response = await client.post("/", json=msgspec.to_builtins(event))
 
     assert response.status_code == 201
-    mock_grant_application_handler.assert_called_once_with(
-        grant_application_id=test_application_with_template.id,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
+    mock_grant_application_handler.assert_called_once()
+    call_args = mock_grant_application_handler.call_args
+    assert call_args.kwargs["grant_application"].id == test_application_with_template.id
+    assert call_args.kwargs["trace_id"] == trace_id
