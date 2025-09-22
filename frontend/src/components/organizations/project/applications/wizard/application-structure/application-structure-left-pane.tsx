@@ -8,8 +8,9 @@ import { PreviewCard } from "@/components/organizations/project/applications/wiz
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
+import type { TemplateGenerationEvent } from "@/types/notification-events";
 
 const ANALYZING_STEPS = [
 	{
@@ -113,26 +114,17 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 };
 
 const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
-	cfp_data_extracted: 0,
-	extracting_cfp_data: 0,
-	generation_error: -1,
-
+	cfp_data_extracted: 1,
 	grant_template_created: 4,
-	grant_template_extraction: 1,
-
-	grant_template_generation_started: 0,
-	grant_template_metadata: 2,
-
-	indexing_in_progress: 0,
-
+	indexing_failed: -1,
+	indexing_timeout: -1,
 	insufficient_context_error: -1,
 	internal_error: -1,
-
-	low_retrieval_quality: -1,
-	metadata_generated: 2,
+	job_cancelled: -1,
+	llm_timeout: -1,
+	metadata_generated: 3,
 	pipeline_error: -1,
-	saving_grant_template: 3,
-	sections_extracted: 1,
+	sections_extracted: 2,
 };
 
 export function ApplicationStructureLeftPane() {
@@ -242,8 +234,8 @@ function AnalyzingSteps() {
 			setHasError(false);
 
 			const isIndexingEvent =
-				templateGenerationStatus.event === "grant_template_generation_started" ||
-				templateGenerationStatus.event === "indexing_in_progress";
+				templateGenerationStatus.event === "cfp_data_extracted" ||
+				templateGenerationStatus.event === "sections_extracted";
 			setShowStepsDetails(!isIndexingEvent);
 
 			if (stepGroup >= 0) {

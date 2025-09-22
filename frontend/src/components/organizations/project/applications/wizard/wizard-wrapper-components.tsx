@@ -315,10 +315,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: need validationResult to run granularly
-	const validationResult = useMemo((): ValidationResult => {
-		const validated = validateStepNext();
-		return validated;
-	}, [
+	const validationResult = useMemo(validateStepNext, [
 		applicationText,
 		appRagSources,
 		currentStep,
