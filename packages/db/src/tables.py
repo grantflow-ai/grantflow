@@ -1,6 +1,9 @@
 from datetime import UTC, date, datetime
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID, uuid4
+
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -43,7 +46,6 @@ from packages.db.src.enums import (
 from packages.db.src.json_objects import (
     CFPAnalysisResult,
     Chunk,
-    DocumentMetadata,
     GrantElement,
     GrantLongFormSection,
     ResearchDeepDive,
@@ -226,7 +228,7 @@ class RagSource(BaseWithUUIDPK):
         Enum(SourceIndexingStatusEnum), index=True, default=SourceIndexingStatusEnum.CREATED
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
+    document_metadata: Mapped["DocumentMetadata | None"] = mapped_column(JSON, nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
