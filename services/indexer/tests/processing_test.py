@@ -30,14 +30,11 @@ async def test_process_source_text_file(
     mock_chunk: Chunk,
     mock_vector_dto: VectorDTO,
 ) -> None:
+    # Mock the new extract_file_content that returns (text, mime_type, chunks)
     mock_extract = mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
-        return_value=("Test file content", "text/plain"),
-    )
-    mock_chunk_text = mocker.patch(
-        "services.indexer.src.processing.chunk_text",
-        return_value=[mock_chunk],
+        return_value=("Test file content", "text/plain", ["Test chunk content"], None),
     )
     mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -45,7 +42,7 @@ async def test_process_source_text_file(
         return_value=[mock_vector_dto],
     )
 
-    vectors, text_content = await process_source(
+    vectors, text_content, _metadata = await process_source(
         content=b"Test file content",
         source_id="test-source-id",
         filename="test.txt",
@@ -56,16 +53,19 @@ async def test_process_source_text_file(
     assert vectors[0] == mock_vector_dto
     assert text_content == "Test file content"
 
+    # Verify the new API is called correctly
     mock_extract.assert_called_once_with(
         content=b"Test file content",
         mime_type="text/plain",
+        enable_chunking=True,
+        enable_token_reduction=True,
+        language_hint="en",
     )
-    mock_chunk_text.assert_called_once_with(
-        text="Test file content",
-        mime_type="text/plain",
-    )
+
+    # Verify chunks are converted to the expected format
+    expected_chunks = [{"content": "Test chunk content"}]
     mock_index_chunks.assert_called_once_with(
-        chunks=[mock_chunk],
+        chunks=expected_chunks,
         source_id="test-source-id",
     )
 
@@ -78,11 +78,7 @@ async def test_process_source_pdf_file(
     mock_extract = mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
-        return_value=("PDF content extracted", "application/pdf"),
-    )
-    mock_chunk_text = mocker.patch(
-        "services.indexer.src.processing.chunk_text",
-        return_value=[mock_chunk],
+        return_value=("PDF content extracted", "application/pdf", ["PDF chunk content"], None),
     )
     mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -90,7 +86,7 @@ async def test_process_source_pdf_file(
         return_value=[mock_vector_dto],
     )
 
-    vectors, text_content = await process_source(
+    vectors, text_content, _metadata = await process_source(
         content=b"PDF binary content",
         source_id="pdf-source-id",
         filename="document.pdf",
@@ -104,13 +100,13 @@ async def test_process_source_pdf_file(
     mock_extract.assert_called_once_with(
         content=b"PDF binary content",
         mime_type="application/pdf",
+        enable_chunking=True,
+        enable_token_reduction=True,
+        language_hint="en",
     )
-    mock_chunk_text.assert_called_once_with(
-        text="PDF content extracted",
-        mime_type="application/pdf",
-    )
+    expected_chunks = [{"content": "PDF chunk content"}]
     mock_index_chunks.assert_called_once_with(
-        chunks=[mock_chunk],
+        chunks=expected_chunks,
         source_id="pdf-source-id",
     )
 
@@ -118,29 +114,21 @@ async def test_process_source_pdf_file(
 async def test_process_source_multiple_chunks(
     mocker: MockerFixture,
 ) -> None:
-    chunks: list[Chunk] = [
-        Chunk(content="Chunk 1", page_number=1),
-        Chunk(content="Chunk 2", page_number=2),
-        Chunk(content="Chunk 3", page_number=3),
-    ]
+    chunks_content = ["Chunk 1", "Chunk 2", "Chunk 3"]
 
     vectors = [
         VectorDTO(
-            chunk=chunk,
+            chunk=Chunk(content=content),
             embedding=[0.1, 0.2, 0.3],
             rag_source_id="multi-source-id",
         )
-        for chunk in chunks
+        for content in chunks_content
     ]
 
     mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
-        return_value=("Long document content", "text/plain"),
-    )
-    mocker.patch(
-        "services.indexer.src.processing.chunk_text",
-        return_value=chunks,
+        return_value=("Long document content", "text/plain", chunks_content, None),
     )
     mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -148,7 +136,7 @@ async def test_process_source_multiple_chunks(
         return_value=vectors,
     )
 
-    result_vectors, text_content = await process_source(
+    result_vectors, text_content, _metadata = await process_source(
         content=b"Long document content",
         source_id="multi-source-id",
         filename="long-document.txt",
@@ -173,11 +161,7 @@ async def test_process_source_json_content(
     mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
-        return_value=(json_content, "application/json"),
-    )
-    mocker.patch(
-        "services.indexer.src.processing.chunk_text",
-        return_value=[mock_chunk],
+        return_value=(json_content, "application/json", ["JSON chunk"], None),
     )
     mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -189,7 +173,7 @@ async def test_process_source_json_content(
         return_value=b'{"key":"value","nested":{"data":"test"}}',
     )
 
-    vectors, text_content = await process_source(
+    vectors, text_content, _metadata = await process_source(
         content=b'{"key":"value","nested":{"data":"test"}}',
         source_id="json-source-id",
         filename="data.json",
@@ -208,27 +192,31 @@ async def test_process_source_empty_content(
     mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
-        return_value=("", "text/plain"),
+        return_value=("", "text/plain", [], None),
     )
-    mocker.patch(
-        "services.indexer.src.processing.chunk_text",
-        return_value=[],
-    )
-    mocker.patch(
+    mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=[],
     )
 
-    vectors, text_content = await process_source(
+    vectors, text_content, _metadata = await process_source(
         content=b"",
         source_id="empty-source-id",
         filename="empty.txt",
         mime_type="text/plain",
     )
 
-    assert len(vectors) == 0
+    # Should create fallback chunk when no chunks returned
+    assert len(vectors) == 0  # Mocked to return empty
     assert text_content == ""
+
+    # Verify fallback chunk creation logic
+    expected_chunks = [{"content": ""}]
+    mock_index_chunks.assert_called_once_with(
+        chunks=expected_chunks,
+        source_id="empty-source-id",
+    )
 
 
 async def test_process_source_with_extraction_error(
