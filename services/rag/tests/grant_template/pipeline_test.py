@@ -28,15 +28,15 @@ async def job_with_extract_cfp_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
 ) -> None:
-    from packages.db.src.tables import GrantTemplateGenerationJob
+    from packages.db.src.tables import RagGenerationJob
 
     from services.rag.src.utils.job_manager import _serialize_checkpoint_data
 
     async with async_session_maker() as session:
-        job = GrantTemplateGenerationJob(
+        job = RagGenerationJob(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_extract_cfp_dto),
         )
@@ -50,15 +50,15 @@ async def job_with_analyze_cfp_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
 ) -> None:
-    from packages.db.src.tables import GrantTemplateGenerationJob
+    from packages.db.src.tables import RagGenerationJob
 
     from services.rag.src.utils.job_manager import _serialize_checkpoint_data
 
     async with async_session_maker() as session:
-        job = GrantTemplateGenerationJob(
+        job = RagGenerationJob(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_analyze_cfp_dto),
         )
@@ -72,15 +72,15 @@ async def job_with_extract_sections_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     sample_sections_dto: ExtractionSectionsStageDTO,
 ) -> None:
-    from packages.db.src.tables import GrantTemplateGenerationJob
+    from packages.db.src.tables import RagGenerationJob
 
     from services.rag.src.utils.job_manager import _serialize_checkpoint_data
 
     async with async_session_maker() as session:
-        job = GrantTemplateGenerationJob(
+        job = RagGenerationJob(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
+            template_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_sections_dto),
         )

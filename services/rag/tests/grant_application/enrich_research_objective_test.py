@@ -32,7 +32,9 @@ def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Develop and validate novel protein biomarkers for early cancer detection through comprehensive proteomics analysis, utilizing mass spectrometry techniques to identify specific proteins that can reliably distinguish cancerous from healthy tissue states.",
                 "core_scientific_terms": ["biomarkers", "proteomics", "mass spectrometry", "validation", "specificity"],
+                "scientific_context": "Early cancer detection remains a critical challenge in oncology, with current biomarkers lacking sufficient sensitivity and specificity. Recent advances in proteomics and mass spectrometry offer unprecedented opportunities to identify novel protein signatures that could revolutionize cancer screening programs.",
                 "instructions": "Write a comprehensive description focusing on scientific rigor and methodological precision. Emphasize the innovative approach and potential impact on cancer research. Use formal academic tone with technical detail appropriate for grant reviewers.",
                 "description": "This research objective aims to discover and validate novel protein biomarkers for early cancer detection using advanced proteomics techniques. The methodology involves mass spectrometry analysis of patient samples to identify differentially expressed proteins.",
                 "guiding_questions": [
@@ -48,6 +50,7 @@ def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
             },
             "research_tasks": [
                 {
+                    "enriched_objective": "Systematically identify candidate protein biomarkers through state-of-the-art proteomics analysis, employing advanced mass spectrometry platforms to detect and quantify differentially expressed proteins between cancer and healthy tissue samples with high statistical confidence.",
                     "core_scientific_terms": [
                         "proteomics",
                         "mass spectrometry",
@@ -55,6 +58,7 @@ def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
                         "protein analysis",
                         "biomarker discovery",
                     ],
+                    "scientific_context": "Proteomics-based biomarker discovery has emerged as a powerful approach for cancer diagnosis, leveraging high-throughput mass spectrometry to analyze complex protein mixtures and identify disease-specific protein signatures that traditional genomic approaches may miss.",
                     "instructions": "Focus on technical methodology and experimental design for biomarker identification. Emphasize innovative proteomics approaches and data analysis techniques.",
                     "description": "Systematic identification of candidate biomarkers through comprehensive proteomics analysis using mass spectrometry techniques to detect differentially expressed proteins in cancer versus control samples.",
                     "guiding_questions": [
@@ -69,6 +73,7 @@ def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
                     ],
                 },
                 {
+                    "enriched_objective": "Comprehensively validate identified protein biomarkers through rigorous clinical studies, establishing their diagnostic performance characteristics including sensitivity, specificity, and predictive values across diverse patient populations to ensure clinical utility and regulatory compliance.",
                     "core_scientific_terms": [
                         "biomarker validation",
                         "clinical sensitivity",
@@ -76,6 +81,7 @@ def valid_enrichment_response() -> ObjectiveEnrichmentDTO:
                         "assay development",
                         "clinical trials",
                     ],
+                    "scientific_context": "Clinical validation of biomarkers is a critical bottleneck in translating laboratory discoveries into clinical practice, requiring carefully designed studies that demonstrate consistent performance across diverse populations and real-world clinical conditions.",
                     "instructions": "Emphasize clinical validation methodology and regulatory considerations. Focus on translational aspects and clinical utility of identified biomarkers.",
                     "description": "Comprehensive validation of identified biomarkers through clinical studies to establish sensitivity, specificity, and clinical utility for cancer detection in diverse patient populations.",
                     "guiding_questions": [
@@ -165,7 +171,7 @@ async def test_validate_enrichment_response_missing_objective_fields() -> None:
         },
     )
 
-    with pytest.raises(ValidationError, match="Missing instructions in objective"):
+    with pytest.raises(ValidationError, match="Missing enriched_objective in objective"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
@@ -174,7 +180,9 @@ async def test_validate_enrichment_response_wrong_terms_count() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective that is longer than fifty characters",
                 "core_scientific_terms": ["term1", "term2"],
+                "scientific_context": "Test scientific context that is longer than fifty characters",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -193,7 +201,9 @@ async def test_validate_enrichment_response_insufficient_questions() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective that is longer than fifty characters",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that is longer than fifty characters",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2"],
@@ -212,7 +222,9 @@ async def test_validate_enrichment_response_insufficient_queries() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective that is longer than fifty characters",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that is longer than fifty characters",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],

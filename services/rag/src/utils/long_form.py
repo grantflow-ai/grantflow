@@ -6,6 +6,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
@@ -152,13 +153,15 @@ async def handle_long_form_text_generation(
 
     time()
     while api_call_num <= max_api_calls:
-        prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
+        # Compress the prompt after to_string() to reduce token usage
+        full_prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
             min_words=min_words,
             max_words=max_words,
             sources=sources,
             already_generated_text=result,
         )
+        prompt = compress_prompt_text(full_prompt, aggressive=True)
 
         response = await handle_completions_request(
             prompt_identifier=prompt_identifier,
@@ -250,7 +253,9 @@ async def generate_long_form_text(
             max_words=max_words,
             min_words=min_words,
             prompt_identifier=f"{prompt_identifier}_shorten_{attempts}",
-            task_description=SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow),
+            task_description=compress_prompt_text(
+                SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow), aggressive=True
+            ),
             model=ANTHROPIC_SONNET_MODEL,
             trace_id=trace_id,
         )

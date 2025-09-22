@@ -9,13 +9,14 @@ from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
     handle_enrich_objective,
 )
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.token_optimization import estimate_prompt_tokens
 
 logger = get_logger(__name__)
 
 MAX_TOTAL_TOKENS: Final[int] = 180000
-MAX_RETRIEVAL_TOKENS: Final[int] = 10000
+MAX_RETRIEVAL_TOKENS: Final[int] = 6000
 SAFETY_MARGIN: Final[float] = 0.85
 
 
@@ -77,7 +78,9 @@ async def perform_shared_retrieval(
         trace_id=trace_id,
     )
 
-    return "\n".join(retrieval_result)
+    # Compress the retrieval context to reduce token usage
+    raw_context = "\n".join(retrieval_result)
+    return compress_prompt_text(raw_context, aggressive=True)
 
 
 async def handle_batch_enrich_objectives(
