@@ -130,7 +130,8 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(container.querySelector('[data-testid="tasks-section"]')).toBeInTheDocument();
-		expect(screen.getByText("Task: Test task description")).toBeInTheDocument();
+		expect(screen.getByText("Test task title")).toBeInTheDocument();
+		expect(screen.getByText("Test task description")).toBeInTheDocument();
 	});
 
 	it("shows objective index badges", () => {
@@ -277,8 +278,10 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
-		expect(screen.getByText("Task: First task description")).toBeInTheDocument();
-		expect(screen.getByText("Task: Second task description")).toBeInTheDocument();
+		expect(screen.getByText("First task")).toBeInTheDocument();
+		expect(screen.getByText("First task description")).toBeInTheDocument();
+		expect(screen.getByText("Second task")).toBeInTheDocument();
+		expect(screen.getByText("Second task description")).toBeInTheDocument();
 		expect(screen.getByText("1.1")).toBeInTheDocument();
 		expect(screen.getByText("1.2")).toBeInTheDocument();
 	});
@@ -302,7 +305,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		const taskDisplay = container.querySelector('[data-testid="task-display"]');
-		expect(taskDisplay?.textContent).toBe("Task: Fallback task title");
+		expect(taskDisplay?.textContent).toBe("Fallback task title");
 	});
 
 	it("displays task drag handles", () => {
@@ -530,7 +533,8 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
-			expect(screen.getByText("Task: Detailed task description")).toBeInTheDocument();
+			expect(screen.getByText("Basic title")).toBeInTheDocument();
+			expect(screen.getByText("Detailed task description")).toBeInTheDocument();
 		});
 
 		it("falls back to task title when description is empty", () => {
@@ -557,7 +561,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const taskDisplay = screen.getByTestId("task-display");
-			expect(taskDisplay).toHaveTextContent("Task: Fallback title");
+			expect(taskDisplay).toHaveTextContent("Fallback title");
 		});
 	});
 });
