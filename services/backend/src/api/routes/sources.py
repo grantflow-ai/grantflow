@@ -652,7 +652,7 @@ async def _cancel_job_if_active(
 
         notification = GenerationNotification(
             rag_job_id=job_id,
-            event=NotificationEvents.AUTO_CANCELLED,
+            event=NotificationEvents.JOB_CANCELLED,
             message=f"Job cancelled: {reason}",
             notification_type="warning",
         )

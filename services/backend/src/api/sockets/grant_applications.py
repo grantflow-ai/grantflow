@@ -1,14 +1,18 @@
 import asyncio
 import time
 from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from google.api_core import exceptions as gcp_exceptions
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.query_helpers import update_active_by_id
+from packages.db.src.tables import GenerationNotification, RagGenerationJob
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import WebsocketMessage, pull_notifications
+from packages.shared_utils.src.pubsub import WebsocketMessage
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
 
@@ -24,6 +28,7 @@ async def handle_grant_application_notifications(
     organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
+    session_maker: async_sessionmaker[Any],
 ) -> AsyncGenerator[WebsocketMessage[dict[str, Any]]]:
     logger.info(
         "WebSocket connection established for notifications",
@@ -35,47 +40,85 @@ async def handle_grant_application_notifications(
     while True:
         poll_start = time.time()
         logger.debug(
-            "Polling for source updates",
+            "Polling for undelivered notifications",
             organization_id=str(organization_id),
             project_id=str(project_id),
             application_id=str(application_id),
         )
         try:
-            messages = await pull_notifications(
-                parent_id=application_id,
-            )
+            notifications_to_send = []
+
+            # Get undelivered notifications for this application in a single query with join
+            async with session_maker() as session, session.begin():
+                # Query for undelivered notifications related to jobs for this application
+                result = await session.execute(
+                    select(GenerationNotification)
+                    .join(
+                        RagGenerationJob,
+                        and_(
+                            GenerationNotification.rag_job_id == RagGenerationJob.id,
+                            RagGenerationJob.grant_application_id == application_id,
+                            RagGenerationJob.deleted_at.is_(None),
+                        ),
+                    )
+                    .where(
+                        and_(
+                            GenerationNotification.delivered_at.is_(None),
+                            GenerationNotification.deleted_at.is_(None),
+                        )
+                    )
+                    .order_by(GenerationNotification.created_at.asc())
+                )
+                notifications = list(result.scalars())
+
+                if notifications:
+                    delivered_at = datetime.now(UTC)
+
+                    # Mark all notifications as delivered
+                    for notif in notifications:
+                        await session.execute(
+                            update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
+                        )
+
+                    # Prepare messages to send
+                    for notification in notifications:
+                        message: WebsocketMessage[dict[str, Any]] = {
+                            "type": "info" if notification.notification_type == "info" else "error",
+                            "parent_id": application_id,
+                            "event": notification.event,
+                            "data": notification.data if notification.data else {"message": notification.message},
+                            "trace_id": "",
+                        }
+                        notifications_to_send.append((notification, message))
+
             poll_duration = time.time() - poll_start
 
-            if messages:
+            if notifications_to_send:
                 logger.info(
-                    "Received messages from Pub/Sub",
-                    num_messages=len(messages),
+                    "Found and marked undelivered notifications",
+                    num_notifications=len(notifications_to_send),
                     application_id=str(application_id),
                     poll_duration_ms=round(poll_duration * 1000, 2),
                 )
-                for message in messages:
+
+                for notification, message in notifications_to_send:
                     logger.debug(
-                        "Sending message to WebSocket client",
-                        notification_event=message.get("event"),
+                        "Sending notification to WebSocket client",
+                        notification_event=notification.event,
+                        notification_id=str(notification.id),
                         application_id=str(application_id),
                     )
                     yield message
             else:
                 logger.debug(
-                    "No messages received in this poll",
+                    "No undelivered notifications found",
                     application_id=str(application_id),
                     poll_duration_ms=round(poll_duration * 1000, 2),
                 )
-        except gcp_exceptions.DeadlineExceeded:
-            logger.debug(
-                "Pub/Sub pull timed out (expected behavior), continuing polling",
-                organization_id=str(organization_id),
-                project_id=str(project_id),
-                application_id=str(application_id),
-            )
+
         except Exception as e:
             logger.error(
-                "Error pulling notifications, continuing polling",
+                "Error polling notifications from database, continuing polling",
                 organization_id=str(organization_id),
                 project_id=str(project_id),
                 application_id=str(application_id),
