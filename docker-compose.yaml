@@ -107,7 +107,7 @@ services:
     volumes:
       - ./services/backend:/app/services/backend:cached
       - ./packages:/app/packages:cached
-    command: "uvicorn services.backend.src.main:app --host 0.0.0.0 --log-level info --reload"
+    command: "uvicorn services.backend.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/backend/src --reload-dir packages"
     depends_on:
       db:
         condition: service_healthy
@@ -137,7 +137,7 @@ services:
     volumes:
       - ./services/indexer:/app/services/indexer:cached
       - ./packages:/app/packages:cached
-    command: "uvicorn services.indexer.src.main:app --host 0.0.0.0 --log-level info --reload"
+    command: "uvicorn services.indexer.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/indexer/src --reload-dir packages"
     depends_on:
       db:
         condition: service_healthy
@@ -166,7 +166,7 @@ services:
     volumes:
       - ./services/crawler:/app/services/crawler:cached
       - ./packages:/app/packages:cached
-    command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
+    command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/crawler/src --reload-dir packages"
     depends_on:
       db:
         condition: service_healthy
@@ -195,7 +195,7 @@ services:
     volumes:
       - ./services/rag:/app/services/rag:cached
       - ./packages:/app/packages:cached
-    command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload"
+    command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/rag/src --reload-dir packages"
     depends_on:
       db:
         condition: service_healthy
@@ -251,7 +251,7 @@ services:
     volumes:
       - ./services/scraper:/app/services/scraper:cached
       - ./packages:/app/packages:cached
-    command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
+    command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/scraper/src --reload-dir packages"
     depends_on:
       db:
         condition: service_healthy
