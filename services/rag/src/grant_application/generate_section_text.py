@@ -10,7 +10,6 @@ from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
 
 if TYPE_CHECKING:
@@ -222,10 +221,10 @@ async def handle_generate_section_text(
     6. Professional academic writing quality
     """
 
-    task_description = f"Generate the {section_title} section. Instructions: {section.get('generation_instructions', '')}"
+    task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
         task_description=task_description,
-        max_length=section.get("max_words", 1000),
+        max_length=section["max_words"],
         minimum_percentage=MIN_WORDS_RATIO * 100,
         retrieval_context=shared_context,
         research_context=research_context,
@@ -241,9 +240,7 @@ async def handle_generate_section_text(
 
     validated_context = combined_context
 
-    cfp_requirements_text = _format_cfp_requirements_for_section(
-        section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
-    )
+    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis["cfp_analysis"])
     length_requirements = _get_section_length_requirements(section_title)
 
     logger.debug(
