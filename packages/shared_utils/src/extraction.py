@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any
 
 from kreuzberg import (
     KreuzbergError,
@@ -8,7 +8,11 @@ from kreuzberg import (
     TesseractConfig,
     PSMMode,
 )
-from packages.db.src.json_objects import DocumentMetadata
+
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
+else:
+    DocumentMetadata = dict
 
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
@@ -85,9 +89,9 @@ def get_scientific_extraction_config(
     max_chars: int = 2000,
     max_overlap: int = 200,
     enable_token_reduction: bool = True,
-    enable_entity_extraction: bool = False,
-    enable_keyword_extraction: bool = False,
-    enable_document_classification: bool = False,
+    enable_entity_extraction: bool = True,
+    enable_keyword_extraction: bool = True,
+    enable_document_classification: bool = True,
     language_hint: str = "en",
 ) -> ExtractionConfig:
     """
@@ -127,6 +131,12 @@ def get_scientific_extraction_config(
         force_ocr=False,  # Let Kreuzberg decide if OCR is needed
         ocr_config=ocr_config,
         auto_detect_language=True,  # Now enabled with langdetect dependency
+        extract_entities=enable_entity_extraction,
+        extract_keywords=enable_keyword_extraction,
+        keyword_count=10,  # Extract top 10 keywords for scientific documents
+        auto_detect_document_type=enable_document_classification,
+        document_classification_mode="text",  # Text mode works well for scientific docs
+        document_type_confidence_threshold=0.4,  # Lower threshold for scientific content
     )
 
 
@@ -154,9 +164,9 @@ async def extract_file_content(
     mime_type: str,
     enable_chunking: bool = False,
     enable_token_reduction: bool = False,
-    enable_entity_extraction: bool = False,
-    enable_keyword_extraction: bool = False,
-    enable_document_classification: bool = False,
+    enable_entity_extraction: bool = True,
+    enable_keyword_extraction: bool = True,
+    enable_document_classification: bool = True,
     language_hint: str = "en",
 ) -> tuple[str, str, list[str] | None, DocumentMetadata | None]:
     """
@@ -189,10 +199,19 @@ async def extract_file_content(
 
     try:
         # Use optimized configuration for scientific documents
-        if enable_chunking or enable_token_reduction:
+        if (
+            enable_chunking
+            or enable_token_reduction
+            or enable_entity_extraction
+            or enable_keyword_extraction
+            or enable_document_classification
+        ):
             config = get_scientific_extraction_config(
                 chunk_content=enable_chunking,
                 enable_token_reduction=enable_token_reduction,
+                enable_entity_extraction=enable_entity_extraction,
+                enable_keyword_extraction=enable_keyword_extraction,
+                enable_document_classification=enable_document_classification,
                 language_hint=language_hint,
             )
             result = await extract_bytes(
@@ -205,9 +224,7 @@ async def extract_file_content(
         extraction_duration = time.time() - start_time
         chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
         metadata = (
-            cast(DocumentMetadata, result.metadata)
-            if hasattr(result, "metadata") and result.metadata
-            else None
+            result.metadata if hasattr(result, "metadata") and result.metadata else None
         )
 
         logger.debug(
