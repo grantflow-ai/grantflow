@@ -193,6 +193,7 @@ async def generate_work_plan_component_text(
         form_inputs=form_inputs,
         section_title=component["title"],
         with_guided_retrieval=True,
+        trace_id=trace_id,
     )
 
     if source_validation_error := await handle_source_validation(

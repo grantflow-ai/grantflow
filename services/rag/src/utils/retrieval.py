@@ -95,6 +95,30 @@ class RetrievalQualityResponse(TypedDict):
     optimization: RetrievalOptimization
 
 
+def _make_kwargs_hashable(kwargs: dict[str, Any]) -> str:
+    """Convert kwargs to a hashable string representation."""
+    if not kwargs:
+        return ""
+
+    # Create a consistent string representation
+    items = []
+    for key, value in sorted(kwargs.items()):
+        if isinstance(value, (list, dict, set)):
+            # Convert unhashable types to their string representation
+            value_str = str(
+                sorted(value.items())
+                if isinstance(value, dict)
+                else sorted(value)
+                if isinstance(value, (list, set))
+                else value
+            )
+        else:
+            value_str = str(value)
+        items.append(f"{key}={value_str}")
+
+    return "|".join(items)
+
+
 retrieval_quality_schema: Final[dict[str, Any]] = {
     "type": "object",
     "properties": {
@@ -213,7 +237,6 @@ async def handle_retrieval(
     )
 
 
-@ttl_lru_cache(maxsize=128, ttl_seconds=300)
 async def retrieve_documents(
     *,
     application_id: str | None = None,
@@ -228,6 +251,38 @@ async def retrieve_documents(
     trace_id: str,
     **kwargs: Any,
 ) -> list[str]:
+    """Retrieve documents with caching. Converts unhashable parameters to hashable types for caching."""
+    return await _retrieve_documents_cached(
+        application_id=application_id,
+        max_results=max_results,
+        max_tokens=max_tokens,
+        model=model,
+        organization_id=organization_id,
+        search_queries_tuple=tuple(search_queries) if search_queries else None,
+        task_description=str(task_description),  # Ensure PromptTemplate is stringified
+        with_guided_retrieval=with_guided_retrieval,
+        embedding_model=embedding_model,
+        trace_id=trace_id,
+        kwargs=kwargs,
+    )
+
+
+@ttl_lru_cache(maxsize=128, ttl_seconds=300)
+async def _retrieve_documents_cached(
+    *,
+    application_id: str | None = None,
+    max_results: int = MAX_RESULTS,
+    max_tokens: int = 4000,
+    model: str = GENERATION_MODEL,
+    organization_id: str | None = None,
+    search_queries_tuple: tuple[str, ...] | None = None,
+    task_description: str,
+    with_guided_retrieval: bool = False,
+    embedding_model: str | None = None,
+    trace_id: str,
+    kwargs: dict[str, Any],
+) -> list[str]:
+    """Cached retrieval function. Now handles hashable types correctly."""
     start_time = time.time()
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
@@ -236,6 +291,10 @@ async def retrieve_documents(
         raise ValueError("Either application_id or organization_id must be provided.")
 
     query_start = time.time()
+    # Convert tuple back to list for internal use
+    search_queries = list(search_queries_tuple) if search_queries_tuple else None
+
+    # Use original kwargs for search query generation
     search_queries = search_queries or await handle_create_search_queries(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )
