@@ -72,6 +72,19 @@ sentence-transformers/
 storybook-static/
 terraform.rc
 testing/test_data/results/
+testing/results/
+testing/llm_optimization/
+**/benchmark_results/
+**/test_results/
+*baseline_test.py
+*optimization_test.py
+*evaluation_test.py
+comprehensive_*.py
+enhanced_*.py
+ngram_*.py
+live_*.py
+debug_*.py
+compare_*.py
 openapi.json
 
 # AI Rules generated files

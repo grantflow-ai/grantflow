@@ -1,5 +1,4 @@
-import time
-from typing import Any, Final
+from typing import Final
 
 from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
@@ -9,7 +8,6 @@ from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_e
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
 
 logger = get_logger(__name__)
@@ -196,10 +194,10 @@ async def handle_generate_section_text(
     6. Professional academic writing quality
     """
 
-    task_description = f"Generate the {section_title} section. Instructions: {section.get('generation_instructions', '')}"
+    task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
         task_description=task_description,
-        max_length=section.get("max_words", 1000),
+        max_length=section["max_words"],
         minimum_percentage=MIN_WORDS_RATIO * 100,
         retrieval_context=shared_context,
         research_context=research_context,
@@ -215,13 +213,13 @@ async def handle_generate_section_text(
 
     validated_context = combined_context
 
-    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis)
+    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis["cfp_analysis"])
     length_requirements = _get_section_length_requirements(section_title)
 
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         length_requirements=length_requirements,
-        instructions=section.get("generation_instructions", f"Write the {section_title} section"),
+        instructions=section["generation_instructions"],
         cfp_requirements=cfp_requirements_text,
         context=validated_context,
     )
@@ -229,13 +227,15 @@ async def handle_generate_section_text(
 
     return await with_prompt_evaluation(
         prompt_identifier="optimized_section_generation",
-        prompt_handler=generate_long_form_text,
+        prompt_handler=lambda prompt, **kwargs: generate_long_form_text(
+            prompt_identifier="section_generation_evaluation", task_description=prompt, trace_id=trace_id, **kwargs
+        ),
         prompt=compressed_prompt,
         increment=15,
         retries=3,
         passing_score=80,
         # Required arguments for generate_long_form_text
-        max_words=section.get("max_words", 1000),
+        max_words=section["max_words"],
         min_words=section.get("min_words", 100),
         context=validated_context,
         criteria=[
