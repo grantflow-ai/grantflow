@@ -4,7 +4,6 @@ from urllib.error import URLError
 
 import pytest
 from anyio import Path
-from bs4 import BeautifulSoup
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
 )
@@ -83,10 +82,13 @@ def mock_trafilatura_extract() -> Generator[Mock]:
 
 
 @pytest.fixture
-def mock_convert_to_markdown() -> Generator[Mock]:
-    with patch("services.crawler.src.extraction.convert_to_markdown") as mock:
+def mock_extract_file_content() -> Generator[AsyncMock]:
+    with patch("services.crawler.src.extraction.extract_file_content") as mock:
         mock.return_value = (
-            "# Test Content\n\nThis is a test paragraph with some content."
+            "# Test Content\n\nThis is a test paragraph with some content.",
+            "text/html",
+            None,
+            None,
         )
         yield mock
 
@@ -102,22 +104,6 @@ def mock_generate_embeddings() -> Generator[AsyncMock]:
 def mock_cosine_similarity() -> Generator[Mock]:
     with patch("services.crawler.src.extraction.cosine_similarity") as mock:
         mock.return_value = [[0.95]]
-        yield mock
-
-
-@pytest.fixture
-def mock_chunk_text() -> Generator[Mock]:
-    with patch("services.crawler.src.extraction.chunk_text") as mock:
-        mock.return_value = [
-            {
-                "content": "Test Content",
-                "metadata": {"source": "https://example.org/test-page"},
-            },
-            {
-                "content": "This is a test paragraph with some content.",
-                "metadata": {"source": "https://example.org/test-page"},
-            },
-        ]
         yield mock
 
 
@@ -197,15 +183,23 @@ async def test_extract_and_process_content() -> None:
             "services.crawler.src.extraction.generate_embeddings",
             new_callable=AsyncMock,
         ) as mock_embeddings,
-        patch("services.crawler.src.extraction.sanitize_html") as mock_sanitize,
-        patch("services.crawler.src.extraction.convert_to_markdown") as mock_convert,
+        patch(
+            "services.crawler.src.extraction.extract_file_content",
+            new_callable=AsyncMock,
+        ) as mock_extract_file,
     ):
-        mock_extract.return_value = "Test\nContent"
+        # First call extracts text (markdown), second call extracts HTML
+        mock_extract.side_effect = [
+            "Test\nContent",
+            "<html><body><h1>Test</h1><p>Content</p></body></html>",
+        ]
         mock_embeddings.return_value = [[0.1, 0.2, 0.3]]
-        mock_sanitize.return_value = BeautifulSoup(
-            "<html><body><h1>Test</h1><p>Content</p></body></html>", "html.parser"
-        )
-        mock_convert.return_value = "# Test\n\nContent"
+        mock_extract_file.return_value = (
+            "# Test\n\nContent",
+            "text/html",
+            None,
+            None,
+        )  # Kreuzberg converts to markdown
 
         md_content, text_content, embeddings = await extract_and_process_content(
             url, html
@@ -223,13 +217,20 @@ async def test_extract_and_process_content_with_existing_data() -> None:
     existing_embeddings = [[0.9, 0.8, 0.7]]
 
     with (
-        patch("services.crawler.src.extraction.sanitize_html") as mock_sanitize,
-        patch("services.crawler.src.extraction.convert_to_markdown") as mock_convert,
+        patch("services.crawler.src.extraction.extract") as mock_extract,
+        patch(
+            "services.crawler.src.extraction.extract_file_content",
+            new_callable=AsyncMock,
+        ) as mock_extract_file,
     ):
-        mock_sanitize.return_value = BeautifulSoup(
-            "<html><body><h1>Test</h1><p>Content</p></body></html>", "html.parser"
-        )
-        mock_convert.return_value = "# Test\n\nContent"
+        # Only one call to extract since we have existing text, so it extracts HTML for markdown conversion
+        mock_extract.return_value = "<html><body><h1>Test</h1><p>Content</p></body></html>"  # Trafilatura returns HTML
+        mock_extract_file.return_value = (
+            "# Test\n\nContent",
+            "text/html",
+            None,
+            None,
+        )  # Kreuzberg converts to markdown
 
         md_content, text_content, embeddings = await extract_and_process_content(
             url, html, existing_text, existing_embeddings
@@ -349,7 +350,7 @@ async def test_crawl_basic(
     mock_url: str,
     mock_download_page_html: AsyncMock,
     mock_trafilatura_extract: Mock,
-    mock_convert_to_markdown: Mock,
+    mock_extract_file_content: AsyncMock,
     mock_generate_embeddings: AsyncMock,
     mock_download_file: AsyncMock,
 ) -> None:
@@ -384,7 +385,6 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
             "services.crawler.src.extraction.crawl", new_callable=AsyncMock
         ) as mock_crawl,
         patch("services.crawler.src.extraction.TemporaryDirectory") as mock_tempdir,
-        patch("services.crawler.src.extraction.chunk_text") as mock_chunk,
         patch(
             "services.crawler.src.extraction.index_chunks", new_callable=AsyncMock
         ) as mock_index_chunks,
@@ -401,9 +401,6 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
             }
         ]
 
-        mock_chunk.return_value = [
-            {"content": "Test content", "metadata": {"source": "test"}}
-        ]
         mock_index_chunks.return_value = [
             {
                 "chunk": {"content": "Test content", "metadata": {"source": "test"}},
@@ -430,6 +427,6 @@ async def test_crawl_url_integration(temp_dir: Path) -> None:
         assert file_contents["test2.docx"] == b"content2"
 
         mock_index_chunks.assert_called_once_with(
-            chunks=[{"content": "Test content", "metadata": {"source": "test"}}],
+            chunks=[{"content": "# Page 1\n\nContent"}],
             source_id="test-id",
         )

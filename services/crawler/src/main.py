@@ -186,10 +186,10 @@ async def handle_url_crawling(
         trace_id=trace_id,
     )
 
-    parent_id = crawling_request["entity_id"]
+    crawling_request["entity_id"]
     if crawling_request["entity_type"] == "grant_template":
         async with session_maker() as session:
-            parent_id = await session.scalar(
+            await session.scalar(
                 select(GrantTemplate.grant_application_id).where(
                     GrantTemplate.id == crawling_request["entity_id"]
                 )
@@ -199,13 +199,10 @@ async def handle_url_crawling(
         logger=logger,
         session_maker=session_maker,
         source_id=crawling_request["source_id"],
-        parent_id=parent_id,
         identifier=crawling_request["url"],
         text_content="",
         vectors=None,
         indexing_status=SourceIndexingStatusEnum.INDEXING,
-        should_send_notifications=crawling_request["entity_type"]
-        != "granting_institution",
         trace_id=trace_id,
     )
 
@@ -280,13 +277,10 @@ async def handle_url_crawling(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=parent_id,
             identifier=crawling_request["url"],
             text_content=content,
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
-            should_send_notifications=crawling_request["entity_type"]
-            != "granting_institution",
             trace_id=trace_id,
         )
 
@@ -315,13 +309,10 @@ async def handle_url_crawling(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=parent_id,
             identifier=crawling_request["url"],
             text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
-            should_send_notifications=crawling_request["entity_type"]
-            != "granting_institution",
             trace_id=trace_id,
         )
 
