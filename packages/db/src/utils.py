@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.json_objects import DocumentMetadata
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
@@ -20,7 +21,6 @@ from packages.db.src.tables import (
 )
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.pubsub import SourceProcessingResult, publish_notification
 
 if TYPE_CHECKING:
     from structlog.typing import FilteringBoundLogger
@@ -107,57 +107,45 @@ async def update_source_indexing_status(
     logger: "FilteringBoundLogger",
     session_maker: async_sessionmaker[Any],
     source_id: UUID,
-    parent_id: UUID,
     identifier: str,
     text_content: str,
     vectors: list[VectorDTO] | None,
     indexing_status: SourceIndexingStatusEnum,
-    should_send_notifications: bool = True,
     trace_id: str,
+    document_metadata: DocumentMetadata | None = None,
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
+            update_values: dict[str, Any] = {"indexing_status": indexing_status, "text_content": text_content}
+            if document_metadata is not None:
+                update_values["document_metadata"] = document_metadata
+
             await session.execute(
                 update(RagSource)
                 .where(
                     RagSource.id == source_id,
                     RagSource.deleted_at.is_(None),
                 )
-                .values({"indexing_status": indexing_status, "text_content": text_content})
+                .values(update_values)
             )
             if vectors:
                 await session.execute(insert(TextVector).values(vectors))
 
             await session.commit()
 
-            if should_send_notifications:
-                await publish_notification(
-                    parent_id=parent_id,
-                    event="source_processing",
-                    data=SourceProcessingResult(
-                        source_id=source_id,
-                        indexing_status=indexing_status,
-                        identifier=identifier,
-                        trace_id=trace_id,
-                    ),
-                    trace_id=trace_id,
-                )
+            logger.debug(
+                "Source indexing status updated",
+                source_id=source_id,
+                indexing_status=indexing_status.value,
+                identifier=identifier,
+                metadata_fields=len(document_metadata) if document_metadata else 0,
+                trace_id=trace_id,
+            )
         except SQLAlchemyError as e:
             logger.exception(
                 "Database operation error",
                 source_id=source_id,
                 identifier=identifier,
                 error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
+                trace_id=trace_id,
             )
-            if should_send_notifications:
-                await publish_notification(
-                    parent_id=parent_id,
-                    event="source_processing",
-                    data=SourceProcessingResult(
-                        source_id=source_id,
-                        indexing_status=SourceIndexingStatusEnum.FAILED,
-                        identifier=identifier,
-                        trace_id=trace_id,
-                    ),
-                    trace_id=trace_id,
-                )
