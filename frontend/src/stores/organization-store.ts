@@ -82,11 +82,14 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 			},
 
 			selectOrganization: (organizationId: string) => {
-				set({ selectedOrganizationId: organizationId });
-				log.info("organization-store.ts: selectOrganization", {
-					message: "Organization selected",
-					organizationId,
-				});
+				const { selectedOrganizationId: currentId } = get();
+				if (currentId !== organizationId) {
+					set({ selectedOrganizationId: organizationId });
+					log.info("organization-store.ts: selectOrganization", {
+						message: "Organization selected",
+						organizationId,
+					});
+				}
 			},
 
 			setOrganization: (organization: OrganizationType) => {
