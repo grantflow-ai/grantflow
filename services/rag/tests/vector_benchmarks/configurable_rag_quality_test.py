@@ -372,6 +372,7 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 task_description=scientific_query,
                 search_queries=search_queries[:3],
                 embedding_model=embedding_model,
+                trace_id="test-trace-id",
             )
             retrieval_time = time.time() - retrieval_start
             total_retrieval_time += retrieval_time

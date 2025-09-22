@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from packages.db.src.tables import GrantApplicationSource, TextVector
-from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
@@ -41,7 +40,9 @@ async def test_extraction_smoke(logger: logging.Logger, data_file: Path) -> None
         pytest.skip(f"Unsupported file type: {data_file.suffix}")
 
     try:
-        result, extracted_mime_type = await extract_file_content(content=data_file.read_bytes(), mime_type=mime_type)
+        result, extracted_mime_type, _, _ = await extract_file_content(
+            content=data_file.read_bytes(), mime_type=mime_type, enable_chunking=False, enable_token_reduction=False
+        )
 
         assert isinstance(result, str), f"Expected string result, got {type(result)}"
         assert result.strip(), "Extracted text is empty"
@@ -65,17 +66,23 @@ async def test_chunking_smoke(logger: logging.Logger, data_file: Path) -> None:
     )
 
     try:
-        text, extracted_mime_type = await extract_file_content(content=data_file.read_bytes(), mime_type=mime_type)
+        text, _extracted_mime_type, chunks, _ = await extract_file_content(
+            content=data_file.read_bytes(), mime_type=mime_type, enable_chunking=True, enable_token_reduction=True
+        )
 
-        chunks = chunk_text(text=text, mime_type=extracted_mime_type)
+        # Convert chunks to expected format if available
+        if chunks:
+            chunk_dtos = [{"content": chunk, "page_number": None} for chunk in chunks]
+        else:
+            chunk_dtos = [{"content": text, "page_number": None}]
 
-        assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
-        assert all(chunk["content"].strip() for chunk in chunks), "Empty chunks found"
+        assert len(chunk_dtos) > 0, f"No chunks generated from {data_file.name}"
+        assert all(chunk["content"] and chunk["content"].strip() for chunk in chunk_dtos), "Empty chunks found"
 
-        avg_chunk_length = sum(len(chunk["content"]) for chunk in chunks) / len(chunks)
+        avg_chunk_length = sum(len(chunk["content"]) for chunk in chunk_dtos if chunk["content"]) / len(chunk_dtos)
         assert 100 <= avg_chunk_length <= 3000, f"Average chunk length suspicious: {avg_chunk_length}"
 
-        logger.info("✓ Chunking smoke test passed: %d chunks, avg length %d", len(chunks), int(avg_chunk_length))
+        logger.info("✓ Chunking smoke test passed: %d chunks, avg length %d", len(chunk_dtos), int(avg_chunk_length))
     except (FileParsingError, ValidationError, ExternalOperationError) as e:
         pytest.fail(f"Chunking failed for {data_file.name}: {e}")
 
@@ -121,7 +128,7 @@ async def test_semantic_coherence_assessment(
     )
 
     try:
-        vectors, text_content = await process_source(
+        vectors, text_content, _ = await process_source(
             content=data_file.read_bytes(),
             filename=data_file.name,
             mime_type=mime_type,
@@ -250,7 +257,7 @@ async def test_comprehensive_pipeline_evaluation(
     )
 
     try:
-        vectors, text_content = await process_source(
+        vectors, text_content, _ = await process_source(
             content=data_file.read_bytes(),
             filename=data_file.name,
             mime_type=mime_type,
