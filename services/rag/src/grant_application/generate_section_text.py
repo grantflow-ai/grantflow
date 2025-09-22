@@ -74,7 +74,6 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
 
 
 def _get_section_length_requirements(section_title: str) -> str:
-    """Generate length requirements text for specific section types"""
     section_title_lower = section_title.lower()
 
     if "abstract" in section_title_lower:
