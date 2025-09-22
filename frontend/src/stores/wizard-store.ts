@@ -5,6 +5,7 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
+import type { TemplateGenerationEvent } from "@/types/notification-events";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
@@ -25,23 +26,6 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 ];
 
 export type ResearchObjective = API.UpdateApplication.RequestBody["research_objectives"][0];
-
-export type TemplateGenerationEvent =
-	| "cfp_data_extracted"
-	| "extracting_cfp_data"
-	| "generation_error"
-	| "grant_template_created"
-	| "grant_template_extraction"
-	| "grant_template_generation_started"
-	| "grant_template_metadata"
-	| "indexing_in_progress"
-	| "insufficient_context_error"
-	| "internal_error"
-	| "low_retrieval_quality"
-	| "metadata_generated"
-	| "pipeline_error"
-	| "saving_grant_template"
-	| "sections_extracted";
 
 export interface TemplateGenerationStatus {
 	event: TemplateGenerationEvent;

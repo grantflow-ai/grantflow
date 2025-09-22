@@ -3,63 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
+import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS } from "@/types/notification-events";
 
 type ToastId = number | string | undefined;
 
-const ERROR_EVENTS = new Set([
-	"auto_cancelled",
-	"generation_error",
-	"indexing_failed",
-	"internal_error",
-	"job_cancelled",
-	"missing_prerequisites",
-	"pipeline_error",
-	"template_incomplete",
-]);
-
-const WARNING_EVENTS = new Set([
-	"cancellation_acknowledged",
-	"indexing_timeout",
-	"insufficient_context_error",
-	"llm_timeout",
-	"low_retrieval_quality",
-]);
-
-const SUCCESS_EVENTS = new Set([
-	"application_saved",
-	"cfp_data_extracted",
-	"grant_application_generation_completed",
-	"grant_template_created",
-	"grant_template_generation_completed",
-	"metadata_generated",
-	"objective_completed",
-	"objectives_enriched",
-	"relationships_extracted",
-	"research_plan_completed",
-	"section_texts_generated",
-	"sections_extracted",
-	"wikidata_enhancement_complete",
-]);
-
-const PROGRESS_EVENTS = new Set([
-	"assembling_application",
-	"enhancing_with_wikidata",
-	"enriching_objectives",
-	"extracting_cfp_data",
-	"extracting_relationships",
-	"generating_objective",
-	"generating_research_plan",
-	"generating_section_texts",
-	"grant_application_generation_started",
-	"grant_template_extraction",
-	"grant_template_generation_started",
-	"grant_template_metadata",
-	"indexing_in_progress",
-	"restored_progress",
-	"saving_application",
-	"saving_grant_template",
-	"validating_template",
-]);
+const WARNING_EVENTS = new Set(["indexing_timeout", "insufficient_context_error", "llm_timeout"]);
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
@@ -87,11 +35,6 @@ export function NotificationHandler({ notification }: NotificationHandlerProps) 
 function displayNotification(notification: RagProcessingStatusMessage): ToastId {
 	const { data, event, message } = notification.data;
 
-	if (PROGRESS_EVENTS.has(event)) {
-		showInfoToast(message, data, notification.type);
-		return undefined;
-	}
-
 	if (ERROR_EVENTS.has(event)) {
 		showErrorToast(message, data, notification.type);
 	} else if (WARNING_EVENTS.has(event)) {
@@ -107,8 +50,8 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 
 function shouldDismissToast(event: string, previousEvent: null | string, toastId: ToastId): boolean {
 	if (!toastId) return false;
-	const isProgressChange = PROGRESS_EVENTS.has(event) && previousEvent !== event;
-	const isCompleteEvent = SUCCESS_EVENTS.has(event) || ERROR_EVENTS.has(event);
+	const isProgressChange = SUCCESS_EVENTS.has(event as NotificationEvent) && previousEvent !== event;
+	const isCompleteEvent = ERROR_EVENTS.has(event as NotificationEvent);
 	return isProgressChange || isCompleteEvent;
 }
 

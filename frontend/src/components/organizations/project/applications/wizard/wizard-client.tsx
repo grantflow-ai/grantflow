@@ -14,8 +14,9 @@ import {
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 import { useApplicationStore } from "@/stores/application-store";
-import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { isTemplateEvent } from "@/types/notification-events";
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
@@ -161,10 +162,12 @@ export function WizardClientComponent({
 			const { event, message } = latestRagNotification.data;
 
 			log.info("[useApplicationNotifications] Received event from latestRagNotification:", { event });
-			useWizardStore.getState().setTemplateGenerationStatus({
-				event: event as TemplateGenerationEvent,
-				message,
-			});
+			if (isTemplateEvent(event)) {
+				useWizardStore.getState().setTemplateGenerationStatus({
+					event,
+					message,
+				});
+			}
 		}
 	}, [latestRagNotification]);
 
@@ -179,22 +182,16 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification.data;
 
-		if (
-			event === "grant_template_generation_started" ||
-			event === "indexing_in_progress" ||
-			event === "extracting_cfp_data" ||
-			event === "grant_template_extraction" ||
-			event === "grant_template_metadata"
-		) {
+		if (event === "cfp_data_extracted" || event === "sections_extracted") {
 			setGeneratingTemplate(true);
 		}
 
-		if (event === "grant_template_generation_completed") {
+		if (event === "grant_template_created") {
 			setGeneratingTemplate(false);
 			void getApplication(organizationId, projectId, initialApplicationId);
 		}
 
-		if (event === "generation_error" || event === "pipeline_error") {
+		if (event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}
 	}, [latestRagNotification, setGeneratingTemplate, getApplication, organizationId, projectId, initialApplicationId]);

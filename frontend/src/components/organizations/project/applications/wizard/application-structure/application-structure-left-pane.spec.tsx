@@ -156,7 +156,7 @@ describe("ApplicationStructureLeftPane", () => {
 
 		useWizardStore.setState({
 			templateGenerationStatus: {
-				event: "generation_error",
+				event: "pipeline_error",
 				message: "Failed to generate template: Invalid document format",
 			},
 		});
@@ -176,7 +176,7 @@ describe("ApplicationStructureLeftPane", () => {
 
 		useWizardStore.setState({
 			templateGenerationStatus: {
-				event: "indexing_in_progress",
+				event: "cfp_data_extracted",
 				message: "Indexing documents",
 			},
 		});

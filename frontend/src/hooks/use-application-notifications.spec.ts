@@ -413,10 +413,10 @@ describe("Type Guards", () => {
 		const validNotification = RagProcessingStatusMessageFactory.build({
 			data: {
 				data: { section_count: 5 },
-				event: "grant_template_extraction",
+				event: "sections_extracted",
 				message: "Extracting sections...",
 			},
-			event: "grant_template_extraction",
+			event: "sections_extracted",
 			parent_id: "test-id",
 			type: "data",
 		});
@@ -426,10 +426,10 @@ describe("Type Guards", () => {
 		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
 			data: {
 				data: undefined,
-				event: "grant_template_extraction",
+				event: "sections_extracted",
 				message: "Processing...",
 			},
-			event: "grant_template_extraction",
+			event: "sections_extracted",
 			parent_id: "test-id",
 			type: "data",
 		});
@@ -453,12 +453,10 @@ describe("Type Guards", () => {
 
 		const notificationWithStages = {
 			data: {
-				current_pipeline_stage: 4,
-				event: "generating_section_texts",
+				event: "section_texts_generated",
 				message: "Generating text for all grant sections...",
-				total_pipeline_stages: 9,
 			},
-			event: "generating_section_texts",
+			event: "section_texts_generated",
 			parent_id: "test-id",
 			type: "data",
 		};
