@@ -110,6 +110,13 @@ runs:
               # Wait for emulator to be ready
               sleep 10
 
+              # Set environment variables for GitHub Actions
+              echo "PUBSUB_EMULATOR_HOST=localhost:8085" >> $GITHUB_ENV
+              echo "PUBSUB_PROJECT_ID=grantflow" >> $GITHUB_ENV
+
+              # Create necessary topics and subscriptions using our initialization script
+              PYTHONPATH=. PUBSUB_EMULATOR_HOST=localhost:8085 PUBSUB_PROJECT_ID=grantflow uv run python scripts/init-pubsub-emulator.py
+
         - name: Run Tests
           shell: bash
           run: |
@@ -122,7 +129,7 @@ runs:
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               elif [[ "${{ inputs.target }}" == "rag" ]]; then
                 # Run rag tests with PubSub emulator
-                PYTHONPATH=. PUBSUB_EMULATOR_HOST=localhost:8085 uv run pytest services/${{ inputs.target }} -v
+                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi
