@@ -44,10 +44,37 @@ export async function login(idToken: string) {
 			});
 		}
 
-		log.info("action_success", { action: "login", duration_ms: Date.now() - started });
-		redirect(routes.organization.root());
+		// Verify the user can access their organization data before redirecting
+		try {
+			const verifyUrl = new URL("/organizations", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
+			await getClient()
+				.get(verifyUrl, {
+					headers: { Authorization: `Bearer ${jwt_token}` },
+				})
+				.json();
+
+			log.info("action_success", { action: "login", duration_ms: Date.now() - started });
+			redirect(routes.organization.root());
+		} catch (verifyError) {
+			// If verification fails, remove the session cookie and throw an error
+			const cookieStore = await cookies();
+			cookieStore.delete(SESSION_COOKIE);
+			cookieStore.delete(SELECTED_ORGANIZATION_COOKIE);
+
+			log.warn("Login verification failed, removing session", {
+				action: "login",
+				duration_ms: Date.now() - started,
+				error: verifyError instanceof Error ? verifyError.message : String(verifyError),
+			});
+			throw new Error("Authentication failed. Please try logging in again.");
+		}
 	} catch (error) {
 		log.error("action_failed", error, { action: "login", duration_ms: Date.now() - started });
-		throw error;
+
+		// Don't redirect on login errors - let the client handle them
+		if (error instanceof Error) {
+			throw new Error(error.message);
+		}
+		throw new Error("Login failed");
 	}
 }
