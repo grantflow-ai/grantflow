@@ -1,16 +1,16 @@
 from collections.abc import Sequence
 
-import pgvector.sqlalchemy
+import pgvector
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "b722c7af4d1a"
+revision: str = "7b54cb873ba4"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-def upgrade() -> None:
+def upgrade() -> None:  # noqa: PLR0915
     op.create_table(
         "grant_matching_subscriptions",
         sa.Column("email", sa.String(length=255), nullable=False),
@@ -70,37 +70,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_organizations_deleted_at"), "organizations", ["deleted_at"], unique=False)
     op.create_index(op.f("ix_organizations_name"), "organizations", ["name"], unique=False)
     op.create_table(
-        "rag_generation_jobs",
-        sa.Column(
-            "status",
-            sa.Enum("PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED", name="raggenerationstatusenum"),
-            nullable=False,
-        ),
-        sa.Column("retry_count", sa.BigInteger(), nullable=False),
-        sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column("error_details", sa.JSON(), nullable=True),
-        sa.Column("checkpoint_data", sa.JSON(), nullable=True),
-        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("failed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("job_type", sa.String(length=50), nullable=False),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint("retry_count >= 0", name="check_retry_count_non_negative"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        "idx_rag_generation_jobs_status_created", "rag_generation_jobs", ["status", "created_at"], unique=False
-    )
-    op.create_index(
-        "idx_rag_generation_jobs_status_retry", "rag_generation_jobs", ["status", "retry_count"], unique=False
-    )
-    op.create_index(op.f("ix_rag_generation_jobs_created_at"), "rag_generation_jobs", ["created_at"], unique=False)
-    op.create_index(op.f("ix_rag_generation_jobs_deleted_at"), "rag_generation_jobs", ["deleted_at"], unique=False)
-    op.create_index(op.f("ix_rag_generation_jobs_status"), "rag_generation_jobs", ["status"], unique=False)
-    op.create_table(
         "rag_sources",
         sa.Column(
             "indexing_status",
@@ -118,35 +87,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_rag_sources_created_at"), "rag_sources", ["created_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_deleted_at"), "rag_sources", ["deleted_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_indexing_status"), "rag_sources", ["indexing_status"], unique=False)
-    op.create_table(
-        "generation_notifications",
-        sa.Column("rag_job_id", sa.UUID(), nullable=False),
-        sa.Column("event", sa.String(length=100), nullable=False),
-        sa.Column("message", sa.Text(), nullable=False),
-        sa.Column("data", sa.JSON(), nullable=True),
-        sa.Column("current_pipeline_stage", sa.BigInteger(), nullable=True),
-        sa.Column("total_pipeline_stages", sa.BigInteger(), nullable=True),
-        sa.Column("notification_type", sa.String(length=20), nullable=False),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(["rag_job_id"], ["rag_generation_jobs.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        "idx_rag_notifications_job_created", "generation_notifications", ["rag_job_id", "created_at"], unique=False
-    )
-    op.create_index(
-        op.f("ix_generation_notifications_created_at"), "generation_notifications", ["created_at"], unique=False
-    )
-    op.create_index(
-        op.f("ix_generation_notifications_deleted_at"), "generation_notifications", ["deleted_at"], unique=False
-    )
-    op.create_index(op.f("ix_generation_notifications_event"), "generation_notifications", ["event"], unique=False)
-    op.create_index(
-        op.f("ix_generation_notifications_rag_job_id"), "generation_notifications", ["rag_job_id"], unique=False
-    )
     op.create_table(
         "granting_institution_sources",
         sa.Column("rag_source_id", sa.UUID(), nullable=False),
@@ -390,7 +330,6 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=500), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("project_id", sa.UUID(), nullable=False),
-        sa.Column("rag_job_id", sa.UUID(), nullable=True),
         sa.Column("parent_id", sa.UUID(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -398,7 +337,6 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["parent_id"], ["grant_applications.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["rag_job_id"], ["rag_generation_jobs.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("idx_grant_app_project_status", "grant_applications", ["project_id", "status"], unique=False)
@@ -413,7 +351,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_grant_applications_deleted_at"), "grant_applications", ["deleted_at"], unique=False)
     op.create_index(op.f("ix_grant_applications_parent_id"), "grant_applications", ["parent_id"], unique=False)
     op.create_index(op.f("ix_grant_applications_project_id"), "grant_applications", ["project_id"], unique=False)
-    op.create_index(op.f("ix_grant_applications_rag_job_id"), "grant_applications", ["rag_job_id"], unique=False)
     op.create_index(op.f("ix_grant_applications_status"), "grant_applications", ["status"], unique=False)
     op.create_table(
         "notifications",
@@ -489,32 +426,6 @@ def upgrade() -> None:
         op.f("ix_editor_documents_grant_application_id"), "editor_documents", ["grant_application_id"], unique=False
     )
     op.create_table(
-        "grant_application_generation_jobs",
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("grant_application_id", sa.UUID(), nullable=False),
-        sa.Column(
-            "current_stage",
-            sa.Enum(
-                "GENERATE_SECTIONS",
-                "EXTRACT_RELATIONSHIPS",
-                "ENRICH_RESEARCH_OBJECTIVES",
-                "ENRICH_TERMINOLOGY",
-                "GENERATE_RESEARCH_PLAN",
-                name="grantapplicationstageenum",
-            ),
-            nullable=True,
-        ),
-        sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["id"], ["rag_generation_jobs.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_grant_application_generation_jobs_grant_application_id"),
-        "grant_application_generation_jobs",
-        ["grant_application_id"],
-        unique=True,
-    )
-    op.create_table(
         "grant_application_sources",
         sa.Column("grant_application_id", sa.UUID(), nullable=False),
         sa.Column("rag_source_id", sa.UUID(), nullable=False),
@@ -536,7 +447,6 @@ def upgrade() -> None:
         sa.Column("grant_sections", sa.JSON(), nullable=False),
         sa.Column("grant_application_id", sa.UUID(), nullable=False),
         sa.Column("granting_institution_id", sa.UUID(), nullable=True),
-        sa.Column("rag_job_id", sa.UUID(), nullable=True),
         sa.Column("submission_date", sa.Date(), nullable=True),
         sa.Column("cfp_analysis", sa.JSON(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -545,39 +455,12 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["granting_institution_id"], ["granting_institutions.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["rag_job_id"], ["rag_generation_jobs.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_grant_templates_created_at"), "grant_templates", ["created_at"], unique=False)
     op.create_index(op.f("ix_grant_templates_deleted_at"), "grant_templates", ["deleted_at"], unique=False)
     op.create_index(
         op.f("ix_grant_templates_grant_application_id"), "grant_templates", ["grant_application_id"], unique=False
-    )
-    op.create_index(op.f("ix_grant_templates_rag_job_id"), "grant_templates", ["rag_job_id"], unique=False)
-    op.create_table(
-        "grant_template_generation_jobs",
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("grant_template_id", sa.UUID(), nullable=False),
-        sa.Column(
-            "current_stage",
-            sa.Enum(
-                "EXTRACT_CFP_CONTENT",
-                "ANALYZE_CFP_CONTENT",
-                "EXTRACT_SECTIONS",
-                "GENERATE_METADATA",
-                name="granttemplatestageenum",
-            ),
-            nullable=True,
-        ),
-        sa.ForeignKeyConstraint(["grant_template_id"], ["grant_templates.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["id"], ["rag_generation_jobs.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_grant_template_generation_jobs_grant_template_id"),
-        "grant_template_generation_jobs",
-        ["grant_template_id"],
-        unique=True,
     )
     op.create_table(
         "grant_template_sources",
@@ -596,17 +479,183 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_grant_template_sources_deleted_at"), "grant_template_sources", ["deleted_at"], unique=False
     )
+    op.create_table(
+        "rag_generation_jobs",
+        sa.Column("parent_job_id", sa.UUID(), nullable=True),
+        sa.Column("grant_template_id", sa.UUID(), nullable=True),
+        sa.Column("grant_application_id", sa.UUID(), nullable=True),
+        sa.Column(
+            "template_stage",
+            sa.Enum(
+                "EXTRACT_CFP_CONTENT",
+                "ANALYZE_CFP_CONTENT",
+                "EXTRACT_SECTIONS",
+                "GENERATE_METADATA",
+                name="granttemplatestageenum",
+            ),
+            nullable=True,
+        ),
+        sa.Column(
+            "application_stage",
+            sa.Enum(
+                "GENERATE_SECTIONS",
+                "EXTRACT_RELATIONSHIPS",
+                "ENRICH_RESEARCH_OBJECTIVES",
+                "ENRICH_TERMINOLOGY",
+                "GENERATE_RESEARCH_PLAN",
+                name="grantapplicationstageenum",
+            ),
+            nullable=True,
+        ),
+        sa.Column(
+            "status",
+            sa.Enum("PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED", name="raggenerationstatusenum"),
+            nullable=False,
+        ),
+        sa.Column("retry_count", sa.BigInteger(), nullable=False),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("error_details", sa.JSON(), nullable=True),
+        sa.Column("checkpoint_data", sa.JSON(), nullable=True),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("failed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.CheckConstraint(
+            "(grant_template_id IS NOT NULL AND grant_application_id IS NULL AND template_stage IS NOT NULL AND application_stage IS NULL) OR (grant_template_id IS NULL AND grant_application_id IS NOT NULL AND template_stage IS NULL AND application_stage IS NOT NULL)",
+            name="check_exactly_one_entity_and_stage",
+        ),
+        sa.CheckConstraint("retry_count >= 0", name="check_retry_count_non_negative"),
+        sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["grant_template_id"], ["grant_templates.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["parent_job_id"], ["rag_generation_jobs.id"], ondelete="SET NULL"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("idx_rag_generation_jobs_parent", "rag_generation_jobs", ["parent_job_id"], unique=False)
+    op.create_index(
+        "idx_rag_generation_jobs_status_created", "rag_generation_jobs", ["status", "created_at"], unique=False
+    )
+    op.create_index(
+        "idx_rag_generation_jobs_status_retry", "rag_generation_jobs", ["status", "retry_count"], unique=False
+    )
+    op.create_index(
+        "idx_rag_jobs_application_stage",
+        "rag_generation_jobs",
+        ["grant_application_id", "application_stage"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_rag_jobs_template_stage", "rag_generation_jobs", ["grant_template_id", "template_stage"], unique=False
+    )
+    op.create_index(
+        "idx_unique_application_stage",
+        "rag_generation_jobs",
+        ["grant_application_id", "application_stage"],
+        unique=True,
+        postgresql_where=sa.text(
+            "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_application_id IS NOT NULL AND application_stage IS NOT NULL"
+        ),
+    )
+    op.create_index(
+        "idx_unique_template_stage",
+        "rag_generation_jobs",
+        ["grant_template_id", "template_stage"],
+        unique=True,
+        postgresql_where=sa.text(
+            "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_template_id IS NOT NULL AND template_stage IS NOT NULL"
+        ),
+    )
+    op.create_index(
+        op.f("ix_rag_generation_jobs_application_stage"), "rag_generation_jobs", ["application_stage"], unique=False
+    )
+    op.create_index(op.f("ix_rag_generation_jobs_created_at"), "rag_generation_jobs", ["created_at"], unique=False)
+    op.create_index(op.f("ix_rag_generation_jobs_deleted_at"), "rag_generation_jobs", ["deleted_at"], unique=False)
+    op.create_index(
+        op.f("ix_rag_generation_jobs_grant_application_id"),
+        "rag_generation_jobs",
+        ["grant_application_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_rag_generation_jobs_grant_template_id"), "rag_generation_jobs", ["grant_template_id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_rag_generation_jobs_parent_job_id"), "rag_generation_jobs", ["parent_job_id"], unique=False
+    )
+    op.create_index(op.f("ix_rag_generation_jobs_status"), "rag_generation_jobs", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_rag_generation_jobs_template_stage"), "rag_generation_jobs", ["template_stage"], unique=False
+    )
+    op.create_table(
+        "generation_notifications",
+        sa.Column("rag_job_id", sa.UUID(), nullable=False),
+        sa.Column("data", sa.JSON(), nullable=True),
+        sa.Column("delivered_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("event", sa.String(length=100), nullable=False),
+        sa.Column("message", sa.Text(), nullable=False),
+        sa.Column("notification_type", sa.String(length=20), nullable=False),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["rag_job_id"], ["rag_generation_jobs.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        "idx_rag_notifications_job_created", "generation_notifications", ["rag_job_id", "created_at"], unique=False
+    )
+    op.create_index(
+        op.f("ix_generation_notifications_created_at"), "generation_notifications", ["created_at"], unique=False
+    )
+    op.create_index(
+        op.f("ix_generation_notifications_deleted_at"), "generation_notifications", ["deleted_at"], unique=False
+    )
+    op.create_index(op.f("ix_generation_notifications_event"), "generation_notifications", ["event"], unique=False)
+    op.create_index(
+        op.f("ix_generation_notifications_rag_job_id"), "generation_notifications", ["rag_job_id"], unique=False
+    )
 
 
-def downgrade() -> None:
+def downgrade() -> None:  # noqa: PLR0915
+    op.drop_index(op.f("ix_generation_notifications_rag_job_id"), table_name="generation_notifications")
+    op.drop_index(op.f("ix_generation_notifications_event"), table_name="generation_notifications")
+    op.drop_index(op.f("ix_generation_notifications_deleted_at"), table_name="generation_notifications")
+    op.drop_index(op.f("ix_generation_notifications_created_at"), table_name="generation_notifications")
+    op.drop_index("idx_rag_notifications_job_created", table_name="generation_notifications")
+    op.drop_table("generation_notifications")
+    op.drop_index(op.f("ix_rag_generation_jobs_template_stage"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_status"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_parent_job_id"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_grant_template_id"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_grant_application_id"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_deleted_at"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_created_at"), table_name="rag_generation_jobs")
+    op.drop_index(op.f("ix_rag_generation_jobs_application_stage"), table_name="rag_generation_jobs")
+    op.drop_index(
+        "idx_unique_template_stage",
+        table_name="rag_generation_jobs",
+        postgresql_where=sa.text(
+            "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_template_id IS NOT NULL AND template_stage IS NOT NULL"
+        ),
+    )
+    op.drop_index(
+        "idx_unique_application_stage",
+        table_name="rag_generation_jobs",
+        postgresql_where=sa.text(
+            "deleted_at IS NULL AND status IN ('PENDING', 'PROCESSING', 'COMPLETED') AND grant_application_id IS NOT NULL AND application_stage IS NOT NULL"
+        ),
+    )
+    op.drop_index("idx_rag_jobs_template_stage", table_name="rag_generation_jobs")
+    op.drop_index("idx_rag_jobs_application_stage", table_name="rag_generation_jobs")
+    op.drop_index("idx_rag_generation_jobs_status_retry", table_name="rag_generation_jobs")
+    op.drop_index("idx_rag_generation_jobs_status_created", table_name="rag_generation_jobs")
+    op.drop_index("idx_rag_generation_jobs_parent", table_name="rag_generation_jobs")
+    op.drop_table("rag_generation_jobs")
     op.drop_index(op.f("ix_grant_template_sources_deleted_at"), table_name="grant_template_sources")
     op.drop_index(op.f("ix_grant_template_sources_created_at"), table_name="grant_template_sources")
     op.drop_table("grant_template_sources")
-    op.drop_index(
-        op.f("ix_grant_template_generation_jobs_grant_template_id"), table_name="grant_template_generation_jobs"
-    )
-    op.drop_table("grant_template_generation_jobs")
-    op.drop_index(op.f("ix_grant_templates_rag_job_id"), table_name="grant_templates")
     op.drop_index(op.f("ix_grant_templates_grant_application_id"), table_name="grant_templates")
     op.drop_index(op.f("ix_grant_templates_deleted_at"), table_name="grant_templates")
     op.drop_index(op.f("ix_grant_templates_created_at"), table_name="grant_templates")
@@ -614,11 +663,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_grant_application_sources_deleted_at"), table_name="grant_application_sources")
     op.drop_index(op.f("ix_grant_application_sources_created_at"), table_name="grant_application_sources")
     op.drop_table("grant_application_sources")
-    op.drop_index(
-        op.f("ix_grant_application_generation_jobs_grant_application_id"),
-        table_name="grant_application_generation_jobs",
-    )
-    op.drop_table("grant_application_generation_jobs")
     op.drop_index(op.f("ix_editor_documents_grant_application_id"), table_name="editor_documents")
     op.drop_index(op.f("ix_editor_documents_deleted_at"), table_name="editor_documents")
     op.drop_index(op.f("ix_editor_documents_created_at"), table_name="editor_documents")
@@ -638,7 +682,6 @@ def downgrade() -> None:
     )
     op.drop_table("notifications")
     op.drop_index(op.f("ix_grant_applications_status"), table_name="grant_applications")
-    op.drop_index(op.f("ix_grant_applications_rag_job_id"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_project_id"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_parent_id"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_deleted_at"), table_name="grant_applications")
@@ -703,22 +746,10 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_granting_institution_sources_deleted_at"), table_name="granting_institution_sources")
     op.drop_index(op.f("ix_granting_institution_sources_created_at"), table_name="granting_institution_sources")
     op.drop_table("granting_institution_sources")
-    op.drop_index(op.f("ix_generation_notifications_rag_job_id"), table_name="generation_notifications")
-    op.drop_index(op.f("ix_generation_notifications_event"), table_name="generation_notifications")
-    op.drop_index(op.f("ix_generation_notifications_deleted_at"), table_name="generation_notifications")
-    op.drop_index(op.f("ix_generation_notifications_created_at"), table_name="generation_notifications")
-    op.drop_index("idx_rag_notifications_job_created", table_name="generation_notifications")
-    op.drop_table("generation_notifications")
     op.drop_index(op.f("ix_rag_sources_indexing_status"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_deleted_at"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_created_at"), table_name="rag_sources")
     op.drop_table("rag_sources")
-    op.drop_index(op.f("ix_rag_generation_jobs_status"), table_name="rag_generation_jobs")
-    op.drop_index(op.f("ix_rag_generation_jobs_deleted_at"), table_name="rag_generation_jobs")
-    op.drop_index(op.f("ix_rag_generation_jobs_created_at"), table_name="rag_generation_jobs")
-    op.drop_index("idx_rag_generation_jobs_status_retry", table_name="rag_generation_jobs")
-    op.drop_index("idx_rag_generation_jobs_status_created", table_name="rag_generation_jobs")
-    op.drop_table("rag_generation_jobs")
     op.drop_index(op.f("ix_organizations_name"), table_name="organizations")
     op.drop_index(op.f("ix_organizations_deleted_at"), table_name="organizations")
     op.drop_index(op.f("ix_organizations_created_at"), table_name="organizations")

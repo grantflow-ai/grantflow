@@ -23,6 +23,7 @@ dependencies = [
 [dependency-groups]
 dev = [
   "alembic>=1.15.1",
+  "kreuzberg>=3.1.7",       # for type hints
   "psycopg[binary]>=3.2.6", # required for alembic
 ]
 
