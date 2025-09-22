@@ -451,7 +451,6 @@ async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnri
         form_inputs=dto["form_inputs"],
     )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = enrichment_prompt.to_string(rag_results=dto["retrieval_context"])
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 

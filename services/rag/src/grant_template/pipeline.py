@@ -176,7 +176,6 @@ async def handle_grant_template_pipeline(
         template_id = grant_template.id
         job_id = job.id
 
-        # Capture detailed error information for debugging
         error_traceback = traceback.format_exc()
         error_context = getattr(e, "context", None)
 
@@ -207,7 +206,6 @@ async def handle_grant_template_pipeline(
             user_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."
             event_type = NotificationEvents.PIPELINE_ERROR
 
-        # Create detailed error message for database storage
         detailed_error_message = f"{type(e).__name__}: {e!s}"
         if error_context:
             detailed_error_message += f"\nContext: {error_context}"

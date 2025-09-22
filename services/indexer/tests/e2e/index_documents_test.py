@@ -30,7 +30,6 @@ async def test_index_chunks(
         pytest.skip(f"Cannot determine MIME type for {data_file.name}")
 
     try:
-        # Use the new optimized extraction with chunking enabled
         content, _extracted_mime_type, chunks, _ = await extract_file_content(
             content=data_file.read_bytes(),
             mime_type=mime_type,
@@ -39,7 +38,6 @@ async def test_index_chunks(
             language_hint="en",
         )
 
-        # Convert chunks to expected format if available
         chunk_dtos = [Chunk(content=chunk) for chunk in chunks] if chunks else [Chunk(content=content)]
 
         assert len(chunk_dtos) > 0, f"No chunks generated from {data_file.name}"

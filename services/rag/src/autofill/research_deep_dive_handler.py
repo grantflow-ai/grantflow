@@ -145,7 +145,6 @@ async def _generate_field_answer(
         trace_id=trace_id,
     )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 

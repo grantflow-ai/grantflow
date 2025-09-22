@@ -78,7 +78,6 @@ async def perform_shared_retrieval(
         trace_id=trace_id,
     )
 
-    # Compress the retrieval context to reduce token usage
     raw_context = "\n".join(retrieval_result)
     return compress_prompt_text(raw_context, aggressive=True)
 

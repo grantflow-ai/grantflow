@@ -70,7 +70,6 @@ async def test_chunking_smoke(logger: logging.Logger, data_file: Path) -> None:
             content=data_file.read_bytes(), mime_type=mime_type, enable_chunking=True, enable_token_reduction=True
         )
 
-        # Convert chunks to expected format if available
         if chunks:
             chunk_dtos = [{"content": chunk, "page_number": None} for chunk in chunks]
         else:
