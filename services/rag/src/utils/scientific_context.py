@@ -25,46 +25,49 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
     if not context:
         return []
 
-    bold_pattern = r"\*\*([^*]+)\*\*"
-    terms = re.findall(bold_pattern, context)
+    try:
+        bold_pattern = r"\*\*([^*]+)\*\*"
+        terms = re.findall(bold_pattern, context)
 
-    scientific_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b"
-    capitalized_terms = re.findall(scientific_pattern, context)
+        scientific_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b"
+        capitalized_terms = re.findall(scientific_pattern, context)
 
-    all_terms = terms + capitalized_terms
+        all_terms = terms + capitalized_terms
 
-    scientific_keywords = [
-        "acid",
-        "protein",
-        "enzyme",
-        "cell",
-        "gene",
-        "dna",
-        "rna",
-        "molecule",
-        "compound",
-        "synthesis",
-        "analysis",
-        "study",
-        "research",
-        "method",
-        "technique",
-        "process",
-        "system",
-        "learning",
-        "intelligence",
-        "network",
-        "algorithm",
-        "data",
-    ]
+        scientific_keywords = [
+            "acid",
+            "protein",
+            "enzyme",
+            "cell",
+            "gene",
+            "dna",
+            "rna",
+            "molecule",
+            "compound",
+            "synthesis",
+            "analysis",
+            "study",
+            "research",
+            "method",
+            "technique",
+            "process",
+            "system",
+            "learning",
+            "intelligence",
+            "network",
+            "algorithm",
+            "data",
+        ]
 
-    scientific_terms = [
-        term.strip()
-        for term in all_terms
-        if term.strip() and any(keyword in term.lower() for keyword in scientific_keywords)
-    ]
+        scientific_terms = [
+            term.strip()
+            for term in all_terms
+            if term.strip() and any(keyword in term.lower() for keyword in scientific_keywords)
+        ]
 
-    return sorted(set(scientific_terms))
+        return sorted(set(scientific_terms))
+    except Exception:
+        return []
 
 
 def format_scientific_context(context: str) -> str:
@@ -115,9 +118,15 @@ def validate_scientific_context(context: Any) -> ValidationResult:
     context_lower = context.lower()
     has_scientific_keywords = any(keyword in context_lower for keyword in scientific_keywords)
 
-    terms = extract_scientific_terms_from_context(context)
-    term_count = len(terms)
-    has_scientific_terms = term_count > 0
+    try:
+        terms = extract_scientific_terms_from_context(context)
+        term_count = len(terms)
+        has_scientific_terms = term_count > 0
+    except Exception:
+        terms = []
+        term_count = 0
+        has_scientific_terms = False
+        errors.append("Failed to extract scientific terms")
 
     if not has_scientific_keywords and not has_scientific_terms:
         errors.append("No scientific terms found")

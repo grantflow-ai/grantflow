@@ -29,12 +29,10 @@ from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
 
-tracer = get_tracer(__name__)
-
-
 configure_otel("rag")
 
 logger = get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 def handle_pubsub_message(event: PubSubEvent) -> RagRequest:
@@ -51,6 +49,118 @@ def handle_pubsub_message(event: PubSubEvent) -> RagRequest:
         raise ValidationError("Invalid pubsub message format", context={"error": str(e)}) from e
 
 
+async def _handle_autofill_request(
+    request: ResearchPlanAutofillRequest | ResearchDeepDiveAutofillRequest,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    async with session_maker() as session:
+        application = await session.scalar(
+            select_active(GrantApplication).where(GrantApplication.id == request.application_id)
+        )
+
+        if not application:
+            logger.error(
+                "Grant application not found for autofill request",
+                application_id=str(request.application_id),
+                request_type=type(request).__name__,
+                trace_id=request.trace_id,
+            )
+            raise ValidationError(
+                f"Grant application {request.application_id} not found or has been deleted",
+                context={
+                    "application_id": str(request.application_id),
+                    "request_type": type(request).__name__,
+                    "trace_id": request.trace_id,
+                },
+            )
+
+    with tracer.start_as_current_span(
+        "autofill_request",
+        attributes={
+            "request.type": type(request).__name__,
+            "application.id": str(request.application_id),
+            "application.title": application.title,
+            "trace.id": request.trace_id,
+        },
+    ) as span:
+        await handle_autofill_request(request=request, application=application, session_maker=session_maker)
+        span.set_attribute("autofill.success", True)
+
+
+async def _handle_grant_template_request(
+    request: GrantTemplateRagRequest,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    async with session_maker() as session:
+        grant_template = await session.scalar(select_active(GrantTemplate).where(GrantTemplate.id == request.parent_id))
+
+        if not grant_template:
+            logger.error(
+                "Grant template not found",
+                template_id=str(request.parent_id),
+                trace_id=request.trace_id,
+            )
+            return
+
+    await handle_grant_template_pipeline(
+        grant_template=grant_template,
+        session_maker=session_maker,
+        trace_id=request.trace_id,
+    )
+
+
+async def _handle_grant_application_request(
+    request: GrantApplicationRagRequest,
+    session_maker: async_sessionmaker[Any],
+) -> None:
+    async with session_maker() as session:
+        grant_application = await session.scalar(
+            select_active(GrantApplication)
+            .where(GrantApplication.id == request.parent_id)
+            .options(selectinload(GrantApplication.grant_template))
+        )
+
+        if not grant_application:
+            logger.error(
+                "Grant application not found",
+                application_id=str(request.parent_id),
+                trace_id=request.trace_id,
+            )
+            return
+
+        if not grant_application.grant_template:
+            logger.error(
+                "Grant template not found for application",
+                application_id=str(request.parent_id),
+                trace_id=request.trace_id,
+            )
+            return
+
+        if not grant_application.grant_template.grant_sections:
+            logger.error(
+                "Grant template has no sections",
+                application_id=str(request.parent_id),
+                template_id=str(grant_application.grant_template.id),
+                trace_id=request.trace_id,
+            )
+            return
+
+        if not grant_application.grant_template.cfp_analysis:
+            logger.error(
+                "CFP analysis is missing from grant template",
+                application_id=str(request.parent_id),
+                template_id=str(grant_application.grant_template.id),
+                trace_id=request.trace_id,
+            )
+            return
+
+    await handle_grant_application_pipeline(
+        grant_application=grant_application,
+        session_maker=session_maker,
+        trace_id=request.trace_id,
+    )
+
+
 @post("/")
 async def handle_request(
     data: PubSubEvent,
@@ -64,115 +174,26 @@ async def handle_request(
         trace_id=request.trace_id,
     )
 
-    if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
-        async with session_maker() as session:
-            application = await session.scalar(
-                select_active(GrantApplication).where(GrantApplication.id == request.application_id)
+    try:
+        if isinstance(request, (ResearchPlanAutofillRequest, ResearchDeepDiveAutofillRequest)):
+            await _handle_autofill_request(request, session_maker)
+        elif isinstance(request, GrantTemplateRagRequest):
+            await _handle_grant_template_request(request, session_maker)
+        elif isinstance(request, GrantApplicationRagRequest):
+            await _handle_grant_application_request(request, session_maker)
+        else:
+            logger.error(
+                "Unknown request type",
+                request_type=type(request).__name__,
+                trace_id=request.trace_id,
             )
-
-            if not application:
-                logger.error(
-                    "Grant application not found for autofill request",
-                    application_id=str(request.application_id),
-                    request_type=type(request).__name__,
-                    trace_id=request.trace_id,
-                )
-                raise ValidationError(
-                    f"Grant application {request.application_id} not found or has been deleted",
-                    context={
-                        "application_id": str(request.application_id),
-                        "request_type": type(request).__name__,
-                        "trace_id": request.trace_id,
-                    },
-                )
-
-        with tracer.start_as_current_span(
-            "autofill_request",
-            attributes={
-                "request.type": type(request).__name__,
-                "application.id": str(request.application_id),
-                "application.title": application.title,
-                "trace.id": request.trace_id,
-            },
-        ) as span:
-            try:
-                await handle_autofill_request(request=request, application=application, session_maker=session_maker)
-                span.set_attribute("autofill.success", True)
-            except RagJobCancelledError:
-                logger.info(
-                    "Job cancelled",
-                    request_type=type(request).__name__,
-                    trace_id=request.trace_id,
-                )
-                span.set_attribute("autofill.cancelled", True)
-                return
+    except RagJobCancelledError:
+        logger.info(
+            "Job cancelled",
+            request_type=type(request).__name__,
+            trace_id=request.trace_id,
+        )
         return
-
-    if isinstance(request, GrantTemplateRagRequest):
-        async with session_maker() as session:
-            grant_template = await session.scalar(
-                select_active(GrantTemplate).where(GrantTemplate.id == request.parent_id)
-            )
-
-            if not grant_template:
-                logger.error(
-                    "Grant template not found",
-                    template_id=str(request.parent_id),
-                    trace_id=request.trace_id,
-                )
-                raise ValidationError(f"Grant template {request.parent_id} not found")
-
-        try:
-            await handle_grant_template_pipeline(
-                grant_template=grant_template,
-                session_maker=session_maker,
-                trace_id=request.trace_id,
-            )
-        except RagJobCancelledError:
-            logger.info(
-                "Job cancelled",
-                trace_id=request.trace_id,
-            )
-            return
-        return
-
-    if isinstance(request, GrantApplicationRagRequest):
-        async with session_maker() as session:
-            grant_application = await session.scalar(
-                select_active(GrantApplication)
-                .where(GrantApplication.id == request.parent_id)
-                .options(selectinload(GrantApplication.grant_template))
-            )
-
-            if not grant_application:
-                logger.error(
-                    "Grant application not found",
-                    application_id=str(request.parent_id),
-                    trace_id=request.trace_id,
-                )
-                raise ValidationError(f"Grant application {request.parent_id} not found")
-
-            if not grant_application.grant_template:
-                raise ValidationError("Grant template not found")
-
-            if not grant_application.grant_template.grant_sections:
-                raise ValidationError("Grant template has no sections")
-
-            if not grant_application.grant_template.cfp_analysis:
-                raise ValidationError("CFP analysis is missing from grant template")
-
-        try:
-            await handle_grant_application_pipeline(
-                grant_application=grant_application,
-                session_maker=session_maker,
-                trace_id=request.trace_id,
-            )
-        except RagJobCancelledError:
-            logger.info(
-                "Job cancelled",
-                trace_id=request.trace_id,
-            )
-            return
 
 
 async def before_server_start() -> None:
