@@ -421,19 +421,16 @@ async def test_handle_completions_fallback_on_token_limit_error(
     mocker: MockerFixture,
     trace_id: str,
 ) -> None:
-    # Create a token limit error
     token_limit_error = BadRequestError(
         "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'prompt is too long: 206623 tokens > 200000 maximum'}}",
         response=Mock(status_code=400),
         body={},
     )
 
-    # Mock Anthropic client to fail with token limit error
     anthropic_client = AsyncMock()
     anthropic_client.messages.create.side_effect = token_limit_error
     mocker.patch("services.rag.src.utils.completion.get_anthropic_client", return_value=anthropic_client)
 
-    # Mock Google API response
     mock_google_api_response.text = '{"key": "google_value"}'
     mock_google_api_response.usage_metadata = Mock(
         prompt_token_count=100, candidates_token_count=50, total_token_count=150
@@ -444,19 +441,16 @@ async def test_handle_completions_fallback_on_token_limit_error(
     result = await handle_completions_request(
         prompt_identifier="test",
         response_type=dict[str, str],
-        messages="test message with many tokens" * 1000,  # Long message
+        messages="test message with many tokens" * 1000,
         system_prompt="You are a helpful assistant.",
         response_schema=response_schema,
-        model=ANTHROPIC_SONNET_MODEL,  # Start with Anthropic
+        model=ANTHROPIC_SONNET_MODEL,
         trace_id=trace_id,
     )
 
-    # Should fallback to Google and return successful response
     assert result == {"key": "google_value"}
 
-    # Verify Google was called after Anthropic failed
     anthropic_client.messages.create.assert_called_once()
 
-    # Verify the Google API was used for the successful response
     assert hasattr(mock_google_api_response, "text")
     assert mock_google_api_response.text == '{"key": "google_value"}'

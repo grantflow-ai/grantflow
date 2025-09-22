@@ -30,7 +30,6 @@ async def test_process_source_text_file(
     mock_chunk: Chunk,
     mock_vector_dto: VectorDTO,
 ) -> None:
-    # Mock the new extract_file_content that returns (text, mime_type, chunks)
     mock_extract = mocker.patch(
         "services.indexer.src.processing.extract_file_content",
         new_callable=AsyncMock,
@@ -53,7 +52,6 @@ async def test_process_source_text_file(
     assert vectors[0] == mock_vector_dto
     assert text_content == "Test file content"
 
-    # Verify the new API is called correctly
     mock_extract.assert_called_once_with(
         content=b"Test file content",
         mime_type="text/plain",
@@ -62,7 +60,6 @@ async def test_process_source_text_file(
         language_hint="en",
     )
 
-    # Verify chunks are converted to the expected format
     expected_chunks = [{"content": "Test chunk content"}]
     mock_index_chunks.assert_called_once_with(
         chunks=expected_chunks,
@@ -207,11 +204,9 @@ async def test_process_source_empty_content(
         mime_type="text/plain",
     )
 
-    # Should create fallback chunk when no chunks returned
-    assert len(vectors) == 0  # Mocked to return empty
+    assert len(vectors) == 0
     assert text_content == ""
 
-    # Verify fallback chunk creation logic
     expected_chunks = [{"content": ""}]
     mock_index_chunks.assert_called_once_with(
         chunks=expected_chunks,

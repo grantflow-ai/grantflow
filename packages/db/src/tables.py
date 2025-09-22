@@ -5,7 +5,6 @@ from uuid import UUID, uuid4
 if TYPE_CHECKING:
     from kreuzberg._types import Metadata as DocumentMetadata
 else:
-    # SQLAlchemy needs this at runtime for type resolution
     DocumentMetadata = dict
 
 from pgvector.sqlalchemy import Vector

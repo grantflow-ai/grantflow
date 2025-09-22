@@ -63,15 +63,6 @@ class SourceProcessingResult(TypedDict):
     trace_id: str
 
 
-class RagProcessingStatus(TypedDict):
-    event: str
-    message: str
-    data: NotRequired[dict[str, Any]]
-    current_pipeline_stage: NotRequired[int]
-    total_pipeline_stages: NotRequired[int]
-    trace_id: str
-
-
 class BaseRagRequest(msgspec.Struct):
     trace_id: str
 

@@ -1,13 +1,5 @@
-"""
-Stop words collections for text processing across GrantFlow services.
-
-This module provides curated stop word collections optimized for academic and grant application text processing.
-These stop words complement spaCy's default stop words by targeting domain-specific overused terms.
-"""
-
 from typing import Final
 
-# Transitional and linking words commonly overused in academic writing
 TRANSITIONAL_STOP_WORDS: Final[set[str]] = {
     "furthermore",
     "moreover",
@@ -35,7 +27,6 @@ TRANSITIONAL_STOP_WORDS: Final[set[str]] = {
     "subsequently",
 }
 
-# Frequency and degree adverbs that add little semantic value
 FREQUENCY_STOP_WORDS: Final[set[str]] = {
     "typically",
     "usually",
@@ -53,7 +44,6 @@ FREQUENCY_STOP_WORDS: Final[set[str]] = {
     "systematically",
 }
 
-# Quantitative and descriptive modifiers overused in academic contexts
 QUANTITATIVE_STOP_WORDS: Final[set[str]] = {
     "various",
     "numerous",
@@ -79,7 +69,6 @@ QUANTITATIVE_STOP_WORDS: Final[set[str]] = {
     "secondary",
 }
 
-# Methodological and procedural terms commonly overused in research descriptions
 METHODOLOGICAL_STOP_WORDS: Final[set[str]] = {
     "approach",
     "method",
@@ -100,7 +89,6 @@ METHODOLOGICAL_STOP_WORDS: Final[set[str]] = {
     "strategic",
 }
 
-# Academic filler words that provide limited semantic content
 ACADEMIC_FILLER_STOP_WORDS: Final[set[str]] = {
     "aspect",
     "aspects",
@@ -124,7 +112,6 @@ ACADEMIC_FILLER_STOP_WORDS: Final[set[str]] = {
     "challenges",
 }
 
-# Overused grant-specific terms (excludes scientifically meaningful ones)
 GRANT_BUZZWORD_STOP_WORDS: Final[set[str]] = {
     "cutting-edge",
     "state-of-the-art",
@@ -146,8 +133,6 @@ GRANT_BUZZWORD_STOP_WORDS: Final[set[str]] = {
     "pertinent",
 }
 
-# Complete collection of academic/grant application stop words beyond spaCy defaults
-# These words are commonly overused in academic writing but add little semantic value
 ACADEMIC_STOP_WORDS: Final[set[str]] = (
     TRANSITIONAL_STOP_WORDS
     | FREQUENCY_STOP_WORDS

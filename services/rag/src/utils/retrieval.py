@@ -96,15 +96,12 @@ class RetrievalQualityResponse(TypedDict):
 
 
 def _make_kwargs_hashable(kwargs: dict[str, Any]) -> str:
-    """Convert kwargs to a hashable string representation."""
     if not kwargs:
         return ""
 
-    # Create a consistent string representation
     items = []
     for key, value in sorted(kwargs.items()):
         if isinstance(value, (list, dict, set)):
-            # Convert unhashable types to their string representation
             value_str = str(
                 sorted(value.items())
                 if isinstance(value, dict)
@@ -251,7 +248,6 @@ async def retrieve_documents(
     trace_id: str,
     **kwargs: Any,
 ) -> list[str]:
-    """Retrieve documents with caching. Converts unhashable parameters to hashable types for caching."""
     return await _retrieve_documents_cached(
         application_id=application_id,
         max_results=max_results,
@@ -259,7 +255,7 @@ async def retrieve_documents(
         model=model,
         organization_id=organization_id,
         search_queries_tuple=tuple(search_queries) if search_queries else None,
-        task_description=str(task_description),  # Ensure PromptTemplate is stringified
+        task_description=str(task_description),
         with_guided_retrieval=with_guided_retrieval,
         embedding_model=embedding_model,
         trace_id=trace_id,
@@ -282,7 +278,6 @@ async def _retrieve_documents_cached(
     trace_id: str,
     kwargs: dict[str, Any],
 ) -> list[str]:
-    """Cached retrieval function. Now handles hashable types correctly."""
     start_time = time.time()
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
@@ -291,10 +286,8 @@ async def _retrieve_documents_cached(
         raise ValueError("Either application_id or organization_id must be provided.")
 
     query_start = time.time()
-    # Convert tuple back to list for internal use
     search_queries = list(search_queries_tuple) if search_queries_tuple else None
 
-    # Use original kwargs for search query generation
     search_queries = search_queries or await handle_create_search_queries(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )

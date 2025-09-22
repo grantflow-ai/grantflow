@@ -172,7 +172,6 @@ async def handle_generate_section_text(
         section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
     )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         instructions=section["generation_instructions"],

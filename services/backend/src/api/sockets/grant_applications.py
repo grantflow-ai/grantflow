@@ -48,9 +48,7 @@ async def handle_grant_application_notifications(
         try:
             notifications_to_send = []
 
-            # Get undelivered notifications for this application in a single query with join
             async with session_maker() as session, session.begin():
-                # Query for undelivered notifications related to jobs for this application
                 result = await session.execute(
                     select(GenerationNotification)
                     .join(
@@ -74,13 +72,11 @@ async def handle_grant_application_notifications(
                 if notifications:
                     delivered_at = datetime.now(UTC)
 
-                    # Mark all notifications as delivered
                     for notif in notifications:
                         await session.execute(
                             update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
                         )
 
-                    # Prepare messages to send
                     for notification in notifications:
                         message: WebsocketMessage[dict[str, Any]] = {
                             "type": "info" if notification.notification_type == "info" else "error",

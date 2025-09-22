@@ -153,7 +153,6 @@ async def handle_long_form_text_generation(
 
     time()
     while api_call_num <= max_api_calls:
-        # Compress the prompt after to_string() to reduce token usage
         full_prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
             min_words=min_words,

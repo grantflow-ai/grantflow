@@ -195,7 +195,6 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 

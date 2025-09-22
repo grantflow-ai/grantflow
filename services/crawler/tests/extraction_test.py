@@ -188,7 +188,6 @@ async def test_extract_and_process_content() -> None:
             new_callable=AsyncMock,
         ) as mock_extract_file,
     ):
-        # First call extracts text (markdown), second call extracts HTML
         mock_extract.side_effect = [
             "Test\nContent",
             "<html><body><h1>Test</h1><p>Content</p></body></html>",
@@ -199,7 +198,7 @@ async def test_extract_and_process_content() -> None:
             "text/html",
             None,
             None,
-        )  # Kreuzberg converts to markdown
+        )
 
         md_content, text_content, embeddings = await extract_and_process_content(
             url, html
@@ -223,14 +222,15 @@ async def test_extract_and_process_content_with_existing_data() -> None:
             new_callable=AsyncMock,
         ) as mock_extract_file,
     ):
-        # Only one call to extract since we have existing text, so it extracts HTML for markdown conversion
-        mock_extract.return_value = "<html><body><h1>Test</h1><p>Content</p></body></html>"  # Trafilatura returns HTML
+        mock_extract.return_value = (
+            "<html><body><h1>Test</h1><p>Content</p></body></html>"
+        )
         mock_extract_file.return_value = (
             "# Test\n\nContent",
             "text/html",
             None,
             None,
-        )  # Kreuzberg converts to markdown
+        )
 
         md_content, text_content, embeddings = await extract_and_process_content(
             url, html, existing_text, existing_embeddings
