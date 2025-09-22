@@ -234,7 +234,6 @@ async def handle_generate_section_text(
         increment=15,
         retries=3,
         passing_score=80,
-        # Required arguments for generate_long_form_text
         max_words=section["max_words"],
         min_words=section.get("min_words", 100),
         context=validated_context,
