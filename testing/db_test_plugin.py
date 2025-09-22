@@ -46,7 +46,6 @@ from testing.factories import (
     RagUrlFactory,
 )
 
-# Create a logger for this module
 logger = logging.getLogger(__name__)
 
 for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
@@ -55,29 +54,23 @@ for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects
 
 
 class DatabaseCleanupTracker:
-    """Tracks test databases for cleanup on exit/termination."""
-
     def __init__(self) -> None:
         self._databases_to_clean: set[tuple[str, str]] = set()
         self._cleanup_in_progress = False
         self._lock = asyncio.Lock()
         self._cleanup_task: asyncio.Task[None] | None = None
 
-        # Register cleanup handlers
         atexit.register(self._sync_cleanup)
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
 
     def register_database(self, connection_string: str, db_name: str) -> None:
-        """Register a database for cleanup."""
         self._databases_to_clean.add((connection_string, db_name))
 
     def unregister_database(self, connection_string: str, db_name: str) -> None:
-        """Unregister a database after successful cleanup."""
         self._databases_to_clean.discard((connection_string, db_name))
 
     async def cleanup_databases(self) -> None:
-        """Clean up all registered databases."""
         if self._cleanup_in_progress:
             return
 
@@ -95,23 +88,18 @@ class DatabaseCleanupTracker:
                     logger.warning("Failed to drop database %s: %s", db_name, e)
 
     async def _drop_database(self, connection_string: str, db_name: str) -> None:
-        """Drop a single database with timeout."""
         try:
-            # Set a timeout to prevent hanging
             async with asyncio.timeout(5):
                 conn = await connect(connection_string)
                 try:
-                    # Also drop the template database if it exists
                     template_db_name = f"{db_name}_template"
 
                     for name in [db_name, template_db_name]:
-                        # Terminate connections
                         await conn.execute(f"""
                             SELECT pg_terminate_backend(pid)
                             FROM pg_stat_activity
                             WHERE datname = '{name}' AND pid <> pg_backend_pid()
                         """)
-                        # Drop the database
                         await conn.execute(f'DROP DATABASE IF EXISTS "{name}"')
                 finally:
                     await conn.close()
@@ -121,32 +109,24 @@ class DatabaseCleanupTracker:
             logger.warning("Error dropping database %s: %s", db_name, e)
 
     def _sync_cleanup(self) -> None:
-        """Synchronous cleanup for atexit."""
         if self._databases_to_clean:
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
-                    # If loop is running, schedule cleanup
-                    # Store reference to avoid task being garbage collected
                     cleanup_task = asyncio.create_task(self.cleanup_databases())
-                    # Store task reference to prevent garbage collection
                     self._cleanup_task = cleanup_task
                 else:
-                    # Run cleanup in the loop
                     loop.run_until_complete(self.cleanup_databases())
             except Exception as e:
                 logger.warning("Cleanup failed: %s", e)
 
     def _signal_handler(self, signum: int, frame: Any) -> None:  # noqa: ARG002
-        """Handle termination signals."""
         logger.info("Received signal %s, cleaning up test databases...", signum)
         self._sync_cleanup()
-        # Re-raise the signal to continue normal termination
         signal.signal(signum, signal.SIG_DFL)
         os.kill(os.getpid(), signum)
 
 
-# Global cleanup tracker instance
 _cleanup_tracker = DatabaseCleanupTracker()
 
 
@@ -178,7 +158,6 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
 
     admin_connection_string = urlunparse(parsed)
 
-    # Register database for cleanup tracking
     _cleanup_tracker.register_database(admin_connection_string, test_db_name)
 
     try:
@@ -206,7 +185,6 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         yield test_connection_string.replace("postgresql://", "postgresql+asyncpg://")
 
     finally:
-        # Attempt cleanup with timeout to prevent hanging
         cleanup_successful = False
         try:
             async with asyncio.timeout(10):
@@ -229,7 +207,6 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         except Exception as e:
             logger.warning("Failed to cleanup database %s: %s", test_db_name, e)
 
-        # If cleanup was successful, unregister from tracker
         if cleanup_successful:
             _cleanup_tracker.unregister_database(admin_connection_string, test_db_name)
 
@@ -259,7 +236,6 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
     f"test_snapshot_{os.getpid()}"
 
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    # Use the base database path (e.g., /local) instead of /postgres
     base_path = urlparse(
         os.getenv("DATABASE_CONNECTION_STRING") or "postgresql://local:local@localhost:5432/local"
     ).path
@@ -303,7 +279,6 @@ async def restore_database_snapshot(
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    # Use the base database path (e.g., /local) instead of /postgres
     base_path = urlparse(
         os.getenv("DATABASE_CONNECTION_STRING") or "postgresql://local:local@localhost:5432/local"
     ).path

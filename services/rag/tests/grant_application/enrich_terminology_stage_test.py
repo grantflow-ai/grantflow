@@ -137,7 +137,6 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
         trace_id=str(uuid4()),
     )
 
-    # Terms are sorted alphabetically by the implementation
     expected_terms = [
         "biomarkers",
         "clinical validation",

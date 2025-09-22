@@ -1,14 +1,16 @@
 import { JwtResponseFactory, LoginRequestFactory } from "::testing/factories";
-import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
+import { mockCookies, mockRedirect, mockSetCookie } from "::testing/global-mocks";
 import { vi } from "vitest";
-import { SESSION_COOKIE } from "@/constants";
+import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
 import { routes } from "@/utils/navigation";
 
 import { login } from "./login";
 
 const mockPost = vi.fn();
+const mockGet = vi.fn();
 vi.mock("@/utils/api/server", () => ({
 	getClient: () => ({
+		get: mockGet,
 		post: mockPost,
 	}),
 }));
@@ -27,6 +29,10 @@ describe("login", () => {
 
 		mockPost.mockReturnValue({
 			json: vi.fn().mockResolvedValue(jwtResponse),
+		});
+
+		mockGet.mockReturnValue({
+			json: vi.fn().mockResolvedValue([]),
 		});
 
 		mockGetEnv.mockReturnValue({
@@ -73,9 +79,52 @@ describe("login", () => {
 		);
 	});
 
-	it("should redirect to organizations page after successful login", async () => {
+	it("should verify access by calling organizations endpoint", async () => {
+		await login(loginRequest.id_token);
+
+		expect(mockGet).toHaveBeenCalledWith(
+			expect.any(URL),
+			expect.objectContaining({
+				headers: { Authorization: `Bearer ${jwtResponse.jwt_token}` },
+			}),
+		);
+	});
+
+	it("should redirect to organizations page after successful login and verification", async () => {
 		await login(loginRequest.id_token);
 
 		expect(mockRedirect).toHaveBeenCalledWith(routes.organization.root());
+	});
+
+	it("should remove session cookies and throw error when verification fails", async () => {
+		const mockDeleteCookie = vi.fn();
+
+		vi.mocked(mockCookies).mockResolvedValue({
+			delete: mockDeleteCookie,
+			get: vi.fn(),
+			getAll: vi.fn(),
+			has: vi.fn(),
+			set: vi.fn(),
+		});
+
+		mockGet.mockReturnValue({
+			json: vi.fn().mockRejectedValue(new Error("Verification failed")),
+		});
+
+		await expect(login(loginRequest.id_token)).rejects.toThrow(
+			"Authentication failed. Please try logging in again.",
+		);
+
+		expect(mockDeleteCookie).toHaveBeenCalledWith(SESSION_COOKIE);
+		expect(mockDeleteCookie).toHaveBeenCalledWith(SELECTED_ORGANIZATION_COOKIE);
+	});
+
+	it("should allow NEXT_REDIRECT errors to bubble up", async () => {
+		const redirectError = new Error("NEXT_REDIRECT");
+		vi.mocked(mockRedirect).mockImplementation(() => {
+			throw redirectError;
+		});
+
+		await expect(login(loginRequest.id_token)).rejects.toThrow(redirectError);
 	});
 });

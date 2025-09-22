@@ -181,10 +181,19 @@ def mock_job_manager() -> AsyncMock:
     manager.ensure_not_cancelled = AsyncMock(return_value=None)
     manager.add_notification = AsyncMock(return_value=None)
     manager.update_job_status = AsyncMock(return_value=None)
-    manager.to_next_job_stage = AsyncMock(return_value=None)
+
+    async def mock_to_next_stage(dto: Any) -> None:
+        if hasattr(manager, "current_stage") and hasattr(manager, "pipeline_stages"):
+            current_index = manager.pipeline_stages.index(manager.current_stage)
+            if current_index < len(manager.pipeline_stages) - 1:
+                manager.current_stage = manager.pipeline_stages[current_index + 1]
+
+    manager.to_next_job_stage = AsyncMock(side_effect=mock_to_next_stage)
     manager.get_or_create_job = AsyncMock()
     manager.job = None
     manager.job_id = None
+    manager.current_stage = None
+    manager.pipeline_stages = []
     return manager
 
 

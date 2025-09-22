@@ -44,7 +44,6 @@ export async function login(idToken: string) {
 			});
 		}
 
-		// Verify the user can access their organization data before redirecting
 		try {
 			const verifyUrl = new URL("/organizations", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 			await getClient()
@@ -54,9 +53,7 @@ export async function login(idToken: string) {
 				.json();
 
 			log.info("action_success", { action: "login", duration_ms: Date.now() - started });
-			redirect(routes.organization.root());
 		} catch (verifyError) {
-			// If verification fails, remove the session cookie and throw an error
 			const cookieStore = await cookies();
 			cookieStore.delete(SESSION_COOKIE);
 			cookieStore.delete(SELECTED_ORGANIZATION_COOKIE);
@@ -68,10 +65,15 @@ export async function login(idToken: string) {
 			});
 			throw new Error("Authentication failed. Please try logging in again.");
 		}
+
+		redirect(routes.organization.root());
 	} catch (error) {
+		if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+			throw error;
+		}
+
 		log.error("action_failed", error, { action: "login", duration_ms: Date.now() - started });
 
-		// Don't redirect on login errors - let the client handle them
 		if (error instanceof Error) {
 			throw new Error(error.message);
 		}
