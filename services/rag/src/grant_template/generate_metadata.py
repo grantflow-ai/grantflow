@@ -414,7 +414,6 @@ async def handle_generate_grant_template_metadata(
             )
         )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = prompt.to_string(
         organization_guidelines=organization_guidelines,
     )

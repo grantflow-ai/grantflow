@@ -1,10 +1,7 @@
 import time
-from typing import TYPE_CHECKING
 
+from kreuzberg._types import Metadata as DocumentMetadata
 from packages.db.src.json_objects import Chunk
-
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.extraction import extract_file_content
@@ -23,7 +20,7 @@ async def process_source(
     model_name: str | None = None,
     enable_token_reduction: bool = True,
     language_hint: str = "en",
-) -> tuple[list[VectorDTO], str, "DocumentMetadata | None"]:
+) -> tuple[list[VectorDTO], str, DocumentMetadata | None]:
     logger.debug(
         "Starting optimized scientific document processing",
         filename=filename,
@@ -34,7 +31,6 @@ async def process_source(
 
     extraction_start = time.time()
 
-    # Use optimized Kreuzberg extraction with token reduction and chunking
     extracted_text, processed_mime_type, chunks, metadata = await extract_file_content(
         content=content,
         mime_type=mime_type,
@@ -58,11 +54,9 @@ async def process_source(
         token_reduction_enabled=enable_token_reduction,
     )
 
-    # Convert chunks to the expected format
     if chunks:
         chunk_dtos = [Chunk(content=chunk) for chunk in chunks]
     else:
-        # Fallback: create a single chunk if chunking failed
         chunk_dtos = [Chunk(content=extracted_text)]
         logger.warning(
             "Chunking not available, using full text as single chunk",

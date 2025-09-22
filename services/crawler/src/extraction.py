@@ -166,13 +166,11 @@ async def extract_and_process_content(
             ) from e
 
     markdown_start = time.time()
-    # Extract clean HTML using trafilatura (removes ads, nav, boilerplate)
     clean_html = extract(
         raw_html, output_format="html", include_comments=False, include_formatting=True
     )
 
     if clean_html:
-        # Process the clean HTML with Kreuzberg using scientific settings
         md_out, _, _, _ = await extract_file_content(
             content=clean_html.encode("utf-8"),
             mime_type="text/html",
@@ -584,10 +582,8 @@ async def crawl_url(
         content_assembly_duration_ms=round(content_assembly_duration * 1000, 2),
     )
 
-    # Use Kreuzberg's extraction with chunking for consistency
     chunking_start = time.time()
     try:
-        # Extract with chunking enabled for consistency with indexer
         _, _, chunks_content, _ = await extract_file_content(
             content=content.encode("utf-8"),
             mime_type="text/markdown",
@@ -596,7 +592,6 @@ async def crawl_url(
             language_hint="en",
         )
 
-        # Convert to Chunk format
         if chunks_content:
             chunks = [Chunk(content=chunk) for chunk in chunks_content]
         else:

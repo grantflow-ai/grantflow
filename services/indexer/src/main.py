@@ -173,7 +173,7 @@ async def handle_file_indexing(
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
             trace_id=trace_id,
-            document_metadata=rag_source.document_metadata,  # Keep existing metadata
+            document_metadata=rag_source.document_metadata,
         )
         logger.info(
             "File indexing completed (already processed)",
@@ -250,7 +250,7 @@ async def handle_file_indexing(
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
             trace_id=trace_id,
-            document_metadata=None,  # No metadata on failure
+            document_metadata=None,
         )
         failure_update_duration = time.time() - failure_update_start
 

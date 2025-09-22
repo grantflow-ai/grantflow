@@ -247,14 +247,12 @@ class JobManager[DTOType]:
                 trace_id=self.trace_id,
             )
 
-            # Publish within transaction - if this fails, the COMPLETED status will rollback
             await publish_rag_task(
                 parent_type=self.entity_type,
                 parent_id=self.entity_id,
                 trace_id=self.trace_id,
             )
 
-            # Only update current_stage after successful publish
             self.current_stage = next_stage
 
             logger.info(

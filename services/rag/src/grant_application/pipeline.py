@@ -187,7 +187,6 @@ async def _handle_pipeline_error(
 ) -> None:
     job_id = existing_job.id if existing_job else None
 
-    # Capture detailed error information for debugging
     error_traceback = traceback.format_exc()
     error_context = getattr(error, "context", None)
 
@@ -204,7 +203,6 @@ async def _handle_pipeline_error(
 
     user_message, event_type = _get_error_details(error)
 
-    # Create detailed error message for database storage
     detailed_error_message = f"{type(error).__name__}: {error!s}"
     if error_context:
         detailed_error_message += f"\nContext: {error_context}"

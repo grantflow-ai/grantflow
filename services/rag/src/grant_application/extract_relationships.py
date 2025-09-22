@@ -342,7 +342,6 @@ async def handle_extract_relationships(
         trace_id=trace_id,
     )
 
-    # Compress the prompt after to_string() to reduce token usage
     full_prompt = prompt.to_string(rag_results=rag_results)
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
