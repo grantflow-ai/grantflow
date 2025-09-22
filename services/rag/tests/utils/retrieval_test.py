@@ -85,7 +85,7 @@ async def test_retrieve_documents_basic(
     mock_handle_create_queries.return_value = ["generated query"]
 
     mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
-    processed_docs = [{"content": "Processed content 1"}, {"content": "Processed content 2"}]
+    processed_docs = ["Processed content 1", "Processed content 2"]
     mock_post_process.return_value = processed_docs
 
     result = await retrieve_documents(
@@ -94,7 +94,7 @@ async def test_retrieve_documents_basic(
         trace_id=trace_id,
     )
 
-    assert result == processed_docs  # type: ignore[comparison-overlap]
+    assert result == processed_docs
 
     mock_handle_create_queries.assert_called_once()
     mock_handle_retrieval.assert_called_once()
@@ -120,8 +120,8 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(
     mock_handle_create_queries.return_value = ["original query"]
 
     mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
-    processed_docs1 = [{"content": "Processed content 1"}, {"content": "Processed content 2"}]
-    processed_docs2 = [{"content": "Better processed 1"}, {"content": "Better processed 2"}]
+    processed_docs1 = ["Processed content 1", "Processed content 2"]
+    processed_docs2 = ["Better processed 1", "Better processed 2"]
     mock_post_process.side_effect = [processed_docs1, processed_docs2]
 
     mock_completions_request = mocker.patch("services.rag.src.utils.retrieval.handle_completions_request")
@@ -167,7 +167,7 @@ async def test_retrieve_documents_with_guided_retrieval_insufficient(
         trace_id=trace_id,
     )
 
-    assert result == processed_docs2  # type: ignore[comparison-overlap]
+    assert result == processed_docs2
 
     assert mock_handle_retrieval.call_count == 2
     assert mock_handle_retrieval.call_args_list[1][1]["search_queries"] == ["better query"]
@@ -203,3 +203,69 @@ async def test_retrieve_documents_guided_retrieval_max_attempts(
     assert mock_handle_create_queries.call_count >= 1
     assert mock_handle_retrieval.call_count >= 1
     assert mock_post_process.call_count >= 1
+
+
+async def test_retrieve_documents_with_hashable_types(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+) -> None:
+    """Test that retrieve_documents works with hashable types (no unhashable list errors)."""
+    mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
+    mock_handle_retrieval.return_value = mock_text_vectors
+
+    mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
+    processed_docs = ["Processed content 1", "Processed content 2"]
+    mock_post_process.return_value = processed_docs
+
+    # Call with list parameters that previously caused unhashable type errors
+    result = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test task",
+        search_queries=["test query", "another query"],  # This used to cause unhashable type errors
+        trace_id="trace_id_1",
+        form_inputs={"key": "value"},  # kwargs that need to be made hashable
+        section_title="Test Section",
+    )
+
+    assert result == processed_docs
+    mock_handle_retrieval.assert_called_once()
+    mock_post_process.assert_called_once()
+
+
+async def test_retrieve_documents_caching_with_different_kwargs(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+) -> None:
+    """Test that caching works correctly with different kwargs."""
+    mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
+    mock_handle_retrieval.return_value = mock_text_vectors
+
+    mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
+    processed_docs = ["Processed content 1", "Processed content 2"]
+    mock_post_process.return_value = processed_docs
+
+    # First call with kwargs
+    result1 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test task",
+        search_queries=["test query"],
+        trace_id="trace_id_1",
+        section_title="Section 1",
+        form_inputs={"key": "value"},
+    )
+
+    # Second call with different kwargs should not use cache
+    result2 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test task",
+        search_queries=["test query"],
+        trace_id="trace_id_2",
+        section_title="Section 2",
+        form_inputs={"key": "different_value"},
+    )
+
+    assert result1 == result2 == processed_docs
+
+    # Should call underlying functions twice due to different kwargs
+    assert mock_handle_retrieval.call_count == 2
+    assert mock_post_process.call_count == 2
