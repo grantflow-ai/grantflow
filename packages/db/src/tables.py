@@ -4,6 +4,9 @@ from uuid import UUID, uuid4
 
 if TYPE_CHECKING:
     from kreuzberg._types import Metadata as DocumentMetadata
+else:
+    # SQLAlchemy needs this at runtime for type resolution
+    DocumentMetadata = dict
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -228,7 +231,7 @@ class RagSource(BaseWithUUIDPK):
         Enum(SourceIndexingStatusEnum), index=True, default=SourceIndexingStatusEnum.CREATED
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    document_metadata: Mapped["DocumentMetadata | None"] = mapped_column(JSON, nullable=True)
+    document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
