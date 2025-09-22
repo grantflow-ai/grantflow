@@ -201,9 +201,8 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		// For indexing events like sections_extracted, step details should not be shown
-		expect(screen.queryByText(/Analyzing the documents/)).not.toBeInTheDocument();
-		expect(screen.queryByText(/Translating the requirements/)).not.toBeInTheDocument();
+		expect(screen.getByText(/Reading the call/)).toBeInTheDocument();
+		expect(screen.getByText(/Building the outline/)).toBeInTheDocument();
 	});
 
 	it("shows step details for non-indexing events", () => {
@@ -220,7 +219,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		// For non-indexing events, step details should be shown
 		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 		expect(screen.getByText(/Translating the requirements/)).toBeInTheDocument();
 	});
