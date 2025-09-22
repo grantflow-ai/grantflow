@@ -10,6 +10,7 @@ from services.rag.src.autofill.constants import (
     TEMPERATURE,
 )
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
@@ -142,10 +143,11 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                 context={"title": obj["title"], "length": len(obj["title"])},
             )
 
-        if len(obj["description"]) < 50:
+        description = obj.get("description", "")
+        if len(description) < 50:
             raise ValidationError(
                 f"Objective {obj_number} description too short (min 50 chars)",
-                context={"description": obj["description"][:50], "length": len(obj["description"])},
+                context={"description": description[:50], "length": len(description)},
             )
 
         tasks = obj["research_tasks"]
@@ -172,10 +174,11 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                     context={"title": task["title"], "length": len(task["title"])},
                 )
 
-            if len(task["description"]) < 50:
+            task_description = task.get("description", "")
+            if len(task_description) < 50:
                 raise ValidationError(
                     f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
-                    context={"description": task["description"][:50], "length": len(task["description"])},
+                    context={"description": task_description[:50], "length": len(task_description)},
                 )
 
 
@@ -185,18 +188,20 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
 
     retrieval_results = await retrieve_documents(
-        application_id=application.id,
+        application_id=str(application.id),
         search_queries=search_queries,
         task_description=str(prompt_with_title),
         max_tokens=RESEARCH_PLAN_MAX_TOKENS,
         trace_id=trace_id,
     )
 
-    prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
+    # Compress the prompt after to_string() to reduce token usage
+    full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
+    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
     response: ResearchPlanResponse = await handle_completions_request(
         prompt_identifier="research_plan_generation",
-        messages=prompt,
+        messages=compressed_prompt,
         system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
         response_schema=research_plan_schema,
         response_type=ResearchPlanResponse,
