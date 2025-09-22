@@ -45,21 +45,27 @@ export const WithInitialData: Story = {
 		initialData: {
 			description:
 				"Create and validate new treatment methodologies that improve patient outcomes while reducing costs and treatment duration.",
-			name: "Develop innovative treatment protocols",
 			tasks: [
 				{
 					description: "Conduct comprehensive literature review of existing treatment protocols",
 					id: "1",
+					number: 1,
+					title: "Literature Review",
 				},
 				{
 					description: "Design randomized controlled trial methodology",
 					id: "2",
+					number: 2,
+					title: "Trial Design",
 				},
 				{
 					description: "Recruit and train research staff for data collection",
 					id: "3",
+					number: 3,
+					title: "Staff Training",
 				},
 			],
+			title: "Develop innovative treatment protocols",
 		} as ObjectiveFormData,
 		objectiveNumber: 1,
 		onSaveAction: fn(),
@@ -71,13 +77,15 @@ export const OneTask: Story = {
 		initialData: {
 			description:
 				"Develop comprehensive methodologies for evaluating the effectiveness of new treatment approaches in clinical settings.",
-			name: "Evaluate treatment effectiveness",
 			tasks: [
 				{
 					description: "Design and implement randomized controlled trial for treatment evaluation",
 					id: "1",
+					number: 1,
+					title: "RCT Implementation",
 				},
 			],
+			title: "Evaluate treatment effectiveness",
 		} as ObjectiveFormData,
 		objectiveNumber: 1,
 		onSaveAction: fn(),
@@ -89,25 +97,33 @@ export const MultipleTasks: Story = {
 		initialData: {
 			description:
 				"Build strategic alliances with local healthcare providers and community organizations to ensure sustainable implementation of research findings.",
-			name: "Establish community partnerships",
 			tasks: [
 				{
 					description: "Identify key stakeholders in the local healthcare ecosystem",
 					id: "1",
+					number: 1,
+					title: "Stakeholder Identification",
 				},
 				{
 					description: "Develop partnership agreements and MOUs",
 					id: "2",
+					number: 2,
+					title: "Partnership Agreements",
 				},
 				{
 					description: "Create joint governance structure for ongoing collaboration",
 					id: "3",
+					number: 3,
+					title: "Governance Structure",
 				},
 				{
 					description: "Establish data sharing protocols and agreements",
 					id: "4",
+					number: 4,
+					title: "Data Sharing Protocols",
 				},
 			],
+			title: "Establish community partnerships",
 		} as ObjectiveFormData,
 		objectiveNumber: 2,
 		onSaveAction: fn(),

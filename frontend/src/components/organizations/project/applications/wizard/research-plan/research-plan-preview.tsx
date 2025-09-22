@@ -6,14 +6,14 @@ import { WizardRightPane } from "@/components/organizations/project/applications
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useObjectiveManagement } from "@/hooks/use-objective-management";
 import { useApplicationStore } from "@/stores/application-store";
-import { type Objective, useWizardStore } from "@/stores/wizard-store";
+import { type ResearchObjective, useWizardStore } from "@/stores/wizard-store";
 import { ObjectiveList } from "./objective-list";
 
 interface ResearchPlanPreviewProps {
 	dialogRef: RefObject<null | WizardDialogRef>;
 }
 
-const handleReorder = async (objectives: Objective[], oldIndex: number, newIndex: number) => {
+const handleReorder = async (objectives: ResearchObjective[], oldIndex: number, newIndex: number) => {
 	const reorderedObjectives = [...objectives];
 	const [movedObjective] = reorderedObjectives.splice(oldIndex, 1);
 	reorderedObjectives.splice(newIndex, 0, movedObjective);

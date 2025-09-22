@@ -87,7 +87,9 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Test task description");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
+			expect(taskDisplay).toHaveTextContent("Test task description");
 		});
 
 		it("displays textarea in editing mode", () => {
@@ -97,7 +99,9 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
+			expect(screen.getByLabelText("Task title")).toBeInTheDocument();
 			expect(screen.getByLabelText("Task description")).toBeInTheDocument();
+			expect(screen.getByDisplayValue("Test Task Title")).toBeInTheDocument();
 			expect(screen.getByDisplayValue("Test task description")).toBeInTheDocument();
 		});
 	});
@@ -110,10 +114,12 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Test task description");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
+			expect(taskDisplay).toHaveTextContent("Test task description");
 		});
 
-		it("falls back to title when description is empty", () => {
+		it("shows only title when description is empty", () => {
 			const taskWithEmptyDescription = {
 				...mockTask,
 				description: "",
@@ -125,10 +131,12 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Test Task Title");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
+			expect(taskDisplay).not.toHaveTextContent("Test task description");
 		});
 
-		it("falls back to title when description is only whitespace", () => {
+		it("shows title and whitespace description when description is only whitespace", () => {
 			const taskWithWhitespaceDescription = {
 				...mockTask,
 				description: "   \n\t  ",
@@ -140,10 +148,11 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Test Task Title");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
 		});
 
-		it("falls back to title when description is undefined", () => {
+		it("shows only title when description is undefined", () => {
 			const taskWithUndefinedDescription = {
 				...mockTask,
 				description: undefined,
@@ -155,10 +164,11 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Test Task Title");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
 		});
 
-		it("trims whitespace from valid descriptions", () => {
+		it("displays both title and description with whitespace trimmed", () => {
 			const taskWithWhitespaceAroundDescription = {
 				...mockTask,
 				description: "  Valid description  ",
@@ -170,7 +180,9 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Valid description");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Test Task Title");
+			expect(taskDisplay).toHaveTextContent("Valid description");
 		});
 	});
 
@@ -262,7 +274,7 @@ describe("DraggableTaskItem", () => {
 			expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
 		});
 
-		it("calls onValueChange when textarea content changes", async () => {
+		it("calls onValueChange when textarea loses focus", async () => {
 			const user = userEvent.setup();
 			const onValueChange = vi.fn();
 
@@ -272,12 +284,13 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			const textarea = screen.getByLabelText("Task description");
-			await user.clear(textarea);
-			await user.type(textarea, "x");
+			const titleTextarea = screen.getByLabelText("Task title");
+
+			await user.type(titleTextarea, " Updated");
+			await user.tab();
 
 			expect(onValueChange).toHaveBeenCalled();
-			expect(onValueChange).toHaveBeenCalledWith(0, expect.any(String));
+			expect(onValueChange).toHaveBeenCalledWith(0, "Test Task Title Updated", "Test task description");
 		});
 
 		it("calls onTaskDelete when delete button is clicked", async () => {
@@ -393,7 +406,9 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			expect(screen.getByTestId("task-display")).toHaveTextContent("Task:");
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toBeInTheDocument();
+			expect(taskDisplay.textContent).toBe("");
 		});
 
 		it("handles negative taskIndex (edge case)", () => {

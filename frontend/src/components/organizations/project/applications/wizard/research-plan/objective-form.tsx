@@ -1,22 +1,20 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
 import { cn } from "@/lib/utils";
+import type { API } from "@/types/api-types";
 import { FloatingActionPanel } from "./floating-action-panel";
 
-export interface ObjectiveFormData {
-	description: string;
-	name: string;
-	tasks: ObjectiveTask[];
-}
+export type ObjectiveFormData = {
+	tasks: ObjectiveFormTask[];
+} & Omit<API.UpdateApplication.RequestBody["research_objectives"][0], "research_tasks">;
 
-export interface ObjectiveTask {
-	description: string;
+export type ObjectiveFormTask = {
 	id: string;
-}
+} & API.UpdateApplication.RequestBody["research_objectives"][0]["research_tasks"][0];
 
 interface ObjectiveFormProps {
 	className?: string;
@@ -25,22 +23,27 @@ interface ObjectiveFormProps {
 	onSaveAction: (data: ObjectiveFormData) => void;
 }
 
+const scrollToBottom = () => {
+	window.scrollTo({ behavior: "smooth", top: document.body.scrollHeight });
+};
+
 export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveAction }: ObjectiveFormProps) {
 	const [formData, setFormData] = useState<ObjectiveFormData>(
 		initialData ?? {
 			description: "",
-			name: "",
-			tasks: [{ description: "", id: crypto.randomUUID() }],
+			number: objectiveNumber,
+			tasks: [],
+			title: "",
 		},
 	);
 
 	const [errors, setErrors] = useState<{
 		description?: string;
-		name?: string;
 		tasks?: Record<string, string>;
+		title?: string;
 	}>({});
 
-	const updateField = (field: keyof Omit<ObjectiveFormData, "tasks">, value: string) => {
+	const updateField = (field: keyof Omit<ObjectiveFormData, "number" | "tasks">, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 
 		if (errors[field]) {
@@ -48,10 +51,10 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}
 	};
 
-	const updateTask = (taskId: string, description: string) => {
+	const updateTask = (taskId: string, field: "description" | "title", value: string) => {
 		setFormData((prev) => ({
 			...prev,
-			tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, description } : task)),
+			tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, [field]: value } : task)),
 		}));
 
 		if (errors.tasks?.[taskId]) {
@@ -67,28 +70,83 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}
 	};
 
+	const prevTaskTitlesRef = useRef<Record<string, string>>({});
+	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	const handleTaskFieldChange = (taskId: string, field: "description" | "title", value: string) => {
+		updateTask(taskId, field, value);
+
+		if (field === "title") {
+			const prevTitle = prevTaskTitlesRef.current[taskId] || "";
+			const wasEmpty = !prevTitle.trim();
+			const isNowFilled = value.trim();
+
+			if (scrollTimeoutRef.current) {
+				clearTimeout(scrollTimeoutRef.current);
+			}
+
+			if (wasEmpty && isNowFilled) {
+				scrollTimeoutRef.current = setTimeout(() => {
+					scrollToBottom();
+					scrollTimeoutRef.current = null;
+				}, 500);
+			}
+
+			prevTaskTitlesRef.current[taskId] = value;
+
+			if (!value.trim()) {
+				setFormData((prev) => ({
+					...prev,
+					tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, description: undefined } : task)),
+				}));
+			}
+		}
+
+		setTimeout(() => {
+			cleanupEmptyTasks();
+		}, 500);
+	};
+
 	const addTask = () => {
+		const newTaskId = crypto.randomUUID();
+		const currentTaskCount = formData.tasks.length;
 		setFormData((prev) => ({
 			...prev,
-			tasks: [...prev.tasks, { description: "", id: crypto.randomUUID() }],
+			tasks: [...prev.tasks, { description: undefined, id: newTaskId, number: currentTaskCount + 1, title: "" }],
+		}));
+
+		setTimeout(() => {
+			scrollToBottom();
+			const newTaskElement = document.querySelector(`[data-testid="task-title-${currentTaskCount}"]`);
+			if (newTaskElement) {
+				const textarea = newTaskElement.querySelector("textarea");
+				textarea?.focus();
+			}
+		}, 100);
+	};
+
+	const cleanupEmptyTasks = () => {
+		setFormData((prev) => ({
+			...prev,
+			tasks: prev.tasks.filter((task) => task.title.trim() || task.description?.trim()),
 		}));
 	};
 
 	const validateForm = (): boolean => {
 		const newErrors: typeof errors = {};
 
-		if (!formData.name.trim()) {
-			newErrors.name = "Objective name is required";
+		if (!formData.title.trim()) {
+			newErrors.title = "Objective title is required";
 		}
 
-		if (!formData.description.trim()) {
+		if (!formData.description?.trim()) {
 			newErrors.description = "Objective description is required";
 		}
 
 		const taskErrors: Record<string, string> = {};
 		for (const task of formData.tasks) {
-			if (!task.description.trim()) {
-				taskErrors[task.id] = "Task description is required";
+			if (!task.title.trim()) {
+				taskErrors[task.id] = "Task title is required";
 			}
 		}
 
@@ -106,12 +164,18 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}
 	};
 
-	const isFormValid = (): boolean => {
-		return Boolean(
-			formData.name.trim() &&
-				formData.description.trim() &&
-				formData.tasks.every((task) => task.description.trim()),
-		);
+	const canAddTask = (): boolean => {
+		if (!(formData.title.trim() && formData.description?.trim())) {
+			return false;
+		}
+		return formData.tasks.every((task) => task.title.trim());
+	};
+
+	const canAddObjective = (): boolean => {
+		if (!(formData.title.trim() && formData.description?.trim())) {
+			return false;
+		}
+		return formData.tasks.some((task) => task.title.trim());
 	};
 
 	return (
@@ -126,15 +190,15 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 
 				<AppTextArea
 					className="min-h-32"
-					errorMessage={errors.name}
-					id="objective-name-input"
-					label="Objective name"
+					errorMessage={errors.title}
+					id="objective-title-input"
+					label="Objective title"
 					onChange={(e) => {
-						updateField("name", e.target.value);
+						updateField("title", e.target.value);
 					}}
 					placeholder="Enter a clear, measurable objective"
-					testId="objective-name-input"
-					value={formData.name}
+					testId="objective-title-input"
+					value={formData.title}
 				/>
 
 				<AppTextArea
@@ -150,30 +214,58 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					value={formData.description}
 				/>
 
-				<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
+				<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks (Recommended)</h3>
+				<p className="text-muted-foreground-dark leading-tight">
+					Describe steps to achieve this objective. You can add more than one!
+				</p>
 
-				{formData.tasks.map((task, index) => (
-					<div className="flex gap-3 items-start" key={task.id}>
-						<AppTextArea
-							className="min-h-52 flex-1"
-							errorMessage={errors.tasks?.[task.id]}
-							id={`task-description-${index}`}
-							label="Task description"
-							onChange={(e) => {
-								updateTask(task.id, e.target.value);
-							}}
-							placeholder="Describe a step to achieve this objective"
-							testId={`task-description-${index}`}
-							value={task.description}
-						/>
-					</div>
-				))}
+				{formData.tasks.map((task, index) => {
+					const shouldShowDescription = task.title.trim() || task.description?.trim();
+					return (
+						<div className="space-y-3" key={task.id}>
+							<AppTextArea
+								className="min-h-32"
+								errorMessage={task.title.trim() ? undefined : errors.tasks?.[task.id]}
+								id={`task-title-${index}`}
+								label="Task title"
+								onChange={(e) => {
+									handleTaskFieldChange(task.id, "title", e.target.value);
+								}}
+								placeholder="Enter a brief task title"
+								testId={`task-title-${index}`}
+								value={task.title}
+							/>
+
+							<div
+								className={cn(
+									"transition-all duration-500 ease-in-out overflow-hidden",
+									shouldShowDescription
+										? "max-h-96 opacity-100 transform translate-y-0"
+										: "max-h-0 opacity-0 transform -translate-y-2",
+								)}
+							>
+								<AppTextArea
+									className="min-h-52"
+									id={`task-description-${index}`}
+									label="Task description"
+									onChange={(e) => {
+										handleTaskFieldChange(task.id, "description", e.target.value);
+									}}
+									placeholder="Describe the steps to complete this task"
+									testId={`task-description-${index}`}
+									value={task.description ?? ""}
+								/>
+							</div>
+						</div>
+					);
+				})}
 			</div>
 
 			<FloatingActionPanel>
 				<AppButton
 					className="w-full"
 					data-testid="add-task-button"
+					disabled={!canAddTask()}
 					leftIcon={<Plus size={16} />}
 					onClick={addTask}
 					variant="secondary"
@@ -183,7 +275,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				<AppButton
 					className="w-full"
 					data-testid="add-objective-button"
-					disabled={!isFormValid()}
+					disabled={!canAddObjective()}
 					onClick={handleSave}
 					type="button"
 					variant="primary"
