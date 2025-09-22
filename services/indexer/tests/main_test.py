@@ -60,13 +60,6 @@ def mock_parse_object_uri() -> Generator[MagicMock]:
         yield mock
 
 
-@pytest.fixture(autouse=True)
-def mock_publish_notification() -> Generator[AsyncMock]:
-    with patch("packages.db.src.utils.publish_notification") as mock:
-        mock.return_value = None
-        yield mock
-
-
 def create_pubsub_event(object_path: str, event_type: str = "OBJECT_FINALIZE") -> PubSubEvent:
     return PubSubEvent(
         message=PubSubMessage(
@@ -133,7 +126,6 @@ async def test_handle_file_indexing_grant_application(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
     project: Project,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -204,14 +196,6 @@ async def test_handle_file_indexing_grant_application(
     assert mock_process_source.call_args[1]["filename"] == "document.pdf"
     assert mock_process_source.call_args[1]["mime_type"] == "application/pdf"
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["source_id"] == source_id
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["data"]["identifier"] == "document.pdf"
-
 
 async def test_handle_file_indexing_funding_organization(
     test_client: AsyncTestClient[Any],
@@ -220,7 +204,6 @@ async def test_handle_file_indexing_funding_organization(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     granting_institution: GrantingInstitution,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -284,8 +267,6 @@ async def test_handle_file_indexing_funding_organization(
     mock_download_blob.assert_awaited_once_with(file_path)
     mock_process_source.assert_awaited_once()
 
-    mock_publish_notification.assert_not_called()
-
 
 async def test_handle_file_indexing_grant_template(
     test_client: AsyncTestClient[Any],
@@ -295,7 +276,6 @@ async def test_handle_file_indexing_grant_template(
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
     project: Project,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -365,19 +345,11 @@ async def test_handle_file_indexing_grant_template(
     mock_download_blob.assert_awaited_once_with(file_path)
     mock_process_source.assert_awaited_once()
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_template.grant_application_id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["data"]["identifier"] == "template.docx"
-
 
 async def test_handle_file_indexing_invalid_path(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_object_uri: MagicMock,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     mock_parse_object_uri.side_effect = KeyError("Invalid path format")
 
@@ -385,15 +357,12 @@ async def test_handle_file_indexing_invalid_path(
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-    mock_publish_notification.assert_not_called()
-
 
 async def test_handle_file_indexing_unsupported_extension(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
@@ -410,15 +379,12 @@ async def test_handle_file_indexing_unsupported_extension(
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    mock_publish_notification.assert_not_called()
-
 
 async def test_handle_file_indexing_download_error(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
@@ -437,8 +403,6 @@ async def test_handle_file_indexing_download_error(
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-    mock_publish_notification.assert_not_called()
-
 
 async def test_handle_file_indexing_processing_error(
     test_client: AsyncTestClient[Any],
@@ -446,7 +410,6 @@ async def test_handle_file_indexing_processing_error(
     mock_process_source: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
@@ -505,20 +468,12 @@ async def test_handle_file_indexing_processing_error(
         assert source is not None
         assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
-    assert call_kwargs["data"]["identifier"] == "document.pdf"
-
 
 async def test_handle_database_error(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
@@ -563,13 +518,10 @@ async def test_handle_database_error(
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-        mock_publish_notification.assert_not_called()
-
 
 async def test_invalid_pubsub_message(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     invalid_event = {
         "message": {
@@ -583,8 +535,6 @@ async def test_invalid_pubsub_message(
     response = await test_client.post("/", json=msgspec.to_builtins(invalid_event))
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    mock_publish_notification.assert_not_called()
-
 
 async def test_handle_file_indexing_existing_file(
     test_client: AsyncTestClient[Any],
@@ -593,7 +543,6 @@ async def test_handle_file_indexing_existing_file(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
 ) -> None:
     source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
     object_path = f"grant_application/{grant_application.id}/{source_id_placeholder}/existing.pdf"
@@ -645,14 +594,6 @@ async def test_handle_file_indexing_existing_file(
     mock_download_blob.assert_awaited_once_with(object_path)
     mock_process_source.assert_not_called()
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["source_id"] == source_id
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["data"]["identifier"] == "existing.pdf"
-
 
 async def test_handle_file_indexing_file_parsing_error(
     test_client: AsyncTestClient[Any],
@@ -660,7 +601,6 @@ async def test_handle_file_indexing_file_parsing_error(
     mock_process_source: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
@@ -719,13 +659,6 @@ async def test_handle_file_indexing_file_parsing_error(
         assert source is not None
         assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
-    assert call_kwargs["data"]["identifier"] == "document.pdf"
-
 
 async def test_handle_file_indexing_retry_failed_file(
     test_client: AsyncTestClient[Any],
@@ -733,7 +666,6 @@ async def test_handle_file_indexing_retry_failed_file(
     mock_process_source: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
-    mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
@@ -791,11 +723,3 @@ async def test_handle_file_indexing_retry_failed_file(
 
     mock_download_blob.assert_awaited_once_with(object_path)
     mock_process_source.assert_awaited_once()
-
-    mock_publish_notification.assert_called_once()
-    call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(grant_application.id)
-    assert call_kwargs["event"] == "source_processing"
-    assert call_kwargs["data"]["source_id"] == source_id
-    assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-    assert call_kwargs["data"]["identifier"] == "failed.pdf"

@@ -141,9 +141,9 @@ async def handle_file_indexing(
         )
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
-        parent_id = parse_result["entity_id"]
+        parse_result["entity_id"]
         if parse_result["entity_type"] == "grant_template":
-            parent_id = await session.scalar(
+            await session.scalar(
                 select(GrantTemplate.grant_application_id).where(GrantTemplate.id == parse_result["entity_id"])
             )
 
@@ -168,13 +168,12 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
             identifier=parse_result["blob_name"],
             text_content=rag_source.text_content,
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
-            should_send_notifications=parse_result["entity_type"] != "granting_institution",
             trace_id=trace_id,
+            document_metadata=rag_source.document_metadata,  # Keep existing metadata
         )
         logger.info(
             "File indexing completed (already processed)",
@@ -193,7 +192,7 @@ async def handle_file_indexing(
 
     try:
         processing_start = time.time()
-        vectors, text_content = await process_source(
+        vectors, text_content, document_metadata = await process_source(
             content=content,
             source_id=str(parse_result["source_id"]),
             filename=parse_result["blob_name"],
@@ -212,13 +211,12 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
             identifier=parse_result["blob_name"],
             text_content=text_content,
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
-            should_send_notifications=parse_result["entity_type"] != "granting_institution",
             trace_id=trace_id,
+            document_metadata=document_metadata,
         )
 
         logger.info(
@@ -247,13 +245,12 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
             identifier=parse_result["blob_name"],
             text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
-            should_send_notifications=parse_result["entity_type"] != "granting_institution",
             trace_id=trace_id,
+            document_metadata=None,  # No metadata on failure
         )
         failure_update_duration = time.time() - failure_update_start
 
