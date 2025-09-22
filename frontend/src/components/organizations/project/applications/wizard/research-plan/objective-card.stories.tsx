@@ -3,7 +3,7 @@ import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { horizontalListSortingStrategy, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useMemo, useState } from "react";
-import type { Objective } from "@/stores/wizard-store";
+import type { ResearchObjective } from "@/stores/wizard-store";
 import { DraggableObjectiveCard } from "./draggable-objective-card";
 
 const singleCardDecorator = [
@@ -35,7 +35,7 @@ const DraggableWrapper = ({
 }: {
 	index?: number;
 	initialEditing?: boolean;
-	objective: Objective;
+	objective: ResearchObjective;
 	objectivesCount?: number;
 }) => {
 	const [isEditing, setIsEditing] = useState(initialEditing);
@@ -237,7 +237,7 @@ export const MinimalContent: Story = {
 };
 
 const HorizontalObjectivesWrapper = ({ count }: { count: number }) => {
-	const [objectives, setObjectives] = useState<Objective[]>(() => {
+	const [objectives, setObjectives] = useState<ResearchObjective[]>(() => {
 		return Array.from({ length: count }, (_, i) =>
 			ResearchObjectiveFactory.build({
 				description: `Objective ${i + 1} description that demonstrates content in horizontal layout.`,
@@ -273,7 +273,7 @@ const HorizontalObjectivesWrapper = ({ count }: { count: number }) => {
 	const handleRemove = (objectiveNumber: number) => {
 		setObjectives((prev) => prev.filter((o) => o.number !== objectiveNumber));
 	};
-	const handleSave = (updated: Objective) => {
+	const handleSave = (updated: ResearchObjective) => {
 		setObjectives((prev) => prev.map((o) => (o.number === updated.number ? updated : o)));
 		setEditingId(null);
 		return Promise.resolve();

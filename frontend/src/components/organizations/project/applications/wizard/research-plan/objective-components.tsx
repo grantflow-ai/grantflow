@@ -3,28 +3,28 @@
 import type { useSortable } from "@dnd-kit/sortable";
 import { Edit, GripHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import {
+	AppDropdownMenu,
+	AppDropdownMenuContent,
+	AppDropdownMenuItem,
+	AppDropdownMenuTrigger,
+} from "@/components/app/app-dropdown";
 import { AppButton } from "@/components/app/buttons/app-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { Objective } from "@/stores/wizard-store";
+import type { ResearchObjective } from "@/stores/wizard-store";
 import { DraggableTaskList } from "./draggable-task-list";
 
 interface EditableObjectiveProps {
 	index: number;
-	objective: Objective;
+	objective: ResearchObjective;
 	onCancel: () => void;
-	onSave: (updatedObjective: Objective) => void;
+	onSave: (updatedObjective: ResearchObjective) => void;
 }
 
 interface ObjectiveCardContentProps {
 	index: number;
-	objective: Objective;
+	objective: ResearchObjective;
 }
 
 interface ObjectiveHeaderProps {
@@ -32,7 +32,7 @@ interface ObjectiveHeaderProps {
 	index: number;
 	isEditing: boolean;
 	listeners: ReturnType<typeof useSortable>["listeners"];
-	objective: Objective;
+	objective: ResearchObjective;
 	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
@@ -42,20 +42,22 @@ interface ObjectiveHeaderProps {
 export function EditableObjective({ index, objective, onCancel: _onCancel, onSave }: EditableObjectiveProps) {
 	const [title, setTitle] = useState(objective.title);
 	const [description, setDescription] = useState(objective.description);
-	const [tasks, setTasks] = useState(objective.research_tasks);
+	const [tasks, setTasks] = useState<ResearchObjective["research_tasks"]>(objective.research_tasks);
+	const [taskValues, setTaskValues] = useState<Record<number, { description: string; title: string }>>({});
 
-	const taskValues: Record<number, string> = {};
-
-	const handleTaskValuesChange = (newTaskValues: Record<number, string>) => {
-		Object.assign(taskValues, newTaskValues);
-	};
+	const handleTaskValuesChange = useCallback(
+		(newTaskValues: Record<number, { description: string; title: string }>) => {
+			setTaskValues((prev) => ({ ...prev, ...newTaskValues }));
+		},
+		[],
+	);
 
 	const handleTaskDelete = (taskIndex: number) => {
-		setTasks((prevTasks) => prevTasks.filter((_, idx) => idx !== taskIndex));
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => prevTasks.filter((_, idx) => idx !== taskIndex));
 	};
 
 	const handleTaskAdd = () => {
-		setTasks((prevTasks) => [
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => [
 			...prevTasks,
 			{
 				description: "",
@@ -66,7 +68,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleTaskReorder = (oldIndex: number, newIndex: number) => {
-		setTasks((prevTasks) => {
+		setTasks((prevTasks: ResearchObjective["research_tasks"]) => {
 			const reorderedTasks = [...prevTasks];
 			const [movedTask] = reorderedTasks.splice(oldIndex, 1);
 			reorderedTasks.splice(newIndex, 0, movedTask);
@@ -79,9 +81,9 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleSave = () => {
-		const updatedTasks = tasks.map((task, index) => ({
+		const updatedTasks = tasks.map((task: ResearchObjective["research_tasks"][0], index: number) => ({
 			...task,
-			description: taskValues[index] ?? task.description,
+			...taskValues[index],
 		}));
 
 		onSave({
@@ -191,8 +193,8 @@ export function ObjectiveHeader({
 			</div>
 
 			<div>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
+				<AppDropdownMenu modal={false}>
+					<AppDropdownMenuTrigger asChild>
 						<button
 							className="inline-flex items-center justify-center size-8 text-gray-400 cursor-pointer hover:text-gray-600 focus:outline-none"
 							data-testid="menu-trigger"
@@ -200,18 +202,30 @@ export function ObjectiveHeader({
 						>
 							<Image alt="Menu" height={16} src="/icons/three-dots.svg" width={16} />
 						</button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem data-testid="edit-task-menuitem" onClick={isEditing ? onCancel : onEdit}>
-							<Edit className="mr-2 size-4" />
+					</AppDropdownMenuTrigger>
+					<AppDropdownMenuContent
+						align="end"
+						className="w-40 border-app-gray-100 bg-white p-1"
+						data-testid="objective-context-menu"
+					>
+						<AppDropdownMenuItem
+							className="group flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
+							data-testid="edit-task-menuitem"
+							onClick={isEditing ? onCancel : onEdit}
+						>
+							<Edit className="size-4 text-app-black group-hover:text-white" />
 							{isEditing ? "Cancel Editing" : "Edit Objective"}
-						</DropdownMenuItem>
-						<DropdownMenuItem data-testid="remove-menuitem" onClick={onRemove}>
-							<Trash2 className="mr-2 size-4" />
+						</AppDropdownMenuItem>
+						<AppDropdownMenuItem
+							className="group flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-app-red hover:bg-app-gray-100"
+							data-testid="remove-menuitem"
+							onClick={onRemove}
+						>
+							<Trash2 className="size-4 text-app-black group-hover:text-white" />
 							Remove
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+						</AppDropdownMenuItem>
+					</AppDropdownMenuContent>
+				</AppDropdownMenu>
 			</div>
 		</div>
 	);
