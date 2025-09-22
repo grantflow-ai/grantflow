@@ -10,7 +10,9 @@ vi.mock("@/components/organizations/dashboard/dashboard-client");
 
 const mockGetOrganizations = vi.mocked(await import("@/actions/organization").then((m) => m.getOrganizations));
 const mockGetProjects = vi.mocked(await import("@/actions/project").then((m) => m.getProjects));
-const mockGetOrganizationId = vi.mocked(await import("@/utils/organization-context").then((m) => m.getOrganizationId));
+const mockGetOrganizationId = vi.mocked(
+	await import("@/utils/organization-context").then((m) => m.getSelectedOrgFromCookies),
+);
 const mockDashboardClient = vi.mocked(
 	await import("@/components/organizations/dashboard/dashboard-client").then((m) => m.DashboardClient),
 );
@@ -21,7 +23,7 @@ describe("DashboardPage", () => {
 		mockDashboardClient.mockImplementation(() => <div data-testid="dashboard-client" />);
 	});
 
-	it("should render dashboard with organizations and projects", async () => {
+	it("should render dashboard with valid organization from cookie", async () => {
 		const organizations = ListOrganizationsResponseFactory.build();
 		const projects = ProjectListItemFactory.batch(3);
 		const selectedOrgId = organizations[0].id;
@@ -37,27 +39,25 @@ describe("DashboardPage", () => {
 			{
 				initialOrganizations: organizations,
 				initialProjects: projects,
-				initialSelectedOrganizationId: selectedOrgId,
 			},
 			undefined,
 		);
 	});
 
-	it("should select first organization when none is selected", async () => {
+	it("should render dashboard when no organization is selected", async () => {
 		const organizations = ListOrganizationsResponseFactory.build();
-		const projects = ProjectListItemFactory.batch(2);
 
 		mockGetOrganizations.mockResolvedValue(organizations);
 		mockGetOrganizationId.mockResolvedValue(null);
-		mockGetProjects.mockResolvedValue(projects);
+		mockGetProjects.mockResolvedValue([]);
 
 		render(await DashboardPage());
 
+		expect(screen.getByTestId("dashboard-client")).toBeInTheDocument();
 		expect(mockDashboardClient).toHaveBeenCalledWith(
 			{
 				initialOrganizations: organizations,
 				initialProjects: [],
-				initialSelectedOrganizationId: null,
 			},
 			undefined,
 		);
@@ -74,26 +74,26 @@ describe("DashboardPage", () => {
 			{
 				initialOrganizations: [],
 				initialProjects: [],
-				initialSelectedOrganizationId: null,
 			},
 			undefined,
 		);
 	});
 
-	it("should handle no selected organization with empty projects", async () => {
+	it("should render dashboard even with invalid organization ID from cookie", async () => {
 		const organizations = ListOrganizationsResponseFactory.build();
+		const invalidOrgId = "invalid-org-id-not-in-list";
 
 		mockGetOrganizations.mockResolvedValue(organizations);
-		mockGetOrganizationId.mockResolvedValue(null);
+		mockGetOrganizationId.mockResolvedValue(invalidOrgId);
 		mockGetProjects.mockResolvedValue([]);
 
 		render(await DashboardPage());
 
+		expect(screen.getByTestId("dashboard-client")).toBeInTheDocument();
 		expect(mockDashboardClient).toHaveBeenCalledWith(
 			{
 				initialOrganizations: organizations,
 				initialProjects: [],
-				initialSelectedOrganizationId: null,
 			},
 			undefined,
 		);

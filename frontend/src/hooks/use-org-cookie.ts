@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { useCookies } from "react-cookie";
 import { SELECTED_ORGANIZATION_COOKIE } from "@/constants";
 
-export function useOrganization() {
+export function useOrgCookie() {
 	const [cookies, setCookie, removeCookie] = useCookies([SELECTED_ORGANIZATION_COOKIE]);
 	const router = useRouter();
 
 	const selectedOrganizationId = (cookies[SELECTED_ORGANIZATION_COOKIE] as string | undefined) ?? null;
 
-	const switchOrganization = (organizationId: string) => {
+	const setOrganizationCookie = (organizationId: string) => {
 		setCookie(SELECTED_ORGANIZATION_COOKIE, organizationId, {
 			maxAge: 60 * 60 * 24 * 30,
 			path: "/",
@@ -23,14 +23,14 @@ export function useOrganization() {
 		router.refresh();
 	};
 
-	const clearOrganization = () => {
+	const clearOrganizationCookie = () => {
 		removeCookie(SELECTED_ORGANIZATION_COOKIE, { path: "/" });
 		router.refresh();
 	};
 
 	return {
-		clearOrganization,
+		clearOrganizationCookie,
 		selectedOrganizationId,
-		switchOrganization,
+		setOrganizationCookie,
 	};
 }
