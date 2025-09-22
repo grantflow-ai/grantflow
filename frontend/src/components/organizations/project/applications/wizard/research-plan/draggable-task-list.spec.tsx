@@ -32,7 +32,7 @@ vi.mock("./draggable-task-item", () => ({
 	}: {
 		isEditing?: boolean;
 		onTaskDelete?: () => void;
-		onValueChange?: (index: number, content: string) => void;
+		onValueChange?: (index: number, title: string, description: string) => void;
 		task: { description?: string; title: string };
 		taskIndex: number;
 	}) => (
@@ -47,7 +47,7 @@ vi.mock("./draggable-task-item", () => ({
 				<>
 					<button
 						data-testid={`update-task-${taskIndex}`}
-						onClick={() => onValueChange?.(taskIndex, "Updated content")}
+						onClick={() => onValueChange?.(taskIndex, "Updated Title", task.description ?? "")}
 						type="button"
 					>
 						Update
@@ -110,13 +110,21 @@ describe("DraggableTaskList", () => {
 		it("renders empty state when no tasks", () => {
 			render(<DraggableTaskList {...defaultProps} tasks={[]} />);
 
-			expect(screen.getByText("Tasks")).toBeInTheDocument();
+			// Tasks header should not be shown when no tasks and not editing
+			expect(screen.queryByText("Tasks")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("task-item-0")).not.toBeInTheDocument();
 		});
 
 		it("shows add button in editing mode", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={true} />);
 
+			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
+		});
+
+		it("shows Tasks header in editing mode even with no tasks", () => {
+			render(<DraggableTaskList {...defaultProps} isEditing={true} tasks={[]} />);
+
+			expect(screen.getByText("Tasks")).toBeInTheDocument();
 			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 		});
 
@@ -194,9 +202,13 @@ describe("DraggableTaskList", () => {
 
 			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskValuesChange={onTaskValuesChange} />);
 
-			await user.click(screen.getByTestId("update-task-0"));
+			// Click the update button on the first task
+			const updateButton = screen.getByTestId("update-task-0");
+			await user.click(updateButton);
 
-			expect(onTaskValuesChange).toHaveBeenCalledWith({ 0: "Updated content" });
+			expect(onTaskValuesChange).toHaveBeenCalledWith({
+				0: { description: "First task description", title: "Updated Title" },
+			});
 		});
 
 		it("passes task delete events to onTaskDelete", async () => {
@@ -284,7 +296,8 @@ describe("DraggableTaskList", () => {
 		it("handles empty tasks array", () => {
 			render(<DraggableTaskList {...defaultProps} tasks={[]} />);
 
-			expect(screen.getByText("Tasks")).toBeInTheDocument();
+			// Tasks header should not show when no tasks and not editing
+			expect(screen.queryByText("Tasks")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("task-item-0")).not.toBeInTheDocument();
 		});
 
