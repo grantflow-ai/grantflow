@@ -232,11 +232,35 @@ tasks:
       - task: db:up
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
-      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
+      DATABASE_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
     cmds:
       - task: _sleep
         vars:
           SECONDS: "2"
+      - uv run python scripts/seed_db.py
+
+  db:seed:remote:
+    desc: Populate Cloud SQL database with initial seed data (requires Cloud SQL Proxy running)
+    deps:
+      - task: db:proxy:start
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+      DATABASE_CONNECTION_STRING:
+        sh: |
+          # Get the connection string and replace socket path with TCP connection
+          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+          if [ -n "$CONNECTION" ]; then
+            # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+            # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
+            echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
+          fi
+    cmds:
+      - |
+        if [ -z "$DATABASE_CONNECTION_STRING" ]; then
+          echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
+          exit 1
+        fi
+      - echo "Running seed on Cloud SQL..."
       - uv run python scripts/seed_db.py
 
   db:drop:
