@@ -20,7 +20,9 @@ async def test_extraction(logger: logging.Logger, data_file: Path) -> None:
         pytest.skip(f"Cannot determine MIME type for {data_file.name}")
 
     try:
-        result, extracted_mime_type = await extract_file_content(content=data_file.read_bytes(), mime_type=mime_type)
+        result, extracted_mime_type, _, _ = await extract_file_content(
+            content=data_file.read_bytes(), mime_type=mime_type, enable_chunking=False, enable_token_reduction=False
+        )
 
         assert isinstance(result, str), f"Expected string result, got {type(result)}"
         assert result.strip(), "Extracted text is empty"

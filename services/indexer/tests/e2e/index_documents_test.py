@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from packages.db.src.json_objects import Chunk
 from packages.db.src.tables import GrantApplication, GrantApplicationSource
-from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from packages.shared_utils.src.extraction import extract_file_content
@@ -30,16 +30,22 @@ async def test_index_chunks(
         pytest.skip(f"Cannot determine MIME type for {data_file.name}")
 
     try:
-        content, extracted_mime_type = await extract_file_content(
+        # Use the new optimized extraction with chunking enabled
+        content, _extracted_mime_type, chunks, _ = await extract_file_content(
             content=data_file.read_bytes(),
             mime_type=mime_type,
+            enable_chunking=True,
+            enable_token_reduction=True,
+            language_hint="en",
         )
 
-        chunks = chunk_text(text=content, mime_type=extracted_mime_type)
-        assert len(chunks) > 0, f"No chunks generated from {data_file.name}"
+        # Convert chunks to expected format if available
+        chunk_dtos = [Chunk(content=chunk) for chunk in chunks] if chunks else [Chunk(content=content)]
+
+        assert len(chunk_dtos) > 0, f"No chunks generated from {data_file.name}"
 
         vector_dtos = await index_chunks(
-            chunks=chunks,
+            chunks=chunk_dtos,
             source_id=str(grant_application_file.rag_source_id),
         )
 
