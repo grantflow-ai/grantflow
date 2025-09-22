@@ -57,11 +57,6 @@ tasks:
       - task: backend:test
       - task: frontend:test
 
-  test:serial:
-    desc: Run all tests in serial mode (no parallelization)
-    cmds:
-      - PYTHONPATH=. uv run pytest -n0
-      - task: frontend:test
 
   test:ci:
     desc: Run tests in CI mode (serial execution)
@@ -84,37 +79,18 @@ tasks:
       - task: lint:all
 
   format:
-    desc: Format code in all packages (frontend and editor)
+    desc: Format frontend code
     cmds:
-      - pnpm --parallel --filter './frontend' --filter './editor' format
+      - pnpm --filter './frontend' format
 
   build:
-    desc: Build both frontend and editor packages
+    desc: Build frontend package
     cmds:
-      - pnpm --filter './frontend' --filter './editor' build
+      - pnpm --filter './frontend' build
 
   knip:
-    desc: Check for unused dependencies and dead code in frontend/editor packages
-    cmds:
-      - task: knip:crdt
-      - task: knip:frontend
-      - task: knip:editor
-
-  knip:frontend:
-    desc: Check frontend package only for unused dependencies and dead code
+    desc: Check for unused dependencies and dead code in frontend package
     dir: frontend
-    cmds:
-      - pnpm knip
-
-  knip:editor:
-    desc: Check editor package only for unused dependencies and dead code
-    dir: editor
-    cmds:
-      - pnpm knip
-
-  knip:crdt:
-    desc: Check crdt package only for unused dependencies and dead code
-    dir: crdt
     cmds:
       - pnpm knip
 
@@ -166,6 +142,7 @@ tasks:
       - task: db:up
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
     cmds:
       - task: _db:wait-for-ready
       - uv run alembic --config ./packages/db/alembic.ini upgrade head
@@ -242,6 +219,7 @@ tasks:
       - task: db:up
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
     cmds:
       - task: _sleep
         vars:
@@ -254,6 +232,7 @@ tasks:
       - task: db:up
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
+      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
     cmds:
       - task: _sleep
         vars:
@@ -294,12 +273,12 @@ tasks:
       - echo "✅ Database reset complete!"
 
   frontend:install:
-    desc: Install dependencies for both frontend folders using pnpm workspace
+    desc: Install dependencies for frontend using pnpm
     cmds:
       - pnpm install -r
 
   frontend:update:
-    desc: Update dependencies for both frontend folders to latest versions
+    desc: Update frontend dependencies to latest versions
     cmds:
       - pnpm up --latest -r
 
@@ -323,19 +302,6 @@ tasks:
     cmds:
       - pnpm test:e2e
 
-  frontend:test:e2e:mock:
-    desc: Run frontend e2e tests with mock API
-    dir: frontend
-    dotenv: [".env"]
-    cmds:
-      - pnpm test:e2e:mock
-
-  frontend:test:e2e:ui:
-    desc: Run frontend e2e tests with Playwright UI
-    dir: frontend
-    dotenv: [".env"]
-    cmds:
-      - pnpm test:e2e:ui
 
   frontend:dev:
     desc: Start the main frontend development server
@@ -364,83 +330,6 @@ tasks:
     cmds:
       - pnpm test:coverage
 
-  editor:dev:
-    desc: Start the editor development server
-    dir: editor
-    cmds:
-      - pnpm dev
-
-  editor:build:
-    desc: Build the editor application for production
-    dir: editor
-    cmds:
-      - pnpm build
-
-  editor:test:
-    desc: Run editor tests (non-interactive mode)
-    dir: editor
-    cmds:
-      - pnpm test
-
-  editor:test:watch:
-    desc: Run editor tests (interactive mode)
-    dir: editor
-    cmds:
-      - pnpm test:watch
-
-  editor:test:coverage:
-    desc: Run editor tests with coverage reporting
-    dir: editor
-    cmds:
-      - pnpm test:coverage
-
-  editor:storybook:
-    desc: Start the editor Storybook server
-    dir: editor
-    cmds:
-      - pnpm run storybook
-
-  crdt:dev:
-    desc: Start the CRDT server in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dir: crdt
-    dotenv: [".env"]
-    cmds:
-      - pnpm run dev
-
-  crdt:build:
-    desc: Build CRDT server for production
-    dir: crdt
-    cmds:
-      - pnpm run build
-
-  crdt:test:
-    desc: Run CRDT server tests (non-interactive mode)
-    dir: crdt
-    dotenv: [".env"]
-    cmds:
-      - pnpm run test
-
-  crdt:test:watch:
-    desc: Run CRDT server tests (interactive mode)
-    dir: crdt
-    dotenv: [".env"]
-    cmds:
-      - pnpm run test:watch
-
-  crdt:test:coverage:
-    desc: Run CRDT server tests with coverage reporting
-    dir: crdt
-    dotenv: [".env"]
-    cmds:
-      - pnpm run test:coverage
-
-  crdt:lint:
-    desc: Lint CRDT server code with Biome and ESLint
-    dir: crdt
-    cmds:
-      - pnpm run lint
 
   backend:install:
     desc: Install services dependencies using uv
@@ -471,18 +360,9 @@ tasks:
       - task: service:indexer:test
       - task: service:crawler:test
       - task: service:rag:test
-      - task: crdt:test
+      - task: service:scraper:test
       - task: _packages:test
 
-  service:backend:dev:
-    desc: Start the backend API service in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run uvicorn services.backend.src.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
 
   service:backend:test:
     desc: Run backend service tests with detailed output
@@ -501,15 +381,6 @@ tasks:
     cmds:
       - uv run pytest services/backend/tests -v
 
-  service:indexer:dev:
-    desc: Start the indexer service in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run uvicorn services.indexer.src.main:app --host 0.0.0.0 --port 8001 --log-level debug --reload --reload-dir services/indexer/src
 
   service:indexer:test:
     desc: Run indexer service tests with detailed output
@@ -528,60 +399,7 @@ tasks:
     cmds:
       - uv run pytest services/indexer/tests -v
 
-  service:indexer:test:e2e:smoke:
-    desc: Run indexer e2e smoke tests (< 1 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/indexer/tests/e2e/ -m smoke -v
 
-  service:indexer:test:e2e:quality:
-    desc: Run indexer e2e quality assessment tests (2-5 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/indexer/tests/e2e/ -m quality_assessment -v
-
-  service:indexer:test:e2e:semantic:
-    desc: Run indexer e2e semantic evaluation tests
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/indexer/tests/e2e/ -m semantic_evaluation -v
-
-  service:indexer:test:e2e:ai:
-    desc: Run indexer e2e AI-powered evaluation tests
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/indexer/tests/e2e/ -m ai_eval -v
-
-  service:indexer:test:e2e:full:
-    desc: Run complete indexer e2e test suite (10+ min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/indexer/tests/e2e/ -m e2e_full -v
-
-  service:crawler:dev:
-    desc: Start the crawler service in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run uvicorn services.crawler.src.main:app --host 0.0.0.0 --port 8002 --log-level debug --reload --reload-dir services/crawler/src
 
   service:crawler:test:
     desc: Run crawler service tests with detailed output
@@ -600,15 +418,6 @@ tasks:
     cmds:
       - uv run pytest services/crawler/tests -v
 
-  service:rag:dev:
-    desc: Start the RAG service in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run uvicorn services.rag.src.main:app --host 0.0.0.0 --port 8003 --log-level debug --reload --reload-dir services/rag/src
 
   service:rag:test:
     desc: Run RAG service tests with detailed output (parallel execution)
@@ -619,14 +428,6 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests -v
 
-  service:rag:test:serial:
-    desc: Run RAG service tests in serial mode (no parallelization)
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-      PUBSUB_EMULATOR_HOST: "localhost:8085"
-    cmds:
-      - uv run pytest services/rag/tests -v
 
   service:rag:test:e2e:
     desc: Run RAG service end-to-end tests
@@ -638,54 +439,6 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests -v
 
-  service:rag:test:e2e:smoke:
-    desc: Run RAG e2e smoke tests (< 1 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-      PUBSUB_EMULATOR_HOST: "localhost:8085"
-    cmds:
-      - uv run pytest services/rag/tests/e2e/ -m smoke -v
-
-  service:rag:test:e2e:quality:
-    desc: Run RAG e2e quality assessment tests (2-5 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-      PUBSUB_EMULATOR_HOST: "localhost:8085"
-    cmds:
-      - uv run pytest services/rag/tests/e2e/ -m quality_assessment -v
-
-  service:rag:test:e2e:semantic:
-    desc: Run RAG e2e semantic evaluation tests (5-10 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-      PUBSUB_EMULATOR_HOST: "localhost:8085"
-    cmds:
-      - uv run pytest services/rag/tests/e2e/ -m semantic_evaluation -v
-
-  service:rag:test:e2e:ai:
-    desc: Run RAG e2e AI evaluation tests (requires ANTHROPIC_API_KEY)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PUBSUB_EMULATOR_HOST: "localhost:8085"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/rag/tests/e2e/ -m ai_eval -v
-
-  service:rag:test:e2e:full:
-    desc: Run complete RAG e2e test suite (10+ min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
 
   service:scraper:test:
@@ -696,13 +449,6 @@ tasks:
     cmds:
       - uv run pytest services/scraper/tests -v
 
-  service:scraper:test:serial:
-    desc: Run scraper service tests in serial mode (no parallelization)
-    dotenv: [".env"]
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/scraper/tests -v -n0
 
   service:scraper:test:e2e:
     desc: Run scraper service end-to-end tests
@@ -713,42 +459,7 @@ tasks:
     cmds:
       - uv run pytest services/scraper/tests/e2e/ -v
 
-  service:scraper:test:e2e:smoke:
-    desc: Run scraper e2e smoke tests (< 5 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/scraper/tests/e2e/ -m smoke -v
 
-  service:scraper:test:e2e:quality:
-    desc: Run scraper e2e quality assessment tests (< 10 min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/scraper/tests/e2e/ -m quality_assessment -v
-
-  service:scraper:test:e2e:full:
-    desc: Run complete scraper e2e test suite (10+ min)
-    dotenv: [".env"]
-    env:
-      E2E_TESTS: "1"
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - uv run pytest services/scraper/tests/e2e/ -m e2e_full -v
-
-  emulator:pubsub:up:
-    desc: Start the Google Cloud Pub/Sub emulator for local development
-    cmds:
-      - gcloud beta emulators pubsub start --project=grantflow
-
-  emulator:gcs:up:
-    desc: Start the Google Cloud Storage emulator for local development
-    cmds:
-      - docker compose --profile gcs up
 
   lint:all:
     desc: Run all linters and formatters on all files
@@ -772,55 +483,15 @@ tasks:
       - task: lint:mypy
 
   lint:biome:
-    desc: Format and lint code with Biome for frontend folders and crdt
-    deps:
-      - task: lint:biome:frontend
-      - task: lint:biome:editor
-      - task: lint:biome:crdt
-
-  lint:biome:frontend:
     desc: Format and lint frontend code with Biome
     dir: frontend
     cmds:
       - pnpm biome check --write .
       - pnpm biome format --write .
 
-  lint:biome:editor:
-    desc: Format and lint editor code with Biome
-    dir: editor
-    cmds:
-      - pnpm biome check --write .
-      - pnpm biome format --write .
-
-  lint:biome:crdt:
-    desc: Format and lint crdt code with Biome
-    dir: crdt
-    cmds:
-      - pnpm biome check --write .
-      - pnpm biome format --write .
-
   lint:eslint:
-    desc: Lint JavaScript/TypeScript with ESLint for both frontend folders
-    deps:
-      - task: lint:eslint:frontend
-      - task: lint:eslint:editor
-      - task: lint:eslint:crdt
-
-  lint:eslint:frontend:
     desc: Lint frontend JavaScript/TypeScript with ESLint
     dir: frontend
-    cmds:
-      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
-
-  lint:eslint:editor:
-    desc: Lint editor JavaScript/TypeScript with ESLint
-    dir: editor
-    cmds:
-      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
-
-  lint:eslint:crdt:
-    desc: Lint crdt JavaScript/TypeScript with ESLint
-    dir: crdt
     cmds:
       - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 
@@ -841,27 +512,8 @@ tasks:
       - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js,playwright-report,test-results"
 
   lint:typescript:
-    desc: Type check TypeScript code for frontend, editor, and crdt
-    deps:
-      - task: lint:typescript:frontend
-      - task: lint:typescript:editor
-      - task: lint:typescript:crdt
-
-  lint:typescript:frontend:
     desc: Type check frontend TypeScript code
     dir: frontend
-    cmds:
-      - pnpm typecheck
-
-  lint:typescript:editor:
-    desc: Type check editor TypeScript code
-    dir: editor
-    cmds:
-      - pnpm typecheck
-
-  lint:typescript:crdt:
-    desc: Type check crdt TypeScript code
-    dir: crdt
     cmds:
       - pnpm typecheck
 
@@ -906,30 +558,6 @@ tasks:
       - echo "Running trivy on terraform directory..."
       - trivy config ./terraform
 
-  gh:deploy:backend:
-    desc: Deploy backend service to Cloud Run via GitHub Actions
-    cmds:
-      - gh workflow run "Deploy to Cloud Run" --ref development -f service=backend -f use_latest=true
-
-  gh:deploy:crawler:
-    desc: Deploy crawler service to Cloud Run via GitHub Actions
-    cmds:
-      - gh workflow run "Deploy to Cloud Run" --ref development -f service=crawler -f use_latest=true
-
-  gh:deploy:indexer:
-    desc: Deploy indexer service to Cloud Run via GitHub Actions
-    cmds:
-      - gh workflow run "Deploy to Cloud Run" --ref development -f service=indexer -f use_latest=true
-
-  gh:deploy:rag:
-    desc: Deploy RAG service to Cloud Run via GitHub Actions
-    cmds:
-      - gh workflow run "Deploy to Cloud Run" --ref development -f service=rag -f use_latest=true
-
-  gh:deploy:scraper:
-    desc: Deploy scraper service to Cloud Run via GitHub Actions
-    cmds:
-      - gh workflow run "Deploy to Cloud Run" --ref development -f service=scraper -f use_latest=true
 
   cloud-functions:generate-requirements:
     desc: Generate requirements.txt files from pyproject.toml for cloud functions
@@ -940,54 +568,6 @@ tasks:
       - cd functions && sed -i.bak -e '/-e file:\/\//d' -e '/^\.\/packages\//d' requirements.txt && rm requirements.txt.bak
       - echo "✅ All requirements.txt files generated successfully!"
 
-  cloud-functions:sync:
-    desc: Sync dependencies for cloud functions
-    cmds:
-      - echo "🔄 Syncing cloud functions dependencies..."
-      - cd functions && uv sync
-      - cd functions/user_cleanup && uv sync
-      - echo "✅ Cloud functions dependencies synced!"
-
-  cloud-functions:test:
-    desc: Run tests for cloud functions
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-    cmds:
-      - echo "🧪 Running cloud functions tests..."
-      - uv run pytest functions/tests -v
-      - echo "✅ Cloud functions tests completed!"
-
-  cloud-functions:deploy:
-    desc: Deploy Firebase Cloud Functions (auth blocking functions)
-    deps:
-      - task: cloud-functions:generate-requirements
-    cmds:
-      - echo "🚀 Deploying Firebase Cloud Functions..."
-      - echo "📦 Creating virtual environment..."
-      - cd functions && python3.12 -m venv venv
-      - echo "📚 Installing dependencies..."
-      - cd functions && ./venv/bin/pip install -r requirements.txt
-      - echo "🔥 Deploying to Firebase..."
-      - firebase deploy --only functions:beforeCreate,functions:beforeSignIn --project grantflow
-      - echo "✅ Firebase Cloud Functions deployed successfully!"
-
-  cloud-functions:deploy:staging:
-    desc: Deploy Firebase Cloud Functions to staging environment
-    deps:
-      - task: cloud-functions:deploy
-    vars:
-      PROJECT: grantflow
-
-  cloud-functions:deploy:production:
-    desc: Deploy Firebase Cloud Functions to production environment
-    deps:
-      - task: cloud-functions:generate-requirements
-    cmds:
-      - echo "⚠️  Production deployment requires manual confirmation"
-      - echo "🚀 Deploying Firebase Cloud Functions to PRODUCTION..."
-      - echo "🔥 Deploying to Firebase PRODUCTION..."
-      - firebase deploy --only functions:beforeCreate,functions:beforeSignIn --project grantflow-production
-      - echo "✅ Firebase Cloud Functions deployed to PRODUCTION successfully!"
 
   _dev:check:
     internal: true
@@ -1090,14 +670,6 @@ tasks:
           "
         platforms: [windows]
 
-  _dev:services:
-    internal: true
-    deps:
-      - task: service:backend:dev
-      - task: service:indexer:dev
-      - task: service:crawler:dev
-      - task: service:rag:dev
-      - task: frontend:dev
 
   _packages:test:
     internal: true

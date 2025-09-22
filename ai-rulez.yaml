@@ -22,7 +22,7 @@ rules:
       content: Use real PostgreSQL via db_test_plugin for all tests. Never mock SQLAlchemy sessions. Use factories from testing/factories.py. Run 'task test:e2e' for integration tests before merging.
     - name: Task-Based Development Flow
       priority: high
-      content: 'Follow strict workflow: task lint:all → task test → task build. Never run raw commands. Check Taskfile.yaml for available tasks. Use ''task gh:deploy:{service}'' for deployments.'
+      content: 'Follow strict workflow: task lint:all → task test → task build. Never run raw commands. Check Taskfile.yaml for available tasks. Use `task --list` to see all available commands.'
     - name: Type Safety and Validation
       priority: high
       content: 'Python: Use msgspec TypedDict with NotRequired[], never Optional. TypeScript: Ban ''any'', use type guards from @tool-belt/type-predicates. All API responses must use msgspec models.'
@@ -76,7 +76,7 @@ rules:
       content: 'Handle Pub/Sub message duplicates with `ON CONFLICT DO NOTHING` in database operations. Topics: url-crawling, frontend-notifications, file-indexing, rag-processing. Use structlog with key=value logging: `logger.info(''Created'', id=str(id))`.'
     - name: Monorepo Service Boundaries
       priority: medium
-      content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt. Deploy via `task gh:deploy:{service}` commands.
+      content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt. Services deploy via GitHub Actions workflows.
     - name: Python Testing Standards
       priority: critical
       content: Test files must end with _test.py. Use TypedDict constructors for creating test data (e.g., ResearchTask(number=1, title="Test")). All tests must be functional with proper type annotations. Avoid redundant/duplicate tests. Mock async functions with new_callable=AsyncMock. Always add check_if_cancelled and handle_cancellation mocks to JobManager. Use real PostgreSQL via async_sessionmaker fixture.
@@ -116,8 +116,6 @@ sections:
         task dev
 
         # Or start specific services
-        task service:backend:dev  # API service on port 8000
-        task service:indexer:dev  # Document processing
         task frontend:dev         # Next.js app on port 3000
         ```
 
@@ -222,6 +220,9 @@ sections:
         # Python service tests with real PostgreSQL
         PYTHONPATH=. uv run pytest services/backend/tests/
         PYTHONPATH=. uv run pytest services/indexer/tests/
+        PYTHONPATH=. uv run pytest services/rag/tests/
+        PYTHONPATH=. uv run pytest services/crawler/tests/
+        PYTHONPATH=. uv run pytest services/scraper/tests/
 
         # Frontend tests with Vitest
         cd frontend && pnpm test
