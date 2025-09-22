@@ -1,10 +1,15 @@
 import { Factory } from "interface-forge";
 import type { FormData, Grant, SearchParams } from "@/components/grant-finder/types";
 import { SourceIndexingStatus } from "@/enums";
-import type { SourceProcessingNotification, WebsocketMessage } from "@/hooks/use-application-notifications";
+import type {
+	RagProcessingStatus as RagProcessingStatusType,
+	SourceProcessingNotification,
+	WebsocketMessage,
+} from "@/hooks/use-application-notifications";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
+import type { NotificationEvent } from "@/types/notification-events";
 
 type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
@@ -461,16 +466,7 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 	},
 );
 
-interface RagProcessingStatus {
-	current_pipeline_stage?: number;
-	data?: Record<string, unknown>;
-	event: string;
-	message: string;
-	total_pipeline_stages?: number;
-}
-
-export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((factory) => ({
-	current_pipeline_stage: factory.datatype.boolean() ? factory.number.int({ max: 10, min: 1 }) : undefined,
+export const RagProcessingStatusFactory = new Factory<RagProcessingStatusType>((factory) => ({
 	data: factory.datatype.boolean()
 		? {
 				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int(
@@ -483,18 +479,18 @@ export const RagProcessingStatusFactory = new Factory<RagProcessingStatus>((fact
 			}
 		: undefined,
 	event: factory.helpers.arrayElement([
-		"grant_template_extraction",
-		"sections_extracted",
-		"grant_template_metadata",
-		"extracting_relationships",
-		"enriching_objectives",
+		"grant_application_generation_completed",
 		"objectives_enriched",
-	]),
+		"section_texts_generated",
+		"cfp_data_extracted",
+		"grant_template_created",
+		"job_cancelled",
+		"pipeline_error",
+	]) as NotificationEvent,
 	message: factory.lorem.sentence(),
-	total_pipeline_stages: factory.datatype.boolean() ? factory.number.int({ max: 10, min: 3 }) : undefined,
 }));
 
-export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatus>>((factory) => {
+export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatusType>>((factory) => {
 	const status = RagProcessingStatusFactory.build();
 	return {
 		data: status,

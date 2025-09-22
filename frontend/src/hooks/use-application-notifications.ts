@@ -4,6 +4,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
 import type { SourceIndexingStatus } from "@/enums";
+import type { NotificationEvent } from "@/types/notification-events";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 
@@ -19,11 +20,9 @@ export interface AutofillProgressNotification {
 }
 
 export interface RagProcessingStatus {
-	current_pipeline_stage?: number;
 	data?: Record<string, unknown>;
-	event: string;
+	event: NotificationEvent;
 	message: string;
-	total_pipeline_stages?: number;
 }
 export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
 
