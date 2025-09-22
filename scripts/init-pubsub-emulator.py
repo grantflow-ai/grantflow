@@ -56,6 +56,10 @@ def main() -> None:
             "topic": "frontend-notifications",
             "subscriptions": [],
         },
+        {
+            "topic": "email-notifications",
+            "subscriptions": [],
+        },
     ]
 
     for config in topics_and_subscriptions:
