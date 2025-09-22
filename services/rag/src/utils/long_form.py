@@ -266,7 +266,7 @@ async def generate_long_form_text(
         buffered_min_words=buffered_min_words,
         buffered_max_words=buffered_max_words,
         selected_model=selected_model,
-        model_selection_reason=MODEL_SELECTION_REASON if model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
+        model_selection_reason=MODEL_SELECTION_REASON if selected_model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
         trace_id=trace_id,
     )
 
