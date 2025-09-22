@@ -35,7 +35,6 @@ async def create_and_cancel_template_job(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
             current_stage=GRANT_TEMPLATE_PIPELINE_STAGES[0],
-            current_stage_name=str(GRANT_TEMPLATE_PIPELINE_STAGES[0]),
             retry_count=0,
         )
         session.add(job)
@@ -56,7 +55,6 @@ async def create_and_cancel_application_job(
             grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PROCESSING,
             current_stage=GRANT_APPLICATION_STAGES_ORDER[0],
-            current_stage_name=str(GRANT_APPLICATION_STAGES_ORDER[0]),
             retry_count=0,
         )
         session.add(job)

@@ -504,8 +504,6 @@ class RagGenerationJob(BaseWithUUIDPK):
     status: Mapped[RagGenerationStatusEnum] = mapped_column(
         Enum(RagGenerationStatusEnum), index=True, default=RagGenerationStatusEnum.PENDING
     )
-
-    current_stage_name: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     retry_count: Mapped[int] = mapped_column(BigInteger, default=0)
 
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

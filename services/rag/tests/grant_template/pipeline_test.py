@@ -2,7 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -35,9 +35,8 @@ async def job_with_extract_cfp_checkpoint(
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
             grant_template_id=grant_template.id,
-            total_stages=4,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=0,
+            current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_extract_cfp_dto),
         )
@@ -58,9 +57,8 @@ async def job_with_analyze_cfp_checkpoint(
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
             grant_template_id=grant_template.id,
-            total_stages=4,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=1,
+            current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_analyze_cfp_dto),
         )
@@ -81,9 +79,8 @@ async def job_with_extract_sections_checkpoint(
     async with async_session_maker() as session:
         job = GrantTemplateGenerationJob(
             grant_template_id=grant_template.id,
-            total_stages=4,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=2,
+            current_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_sections_dto),
         )

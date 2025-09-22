@@ -109,10 +109,10 @@ export const grantApplicationsRelations = relations(grantApplications, ({ many, 
 		relationName: "grantApplications_parentId_grantApplications_id",
 	}),
 	grantApplicationGenerationJobs: many(grantApplicationGenerationJobs),
+	grantApplicationSources: many(grantApplicationSources),
 	grantApplications: many(grantApplications, {
 		relationName: "grantApplications_parentId_grantApplications_id",
 	}),
-	grantApplicationSources: many(grantApplicationSources),
 	grantTemplates: many(grantTemplates),
 	project: one(projects, {
 		fields: [grantApplications.projectId],
