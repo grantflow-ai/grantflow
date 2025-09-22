@@ -8,14 +8,15 @@ from urllib.parse import urljoin, urlparse
 
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
-from html_to_markdown import convert_to_markdown
-from packages.shared_utils.src.chunking import chunk_text
+from kreuzberg import KreuzbergError
+from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import generate_embeddings, index_chunks
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
 )
+from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.html import sanitize_html
 from packages.shared_utils.src.logger import get_logger
 from sklearn.metrics.pairwise import cosine_similarity
@@ -165,9 +166,27 @@ async def extract_and_process_content(
             ) from e
 
     markdown_start = time.time()
-    soup = BeautifulSoup(raw_html, "html.parser")
-    sanitized_html = sanitize_html(soup)
-    md_out = convert_to_markdown(sanitized_html)
+    # Extract clean HTML using trafilatura (removes ads, nav, boilerplate)
+    clean_html = extract(
+        raw_html, output_format="html", include_comments=False, include_formatting=True
+    )
+
+    if clean_html:
+        # Process the clean HTML with Kreuzberg using scientific settings
+        md_out, _, _, _ = await extract_file_content(
+            content=clean_html.encode("utf-8"),
+            mime_type="text/html",
+            enable_chunking=False,
+            enable_token_reduction=True,
+            language_hint="en",
+        )
+    else:
+        logger.warning(
+            "Trafilatura failed to extract HTML content",
+            url=url,
+            html_length=len(raw_html) if raw_html else 0,
+        )
+        md_out = ""
     markdown_duration = time.time() - markdown_start
 
     total_duration = time.time() - start_time
@@ -565,8 +584,33 @@ async def crawl_url(
         content_assembly_duration_ms=round(content_assembly_duration * 1000, 2),
     )
 
+    # Use Kreuzberg's extraction with chunking for consistency
     chunking_start = time.time()
-    chunks = chunk_text(text=content, mime_type="text/markdown")
+    try:
+        # Extract with chunking enabled for consistency with indexer
+        _, _, chunks_content, _ = await extract_file_content(
+            content=content.encode("utf-8"),
+            mime_type="text/markdown",
+            enable_chunking=True,
+            enable_token_reduction=True,
+            language_hint="en",
+        )
+
+        # Convert to Chunk format
+        if chunks_content:
+            chunks = [Chunk(content=chunk) for chunk in chunks_content]
+        else:
+            chunks = [Chunk(content=content)]
+
+    except KreuzbergError as e:
+        logger.warning(
+            "Kreuzberg chunking failed, using fallback",
+            error_type=type(e).__name__,
+            error=str(e),
+            url=url,
+        )
+        chunks = [Chunk(content=content)]
+
     chunking_duration = time.time() - chunking_start
 
     logger.debug(
