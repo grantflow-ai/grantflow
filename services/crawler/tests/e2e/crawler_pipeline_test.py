@@ -2,12 +2,14 @@ import logging
 from typing import Any
 
 import pytest
+from litestar.stores.memory import MemoryStore
 from packages.db.src.tables import GrantApplicationSource
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
     ValidationError,
 )
+from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import (
     TestExecutionSpeed,
@@ -21,8 +23,8 @@ from services.crawler.src.extraction import (
     extract_and_process_content,
     extract_links,
     find_relevant_links,
-    prepare_url_data,
 )
+from services.crawler.src.utils import download_page_html
 
 
 @performance_test(
@@ -41,7 +43,8 @@ async def test_url_preparation_smoke(
     logger.info("Running smoke test for URL preparation: %s", test_url)
 
     try:
-        html_content, visited_urls = await prepare_url_data(test_url)
+        html_content = await download_page_html(test_url)
+        visited_urls = [test_url]
 
         assert html_content is not None, "HTML content is None"
         assert isinstance(html_content, str), "HTML content should be a string"
@@ -173,8 +176,16 @@ async def test_crawling_quality_assessment(
     logger.info("Running quality assessment for crawling: %s", test_url)
 
     try:
+        # Setup memory store for testing
+        memory_store = MemoryStore()
+        session_key = f"test_session_{grant_application_file.rag_source_id}"
+        await memory_store.set(session_key, serialize([]), expires_in=3600)
+
         vectors, text_content, files = await crawl_url(
-            url=test_url, source_id=str(grant_application_file.rag_source_id)
+            url=test_url,
+            source_id=str(grant_application_file.rag_source_id),
+            memory_store=memory_store,
+            session_key=session_key,
         )
 
         assert len(vectors) > 0, "No vectors generated"
@@ -265,9 +276,14 @@ async def test_link_relevance_assessment(logger: logging.Logger) -> None:
     mock_main_embeddings = [[0.1] * 384]
     visited_urls: list[str] = []
 
+    # Use a mock memory store for testing
+    memory_store = MemoryStore()
+    session_key = "test_session"
+    await memory_store.set(session_key, serialize(visited_urls), expires_in=3600)
+
     try:
         relevant_links = await find_relevant_links(
-            normal_links, mock_main_embeddings, visited_urls
+            normal_links, mock_main_embeddings, memory_store, session_key
         )
 
         assert isinstance(relevant_links, list), "Expected list of relevant links"
@@ -358,8 +374,16 @@ async def test_comprehensive_crawling_pipeline(
     logger.info("Running comprehensive crawling pipeline evaluation for %s", test_url)
 
     try:
+        # Setup memory store for testing
+        memory_store = MemoryStore()
+        session_key = f"test_session_{grant_application_file.rag_source_id}"
+        await memory_store.set(session_key, serialize([]), expires_in=3600)
+
         vectors, text_content, files = await crawl_url(
-            url=test_url, source_id=str(grant_application_file.rag_source_id)
+            url=test_url,
+            source_id=str(grant_application_file.rag_source_id),
+            memory_store=memory_store,
+            session_key=session_key,
         )
 
         assert len(vectors) > 0, "No vectors generated"

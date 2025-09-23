@@ -263,3 +263,123 @@ async def test_retrieve_documents_caching_with_different_kwargs(
 
     assert mock_handle_retrieval.call_count == 2
     assert mock_post_process.call_count == 2
+
+
+async def test_retrieve_documents_cache_hit(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+) -> None:
+    """Test that identical calls hit the cache and don't re-execute retrieval."""
+    mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
+    mock_handle_retrieval.return_value = mock_text_vectors
+
+    mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
+    processed_docs = ["Cached content 1", "Cached content 2"]
+    mock_post_process.return_value = processed_docs
+
+    # First call should execute retrieval
+    result1 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test caching",
+        search_queries=["cache test"],
+        trace_id="trace_id_1",
+    )
+
+    # Second identical call should hit cache (note: trace_id is excluded from cache key)
+    result2 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test caching",
+        search_queries=["cache test"],
+        trace_id="trace_id_2",  # Different trace_id shouldn't affect cache
+    )
+
+    # Results should be identical
+    assert result1 == result2 == processed_docs
+
+    # Should only call retrieval/processing once (second call uses cache)
+    assert mock_handle_retrieval.call_count == 1
+    assert mock_post_process.call_count == 1
+
+
+async def test_retrieve_documents_cache_miss_different_params(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+) -> None:
+    """Test that different parameters result in cache miss."""
+    mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
+    mock_handle_retrieval.return_value = mock_text_vectors
+
+    mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
+    processed_docs = ["Content 1", "Content 2"]
+    mock_post_process.return_value = processed_docs
+
+    # First call
+    result1 = await retrieve_documents(
+        application_id="test-app-id-1",
+        task_description="Test caching",
+        search_queries=["cache test"],
+        trace_id="trace_id_1",
+    )
+
+    # Second call with different application_id should miss cache
+    result2 = await retrieve_documents(
+        application_id="test-app-id-2",  # Different app ID
+        task_description="Test caching",
+        search_queries=["cache test"],
+        trace_id="trace_id_2",
+    )
+
+    # Results should be identical but both calls should execute
+    assert result1 == result2 == processed_docs
+
+    # Should call retrieval/processing twice (no cache hit)
+    assert mock_handle_retrieval.call_count == 2
+    assert mock_post_process.call_count == 2
+
+
+async def test_retrieve_documents_cache_ttl_expiration(
+    mock_text_vectors: list[TextVector],
+    mocker: MockFixture,
+) -> None:
+    """Test that cache entries expire after TTL."""
+
+    mock_handle_retrieval = mocker.patch("services.rag.src.utils.retrieval.handle_retrieval")
+    mock_handle_retrieval.return_value = mock_text_vectors
+
+    mock_post_process = mocker.patch("services.rag.src.utils.retrieval.post_process_documents")
+    processed_docs = ["Content 1", "Content 2"]
+    mock_post_process.return_value = processed_docs
+
+    # Mock time to control cache expiration
+    mock_time = mocker.patch("services.rag.src.utils.retrieval.time.time")
+    mock_time.side_effect = [
+        1000.0,  # First call - cache set time
+        1000.0,  # Cache set time
+        1000.0,  # First cache check
+        1400.0,  # Second call - expired (400 > 300 TTL)
+        1400.0,  # Cache check time
+        1400.0,  # New cache set time
+    ]
+
+    # First call
+    result1 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test TTL",
+        search_queries=["ttl test"],
+        trace_id="trace_id_1",
+    )
+
+    # Second call after TTL expiration should execute again
+    result2 = await retrieve_documents(
+        application_id="test-app-id",
+        task_description="Test TTL",
+        search_queries=["ttl test"],
+        trace_id="trace_id_2",
+    )
+
+    # Results should be identical but both calls should execute due to TTL
+    assert result1 == result2 == processed_docs
+
+    # Should call retrieval/processing twice (cache expired)
+    assert mock_handle_retrieval.call_count == 2
+    assert mock_post_process.call_count == 2

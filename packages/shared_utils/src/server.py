@@ -8,6 +8,7 @@ from litestar.config.cors import CORSConfig
 from litestar.connection.request import Request
 from litestar.di import Provide
 from litestar.logging import StructLoggingConfig
+from litestar.stores.memory import MemoryStore
 from litestar.types import ExceptionHandler, LifespanHook
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -169,6 +170,11 @@ def create_litestar_app(
         processors=[exception_serializer_processor, *default_processors],
     )
 
+    if "stores" not in kwargs:
+        kwargs["stores"] = {"memory": MemoryStore()}
+    else:
+        kwargs["stores"] = {"memory": MemoryStore(), **kwargs["stores"]}
+
     return Litestar(
         cors_config=CORSConfig(
             allow_origins=["*"],
@@ -176,13 +182,11 @@ def create_litestar_app(
             allow_headers=["*"],
             max_age=86400,
         ),
-        debug=get_env("DEBUG", fallback="", raise_on_missing=False) == "true",
+        debug=get_env("DEBUG", fallback="", raise_on_missing=False).lower()
+        in ["true", "1"],
         exception_handlers={
-            IntegrityError: exception_handler,
             SQLAlchemyError: exception_handler,
             BackendError: exception_handler,
-            LLMTimeoutError: exception_handler,
-            ValidationError: exception_handler,
         },
         logging_config=logging_config,
         **kwargs,

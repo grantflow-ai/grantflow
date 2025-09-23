@@ -161,6 +161,27 @@ export function getFirebaseStorage(): FirebaseStorage {
 	return instanceRef.storage;
 }
 
+export async function updateUserProfile(profileData: { displayName?: string; photoURL?: string }): Promise<void> {
+	const auth = getFirebaseAuth();
+	const user = auth.currentUser;
+
+	if (!user) {
+		throw new Error("No authenticated user found");
+	}
+
+	try {
+		await updateProfile(user, profileData);
+		log.info("User profile updated successfully", {
+			displayName: profileData.displayName ? "updated" : "unchanged",
+			photoURL: profileData.photoURL ? "updated" : "unchanged",
+			uid: user.uid,
+		});
+	} catch (error) {
+		log.error("Error updating user profile", error);
+		throw new Error("Failed to update user profile");
+	}
+}
+
 export async function uploadProfilePhoto(user: User, file: File): Promise<string> {
 	const storage = getFirebaseStorage();
 	const auth = getFirebaseAuth();
