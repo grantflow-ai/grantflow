@@ -1,8 +1,3 @@
-"""
-Development bypass for file indexing to handle GCS emulator limitations.
-In dev mode, directly triggers the indexer service instead of relying on GCS Pub/Sub.
-"""
-
 import asyncio
 import base64
 import json
@@ -21,20 +16,11 @@ MAX_RETRIES = 3
 
 
 def is_development_environment() -> bool:
-    """Check if we're running in local development mode."""
     env = os.getenv("ENVIRONMENT", "development")
     return env in ("development", "dev", "local")
 
 
 async def trigger_dev_indexing(object_path: str, trace_id: str = "") -> None:
-    """
-    Trigger file indexing in development by directly calling the indexer.
-    Simulates the Pub/Sub event that would normally be sent by GCS.
-
-    Args:
-        object_path: The GCS object path
-        trace_id: Optional trace ID for request tracking
-    """
     if not is_development_environment():
         return
 
@@ -44,16 +30,13 @@ async def trigger_dev_indexing(object_path: str, trace_id: str = "") -> None:
         trace_id=trace_id,
     )
 
-    # Create the GCS event data
     event_data = {
         "bucket": "grantflow-uploads",
         "name": object_path,
     }
 
-    # Encode as base64 like a real Pub/Sub message
     encoded_data = base64.b64encode(json.dumps(event_data).encode()).decode()
 
-    # Construct Pub/Sub message matching what the indexer expects
     pubsub_message = {
         "message": {
             "attributes": {

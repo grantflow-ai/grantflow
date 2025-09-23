@@ -429,7 +429,7 @@ async def handle_generate_application(
         rag_sources_count = await session.scalar(
             select(count())
             .select_from(GrantApplicationSource)
-            .join(RagSource)
+            .join(RagSource, GrantApplicationSource.rag_source_id == RagSource.id)
             .where(
                 GrantApplicationSource.grant_application_id == application.id,
                 GrantApplicationSource.deleted_at.is_(None),
@@ -668,7 +668,7 @@ async def handle_duplicate_application(
                         "status": ApplicationStatusEnum.IN_PROGRESS,
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
-                        "text": None,
+                        "text": original_app.text,
                         "parent_id": application_id,
                     }
                 )

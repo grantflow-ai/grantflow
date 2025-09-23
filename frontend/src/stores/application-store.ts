@@ -91,7 +91,6 @@ function validateJobRestoration(_application: ApplicationType): {
 	projectId?: string;
 	ragJobId?: string;
 } {
-	// Job restoration is temporarily disabled since rag_job_id has been removed from the data model
 	// TODO: Implement new job restoration logic if needed
 	return { isValid: false };
 }
@@ -469,13 +468,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	checkAndRestoreJobState: () => {
-		// Job restoration is temporarily disabled since rag_job_id has been removed from the data model
 		// TODO: Implement new job restoration logic if needed
 		const validationResult = validateJobRestoration(get().application);
 		if (!validationResult.isValid) {
 			return Promise.resolve();
 		}
-		// Return a resolved promise to maintain compatibility with existing async call sites
 		return Promise.resolve();
 	},
 

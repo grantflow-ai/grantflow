@@ -87,7 +87,9 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
         filtered_sources = [
             source
             for source in application.rag_sources
-            if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+            if source.deleted_at is None
+            and (source.rag_source is None or source.rag_source.deleted_at is None)
+            and (source.rag_source is None or source.rag_source.parent_id is None)
         ]
         application.rag_sources = filtered_sources
 
@@ -95,7 +97,9 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
             filtered_template_sources = [
                 source
                 for source in application.grant_template.rag_sources
-                if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+                if source.deleted_at is None
+                and (source.rag_source is None or source.rag_source.deleted_at is None)
+                and (source.rag_source is None or source.rag_source.parent_id is None)
             ]
             application.grant_template.rag_sources = filtered_template_sources
 

@@ -141,7 +141,7 @@ async def handle_file_indexing(
         )
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
-        parse_result["entity_id"]
+
         if parse_result["entity_type"] == "grant_template":
             await session.scalar(
                 select(GrantTemplate.grant_application_id).where(GrantTemplate.id == parse_result["entity_id"])

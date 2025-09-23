@@ -35,7 +35,6 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 @pytest.fixture
 async def test_client() -> AsyncGenerator[AsyncTestClient[Any]]:
     os.environ.setdefault("ENVIRONMENT", "test")
-
     app.debug = True
 
     async with AsyncTestClient(app=app, raise_server_exceptions=True) as client:
