@@ -18,18 +18,18 @@ describe("AiAutofillButton", () => {
 
 	it("should disable the button when the disabled prop is true", () => {
 		const handleClick = vi.fn();
-		render(<AiAutofillButton onClick={handleClick} disabled />);
-		const button = screen.getByRole("button") as HTMLButtonElement;
-		expect(button.disabled).toBe(true);
+		render(<AiAutofillButton disabled onClick={handleClick} />);
+		const button = screen.getByRole("button");
+		expect((button as HTMLButtonElement).disabled).toBe(true);
 		fireEvent.click(button);
 		expect(handleClick).not.toHaveBeenCalled();
 	});
 
 	it("should disable the button and show loading text when isLoading is true", () => {
 		const handleClick = vi.fn();
-		render(<AiAutofillButton onClick={handleClick} isLoading />);
-		const button = screen.getByRole("button") as HTMLButtonElement;
-		expect(button.disabled).toBe(true);
+		render(<AiAutofillButton isLoading onClick={handleClick} />);
+		const button = screen.getByRole("button");
+		expect((button as HTMLButtonElement).disabled).toBe(true);
 		expect(screen.getByText("Generating...")).toBeInTheDocument();
 		expect(screen.queryByText("Let the AI Try!")).not.toBeInTheDocument();
 		fireEvent.click(button);
