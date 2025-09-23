@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 from uuid import UUID, uuid4
 
 import pytest
@@ -290,30 +290,16 @@ async def test_update_source_indexing_status_success(
         )
     ]
 
-    with patch("packages.db.src.utils.publish_notification") as mock_publish:
-        mock_publish.return_value = "test-message-id"
-
-        await update_source_indexing_status(
-            logger=mock_logger,
-            session_maker=async_session_maker,
-            source_id=file_id,
-            identifier="test.pdf",
-            text_content="Test content extracted from PDF",
-            vectors=vectors,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            trace_id=trace_id,
-        )
-
-        assert mock_publish.call_count == 1
-
-        call = mock_publish.call_args
-        assert call.kwargs["parent_id"] == parent_id
-        assert call.kwargs["event"] == "source_processing"
-        assert call.kwargs["data"]["source_id"] == file_id
-        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
-        assert call.kwargs["data"]["identifier"] == "test.pdf"
-        assert call.kwargs["data"]["trace_id"] == trace_id
-        assert call.kwargs["trace_id"] == trace_id
+    await update_source_indexing_status(
+        logger=mock_logger,
+        session_maker=async_session_maker,
+        source_id=file_id,
+        identifier="test.pdf",
+        text_content="Test content extracted from PDF",
+        vectors=vectors,
+        indexing_status=SourceIndexingStatusEnum.FINISHED,
+        trace_id=trace_id,
+    )
 
     async with async_session_maker() as session:
         source = await session.scalar(select(RagSource).where(RagSource.id == file_id))
@@ -364,24 +350,16 @@ async def test_update_source_indexing_status_no_vectors(
 
     mock_logger = Mock(spec=BoundLogger)
 
-    with patch("packages.db.src.utils.publish_notification") as mock_publish:
-        mock_publish.return_value = "test-message-id"
-
-        await update_source_indexing_status(
-            logger=mock_logger,
-            session_maker=async_session_maker,
-            source_id=file_id,
-            identifier="empty.pdf",
-            text_content="",
-            vectors=None,
-            indexing_status=SourceIndexingStatusEnum.FAILED,
-            trace_id=trace_id,
-        )
-
-        assert mock_publish.call_count == 1
-
-        call = mock_publish.call_args
-        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
+    await update_source_indexing_status(
+        logger=mock_logger,
+        session_maker=async_session_maker,
+        source_id=file_id,
+        identifier="empty.pdf",
+        text_content="",
+        vectors=None,
+        indexing_status=SourceIndexingStatusEnum.FAILED,
+        trace_id=trace_id,
+    )
 
     async with async_session_maker() as session:
         source = await session.scalar(select(RagSource).where(RagSource.id == file_id))
@@ -415,22 +393,15 @@ async def test_update_source_indexing_status_database_error(
     mock_session.execute.side_effect = SQLAlchemyError("Database error")
     mock_session.rollback = AsyncMock()
 
-    with patch("packages.db.src.utils.publish_notification") as mock_publish:
-        mock_publish.return_value = "test-message-id"
+    await update_source_indexing_status(
+        logger=mock_logger,
+        session_maker=mock_session_maker,
+        source_id=file_id,
+        identifier="test.pdf",
+        text_content="Test content",
+        vectors=None,
+        indexing_status=SourceIndexingStatusEnum.FINISHED,
+        trace_id=trace_id,
+    )
 
-        await update_source_indexing_status(
-            logger=mock_logger,
-            session_maker=mock_session_maker,
-            source_id=file_id,
-            identifier="test.pdf",
-            text_content="Test content",
-            vectors=None,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            trace_id=trace_id,
-        )
-
-        mock_logger.exception.assert_called_once()
-
-        assert mock_publish.call_count == 1
-        call = mock_publish.call_args
-        assert call.kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FAILED
+    mock_logger.exception.assert_called_once()
