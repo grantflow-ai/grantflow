@@ -143,22 +143,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks = chunks_by_source.get(source_id, [])
 
         nlp_analysis = await categorize_text(text_content)
-        sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
-        {
-            k: len(v)
-            for k, v in [
-                ("money", nlp_analysis["money"]),
-                ("date_time", nlp_analysis["date_time"]),
-                ("writing_related", nlp_analysis["writing_related"]),
-                ("other_numbers", nlp_analysis["other_numbers"]),
-                ("recommendations", nlp_analysis["recommendations"]),
-                ("orders", nlp_analysis["orders"]),
-                ("positive_instructions", nlp_analysis["positive_instructions"]),
-                ("negative_instructions", nlp_analysis["negative_instructions"]),
-                ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
-            ]
-            if v
-        }
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),

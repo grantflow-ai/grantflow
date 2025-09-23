@@ -758,6 +758,54 @@ def generate_rag_quality_analysis(
 
     chunking_comparison = generate_dynamic_chunking_comparison(results)
 
+    perf_best = {}
+    if results:
+        perf_best["fastest_insertion"] = create_rag_best_summary(
+            max(results, key=lambda r: r["performance_metrics"]["insertion_benchmark"]["throughput_vectors_per_sec"]),
+            "insertion",
+        )
+        perf_best["fastest_search"] = create_rag_best_summary(
+            max(results, key=lambda r: r["performance_metrics"]["search_benchmark"]["throughput_queries_per_sec"]),
+            "search",
+        )
+        perf_best["most_memory_efficient"] = create_rag_best_summary(
+            min(results, key=lambda r: r["performance_metrics"]["total_memory_mb"]), "memory"
+        )
+        perf_best["most_chunks_generated"] = create_rag_best_summary(
+            max(results, key=lambda r: r["chunking_analysis"]["chunk_count"]), "chunks"
+        )
+        perf_best["largest_average_chunks"] = create_rag_best_summary(
+            max(results, key=lambda r: r["chunking_analysis"]["avg_chunk_size"]), "chunk_size"
+        )
+
+    rag_best = {}
+    if results:
+        rag_best["best_relevance_score"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"]["avg_relevance_score"]), "relevance"
+        )
+        rag_best["best_retrieval_success_rate"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"]["retrieval_success_rate"]), "success_rate"
+        )
+        rag_best["fastest_retrieval_time"] = create_rag_best_summary(
+            min(results, key=lambda r: r["rag_quality_evaluation"]["avg_retrieval_time_seconds"]), "retrieval_speed"
+        )
+        rag_best["most_documents_retrieved"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"]["total_documents_retrieved"]), "doc_count"
+        )
+        rag_best["best_diversity_score"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"].get("avg_diversity_score", 0)), "diversity"
+        )
+        rag_best["best_query_quality"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"].get("avg_query_quality_diversity", 0)),
+            "query_quality",
+        )
+        rag_best["best_query_ai_score"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"].get("avg_query_ai_score", 0)), "query_ai"
+        )
+        rag_best["best_performance_score"] = create_rag_best_summary(
+            max(results, key=lambda r: r["rag_quality_evaluation"].get("avg_performance_score", 0)), "performance"
+        )
+
     return {
         "summary": {
             "test_purpose": "configurable RAG quality benchmark using production pipeline",
@@ -766,6 +814,8 @@ def generate_rag_quality_analysis(
             "test_timestamp": datetime.now(UTC).isoformat(),
             "total_configurations": len(results),
         },
+        "performance_best": perf_best,
+        "rag_quality_best": rag_best,
         "comprehensive_comparison": {
             "model_data": model_comparison_data,
             "markdown_table": generate_markdown_comparison_table(model_comparison_data),
@@ -989,6 +1039,12 @@ def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> No
 
     markdown_lines.extend(_build_header_section(analysis["summary"]))
     markdown_lines.extend(_build_configs_section(analysis))
+
+    if "performance_best" in analysis:
+        markdown_lines.extend(_build_performance_section(analysis["performance_best"]))
+
+    if "rag_quality_best" in analysis:
+        markdown_lines.extend(_build_rag_quality_section(analysis["rag_quality_best"]))
 
     if "comprehensive_comparison" in analysis:
         markdown_lines.append("## Comprehensive Model Comparison")

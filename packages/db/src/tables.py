@@ -590,7 +590,9 @@ class GenerationNotification(BaseWithUUIDPK):
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     event: Mapped[str] = mapped_column(String(100), index=True)
     message: Mapped[str] = mapped_column(Text)
-    notification_type: Mapped[str] = mapped_column(String(20), default="info")
+    notification_type: Mapped[Literal["info", "error", "warning", "success"]] = mapped_column(
+        String(20), default="info"
+    )
 
     rag_job: Relationship["RagGenerationJob"] = relationship("RagGenerationJob")
 

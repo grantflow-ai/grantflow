@@ -390,7 +390,7 @@ describe("Type Guards", () => {
 			},
 			event: "source_processing",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
@@ -401,7 +401,7 @@ describe("Type Guards", () => {
 			},
 			event: "other_event",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isSourceProcessingNotificationMessage(invalidNotification)).toBe(false);
@@ -418,7 +418,7 @@ describe("Type Guards", () => {
 			},
 			event: "sections_extracted",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
@@ -431,7 +431,7 @@ describe("Type Guards", () => {
 			},
 			event: "sections_extracted",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
@@ -442,7 +442,7 @@ describe("Type Guards", () => {
 			},
 			event: "source_processing",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isRagProcessingStatusMessage(invalidNotification)).toBe(false);
@@ -458,7 +458,7 @@ describe("Type Guards", () => {
 			},
 			event: "section_texts_generated",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isRagProcessingStatusMessage(notificationWithStages)).toBe(true);
