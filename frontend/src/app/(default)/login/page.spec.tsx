@@ -127,7 +127,7 @@ describe.sequential("Login Page", () => {
 		expect(createAccountLink).toBeInTheDocument();
 
 		const buttonLink = screen.getByTestId("login-create-account-button-link");
-		expect(buttonLink).toHaveAttribute("href", routes.onboarding());
+		expect(buttonLink).toHaveAttribute("href", routes.signup());
 	});
 
 	describe.sequential("Email Sign-in Flow", () => {
@@ -203,7 +203,7 @@ describe.sequential("Login Page", () => {
 			await waitFor(() => {
 				expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
 					handleCodeInApp: true,
-					url: expect.stringContaining("/onboarding/email"),
+					url: expect.stringContaining("/signup/email"),
 				});
 			});
 
@@ -242,7 +242,7 @@ describe.sequential("Login Page", () => {
 			await waitFor(() => {
 				expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
 					handleCodeInApp: true,
-					url: expect.stringContaining("/onboarding/email"),
+					url: expect.stringContaining("/signup/email"),
 				});
 			});
 

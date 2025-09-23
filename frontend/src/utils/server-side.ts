@@ -67,11 +67,11 @@ export const createAuthHeaders = async () => {
 	const cookie = cookieStore.get(SESSION_COOKIE);
 
 	if (!cookie?.value) {
-		log.warn("No session cookie found, redirecting to onboarding", {
+		log.warn("No session cookie found, redirecting to login", {
 			cookie_name: SESSION_COOKIE,
-			redirect_path: routes.onboarding(),
+			redirect_path: routes.login(),
 		});
-		redirect(routes.onboarding());
+		redirect(routes.login());
 	}
 
 	log.info("Auth headers created", {
@@ -86,23 +86,23 @@ export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	const hasConsent = await checkCookieConsent();
 
 	if (!hasConsent) {
-		log.warn("No cookie consent found, redirecting to onboarding", {
+		log.warn("No cookie consent found, redirecting to login", {
 			cookie_name: COOKIE_CONSENT,
-			redirect_path: routes.onboarding(),
+			redirect_path: routes.login(),
 		});
-		redirect(routes.onboarding());
+		redirect(routes.login());
 	}
 
 	try {
 		return await promise;
 	} catch (error) {
 		if (error instanceof HTTPError && error.response.status === 401) {
-			log.warn("Unauthorized request, redirecting to onboarding", {
-				redirect_path: routes.onboarding(),
+			log.warn("Unauthorized request, redirecting to login", {
+				redirect_path: routes.login(),
 				status: error.response.status,
 				url: error.request.url,
 			});
-			redirect(routes.onboarding());
+			redirect(routes.login());
 		}
 
 		log.error("API request failed", error, {

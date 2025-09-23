@@ -1,10 +1,13 @@
 import time
 from asyncio import gather
+from datetime import datetime, UTC, timedelta
 from typing import Any
 
 from litestar import post
+from litestar.connection import Request
 from litestar.exceptions import ValidationException
-from sqlalchemy import insert, select
+from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from services.crawler.src.utils import decode_pubsub_message
@@ -92,30 +95,36 @@ async def handle_gcs_file_upload(
 
             if crawling_request["entity_type"] == "granting_institution":
                 await session.execute(
-                    insert(GrantingInstitutionSource).values(
+                    insert(GrantingInstitutionSource)
+                    .values(
                         {
                             "rag_source_id": source_id,
                             "granting_institution_id": crawling_request["entity_id"],
                         }
                     )
+                    .on_conflict_do_nothing()
                 )
             elif crawling_request["entity_type"] == "grant_application":
                 await session.execute(
-                    insert(GrantApplicationSource).values(
+                    insert(GrantApplicationSource)
+                    .values(
                         {
                             "rag_source_id": source_id,
                             "grant_application_id": crawling_request["entity_id"],
                         }
                     )
+                    .on_conflict_do_nothing()
                 )
             elif crawling_request["entity_type"] == "grant_template":
                 await session.execute(
-                    insert(GrantTemplateSource).values(
+                    insert(GrantTemplateSource)
+                    .values(
                         {
                             "rag_source_id": source_id,
                             "grant_template_id": crawling_request["entity_id"],
                         }
                     )
+                    .on_conflict_do_nothing()
                 )
             else:
                 raise ValidationError(
@@ -149,6 +158,7 @@ async def handle_gcs_file_upload(
 async def handle_url_crawling(
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
+    request: Request[Any, Any, Any],
 ) -> None:
     start_time = time.time()
     logger.debug("Starting URL crawling request processing")
@@ -180,13 +190,76 @@ async def handle_url_crawling(
         )
         return
 
-    logger.debug(
-        "Updating source status to INDEXING",
-        source_id=str(crawling_request["source_id"]),
-        trace_id=trace_id,
-    )
+    # Atomic claim: Try to set status to INDEXING
+    async with session_maker() as session, session.begin():
+        from packages.db.src.tables import RagSource
 
-    crawling_request["entity_id"]
+        # Try to claim the source atomically
+        result = await session.execute(
+            update(RagSource)
+            .where(
+                RagSource.id == crawling_request["source_id"],
+                RagSource.indexing_status.in_(
+                    [SourceIndexingStatusEnum.CREATED, SourceIndexingStatusEnum.FAILED]
+                ),
+            )
+            .values(
+                indexing_status=SourceIndexingStatusEnum.INDEXING,
+                indexing_started_at=datetime.now(UTC),
+            )
+            .returning(RagSource.id)
+        )
+
+        claimed_id = result.scalar_one_or_none()
+
+        if not claimed_id:
+            # Check why we couldn't claim it
+            existing = await session.scalar(
+                select(RagSource).where(RagSource.id == crawling_request["source_id"])
+            )
+
+            if not existing:
+                logger.error(
+                    "Source not found", source_id=str(crawling_request["source_id"])
+                )
+                return  # ACK message
+
+            if existing.indexing_status == SourceIndexingStatusEnum.INDEXING:
+                # Check if stuck (older than 10 minutes)
+                if (
+                    existing.indexing_started_at
+                    and existing.indexing_started_at
+                    < datetime.now(UTC) - timedelta(minutes=10)
+                ):
+                    logger.warning(
+                        "Found stuck indexing job, reclaiming",
+                        source_id=str(crawling_request["source_id"]),
+                        started_at=existing.indexing_started_at.isoformat()
+                        if existing.indexing_started_at
+                        else None,
+                        trace_id=trace_id,
+                    )
+                    existing.indexing_status = SourceIndexingStatusEnum.INDEXING
+                    existing.indexing_started_at = datetime.now(UTC)
+                    # Continue with processing
+                else:
+                    logger.info(
+                        "URL already being processed by another container",
+                        url=crawling_request["url"],
+                        source_id=str(crawling_request["source_id"]),
+                        trace_id=trace_id,
+                    )
+                    return  # ACK message
+            elif existing.indexing_status == SourceIndexingStatusEnum.FINISHED:
+                logger.info(
+                    "URL already processed successfully",
+                    url=crawling_request["url"],
+                    source_id=str(crawling_request["source_id"]),
+                    trace_id=trace_id,
+                )
+                return  # ACK message
+
+    # Get entity info for grant_template special handling
     if crawling_request["entity_type"] == "grant_template":
         async with session_maker() as session:
             await session.scalar(
@@ -195,16 +268,12 @@ async def handle_url_crawling(
                 )
             )
 
-    await update_source_indexing_status(
-        logger=logger,
-        session_maker=session_maker,
-        source_id=crawling_request["source_id"],
-        identifier=crawling_request["url"],
-        text_content="",
-        vectors=None,
-        indexing_status=SourceIndexingStatusEnum.INDEXING,
-        trace_id=trace_id,
-    )
+    # Initialize memory store for this crawl session
+    memory_store = request.app.stores.get("memory")
+    session_key = f"visited_urls:{crawling_request['source_id']}"
+    await memory_store.set(
+        session_key, b"[]", expires_in=3600
+    )  # Initialize as empty JSON array
 
     try:
         crawl_start = time.time()
@@ -217,6 +286,8 @@ async def handle_url_crawling(
         vectors, content, files = await crawl_url(
             url=crawling_request["url"],
             source_id=str(crawling_request["source_id"]),
+            memory_store=memory_store,
+            session_key=session_key,
         )
 
         logger.debug(
@@ -315,6 +386,9 @@ async def handle_url_crawling(
             indexing_status=SourceIndexingStatusEnum.FAILED,
             trace_id=trace_id,
         )
+    finally:
+        # Cleanup memory store
+        await memory_store.delete(session_key)
 
 
 app = create_litestar_app(

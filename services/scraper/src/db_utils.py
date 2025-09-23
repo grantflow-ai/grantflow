@@ -6,6 +6,7 @@ from uuid import UUID
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import Grant, GrantingInstitution, RagUrl
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.url_utils import normalize_url
 from services.scraper.src.dtos import GrantInfo
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -174,7 +175,8 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
 
     async with async_session_maker() as session, session.begin():
         try:
-            existing_rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == url))
+            normalized_url = normalize_url(url)
+            existing_rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == normalized_url))
 
             if existing_rag_url:
                 existing_rag_url.text_content = content
@@ -183,7 +185,7 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
                 logger.debug("Updated existing RagUrl", url=url, grant_id=grant_id)
             else:
                 rag_url = RagUrl(
-                    url=url,
+                    url=normalized_url,
                     title=title,
                     description=description,
                     text_content=content,

@@ -32,6 +32,7 @@ from packages.shared_utils.src.gcs import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
+from packages.shared_utils.src.url_utils import normalize_url
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -152,15 +153,37 @@ async def handle_create_rag_source(
     async with session_maker() as session, session.begin():
         try:
             if url:
+                normalized_url = normalize_url(url)
                 rag_url_alias = aliased(RagUrl)
-                if rag_source := await session.scalar(
+
+                # Check for existing URL within the same parent entity
+                parent_constraint = None
+                if application_id:
+                    parent_constraint = select(GrantApplicationSource.rag_source_id).where(
+                        GrantApplicationSource.grant_application_id == application_id
+                    )
+                elif template_id:
+                    parent_constraint = select(GrantTemplateSource.rag_source_id).where(
+                        GrantTemplateSource.grant_template_id == template_id
+                    )
+                elif granting_institution_id:
+                    parent_constraint = select(GrantingInstitutionSource.rag_source_id).where(
+                        GrantingInstitutionSource.granting_institution_id == granting_institution_id
+                    )
+
+                query = (
                     select(RagSource)
                     .join(rag_url_alias)
                     .where(
-                        rag_url_alias.url == url,
+                        rag_url_alias.url == normalized_url,
                         RagSource.deleted_at.is_(None),
                     )
-                ):
+                )
+
+                if parent_constraint is not None:
+                    query = query.where(RagSource.id.in_(parent_constraint))
+
+                if rag_source := await session.scalar(query):
                     if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
                         return UUID(str(rag_source.id))
 
@@ -187,7 +210,7 @@ async def handle_create_rag_source(
                         [
                             {
                                 "id": source_id,
-                                "url": url,
+                                "url": normalize_url(url),
                             }
                         ]
                     )
@@ -484,9 +507,17 @@ async def handle_delete_rag_source(
                         GrantTemplate.deleted_at.is_(None),
                     )
                 )
-                if template and template.rag_jobs:
+                if template:
                     # Cancel any active RAG jobs for this template
-                    for job in template.rag_jobs:
+                    rag_jobs = await session.scalars(
+                        select(RagGenerationJob).where(
+                            RagGenerationJob.grant_template_id == template_id,
+                            RagGenerationJob.status.in_(
+                                [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]
+                            ),
+                        )
+                    )
+                    for job in rag_jobs:
                         await _cancel_job_if_active(
                             session=session,
                             job_id=job.id,
@@ -500,9 +531,17 @@ async def handle_delete_rag_source(
                         GrantApplication.deleted_at.is_(None),
                     )
                 )
-                if application and application.rag_jobs:
+                if application:
                     # Cancel any active RAG jobs for this application
-                    for job in application.rag_jobs:
+                    rag_jobs = await session.scalars(
+                        select(RagGenerationJob).where(
+                            RagGenerationJob.grant_application_id == application_id,
+                            RagGenerationJob.status.in_(
+                                [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]
+                            ),
+                        )
+                    )
+                    for job in rag_jobs:
                         await _cancel_job_if_active(
                             session=session,
                             job_id=job.id,
@@ -510,7 +549,6 @@ async def handle_delete_rag_source(
                         )
 
             source.soft_delete()
-            await session.commit()
 
         except NoResultFound as e:
             raise NotFoundException from e

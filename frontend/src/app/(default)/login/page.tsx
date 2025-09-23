@@ -30,6 +30,7 @@ import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
+import { checkProfileAndRedirect } from "@/utils/onboarding";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -63,6 +64,9 @@ export default function Login() {
 			if (!isNewUser) {
 				setUser(convertFirebaseUser(user));
 				await login(idToken);
+
+				// Check profile completeness and redirect accordingly
+				checkProfileAndRedirect(user.displayName);
 				return;
 			}
 
@@ -72,7 +76,7 @@ export default function Login() {
 					<Link
 						className="text-primary text-sm hover:underline"
 						data-testid="login-no-account-link"
-						href="/onboarding"
+						href="/signup"
 					>
 						Create an account.
 					</Link>
@@ -207,7 +211,7 @@ export default function Login() {
 										size="sm"
 										variant="link"
 									>
-										<Link data-testid="login-create-account-button-link" href={routes.onboarding()}>
+										<Link data-testid="login-create-account-button-link" href={routes.signup()}>
 											Create an Account
 										</Link>
 									</AppButton>
