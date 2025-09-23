@@ -2,21 +2,16 @@ import logging
 import time
 from typing import Any
 from unittest.mock import AsyncMock, patch
-from uuid import UUID
 
+from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_application.handlers import handle_generate_sections_stage
-from services.rag.src.utils.job_manager import GrantApplicationJobManager
-from packages.db.src.utils import retrieve_application
-
-# Import our ROUGE calculation functions
 from services.rag.tests.e2e.rag_proximity_test import calculate_rouge_l
 
 
 def calculate_rouge_n_grams(reference_text: str, generated_text: str, n: int) -> float:
-    """Calculate ROUGE-N score for any n-gram size"""
     if not reference_text or not generated_text:
         return 0.0
 
@@ -46,7 +41,6 @@ def calculate_rouge_n_grams(reference_text: str, generated_text: str, n: int) ->
 
 
 def extract_ngrams_for_analysis(text: str, n: int) -> set[tuple[str, ...]]:
-    """Extract n-grams from text for analysis"""
     tokens = text.lower().split()
     if len(tokens) < n:
         return set()
@@ -54,14 +48,9 @@ def extract_ngrams_for_analysis(text: str, n: int) -> set[tuple[str, ...]]:
     return {tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)}
 
 
-
-
 async def analyze_generated_content(
     section_texts: dict[str, str], iteration: int, logger: logging.Logger
-) -> dict[str, Any]:
-    """Analyze generated content with ROUGE metrics and n-gram analysis"""
-
-    # Define reference requirements for different sections (based on melanoma application)
+) -> list[dict[str, Any]]:
     section_requirements = {
         "abstract": "melanoma brain metastases immunotherapy single-cell technologies ZMAN-seq PIC-seq STEREO-seq tumor microenvironment TREM2 macrophages cytokines",
         "research_strategy": "single-cell RNA sequencing temporal immune tracking cell-cell interactions spatial transcriptomics tumor microenvironment immune suppression mechanisms therapeutic development",
@@ -76,7 +65,6 @@ async def analyze_generated_content(
     analysis_results = []
 
     for section_title, generated_text in section_texts.items():
-        # Find the best matching requirement
         section_key = section_title.lower()
         requirements = ""
 
@@ -86,19 +74,16 @@ async def analyze_generated_content(
                 break
 
         if not requirements:
-            # Default to general melanoma research requirements
             requirements = section_requirements.get("abstract", "")
 
         if not generated_text or not requirements:
             continue
 
-        # Calculate ROUGE scores
         rouge_l = calculate_rouge_l(requirements, generated_text)
         rouge_2 = calculate_rouge_n_grams(requirements, generated_text, 2)
         rouge_3 = calculate_rouge_n_grams(requirements, generated_text, 3)
         rouge_4 = calculate_rouge_n_grams(requirements, generated_text, 4)
 
-        # Extract n-grams for detailed analysis
         req_bigrams = extract_ngrams_for_analysis(requirements, 2)
         gen_bigrams = extract_ngrams_for_analysis(generated_text, 2)
         bigram_overlap = len(req_bigrams & gen_bigrams)
@@ -114,7 +99,6 @@ async def analyze_generated_content(
         fourgram_overlap = len(req_4grams & gen_4grams)
         fourgram_total = len(req_4grams | gen_4grams)
 
-        # Count words
         word_count = len(generated_text.split())
 
         result = {
@@ -157,7 +141,8 @@ async def analyze_generated_content(
         analysis_results.append(result)
 
         logger.info(
-            "Section analysis completed", section=section_title, word_count=word_count, rouge_l=rouge_l, rouge_2=rouge_2
+            "Section analysis completed",
+            extra={"section": section_title, "word_count": word_count, "rouge_l": rouge_l, "rouge_2": rouge_2},
         )
 
     return analysis_results
@@ -175,13 +160,13 @@ async def test_rag_focused_prompts_real_generation(
 
     start_time = time.time()
 
-    # Get the application object
     async with async_session_maker() as session:
         application = await retrieve_application(application_id=melanoma_alliance_full_application_id, session=session)
 
-    mock_job_manager = GrantApplicationJobManager(application_id=application.id, session_maker=async_session_maker)
+    mock_job_manager = AsyncMock()
+    mock_job_manager.ensure_not_cancelled = AsyncMock()
+    mock_job_manager.add_notification = AsyncMock()
 
-    # Generate content using the RAG pipeline with our enhanced prompts
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
     ):
@@ -199,46 +184,52 @@ async def test_rag_focused_prompts_real_generation(
 
     logger.info(
         "Generation completed",
-        execution_time=generation_time,
-        full_text_length=len(full_text),
-        sections_count=len(section_texts),
+        extra={
+            "execution_time": generation_time,
+            "full_text_length": len(full_text),
+            "sections_count": len(section_texts),
+        },
     )
 
-    # Analyze the generated content
     analysis_start = time.time()
     analysis_results = await analyze_generated_content(section_texts, 1, logger)
     time.time() - analysis_start
 
-    # Calculate overall metrics
     if analysis_results:
-        avg_rouge_l = sum(r["rouge_scores"]["rouge_l"] for r in analysis_results) / len(analysis_results)
-        avg_rouge_2 = sum(r["rouge_scores"]["rouge_2"] for r in analysis_results) / len(analysis_results)
-        avg_rouge_3 = sum(r["rouge_scores"]["rouge_3"] for r in analysis_results) / len(analysis_results)
-        avg_rouge_4 = sum(r["rouge_scores"]["rouge_4"] for r in analysis_results) / len(analysis_results)
+        avg_rouge_l = sum(float(r["rouge_scores"]["rouge_l"]) for r in analysis_results) / len(analysis_results)
+        avg_rouge_2 = sum(float(r["rouge_scores"]["rouge_2"]) for r in analysis_results) / len(analysis_results)
+        avg_rouge_3 = sum(float(r["rouge_scores"]["rouge_3"]) for r in analysis_results) / len(analysis_results)
+        avg_rouge_4 = sum(float(r["rouge_scores"]["rouge_4"]) for r in analysis_results) / len(analysis_results)
 
-        sum(r["ngram_analysis"]["bigrams"]["jaccard_similarity"] for r in analysis_results) / len(analysis_results)
-        sum(r["ngram_analysis"]["trigrams"]["jaccard_similarity"] for r in analysis_results) / len(analysis_results)
-        sum(r["ngram_analysis"]["4grams"]["jaccard_similarity"] for r in analysis_results) / len(analysis_results)
+        sum(float(r["ngram_analysis"]["bigrams"]["jaccard_similarity"]) for r in analysis_results) / len(
+            analysis_results
+        )
+        sum(float(r["ngram_analysis"]["trigrams"]["jaccard_similarity"]) for r in analysis_results) / len(
+            analysis_results
+        )
+        sum(float(r["ngram_analysis"]["4grams"]["jaccard_similarity"]) for r in analysis_results) / len(
+            analysis_results
+        )
 
-        total_words = sum(r["word_count"] for r in analysis_results)
+        total_words = sum(int(r["word_count"]) for r in analysis_results)
 
         logger.info(
             "RAG-focused analysis completed",
-            avg_rouge_l=avg_rouge_l,
-            avg_rouge_2=avg_rouge_2,
-            avg_rouge_3=avg_rouge_3,
-            avg_rouge_4=avg_rouge_4,
-            total_words=total_words,
-            sections_analyzed=len(analysis_results),
+            extra={
+                "avg_rouge_l": avg_rouge_l,
+                "avg_rouge_2": avg_rouge_2,
+                "avg_rouge_3": avg_rouge_3,
+                "avg_rouge_4": avg_rouge_4,
+                "total_words": total_words,
+                "sections_analyzed": len(analysis_results),
+            },
         )
 
-        # Validate that we got reasonable results
         assert avg_rouge_l > 0, f"ROUGE-L should be positive: {avg_rouge_l}"
         assert avg_rouge_2 >= 0, f"ROUGE-2 should be non-negative: {avg_rouge_2}"
         assert total_words > 1000, f"Total generated text should be substantial: {total_words} words"
         assert len(analysis_results) > 0, "Should have analyzed at least one section"
 
-        # Check that the text contains key melanoma research terms
         full_text_lower = full_text.lower()
         melanoma_terms = [
             "melanoma",
@@ -254,7 +245,7 @@ async def test_rag_focused_prompts_real_generation(
             if term.replace(" ", "").replace("-", "") in full_text_lower.replace(" ", "").replace("-", "")
         ]
 
-        logger.info("Melanoma terms found", found_terms=found_terms, total_terms=len(melanoma_terms))
+        logger.info("Melanoma terms found", extra={"found_terms": found_terms, "total_terms": len(melanoma_terms)})
         assert len(found_terms) >= 4, f"Should contain most melanoma research terms, found: {found_terms}"
 
     else:
@@ -262,11 +253,8 @@ async def test_rag_focused_prompts_real_generation(
         raise AssertionError("Failed to analyze any sections")
 
 
-async def run_rag_focused_baseline_iterations(iterations: int = 5) -> dict:
+async def run_rag_focused_baseline_iterations(iterations: int = 5) -> dict[str, str]:
     """Run multiple iterations of the RAG-focused generation test"""
-
-    # This would need to be called from a test runner that has access to fixtures
-    # For now, we'll create a placeholder that can be called manually
 
     return {
         "message": "Use pytest to run the actual test with database fixtures",
