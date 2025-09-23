@@ -232,10 +232,14 @@ class RagSource(BaseWithUUIDPK):
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
     indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parent_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
     )
+    parent: Relationship["RagSource | None"] = relationship("RagSource", remote_side="RagSource.id", backref="children")
 
     __mapper_args__ = {  # noqa: RUF012
         "polymorphic_identity": "rag_source",
