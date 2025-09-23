@@ -101,7 +101,6 @@ class GrantTemplateResponse(TypedDict):
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
-    rag_job_id: NotRequired[str]
     created_at: str
     updated_at: str
 
@@ -118,7 +117,6 @@ class ApplicationResponse(TypedDict):
     text: NotRequired[str]
     grant_template: NotRequired[GrantTemplateResponse]
     rag_sources: list[SourceResponse]
-    rag_job_id: NotRequired[str]
     parent_id: NotRequired[str]
     deadline: NotRequired[str]
     editor_document_id: str | None
