@@ -3,6 +3,7 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.tables import Grant, GrantingInstitution
+from packages.shared_utils.src.url_utils import normalize_url
 from services.scraper.src.db_utils import (
     batch_save_grants,
     bulk_insert_grants,
@@ -164,9 +165,8 @@ async def test_save_grant_page_content(async_session_maker: async_sessionmaker[A
     async with async_session_maker() as session:
         from packages.db.src.tables import RagUrl
 
-        rag_url = await session.scalar(
-            select(RagUrl).where(RagUrl.url == f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
-        )
+        expected_url = normalize_url(f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
+        rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == expected_url))
         assert rag_url is not None
         assert rag_url.title == f"NIH Grant: {grant_id}"
         assert rag_url.text_content == content
@@ -185,9 +185,8 @@ async def test_save_grant_page_content_update_existing(async_session_maker: asyn
     async with async_session_maker() as session:
         from packages.db.src.tables import RagUrl
 
-        rag_urls = await session.execute(
-            select(RagUrl).where(RagUrl.url == f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
-        )
+        expected_url = normalize_url(f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
+        rag_urls = await session.execute(select(RagUrl).where(RagUrl.url == expected_url))
         rag_url_list = rag_urls.scalars().all()
         assert len(rag_url_list) == 1
         assert rag_url_list[0].text_content == updated_content

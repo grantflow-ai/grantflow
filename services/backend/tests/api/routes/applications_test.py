@@ -433,10 +433,12 @@ async def test_retrieve_application_with_rag_sources(
         session.add(url_source)
         await session.flush()
 
-        # Create RagUrl with proper fields
+        # Create RagUrl with proper fields - URL should be normalized
+        from packages.shared_utils.src.url_utils import normalize_url
+
         rag_url = RagUrl(
             id=url_source.id,
-            url="https://example.com",
+            url=normalize_url("https://example.com"),
         )
         session.add(rag_url)
 
