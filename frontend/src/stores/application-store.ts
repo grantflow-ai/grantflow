@@ -994,7 +994,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("updateGrantSections: Starting", {
 			hasApplication: !!application,
 			hasGrantTemplate: !!application?.grant_template,
-			sectionCount: sections.length,
+			sectionCount: sections?.length ?? 0,
 			templateId: application?.grant_template?.id,
 		});
 
@@ -1007,14 +1007,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			...application,
 			grant_template: {
 				...application.grant_template,
-				grant_sections: sections,
+				grant_sections: sections ?? [],
 			},
 		};
 
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
-			grant_sections: sections.map((section) => ({
+			grant_sections: (sections ?? []).map((section) => ({
 				id: section.id,
 				max_words: section.max_words,
 				order: section.order,
@@ -1022,7 +1022,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				title: section.title,
 			})),
 			projectId: updatedApplication.project_id,
-			sectionCount: sections.length,
+			sectionCount: (sections ?? []).length,
 			template_rag_sources: formatRagSources(updatedApplication),
 			templateId: updatedApplication.grant_template?.id,
 		});
@@ -1039,18 +1039,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				application.id,
 				application.grant_template.id,
 				{
-					grant_sections: sections,
+					grant_sections: sections ?? [],
 				},
 			);
 
 			log.info("updateGrantSections: Success", {
-				grant_sections: sections.map((section) => ({
+				grant_sections: (sections ?? []).map((section) => ({
 					id: section.id,
 					order: section.order,
 					parent_id: section.parent_id,
 					title: section.title,
 				})),
-				sectionCount: sections.length,
+				sectionCount: (sections ?? []).length,
 			});
 		} catch (error) {
 			const restoredApplication: NonNullable<ApplicationType> = {

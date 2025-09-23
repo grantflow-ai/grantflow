@@ -39,13 +39,12 @@ describe("rag-jobs server actions", () => {
 			const mockProjectId = "project-123e4567-e89b-12d3-a456-426614174000";
 			const mockJobId = "123e4567-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
-				current_stage: 2,
+				current_stage: "2",
 				grant_template_id: "456e7890-e89b-12d3-a456-426614174000",
 				id: mockJobId,
 				job_type: "grant_template_generation",
 				retry_count: 0,
 				status: "PROCESSING",
-				total_stages: 4,
 			});
 
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });
@@ -66,7 +65,7 @@ describe("rag-jobs server actions", () => {
 			const mockProjectId = "project-789e0123-e89b-12d3-a456-426614174000";
 			const mockJobId = "789e0123-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
-				current_stage: 5,
+				current_stage: "5",
 				generated_sections: {
 					introduction: "This is the introduction...",
 					methodology: "The methodology involves...",
@@ -76,7 +75,6 @@ describe("rag-jobs server actions", () => {
 				job_type: "grant_application_generation",
 				retry_count: 0,
 				status: "COMPLETED",
-				total_stages: 5,
 				validation_results: {
 					is_valid: true,
 					score: 0.95,
@@ -103,7 +101,7 @@ describe("rag-jobs server actions", () => {
 			const mockProjectId = "project-abc12345-e89b-12d3-a456-426614174000";
 			const mockJobId = "abc12345-e89b-12d3-a456-426614174000";
 			const mockResponse = RagJobResponseFactory.build({
-				current_stage: 1,
+				current_stage: "1",
 				error_details: {
 					details: "Invalid PDF format",
 					error_type: "ExtractionError",
@@ -113,7 +111,6 @@ describe("rag-jobs server actions", () => {
 				job_type: "grant_template_generation",
 				retry_count: 3,
 				status: "FAILED",
-				total_stages: 4,
 			});
 
 			mockGet.mockReturnValue({ json: vi.fn().mockResolvedValue(mockResponse) });

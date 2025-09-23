@@ -26,7 +26,7 @@ describe("DashboardPage", () => {
 	it("should render dashboard with valid organization from cookie", async () => {
 		const organizations = ListOrganizationsResponseFactory.build();
 		const projects = ProjectListItemFactory.batch(3);
-		const selectedOrgId = organizations[0].id;
+		const selectedOrgId = organizations[0]?.id ?? "fallback-id";
 
 		mockGetOrganizations.mockResolvedValue(organizations);
 		mockGetOrganizationId.mockResolvedValue(selectedOrgId);

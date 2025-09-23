@@ -44,7 +44,7 @@ export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBo
 }));
 
 export const OrganizationFactory = new Factory<API.CreateOrganization.Http201.ResponseBody>((factory) => ({
-	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
+	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : undefined,
 	full_name: factory.company.name(),
 	id: factory.string.uuid(),
 }));
@@ -94,32 +94,34 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 		{ count: { max: 5, min: 1 } },
 	),
 	name: factory.company.name(),
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const DuplicateProjectResponseFactory = new Factory<API.DuplicateProject.Http201.ResponseBody>((factory) => ({
 	created_at: factory.date.recent().toISOString(),
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	grant_applications: factory.helpers.multiple(
 		() => ({
-			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
+			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : null,
 			id: factory.string.uuid(),
 			title: factory.lorem.sentence(),
 		}),
 		{ count: { max: 5, min: 0 } },
 	),
 	id: factory.string.uuid(),
-	logo_url: factory.datatype.boolean() ? factory.image.url() : undefined,
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
 	members: factory.helpers.multiple(
 		() => ({
-			display_name: factory.datatype.boolean() ? factory.person.fullName() : undefined,
+			display_name: factory.datatype.boolean() ? factory.person.fullName() : null,
 			email: factory.internet.email(),
 			firebase_uid: factory.string.uuid(),
-			photo_url: factory.datatype.boolean() ? factory.image.avatar() : undefined,
+			photo_url: factory.datatype.boolean() ? factory.image.avatar() : null,
 			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"] as const),
 		}),
 		{ count: { max: 5, min: 1 } },
 	),
 	name: `Copy of ${factory.company.name()}`,
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 	updated_at: factory.date.recent().toISOString(),
 }));
 
@@ -327,9 +329,9 @@ export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody
 
 export const CreateApplicationRequestFactory = TitleRequestFactory;
 
-export const UpdateApplicationRequestFactory = new Factory<Partial<API.UpdateApplication.RequestBody>>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
-	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
+export const UpdateApplicationRequestFactory = new Factory<Required<API.UpdateApplication.RequestBody>>((factory) => ({
+	description: factory.lorem.paragraph(),
+	form_inputs: FormInputsFactory.build(),
 	research_objectives: ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 })),
 	status: factory.helpers.arrayElement<ApplicationStatus>([
 		"WORKING_DRAFT",
@@ -341,38 +343,40 @@ export const UpdateApplicationRequestFactory = new Factory<Partial<API.UpdateApp
 	title: factory.lorem.sentence(),
 }));
 
-export const ProjectRequestFactory = new Factory<API.CreateProject.RequestBody>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
-	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+export const ProjectRequestFactory = new Factory<Required<API.CreateProject.RequestBody>>((factory) => ({
+	description: factory.lorem.paragraph(),
+	logo_url: factory.image.url(),
 	name: factory.company.name(),
 }));
 
 export const CreateProjectRequestFactory = ProjectRequestFactory;
-export const UpdateProjectRequestFactory = new Factory<API.UpdateProject.RequestBody>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
-	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+export const UpdateProjectRequestFactory = new Factory<Required<API.UpdateProject.RequestBody>>((factory) => ({
+	description: factory.lorem.paragraph(),
+	logo_url: factory.image.url(),
 	name: factory.company.name(),
 }));
 
-export const OrganizationRequestFactory = new Factory<API.CreateOrganization.RequestBody>((factory) => ({
-	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
-	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+export const OrganizationRequestFactory = new Factory<Required<API.CreateOrganization.RequestBody>>((factory) => ({
+	contact_email: factory.internet.email(),
+	contact_person_name: factory.person.fullName(),
+	description: factory.lorem.paragraph(),
 	firebase_uid: factory.string.alphanumeric(28),
-	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
-	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	institutional_affiliation: factory.company.name(),
+	logo_url: factory.image.url(),
 	name: factory.company.name(),
 }));
 
 export const CreateOrganizationRequestFactory = OrganizationRequestFactory;
-export const UpdateOrganizationRequestFactory = new Factory<API.UpdateOrganization.RequestBody>((factory) => ({
-	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
-	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
-	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
-	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
-	name: factory.company.name(),
-}));
+export const UpdateOrganizationRequestFactory = new Factory<Required<API.UpdateOrganization.RequestBody>>(
+	(factory) => ({
+		contact_email: factory.internet.email(),
+		contact_person_name: factory.person.fullName(),
+		description: factory.lorem.paragraph(),
+		institutional_affiliation: factory.company.name(),
+		logo_url: factory.image.url(),
+		name: factory.company.name(),
+	}),
+);
 
 export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) => ({
 	id_token: factory.string.alphanumeric(256),
@@ -419,7 +423,7 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 	};
 });
 
-type GrantSectionUpdateRequest = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
+type GrantSectionUpdateRequest = NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0];
 
 export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(() => ({
 	depends_on: [],
@@ -607,7 +611,7 @@ export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.Resp
 	return {
 		completed_at: isCompleted ? factory.date.recent().toISOString() : undefined,
 		created_at: factory.date.past().toISOString(),
-		current_stage: factory.number.int({ max: 5, min: 1 }),
+		current_stage: isPending ? null : factory.number.int({ max: 5, min: 1 }).toString(),
 		error_details: isFailed ? {} : undefined,
 		error_message: isFailed ? factory.lorem.sentence() : undefined,
 		extracted_metadata: undefined,
@@ -621,7 +625,6 @@ export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.Resp
 		retry_count: factory.number.int({ max: 3, min: 0 }),
 		started_at: isPending ? undefined : factory.date.recent().toISOString(),
 		status,
-		total_stages: factory.number.int({ max: 10, min: 3 }),
 		updated_at: factory.date.recent().toISOString(),
 		validation_results: isCompleted ? {} : undefined,
 	};
@@ -850,7 +853,7 @@ export const TriggerAutofillResponseFactory = new Factory<API.TriggerAutofill.Ht
 }));
 
 export const TriggerAutofillRequestFactory = new Factory<API.TriggerAutofill.RequestBody>((factory) => ({
-	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"] as const),
 	context: factory.datatype.boolean() ? {} : undefined,
 	field_name: factory.datatype.boolean()
 		? factory.helpers.arrayElement([

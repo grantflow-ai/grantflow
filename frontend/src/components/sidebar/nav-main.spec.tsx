@@ -71,7 +71,7 @@ describe("NavMain", () => {
 				</SidebarProvider>,
 			);
 			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
-			await screen.findByText(mockApplications.applications[0].title);
+			await screen.findByText(mockApplications.applications[0]?.title ?? "");
 			expect(screen.queryByTestId("search-input")).not.toBeInTheDocument();
 		});
 	});

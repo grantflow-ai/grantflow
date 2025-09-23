@@ -3,7 +3,6 @@ import { ApplicationFactory, ProjectFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
