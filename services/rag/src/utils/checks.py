@@ -32,7 +32,7 @@ async def verify_rag_sources_indexed(
                 rag_sources = list(
                     await session.scalars(
                         select_active(RagSource)
-                        .join(GrantApplicationSource)
+                        .join(GrantApplicationSource, GrantApplicationSource.rag_source_id == RagSource.id)
                         .join(GrantApplication)
                         .where(GrantApplicationSource.grant_application_id == parent_id)
                     )
@@ -41,7 +41,7 @@ async def verify_rag_sources_indexed(
                 rag_sources = list(
                     await session.scalars(
                         select_active(RagSource)
-                        .join(GrantTemplateSource)
+                        .join(GrantTemplateSource, GrantTemplateSource.rag_source_id == RagSource.id)
                         .join(GrantTemplate)
                         .where(GrantTemplateSource.grant_template_id == parent_id)
                     )

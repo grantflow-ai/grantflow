@@ -429,7 +429,7 @@ async def handle_generate_application(
         rag_sources_count = await session.scalar(
             select(count())
             .select_from(GrantApplicationSource)
-            .join(RagSource)
+            .join(RagSource, GrantApplicationSource.rag_source_id == RagSource.id)
             .where(
                 GrantApplicationSource.grant_application_id == application.id,
                 GrantApplicationSource.deleted_at.is_(None),

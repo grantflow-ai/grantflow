@@ -172,7 +172,7 @@ async def handle_create_rag_source(
 
                 query = (
                     select(RagSource)
-                    .join(rag_url_alias)
+                    .join(rag_url_alias, RagSource.id == rag_url_alias.id)
                     .where(
                         rag_url_alias.url == normalized_url,
                         RagSource.deleted_at.is_(None),
@@ -417,7 +417,7 @@ async def handle_delete_rag_source(
         if template_id:
             statement = (
                 select(rag_poly)
-                .join(GrantTemplateSource)
+                .join(GrantTemplateSource, GrantTemplateSource.rag_source_id == rag_poly.id)
                 .where(
                     GrantTemplateSource.grant_template_id == template_id,
                     rag_poly.id == source_id,
@@ -426,7 +426,7 @@ async def handle_delete_rag_source(
         elif application_id:
             statement = (
                 select(rag_poly)
-                .join(GrantApplicationSource)
+                .join(GrantApplicationSource, GrantApplicationSource.rag_source_id == rag_poly.id)
                 .where(
                     GrantApplicationSource.grant_application_id == application_id,
                     rag_poly.id == source_id,
@@ -436,7 +436,7 @@ async def handle_delete_rag_source(
             institution_id = granting_institution_id if granting_institution_id else organization_id
             statement = (
                 select(rag_poly)
-                .join(GrantingInstitutionSource)
+                .join(GrantingInstitutionSource, GrantingInstitutionSource.rag_source_id == rag_poly.id)
                 .where(
                     GrantingInstitutionSource.granting_institution_id == institution_id,
                     rag_poly.id == source_id,
