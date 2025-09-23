@@ -7,7 +7,6 @@ export function checkProfileAndRedirect(userDisplayName: null | string) {
 		hasDisplayName: Boolean(userDisplayName),
 	});
 
-	// Check if profile is complete
 	const isProfileComplete = userDisplayName && userDisplayName.trim().length >= 2;
 
 	if (isProfileComplete) {

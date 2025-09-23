@@ -23,7 +23,6 @@ async def pull_notifications(
     parent_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[WebsocketMessage[dict[str, Any]]]:
-    """Pull undelivered notifications for a grant application."""
     notifications_to_send = []
 
     async with session_maker() as session, session.begin():

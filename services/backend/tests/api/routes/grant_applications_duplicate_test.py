@@ -274,7 +274,6 @@ async def test_duplicate_application_no_editor_document(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that duplicating an application does not create an EditorDocument"""
     project_id = grant_application.project_id
 
     async with async_session_maker() as session:
@@ -290,7 +289,6 @@ async def test_duplicate_application_no_editor_document(
     assert response.status_code == 201
     data = response.json()
 
-    # Verify no EditorDocument was created for the new application
     async with async_session_maker() as session:
         from sqlalchemy import select
 

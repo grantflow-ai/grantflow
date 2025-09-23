@@ -30,7 +30,10 @@ export function ApplicationPreview({
 	const templateFiles: FileWithSource[] = useMemo(
 		() =>
 			(templateSources ?? [])
-				.filter((source) => source.filename && source.status !== SourceIndexingStatus.FAILED)
+				.filter(
+					(source) =>
+						source.filename && (source.status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED,
+				)
 				.map((source) => {
 					const file = new File([], source.filename!, { type: "application/octet-stream" });
 					return Object.assign(file, {
@@ -45,7 +48,9 @@ export function ApplicationPreview({
 	const templateUrls: UrlWithSource[] = useMemo(
 		() =>
 			(templateSources ?? [])
-				.filter((source) => source.url && source.status !== SourceIndexingStatus.FAILED)
+				.filter(
+					(source) => source.url && (source.status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED,
+				)
 				.map((source) => ({
 					sourceId: source.sourceId,
 					sourceStatus: source.status,

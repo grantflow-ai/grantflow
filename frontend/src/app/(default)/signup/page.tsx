@@ -61,7 +61,6 @@ export default function Signup() {
 
 				await login(idToken);
 
-				// Check profile completeness and redirect accordingly
 				checkProfileAndRedirect(user.displayName);
 				return;
 			}

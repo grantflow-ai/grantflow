@@ -89,7 +89,7 @@ describe("OnboardingPage", () => {
 		mockUseUserStore.mockReturnValue({
 			setUser: vi.fn(),
 			user: {
-				displayName: "X", // Too short
+				displayName: "X",
 				email: "test@example.com",
 				uid: "test-uid",
 			},

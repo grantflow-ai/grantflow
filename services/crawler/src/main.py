@@ -81,7 +81,6 @@ async def handle_gcs_file_upload(
                 mime_type=mime_type,
             )
 
-            # Create the RagSource for this file (DB will auto-generate UUID)
             result = await session.execute(
                 insert(RagSource)
                 .values(
@@ -94,7 +93,6 @@ async def handle_gcs_file_upload(
             )
             file_source_id = result.scalar_one()
 
-            # Then create the RagFile with the same ID
             await session.execute(
                 insert(RagFile).values(
                     {
@@ -205,11 +203,9 @@ async def handle_url_crawling(
         )
         return
 
-    # Atomic claim: Try to set status to INDEXING
     async with session_maker() as session, session.begin():
         from packages.db.src.tables import RagSource
 
-        # Try to claim the source atomically
         result = await session.execute(
             update(RagSource)
             .where(
@@ -228,7 +224,6 @@ async def handle_url_crawling(
         claimed_id = result.scalar_one_or_none()
 
         if not claimed_id:
-            # Check why we couldn't claim it
             existing = await session.scalar(
                 select(RagSource).where(RagSource.id == crawling_request["source_id"])
             )
@@ -237,10 +232,9 @@ async def handle_url_crawling(
                 logger.error(
                     "Source not found", source_id=str(crawling_request["source_id"])
                 )
-                return  # ACK message
+                return
 
             if existing.indexing_status == SourceIndexingStatusEnum.INDEXING:
-                # Check if stuck (older than 10 minutes)
                 if (
                     existing.indexing_started_at
                     and existing.indexing_started_at
@@ -256,7 +250,6 @@ async def handle_url_crawling(
                     )
                     existing.indexing_status = SourceIndexingStatusEnum.INDEXING
                     existing.indexing_started_at = datetime.now(UTC)
-                    # Continue with processing
                 else:
                     logger.info(
                         "URL already being processed by another container",
@@ -264,7 +257,7 @@ async def handle_url_crawling(
                         source_id=str(crawling_request["source_id"]),
                         trace_id=trace_id,
                     )
-                    return  # ACK message
+                    return
             elif existing.indexing_status == SourceIndexingStatusEnum.FINISHED:
                 logger.info(
                     "URL already processed successfully",
@@ -272,9 +265,8 @@ async def handle_url_crawling(
                     source_id=str(crawling_request["source_id"]),
                     trace_id=trace_id,
                 )
-                return  # ACK message
+                return
 
-    # Get entity info for grant_template special handling
     if crawling_request["entity_type"] == "grant_template":
         async with session_maker() as session:
             await session.scalar(
@@ -283,12 +275,9 @@ async def handle_url_crawling(
                 )
             )
 
-    # Initialize memory store for this crawl session
     memory_store = request.app.stores.get("memory")
     session_key = f"visited_urls:{crawling_request['source_id']}"
-    await memory_store.set(
-        session_key, b"[]", expires_in=3600
-    )  # Initialize as empty JSON array
+    await memory_store.set(session_key, b"[]", expires_in=3600)
 
     try:
         crawl_start = time.time()
@@ -402,7 +391,6 @@ async def handle_url_crawling(
             trace_id=trace_id,
         )
     finally:
-        # Cleanup memory store
         await memory_store.delete(session_key)
 
 

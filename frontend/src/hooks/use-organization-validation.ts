@@ -7,10 +7,6 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
-/**
- * Custom hook for organization validation and state management
- * Combines cookie management, validation, and store updates in a single effect
- */
 export function useOrganizationValidation(organizations: API.ListOrganizations.Http200.ResponseBody) {
 	const { clearOrganizationCookie, selectedOrganizationId, setOrganizationCookie } = useOrgCookie();
 	const {

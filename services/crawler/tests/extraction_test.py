@@ -117,9 +117,6 @@ def mock_cosine_similarity() -> Generator[Mock]:
         yield mock
 
 
-# Removed prepare_url_data tests since the function doesn't exist
-
-
 def test_extract_links() -> None:
     html = """
     <html>
@@ -284,7 +281,6 @@ async def test_find_relevant_links() -> None:
     normal_links = {"https://example.org/page1", "https://example.org/page2"}
     embeddings = [[0.1, 0.2, 0.3]]
 
-    # Mock memory store
     mock_memory_store = AsyncMock()
     mock_memory_store.get.return_value = serialize(["https://example.org/visited"])
     mock_memory_store.set = AsyncMock()
@@ -423,18 +419,15 @@ async def test_crawl_url_integration(
 
 
 async def test_find_relevant_links_url_normalization() -> None:
-    """Test that URLs are normalized before checking visited set."""
     from packages.shared_utils.src.serialization import serialize
 
-    # Test URLs with different formats but same normalized form
     normal_links = {
-        "https://Example.com/page?param=1",  # Should be normalized
-        "https://example.com/page#section",  # Should be normalized to same as above
-        "https://example.com/page/",  # Should be normalized (trailing slash)
+        "https://Example.com/page?param=1",
+        "https://example.com/page#section",
+        "https://example.com/page/",
     }
     embeddings = [[0.1, 0.2, 0.3]]
 
-    # Mock memory store with pre-visited normalized URL
     mock_memory_store = AsyncMock()
     visited_urls = [normalize_url("https://example.com/page")]
     mock_memory_store.get.return_value = serialize(visited_urls)
@@ -456,25 +449,20 @@ async def test_find_relevant_links_url_normalization() -> None:
         )
         mock_extract.return_value = "Extracted content"
         mock_embeddings.return_value = [[0.4, 0.5, 0.6]]
-        mock_similarity.return_value = [[0.95]]  # High similarity
+        mock_similarity.return_value = [[0.95]]
 
-        # Call find_relevant_links with memory store
         results = await find_relevant_links(
             normal_links, embeddings, mock_memory_store, "test_session"
         )
 
-        # All URLs should be skipped because they normalize to the same visited URL
-        # Only unique normalized URLs should be processed
         assert len(results) == 0, "All URLs should be deduplicated due to normalization"
 
 
 async def test_crawl_with_memory_store_url_normalization(temp_dir: Path) -> None:
-    """Test that crawl function normalizes URLs before storing in memory."""
     from packages.shared_utils.src.serialization import deserialize
 
-    # Mock memory store
     mock_memory_store = AsyncMock()
-    mock_memory_store.get.return_value = None  # Empty initially
+    mock_memory_store.get.return_value = None
     mock_memory_store.set = AsyncMock()
 
     url = "https://Example.COM/Page/?param=1#section"
@@ -497,10 +485,8 @@ async def test_crawl_with_memory_store_url_normalization(temp_dir: Path) -> None
         ]
         mock_embeddings.return_value = [[0.1, 0.2, 0.3]]
 
-        # Import crawl function that uses memory store
         from services.crawler.src.extraction import crawl
 
-        # Call crawl with memory store
         await crawl(
             url=url,
             temp_dir=temp_dir,
@@ -509,14 +495,12 @@ async def test_crawl_with_memory_store_url_normalization(temp_dir: Path) -> None
             raw_html=None,
         )
 
-        # Verify that normalized URL was stored in memory
         mock_memory_store.set.assert_called()
         set_calls = mock_memory_store.set.call_args_list
 
-        # Check if normalized URL was stored
         stored_visited_urls = None
         for call in set_calls:
-            if call[0][0] == "test-session":  # session_key
+            if call[0][0] == "test-session":
                 stored_visited_urls = deserialize(call[0][1], list[str])
                 break
 
