@@ -404,38 +404,41 @@ async def test_retrieve_application_with_rag_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
+        # Create RagSource for file first
+        from packages.db.src.enums import SourceIndexingStatusEnum
+
+        file_source = RagSource(
+            source_type="rag_file",
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+        )
+        session.add(file_source)
+        await session.flush()
+
+        # Create RagFile with proper fields
         rag_file = RagFile(
-            organization_id=project.organization_id,
-            url="gs://bucket/file.pdf",
+            id=file_source.id,
+            bucket_name="test-bucket",
+            object_path="gs://bucket/file.pdf",
             filename="file.pdf",
-            content_type="application/pdf",
-            size_bytes=1024,
+            mime_type="application/pdf",
+            size=1024,
         )
         session.add(rag_file)
 
+        # Create RagSource for URL
+        url_source = RagSource(
+            source_type="rag_url",
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+        )
+        session.add(url_source)
+        await session.flush()
+
+        # Create RagUrl with proper fields
         rag_url = RagUrl(
-            organization_id=project.organization_id,
+            id=url_source.id,
             url="https://example.com",
         )
         session.add(rag_url)
-
-        await session.flush()
-
-        file_source = RagSource(
-            id=rag_file.id,
-            source_type="rag_file",
-            organization_id=project.organization_id,
-            identifier="file.pdf",
-        )
-        session.add(file_source)
-
-        url_source = RagSource(
-            id=rag_url.id,
-            source_type="rag_url",
-            organization_id=project.organization_id,
-            identifier="https://example.com",
-        )
-        session.add(url_source)
 
         await session.flush()
 
