@@ -12469,7 +12469,7 @@ snapshots:
 
   '@types/webpack@5.28.5(esbuild@0.25.0)':
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 24.5.2
       tapable: 2.2.3
       webpack: 5.101.3(esbuild@0.25.10)
     transitivePeerDependencies:
@@ -14909,7 +14909,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 24.5.2
       merge-stream: 2.0.0
       supports-color: 8.1.1
 

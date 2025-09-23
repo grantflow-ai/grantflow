@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createApplication } from "@/actions/grant-applications";
@@ -20,11 +20,10 @@ import { DeleteProjectModal } from "@/components/organizations/modals/delete-pro
 import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import PaymentLink from "@/components/organizations/payment/payment-link";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { useOrganization } from "@/hooks/use-organization";
+import { useOrganizationValidation } from "@/hooks/use-organization-validation";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
-import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -33,56 +32,23 @@ import { generateBackgroundColor, generateInitials } from "@/utils/user";
 interface DashboardClientProps {
 	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;
 	initialProjects: API.ListProjects.Http200.ResponseBody;
-	initialSelectedOrganizationId: null | string;
 }
 
-export function DashboardClient({
-	initialOrganizations,
-	initialProjects,
-	initialSelectedOrganizationId,
-}: DashboardClientProps) {
+export function DashboardClient({ initialOrganizations, initialProjects }: DashboardClientProps) {
 	const router = useRouter();
+
+	const validatedOrganizationId = useOrganizationValidation(initialOrganizations);
+
 	const { navigateToApplication, navigateToProject } = useNavigationStore();
-	const { selectedOrganizationId, switchOrganization } = useOrganization();
-	const { selectOrganization, setOrganizations } = useOrganizationStore();
+	const { addNotification } = useNotificationStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
+
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
-
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
-
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
 
-	const { addNotification } = useNotificationStore();
-
-	const { getOrganization } = useOrganizationStore();
-
-	useEffect(() => {
-		setOrganizations(initialOrganizations);
-	}, [initialOrganizations, setOrganizations]);
-
-	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally omitting selectedOrganizationId and switchOrganization to avoid infinite loop
-	useEffect(() => {
-		if (!selectedOrganizationId && initialSelectedOrganizationId) {
-			switchOrganization(initialSelectedOrganizationId);
-		}
-	}, [initialSelectedOrganizationId]);
-
-	useEffect(() => {
-		if (currentOrganizationId) {
-			selectOrganization(currentOrganizationId);
-		}
-	}, [currentOrganizationId, selectOrganization]);
-
-	useEffect(() => {
-		if (currentOrganizationId) {
-			getOrganization(currentOrganizationId);
-		}
-	}, [currentOrganizationId, getOrganization]);
-
 	const { data: projects = initialProjects, mutate } = useSWR(
-		currentOrganizationId ? ["projects", currentOrganizationId] : null,
+		validatedOrganizationId ? ["projects", validatedOrganizationId] : null,
 		([, orgId]: [string, string]) => getProjects(orgId),
 		{
 			fallbackData: initialProjects,
@@ -91,13 +57,13 @@ export function DashboardClient({
 	);
 
 	const handleDuplicateProject = async (projectId: string) => {
-		if (!currentOrganizationId) {
+		if (!validatedOrganizationId) {
 			toast.error("Please select an organization first");
 			return;
 		}
 		const toastId = toast.loading("Duplicating research project");
 		try {
-			await duplicateProjectAction(currentOrganizationId, projectId);
+			await duplicateProjectAction(validatedOrganizationId, projectId);
 			await mutate();
 			toast.success("Research project duplicated successfully.", { id: toastId });
 		} catch (error) {
@@ -133,10 +99,10 @@ export function DashboardClient({
 	};
 
 	const confirmDeleteProject = async () => {
-		if (projectToDelete && currentOrganizationId) {
+		if (projectToDelete && validatedOrganizationId) {
 			const toastId = toast.loading("Deleting research project...");
 			try {
-				await deleteProjectAction(currentOrganizationId, projectToDelete);
+				await deleteProjectAction(validatedOrganizationId, projectToDelete);
 				await mutate();
 
 				toast.success("Project deleted successfully", { id: toastId });
@@ -155,12 +121,12 @@ export function DashboardClient({
 	};
 
 	const handleCreateProject = async () => {
-		if (isCreatingProject || !currentOrganizationId) return;
+		if (isCreatingProject || !validatedOrganizationId) return;
 
 		setIsCreatingProject(true);
 		try {
 			const newProjectName = `New Project ${projects.length + 1}`;
-			const newproject = await createProject(currentOrganizationId, {
+			const newproject = await createProject(validatedOrganizationId, {
 				description: "",
 				name: newProjectName,
 			});
@@ -196,7 +162,7 @@ export function DashboardClient({
 	};
 
 	const handleCreateApplication = async (projectId: null | string, projectName: string, isNewProject: boolean) => {
-		if (!currentOrganizationId) {
+		if (!validatedOrganizationId) {
 			toast.error("No organization selected");
 			return;
 		}
@@ -206,7 +172,7 @@ export function DashboardClient({
 			const targetProjectName = projectName;
 
 			if (isNewProject) {
-				const newProject = await createProject(currentOrganizationId, {
+				const newProject = await createProject(validatedOrganizationId, {
 					description: "",
 					name: projectName,
 				});
@@ -222,7 +188,7 @@ export function DashboardClient({
 				return;
 			}
 
-			const application = await createApplication(currentOrganizationId, targetProjectId, {
+			const application = await createApplication(validatedOrganizationId, targetProjectId, {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
 
@@ -239,7 +205,7 @@ export function DashboardClient({
 			toast.success("Application created successfully");
 		} catch (error) {
 			log.error("dashboard-create-application", {
-				currentOrganizationId,
+				currentOrganizationId: validatedOrganizationId,
 				error,
 				isNewProject,
 				projectId,
