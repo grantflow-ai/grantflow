@@ -65,7 +65,6 @@ export default function Login() {
 				setUser(convertFirebaseUser(user));
 				await login(idToken);
 
-				// Check profile completeness and redirect accordingly
 				checkProfileAndRedirect(user.displayName);
 				return;
 			}

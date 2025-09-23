@@ -66,8 +66,6 @@ export async function login(idToken: string) {
 			});
 			throw new Error("Authentication failed. Please try logging in again.");
 		}
-
-		// Note: Profile completeness check and redirect is handled by the calling code
 	} catch (error) {
 		if (error instanceof Error && error.message === "NEXT_REDIRECT") {
 			throw error;

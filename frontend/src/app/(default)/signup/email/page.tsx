@@ -38,7 +38,6 @@ export default function FinalizeEmailLogin() {
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);
 
-				// Check profile completeness and redirect accordingly
 				checkProfileAndRedirect(cred.user.displayName);
 			} catch (error) {
 				if (!isRedirectError(error)) {

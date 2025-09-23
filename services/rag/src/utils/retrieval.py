@@ -23,34 +23,28 @@ MAX_RESULTS: Final[int] = 100
 MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
 MIN_QUALITY_SCORE: Final[float] = 7.0
 
-# Simple TTL cache for document retrieval
 _document_cache: dict[str, tuple[list[str], float]] = {}
-CACHE_TTL_SECONDS: Final[int] = 300  # 5 minutes
+CACHE_TTL_SECONDS: Final[int] = 300
 
 
 def _create_cache_key(**kwargs: Any) -> str:
-    """Create a cache key from function arguments."""
-    # Remove non-cacheable arguments
     cache_data = {k: v for k, v in kwargs.items() if k != "trace_id"}
     cache_str = json.dumps(cache_data, sort_keys=True, default=str)
     return hashlib.sha256(cache_str.encode()).hexdigest()[:16]
 
 
 def _get_cached_documents(cache_key: str) -> list[str] | None:
-    """Get cached documents if not expired."""
     if cache_key in _document_cache:
         documents, timestamp = _document_cache[cache_key]
         if time.time() - timestamp < CACHE_TTL_SECONDS:
             logger.debug("Document cache hit", cache_key=cache_key)
             return documents
-        # Remove expired entry
         del _document_cache[cache_key]
         logger.debug("Document cache expired", cache_key=cache_key)
     return None
 
 
 def _cache_documents(cache_key: str, documents: list[str]) -> None:
-    """Cache documents with current timestamp."""
     _document_cache[cache_key] = (documents, time.time())
     logger.debug("Document cache set", cache_key=cache_key, count=len(documents))
 
@@ -310,7 +304,6 @@ async def _retrieve_documents_cached(
     trace_id: str,
     kwargs: dict[str, Any],
 ) -> list[str]:
-    # Check cache first
     cache_key = _create_cache_key(
         application_id=application_id,
         max_results=max_results,
@@ -471,7 +464,6 @@ async def _retrieve_documents_cached(
         trace_id=trace_id,
     )
 
-    # Cache the results
     _cache_documents(cache_key, best_processed_contents)
 
     return best_processed_contents

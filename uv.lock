@@ -1744,7 +1744,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.17.2"
+version = "3.17.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1761,9 +1761,9 @@ dependencies = [
     { name = "python-calamine" },
     { name = "python-pptx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/10/bfbd0687009625a8883beec27b45a0d3e7a8425f214b18a13466eaae1631/kreuzberg-3.17.2.tar.gz", hash = "sha256:737e7e4010e0476996209e6f4ba40576bc5d9c2c77bd6e9fb2f2a29942aef165", size = 16316004, upload-time = "2025-09-22T09:09:16.431Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/37/c9481886a75d188f7304563711d3289151a6a76400a0c4adf7a99508cf75/kreuzberg-3.17.3.tar.gz", hash = "sha256:933904c0134d70e8368f00522ae22d192fb1bcf5ca66216f4f1c30911c9e1c21", size = 16314583, upload-time = "2025-09-23T05:54:20.32Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/f4/b60c5f0e306d7aafb41157ef4bc29058bf9563876fd55b0a5eee8d72452c/kreuzberg-3.17.2-py3-none-any.whl", hash = "sha256:bd03429bc84ef49b14e2bd95bf9f13f5fd60e22debf7e999a21109bb1454de96", size = 218761, upload-time = "2025-09-22T09:09:14.257Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/a5/1e73fdaf65911f8958ee108feae2403235d344ecc54ef95243e3051163f3/kreuzberg-3.17.3-py3-none-any.whl", hash = "sha256:1877841cfc4ff5e275b6b8ebfb05d9939d6ea0ce63158db6e9c71c6816cc875d", size = 219026, upload-time = "2025-09-23T05:54:17.974Z" },
 ]
 
 [package.optional-dependencies]
@@ -1807,11 +1807,11 @@ wheels = [
 
 [[package]]
 name = "lefthook"
-version = "1.13.2"
+version = "1.13.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d5/29/79708f0c19d3e0a880673b127b0fcaca8f5c9d17e435516fc5ab33983b8e/lefthook-1.13.2.tar.gz", hash = "sha256:2d2072dc34a3fd10984c1842e2f3a54f7cffbc664bd44ca771acd3f3582760a9", size = 51888895, upload-time = "2025-09-22T09:41:32.33Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/9b/4aba6d91dbdd3c46712eb2603431f5caee42db0a4dcf1ad22d9e4672b6fb/lefthook-1.13.3.tar.gz", hash = "sha256:bf54541be0dd5b36ce6379450c5c4d5ae2784b5cb9486c0f8feae8ce3d247f58", size = 55386371, upload-time = "2025-09-23T07:42:05.54Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/30/dcb20f1852685386574f02d5d75085b4bd4bcf1a8f092548596c88137314/lefthook-1.13.2-py3-none-any.whl", hash = "sha256:a2447c6b4129afb7ad3ea15ee83cc3ed0ef329beab7cf1ef2838d9d3391bc885", size = 52135560, upload-time = "2025-09-22T09:41:28.181Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/37/8bc3ab2313f638e1fa22f6690375041fbb27a02fb2906a5df0394d8742e2/lefthook-1.13.3-py3-none-any.whl", hash = "sha256:cd5213715e3a295d86770bdb3a73e737ab20ee3d0669ec878aae058760b0815d", size = 55654478, upload-time = "2025-09-23T07:42:01.846Z" },
 ]
 
 [[package]]
