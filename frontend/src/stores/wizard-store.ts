@@ -25,7 +25,7 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.GENERATE_AND_COMPLETE,
 ];
 
-export type ResearchObjective = API.UpdateApplication.RequestBody["research_objectives"][0];
+export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
 export interface TemplateGenerationStatus {
 	event: TemplateGenerationEvent;

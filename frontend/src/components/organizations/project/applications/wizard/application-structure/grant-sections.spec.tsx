@@ -402,7 +402,9 @@ describe("SortableSection", () => {
 	});
 
 	it("generates AI prompt based on section title when no generation_instructions", () => {
-		const section = GrantSectionBaseFactory.build({ title: "Background" });
+		const section = GrantSectionBaseFactory.build({ title: "Background" } as unknown as Parameters<
+			typeof GrantSectionBaseFactory.build
+		>[0]);
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -495,7 +497,9 @@ describe("SortableSection", () => {
 	});
 
 	it("falls back to generated AI prompt when generation_instructions not available", () => {
-		const section = GrantSectionBaseFactory.build({ title: "Background" });
+		const section = GrantSectionBaseFactory.build({ title: "Background" } as unknown as Parameters<
+			typeof GrantSectionBaseFactory.build
+		>[0]);
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 

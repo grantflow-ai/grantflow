@@ -1,8 +1,8 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import { createProject, deleteProject, getProject, getProjects, updateProject } from "@/actions/project";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
 import { useProjectStore } from "./project-store";
@@ -60,7 +60,7 @@ describe("Project Store", () => {
 			const projectListItem = ProjectListItemFactory.build();
 			useProjectStore.setState({
 				project,
-				projects: [projectListItem],
+				projects: [projectListItem] as API.ListProjects.Http200.ResponseBody,
 			});
 
 			useProjectStore.getState().reset();
@@ -149,12 +149,21 @@ describe("Project Store", () => {
 	describe("updateProject", () => {
 		it("should update project and refresh data", async () => {
 			const project = ProjectFactory.build();
-			const projectListItem = ProjectListItemFactory.build({ id: project.id, name: project.name });
-			const updatedProject = ProjectFactory.build({ id: project.id, name: "Updated Name" });
-			const updatedProjectListItem = ProjectListItemFactory.build({ id: project.id, name: "Updated Name" });
+			const projectListItem = ProjectListItemFactory.build({
+				id: project.id,
+				name: project.name,
+			});
+			const updatedProject = ProjectFactory.build({
+				id: project.id,
+				name: "Updated Name",
+			});
+			const updatedProjectListItem = ProjectListItemFactory.build({
+				id: project.id,
+				name: "Updated Name",
+			});
 			const updateData = { description: null, logo_url: null, name: "Updated Name" };
 
-			useProjectStore.setState({ project, projects: [projectListItem] });
+			useProjectStore.setState({ project, projects: [projectListItem] as API.ListProjects.Http200.ResponseBody });
 
 			vi.mocked(updateProject).mockResolvedValue({
 				description: null,
@@ -163,7 +172,7 @@ describe("Project Store", () => {
 				name: "Updated Name",
 			});
 			vi.mocked(getProject).mockResolvedValue(updatedProject);
-			vi.mocked(getProjects).mockResolvedValue([updatedProjectListItem]);
+			vi.mocked(getProjects).mockResolvedValue([updatedProjectListItem] as API.ListProjects.Http200.ResponseBody);
 
 			await useProjectStore.getState().updateProject("mock-org-id", project.id, updateData);
 
@@ -174,11 +183,14 @@ describe("Project Store", () => {
 
 		it("should handle update error and restore previous state", async () => {
 			const project = ProjectFactory.build();
-			const projectListItem = ProjectListItemFactory.build({ id: project.id, name: project.name });
+			const projectListItem = ProjectListItemFactory.build({
+				id: project.id,
+				name: project.name,
+			});
 			const updateData = { description: null, logo_url: null, name: "Updated Name" };
 			const error = new Error("Update failed");
 
-			useProjectStore.setState({ project, projects: [projectListItem] });
+			useProjectStore.setState({ project, projects: [projectListItem] as API.ListProjects.Http200.ResponseBody });
 
 			vi.mocked(updateProject).mockRejectedValue(error);
 
@@ -194,11 +206,20 @@ describe("Project Store", () => {
 		it("should delete project and update state", async () => {
 			const project1 = ProjectFactory.build();
 			const project2 = ProjectFactory.build();
-			const projectListItem1 = ProjectListItemFactory.build({ id: project1.id, name: project1.name });
-			const projectListItem2 = ProjectListItemFactory.build({ id: project2.id, name: project2.name });
+			const projectListItem1 = ProjectListItemFactory.build({
+				id: project1.id,
+				name: project1.name,
+			});
+			const projectListItem2 = ProjectListItemFactory.build({
+				id: project2.id,
+				name: project2.name,
+			});
 			const projects = [projectListItem1, projectListItem2];
 
-			useProjectStore.setState({ project: project1, projects });
+			useProjectStore.setState({
+				project: project1,
+				projects: projects as API.ListProjects.Http200.ResponseBody,
+			});
 
 			vi.mocked(deleteProject).mockResolvedValue(undefined);
 
@@ -211,10 +232,13 @@ describe("Project Store", () => {
 
 		it("should handle delete error", async () => {
 			const project = ProjectFactory.build();
-			const projectListItem = ProjectListItemFactory.build({ id: project.id, name: project.name });
+			const projectListItem = ProjectListItemFactory.build({
+				id: project.id,
+				name: project.name,
+			});
 			const error = new Error("Delete failed");
 
-			useProjectStore.setState({ project, projects: [projectListItem] });
+			useProjectStore.setState({ project, projects: [projectListItem] as API.ListProjects.Http200.ResponseBody });
 
 			vi.mocked(deleteProject).mockRejectedValue(error);
 

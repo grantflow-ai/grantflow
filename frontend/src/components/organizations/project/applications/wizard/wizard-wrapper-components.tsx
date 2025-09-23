@@ -345,7 +345,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 					formInputs &&
 					requiredFields.every((field) => {
 						const value = formInputs[field];
-						// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
 						return value?.trim();
 					});
 				return isGeneratingApplication || !allFieldsFilled;

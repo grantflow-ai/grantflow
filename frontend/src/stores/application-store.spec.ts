@@ -750,7 +750,7 @@ describe("Application Store", () => {
 			it("should clear restored job state", () => {
 				const jobData = {
 					created_at: "2023-01-01T00:00:00Z",
-					current_stage: 3,
+					current_stage: "3",
 					id: "job-123",
 					job_type: "grant_template_generation",
 					retry_count: 0,

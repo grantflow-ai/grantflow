@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: local
       POSTGRES_DB: local
     ports:
-      - "5433:5432"
+      - "5433:5432" # we are using port 5433 for the PostgreSQL database because 5432 is used by local db or cloud proxy.
     volumes:
       - data:/var/lib/postgresql/data
       - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
@@ -86,7 +86,6 @@ services:
       timeout: 5s
       retries: 10
 
-
   backend:
     profiles:
       - all
@@ -100,6 +99,7 @@ services:
       STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
       PYTHONPATH: .
       DEBUG: "True"
+      ENVIRONMENT: development
     env_file:
       - ./.env
     ports:
@@ -130,6 +130,7 @@ services:
       GCS_BUCKET_NAME: grantflow-uploads
       DEBUG: "True"
       MODEL_DIR: /app/hf
+      ENVIRONMENT: development
     env_file:
       - ./.env
     ports:
@@ -159,6 +160,7 @@ services:
       STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
       DEBUG: "True"
       MODEL_DIR: /app/hf
+      ENVIRONMENT: development
     env_file:
       - ./.env
     ports:
@@ -188,6 +190,7 @@ services:
       STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
       DEBUG: "True"
       MODEL_DIR: /app/hf
+      ENVIRONMENT: development
     env_file:
       - ./.env
     ports:
@@ -203,32 +206,32 @@ services:
         condition: service_healthy
 
   frontend:
-      profiles:
-          - all
-          - frontend
-      build:
-          context: .
-          dockerfile: frontend/Dockerfile
-          args:
-              NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
-              NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
-              NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
-              NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
-              NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
-              NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID}
-              NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID}
-              NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
-              NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
-              NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-              NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
-              RESEND_API_KEY: ${RESEND_API_KEY}
-      ports:
-          - "3000:3000"
-      env_file:
-          - ./.env
-          - ./frontend/.env
-      depends_on:
-          - backend
+    profiles:
+      - all
+      - frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+        NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
+        NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID}
+        NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
+        RESEND_API_KEY: ${RESEND_API_KEY}
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+      - ./frontend/.env
+    depends_on:
+      - backend
 
   scraper:
     profiles:
@@ -244,6 +247,7 @@ services:
       STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
       SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
       DEBUG: "True"
+      ENVIRONMENT: development
     env_file:
       - ./.env
     ports:
@@ -257,28 +261,6 @@ services:
         condition: service_healthy
       gcs-emulator:
         condition: service_started
-
-  pgadmin:
-    profiles:
-      - all
-      - services
-      - pgadmin
-    image: dpage/pgadmin4:latest
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@local.dev
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_LISTEN_PORT: 80
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./pgadmin/pgpassfile:/tmp/pgpassfile:ro
-    depends_on:
-      - db
 
   crdt:
     profiles:
@@ -301,4 +283,3 @@ services:
 volumes:
   data:
   gcs-data:
-  pgadmin-data:

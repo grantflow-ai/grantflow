@@ -3,7 +3,6 @@ import { ApplicationWithTemplateFactory, GrantTemplateFactory, ProjectFactory } 
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -43,7 +42,12 @@ describe("ApplicationWizardPageClient", () => {
 		it("should show loading spinner when no application ID", () => {
 			useApplicationStore.setState({ application: null });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			render(<ApplicationWizardPageClient />);
 
@@ -68,7 +72,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application = ApplicationWithTemplateFactory.build();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const { unmount } = render(<ApplicationWizardPageClient />);
 
@@ -91,7 +100,12 @@ describe("ApplicationWizardPageClient", () => {
 
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const wizardSetStateSpy = vi.spyOn(useWizardStore, "setState");
 
@@ -118,7 +132,12 @@ describe("ApplicationWizardPageClient", () => {
 
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const wizardSetStateSpy = vi.spyOn(useWizardStore, "setState");
 
@@ -139,7 +158,12 @@ describe("ApplicationWizardPageClient", () => {
 
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const wizardSetStateSpy = vi.spyOn(useWizardStore, "setState");
 
@@ -167,7 +191,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application2 = ApplicationWithTemplateFactory.build({ id: "app-456" });
 
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const wizardResetSpy = vi.spyOn(useWizardStore.getState(), "reset");
 			const applicationSoftResetSpy = vi.spyOn(useApplicationStore.getState(), "softReset");
@@ -196,7 +225,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application = ApplicationWithTemplateFactory.build();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const checkAndRestoreJobStateSpy = vi.spyOn(useApplicationStore.getState(), "checkAndRestoreJobState");
 
@@ -213,7 +247,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application = ApplicationWithTemplateFactory.build({ id: "app-123" });
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			render(<ApplicationWizardPageClient />);
 
@@ -227,7 +266,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application = ApplicationWithTemplateFactory.build();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			const { rerender } = render(<ApplicationWizardPageClient />);
 
@@ -244,7 +288,12 @@ describe("ApplicationWizardPageClient", () => {
 			const application = ApplicationWithTemplateFactory.build({ id: "app-123" });
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({ project: ProjectFactory.build({ id: "project-123", name: "Test Project" }) });
+			useProjectStore.setState({
+				project: ProjectFactory.build({
+					id: "project-123",
+					name: "Test Project",
+				}),
+			});
 
 			render(<ApplicationWizardPageClient />);
 
