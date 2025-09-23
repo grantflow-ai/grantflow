@@ -19,6 +19,55 @@ logger = get_logger(__name__)
 NOTIFICATION_POLL_INTERVAL = 3.0
 
 
+async def pull_notifications(
+    parent_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> list[WebsocketMessage[dict[str, Any]]]:
+    """Pull undelivered notifications for a grant application."""
+    notifications_to_send = []
+
+    async with session_maker() as session, session.begin():
+        result = await session.execute(
+            select(GenerationNotification)
+            .join(
+                RagGenerationJob,
+                and_(
+                    GenerationNotification.rag_job_id == RagGenerationJob.id,
+                    RagGenerationJob.grant_application_id == parent_id,
+                    RagGenerationJob.deleted_at.is_(None),
+                ),
+            )
+            .where(
+                and_(
+                    GenerationNotification.delivered_at.is_(None),
+                    GenerationNotification.deleted_at.is_(None),
+                )
+            )
+            .order_by(GenerationNotification.created_at.asc())
+        )
+        notifications = list(result.scalars())
+
+        if notifications:
+            delivered_at = datetime.now(UTC)
+
+            for notif in notifications:
+                await session.execute(
+                    update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
+                )
+
+            for notification in notifications:
+                message: WebsocketMessage[dict[str, Any]] = {
+                    "type": "info" if notification.notification_type == "info" else "error",
+                    "parent_id": parent_id,
+                    "event": notification.event,
+                    "data": notification.data if notification.data else {"message": notification.message},
+                    "trace_id": "",
+                }
+                notifications_to_send.append(message)
+
+    return notifications_to_send
+
+
 @websocket_stream(
     "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications",
     opt={"allowed_roles": [UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR]},
@@ -46,46 +95,10 @@ async def handle_grant_application_notifications(
             application_id=str(application_id),
         )
         try:
-            notifications_to_send = []
-
-            async with session_maker() as session, session.begin():
-                result = await session.execute(
-                    select(GenerationNotification)
-                    .join(
-                        RagGenerationJob,
-                        and_(
-                            GenerationNotification.rag_job_id == RagGenerationJob.id,
-                            RagGenerationJob.grant_application_id == application_id,
-                            RagGenerationJob.deleted_at.is_(None),
-                        ),
-                    )
-                    .where(
-                        and_(
-                            GenerationNotification.delivered_at.is_(None),
-                            GenerationNotification.deleted_at.is_(None),
-                        )
-                    )
-                    .order_by(GenerationNotification.created_at.asc())
-                )
-                notifications = list(result.scalars())
-
-                if notifications:
-                    delivered_at = datetime.now(UTC)
-
-                    for notif in notifications:
-                        await session.execute(
-                            update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
-                        )
-
-                    for notification in notifications:
-                        message: WebsocketMessage[dict[str, Any]] = {
-                            "type": "info" if notification.notification_type == "info" else "error",
-                            "parent_id": application_id,
-                            "event": notification.event,
-                            "data": notification.data if notification.data else {"message": notification.message},
-                            "trace_id": "",
-                        }
-                        notifications_to_send.append((notification, message))
+            notifications_to_send = await pull_notifications(
+                parent_id=application_id,
+                session_maker=session_maker,
+            )
 
             poll_duration = time.time() - poll_start
 
@@ -97,11 +110,10 @@ async def handle_grant_application_notifications(
                     poll_duration_ms=round(poll_duration * 1000, 2),
                 )
 
-                for notification, message in notifications_to_send:
+                for message in notifications_to_send:
                     logger.debug(
                         "Sending notification to WebSocket client",
-                        notification_event=notification.event,
-                        notification_id=str(notification.id),
+                        notification_event=message.get("event"),
                         application_id=str(application_id),
                     )
                     yield message
