@@ -11,5 +11,5 @@ export default defineConfig({
 		casing: "camel",
 	},
 	out: "./drizzle",
-	schema: "./src/db/schema.ts",
+	schema: "./src/db.ts",
 });
