@@ -667,22 +667,14 @@ async def handle_duplicate_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": original_app.description,
-                        "status": ApplicationStatusEnum.WORKING_DRAFT,
+                        "status": ApplicationStatusEnum.IN_PROGRESS,
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
-                        "text": original_app.text,
+                        "text": None,
                         "parent_id": application_id,
                     }
                 )
                 .returning(GrantApplication)
-            )
-
-            await session.execute(
-                insert(EditorDocument).values(
-                    {
-                        "grant_application_id": new_app.id,
-                    }
-                )
             )
 
             new_app_id = new_app.id
