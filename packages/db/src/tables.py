@@ -390,7 +390,9 @@ class GrantingInstitutionSource(Base):
     granting_institution: Relationship["GrantingInstitution"] = relationship(
         "GrantingInstitution", back_populates="rag_sources"
     )
-    rag_source: Relationship["RagSource"] = relationship("RagSource")
+    rag_source: Relationship["RagSource"] = relationship(
+        "RagSource", foreign_keys="[GrantingInstitutionSource.rag_source_id]"
+    )
 
 
 class GrantApplication(BaseWithUUIDPK):
@@ -451,7 +453,9 @@ class GrantApplicationSource(Base):
     )
 
     grant_application: Relationship["GrantApplication"] = relationship("GrantApplication", back_populates="rag_sources")
-    rag_source: Relationship["RagSource"] = relationship("RagSource")
+    rag_source: Relationship["RagSource"] = relationship(
+        "RagSource", foreign_keys="[GrantApplicationSource.rag_source_id]"
+    )
 
 
 class GrantTemplate(BaseWithUUIDPK):
@@ -498,7 +502,9 @@ class GrantTemplateSource(Base):
     )
 
     grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="rag_sources")
-    rag_source: Relationship["RagSource"] = relationship("RagSource")
+    rag_source: Relationship["RagSource"] = relationship(
+        "RagSource", foreign_keys="[GrantTemplateSource.rag_source_id]"
+    )
 
 
 class RagGenerationJob(BaseWithUUIDPK):
