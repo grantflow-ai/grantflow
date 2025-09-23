@@ -3718,6 +3718,7 @@ embeddings = [
     { name = "sentence-transformers", extra = ["onnx"] },
 ]
 extraction = [
+    { name = "en-core-web-sm" },
     { name = "kreuzberg", extra = ["chunking", "document-classification", "entity-extraction", "langdetect"] },
 ]
 gcs = [
@@ -3750,6 +3751,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", marker = "extra == 'ai'", specifier = ">=0.54" },
     { name = "anyio", specifier = ">=4.9" },
+    { name = "en-core-web-sm", marker = "extra == 'extraction'", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "en-core-web-sm", marker = "extra == 'nlp'", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "google-cloud-pubsub", marker = "extra == 'pubsub'", specifier = ">=2.30" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
