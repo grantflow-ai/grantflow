@@ -146,6 +146,14 @@ resource "google_pubsub_topic_iam_member" "backend_publisher" {
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
+resource "google_pubsub_topic" "frontend_notifications" {
+  name = "frontend-notifications"
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
 resource "google_pubsub_topic" "rag_processing" {
   name = "rag-processing"
 
