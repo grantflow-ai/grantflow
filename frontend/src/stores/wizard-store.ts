@@ -65,6 +65,7 @@ interface WizardActions {
 	handleTitleChange: (title: string) => void;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
 	polling: PollingActions;
+	refreshApplicationData: () => Promise<void>;
 	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
 	resetApplicationGenerationComplete: () => void;
@@ -91,7 +92,7 @@ interface WizardActions {
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<ResearchObjective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: ResearchObjective[]) => Promise<void>;
 	updateTasksForObjective: (objectiveNumber: number, tasks: ResearchObjective["research_tasks"]) => Promise<void>;
-	validateStepNext: () => ValidationResult;
+	validateStepNext: () => Promise<ValidationResult>;
 }
 
 interface WizardState {
@@ -644,6 +645,26 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			},
 		},
 
+		refreshApplicationData: async () => {
+			const { application } = useApplicationStore.getState();
+			if (!application) {
+				return;
+			}
+
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				return;
+			}
+
+			try {
+				await useApplicationStore
+					.getState()
+					.getApplication(selectedOrganizationId, application.project_id, application.id);
+			} catch (error) {
+				log.error("refreshApplicationData failed", error);
+			}
+		},
+
 		removeObjective: async (objectiveNumber: number): Promise<void> => {
 			return withErrorHandling(async () => {
 				const currentObjectives = getCurrentObjectives();
@@ -959,8 +980,12 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}, "Update tasks for research objective");
 		},
 
-		validateStepNext: (): ValidationResult => {
+		validateStepNext: async (): Promise<ValidationResult> => {
 			const { currentStep } = get();
+
+			// Always refresh application data to get latest state
+			await get().refreshApplicationData();
+
 			const { application } = useApplicationStore.getState();
 
 			if (!application) {

@@ -248,7 +248,6 @@ export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 	granting_institution: factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined,
 	granting_institution_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	id: factory.string.uuid(),
-	rag_job_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
 	submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
 	updated_at: factory.date.recent().toISOString(),

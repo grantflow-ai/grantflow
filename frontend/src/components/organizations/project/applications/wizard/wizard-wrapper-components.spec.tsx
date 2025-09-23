@@ -144,7 +144,9 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 	describe.sequential("Button State Management", () => {
 		it("disables continue button when step validation fails", () => {
-			const mockValidateStepNext = vi.fn(() => ({ isValid: false, reason: "test validation failed" }));
+			const mockValidateStepNext = vi.fn(() =>
+				Promise.resolve({ isValid: false, reason: "test validation failed" }),
+			);
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -172,7 +174,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("disables continue button when RAG sources are not processed (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -199,7 +201,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("enables continue button when RAG sources are processed (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -226,7 +228,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("enables continue button with mixed FINISHED and FAILED RAG sources (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -253,7 +255,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("disables continue button when RAG sources are CREATED (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -280,7 +282,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("handles edge cases with no RAG sources (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -304,7 +306,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("handles edge case with no grant template (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -325,7 +327,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		it("uses local validation only for APPLICATION_DETAILS step", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -356,7 +358,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -387,7 +389,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -426,7 +428,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			useApplicationStore.setState({
@@ -461,7 +463,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -495,7 +497,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: false, reason: "test validation failed" })),
 			});
 
 			render(<WizardFooter />);
@@ -517,7 +519,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.KNOWLEDGE_BASE,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			render(<WizardFooter />);
@@ -538,7 +540,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -568,7 +570,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -594,7 +596,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 				reset: mockReset,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			render(<WizardFooter />);
@@ -634,7 +636,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
 				toNextStep: mockToNextStep,
-				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
+				validateStepNext: vi.fn(() => Promise.resolve({ isValid: true, reason: "test validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -901,10 +903,12 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 		useWizardStore.setState({
 			currentStep: WizardStep.APPLICATION_DETAILS,
-			validateStepNext: vi.fn(() => ({
-				isValid: true,
-				reason: ApplicationDetailsValidationReason.VALID,
-			})),
+			validateStepNext: vi.fn(() =>
+				Promise.resolve({
+					isValid: true,
+					reason: ApplicationDetailsValidationReason.VALID,
+				}),
+			),
 		});
 	});
 
@@ -1062,10 +1066,12 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 	describe("Error tracking", () => {
 		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
-			const validateStepNextSpy = vi.fn(() => ({
-				isValid: true,
-				reason: ApplicationDetailsValidationReason.VALID,
-			}));
+			const validateStepNextSpy = vi.fn(() =>
+				Promise.resolve({
+					isValid: true,
+					reason: ApplicationDetailsValidationReason.VALID,
+				}),
+			);
 
 			useWizardStore.setState({
 				validateStepNext: validateStepNextSpy,
@@ -1073,10 +1079,12 @@ describe("WizardFooter - Analytics Tracking", () => {
 
 			render(<WizardFooter />);
 
-			validateStepNextSpy.mockReturnValue({
-				isValid: false,
-				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
-			});
+			validateStepNextSpy.mockReturnValue(
+				Promise.resolve({
+					isValid: false,
+					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+				}),
+			);
 
 			const continueButton = screen.getByTestId("continue-button");
 			await user.click(continueButton);
@@ -1097,15 +1105,15 @@ describe("WizardFooter - Analytics Tracking", () => {
 			const validateStepNextSpy = vi.fn(() => {
 				callCount++;
 				if (callCount === 1) {
-					return {
+					return Promise.resolve({
 						isValid: true,
 						reason: ApplicationDetailsValidationReason.VALID,
-					};
+					});
 				}
-				return {
+				return Promise.resolve({
 					isValid: false,
 					reason: ApplicationDetailsValidationReason.TITLE_INVALID,
-				};
+				});
 			});
 
 			useWizardStore.setState({
@@ -1142,15 +1150,15 @@ describe("WizardFooter - Analytics Tracking", () => {
 			const validateStepNextSpy = vi.fn(() => {
 				callCount++;
 				if (callCount === 1) {
-					return {
+					return Promise.resolve({
 						isValid: true,
 						reason: ApplicationDetailsValidationReason.VALID,
-					};
+					});
 				}
-				return {
+				return Promise.resolve({
 					isValid: false,
 					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
-				};
+				});
 			});
 
 			useWizardStore.setState({
@@ -1190,15 +1198,15 @@ describe("WizardFooter - Analytics Tracking", () => {
 			const validateStepNextSpy = vi.fn(() => {
 				callCount++;
 				if (callCount === 1) {
-					return {
+					return Promise.resolve({
 						isValid: true,
 						reason: ApplicationDetailsValidationReason.VALID,
-					};
+					});
 				}
-				return {
+				return Promise.resolve({
 					isValid: false,
 					reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
-				};
+				});
 			});
 
 			useWizardStore.setState({
