@@ -1,9 +1,7 @@
-!functions/requirements.txt
 *$py.class
 **/*.log
 **/.venv
 **/__pycache__/
-venv/
 **/http-client.private.env.json
 *.iml
 *.pem
@@ -13,7 +11,6 @@ venv/
 *.terraform.lock.hcl
 *.tfplan
 *.tfplan.*
-tfplan
 *.tfstate
 *.tfstate.*
 *.tfvars
@@ -26,15 +23,19 @@ tfplan
 *storybook.log
 .cache/
 .claude/
+.claude/agents/
 .coverage*
 .coverage/
 .cursor/
+.cursor/rules/
 .cursorrules
 .DS_Store
 .env
 .env.local
 .eslintcache
 .gemini/
+.github/copilot-instructions.md
+.mcp.json
 .mypy_cache
 .next/
 .pytest_cache
@@ -44,15 +45,17 @@ tfplan
 .terraform/
 .terraformrc
 .turbo/
+.uv-cache/
 .venv/
 .vercel/
+.windsurf/
 .windsurfrules
+AGENTS.md
 AI_EVALUATION_BENCHMARK_REPORT.md
 build/
 CLAUDE.md
 coverage.*
 coverage/
-htmlcov/
 crash.*.log
 crash.log
 dist/
@@ -61,30 +64,20 @@ frontend/functions/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/
+functions/requirements.txt
 GEMINI.md
+htmlcov/
 models/
 node_modules/
+openapi.json
 out/
 override.tf
 override.tf.json
 requirements.txt
 sentence-transformers/
 storybook-static/
+temp*
 terraform.rc
 testing/test_data/results/
-openapi.json
-
-# AI Rules generated files
-.claude/agents/
-
-# IDE specific
-.windsurf/
-.mcp.json
-.github/copilot-instructions.md
-
-# Temporary files and logs
-temp*
-
-# AI Rules generated files
-.cursor/rules/
-AGENTS.md
+tfplan
+venv/

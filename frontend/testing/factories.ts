@@ -454,7 +454,7 @@ export const WebSocketMessageFactory = new Factory<WebsocketMessage<unknown>>((f
 	data: {},
 	event: factory.helpers.arrayElement(["source_processing", "template_generation", "error"]),
 	parent_id: factory.string.uuid(),
-	type: factory.helpers.arrayElement(["data", "error", "info"]),
+	type: factory.helpers.arrayElement(["info", "error", "warning", "success"]),
 }));
 
 export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketMessage<SourceProcessingNotification>>(
@@ -464,7 +464,7 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 			data: notification,
 			event: "source_processing",
 			parent_id: factory.string.uuid(),
-			type: "data",
+			type: "info",
 		};
 	},
 );
@@ -499,7 +499,7 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Ra
 		data: status,
 		event: status.event,
 		parent_id: factory.string.uuid(),
-		type: "data",
+		type: "info",
 	};
 });
 
@@ -548,7 +548,7 @@ export const AutofillProgressMessageFactory = new Factory<WebsocketMessage<Autof
 			"autofill_error",
 		]),
 		parent_id: factory.string.uuid(),
-		type: factory.datatype.boolean() && factory.helpers.maybe(() => true, { probability: 0.9 }) ? "data" : "error",
+		type: factory.datatype.boolean() && factory.helpers.maybe(() => true, { probability: 0.9 }) ? "info" : "error",
 	};
 });
 

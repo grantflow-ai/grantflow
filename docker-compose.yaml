@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: local
       POSTGRES_DB: local
     ports:
-      - "5433:5432" # we are using port 5433 for the PostgreSQL database because 5432 is used by local db or cloud proxy.
+      - "5433:5432" 
     volumes:
       - data:/var/lib/postgresql/data
       - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql

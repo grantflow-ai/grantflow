@@ -39,7 +39,7 @@ export interface WebsocketMessage<T> {
 	event: string;
 	parent_id: string;
 	trace_id?: string;
-	type: "data" | "error" | "info";
+	type: "error" | "info" | "success" | "warning";
 }
 
 export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
