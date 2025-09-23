@@ -239,7 +239,9 @@ class RagSource(BaseWithUUIDPK):
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
     )
-    parent: Relationship["RagSource | None"] = relationship("RagSource", remote_side="RagSource.id", backref="children")
+    parent: Relationship["RagSource | None"] = relationship(
+        "RagSource", remote_side="[RagSource.id]", foreign_keys="[RagSource.parent_id]", backref="children"
+    )
 
     __mapper_args__ = {  # noqa: RUF012
         "polymorphic_identity": "rag_source",
