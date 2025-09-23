@@ -34,6 +34,7 @@ from services.crawler.src.extraction import crawl_url, FileContent
 from services.crawler.src.utils import filter_url
 from packages.db.src.tables import (
     RagFile,
+    RagSource,
     GrantApplicationSource,
     GrantTemplateSource,
     GrantingInstitutionSource,
@@ -74,16 +75,30 @@ async def handle_gcs_file_upload(
             mime_type = SUPPORTED_FILE_EXTENSIONS[file_extension]
 
             logger.debug(
-                "Creating RagFile record",
+                "Creating RagSource and RagFile records",
                 filename=file["filename"],
                 file_extension=file_extension,
                 mime_type=mime_type,
             )
 
+            # Create the RagSource for this file (DB will auto-generate UUID)
+            result = await session.execute(
+                insert(RagSource)
+                .values(
+                    {
+                        "source_type": "rag_file",
+                        "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    }
+                )
+                .returning(RagSource.id)
+            )
+            file_source_id = result.scalar_one()
+
+            # Then create the RagFile with the same ID
             await session.execute(
                 insert(RagFile).values(
                     {
-                        "id": str(source_id),
+                        "id": file_source_id,
                         "bucket_name": "",
                         "object_path": object_path,
                         "filename": file["filename"],
@@ -98,7 +113,7 @@ async def handle_gcs_file_upload(
                     insert(GrantingInstitutionSource)
                     .values(
                         {
-                            "rag_source_id": source_id,
+                            "rag_source_id": file_source_id,
                             "granting_institution_id": crawling_request["entity_id"],
                         }
                     )
@@ -109,7 +124,7 @@ async def handle_gcs_file_upload(
                     insert(GrantApplicationSource)
                     .values(
                         {
-                            "rag_source_id": source_id,
+                            "rag_source_id": file_source_id,
                             "grant_application_id": crawling_request["entity_id"],
                         }
                     )
@@ -120,7 +135,7 @@ async def handle_gcs_file_upload(
                     insert(GrantTemplateSource)
                     .values(
                         {
-                            "rag_source_id": source_id,
+                            "rag_source_id": file_source_id,
                             "grant_template_id": crawling_request["entity_id"],
                         }
                     )
