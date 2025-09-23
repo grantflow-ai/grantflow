@@ -176,7 +176,6 @@ async def test_crawling_quality_assessment(
     logger.info("Running quality assessment for crawling: %s", test_url)
 
     try:
-        # Setup memory store for testing
         memory_store = MemoryStore()
         session_key = f"test_session_{grant_application_file.rag_source_id}"
         await memory_store.set(session_key, serialize([]), expires_in=3600)
@@ -276,7 +275,6 @@ async def test_link_relevance_assessment(logger: logging.Logger) -> None:
     mock_main_embeddings = [[0.1] * 384]
     visited_urls: list[str] = []
 
-    # Use a mock memory store for testing
     memory_store = MemoryStore()
     session_key = "test_session"
     await memory_store.set(session_key, serialize(visited_urls), expires_in=3600)
@@ -374,7 +372,6 @@ async def test_comprehensive_crawling_pipeline(
     logger.info("Running comprehensive crawling pipeline evaluation for %s", test_url)
 
     try:
-        # Setup memory store for testing
         memory_store = MemoryStore()
         session_key = f"test_session_{grant_application_file.rag_source_id}"
         await memory_store.set(session_key, serialize([]), expires_in=3600)

@@ -73,7 +73,7 @@ function KnowledgeBasePreview() {
 	const pendingUploads = useApplicationStore((state) => state.pendingUploads.application);
 
 	const knowledgeBaseFiles: FileWithSource[] = (applicationRagSources ?? [])
-		.filter((source) => source.filename && source.status !== SourceIndexingStatus.FAILED)
+		.filter((source) => source.filename && (source.status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED)
 		.map((source) => {
 			const file = new File([], source.filename!, { type: "application/octet-stream" });
 			return Object.assign(file, {
@@ -84,7 +84,7 @@ function KnowledgeBasePreview() {
 		});
 
 	const knowledgeBaseUrls: UrlWithSource[] = (applicationRagSources ?? [])
-		.filter((source) => source.url && source.status !== SourceIndexingStatus.FAILED)
+		.filter((source) => source.url && (source.status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED)
 		.map((source) => ({
 			sourceId: source.sourceId,
 			sourceStatus: source.status,

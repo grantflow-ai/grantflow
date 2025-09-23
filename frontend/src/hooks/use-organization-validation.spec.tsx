@@ -164,7 +164,7 @@ describe("useOrganizationValidation", () => {
 
 			vi.mocked(useOrganizationStore).mockReturnValue({
 				clearOrganization: mockClearOrganization,
-				selectedOrganizationId: "org-1", // Different from cookie
+				selectedOrganizationId: "org-1",
 				selectOrganization: mockSelectOrganization,
 				setOrganizations: mockSetOrganizations,
 			});
@@ -187,7 +187,7 @@ describe("useOrganizationValidation", () => {
 
 			vi.mocked(useOrganizationStore).mockReturnValue({
 				clearOrganization: mockClearOrganization,
-				selectedOrganizationId: "org-2", // Same as cookie
+				selectedOrganizationId: "org-2",
 				selectOrganization: mockSelectOrganization,
 				setOrganizations: mockSetOrganizations,
 			});

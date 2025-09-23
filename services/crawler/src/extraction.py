@@ -264,7 +264,6 @@ async def find_relevant_links(
     start_time = time.time()
     logger.debug("Finding relevant links", total_links=len(normal_links))
 
-    # Get visited URLs from memory store
     visited_data = await memory_store.get(session_key)
     visited_urls: set[str] = (
         set(deserialize(visited_data, list[str])) if visited_data else set()
@@ -284,7 +283,6 @@ async def find_relevant_links(
             skipped_count += 1
             continue
 
-        # Mark as visited BEFORE downloading to prevent races in gather
         visited_urls.add(normalized_link)
         await memory_store.set(
             session_key, serialize(list(visited_urls)), expires_in=3600
@@ -373,13 +371,11 @@ async def crawl(
         if results is None:
             results = []
 
-        # Get visited URLs from memory store
         visited_data = await memory_store.get(session_key)
         visited_urls: set[str] = (
             set(deserialize(visited_data, list[str])) if visited_data else set()
         )
 
-        # Check if already visited
         normalized_url = normalize_url(url)
         if normalized_url in visited_urls and raw_html is None:
             logger.debug(
@@ -389,7 +385,6 @@ async def crawl(
             )
             return results
 
-        # Mark as visited
         visited_urls.add(normalized_url)
         await memory_store.set(
             session_key, serialize(list(visited_urls)), expires_in=3600
@@ -399,7 +394,6 @@ async def crawl(
         base_url = f"{parsed.scheme}://{parsed.netloc}"
 
         prep_start = time.time()
-        # Download if not cached
         if not raw_html:
             try:
                 raw_html = await download_page_html(url)

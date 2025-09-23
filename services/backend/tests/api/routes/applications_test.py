@@ -404,7 +404,6 @@ async def test_retrieve_application_with_rag_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        # Create RagSource for file first
         from packages.db.src.enums import SourceIndexingStatusEnum
 
         file_source = RagSource(
@@ -414,7 +413,6 @@ async def test_retrieve_application_with_rag_sources(
         session.add(file_source)
         await session.flush()
 
-        # Create RagFile with proper fields
         rag_file = RagFile(
             id=file_source.id,
             bucket_name="test-bucket",
@@ -425,7 +423,6 @@ async def test_retrieve_application_with_rag_sources(
         )
         session.add(rag_file)
 
-        # Create RagSource for URL
         url_source = RagSource(
             source_type="rag_url",
             indexing_status=SourceIndexingStatusEnum.CREATED,
@@ -433,7 +430,6 @@ async def test_retrieve_application_with_rag_sources(
         session.add(url_source)
         await session.flush()
 
-        # Create RagUrl with proper fields - URL should be normalized
         from packages.shared_utils.src.url_utils import normalize_url
 
         rag_url = RagUrl(

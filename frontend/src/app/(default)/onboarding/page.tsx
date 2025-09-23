@@ -37,14 +37,12 @@ export default function Onboarding() {
 	});
 
 	useEffect(() => {
-		// Redirect to login if no user
 		if (!user) {
 			log.warn("No user found in onboarding, redirecting to login");
 			router.replace(routes.login());
 			return;
 		}
 
-		// Redirect to organization if profile is already complete
 		if (user.displayName && user.displayName.trim().length >= 2) {
 			log.info("User profile already complete, redirecting to organization");
 			router.replace(routes.organization.root());
@@ -67,7 +65,6 @@ export default function Onboarding() {
 				displayName: data.displayName,
 			});
 
-			// Update local user store
 			setUser({
 				...user,
 				displayName: data.displayName,
@@ -75,7 +72,6 @@ export default function Onboarding() {
 
 			toast.success("Profile completed successfully!");
 
-			// Redirect to organization
 			router.replace(routes.organization.root());
 		} catch (error) {
 			log.error("Failed to update user profile", error);
@@ -85,12 +81,10 @@ export default function Onboarding() {
 		}
 	};
 
-	// Don't render if no user (will redirect)
 	if (!user) {
 		return null;
 	}
 
-	// Don't render if profile is already complete (will redirect)
 	if (user.displayName && user.displayName.trim().length >= 2) {
 		return null;
 	}

@@ -156,7 +156,6 @@ async def handle_create_rag_source(
                 normalized_url = normalize_url(url)
                 rag_url_alias = aliased(RagUrl)
 
-                # Check for existing URL within the same parent entity
                 parent_constraint = None
                 if application_id:
                     parent_constraint = select(GrantApplicationSource.rag_source_id).where(
@@ -508,7 +507,6 @@ async def handle_delete_rag_source(
                     )
                 )
                 if template:
-                    # Cancel any active RAG jobs for this template
                     rag_jobs = await session.scalars(
                         select(RagGenerationJob).where(
                             RagGenerationJob.grant_template_id == template_id,
@@ -532,7 +530,6 @@ async def handle_delete_rag_source(
                     )
                 )
                 if application:
-                    # Cancel any active RAG jobs for this application
                     rag_jobs = await session.scalars(
                         select(RagGenerationJob).where(
                             RagGenerationJob.grant_application_id == application_id,
