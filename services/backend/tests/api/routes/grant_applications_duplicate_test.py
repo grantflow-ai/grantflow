@@ -2,7 +2,14 @@ from typing import Any
 from uuid import uuid4
 
 from packages.db.src.enums import ApplicationStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, OrganizationUser, Project
+from packages.db.src.tables import (
+    EditorDocument,
+    GrantApplication,
+    GrantApplicationSource,
+    GrantTemplate,
+    OrganizationUser,
+    Project,
+)
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
@@ -41,7 +48,7 @@ async def test_duplicate_application_success(
 
     assert data["title"] == "Copy of Test Application"
     assert data["description"] == "Original description"
-    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
     assert data["parent_id"] == str(grant_application.id)
     assert data["id"] != str(grant_application.id)
 
@@ -51,7 +58,7 @@ async def test_duplicate_application_success(
         assert new_app.parent_id == grant_application.id
         assert new_app.form_inputs == {"field1": "value1"}
         assert new_app.research_objectives == [{"objective": "Test objective"}]
-        assert new_app.text == "Original text content"
+        assert new_app.text is None
 
 
 async def test_duplicate_application_not_found(
@@ -234,7 +241,7 @@ async def test_duplicate_application_preserves_status_as_draft(
 
     assert response.status_code == 201
     data = response.json()
-    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
 
 
 async def test_duplicate_application_long_title(
@@ -259,3 +266,38 @@ async def test_duplicate_application_long_title(
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == long_title
+
+
+async def test_duplicate_application_no_editor_document(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+    project_owner_user: OrganizationUser,
+) -> None:
+    """Test that duplicating an application does not create an EditorDocument"""
+    project_id = grant_application.project_id
+
+    async with async_session_maker() as session:
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
+
+    response = await test_client.post(
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
+        json={"title": "Copy without Editor Document"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+
+    # Verify no EditorDocument was created for the new application
+    async with async_session_maker() as session:
+        from sqlalchemy import select
+
+        editor_doc = await session.execute(
+            select(EditorDocument).where(
+                EditorDocument.grant_application_id == data["id"],
+                EditorDocument.deleted_at.is_(None),
+            )
+        )
+        assert editor_doc.scalar_one_or_none() is None
