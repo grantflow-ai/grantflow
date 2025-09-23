@@ -38,15 +38,6 @@ output "url_crawling_subscription_name" {
   value       = google_pubsub_subscription.url_crawling_subscription.name
 }
 
-output "frontend_notifications_topic_id" {
-  description = "The ID of the frontend notifications topic"
-  value       = google_pubsub_topic.frontend_notifications.id
-}
-
-output "frontend_notifications_topic_name" {
-  description = "The name of the frontend notifications topic"
-  value       = google_pubsub_topic.frontend_notifications.name
-}
 
 output "email_notifications_topic_id" {
   description = "The ID of the email notifications topic"
