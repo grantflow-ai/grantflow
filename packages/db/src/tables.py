@@ -231,6 +231,7 @@ class RagSource(BaseWithUUIDPK):
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
+    indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
