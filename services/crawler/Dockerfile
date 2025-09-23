@@ -29,6 +29,9 @@ COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/crawler/src/ /app/services/crawler/src/
 COPY --chown=appuser:appuser packages /app/packages
 
+# Create cache directory for kreuzberg
+RUN mkdir -p /app/.cache && chown -R appuser:appuser /app/.cache
+
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
     APP="services.crawler.src.main:app"
