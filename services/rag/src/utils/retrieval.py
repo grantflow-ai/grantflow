@@ -1,3 +1,5 @@
+import hashlib
+import json
 import time
 from typing import Any, Final, TypedDict, cast
 
@@ -7,7 +9,6 @@ from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSo
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.ttl_cache import ttl_lru_cache
 from sqlalchemy import func, or_
 
 from services.rag.src.dto import DocumentDTO
@@ -21,6 +22,38 @@ logger = get_logger(__name__)
 MAX_RESULTS: Final[int] = 100
 MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
 MIN_QUALITY_SCORE: Final[float] = 7.0
+
+# Simple TTL cache for document retrieval
+_document_cache: dict[str, tuple[list[str], float]] = {}
+CACHE_TTL_SECONDS: Final[int] = 300  # 5 minutes
+
+
+def _create_cache_key(**kwargs: Any) -> str:
+    """Create a cache key from function arguments."""
+    # Remove non-cacheable arguments
+    cache_data = {k: v for k, v in kwargs.items() if k != "trace_id"}
+    cache_str = json.dumps(cache_data, sort_keys=True, default=str)
+    return hashlib.sha256(cache_str.encode()).hexdigest()[:16]
+
+
+def _get_cached_documents(cache_key: str) -> list[str] | None:
+    """Get cached documents if not expired."""
+    if cache_key in _document_cache:
+        documents, timestamp = _document_cache[cache_key]
+        if time.time() - timestamp < CACHE_TTL_SECONDS:
+            logger.debug("Document cache hit", cache_key=cache_key)
+            return documents
+        # Remove expired entry
+        del _document_cache[cache_key]
+        logger.debug("Document cache expired", cache_key=cache_key)
+    return None
+
+
+def _cache_documents(cache_key: str, documents: list[str]) -> None:
+    """Cache documents with current timestamp."""
+    _document_cache[cache_key] = (documents, time.time())
+    logger.debug("Document cache set", cache_key=cache_key, count=len(documents))
+
 
 RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT: Final[str] = """
 You are an AI assistant specializing in evaluating and improving information retrieval quality for Retrieval Augmented Generation (RAG) systems.
@@ -263,7 +296,6 @@ async def retrieve_documents(
     )
 
 
-@ttl_lru_cache(maxsize=128, ttl_seconds=300)
 async def _retrieve_documents_cached(
     *,
     application_id: str | None = None,
@@ -278,6 +310,24 @@ async def _retrieve_documents_cached(
     trace_id: str,
     kwargs: dict[str, Any],
 ) -> list[str]:
+    # Check cache first
+    cache_key = _create_cache_key(
+        application_id=application_id,
+        max_results=max_results,
+        max_tokens=max_tokens,
+        model=model,
+        organization_id=organization_id,
+        search_queries_tuple=search_queries_tuple,
+        task_description=task_description,
+        with_guided_retrieval=with_guided_retrieval,
+        embedding_model=embedding_model,
+        **kwargs,
+    )
+
+    cached_documents = _get_cached_documents(cache_key)
+    if cached_documents is not None:
+        return cached_documents
+
     start_time = time.time()
     entity_id = application_id or organization_id
     entity_type = "application" if application_id else "organization"
@@ -420,5 +470,8 @@ async def _retrieve_documents_cached(
         total_duration_ms=round(total_duration * 1000, 2),
         trace_id=trace_id,
     )
+
+    # Cache the results
+    _cache_documents(cache_key, best_processed_contents)
 
     return best_processed_contents

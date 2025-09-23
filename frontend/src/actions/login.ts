@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
 import type { API } from "@/types/api-types";
@@ -9,7 +8,6 @@ import { getClient } from "@/utils/api/server";
 import { getEnv } from "@/utils/env";
 import { getOrganizationFromJWT } from "@/utils/jwt";
 import { log } from "@/utils/logger/server";
-import { routes } from "@/utils/navigation";
 
 export async function login(idToken: string) {
 	const started = Date.now();
@@ -66,7 +64,7 @@ export async function login(idToken: string) {
 			throw new Error("Authentication failed. Please try logging in again.");
 		}
 
-		redirect(routes.organization.root());
+		// Note: Profile completeness check and redirect is handled by the calling code
 	} catch (error) {
 		if (error instanceof Error && error.message === "NEXT_REDIRECT") {
 			throw error;

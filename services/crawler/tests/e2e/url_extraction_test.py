@@ -12,7 +12,8 @@ from testing.performance_framework import (
     performance_test,
 )
 
-from services.crawler.src.extraction import extract_links, prepare_url_data
+from services.crawler.src.extraction import extract_links
+from services.crawler.src.utils import download_page_html
 
 
 @performance_test(
@@ -31,7 +32,8 @@ async def test_url_content_extraction(
     logger.info("Running URL content extraction test for %s", test_url)
 
     try:
-        html_content, visited_urls = await prepare_url_data(test_url)
+        html_content = await download_page_html(test_url)
+        visited_urls = {test_url}
 
         assert html_content is not None, "HTML content is None"
         assert isinstance(html_content, str), "HTML content should be a string"

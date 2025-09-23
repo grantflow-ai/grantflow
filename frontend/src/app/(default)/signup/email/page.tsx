@@ -6,13 +6,13 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
-
 import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useUserStore } from "@/stores/user-store";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
+import { checkProfileAndRedirect } from "@/utils/onboarding";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
@@ -26,7 +26,7 @@ export default function FinalizeEmailLogin() {
 			const isEmailLink = isSignInWithEmailLink(auth, globalThis.location.href);
 			if (!(email && isEmailLink)) {
 				toast.error("Invalid or expired sign-in link");
-				router.replace(routes.onboarding());
+				router.replace(routes.signup());
 				return;
 			}
 
@@ -37,6 +37,9 @@ export default function FinalizeEmailLogin() {
 
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);
+
+				// Check profile completeness and redirect accordingly
+				checkProfileAndRedirect(cred.user.displayName);
 			} catch (error) {
 				if (!isRedirectError(error)) {
 					log.error("finalizeSignIn", error);
