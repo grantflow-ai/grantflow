@@ -231,6 +231,7 @@ class RagSource(BaseWithUUIDPK):
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
+    indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
@@ -267,7 +268,7 @@ class RagUrl(RagSource):
     __tablename__ = "rag_urls"
 
     id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True)
-    url: Mapped[str] = mapped_column(Text, unique=True)
+    url: Mapped[str] = mapped_column(Text)
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 

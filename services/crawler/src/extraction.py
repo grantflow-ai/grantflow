@@ -9,6 +9,7 @@ from urllib.parse import urljoin, urlparse
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
 from kreuzberg import KreuzbergError
+from litestar.stores.base import Store
 from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import generate_embeddings, index_chunks
@@ -19,6 +20,8 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.html import sanitize_html
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import deserialize, serialize
+from packages.shared_utils.src.url_utils import normalize_url
 from sklearn.metrics.pairwise import cosine_similarity
 from trafilatura import extract
 
@@ -43,24 +46,6 @@ class CrawlResult(TypedDict):
     markdown_content: str
     text_content: str
     saved_path: str
-
-
-async def prepare_url_data(
-    url: str, raw_html: str | None = None, visited_urls: list[str] | None = None
-) -> tuple[str, list[str]]:
-    if visited_urls is None:
-        visited_urls = []
-
-    if not raw_html:
-        try:
-            raw_html = await download_page_html(url)
-            visited_urls.append(url)
-        except (URLError, HTTPError, TimeoutError) as e:
-            raise ExternalOperationError(
-                f"Failed to download page HTML from {url}", context=str(e)
-            ) from e
-
-    return raw_html, visited_urls
 
 
 def extract_links(raw_html: str, base_url: str) -> tuple[set[str], set[str]]:
@@ -271,25 +256,43 @@ async def download_documents(
 
 
 async def find_relevant_links(
-    normal_links: set[str], main_embeddings: list[list[float]], visited_urls: list[str]
+    normal_links: set[str],
+    main_embeddings: list[list[float]],
+    memory_store: Store,
+    session_key: str,
 ) -> list[tuple[str, str, list[list[float]], str]]:
     start_time = time.time()
     logger.debug("Finding relevant links", total_links=len(normal_links))
 
+    # Get visited URLs from memory store
+    visited_data = await memory_store.get(session_key)
+    visited_urls: set[str] = (
+        set(deserialize(visited_data, list[str])) if visited_data else set()
+    )
     relevant_links = []
     processed_count = 0
     skipped_count = 0
 
     for link in normal_links:
-        if link in visited_urls:
-            logger.debug("Already visited url, skipping", url=link)
+        normalized_link = normalize_url(link)
+        if normalized_link in visited_urls:
+            logger.debug(
+                "Already visited url, skipping",
+                url=link,
+                normalized_url=normalized_link,
+            )
             skipped_count += 1
             continue
+
+        # Mark as visited BEFORE downloading to prevent races in gather
+        visited_urls.add(normalized_link)
+        await memory_store.set(
+            session_key, serialize(list(visited_urls)), expires_in=3600
+        )
 
         try:
             link_start = time.time()
             link_html = await download_page_html(str(link))
-            visited_urls.append(str(link))
 
             if link_text := extract(
                 link_html, output_format="markdown", include_comments=False
@@ -352,7 +355,8 @@ async def crawl(
     results: list[CrawlResult] | None = None,
     temp_dir: Path,
     url: str,
-    visited_urls: list[str] | None = None,
+    memory_store: Store,
+    session_key: str,
 ) -> list[CrawlResult]:
     start_time = time.time()
     logger.debug(
@@ -364,22 +368,45 @@ async def crawl(
     )
 
     try:
-        if visited_urls is None:
-            visited_urls = []
         if downloaded_files is None:
             downloaded_files = {}
         if results is None:
             results = []
 
-        if url in visited_urls and raw_html is None:
-            logger.debug("URL already visited, skipping", url=url)
+        # Get visited URLs from memory store
+        visited_data = await memory_store.get(session_key)
+        visited_urls: set[str] = (
+            set(deserialize(visited_data, list[str])) if visited_data else set()
+        )
+
+        # Check if already visited
+        normalized_url = normalize_url(url)
+        if normalized_url in visited_urls and raw_html is None:
+            logger.debug(
+                "URL already visited in this session",
+                url=url,
+                normalized_url=normalized_url,
+            )
             return results
+
+        # Mark as visited
+        visited_urls.add(normalized_url)
+        await memory_store.set(
+            session_key, serialize(list(visited_urls)), expires_in=3600
+        )
 
         parsed = urlparse(url)
         base_url = f"{parsed.scheme}://{parsed.netloc}"
 
         prep_start = time.time()
-        raw_html, visited_urls = await prepare_url_data(url, raw_html, visited_urls)
+        # Download if not cached
+        if not raw_html:
+            try:
+                raw_html = await download_page_html(url)
+            except (URLError, HTTPError, TimeoutError) as e:
+                raise ExternalOperationError(
+                    f"Failed to download page HTML from {url}", context=str(e)
+                ) from e
         prep_duration = time.time() - prep_start
 
         logger.debug(
@@ -451,7 +478,7 @@ async def crawl(
 
         relevant_start = time.time()
         relevant_links = await find_relevant_links(
-            normal_links, main_embeddings, visited_urls
+            normal_links, main_embeddings, memory_store, session_key
         )
         relevant_duration = time.time() - relevant_start
 
@@ -481,7 +508,8 @@ async def crawl(
                         raw_html=rlink[1],
                         main_embeddings=rlink[2],
                         page_text=rlink[3],
-                        visited_urls=visited_urls,
+                        memory_store=memory_store,
+                        session_key=session_key,
                         downloaded_files=downloaded_files,
                     )
                     for rlink in relevant_links
@@ -534,7 +562,11 @@ async def crawl(
 
 
 async def crawl_url(
-    *, url: str, source_id: str
+    *,
+    url: str,
+    source_id: str,
+    memory_store: Store,
+    session_key: str,
 ) -> tuple[list[VectorDTO], str, list[FileContent]]:
     start_time = time.time()
     logger.debug("Starting URL crawl", url=url, source_id=source_id)
@@ -544,7 +576,11 @@ async def crawl_url(
     ):
         crawl_start = time.time()
         crawl_results = await crawl(
-            url=url, temp_dir=Path(temp_dir), is_initial_crawl=True
+            url=url,
+            temp_dir=Path(temp_dir),
+            is_initial_crawl=True,
+            memory_store=memory_store,
+            session_key=session_key,
         )
         crawl_duration = time.time() - crawl_start
 
