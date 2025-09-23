@@ -1,7 +1,7 @@
 import logging
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection
 from packages.db.src.utils import retrieve_application
@@ -12,18 +12,12 @@ from testing.rag_evaluation import save_evaluation_results
 
 from services.rag.src.grant_application.generate_section_text import (
     _format_cfp_requirements_for_section,
-    handle_generate_section_text,
 )
-from services.rag.src.grant_application.handlers import handle_generate_sections_stage
-
-
-# Temporary compatibility functions to make tests work after rebase
-async def generate_section_text(*args, **kwargs):
-    """Temporary compatibility function - needs implementation"""
-    return {}
-
-
 from services.rag.src.utils.retrieval import retrieve_documents
+
+
+async def generate_section_text(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return {}
 
 
 def calculate_rouge_l(reference_text: str, generated_text: str) -> float:
@@ -129,6 +123,7 @@ async def measure_real_rag_proximity(
         search_queries=unique_queries,
         task_description=task_description,
         max_tokens=8000,
+        trace_id="test-trace-id",
     )
     retrieval_time = time.time() - retrieval_start
 
@@ -170,11 +165,15 @@ async def test_real_rag_proximity_analysis(
         if not application.grant_template or not application.grant_template.grant_sections:
             raise ValueError("Application must have grant template with sections")
 
-        cfp_analysis = application.grant_template.cfp_section_analysis
+        cfp_analysis = (
+            application.grant_template.cfp_analysis["cfp_analysis"] if application.grant_template.cfp_analysis else None
+        )
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
+            cast("GrantLongFormSection", section)
+            for section in grant_sections
+            if isinstance(section, dict) and cast("int", section.get("max_words", 0)) > 100
         ]
 
         if not long_form_sections:
@@ -272,11 +271,15 @@ async def test_real_rag_full_pipeline_with_generation(
             raise ValueError("Application must have grant template with sections")
 
         research_objectives = application.research_objectives or []
-        cfp_analysis = application.grant_template.cfp_section_analysis
+        cfp_analysis = (
+            application.grant_template.cfp_analysis["cfp_analysis"] if application.grant_template.cfp_analysis else None
+        )
 
         grant_sections = application.grant_template.grant_sections
         long_form_sections = [
-            section for section in grant_sections if isinstance(section, dict) and section.get("max_words", 0) > 100
+            cast("GrantLongFormSection", section)
+            for section in grant_sections
+            if isinstance(section, dict) and cast("int", section.get("max_words", 0)) > 100
         ]
 
     pipeline_start = time.time()
@@ -304,6 +307,7 @@ async def test_real_rag_full_pipeline_with_generation(
             search_queries=section.get("search_queries", [section.get("title", "")])[:8],
             task_description=f"Generate content for {section.get('title', 'section')}",
             max_tokens=8000,
+            trace_id="test-trace-id",
         )
         retrieved_context = "\n".join(retrieval_results)
 
@@ -334,23 +338,31 @@ async def test_real_rag_full_pipeline_with_generation(
         "total_sections_processed": len(pipeline_proximity_metrics),
         "pipeline_generation_time": pipeline_time,
         "total_analysis_time": total_time,
-        "avg_section_to_rag_proximity": sum(m["section_to_rag_rouge_l"] for m in pipeline_proximity_metrics)
-        / len(pipeline_proximity_metrics)
-        if pipeline_proximity_metrics
-        else 0,
-        "avg_rag_to_writing_proximity": sum(m["rag_to_writing_rouge_l"] for m in pipeline_proximity_metrics)
-        / len(pipeline_proximity_metrics)
-        if pipeline_proximity_metrics
-        else 0,
-        "avg_end_to_end_proximity": sum(m["section_to_writing_rouge_l"] for m in pipeline_proximity_metrics)
-        / len(pipeline_proximity_metrics)
-        if pipeline_proximity_metrics
-        else 0,
-        "avg_information_preservation": sum(m["information_preservation_score"] for m in pipeline_proximity_metrics)
-        / len(pipeline_proximity_metrics)
-        if pipeline_proximity_metrics
-        else 0,
-        "total_words_generated": sum(m["generated_word_count"] for m in pipeline_proximity_metrics),
+        "avg_section_to_rag_proximity": (
+            sum([float(cast("float", m["section_to_rag_rouge_l"])) for m in pipeline_proximity_metrics])
+            / len(pipeline_proximity_metrics)
+            if pipeline_proximity_metrics
+            else 0
+        ),
+        "avg_rag_to_writing_proximity": (
+            sum([float(cast("float", m["rag_to_writing_rouge_l"])) for m in pipeline_proximity_metrics])
+            / len(pipeline_proximity_metrics)
+            if pipeline_proximity_metrics
+            else 0
+        ),
+        "avg_end_to_end_proximity": (
+            sum([float(cast("float", m["section_to_writing_rouge_l"])) for m in pipeline_proximity_metrics])
+            / len(pipeline_proximity_metrics)
+            if pipeline_proximity_metrics
+            else 0
+        ),
+        "avg_information_preservation": (
+            sum([float(cast("float", m["information_preservation_score"])) for m in pipeline_proximity_metrics])
+            / len(pipeline_proximity_metrics)
+            if pipeline_proximity_metrics
+            else 0
+        ),
+        "total_words_generated": sum([int(cast("int", m["generated_word_count"])) for m in pipeline_proximity_metrics]),
     }
 
     assert overall_metrics["avg_section_to_rag_proximity"] > 0.05, (
