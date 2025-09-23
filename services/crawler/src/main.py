@@ -32,6 +32,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.crawler.src.extraction import crawl_url, FileContent
 from services.crawler.src.utils import filter_url
+from services.crawler.src.dev_indexing_bypass import trigger_dev_indexing
 from packages.db.src.tables import (
     RagFile,
     RagSource,
@@ -52,6 +53,7 @@ async def handle_gcs_file_upload(
     crawling_request: CrawlingRequest,
     session_maker: async_sessionmaker[Any],
     source_id: str,
+    trace_id: str = "",
 ) -> None:
     start_time = time.time()
     logger.debug(
@@ -60,6 +62,7 @@ async def handle_gcs_file_upload(
         file_size=len(file["content"]),
         entity_id=str(crawling_request["entity_id"]),
         source_id=source_id,
+        trace_id=trace_id,
     )
     object_path = construct_object_uri(
         entity_type=crawling_request["entity_type"],
@@ -67,7 +70,7 @@ async def handle_gcs_file_upload(
         source_id=source_id,
         blob_name=file["filename"],
     )
-    logger.debug("Constructed object path", object_path=object_path)
+    logger.debug("Constructed object path", object_path=object_path, trace_id=trace_id)
 
     async with session_maker() as session, session.begin():
         try:
@@ -87,6 +90,7 @@ async def handle_gcs_file_upload(
                     {
                         "source_type": "rag_file",
                         "indexing_status": SourceIndexingStatusEnum.CREATED,
+                        "parent_id": source_id,  # Set parent to the URL source
                     }
                 )
                 .returning(RagSource.id)
@@ -159,7 +163,11 @@ async def handle_gcs_file_upload(
                 object_path=object_path,
                 upload_duration_ms=round((time.time() - upload_start) * 1000, 2),
                 total_duration_ms=round((time.time() - start_time) * 1000, 2),
+                trace_id=trace_id,
             )
+
+            # Trigger dev indexing bypass for local development
+            await trigger_dev_indexing(object_path, trace_id)
         except SQLAlchemyError as e:
             logger.error("Failed to create RagFile entry in DB", exc_info=e)
             raise DatabaseError(
@@ -324,6 +332,7 @@ async def handle_url_crawling(
                         crawling_request=crawling_request,
                         session_maker=session_maker,
                         source_id=str(crawling_request["source_id"]),
+                        trace_id=trace_id,
                     )
                     for file in files_to_uploads
                 ]
