@@ -21,6 +21,7 @@ from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.html import sanitize_html
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import deserialize, serialize
+from packages.shared_utils.src.url_utils import normalize_url
 from sklearn.metrics.pairwise import cosine_similarity
 from trafilatura import extract
 
@@ -266,20 +267,25 @@ async def find_relevant_links(
     # Get visited URLs from memory store
     visited_data = await memory_store.get(session_key)
     visited_urls: set[str] = (
-        set(deserialize(visited_data, type_=list[str])) if visited_data else set()
+        set(deserialize(visited_data, list[str])) if visited_data else set()
     )
     relevant_links = []
     processed_count = 0
     skipped_count = 0
 
     for link in normal_links:
-        if link in visited_urls:
-            logger.debug("Already visited url, skipping", url=link)
+        normalized_link = normalize_url(link)
+        if normalized_link in visited_urls:
+            logger.debug(
+                "Already visited url, skipping",
+                url=link,
+                normalized_url=normalized_link,
+            )
             skipped_count += 1
             continue
 
         # Mark as visited BEFORE downloading to prevent races in gather
-        visited_urls.add(link)
+        visited_urls.add(normalized_link)
         await memory_store.set(
             session_key, serialize(list(visited_urls)), expires_in=3600
         )
@@ -370,16 +376,21 @@ async def crawl(
         # Get visited URLs from memory store
         visited_data = await memory_store.get(session_key)
         visited_urls: set[str] = (
-            set(deserialize(visited_data, type_=list[str])) if visited_data else set()
+            set(deserialize(visited_data, list[str])) if visited_data else set()
         )
 
         # Check if already visited
-        if url in visited_urls and raw_html is None:
-            logger.debug("URL already visited in this session", url=url)
+        normalized_url = normalize_url(url)
+        if normalized_url in visited_urls and raw_html is None:
+            logger.debug(
+                "URL already visited in this session",
+                url=url,
+                normalized_url=normalized_url,
+            )
             return results
 
         # Mark as visited
-        visited_urls.add(url)
+        visited_urls.add(normalized_url)
         await memory_store.set(
             session_key, serialize(list(visited_urls)), expires_in=3600
         )

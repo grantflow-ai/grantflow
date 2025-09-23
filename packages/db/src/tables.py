@@ -268,7 +268,7 @@ class RagUrl(RagSource):
     __tablename__ = "rag_urls"
 
     id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), primary_key=True)
-    url: Mapped[str] = mapped_column(Text, unique=True)
+    url: Mapped[str] = mapped_column(Text)
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 

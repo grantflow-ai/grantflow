@@ -8,7 +8,7 @@ export const routes = {
 		const queryString = params.toString();
 		return queryString ? `/accept-invitation?${queryString}` : "/accept-invitation";
 	},
-	finishEmailSignin: () => "/onboarding/email",
+	finishEmailSignin: () => "/signup/email",
 
 	home: () => "/",
 	login: () => "/login",
@@ -38,6 +38,7 @@ export const routes = {
 			personal: () => "/organization/settings/personal",
 		},
 	},
+	signup: () => "/signup",
 };
 
 export interface NavigationOptions {
