@@ -179,7 +179,6 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -192,7 +191,6 @@ export namespace API {
 	id: string;
 	parent_id?: string;
 	project_id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -755,7 +753,6 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -768,7 +765,6 @@ export namespace API {
 	id: string;
 	parent_id?: string;
 	project_id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1518,7 +1514,6 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1531,7 +1526,6 @@ export namespace API {
 	id: string;
 	parent_id?: string;
 	project_id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1825,7 +1819,6 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1838,7 +1831,6 @@ export namespace API {
 	id: string;
 	parent_id?: string;
 	project_id: string;
-	rag_job_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
