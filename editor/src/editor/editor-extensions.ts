@@ -11,6 +11,7 @@ import { Selection } from "@tiptap/extensions";
 import { StarterKit } from "@tiptap/starter-kit";
 import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizontal-rule-node-extension";
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
+import { AiToolsExtension } from "@/components/prompt/ai-tools-extension";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 
 export const EditorExtensions = [
@@ -42,4 +43,5 @@ export const EditorExtensions = [
 	FontFamily,
 	FontSize,
 	TableKit,
+	AiToolsExtension,
 ];
