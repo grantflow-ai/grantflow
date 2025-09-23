@@ -14,7 +14,7 @@ from .env import get_env
 
 def configure_otel(service_name: str) -> None:
     project_id = get_env("GOOGLE_CLOUD_PROJECT", fallback="grantflow")
-    environment = get_env("ENVIRONMENT", fallback="development")
+    environment = get_env("ENVIRONMENT", fallback="staging")
 
     resource = Resource.create(
         {

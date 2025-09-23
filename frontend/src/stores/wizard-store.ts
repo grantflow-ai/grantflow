@@ -983,7 +983,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		validateStepNext: async (): Promise<ValidationResult> => {
 			const { currentStep } = get();
 
-			// Always refresh application data to get latest state
 			await get().refreshApplicationData();
 
 			const { application } = useApplicationStore.getState();

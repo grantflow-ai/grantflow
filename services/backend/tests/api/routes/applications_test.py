@@ -13,7 +13,6 @@ from packages.db.src.tables import (
     OrganizationUser,
     Project,
     RagFile,
-    RagSource,
     RagUrl,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -49,9 +48,11 @@ async def test_list_applications(
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert len(data) >= 3
-    assert all("id" in app for app in data)
-    assert all("title" in app for app in data)
+    assert "applications" in data
+    assert "pagination" in data
+    assert len(data["applications"]) >= 3
+    assert all("id" in app for app in data["applications"])
+    assert all("title" in app for app in data["applications"])
 
 
 async def test_list_applications_empty(
@@ -66,7 +67,9 @@ async def test_list_applications_empty(
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert data == []
+    assert "applications" in data
+    assert "pagination" in data
+    assert data["applications"] == []
 
 
 async def test_list_applications_unauthorized(
@@ -365,6 +368,7 @@ async def test_duplicate_application(
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{original_app.id}/duplicate",
         headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+        json={"title": "Original Application (Copy)"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -372,7 +376,7 @@ async def test_duplicate_application(
 
     assert data["title"] == "Original Application (Copy)"
     assert data["description"] == "Original description"
-    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
     assert data["text"] == "Some text content"
     assert len(data["research_objectives"]) == 1
     assert data["research_objectives"][0]["title"] == "Test Objective"
@@ -390,6 +394,7 @@ async def test_duplicate_application_not_found(
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}/duplicate",
         headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+        json={"title": "Copy of Non-existent"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -405,36 +410,25 @@ async def test_retrieve_application_with_rag_sources(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         from packages.db.src.enums import SourceIndexingStatusEnum
-
-        file_source = RagSource(
-            source_type="rag_file",
-            indexing_status=SourceIndexingStatusEnum.CREATED,
-        )
-        session.add(file_source)
-        await session.flush()
+        from packages.shared_utils.src.url_utils import normalize_url
 
         rag_file = RagFile(
-            id=file_source.id,
             bucket_name="test-bucket",
             object_path="gs://bucket/file.pdf",
             filename="file.pdf",
             mime_type="application/pdf",
             size=1024,
+            source_type="rag_file",
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+            parent_id=None,
         )
         session.add(rag_file)
 
-        url_source = RagSource(
+        rag_url = RagUrl(
+            url=normalize_url("https://example.com"),
             source_type="rag_url",
             indexing_status=SourceIndexingStatusEnum.CREATED,
-        )
-        session.add(url_source)
-        await session.flush()
-
-        from packages.shared_utils.src.url_utils import normalize_url
-
-        rag_url = RagUrl(
-            id=url_source.id,
-            url=normalize_url("https://example.com"),
+            parent_id=None,
         )
         session.add(rag_url)
 
@@ -442,19 +436,19 @@ async def test_retrieve_application_with_rag_sources(
 
         app_file_link = GrantApplicationSource(
             grant_application_id=grant_application.id,
-            rag_source_id=file_source.id,
+            rag_source_id=rag_file.id,
         )
         session.add(app_file_link)
 
         app_url_link = GrantApplicationSource(
             grant_application_id=grant_application.id,
-            rag_source_id=url_source.id,
+            rag_source_id=rag_url.id,
         )
         session.add(app_url_link)
 
         template_file_link = GrantTemplateSource(
             grant_template_id=grant_template.id,
-            rag_source_id=file_source.id,
+            rag_source_id=rag_file.id,
         )
         session.add(template_file_link)
 
@@ -470,14 +464,19 @@ async def test_retrieve_application_with_rag_sources(
 
     assert "rag_sources" in data
     assert len(data["rag_sources"]) == 2
-    source_identifiers = {s["identifier"] for s in data["rag_sources"]}
-    assert "file.pdf" in source_identifiers
-    assert "https://example.com" in source_identifiers
+
+    file_sources = [s for s in data["rag_sources"] if "filename" in s]
+    url_sources = [s for s in data["rag_sources"] if "url" in s]
+
+    assert len(file_sources) == 1
+    assert len(url_sources) == 1
+    assert file_sources[0]["filename"] == "file.pdf"
+    assert url_sources[0]["url"] == "https://example.com/"
 
     assert "grant_template" in data
     assert "rag_sources" in data["grant_template"]
     assert len(data["grant_template"]["rag_sources"]) == 1
-    assert data["grant_template"]["rag_sources"][0]["identifier"] == "file.pdf"
+    assert data["grant_template"]["rag_sources"][0]["filename"] == "file.pdf"
 
 
 @pytest.fixture

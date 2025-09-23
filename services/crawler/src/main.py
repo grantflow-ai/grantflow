@@ -90,7 +90,7 @@ async def handle_gcs_file_upload(
                     {
                         "source_type": "rag_file",
                         "indexing_status": SourceIndexingStatusEnum.CREATED,
-                        "parent_id": source_id,  # Set parent to the URL source
+                        "parent_id": source_id,
                     }
                 )
                 .returning(RagSource.id)
@@ -166,7 +166,6 @@ async def handle_gcs_file_upload(
                 trace_id=trace_id,
             )
 
-            # Trigger dev indexing bypass for local development
             await trigger_dev_indexing(object_path, trace_id)
         except SQLAlchemyError as e:
             logger.error("Failed to create RagFile entry in DB", exc_info=e)

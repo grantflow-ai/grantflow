@@ -314,14 +314,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
-	// We can't use validateStepNext in useMemo since it's async now
-	// Instead, we'll use simple validation for the disabled state (UI only)
-	// The real validation happens when clicking the button
 	const disabled = useMemo(() => {
-		// Basic validation for UI disabled state
 		switch (currentStep) {
 			case WizardStep.APPLICATION_DETAILS: {
-				// Check title and RAG sources locally (may be stale but acceptable for UI)
 				const hasValidTitle = title && title.length >= 10;
 				const hasRagSources = ragSources && ragSources.length > 0;
 				const ragSourcesProcessing = ragSources?.some(
@@ -457,9 +452,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		validateStepNext,
 	]);
 
-	// Show tooltip for disabled button on APPLICATION_DETAILS step
 	if (currentStep === WizardStep.APPLICATION_DETAILS && disabled) {
-		// Determine tooltip message based on current state
 		let tooltipMessage = "Please ensure all requirements are met";
 
 		if (!title || title.length < 10) {
@@ -500,7 +493,6 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		);
 	}
 
-	// Default button for all other cases
 	return (
 		<AppButton
 			data-testid="continue-button"

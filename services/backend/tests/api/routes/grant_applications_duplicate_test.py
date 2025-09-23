@@ -58,7 +58,7 @@ async def test_duplicate_application_success(
         assert new_app.parent_id == grant_application.id
         assert new_app.form_inputs == {"field1": "value1"}
         assert new_app.research_objectives == [{"objective": "Test objective"}]
-        assert new_app.text is None
+        assert new_app.text == "Original text content"
 
 
 async def test_duplicate_application_not_found(

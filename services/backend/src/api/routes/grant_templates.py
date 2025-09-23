@@ -56,7 +56,7 @@ async def handle_generate_grant_template(
         rag_sources_count = await session.scalar(
             select(count())
             .select_from(GrantTemplateSource)
-            .join(RagSource)
+            .join(RagSource, GrantTemplateSource.rag_source_id == RagSource.id)
             .where(
                 GrantTemplateSource.grant_template_id == grant_template_id,
                 GrantTemplateSource.deleted_at.is_(None),

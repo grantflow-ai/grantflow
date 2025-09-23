@@ -716,39 +716,32 @@ describe("Application Store", () => {
 				const { checkAndRestoreJobState } = useApplicationStore.getState();
 				await checkAndRestoreJobState();
 
-				// Job restoration is disabled, so retrieveRagJob should not be called
 				expect(retrieveRagJob).not.toHaveBeenCalled();
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
 
 			it.skip("should restore PROCESSING job state - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 
 			it.skip("should restore PENDING job state - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 
 			it.skip("should not restore COMPLETED job state - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 
 			it.skip("should not restore FAILED job state - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 
 			it.skip("should check grant template rag_job_id if application rag_job_id is missing - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 
 			it.skip("should handle API errors gracefully - disabled after rag_job_id removal", async () => {
-				// This test is disabled because rag_job_id has been removed from the data model
 				// TODO: Update this test when new job restoration logic is implemented
 			});
 		});
