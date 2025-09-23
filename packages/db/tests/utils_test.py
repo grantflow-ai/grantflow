@@ -282,6 +282,8 @@ async def test_update_source_indexing_status_success(
         )
 
     mock_logger = Mock(spec=BoundLogger)
+    mock_logger.debug = Mock()
+    mock_logger.exception = Mock()
     vectors = [
         VectorDTO(
             chunk={"content": "test content"},
@@ -349,6 +351,8 @@ async def test_update_source_indexing_status_no_vectors(
         )
 
     mock_logger = Mock(spec=BoundLogger)
+    mock_logger.debug = Mock()
+    mock_logger.exception = Mock()
 
     await update_source_indexing_status(
         logger=mock_logger,
@@ -376,6 +380,8 @@ async def test_update_source_indexing_status_database_error(
     file_id: UUID = uuid4()
 
     mock_logger = Mock(spec=BoundLogger)
+    mock_logger.debug = Mock()
+    mock_logger.exception = Mock()
     mock_logger.exception = Mock()
 
     mock_session_maker = Mock()
