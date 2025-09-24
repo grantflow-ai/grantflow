@@ -38,6 +38,12 @@ async def handle_cfp_extraction_stage(
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    await job_manager.add_notification(
+        event=NotificationEvents.CFP_DATA_EXTRACTED,
+        message="Analyzing call for proposals document",
+        notification_type="info",
+    )
+
     # this can take a while, that's why we are rechecking cancellation ~keep
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
@@ -119,6 +125,12 @@ async def handle_cfp_analysis_stage(
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    await job_manager.add_notification(
+        event=NotificationEvents.SECTIONS_EXTRACTED,
+        message="Analyzing application requirements",
+        notification_type="info",
+    )
+
     analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
         full_cfp_text="\n".join(
             [
@@ -153,6 +165,12 @@ async def handle_section_extraction_stage(
     trace_id: str,
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
+
+    await job_manager.add_notification(
+        event=NotificationEvents.METADATA_GENERATED,
+        message="Extracting application sections",
+        notification_type="info",
+    )
 
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],

@@ -507,3 +507,352 @@ async def grant_template(
         session.add(template)
         await session.commit()
     return template
+
+
+async def test_download_application_markdown(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application in markdown format."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Test Application",
+            description="Test description",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="# Test Application\n\nThis is test content.",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download?format=markdown",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "text/markdown; charset=utf-8"
+    assert response.headers["content-disposition"] == 'attachment; filename="Test Application.md"'
+    assert "# Test Application" in response.text
+    assert "This is test content." in response.text
+
+
+async def test_download_application_pdf(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application in PDF format."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="PDF Test Application",
+            description="Test description for PDF",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="# PDF Test Application\n\nThis is test content for PDF generation.",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download?format=pdf",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == 'attachment; filename="PDF Test Application.pdf"'
+    assert len(response.content) > 0  # PDF content should exist
+    assert response.content.startswith(b"%PDF")  # PDF signature
+
+
+async def test_download_application_docx(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application in DOCX format."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="DOCX Test Application",
+            description="Test description for DOCX",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="# DOCX Test Application\n\nThis is test content for DOCX generation.",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download?format=docx",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    assert response.headers["content-disposition"] == 'attachment; filename="DOCX Test Application.docx"'
+    assert len(response.content) > 0  # DOCX content should exist
+    assert b"PK" in response.content[:10]  # ZIP signature (DOCX is a ZIP file)
+
+
+async def test_download_application_default_format(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application without format parameter defaults to markdown."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Default Format Test",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="# Default Format Test\n\nContent for default format test.",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "text/markdown; charset=utf-8"
+    assert "Default Format Test.md" in response.headers["content-disposition"]
+
+
+async def test_download_application_invalid_status(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application with invalid status returns validation error."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Invalid Status App",
+            project_id=project.id,
+            status=ApplicationStatusEnum.IN_PROGRESS,
+            text="Some content",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "Application must be in WORKING_DRAFT status to download" in response.text
+
+
+async def test_download_application_no_text_content(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application without text content returns validation error."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="No Content App",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text=None,  # No text content
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "Application has no content to download" in response.text
+
+
+async def test_download_application_empty_text_content(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application with empty text content returns validation error."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Empty Content App",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="   ",  # Empty/whitespace text content
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "Application has no content to download" in response.text
+
+
+async def test_download_application_not_found(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading non-existent application returns 404."""
+    non_existent_id = uuid4()
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+async def test_download_application_unauthorized(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    """Test downloading application without authorization returns 401."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Unauthorized Test",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="Test content",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_download_application_invalid_format(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test downloading application with invalid format returns validation error."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="Invalid Format Test",
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="Test content",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download?format=invalid",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def test_download_application_filename_sanitization(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test that unsafe characters in title are properly sanitized in filename."""
+    unsafe_title = 'Test <App> "With" /Special: \\Characters|?*'
+
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title=unsafe_title,
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="Test content for filename sanitization",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    content_disposition = response.headers["content-disposition"]
+    assert 'filename="Test_App___With____Special____Characters___.md"' in content_disposition
+    # Verify only alphanumeric, hyphens, and underscores remain (same as frontend)
+    filename_part = content_disposition.split('filename="')[1].split('"')[0]
+    assert all(char.isalnum() or char in "-_." for char in filename_part)
+
+
+async def test_download_application_long_title_truncation(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test that very long titles are properly truncated for filename."""
+    very_long_title = "A" * 300  # Very long title
+
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title=very_long_title,
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="Test content for long title",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    content_disposition = response.headers["content-disposition"]
+    # Filename should be truncated and within reasonable limits
+    filename_part = content_disposition.split('filename="')[1].split('"')[0]
+    assert len(filename_part) <= 255  # Max filename length
+    assert filename_part.endswith(".md")
+
+
+async def test_download_application_empty_title_fallback(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test that empty title falls back to default filename."""
+    async with async_session_maker() as session, session.begin():
+        app = GrantApplication(
+            title="",  # Empty title
+            project_id=project.id,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            text="Test content for empty title",
+        )
+        session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download",
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    content_disposition = response.headers["content-disposition"]
+    assert 'filename="application.md"' in content_disposition

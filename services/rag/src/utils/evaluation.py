@@ -107,7 +107,7 @@ MAX_TIMEOUT_MULTIPLIER: Final[float] = 2.0
 PERFORMANCE_HISTORY_SIZE: Final[int] = 100
 
 
-@dataclass
+@dataclass(slots=True)
 class EvaluationCriterion:
     name: str
     evaluation_instructions: str
@@ -130,7 +130,7 @@ class ContentComplexity(Enum):
     VERY_COMPLEX = "very_complex"
 
 
-@dataclass
+@dataclass(slots=True)
 class ComplexityAnalysis:
     complexity_level: ContentComplexity
     word_count: int
@@ -145,7 +145,7 @@ class ComplexityAnalysis:
     analysis_details: dict[str, Any]
 
 
-@dataclass
+@dataclass(slots=True)
 class PerformanceMetrics:
     complexity_level: ContentComplexity
     criteria_count: int
@@ -251,7 +251,7 @@ class AdaptiveTimeoutCalculator:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class CacheEntry:
     result: EvaluationToolResponse
     timestamp: float
