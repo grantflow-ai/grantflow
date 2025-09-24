@@ -8,10 +8,10 @@ from uuid import UUID
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.query_helpers import update_active_by_id
-from packages.db.src.tables import GenerationNotification, GrantTemplate, RagGenerationJob
+from packages.db.src.tables import GenerationNotification
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import WebsocketMessage
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -20,7 +20,7 @@ NOTIFICATION_POLL_INTERVAL = 3.0
 
 
 async def pull_notifications(
-    parent_id: UUID,
+    application_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[WebsocketMessage[dict[str, Any]]]:
     notifications_to_send = []
@@ -28,23 +28,11 @@ async def pull_notifications(
     async with session_maker() as session, session.begin():
         result = await session.execute(
             select(GenerationNotification)
-            .join(RagGenerationJob, GenerationNotification.rag_job_id == RagGenerationJob.id)
-            .outerjoin(
-                GrantTemplate,
-                and_(
-                    RagGenerationJob.grant_template_id == GrantTemplate.id,
-                    GrantTemplate.deleted_at.is_(None),
-                ),
-            )
             .where(
                 and_(
+                    GenerationNotification.grant_application_id == application_id,
                     GenerationNotification.delivered_at.is_(None),
                     GenerationNotification.deleted_at.is_(None),
-                    RagGenerationJob.deleted_at.is_(None),
-                    or_(
-                        RagGenerationJob.grant_application_id == parent_id,
-                        GrantTemplate.grant_application_id == parent_id,
-                    ),
                 )
             )
             .order_by(GenerationNotification.created_at.asc())
@@ -62,7 +50,7 @@ async def pull_notifications(
             for notification in notifications:
                 message: WebsocketMessage[dict[str, Any]] = {
                     "type": notification.notification_type,
-                    "parent_id": parent_id,
+                    "parent_id": application_id,
                     "event": notification.event,
                     "data": notification.data if notification.data else {"message": notification.message},
                     "trace_id": "",
@@ -100,7 +88,7 @@ async def handle_grant_application_notifications(
         )
         try:
             notifications_to_send = await pull_notifications(
-                parent_id=application_id,
+                application_id=application_id,
                 session_maker=session_maker,
             )
 

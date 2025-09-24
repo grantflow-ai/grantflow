@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationSource,
     GrantingInstitutionSource,
@@ -113,6 +114,7 @@ async def update_source_indexing_status(
     logger: "FilteringBoundLogger",
     session_maker: async_sessionmaker[Any],
     source_id: UUID,
+    grant_application_id: UUID,
     identifier: str,
     text_content: str,
     vectors: list[VectorDTO] | None,
@@ -137,11 +139,31 @@ async def update_source_indexing_status(
             if vectors:
                 await session.execute(insert(TextVector).values(vectors))
 
-            await session.commit()
+            notification_type = "success" if indexing_status == SourceIndexingStatusEnum.FINISHED else "error"
+            message = (
+                f"Successfully processed {identifier}"
+                if indexing_status == SourceIndexingStatusEnum.FINISHED
+                else f"Failed to process {identifier}"
+            )
+
+            notification = GenerationNotification(
+                grant_application_id=grant_application_id,
+                event="source_processing",
+                message=message,
+                notification_type=notification_type,
+                data={
+                    "source_id": str(source_id),
+                    "indexing_status": indexing_status.value,
+                    "identifier": identifier,
+                    "trace_id": trace_id,
+                },
+            )
+            session.add(notification)
 
             logger.debug(
-                "Source indexing status updated",
+                "Source indexing status updated and notification saved",
                 source_id=source_id,
+                grant_application_id=grant_application_id,
                 indexing_status=indexing_status.value,
                 identifier=identifier,
                 metadata_fields=len(document_metadata) if document_metadata else 0,
@@ -155,3 +177,28 @@ async def update_source_indexing_status(
                 error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
                 trace_id=trace_id,
             )
+
+            try:
+                async with session_maker() as error_session, error_session.begin():
+                    error_notification = GenerationNotification(
+                        grant_application_id=grant_application_id,
+                        event="source_processing",
+                        message=f"Failed to process {identifier}: {e!s}",
+                        notification_type="error",
+                        data={
+                            "source_id": str(source_id),
+                            "indexing_status": SourceIndexingStatusEnum.FAILED.value,
+                            "identifier": identifier,
+                            "trace_id": trace_id,
+                            "error": str(e),
+                        },
+                    )
+                    error_session.add(error_notification)
+            except Exception as notification_error:
+                logger.error(
+                    "Failed to save error notification",
+                    source_id=source_id,
+                    grant_application_id=grant_application_id,
+                    error=str(notification_error),
+                    trace_id=trace_id,
+                )

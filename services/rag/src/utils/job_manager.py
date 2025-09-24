@@ -311,6 +311,7 @@ class JobManager[DTOType]:
 
         async with self.session_maker() as session, session.begin():
             notification = GenerationNotification(
+                grant_application_id=self.grant_application_id,
                 rag_job_id=self.current_job.id,
                 event=event,
                 message=message,

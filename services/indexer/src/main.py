@@ -7,6 +7,7 @@ from packages.db.src.tables import (
     GrantTemplate,
     RagFile,
     RagSource,
+    TextVector,
 )
 from packages.db.src.utils import update_source_indexing_status
 from packages.shared_utils.src.exceptions import (
@@ -23,7 +24,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent
 from packages.shared_utils.src.server import create_litestar_app
-from sqlalchemy import select
+from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.indexer.src.processing import process_source
@@ -133,6 +134,20 @@ async def handle_file_indexing(
         trace_id=trace_id,
     )
 
+    grant_application_id = None
+    if parse_result["entity_type"] == "grant_template":
+        async with session_maker() as session:
+            grant_application_id = await session.scalar(
+                select(GrantTemplate.grant_application_id).where(GrantTemplate.id == parse_result["entity_id"])
+            )
+            if not grant_application_id:
+                raise ValidationError(
+                    "Grant template has no associated grant application",
+                    context={"grant_template_id": parse_result["entity_id"]},
+                )
+    elif parse_result["entity_type"] == "grant_application":
+        grant_application_id = parse_result["entity_id"]
+
     async with session_maker() as session:
         logger.debug(
             "Querying database for file and source records",
@@ -141,11 +156,6 @@ async def handle_file_indexing(
         )
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
-
-        if parse_result["entity_type"] == "grant_template":
-            await session.scalar(
-                select(GrantTemplate.grant_application_id).where(GrantTemplate.id == parse_result["entity_id"])
-            )
 
     if not rag_file:
         logger.error("Rag file not found", source_id=parse_result["source_id"], trace_id=trace_id)
@@ -164,17 +174,26 @@ async def handle_file_indexing(
             trace_id=trace_id,
         )
 
-        await update_source_indexing_status(
-            logger=logger,
-            session_maker=session_maker,
-            source_id=parse_result["source_id"],
-            identifier=parse_result["blob_name"],
-            text_content=rag_source.text_content,
-            vectors=None,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            trace_id=trace_id,
-            document_metadata=rag_source.document_metadata,
-        )
+        if grant_application_id:
+            await update_source_indexing_status(
+                logger=logger,
+                session_maker=session_maker,
+                source_id=parse_result["source_id"],
+                grant_application_id=grant_application_id,
+                identifier=parse_result["blob_name"],
+                text_content=rag_source.text_content,
+                vectors=None,
+                indexing_status=SourceIndexingStatusEnum.FINISHED,
+                trace_id=trace_id,
+                document_metadata=rag_source.document_metadata,
+            )
+        else:
+            async with session_maker() as session, session.begin():
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == parse_result["source_id"])
+                    .values(indexing_status=SourceIndexingStatusEnum.FINISHED)
+                )
         logger.info(
             "File indexing completed (already processed)",
             total_duration_ms=round((time.time() - start_time) * 1000, 2),
@@ -207,17 +226,34 @@ async def handle_file_indexing(
             trace_id=trace_id,
         )
 
-        await update_source_indexing_status(
-            logger=logger,
-            session_maker=session_maker,
-            source_id=parse_result["source_id"],
-            identifier=parse_result["blob_name"],
-            text_content=text_content,
-            vectors=vectors,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            trace_id=trace_id,
-            document_metadata=document_metadata,
-        )
+        if grant_application_id:
+            await update_source_indexing_status(
+                logger=logger,
+                session_maker=session_maker,
+                source_id=parse_result["source_id"],
+                grant_application_id=grant_application_id,
+                identifier=parse_result["blob_name"],
+                text_content=text_content,
+                vectors=vectors,
+                indexing_status=SourceIndexingStatusEnum.FINISHED,
+                trace_id=trace_id,
+                document_metadata=document_metadata,
+            )
+        else:
+            async with session_maker() as session, session.begin():
+                update_values: dict[str, Any] = {
+                    "indexing_status": SourceIndexingStatusEnum.FINISHED,
+                    "text_content": text_content,
+                }
+                if document_metadata is not None:
+                    update_values["document_metadata"] = dict(document_metadata)
+
+                await session.execute(
+                    update(RagSource).where(RagSource.id == parse_result["source_id"]).values(update_values)
+                )
+
+                if vectors:
+                    await session.execute(insert(TextVector).values(vectors))
 
         logger.info(
             "Successfully indexed file",
@@ -241,17 +277,26 @@ async def handle_file_indexing(
         )
 
         failure_update_start = time.time()
-        await update_source_indexing_status(
-            logger=logger,
-            session_maker=session_maker,
-            source_id=parse_result["source_id"],
-            identifier=parse_result["blob_name"],
-            text_content="",
-            vectors=None,
-            indexing_status=SourceIndexingStatusEnum.FAILED,
-            trace_id=trace_id,
-            document_metadata=None,
-        )
+        if grant_application_id:
+            await update_source_indexing_status(
+                logger=logger,
+                session_maker=session_maker,
+                source_id=parse_result["source_id"],
+                grant_application_id=grant_application_id,
+                identifier=parse_result["blob_name"],
+                text_content="",
+                vectors=None,
+                indexing_status=SourceIndexingStatusEnum.FAILED,
+                trace_id=trace_id,
+                document_metadata=None,
+            )
+        else:
+            async with session_maker() as session, session.begin():
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == parse_result["source_id"])
+                    .values(indexing_status=SourceIndexingStatusEnum.FAILED, text_content="")
+                )
         failure_update_duration = time.time() - failure_update_start
 
         logger.debug(

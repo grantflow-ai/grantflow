@@ -582,8 +582,11 @@ class RagGenerationJob(BaseWithUUIDPK):
 class GenerationNotification(BaseWithUUIDPK):
     __tablename__ = "generation_notifications"
 
-    rag_job_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    rag_job_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), index=True, nullable=True
     )
 
     data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
@@ -594,9 +597,13 @@ class GenerationNotification(BaseWithUUIDPK):
         String(20), default="info"
     )
 
+    grant_application: Relationship["GrantApplication"] = relationship("GrantApplication")
     rag_job: Relationship["RagGenerationJob"] = relationship("RagGenerationJob")
 
-    __table_args__ = (Index("idx_rag_notifications_job_created", "rag_job_id", "created_at"),)
+    __table_args__ = (
+        Index("idx_notifications_application_created", "grant_application_id", "created_at"),
+        Index("idx_notifications_job_created", "rag_job_id", "created_at"),
+    )
 
 
 class Notification(BaseWithUUIDPK):

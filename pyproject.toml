@@ -20,6 +20,7 @@ dev = [
   "faker>=37.0.1",
   "firebase-admin>=7.0.0",
   "google-cloud-pubsub>=2.31.0",
+  "greenlet>=3.2.4",
   "lefthook>=1.11.14",
   "litestar>=2.16.0",
   "mypy>=1.15.0",
