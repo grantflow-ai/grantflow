@@ -58,7 +58,12 @@ def main() -> None:
         },
         {
             "topic": "email-notifications",
-            "subscriptions": [],
+            "subscriptions": [
+                {
+                    "name": "email-notifications-subscription",
+                    "push_endpoint": "http://backend:8000/webhooks/pubsub/email-notifications",
+                }
+            ],
         },
     ]
 

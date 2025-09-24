@@ -1,14 +1,19 @@
 import logging
 from functools import partial
-from typing import Final, TypedDict
+from typing import TYPE_CHECKING, Final, TypedDict
 
 from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -362,88 +367,9 @@ async def enrich_objective_generation(
     )
 
 
-criteria: list[EvaluationCriterion] = [
-    EvaluationCriterion(
-        name="Objective & Task Alignment",
-        evaluation_instructions="""
-        Evaluate how well the enriched content aligns with the original objective:
-            - Instructions and descriptions are directly relevant to the research objective and tasks
-            - No critical aspect of the original objective is omitted or misinterpreted
-            - The enrichment preserves the scientific intent of the objective and tasks
-            - The guiding questions address the core aspects of the objective and tasks
-            - Search queries effectively capture the domain-specific terminology
-            - Core scientific terms accurately represent the foundational concepts of the research
-        """,
-        weight=1.2,
-    ),
-    EvaluationCriterion(
-        name="Scientific Rigor & Precision",
-        evaluation_instructions="""
-        Assess the scientific accuracy and technical precision:
-            - Technical descriptions use correct scientific terminology
-            - Methodological details are accurate and appropriate for the research context
-            - Descriptions reflect current scientific understanding in the domain
-            - Search queries use appropriate scientific terms relevant to the methodology
-            - Guiding questions demonstrate understanding of scientific principles
-            - Core scientific terms are scientifically accurate and fundamental to the research
-        """,
-    ),
-    EvaluationCriterion(
-        name="Comprehensiveness",
-        evaluation_instructions="""
-        Verify the completeness of the enriched content:
-            - All required components are present (enriched objective, core scientific terms, scientific context, instructions, descriptions, questions, etc.)
-            - Each task is appropriately enriched with substantive content
-            - The scope of descriptions covers all relevant aspects of the objective/tasks
-            - Enriched objectives provide comprehensive enhancement of original objectives/tasks
-            - Scientific context adequately explains the research rationale and background
-            - Guiding questions address different dimensions of the research
-            - Search queries collectively cover the breadth of the research area
-            - Core scientific terms comprehensively cover the foundational scientific concepts
-        """,
-    ),
-    EvaluationCriterion(
-        name="Clarity & Structure",
-        evaluation_instructions="""
-        Evaluate the clarity and logical organization:
-            - Enriched objectives clearly enhance the original content
-            - Scientific context provides clear background and rationale
-            - Instructions provide clear guidance for text generation
-            - Descriptions are well-structured and logically organized
-            - Guiding questions are clearly formulated and purposeful
-            - Content follows a logical flow appropriate for a work plan
-            - Search queries are well-formulated for effective retrieval
-            - Core scientific terms are clearly defined and appropriately selected
-        """,
-    ),
-    EvaluationCriterion(
-        name="Context Integration",
-        evaluation_instructions="""
-        Assess how well the enrichment incorporates provided context:
-            - Keywords and topics are effectively integrated into the content
-            - RAG results are appropriately utilized where relevant
-            - User inputs are meaningfully incorporated
-            - The enrichment builds upon rather than repeats source material
-            - Search queries leverage context to enhance relevance
-            - Core scientific terms are grounded in the provided context and research domain
-        """,
-    ),
-    EvaluationCriterion(
-        name="Strategic Value",
-        evaluation_instructions="""
-        Evaluate the strategic quality of the enrichment:
-            - Content emphasizes aspects likely to strengthen the grant application
-            - Instructions guide toward persuasive and competitive content
-            - Descriptions highlight innovative aspects and potential impact
-            - Guiding questions prompt consideration of significance and broader implications
-            - The enrichment positions the research effectively for evaluation
-            - Core scientific terms represent concepts that strengthen the scientific foundation of the proposal
-        """,
-    ),
-]
-
-
-async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnrichmentDTO:
+async def handle_enrich_objective(
+    dto: EnrichObjectiveInputDTO, *, job_manager: "JobManager[StageDTO]"
+) -> ObjectiveEnrichmentDTO:
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
         objective_and_tasks=dto["research_objective"],
         keywords=dto["keywords"],
@@ -459,8 +385,6 @@ async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnri
         prompt_handler=enrich_objective_generation,
         prompt=compressed_prompt,
         input_objective=dto["research_objective"],
-        criteria=criteria,
-        passing_score=80,
-        increment=10,
         trace_id=dto["trace_id"],
+        **get_evaluation_kwargs("enrich_objectives", job_manager),
     )

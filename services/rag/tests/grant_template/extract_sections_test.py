@@ -462,7 +462,11 @@ async def test_extract_sections_validation_error(mock_completions: AsyncMock, tr
 @patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections")
 @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
 async def test_handle_extract_sections_success(
-    mock_retrieve: AsyncMock, mock_filter: AsyncMock, mock_evaluation: AsyncMock, trace_id: str
+    mock_retrieve: AsyncMock,
+    mock_filter: AsyncMock,
+    mock_evaluation: AsyncMock,
+    mock_job_manager: AsyncMock,
+    trace_id: str,
 ) -> None:
     mock_retrieve.return_value = "Organization guidelines content"
     mock_evaluation.return_value = {
@@ -492,6 +496,7 @@ async def test_handle_extract_sections_success(
     ]
 
     result = await handle_extract_sections(
+        job_manager=mock_job_manager,
         cfp_content=cfp_content,
         cfp_subject="Test Grant Program",
         trace_id=trace_id,
@@ -512,7 +517,7 @@ async def test_handle_extract_sections_success(
 @patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation")
 @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
 async def test_handle_extract_sections_no_organization(
-    mock_retrieve: AsyncMock, mock_evaluation: AsyncMock, trace_id: str
+    mock_retrieve: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock, trace_id: str
 ) -> None:
     mock_retrieve.return_value = ""
     mock_evaluation.return_value = {"sections": []}
@@ -521,6 +526,7 @@ async def test_handle_extract_sections_no_organization(
         mock_filter.return_value = []
 
         result = await handle_extract_sections(
+            job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="Test Grant",
             trace_id=trace_id,
@@ -531,7 +537,7 @@ async def test_handle_extract_sections_no_organization(
         mock_retrieve.assert_not_called()
 
 
-async def test_handle_extract_sections_empty_cfp_content(trace_id: str) -> None:
+async def test_handle_extract_sections_empty_cfp_content(mock_job_manager: AsyncMock, trace_id: str) -> None:
     with (
         patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation") as mock_evaluation,
         patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections") as mock_filter,
@@ -540,6 +546,7 @@ async def test_handle_extract_sections_empty_cfp_content(trace_id: str) -> None:
         mock_filter.return_value = []
 
         result = await handle_extract_sections(
+            job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="",
             trace_id=trace_id,
@@ -558,6 +565,7 @@ async def test_end_to_end_section_extraction(
     mock_get_model: AsyncMock,
     mock_get_exclude: AsyncMock,
     mock_evaluation: AsyncMock,
+    mock_job_manager: AsyncMock,
     trace_id: str,
 ) -> None:
     mock_get_exclude.return_value = [0.1, 0.2, 0.3]
@@ -600,6 +608,7 @@ async def test_end_to_end_section_extraction(
         ]
 
         result = await handle_extract_sections(
+            job_manager=mock_job_manager,
             cfp_content=cfp_content_list,
             cfp_subject="Advanced Research Grant",
             trace_id=trace_id,

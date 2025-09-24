@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -120,7 +121,6 @@ async def test_generate_section_text_function(
     mocker: MockerFixture,
     sample_grant_section: GrantLongFormSection,
 ) -> None:
-    """Test the generate_section_text wrapper function properly calls generate_long_form_text."""
     mock_generate_long_form = mocker.patch(
         "services.rag.src.grant_application.generate_section_text.generate_long_form_text",
         return_value="Generated section content with sufficient detail.",
@@ -139,7 +139,7 @@ async def test_generate_section_text_function(
     mock_generate_long_form.assert_called_once_with(
         task_description=task_description,
         max_words=1500,
-        min_words=1200,  # 80% of max_words based on MIN_WORDS_RATIO = 0.8
+        min_words=1200,
         prompt_identifier="section_generation",
         trace_id=trace_id,
     )
@@ -147,25 +147,21 @@ async def test_generate_section_text_function(
 
 async def test_handle_generate_section_text_with_evaluation(
     mocker: MockerFixture,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test handle_generate_section_text integrates with with_prompt_evaluation correctly."""
-
-    # Mock the validation
     mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",
-        return_value=None,  # No validation errors
+        return_value=None,
     )
 
-    # Mock the prompt compression
     mocker.patch(
         "services.rag.src.grant_application.generate_section_text.compress_prompt_text",
         side_effect=lambda text, aggressive: f"compressed_{text[:20]}",
     )
 
-    # Mock with_prompt_evaluation to test the integration
     mock_with_evaluation = mocker.patch(
         "services.rag.src.grant_application.generate_section_text.with_prompt_evaluation",
         return_value="Final evaluated section text",
@@ -180,22 +176,21 @@ async def test_handle_generate_section_text_with_evaluation(
         shared_context=shared_context,
         cfp_analysis=sample_cfp_analysis,
         trace_id=trace_id,
+        job_manager=mock_job_manager,
     )
 
     assert result == "Final evaluated section text"
 
-    # Verify with_prompt_evaluation was called with correct parameters
     mock_with_evaluation.assert_called_once()
     call_kwargs = mock_with_evaluation.call_args.kwargs
 
     assert call_kwargs["prompt_identifier"] == "section_generation"
     assert call_kwargs["increment"] == 10
-    assert call_kwargs["retries"] == 3
-    assert call_kwargs["passing_score"] == 40
+    assert call_kwargs["retries"] == 2
+    assert call_kwargs["passing_score"] == 60
     assert call_kwargs["trace_id"] == trace_id
-    assert len(call_kwargs["criteria"]) == 5  # 5 evaluation criteria
+    assert len(call_kwargs["criteria"]) == 5
 
-    # Verify the prompt_handler is a partial function with section bound
     prompt_handler = call_kwargs["prompt_handler"]
     assert hasattr(prompt_handler, "func")
     assert hasattr(prompt_handler, "keywords")
@@ -205,18 +200,16 @@ async def test_handle_generate_section_text_with_evaluation(
 
 async def test_handle_generate_section_text_with_cfp_requirements(
     mocker: MockerFixture,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test that CFP requirements are properly formatted and included in the prompt."""
-
     mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",
         return_value=None,
     )
 
-    # Capture the compressed prompt
     compressed_prompts = []
 
     def capture_and_return(text: str, aggressive: bool) -> str:
@@ -242,31 +235,25 @@ async def test_handle_generate_section_text_with_cfp_requirements(
         shared_context=shared_context,
         cfp_analysis=sample_cfp_analysis,
         trace_id=trace_id,
+        job_manager=mock_job_manager,
     )
 
-    # Verify CFP requirements were included in the prompt
     assert len(compressed_prompts) == 1
     full_prompt = compressed_prompts[0]
     assert "Research Strategy" in full_prompt
-    # Check that requirements are formatted correctly
     assert "Include detailed methodology" in full_prompt
     assert "The proposal must include a detailed methodology section" in full_prompt
-    # Note: Evaluation criteria are only included if they match the section name
-    # Since "Scientific Merit" doesn't contain "Research Strategy" it won't be included
-    # Check that length constraints are included
     assert "Research Strategy section limited to 6 pages" in full_prompt
     assert "The Research Strategy must not exceed 6 pages" in full_prompt
 
 
 async def test_handle_generate_section_text_with_missing_information_warning(
     mocker: MockerFixture,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
     sample_cfp_analysis: CFPAnalysisResult,
 ) -> None:
-    """Test that source validation warnings are handled but don't prevent generation."""
-
-    # Mock validation to return a warning
     mock_validation = mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",
         return_value="Missing critical methodology details",
@@ -282,7 +269,6 @@ async def test_handle_generate_section_text_with_missing_information_warning(
         return_value="Generated with warnings",
     )
 
-    # Mock the logger.warning to verify it's called
     mock_logger_warning = mocker.patch("services.rag.src.grant_application.generate_section_text.logger.warning")
 
     trace_id = str(uuid4())
@@ -293,14 +279,13 @@ async def test_handle_generate_section_text_with_missing_information_warning(
         shared_context="Context",
         cfp_analysis=sample_cfp_analysis,
         trace_id=trace_id,
+        job_manager=mock_job_manager,
     )
 
     assert result == "Generated with warnings"
 
-    # Verify that validation was called
     mock_validation.assert_called_once()
 
-    # Verify that logger.warning was called with the expected message
     mock_logger_warning.assert_called_once()
     call_args = mock_logger_warning.call_args
     assert call_args[0][0] == "Source validation identified missing information, proceeding with available context"
@@ -313,7 +298,6 @@ async def test_generate_section_text_respects_min_words_ratio(
     mocker: MockerFixture,
     sample_grant_section: GrantLongFormSection,
 ) -> None:
-    """Test that min_words is calculated correctly based on MIN_WORDS_RATIO."""
     from services.rag.src.constants import MIN_WORDS_RATIO
 
     mock_generate_long_form = mocker.patch(
@@ -323,7 +307,6 @@ async def test_generate_section_text_respects_min_words_ratio(
 
     trace_id = str(uuid4())
 
-    # Test with different max_words values
     test_cases = [
         (1000, int(1000 * MIN_WORDS_RATIO)),
         (500, int(500 * MIN_WORDS_RATIO)),

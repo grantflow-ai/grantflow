@@ -60,7 +60,7 @@ class PerformanceGrade(Enum):
     F = "F"
 
 
-@dataclass
+@dataclass(slots=True)
 class TestScenario:
     name: str
     description: str
@@ -72,7 +72,7 @@ class TestScenario:
     iterations: int = 1
 
 
-@dataclass
+@dataclass(slots=True)
 class StageTimingConfig:
     stage_name: str
     target_seconds: float
@@ -80,7 +80,7 @@ class StageTimingConfig:
     weight: float = 1.0
 
 
-@dataclass
+@dataclass(slots=True)
 class PerformanceTargets:
     excellent_seconds: float
     good_seconds: float
@@ -100,7 +100,7 @@ class PerformanceTargets:
         return PerformanceGrade.F
 
 
-@dataclass
+@dataclass(slots=True)
 class StageMetrics:
     stage_name: str
     duration_seconds: float
@@ -110,7 +110,7 @@ class StageMetrics:
     percentage_of_total: float
 
 
-@dataclass
+@dataclass(slots=True)
 class QualityMetrics:
     total_characters: int = 0
     total_words: int = 0
@@ -150,7 +150,7 @@ class PerformanceResultParams(TypedDict):
     quality_metrics: NotRequired[dict[str, Any]]
 
 
-@dataclass
+@dataclass(slots=True)
 class PerformanceResult:
     test_name: str
     test_id: str

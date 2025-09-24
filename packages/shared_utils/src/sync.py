@@ -2,7 +2,7 @@ from asyncio import gather
 from collections.abc import Callable, Coroutine
 from functools import partial
 from itertools import batched
-from typing import Any, cast
+from typing import Any, Literal, cast, overload
 
 from anyio.to_thread import run_sync as any_io_run_sync
 
@@ -23,11 +23,28 @@ def as_async_callable[**P, T](
     return wrapper
 
 
+@overload
 async def batched_gather[T](
     *coroutines: Coroutine[Any, Any, T],
     batch_size: int,
-) -> list[T]:
-    ret: list[T] = []
+    return_exceptions: Literal[False] = False,
+) -> list[T]: ...
+
+
+@overload
+async def batched_gather[T](
+    *coroutines: Coroutine[Any, Any, T],
+    batch_size: int,
+    return_exceptions: Literal[True],
+) -> list[T | BaseException]: ...
+
+
+async def batched_gather[T](
+    *coroutines: Coroutine[Any, Any, T],
+    batch_size: int,
+    return_exceptions: bool = False,
+) -> list[T] | list[T | BaseException]:
+    ret: list[T | BaseException] = []
     for batch in batched(coroutines, batch_size, strict=False):
-        ret.extend(await gather(*batch))
+        ret.extend(await gather(*batch, return_exceptions=return_exceptions))
     return ret

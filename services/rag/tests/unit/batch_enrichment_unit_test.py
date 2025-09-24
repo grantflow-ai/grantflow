@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from packages.shared_utils.src.logger import get_logger
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def test_batch_enrichment_calls_single_llm_request(trace_id: str) -> None:
+async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: AsyncMock, trace_id: str) -> None:
     mock_objectives: list[ResearchObjective] = [
         {
             "number": 1,
@@ -102,6 +102,7 @@ async def test_batch_enrichment_calls_single_llm_request(trace_id: str) -> None:
             research_objectives=mock_objectives,
             form_inputs=mock_form_inputs,
             trace_id=trace_id,
+            job_manager=mock_job_manager,
         )
 
         assert mock_retrieve.call_count == 1, "Should make exactly one retrieval call"

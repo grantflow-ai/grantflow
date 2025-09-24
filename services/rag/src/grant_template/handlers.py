@@ -38,6 +38,12 @@ async def handle_cfp_extraction_stage(
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    await job_manager.add_notification(
+        event=NotificationEvents.CFP_DATA_EXTRACTED,
+        message="Analyzing call for proposals document",
+        notification_type="info",
+    )
+
     # this can take a while, that's why we are rechecking cancellation ~keep
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
@@ -69,6 +75,7 @@ async def handle_cfp_extraction_stage(
             str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
         },
         session_maker=session_maker,
+        job_manager=job_manager,
         trace_id=trace_id,
     )
 
@@ -118,6 +125,12 @@ async def handle_cfp_analysis_stage(
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    await job_manager.add_notification(
+        event=NotificationEvents.SECTIONS_EXTRACTED,
+        message="Analyzing application requirements",
+        notification_type="info",
+    )
+
     analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
         full_cfp_text="\n".join(
             [
@@ -153,10 +166,17 @@ async def handle_section_extraction_stage(
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    await job_manager.add_notification(
+        event=NotificationEvents.METADATA_GENERATED,
+        message="Extracting application sections",
+        notification_type="info",
+    )
+
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
         trace_id=trace_id,
+        job_manager=job_manager,
         organization=analysis_result["organization"],
     )
 
@@ -194,6 +214,7 @@ async def handle_generate_metadata_stage(
         organization=section_extraction_result["organization"],
         long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s.get("is_title_only")],
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}

@@ -1,15 +1,20 @@
 from functools import partial
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.source_validation import handle_source_validation
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
 
@@ -118,8 +123,19 @@ async def handle_generate_section_text(
     shared_context: str,
     cfp_analysis: CFPAnalysisResult,
     trace_id: str,
+    job_manager: "JobManager[StageDTO]",
 ) -> str:
     section_title = section["title"]
+
+    logger.debug(
+        "Starting section text generation",
+        section_id=section["id"],
+        section_title=section_title,
+        max_words=section["max_words"],
+        shared_context_chars=len(shared_context),
+        research_objectives_count=len(research_deep_dives),
+        trace_id=trace_id,
+    )
 
     research_context_parts = [
         f"""
@@ -183,6 +199,16 @@ async def handle_generate_section_text(
         section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
     )
 
+    logger.debug(
+        "Prepared context and requirements for section generation",
+        section_id=section["id"],
+        section_title=section_title,
+        combined_context_chars=len(validated_context),
+        cfp_requirements_chars=len(cfp_requirements_text),
+        has_cfp_requirements=bool(cfp_requirements_text),
+        trace_id=trace_id,
+    )
+
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         instructions=section["generation_instructions"],
@@ -191,82 +217,38 @@ async def handle_generate_section_text(
     )
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    return await with_prompt_evaluation(
+    logger.debug(
+        "Generated and compressed prompt for section",
+        section_id=section["id"],
+        section_title=section_title,
+        original_prompt_chars=len(full_prompt),
+        compressed_prompt_chars=len(compressed_prompt),
+        compression_ratio=round(len(compressed_prompt) / len(full_prompt), 2) if full_prompt else 0,
+        trace_id=trace_id,
+    )
+
+    result = await with_prompt_evaluation(
         prompt_identifier="section_generation",
         prompt_handler=partial(generate_section_text, section=section),
         prompt=compressed_prompt,
-        increment=10,
-        retries=3,
-        passing_score=40,
-        criteria=[
-            EvaluationCriterion(
-                name="Content Depth and Detail",
-                evaluation_instructions="""
-                Evaluate whether the content provides sufficient depth, specific details, and comprehensive coverage of the topic.
-                    - Content should be substantive (600+ words for major sections)
-                    - Include specific examples, methodologies, and timelines
-                    - Demonstrate expert knowledge with concrete details
-                    - Avoid generic statements in favor of specific, actionable content
-            """,
-                weight=1.0,
-            ),
-            EvaluationCriterion(
-                name="Structural Completeness",
-                evaluation_instructions="""
-                Assess whether the content includes key structural elements and proper organization.
-                    - Clear objectives and research questions
-                    - Methodological approaches and experimental designs
-                    - Work plan elements with timelines
-                    - Expected outcomes and success metrics
-                    - Proper section organization with headers and subheadings
-                """,
-                weight=0.95,
-            ),
-            EvaluationCriterion(
-                name="Context Integration and Evidence",
-                evaluation_instructions="""
-                Evaluate how effectively the content integrates information from the provided research context.
-                    - Clear use of provided research context and retrieval data
-                    - Specific evidence from context incorporated naturally
-                    - Strong connections to stated research objectives
-                    - Relevant citations and references to context material
-                    - Claims supported by context evidence
-                    - Research objectives clearly addressed
-                    - Context information woven into narrative seamlessly
-                    - No contradictions with provided context
-                """,
-                weight=0.85,
-            ),
-            EvaluationCriterion(
-                name="Academic Quality and Rigor",
-                evaluation_instructions="""
-                Assess the professional quality, scientific accuracy, and academic appropriateness of the writing.
-                    - Professional, scholarly tone throughout
-                    - Precise scientific terminology used correctly
-                    - Clear, concise writing with proper grammar
-                    - Appropriate academic register and style
-                    - Demonstrates understanding of research methodologies
-                    - Uses appropriate statistical and analytical approaches
-                    - Shows awareness of field standards and best practices
-                    - Maintains objectivity and scientific rigor
-                """,
-                weight=0.8,
-            ),
-            EvaluationCriterion(
-                name="Feasibility and Innovation",
-                evaluation_instructions="""
-                Evaluate whether the content demonstrates feasible research approaches and innovative elements.
-                    - Realistic timelines and resource requirements
-                    - Appropriate methodological choices for objectives
-                    - Awareness of potential challenges and limitations
-                    - Practical implementation considerations
-                    - Novel approaches or methodologies where appropriate
-                    - Creative solutions to research problems
-                    - Advancement beyond current state of knowledge
-                    - Potential for significant impact in the field
-                """,
-                weight=0.75,
-            ),
-        ],
+        trace_id=trace_id,
+        **get_evaluation_kwargs("generate_section_text", job_manager),
+    )
+
+    if result:
+        word_count = len(result.split())
+        char_count = len(result)
+    else:
+        word_count = char_count = 0
+
+    logger.info(
+        "Completed section text generation",
+        section_id=section["id"],
+        section_title=section_title,
+        generated_words=word_count,
+        generated_chars=char_count,
+        target_max_words=section["max_words"],
         trace_id=trace_id,
     )
+
+    return result
