@@ -33,7 +33,13 @@ from services.crawler.src.utils import download_page_html
 @pytest.mark.parametrize(
     "test_url,expected_content",
     [
-        ("https://httpbin.org/html", "Herman Melville"),
+        pytest.param(
+            "https://httpbin.org/html",
+            "Herman Melville",
+            marks=pytest.mark.xfail(
+                reason="Flaky external dependency - httpbin.org timeouts"
+            ),
+        ),
         ("https://example.com", "Example Domain"),
     ],
 )

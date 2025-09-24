@@ -30,7 +30,7 @@ async def create_and_cancel_template_job(
         job = RagGenerationJob(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GRANT_TEMPLATE_PIPELINE_STAGES[0],
+            template_stage=GRANT_TEMPLATE_PIPELINE_STAGES[0],
             retry_count=0,
         )
         session.add(job)
@@ -50,7 +50,7 @@ async def create_and_cancel_application_job(
         job = RagGenerationJob(
             grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GRANT_APPLICATION_STAGES_ORDER[0],
+            application_stage=GRANT_APPLICATION_STAGES_ORDER[0],
             retry_count=0,
         )
         session.add(job)
@@ -117,7 +117,7 @@ async def test_template_pipeline_stops_when_job_cancelled(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             retry_count=0,
         )
         session.add(job)
@@ -163,7 +163,7 @@ async def test_application_pipeline_stops_when_job_cancelled(
         job = RagGenerationJob(
             grant_application_id=test_application_with_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
             retry_count=0,
         )
         session.add(job)
@@ -202,7 +202,7 @@ async def test_concurrent_job_cancellation(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
             retry_count=0,
         )
         session.add(job)
@@ -242,7 +242,7 @@ async def test_job_remains_active_when_not_cancelled(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            current_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
             retry_count=0,
         )
         session.add(job)

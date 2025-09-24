@@ -206,7 +206,7 @@ def get_filtering_accuracy_criterion(weight: float = 0.8) -> EvaluationCriterion
     )
 
 
-@dataclass
+@dataclass(slots=True)
 class StageConfig:
     criteria: list[EvaluationCriterion]
     passing_score: int = INITIAL_PASSING_SCORE

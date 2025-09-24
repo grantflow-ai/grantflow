@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Final, Literal, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
@@ -141,25 +141,21 @@ async def handle_generate_sections_stage(
 
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
 
-    # Update notification to reflect actual success/failure status
-    successful_sections = len(long_form_sections) - len(failed_sections)
-    notification_type: Literal["success", "warning", "error"] = (
-        "success" if not failed_sections else ("warning" if successful_sections > 0 else "error")
+    # Debug logging for section generation summary
+    logger.debug(
+        "Section generation completed",
+        total_sections=len(long_form_sections),
+        successful_sections=len(long_form_sections) - len(failed_sections),
+        failed_sections=len(failed_sections),
+        trace_id=trace_id,
     )
-
-    if failed_sections:
-        message = f"Generated {successful_sections}/{len(long_form_sections)} sections ({len(failed_sections)} failed)"
-    else:
-        message = f"Generated {len(section_text_list)} sections"
 
     await job_manager.add_notification(
         event=NotificationEvents.SECTION_TEXTS_GENERATED,
-        message=message,
-        notification_type=notification_type,
+        message=f"Generated {len(section_text_list)} sections",
+        notification_type="success",
         data={
-            "sections_generated": successful_sections,
-            "total_sections": len(long_form_sections),
-            "failed_sections": len(failed_sections),
+            "sections_generated": len(section_text_list),
         },
     )
 
@@ -280,23 +276,21 @@ async def handle_enrich_terminology_stage(
             processed_enrichments.append(cast("EnrichmentDataDTO", result))
             successful_count += 1
 
-    notification_type: Literal["success", "warning", "error"] = (
-        "success" if failed_count == 0 else ("warning" if successful_count > 0 else "error")
+    # Debug logging for wikidata enrichment summary
+    logger.debug(
+        "Wikidata enrichment completed",
+        total_enrichments=len(wikidata_enrichments),
+        successful_enrichments=successful_count,
+        failed_enrichments=failed_count,
+        trace_id=trace_id,
     )
-
-    if failed_count > 0:
-        message = f"Scientific context added ({successful_count} successful, {failed_count} failed)"
-    else:
-        message = "Scientific context added"
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
-        message=message,
-        notification_type=notification_type,
+        message="Scientific context added",
+        notification_type="success",
         data={
-            "terms_added": successful_count,
-            "total_enrichments": len(wikidata_enrichments),
-            "failed_enrichments": failed_count,
+            "terms_added": len(wikidata_enrichments),
         },
     )
 

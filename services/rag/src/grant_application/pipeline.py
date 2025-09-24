@@ -2,7 +2,7 @@ import time
 import traceback
 from typing import TYPE_CHECKING, Any, cast
 
-from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import ApplicationStatusEnum, GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication, GrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
@@ -598,7 +598,7 @@ async def handle_grant_application_pipeline(
                         await session.execute(
                             update(GrantApplication)
                             .where(GrantApplication.id == application_id)
-                            .values(text=application_text)
+                            .values(text=application_text, status=ApplicationStatusEnum.WORKING_DRAFT)
                         )
 
                         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
@@ -613,9 +613,10 @@ async def handle_grant_application_pipeline(
                         )
 
                     logger.info(
-                        "Successfully saved application to database",
+                        "Successfully saved application to database and updated status",
                         application_id=str(application_id),
                         word_count=word_count,
+                        status=ApplicationStatusEnum.WORKING_DRAFT.value,
                         trace_id=trace_id,
                     )
 
