@@ -35,7 +35,7 @@ export function ProjectDetailClient() {
 	const router = useRouter();
 	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
-	const { navigateToApplication } = useNavigationStore();
+	const { clearActiveApplication, navigateToApplication, stateHydrated } = useNavigationStore();
 	const { user } = useUserStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const { getProjects, projects } = useProjectStore();
@@ -67,6 +67,12 @@ export function ProjectDetailClient() {
 	}, [project]);
 
 	useEffect(() => {
+		if (stateHydrated) {
+			clearActiveApplication();
+		}
+	}, [clearActiveApplication, stateHydrated]);
+
+	useEffect(() => {
 		if (selectedOrganizationId) {
 			void getProjects(selectedOrganizationId);
 		}
@@ -82,7 +88,9 @@ export function ProjectDetailClient() {
 			: null,
 		() =>
 			project && selectedOrganizationId
-				? listApplications(selectedOrganizationId, project.id, { search: searchQuery || undefined })
+				? listApplications(selectedOrganizationId, project.id, {
+						search: searchQuery || undefined,
+					})
 				: null,
 		{
 			revalidateOnFocus: false,
@@ -110,21 +118,25 @@ export function ProjectDetailClient() {
 	const applications = applicationsData?.applications ?? [];
 
 	const projectTeamMembers =
-		projectMembers?.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>(
-			(acc, member) => {
-				const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
-				if (!existingMember) {
-					acc.push({
-						backgroundColor: generateBackgroundColor(member.firebase_uid),
-						initials: generateInitials(member.display_name ?? undefined, member.email),
-						uid: member.firebase_uid,
-						...(member.photo_url && { imageUrl: member.photo_url }),
-					});
-				}
-				return acc;
-			},
-			[],
-		) ?? [];
+		projectMembers?.reduce<
+			{
+				backgroundColor: string;
+				imageUrl?: string;
+				initials: string;
+				uid: string;
+			}[]
+		>((acc, member) => {
+			const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
+			if (!existingMember) {
+				acc.push({
+					backgroundColor: generateBackgroundColor(member.firebase_uid),
+					initials: generateInitials(member.display_name ?? undefined, member.email),
+					uid: member.firebase_uid,
+					...(member.photo_url && { imageUrl: member.photo_url }),
+				});
+			}
+			return acc;
+		}, []) ?? [];
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);

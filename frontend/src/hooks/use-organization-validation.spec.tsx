@@ -94,6 +94,14 @@ describe("useOrganizationValidation", () => {
 			expect(mockClearOrganizationCookie).toHaveBeenCalledOnce();
 		});
 
+		it("should not clear organization state and cookies when organizations array is empty and organizationsLoading is true", () => {
+			renderHook(() => useOrganizationValidation([], true));
+
+			expect(mockSetOrganizations).not.toHaveBeenCalledWith([]);
+			expect(mockClearOrganization).not.toHaveBeenCalled();
+			expect(mockClearOrganizationCookie).not.toHaveBeenCalled();
+		});
+
 		it("should return null when organizations array is empty", () => {
 			const { result } = renderHook(() => useOrganizationValidation([]));
 
