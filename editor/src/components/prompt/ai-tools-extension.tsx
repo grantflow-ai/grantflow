@@ -106,7 +106,6 @@ export const AiToolsExtension = Extension.create({
 			const docHtml = editor.getHTML();
 			const htmlBounds = findHtmlBoundsInDocument(docHtml, selectedHTML);
 
-			// This tool is for debugging bounds to test the applyDiff method
 			console.log({
 				htmlBounds: {
 					end: htmlBounds.end,

@@ -3,15 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS } from "@/types/notification-events";
-
-type ToastId = number | string | undefined;
-
-const WARNING_EVENTS = new Set(["indexing_timeout", "insufficient_context_error", "llm_timeout"]);
+import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS, WARNING_EVENTS } from "@/types/notification-events";
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
 }
+
+type ToastId = number | string | undefined;
 
 export function NotificationHandler({ notification }: NotificationHandlerProps) {
 	const [toastId, setToastId] = useState<ToastId>();
@@ -35,24 +33,43 @@ export function NotificationHandler({ notification }: NotificationHandlerProps) 
 function displayNotification(notification: RagProcessingStatusMessage): ToastId {
 	const { data, event, message } = notification.data;
 
-	if (ERROR_EVENTS.has(event)) {
-		showErrorToast(message, data, notification.type);
-	} else if (WARNING_EVENTS.has(event)) {
-		showWarningToast(message, data);
-	} else if (SUCCESS_EVENTS.has(event)) {
-		showSuccessToast(message, event);
-	} else {
-		showInfoToast(message, data, notification.type);
+	switch (notification.type) {
+		case "error": {
+			showErrorToast(message, data, notification.type);
+			break;
+		}
+		case "info": {
+			showInfoToast(message, data, notification.type);
+			break;
+		}
+		case "success": {
+			showSuccessToast(message, event, notification.type);
+			break;
+		}
+		case "warning": {
+			showWarningToast(message, data, notification.type);
+			break;
+		}
+		default: {
+			if (ERROR_EVENTS.has(event)) {
+				showErrorToast(message, data, "error");
+			} else if (WARNING_EVENTS.has(event)) {
+				showWarningToast(message, data, "warning");
+			} else if (SUCCESS_EVENTS.has(event)) {
+				showSuccessToast(message, event, "success");
+			} else {
+				showInfoToast(message, data, "info");
+			}
+		}
 	}
 
 	return undefined;
 }
 
-function shouldDismissToast(event: string, previousEvent: null | string, toastId: ToastId): boolean {
+function shouldDismissToast(event: string, _previousEvent: null | string, toastId: ToastId): boolean {
 	if (!toastId) return false;
-	const isProgressChange = SUCCESS_EVENTS.has(event as NotificationEvent) && previousEvent !== event;
 	const isCompleteEvent = ERROR_EVENTS.has(event as NotificationEvent);
-	return isProgressChange || isCompleteEvent;
+	return isCompleteEvent;
 }
 
 function showErrorToast(message: string, data: Record<string, unknown> | undefined, type: string): void {
@@ -76,7 +93,7 @@ function showInfoToast(message: string, data: Record<string, unknown> | undefine
 	toast.info(`${prefix}${message}`, { description });
 }
 
-function showSuccessToast(message: string, event: string): void {
+function showSuccessToast(message: string, event: string, _type: string): void {
 	const isCompletion = event.includes("completed");
 	const prefix = isCompletion ? "✅ Completed: " : "✓ ";
 	toast.success(`${prefix}${message}`, {
@@ -84,8 +101,12 @@ function showSuccessToast(message: string, event: string): void {
 	});
 }
 
-function showWarningToast(message: string, data: Record<string, unknown> | undefined): void {
-	const description = data?.suggestion as string | undefined;
+function showWarningToast(message: string, data: Record<string, unknown> | undefined, _type: string): void {
+	const suggestion = data?.suggestion as string | undefined;
+	const isRetryable = data?.retryable !== false;
+
+	const description = suggestion ?? (isRetryable ? "This operation will be automatically retried." : undefined);
+
 	toast.warning(`⚠️ ${message}`, {
 		description,
 		duration: 8000,
