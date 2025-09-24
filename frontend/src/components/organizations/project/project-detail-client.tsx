@@ -6,6 +6,7 @@ import useSWR, { mutate } from "swr";
 import {
 	createApplication,
 	deleteApplication,
+	downloadApplication,
 	duplicateApplication,
 	listApplications,
 } from "@/actions/grant-applications";
@@ -21,12 +22,14 @@ import { DeleteApplicationModal } from "@/components/organizations/project/delet
 import ProjectActions from "@/components/organizations/project/project-actions";
 import ProjectTitle from "@/components/organizations/project/project-title";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { DOWNLOAD_FORMATS } from "@/constants/download";
 import { useProjectTitleEditing } from "@/hooks/use-project-title-editing";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
+import type { DownloadFormat } from "@/types/download";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
@@ -59,6 +62,7 @@ export function ProjectDetailClient() {
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
+	const [downloadingApplications, setDownloadingApplications] = useState<Set<string>>(new Set());
 
 	useEffect(() => {
 		if (project) {
@@ -234,6 +238,50 @@ export function ProjectDetailClient() {
 		router.push(wizardPath);
 	};
 
+	const handleDownloadApplication = async (applicationId: string, format: DownloadFormat) => {
+		if (!(project && selectedOrganizationId)) return;
+
+		setDownloadingApplications((prev) => new Set([applicationId, ...prev]));
+
+		try {
+			toast.loading(`Preparing ${DOWNLOAD_FORMATS[format].label} download...`, {
+				id: `download-${applicationId}`,
+			});
+
+			const blob = await downloadApplication(selectedOrganizationId, project.id, applicationId, format);
+
+			const downloadUrl = globalThis.URL.createObjectURL(blob);
+			const application = applications.find((app) => app.id === applicationId);
+			const title = application?.title ?? "application";
+			const sanitizedTitle = title.replaceAll(/[^a-zA-Z0-9\-_]/g, "_");
+			const filename = `${sanitizedTitle}.${DOWNLOAD_FORMATS[format].extension}`;
+
+			const link = document.createElement("a");
+			link.href = downloadUrl;
+			link.download = filename;
+			document.body.append(link);
+			link.click();
+			link.remove();
+
+			globalThis.URL.revokeObjectURL(downloadUrl);
+
+			toast.success(`${DOWNLOAD_FORMATS[format].label} downloaded successfully`, {
+				id: `download-${applicationId}`,
+			});
+		} catch (error) {
+			log.error("download-application", error);
+			toast.error(`Failed to download ${DOWNLOAD_FORMATS[format].label.toLowerCase()}`, {
+				id: `download-${applicationId}`,
+			});
+		} finally {
+			setDownloadingApplications((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(applicationId);
+				return newSet;
+			});
+		}
+	};
+
 	const handleInviteCollaborator = async (options: InviteOptions) => {
 		if (!project) {
 			toast.error("Current project not found. Please refresh and try again.");
@@ -315,10 +363,12 @@ export function ProjectDetailClient() {
 					<div className="flex-1 overflow-auto min-h-0" data-testid="applications-section">
 						<ApplicationList
 							applications={applications}
+							downloadingApplications={downloadingApplications}
 							isCreatingApplication={isCreatingApplication}
 							isLoading={isApplicationsLoading || isApplicationsValidating}
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
+							onDownload={handleDownloadApplication}
 							onDuplicate={handleDuplicateApplication}
 							onOpen={handleOpenApplication}
 							searchQuery={searchQuery}
