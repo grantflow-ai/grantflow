@@ -515,7 +515,6 @@ async def test_download_application_markdown(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application in markdown format."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Test Application",
@@ -545,7 +544,6 @@ async def test_download_application_pdf(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application in PDF format."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="PDF Test Application",
@@ -565,8 +563,8 @@ async def test_download_application_pdf(
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/pdf"
     assert response.headers["content-disposition"] == 'attachment; filename="PDF Test Application.pdf"'
-    assert len(response.content) > 0  # PDF content should exist
-    assert response.content.startswith(b"%PDF")  # PDF signature
+    assert len(response.content) > 0
+    assert response.content.startswith(b"%PDF")
 
 
 async def test_download_application_docx(
@@ -575,7 +573,6 @@ async def test_download_application_docx(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application in DOCX format."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="DOCX Test Application",
@@ -595,8 +592,8 @@ async def test_download_application_docx(
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     assert response.headers["content-disposition"] == 'attachment; filename="DOCX Test Application.docx"'
-    assert len(response.content) > 0  # DOCX content should exist
-    assert b"PK" in response.content[:10]  # ZIP signature (DOCX is a ZIP file)
+    assert len(response.content) > 0
+    assert b"PK" in response.content[:10]
 
 
 async def test_download_application_default_format(
@@ -605,7 +602,6 @@ async def test_download_application_default_format(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application without format parameter defaults to markdown."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Default Format Test",
@@ -632,7 +628,6 @@ async def test_download_application_invalid_status(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application with invalid status returns validation error."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Invalid Status App",
@@ -658,13 +653,12 @@ async def test_download_application_no_text_content(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application without text content returns validation error."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="No Content App",
             project_id=project.id,
             status=ApplicationStatusEnum.WORKING_DRAFT,
-            text=None,  # No text content
+            text=None,
         )
         session.add(app)
         await session.commit()
@@ -684,13 +678,12 @@ async def test_download_application_empty_text_content(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application with empty text content returns validation error."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Empty Content App",
             project_id=project.id,
             status=ApplicationStatusEnum.WORKING_DRAFT,
-            text="   ",  # Empty/whitespace text content
+            text="   ",
         )
         session.add(app)
         await session.commit()
@@ -709,7 +702,6 @@ async def test_download_application_not_found(
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading non-existent application returns 404."""
     non_existent_id = uuid4()
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}/download",
@@ -724,7 +716,6 @@ async def test_download_application_unauthorized(
     project: Project,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test downloading application without authorization returns 401."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Unauthorized Test",
@@ -748,7 +739,6 @@ async def test_download_application_invalid_format(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test downloading application with invalid format returns validation error."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             title="Invalid Format Test",
@@ -773,7 +763,6 @@ async def test_download_application_filename_sanitization(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test that unsafe characters in title are properly sanitized in filename."""
     unsafe_title = 'Test <App> "With" /Special: \\Characters|?*'
 
     async with async_session_maker() as session, session.begin():
@@ -794,7 +783,6 @@ async def test_download_application_filename_sanitization(
     assert response.status_code == HTTPStatus.OK
     content_disposition = response.headers["content-disposition"]
     assert 'filename="Test_App___With____Special____Characters___.md"' in content_disposition
-    # Verify only alphanumeric, hyphens, and underscores remain (same as frontend)
     filename_part = content_disposition.split('filename="')[1].split('"')[0]
     assert all(char.isalnum() or char in "-_." for char in filename_part)
 
@@ -805,8 +793,7 @@ async def test_download_application_long_title_truncation(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test that very long titles are properly truncated for filename."""
-    very_long_title = "A" * 300  # Very long title
+    very_long_title = "A" * 300
 
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
@@ -825,9 +812,8 @@ async def test_download_application_long_title_truncation(
 
     assert response.status_code == HTTPStatus.OK
     content_disposition = response.headers["content-disposition"]
-    # Filename should be truncated and within reasonable limits
     filename_part = content_disposition.split('filename="')[1].split('"')[0]
-    assert len(filename_part) <= 255  # Max filename length
+    assert len(filename_part) <= 255
     assert filename_part.endswith(".md")
 
 
@@ -837,10 +823,9 @@ async def test_download_application_empty_title_fallback(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test that empty title falls back to default filename."""
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
-            title="",  # Empty title
+            title="",
             project_id=project.id,
             status=ApplicationStatusEnum.WORKING_DRAFT,
             text="Test content for empty title",

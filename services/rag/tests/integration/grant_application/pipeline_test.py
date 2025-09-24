@@ -138,10 +138,8 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
     async_session_maker: async_sessionmaker[Any],
     create_pubsub_topics: None,
 ) -> None:
-    """Test that completing the GENERATE_RESEARCH_PLAN stage updates application status to WORKING_DRAFT."""
     from sqlalchemy import update
 
-    # Set application to GENERATING status as it would be during the final stage
     async with async_session_maker() as session:
         await session.execute(
             update(GrantApplication)
@@ -150,14 +148,12 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
         )
         await session.commit()
 
-    # Mock all pipeline dependencies to simulate the final stage completion
     with (
         patch("services.rag.src.utils.checks.verify_rag_sources_indexed", return_value=None),
         patch("services.rag.src.grant_application.handlers.handle_generate_research_plan_stage") as mock_final_stage,
         patch("packages.shared_utils.src.pubsub.publish_email_notification", return_value=None),
         patch("packages.shared_utils.src.pubsub.publish_notification", return_value=None),
     ):
-        # Mock the final stage to return complete data
         mock_final_stage.return_value = {
             "section_texts": [
                 {"section_id": "abstract", "text": "Generated abstract text for testing."},
@@ -183,7 +179,6 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
             "research_plan_text": "Generated comprehensive research plan text.",
         }
 
-        # Load the application and manually trigger the final stage
         async with async_session_maker() as session:
             application = await session.get(
                 GrantApplication,
@@ -193,13 +188,11 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
             assert application
             assert application.grant_template
 
-            # Manually invoke the pipeline starting from the final stage by creating all stage jobs up to the final one
             from packages.db.src.enums import GrantApplicationStageEnum
             from packages.db.src.tables import RagGenerationJob
 
             from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 
-            # Create completed jobs for all stages except the final one
             for stage in GRANT_APPLICATION_STAGES_ORDER[:-1]:
                 job = RagGenerationJob(
                     grant_application_id=application.id,
@@ -210,30 +203,25 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                 session.add(job)
             await session.commit()
 
-            # Run the pipeline - it should detect the final stage needs processing
             await handle_grant_application_pipeline(
                 grant_application=application,
                 session_maker=async_session_maker,
                 trace_id="test-final-stage-completion",
             )
 
-    # Verify the application was updated correctly
     async with async_session_maker() as session:
         updated_application = await session.get(GrantApplication, test_application_with_template.id)
         assert updated_application
 
-        # CRITICAL: Verify status was updated from GENERATING to WORKING_DRAFT
         assert updated_application.status == ApplicationStatusEnum.WORKING_DRAFT, (
             f"Expected application status to be WORKING_DRAFT after final stage completion, "
             f"but got {updated_application.status}. This indicates the pipeline is not properly "
             f"transitioning the application status upon successful completion."
         )
 
-        # Verify text was generated and saved
         assert updated_application.text is not None
         assert len(updated_application.text) > 0
 
-        # Verify the job was marked as completed
         result = await session.execute(
             select_active(RagGenerationJob).where(
                 RagGenerationJob.grant_application_id == test_application_with_template.id,

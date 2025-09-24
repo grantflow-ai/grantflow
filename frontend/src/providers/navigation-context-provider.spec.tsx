@@ -53,7 +53,6 @@ describe("NavigationContextProvider", () => {
 		setupAuthenticatedTest();
 		vi.clearAllMocks();
 
-		// Mock getOrganizations to return some test organizations
 		const { getOrganizations } = await import("@/actions/organization");
 		const mockOrganizations = ListOrganizationsResponseFactory.build();
 		vi.mocked(getOrganizations).mockResolvedValue(Object.values(mockOrganizations));

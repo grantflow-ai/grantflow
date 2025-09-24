@@ -17,7 +17,6 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
 
-# Batch size constant for research deep dive field generation
 RESEARCH_FIELD_BATCH_SIZE: Final[int] = 4
 
 logger = get_logger(__name__)
@@ -168,7 +167,6 @@ async def _generate_field_answer(
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
-    # Use resilient batching - continue even if some fields fail to generate
     field_names = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
     results = await batched_gather(
         *[
@@ -181,7 +179,6 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
         return_exceptions=True,
     )
 
-    # Process results with fallback for failed fields
     field_values = {}
     failed_fields = []
 
@@ -193,13 +190,11 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
                 error=str(result),
                 trace_id=trace_id,
             )
-            # Use fallback text for failed fields
             field_values[field_name] = f"[Failed to generate {field_name}. Manual completion required.]"
             failed_fields.append(field_name)
         else:
             field_values[field_name] = cast("str", result)
 
-    # Log generation summary if there were failures
     if failed_fields:
         logger.warning(
             "Some research deep dive fields failed",

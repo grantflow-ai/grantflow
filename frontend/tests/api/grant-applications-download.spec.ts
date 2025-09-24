@@ -139,7 +139,6 @@ describe("Grant Applications Download API Actions", () => {
 		it("should validate format parameter", async () => {
 			const mockDownloadApplication = vi.mocked(grantApplicationActions.downloadApplication);
 
-			// Test all valid formats
 			const validFormats: DownloadFormat[] = ["markdown", "pdf", "docx"];
 
 			for (const format of validFormats) {
