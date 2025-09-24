@@ -15,7 +15,7 @@ from .framework import VectorBenchmarkFramework
 logger = get_logger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class LoadTestConfiguration:
     name: str
     description: str
@@ -36,7 +36,7 @@ class LoadTestConfiguration:
     expected_use_case: str = "Load testing"
 
 
-@dataclass
+@dataclass(slots=True)
 class LoadTestResult:
     configuration: LoadTestConfiguration
 

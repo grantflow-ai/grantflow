@@ -1,16 +1,21 @@
 from collections import defaultdict
 from functools import partial
-from typing import Final, TypedDict
+from typing import TYPE_CHECKING, Final, TypedDict
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 
 ResearchRelationships = dict[str, list[tuple[str, str]]]
 
@@ -236,77 +241,6 @@ async def extract_relationships_generation(
     )
 
 
-criteria: list[EvaluationCriterion] = [
-    EvaluationCriterion(
-        name="Relationship Identification",
-        evaluation_instructions="""
-        Evaluate the comprehensiveness and accuracy of relationship identification:
-            - Appropriate relationships are identified between research objectives
-            - Meaningful connections between tasks within objectives are captured
-            - Cross-objective task relationships are properly identified
-            - The most significant and relevant relationships are prioritized
-            - Relationships cover different aspects of the research plan (methodological, sequential, etc.)
-        """,
-        weight=1.2,
-    ),
-    EvaluationCriterion(
-        name="Relationship Description Quality",
-        evaluation_instructions="""
-        Assess the quality and depth of relationship descriptions:
-            - Descriptions clearly explain how elements interact and influence each other
-            - The nature of dependencies is specified (sequential, causal, complementary, etc.)
-            - Descriptions include specific scientific or methodological connections
-            - Explanations are detailed and informative (100-200 words)
-            - Descriptions avoid vagueness and overgeneralization
-        """,
-    ),
-    EvaluationCriterion(
-        name="Research Strategy Coherence",
-        evaluation_instructions="""
-        Evaluate how well the relationships support a coherent research strategy:
-            - Relationships collectively form a logical workflow
-            - The network of relationships demonstrates a clear research narrative
-            - Relationships support the overarching research goals
-            - The structure aligns with scientific best practices in the domain
-            - There are no contradictions or impossible sequences in the relationship network
-        """,
-    ),
-    EvaluationCriterion(
-        name="Bidirectional Considerations",
-        evaluation_instructions="""
-        Assess the bidirectional nature of relationships where appropriate:
-            - Feedback mechanisms between research elements are identified
-            - Iterative processes are properly characterized
-            - Mutual influences between elements are considered
-            - Emphasis is placed on information flow in both directions where relevant
-            - Appropriate balance between unidirectional and bidirectional relationships
-        """,
-    ),
-    EvaluationCriterion(
-        name="Technical Accuracy",
-        evaluation_instructions="""
-        Evaluate the technical accuracy of the relationships:
-            - Correct notation is used for objectives and tasks
-            - Relationships are grounded in the scientific methodology described
-            - Temporal and logical sequencing is scientifically sound
-            - Dependencies reflect actual scientific and methodological requirements
-            - Relationship statements demonstrate understanding of the research domain
-        """,
-    ),
-    EvaluationCriterion(
-        name="Strategic Value for Grant Application",
-        evaluation_instructions="""
-        Assess the strategic value of the identified relationships for the grant application:
-            - Relationships highlight the integrated nature of the research plan
-            - Connections demonstrate thoughtful research design
-            - The relationship structure emphasizes efficiency and effectiveness
-            - Relationships underscore the feasibility of the research plan
-            - The network of relationships strengthens the overall grant narrative
-        """,
-    ),
-]
-
-
 async def handle_extract_relationships(
     *,
     application_id: str,
@@ -314,6 +248,7 @@ async def handle_extract_relationships(
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
     trace_id: str,
+    job_manager: "JobManager[StageDTO]",
 ) -> ResearchRelationships:
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
@@ -350,11 +285,8 @@ async def handle_extract_relationships(
         prompt=compressed_prompt,
         prompt_handler=extract_relationships_generation,
         research_objectives=research_objectives,
-        criteria=criteria,
-        passing_score=80,
-        increment=10,
-        retries=5,
         trace_id=trace_id,
+        **get_evaluation_kwargs("extract_relationships", job_manager),
     )
     ret: ResearchRelationships = defaultdict(list)
     for dependent_id, target_id, description in result["relationships"]:

@@ -1,16 +1,21 @@
 from functools import partial
-from typing import Final, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
 from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import ExtractionSectionsStageDTO
+    from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
 
@@ -326,42 +331,6 @@ async def generate_grant_template(
     )
 
 
-evaluation_criteria = [
-    EvaluationCriterion(
-        name="Word Count Analysis",
-        evaluation_instructions="""
-        Check word count allocations:
-        - If page limits provided: Total should match source page limits
-        - If page limits missing: Use reasonable defaults (300-2000 words per section)
-        - Research plan gets 50-66% of words when possible
-        - Distribution reflects section importance
-        - All sections have minimum 50 words, maximum 10000 words
-        """,
-        weight=0.8,
-    ),
-    EvaluationCriterion(
-        name="Content Guidance Quality",
-        evaluation_instructions="""
-        Check content guidance:
-        - Keywords are specific and relevant
-        - Instructions are clear and actionable
-        - Search queries retrieve useful evidence
-        """,
-        weight=0.9,
-    ),
-    EvaluationCriterion(
-        name="Dependencies and Structure",
-        evaluation_instructions="""
-        Verify dependencies:
-        - No circular dependencies
-        - Logical content flow
-        - All sections properly connected
-        """,
-        weight=0.7,
-    ),
-]
-
-
 async def handle_generate_grant_template_metadata(
     *,
     cfp_content: str,
@@ -369,6 +338,7 @@ async def handle_generate_grant_template_metadata(
     organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
     trace_id: str,
+    job_manager: "JobManager[ExtractionSectionsStageDTO]",
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
@@ -398,22 +368,6 @@ async def handle_generate_grant_template_metadata(
         else ""
     )
 
-    criteria = [*evaluation_criteria]
-
-    if organization_guidelines:
-        criteria.append(
-            EvaluationCriterion(
-                name="Organizational Compliance",
-                evaluation_instructions="""
-                Check org guidelines:
-                - Formatting matches requirements
-                - Section names follow conventions
-                - Word limits align with org specs
-                """,
-                weight=0.8,
-            )
-        )
-
     full_prompt = prompt.to_string(
         organization_guidelines=organization_guidelines,
     )
@@ -423,10 +377,7 @@ async def handle_generate_grant_template_metadata(
         prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
         prompt=compressed_prompt,
-        increment=15,
-        retries=3,
-        criteria=criteria,
-        passing_score=70,
         trace_id=trace_id,
+        **get_evaluation_kwargs("generate_metadata", job_manager),
     )
     return result["sections"]

@@ -8,7 +8,7 @@ from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 TEST_DATA_FOLDER = Path(__file__).parent.parent / "test_data"
 
 
-@dataclass
+@dataclass(slots=True)
 class ScenarioMetadata:
     name: str
     researcher: str
@@ -17,7 +17,7 @@ class ScenarioMetadata:
     description: str
 
 
-@dataclass
+@dataclass(slots=True)
 class CFPMapping:
     file: str
     grant_type: str

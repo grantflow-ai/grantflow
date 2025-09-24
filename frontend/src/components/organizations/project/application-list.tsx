@@ -1,14 +1,17 @@
 import { Plus } from "lucide-react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { API } from "@/types/api-types";
+import type { DownloadFormat } from "@/types/download";
 import { ApplicationCard } from "./application-card";
 
 interface ApplicationListProps {
 	applications: API.ListApplications.Http200.ResponseBody["applications"];
+	downloadingApplications?: Set<string>;
 	isCreatingApplication: boolean;
 	isLoading: boolean;
 	onCreate: () => void;
 	onDelete: (id: string) => void;
+	onDownload: (applicationId: string, format: DownloadFormat) => void;
 	onDuplicate: (id: string, currentTitle: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 	searchQuery: string;
@@ -16,10 +19,12 @@ interface ApplicationListProps {
 
 export function ApplicationList({
 	applications,
+	downloadingApplications = new Set(),
 	isCreatingApplication,
 	isLoading,
 	onCreate,
 	onDelete,
+	onDownload,
 	onDuplicate,
 	onOpen,
 	searchQuery,
@@ -79,8 +84,10 @@ export function ApplicationList({
 			{applications.map((application) => (
 				<ApplicationCard
 					application={application}
+					isDownloading={downloadingApplications.has(application.id)}
 					key={application.id}
 					onDelete={onDelete}
+					onDownload={onDownload}
 					onDuplicate={onDuplicate}
 					onOpen={onOpen}
 				/>
