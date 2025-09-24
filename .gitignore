@@ -76,7 +76,9 @@ override.tf.json
 requirements.txt
 sentence-transformers/
 storybook-static/
-temp*
+temp/
+*.tmp
+temp_*
 terraform.rc
 testing/test_data/results/
 tfplan

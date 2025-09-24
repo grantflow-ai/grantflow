@@ -6,6 +6,9 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import type { TemplateGenerationEvent } from "@/types/notification-events";
+
+type ApplicationType = NonNullable<ReturnType<typeof useApplicationStore.getState>["application"]>;
+
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
@@ -58,6 +61,7 @@ type RagSourceStatus = NonNullable<
 
 interface WizardActions {
 	checkApplicationGeneration: () => Promise<void>;
+	checkRagSourcesStatus: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
 	createObjective: (objective: ResearchObjective) => Promise<void>;
 	generateApplication: () => Promise<boolean>;
@@ -73,14 +77,13 @@ interface WizardActions {
 	resetTemplateGenerationFailed: () => void;
 	setApplicationGenerationFailed: (failed: boolean) => void;
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
-	setGeneratingApplication: (isGenerating: boolean) => void;
 
+	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateGenerationFailed: (failed: boolean) => void;
 	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
-
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (
@@ -92,7 +95,7 @@ interface WizardActions {
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<ResearchObjective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: ResearchObjective[]) => Promise<void>;
 	updateTasksForObjective: (objectiveNumber: number, tasks: ResearchObjective["research_tasks"]) => Promise<void>;
-	validateStepNext: () => Promise<ValidationResult>;
+	validateStepNext: () => ValidationResult;
 }
 
 interface WizardState {
@@ -239,6 +242,52 @@ const validateAutofillRequirements = (application: API.RetrieveApplication.Http2
 	}
 
 	return false;
+};
+
+const refreshRagSourceStatus = async (application: NonNullable<ApplicationType>) => {
+	const { selectedOrganizationId } = useOrganizationStore.getState();
+	if (!selectedOrganizationId) return;
+
+	const { getApplication } = useApplicationStore.getState();
+	await getApplication(selectedOrganizationId, application.project_id, application.id);
+};
+
+const handleRagSourcePollingStatus = () => {
+	const { polling } = useWizardStore.getState();
+	const { application } = useApplicationStore.getState();
+
+	if (!application?.grant_template) {
+		return;
+	}
+
+	const ragSources = application.grant_template.rag_sources;
+
+	if (ragSources.length === 0) {
+		log.info("[Wizard Store] No RAG sources found - stopping polling");
+		if (polling.isActive) {
+			polling.stop();
+		}
+		return;
+	}
+
+	const processingSources = ragSources.filter(
+		(source) => source.status === "CREATED" || source.status === "INDEXING",
+	);
+
+	log.info("[Wizard Store] RAG source status check", {
+		pollingActive: polling.isActive,
+		processingCount: processingSources.length,
+		statuses: ragSources.map((s) => ({ id: s.sourceId, status: s.status })),
+		totalSources: ragSources.length,
+	});
+
+	if (processingSources.length === 0 && polling.isActive) {
+		log.info("[Wizard Store] All RAG sources completed processing - stopping polling", {
+			failedCount: ragSources.filter((s) => s.status === "FAILED").length,
+			finishedCount: ragSources.filter((s) => s.status === "FINISHED").length,
+		});
+		polling.stop();
+	}
 };
 
 const trackAutofillEvent = async (
@@ -428,6 +477,40 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					applicationGenerationFailed: true,
 					isGeneratingApplication: false,
 				}));
+			}
+		},
+
+		checkRagSourcesStatus: async () => {
+			const { currentStep, polling } = get();
+
+			if (currentStep !== WizardStep.APPLICATION_DETAILS) {
+				if (polling.isActive) {
+					log.info("[Wizard Store] Stopping RAG polling - not on APPLICATION_DETAILS step", {
+						currentStep,
+						pollingWasActive: true,
+					});
+					polling.stop();
+				}
+				return;
+			}
+
+			const { application } = useApplicationStore.getState();
+			if (!application?.grant_template) {
+				log.warn("[Wizard Store] No application or template found during RAG source polling");
+				if (polling.isActive) {
+					polling.stop();
+				}
+				return;
+			}
+
+			try {
+				await refreshRagSourceStatus(application);
+				handleRagSourcePollingStatus();
+			} catch (error) {
+				log.error("checkRagSourcesStatus", error);
+				if (polling.isActive) {
+					polling.stop();
+				}
 			}
 		},
 
@@ -793,6 +876,13 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				return;
 			}
 
+			if (currentStep === WizardStep.APPLICATION_DETAILS && polling.isActive) {
+				log.info("[Wizard Store] Stopping RAG source polling when leaving APPLICATION_DETAILS", {
+					nextStep: WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1],
+				});
+				polling.stop();
+			}
+
 			if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 				polling.stop();
 				set((state) => ({
@@ -980,11 +1070,8 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}, "Update tasks for research objective");
 		},
 
-		validateStepNext: async (): Promise<ValidationResult> => {
+		validateStepNext: (): ValidationResult => {
 			const { currentStep } = get();
-
-			await get().refreshApplicationData();
-
 			const { application } = useApplicationStore.getState();
 
 			if (!application) {
