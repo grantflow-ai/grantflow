@@ -547,6 +547,20 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					rag_sources: [
+						{
+							filename: "test-file.pdf",
+							sourceId: "test-source-id",
+							status: "FINISHED",
+							url: undefined,
+						},
+					],
+				},
+			});
+
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -564,6 +578,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
+				isGeneratingApplication: false,
 				toNextStep: mockToNextStep,
 				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
@@ -571,6 +586,16 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Test background context",
+						hypothesis: "Test hypothesis",
+						impact: "Test impact",
+						novelty_and_innovation: "Test novelty and innovation",
+						preliminary_data: "Test preliminary data",
+						rationale: "Test rationale",
+						research_feasibility: "Test research feasibility",
+						team_excellence: "Test team excellence",
+					},
 					text: undefined,
 				},
 			});
