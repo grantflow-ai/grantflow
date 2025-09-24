@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { NotificationHandler } from "@/components/shared/notification-handler";
+import { RagNotificationHandler } from "@/components/shared/rag-notification-handler";
 import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
@@ -16,7 +16,7 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { isTemplateEvent } from "@/types/notification-events";
+import { isTemplateEvent, type NotificationEvent, type TemplateGenerationEvent } from "@/types/notification-events";
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
@@ -159,14 +159,14 @@ export function WizardClientComponent({
 
 	useEffect(() => {
 		if (latestRagNotification) {
-			const { event, message } = latestRagNotification.data;
+			const { event } = latestRagNotification;
 
-			log.info("[useApplicationNotifications] Received event from latestRagNotification:", { event });
-			if (isTemplateEvent(event)) {
-				useWizardStore.getState().setTemplateGenerationStatus({
-					event,
-					message,
-				});
+			log.info(
+				"[useApplicationNotifications] Setting TemplateGenerationStatus with latestRagNotification event:",
+				{ event },
+			);
+			if (isTemplateEvent(event as NotificationEvent)) {
+				useWizardStore.getState().setTemplateGenerationEvent(event as TemplateGenerationEvent);
 			}
 		}
 	}, [latestRagNotification]);
@@ -180,7 +180,7 @@ export function WizardClientComponent({
 	useEffect(() => {
 		if (!latestRagNotification) return;
 
-		const { event } = latestRagNotification.data;
+		const { event } = latestRagNotification;
 
 		if (event === "cfp_data_extracted" || event === "sections_extracted") {
 			setGeneratingTemplate(true);
@@ -210,7 +210,7 @@ export function WizardClientComponent({
 			</section>
 			<WizardFooter />
 
-			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
+			{latestRagNotification && <RagNotificationHandler notification={latestRagNotification} />}
 			<WizardDialog ref={dialogRef} />
 		</div>
 	);

@@ -155,54 +155,44 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "pipeline_error",
-				message: "Failed to generate template: Invalid document format",
-			},
+			templateGenerationEvent: "pipeline_error",
 		});
 
 		render(<ApplicationStructureLeftPane />);
 
 		expect(screen.getByTestId("error-title")).toHaveTextContent("Template Generation Failed");
-		expect(screen.getByTestId("error-message")).toHaveTextContent(
-			"Failed to generate template: Invalid document format",
-		);
+		expect(screen.getByTestId("error-message")).toHaveTextContent("Template generation failed");
 	});
 
-	it("hides step details for indexing events", () => {
+	it("shows step details for all template generation events", () => {
 		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "cfp_data_extracted",
-				message: "Indexing documents",
-			},
+			templateGenerationEvent: "cfp_data_extracted",
 		});
 
 		render(<ApplicationStructureLeftPane />);
 
 		expect(screen.getAllByTestId("analyzing-step-title")).toHaveLength(4);
-		expect(screen.queryByText(/Analyzing the documents/)).not.toBeInTheDocument();
+		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 	});
 
-	it("does not show step details for indexing events", () => {
+	it("shows template generation progress with sections_extracted event", () => {
 		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "sections_extracted",
-				message: "Extracting sections",
-			},
+			templateGenerationEvent: "sections_extracted",
 		});
 
 		render(<ApplicationStructureLeftPane />);
 
 		expect(screen.getByText(/Reading the call/)).toBeInTheDocument();
 		expect(screen.getByText(/Building the outline/)).toBeInTheDocument();
+		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 	});
 
 	it("shows step details for non-indexing events", () => {
@@ -211,10 +201,7 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "metadata_generated",
-				message: "Generating metadata",
-			},
+			templateGenerationEvent: "metadata_generated",
 		});
 
 		render(<ApplicationStructureLeftPane />);
