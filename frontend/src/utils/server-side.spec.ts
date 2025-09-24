@@ -175,7 +175,7 @@ describe("Server-side Utils", () => {
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockCookieStore.get).toHaveBeenCalledWith(SESSION_COOKIE);
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 
 		it("should redirect to onboarding when session cookie has no value", async () => {
@@ -186,7 +186,7 @@ describe("Server-side Utils", () => {
 
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 
 		it("should redirect to onboarding when session cookie has null value", async () => {
@@ -197,7 +197,7 @@ describe("Server-side Utils", () => {
 
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 	});
 
@@ -381,12 +381,12 @@ describe("Server-side Utils", () => {
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockCookieStore.get).toHaveBeenCalledWith(COOKIE_CONSENT);
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 			expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
-				"No cookie consent found, redirecting to onboarding",
+				"No cookie consent found, redirecting to login",
 				expect.objectContaining({
 					cookie_name: COOKIE_CONSENT,
-					redirect_path: routes.onboarding(),
+					redirect_path: routes.login(),
 				}),
 			);
 		});
@@ -406,7 +406,7 @@ describe("Server-side Utils", () => {
 
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 
 		it("should redirect to onboarding when user has not interacted with consent", async () => {
@@ -424,7 +424,7 @@ describe("Server-side Utils", () => {
 
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 
 		it("should redirect to onboarding on 401 HTTP errors when consent is given", async () => {
@@ -445,7 +445,7 @@ describe("Server-side Utils", () => {
 
 				expect(true).toBe(false);
 			} catch {
-				expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+				expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 			}
 		});
 
@@ -468,7 +468,7 @@ describe("Server-side Utils", () => {
 				expect(true).toBe(false);
 			} catch (error) {
 				expect(error).toBeInstanceOf(HTTPError);
-				expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+				expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 			}
 		});
 
@@ -549,7 +549,7 @@ describe("Server-side Utils", () => {
 					expect(error).toBeInstanceOf(HTTPError);
 
 					if (shouldRedirect) {
-						expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+						expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 					} else {
 						expect(mockRedirect).not.toHaveBeenCalled();
 					}
@@ -597,7 +597,7 @@ describe("Server-side Utils", () => {
 
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
+			expect(mockRedirect).toHaveBeenCalledWith(routes.login());
 		});
 
 		it("should prioritize consent check over HTTP error handling", async () => {
@@ -611,10 +611,10 @@ describe("Server-side Utils", () => {
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
-				"No cookie consent found, redirecting to onboarding",
+				"No cookie consent found, redirecting to login",
 				expect.objectContaining({
 					cookie_name: COOKIE_CONSENT,
-					redirect_path: routes.onboarding(),
+					redirect_path: routes.login(),
 				}),
 			);
 		});
