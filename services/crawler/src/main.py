@@ -6,8 +6,8 @@ from typing import Any
 from litestar import post
 from litestar.connection import Request
 from litestar.exceptions import ValidationException
-from sqlalchemy import select, update
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import insert, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from services.crawler.src.utils import decode_pubsub_message
@@ -40,6 +40,7 @@ from packages.db.src.tables import (
     GrantTemplateSource,
     GrantingInstitutionSource,
     GrantTemplate,
+    TextVector,
 )
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
@@ -85,7 +86,7 @@ async def handle_gcs_file_upload(
             )
 
             result = await session.execute(
-                insert(RagSource)
+                pg_insert(RagSource)
                 .values(
                     {
                         "source_type": "rag_file",
@@ -112,7 +113,7 @@ async def handle_gcs_file_upload(
 
             if crawling_request["entity_type"] == "granting_institution":
                 await session.execute(
-                    insert(GrantingInstitutionSource)
+                    pg_insert(GrantingInstitutionSource)
                     .values(
                         {
                             "rag_source_id": file_source_id,
@@ -123,7 +124,7 @@ async def handle_gcs_file_upload(
                 )
             elif crawling_request["entity_type"] == "grant_application":
                 await session.execute(
-                    insert(GrantApplicationSource)
+                    pg_insert(GrantApplicationSource)
                     .values(
                         {
                             "rag_source_id": file_source_id,
@@ -134,7 +135,7 @@ async def handle_gcs_file_upload(
                 )
             elif crawling_request["entity_type"] == "grant_template":
                 await session.execute(
-                    insert(GrantTemplateSource)
+                    pg_insert(GrantTemplateSource)
                     .values(
                         {
                             "rag_source_id": file_source_id,
@@ -274,13 +275,23 @@ async def handle_url_crawling(
                 )
                 return
 
+    grant_application_id = None
     if crawling_request["entity_type"] == "grant_template":
         async with session_maker() as session:
-            await session.scalar(
+            grant_application_id = await session.scalar(
                 select(GrantTemplate.grant_application_id).where(
                     GrantTemplate.id == crawling_request["entity_id"]
                 )
             )
+            if not grant_application_id:
+                logger.error(
+                    "Grant template has no associated grant application",
+                    grant_template_id=str(crawling_request["entity_id"]),
+                    trace_id=trace_id,
+                )
+                return
+    elif crawling_request["entity_type"] == "grant_application":
+        grant_application_id = crawling_request["entity_id"]
 
     memory_store = request.app.stores.get("memory")
     session_key = f"visited_urls:{crawling_request['source_id']}"
@@ -356,16 +367,30 @@ async def handle_url_crawling(
             trace_id=trace_id,
         )
 
-        await update_source_indexing_status(
-            logger=logger,
-            session_maker=session_maker,
-            source_id=crawling_request["source_id"],
-            identifier=crawling_request["url"],
-            text_content=content,
-            vectors=vectors,
-            indexing_status=SourceIndexingStatusEnum.FINISHED,
-            trace_id=trace_id,
-        )
+        if grant_application_id:
+            await update_source_indexing_status(
+                logger=logger,
+                session_maker=session_maker,
+                source_id=crawling_request["source_id"],
+                grant_application_id=grant_application_id,
+                identifier=crawling_request["url"],
+                text_content=content,
+                vectors=vectors,
+                indexing_status=SourceIndexingStatusEnum.FINISHED,
+                trace_id=trace_id,
+            )
+        else:
+            async with session_maker() as session, session.begin():
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == crawling_request["source_id"])
+                    .values(
+                        indexing_status=SourceIndexingStatusEnum.FINISHED,
+                        text_content=content,
+                    )
+                )
+                if vectors:
+                    await session.execute(insert(TextVector).values(vectors))
 
         logger.info(
             "URL crawling completed successfully",
@@ -388,16 +413,27 @@ async def handle_url_crawling(
             error_duration_ms=round((time.time() - start_time) * 1000, 2),
         )
 
-        await update_source_indexing_status(
-            logger=logger,
-            session_maker=session_maker,
-            source_id=crawling_request["source_id"],
-            identifier=crawling_request["url"],
-            text_content="",
-            vectors=None,
-            indexing_status=SourceIndexingStatusEnum.FAILED,
-            trace_id=trace_id,
-        )
+        if grant_application_id:
+            await update_source_indexing_status(
+                logger=logger,
+                session_maker=session_maker,
+                source_id=crawling_request["source_id"],
+                grant_application_id=grant_application_id,
+                identifier=crawling_request["url"],
+                text_content="",
+                vectors=None,
+                indexing_status=SourceIndexingStatusEnum.FAILED,
+                trace_id=trace_id,
+            )
+        else:
+            async with session_maker() as session, session.begin():
+                await session.execute(
+                    update(RagSource)
+                    .where(RagSource.id == crawling_request["source_id"])
+                    .values(
+                        indexing_status=SourceIndexingStatusEnum.FAILED, text_content=""
+                    )
+                )
     finally:
         await memory_store.delete(session_key)
 

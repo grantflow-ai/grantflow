@@ -152,8 +152,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 
 	updateProject: async (organizationId: string, projectId: string, data: API.UpdateProject.RequestBody) => {
 		const { project, projects } = get();
-		const previousProject = project;
-		const previousProjects = projects;
 
 		try {
 			await handleUpdateProject(organizationId, projectId, data);
@@ -169,8 +167,8 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			toast.success("Project updated successfully");
 		} catch (error: unknown) {
 			set({
-				project: previousProject,
-				projects: previousProjects,
+				project,
+				projects,
 			});
 			log.error("updateProject", error);
 			toast.error("Failed to update project");
