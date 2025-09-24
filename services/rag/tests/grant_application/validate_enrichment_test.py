@@ -20,10 +20,10 @@ def create_enrichment_data(
     search_queries: list[str] | None = None,
 ) -> EnrichmentDataDTO:
     return {
-        "enriched_objective": "Test enriched objective",
+        "enriched_objective": "Test enriched objective with sufficient length to pass the validation requirements for testing purposes",
         "search_queries": search_queries or ["Query 1", "Query 2", "Query 3"],
         "core_scientific_terms": core_scientific_terms or ["term1", "term2", "term3", "term4", "term5"],
-        "scientific_context": "Test scientific context",
+        "scientific_context": "Test scientific context with background information that meets the minimum length requirement for validation",
         "instructions": instructions
         or "These are detailed instructions for text generation that exceed the minimum length requirement.",
         "description": description
@@ -66,11 +66,20 @@ def test_validate_missing_objective() -> None:
 
 
 def test_validate_missing_objective_fields() -> None:
-    fields = ["core_scientific_terms", "instructions", "description", "guiding_questions", "search_queries"]
+    fields = [
+        "enriched_objective",
+        "core_scientific_terms",
+        "scientific_context",
+        "instructions",
+        "description",
+        "guiding_questions",
+        "search_queries",
+    ]
 
     for field in fields:
-        enrichment_data = {}
+        enrichment_data: dict[str, Any] = {}
 
+        # Add all required fields except the one we're testing
         for f in fields:
             if f != field:
                 if f == "core_scientific_terms":
@@ -78,7 +87,7 @@ def test_validate_missing_objective_fields() -> None:
                 elif f in ["guiding_questions", "search_queries"]:
                     enrichment_data[f] = ["Q1", "Q2", "Q3"]
                 else:
-                    enrichment_data[f] = ["This is a test value that is long enough to pass validation"]
+                    enrichment_data[f] = "This is a test value that is long enough to pass validation requirements"
 
         with pytest.raises(ValidationError) as exc:
             validate_enrichment_response(
@@ -155,11 +164,20 @@ def test_validate_task_count_mismatch() -> None:
 
 
 def test_validate_task_fields() -> None:
-    fields = ["core_scientific_terms", "instructions", "description", "guiding_questions", "search_queries"]
+    fields = [
+        "enriched_objective",
+        "core_scientific_terms",
+        "scientific_context",
+        "instructions",
+        "description",
+        "guiding_questions",
+        "search_queries",
+    ]
 
     for field in fields:
-        task_data = {}
+        task_data: dict[str, Any] = {}
 
+        # Add all required fields except the one we're testing
         for f in fields:
             if f != field:
                 if f == "core_scientific_terms":
@@ -167,7 +185,7 @@ def test_validate_task_fields() -> None:
                 elif f in ["guiding_questions", "search_queries"]:
                     task_data[f] = ["Q1", "Q2", "Q3"]
                 else:
-                    task_data[f] = ["This is a test value that is long enough to pass validation"]
+                    task_data[f] = "This is a test value that is long enough to pass validation requirements"
 
         with pytest.raises(ValidationError) as exc:
             validate_enrichment_response(

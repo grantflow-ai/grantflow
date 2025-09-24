@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Final
 
 from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
@@ -68,7 +69,7 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
 
 
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="optimized_section_generation",
+    name="section_generation",
     template="""
     Write the ${section_title} section for a grant application.
 
@@ -99,6 +100,16 @@ SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
         - Include specific metrics, timelines, and measurable outcomes
 """,
 )
+
+
+async def generate_section_text(task_description: str, *, trace_id: str, section: GrantLongFormSection) -> str:
+    return await generate_long_form_text(
+        task_description=task_description,
+        max_words=section["max_words"],
+        min_words=int(section["max_words"] * MIN_WORDS_RATIO),
+        prompt_identifier="section_generation",
+        trace_id=trace_id,
+    )
 
 
 async def handle_generate_section_text(
@@ -181,12 +192,12 @@ async def handle_generate_section_text(
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
     return await with_prompt_evaluation(
-        prompt_identifier="optimized_section_generation",
-        prompt_handler=generate_long_form_text,
+        prompt_identifier="section_generation",
+        prompt_handler=partial(generate_section_text, section=section),
         prompt=compressed_prompt,
-        increment=15,
+        increment=10,
         retries=3,
-        passing_score=80,
+        passing_score=40,
         criteria=[
             EvaluationCriterion(
                 name="Content Depth and Detail",

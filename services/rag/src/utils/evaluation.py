@@ -573,7 +573,7 @@ def _get_routing_recommendations(
         ContentComplexity.SIMPLE: "quick_evaluation",
         ContentComplexity.MODERATE: "standard_evaluation",
         ContentComplexity.COMPLEX: "thorough_evaluation",
-        ContentComplexity.VERY_COMPLEX: "optimized_prompt_evaluation",
+        ContentComplexity.VERY_COMPLEX: "prompt_evaluation",
     }
 
     base_timeout = base_timeouts[complexity_level]
@@ -635,7 +635,7 @@ async def smart_evaluate_output(
             result = await quick_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "thorough_evaluation":
             result = await thorough_evaluation(criteria, prompt, model_output, trace_id)
-        elif evaluation_mode == "optimized_prompt_evaluation":
+        elif evaluation_mode == "prompt_evaluation":
             result = await fast_evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
@@ -741,7 +741,7 @@ async def fast_evaluate_output(
         ) from e
 
 
-async def optimized_prompt_evaluation[T](
+async def prompt_evaluation[T](
     *,
     prompt_identifier: str,
     passing_score: int = 70,
