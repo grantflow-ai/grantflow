@@ -7,7 +7,11 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
-export function useOrganizationValidation(organizations: API.ListOrganizations.Http200.ResponseBody) {
+export function useOrganizationValidation(
+	organizations: API.ListOrganizations.Http200.ResponseBody,
+	organizationsLoading?: boolean,
+	organizationsSet?: boolean,
+) {
 	const { clearOrganizationCookie, selectedOrganizationId, setOrganizationCookie } = useOrgCookie();
 	const {
 		clearOrganization,
@@ -17,13 +21,23 @@ export function useOrganizationValidation(organizations: API.ListOrganizations.H
 	} = useOrganizationStore();
 
 	useEffect(() => {
+		if (organizationsLoading || organizationsSet) {
+			return;
+		}
+
 		setOrganizations(organizations);
-	}, [organizations, setOrganizations]);
+	}, [organizations, setOrganizations, organizationsLoading, organizationsSet]);
 
 	useEffect(() => {
+		if (organizationsLoading) {
+			return;
+		}
+
 		if (organizations.length === 0) {
 			log.info("No organizations available, clearing organization state");
-			clearOrganization();
+			if (!organizationsSet) {
+				clearOrganization();
+			}
 			clearOrganizationCookie();
 			return;
 		}
@@ -69,6 +83,8 @@ export function useOrganizationValidation(organizations: API.ListOrganizations.H
 		clearOrganizationCookie,
 		selectOrganization,
 		clearOrganization,
+		organizationsLoading,
+		organizationsSet,
 	]);
 
 	return organizations.length > 0 ? selectedOrganizationId : null;

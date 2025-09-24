@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createApplication } from "@/actions/grant-applications";
@@ -39,7 +39,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 	const validatedOrganizationId = useOrganizationValidation(initialOrganizations);
 
-	const { navigateToApplication, navigateToProject } = useNavigationStore();
+	const { clearActiveProject, navigateToApplication, navigateToProject, stateHydrated } = useNavigationStore();
 	const { addNotification } = useNotificationStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 
@@ -56,6 +56,12 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 		},
 	);
 
+	useEffect(() => {
+		if (stateHydrated) {
+			clearActiveProject();
+		}
+	}, [clearActiveProject, stateHydrated]);
+
 	const handleDuplicateProject = async (projectId: string) => {
 		if (!validatedOrganizationId) {
 			toast.error("Please select an organization first");
@@ -65,7 +71,9 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 		try {
 			await duplicateProjectAction(validatedOrganizationId, projectId);
 			await mutate();
-			toast.success("Research project duplicated successfully.", { id: toastId });
+			toast.success("Research project duplicated successfully.", {
+				id: toastId,
+			});
 		} catch (error) {
 			log.error("duplicate-project", error);
 			toast.error("Failed to duplicate research project.", { id: toastId });
@@ -79,7 +87,14 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 	const projectTeamMembers = projects
 		.flatMap((project) => project.members)
-		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>((acc, member) => {
+		.reduce<
+			{
+				backgroundColor: string;
+				imageUrl?: string;
+				initials: string;
+				uid: string;
+			}[]
+		>((acc, member) => {
 			const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
 			if (!existingMember) {
 				acc.push({

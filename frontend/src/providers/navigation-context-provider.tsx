@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
+import { getOrganizations } from "@/actions/organization";
 import { getProject } from "@/actions/project";
+import { useOrganizationValidation } from "@/hooks/use-organization-validation";
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -28,28 +30,39 @@ export function NavigationContextProvider({
 	const [error, setError] = useState<null | string>(null);
 
 	const activeApplicationId = useNavigationStore((state) => state.activeApplicationId);
+	const navigationStateHydrated = useNavigationStore((state) => state.stateHydrated);
 	const activeProjectId = useNavigationStore((state) => state.activeProjectId);
 	const clearActiveApplication = useNavigationStore((state) => state.clearActiveApplication);
 	const clearActiveProject = useNavigationStore((state) => state.clearActiveProject);
 	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
+	const organizations = useOrganizationStore((state) => state.organizations);
+	const [organizationsLoading, setOrganizationsLoading] = useState(!(selectedOrganizationId ?? organizations.length));
+
+	const validatedOrganizationId = useOrganizationValidation(organizations, organizationsLoading, true);
 
 	const loadProjectData = useCallback(async () => {
-		if (!(activeProjectId && selectedOrganizationId)) return false;
+		if (!navigationStateHydrated) return false;
+		if (!(activeProjectId && validatedOrganizationId)) return false;
 		try {
-			const project = await getProject(selectedOrganizationId, activeProjectId);
+			const project = await getProject(validatedOrganizationId, activeProjectId);
 			useProjectStore.getState().setProject(project);
 			return true;
 		} catch (error) {
-			log.error("Failed to load project data", { activeProjectId, error, selectedOrganizationId });
+			log.error("Failed to load project data", {
+				activeProjectId,
+				error,
+				validatedOrganizationId,
+			});
 			clearActiveProject();
 			return false;
 		}
-	}, [activeProjectId, selectedOrganizationId, clearActiveProject]);
+	}, [activeProjectId, validatedOrganizationId, clearActiveProject, navigationStateHydrated]);
 
 	const loadApplicationData = useCallback(async () => {
-		if (!(activeApplicationId && activeProjectId && selectedOrganizationId)) return false;
+		if (!navigationStateHydrated) return false;
+		if (!(activeApplicationId && activeProjectId && validatedOrganizationId)) return false;
 		try {
-			const application = await getApplication(selectedOrganizationId, activeProjectId, activeApplicationId);
+			const application = await getApplication(validatedOrganizationId, activeProjectId, activeApplicationId);
 			useApplicationStore.getState().setApplication(application);
 			return true;
 		} catch (error) {
@@ -57,14 +70,42 @@ export function NavigationContextProvider({
 				activeApplicationId,
 				activeProjectId,
 				error,
-				selectedOrganizationId,
+				validatedOrganizationId,
 			});
 			clearActiveApplication();
 			return false;
 		}
-	}, [activeApplicationId, activeProjectId, selectedOrganizationId, clearActiveApplication]);
+	}, [
+		activeApplicationId,
+		activeProjectId,
+		validatedOrganizationId,
+		clearActiveApplication,
+		navigationStateHydrated,
+	]);
+
+	const loadOrganizationData = useCallback(async () => {
+		try {
+			const organizations = await getOrganizations();
+			useOrganizationStore.setState({ organizations });
+		} catch (error) {
+			log.error("Failed to load organization data", {
+				error,
+			});
+			setError("Failed to load organization data");
+		} finally {
+			setOrganizationsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (organizationsLoading && !organizations.length) {
+			void loadOrganizationData();
+		}
+	}, [organizationsLoading, organizations.length, loadOrganizationData]);
 
 	const loadRequiredData = useCallback(async () => {
+		if (!navigationStateHydrated) return false;
+
 		if (activeProjectId && requireProject) {
 			const projectLoaded = await loadProjectData();
 			if (!projectLoaded) {
@@ -87,11 +128,14 @@ export function NavigationContextProvider({
 		requireApplication,
 		loadProjectData,
 		loadApplicationData,
+		navigationStateHydrated,
 	]);
 
 	useEffect(() => {
+		if (!navigationStateHydrated || organizationsLoading) return;
+
 		if (
-			!selectedOrganizationId ||
+			!validatedOrganizationId ||
 			(requireProject && !activeProjectId) ||
 			(requireApplication && !activeApplicationId)
 		) {
@@ -101,7 +145,7 @@ export function NavigationContextProvider({
 
 		void loadRequiredData();
 	}, [
-		selectedOrganizationId,
+		validatedOrganizationId,
 		requireProject,
 		requireApplication,
 		activeProjectId,
@@ -109,9 +153,13 @@ export function NavigationContextProvider({
 		redirectTo,
 		router,
 		loadRequiredData,
+		navigationStateHydrated,
+		organizationsLoading,
 	]);
 
 	useEffect(() => {
+		if (!navigationStateHydrated) return;
+
 		if (!error) return;
 
 		const timeoutId = setTimeout(() => {
@@ -121,7 +169,7 @@ export function NavigationContextProvider({
 		return () => {
 			clearTimeout(timeoutId);
 		};
-	}, [error, router, redirectTo]);
+	}, [error, router, redirectTo, navigationStateHydrated]);
 
 	if (error) {
 		return (
