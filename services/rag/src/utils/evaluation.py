@@ -774,7 +774,7 @@ async def prompt_evaluation[T](
         trace_id=trace_id,
     )
 
-    while iteration <= retries:
+    while iteration <= retries + 1:
         iteration_start = time.time()
 
         try:
@@ -809,7 +809,15 @@ async def prompt_evaluation[T](
             overall_score = total_weighted_score / total_weight if total_weight > 0 else 0
 
             if not failing_criteria:
-                time.time() - start_time
+                total_duration = time.time() - start_time
+                logger.info(
+                    "Evaluation passed",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration,
+                    overall_score=overall_score,
+                    total_duration=total_duration,
+                    trace_id=trace_id,
+                )
                 return cast("T", model_output)
 
             if (
@@ -817,7 +825,16 @@ async def prompt_evaluation[T](
                 and excellent_scores >= len(criteria) // 2
                 and overall_score >= min_passing_score * 0.9
             ):
-                time.time() - start_time
+                total_duration = time.time() - start_time
+                logger.info(
+                    "Early termination - good enough",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration,
+                    overall_score=overall_score,
+                    excellent_scores=excellent_scores,
+                    total_duration=total_duration,
+                    trace_id=trace_id,
+                )
                 return cast("T", model_output)
 
             iteration_duration = time.time() - iteration_start
@@ -839,35 +856,35 @@ async def prompt_evaluation[T](
                 }
             )
 
-            min_passing_score -= increment
+            iteration += 1
 
-            if min_passing_score <= MIN_PASSING_SCORE:
-                logger.warning(
-                    "Reached minimum passing score, returning result",
+            if iteration > retries + 1 or min_passing_score - increment < MIN_PASSING_SCORE:
+                logger.info(
+                    "Evaluation complete - returning result",
                     prompt_identifier=prompt_identifier,
-                    iteration=iteration,
+                    iteration=iteration - 1,
+                    retries=retries,
+                    reason="exhausted_retries" if iteration > retries else "at_minimum_score",
                     current_passing_score=min_passing_score,
-                    minimum_threshold=MIN_PASSING_SCORE,
                     all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
                 )
                 return cast("T", model_output)
 
-            iteration += 1
+            min_passing_score -= increment
 
-            if iteration <= retries:
-                improvement_instructions = []
-                for criterion_name, result in failing_criteria.items():
-                    improvement_instructions.append(f"- {criterion_name}: {result['instructions']}")
+            improvement_instructions = []
+            for criterion_name, result in failing_criteria.items():
+                improvement_instructions.append(f"- {criterion_name}: {result['instructions']}")
 
-                current_prompt = f"""
-                Improve the previous output based on this feedback:
-                {chr(10).join(improvement_instructions)}
+            current_prompt = f"""
+            Improve the previous output based on this feedback:
+            {chr(10).join(improvement_instructions)}
 
-                Original prompt: {prompt}
-                Previous output: {model_output}
+            Original prompt: {prompt}
+            Previous output: {model_output}
 
-                Generate an improved version that addresses the feedback above.
-                """
+            Generate an improved version that addresses the feedback above.
+            """
 
         except EvaluationError:
             raise

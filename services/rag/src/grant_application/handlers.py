@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, Literal, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
@@ -9,6 +9,7 @@ from packages.shared_utils.src.text import normalize_markdown
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.dto import (
+    EnrichmentDataDTO,
     EnrichObjectivesStageDTO,
     EnrichTerminologyStageDTO,
     ExtractRelationshipsStageDTO,
@@ -29,6 +30,10 @@ if TYPE_CHECKING:
     from packages.db.src.tables import GrantApplication
 
 logger = get_logger(__name__)
+
+# Batch size constants for different operations
+SECTION_GENERATION_BATCH_SIZE: Final[int] = 4
+WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
 
 
 async def handle_generate_sections_stage(
@@ -95,21 +100,66 @@ async def handle_generate_sections_stage(
         for section in long_form_sections
     ]
 
-    section_results = await batched_gather(*generation_coroutines, batch_size=4)
+    # Use error-resilient batching - continue even if some sections fail
+    section_results = await batched_gather(
+        *generation_coroutines, batch_size=SECTION_GENERATION_BATCH_SIZE, return_exceptions=True
+    )
 
     section_texts: dict[str, str] = {}
+    failed_sections = []
+
     for section, result in zip(long_form_sections, section_results, strict=False):
         section_id = section["id"]
-        section_texts[section_id] = result
+
+        if isinstance(result, Exception):
+            error_type = type(result).__name__
+            logger.error(
+                "Section generation failed",
+                section_id=section_id,
+                section_title=section["title"],
+                error_type=error_type,
+                error=str(result),
+                trace_id=trace_id,
+            )
+            # Provide fallback content instead of failing completely
+            section_texts[section_id] = (
+                f"[Failed to generate {section['title']} section: {error_type}. Manual completion required.]"
+            )
+            failed_sections.append({"id": section_id, "title": section["title"], "error": error_type})
+        else:
+            section_texts[section_id] = cast("str", result)
+
+    # Log generation summary
+    if failed_sections:
+        logger.warning(
+            "Some sections failed generation",
+            total_sections=len(long_form_sections),
+            successful_sections=len(long_form_sections) - len(failed_sections),
+            failed_sections=failed_sections,
+            trace_id=trace_id,
+        )
 
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
 
+    # Update notification to reflect actual success/failure status
+    successful_sections = len(long_form_sections) - len(failed_sections)
+    notification_type: Literal["success", "warning", "error"] = (
+        "success" if not failed_sections else ("warning" if successful_sections > 0 else "error")
+    )
+
+    if failed_sections:
+        message = f"Generated {successful_sections}/{len(long_form_sections)} sections ({len(failed_sections)} failed)"
+    else:
+        message = f"Generated {len(section_text_list)} sections"
+
     await job_manager.add_notification(
         event=NotificationEvents.SECTION_TEXTS_GENERATED,
-        message=f"Generated {len(section_text_list)} sections",
-        notification_type="success",
+        message=message,
+        notification_type=notification_type,
         data={
-            "sections_generated": len(section_text_list),
+            "sections_generated": successful_sections,
+            "total_sections": len(long_form_sections),
+            "failed_sections": len(failed_sections),
         },
     )
 
@@ -205,14 +255,48 @@ async def handle_enrich_terminology_stage(
         for enrichment_response in dto["enrichment_responses"]
     ]
 
-    wikidata_enrichments = await batched_gather(*wikidata_enrichment_coroutines, batch_size=4)
+    # Wikidata API is unreliable - continue even if some enrichments fail
+    wikidata_enrichments = await batched_gather(
+        *wikidata_enrichment_coroutines, batch_size=WIKIDATA_ENRICHMENT_BATCH_SIZE, return_exceptions=True
+    )
+
+    # Process results with proper counting
+    processed_enrichments: list[EnrichmentDataDTO] = []
+    successful_count = 0
+    failed_count = 0
+
+    for i, result in enumerate(wikidata_enrichments):
+        if isinstance(result, Exception):
+            logger.warning(  # Changed from debug to warning for consistency
+                "Wikidata enrichment failed",
+                enrichment_index=i,
+                error=str(result),
+                trace_id=trace_id,
+            )
+            # Use empty enrichment as fallback
+            processed_enrichments.append(cast("EnrichmentDataDTO", {}))
+            failed_count += 1
+        else:
+            processed_enrichments.append(cast("EnrichmentDataDTO", result))
+            successful_count += 1
+
+    notification_type: Literal["success", "warning", "error"] = (
+        "success" if failed_count == 0 else ("warning" if successful_count > 0 else "error")
+    )
+
+    if failed_count > 0:
+        message = f"Scientific context added ({successful_count} successful, {failed_count} failed)"
+    else:
+        message = "Scientific context added"
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
-        message="Scientific context added",
-        notification_type="success",
+        message=message,
+        notification_type=notification_type,
         data={
-            "terms_added": len(wikidata_enrichments),
+            "terms_added": successful_count,
+            "total_enrichments": len(wikidata_enrichments),
+            "failed_enrichments": failed_count,
         },
     )
 
@@ -221,7 +305,7 @@ async def handle_enrich_terminology_stage(
         work_plan_section=dto["work_plan_section"],
         relationships=dto["relationships"],
         enrichment_responses=dto["enrichment_responses"],
-        wikidata_enrichments=wikidata_enrichments,
+        wikidata_enrichments=processed_enrichments,
     )
 
 
@@ -277,7 +361,6 @@ async def handle_generate_research_plan_stage(
             ]
         )
 
-    # Calculate total tasks for notification
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
 
     work_plan_text = await generate_workplan_section(
