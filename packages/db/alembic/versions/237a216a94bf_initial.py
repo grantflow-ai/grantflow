@@ -4,7 +4,7 @@ import pgvector
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "7b54cb873ba4"
+revision: str = "237a216a94bf"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -77,16 +77,21 @@ def upgrade() -> None:  # noqa: PLR0915
             nullable=False,
         ),
         sa.Column("text_content", sa.Text(), nullable=True),
+        sa.Column("document_metadata", sa.JSON(), nullable=True),
+        sa.Column("indexing_started_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("parent_id", sa.UUID(), nullable=True),
         sa.Column("source_type", sa.String(length=50), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["parent_id"], ["rag_sources.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_rag_sources_created_at"), "rag_sources", ["created_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_deleted_at"), "rag_sources", ["deleted_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_indexing_status"), "rag_sources", ["indexing_status"], unique=False)
+    op.create_index(op.f("ix_rag_sources_parent_id"), "rag_sources", ["parent_id"], unique=False)
     op.create_table(
         "granting_institution_sources",
         sa.Column("rag_source_id", sa.UUID(), nullable=False),
@@ -290,7 +295,6 @@ def upgrade() -> None:  # noqa: PLR0915
         sa.Column("description", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(["id"], ["rag_sources.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("url"),
     )
     op.create_table(
         "text_vectors",
@@ -358,7 +362,9 @@ def upgrade() -> None:  # noqa: PLR0915
         sa.Column("organization_id", sa.UUID(), nullable=True),
         sa.Column("project_id", sa.UUID(), nullable=True),
         sa.Column(
-            "type", sa.Enum("DEADLINE", "INFO", "WARNING", "SUCCESS", name="notificationtypeenum"), nullable=False
+            "type",
+            sa.Enum("DEADLINE", "INFO", "WARNING", "SUCCESS", "ERROR", name="notificationtypeenum"),
+            nullable=False,
         ),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("message", sa.Text(), nullable=False),
@@ -590,7 +596,8 @@ def upgrade() -> None:  # noqa: PLR0915
     )
     op.create_table(
         "generation_notifications",
-        sa.Column("rag_job_id", sa.UUID(), nullable=False),
+        sa.Column("grant_application_id", sa.UUID(), nullable=False),
+        sa.Column("rag_job_id", sa.UUID(), nullable=True),
         sa.Column("data", sa.JSON(), nullable=True),
         sa.Column("delivered_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("event", sa.String(length=100), nullable=False),
@@ -600,11 +607,18 @@ def upgrade() -> None:  # noqa: PLR0915
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["grant_application_id"], ["grant_applications.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["rag_job_id"], ["rag_generation_jobs.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        "idx_rag_notifications_job_created", "generation_notifications", ["rag_job_id", "created_at"], unique=False
+        "idx_notifications_application_created",
+        "generation_notifications",
+        ["grant_application_id", "created_at"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_notifications_job_created", "generation_notifications", ["rag_job_id", "created_at"], unique=False
     )
     op.create_index(
         op.f("ix_generation_notifications_created_at"), "generation_notifications", ["created_at"], unique=False
@@ -614,16 +628,24 @@ def upgrade() -> None:  # noqa: PLR0915
     )
     op.create_index(op.f("ix_generation_notifications_event"), "generation_notifications", ["event"], unique=False)
     op.create_index(
+        op.f("ix_generation_notifications_grant_application_id"),
+        "generation_notifications",
+        ["grant_application_id"],
+        unique=False,
+    )
+    op.create_index(
         op.f("ix_generation_notifications_rag_job_id"), "generation_notifications", ["rag_job_id"], unique=False
     )
 
 
 def downgrade() -> None:  # noqa: PLR0915
     op.drop_index(op.f("ix_generation_notifications_rag_job_id"), table_name="generation_notifications")
+    op.drop_index(op.f("ix_generation_notifications_grant_application_id"), table_name="generation_notifications")
     op.drop_index(op.f("ix_generation_notifications_event"), table_name="generation_notifications")
     op.drop_index(op.f("ix_generation_notifications_deleted_at"), table_name="generation_notifications")
     op.drop_index(op.f("ix_generation_notifications_created_at"), table_name="generation_notifications")
-    op.drop_index("idx_rag_notifications_job_created", table_name="generation_notifications")
+    op.drop_index("idx_notifications_job_created", table_name="generation_notifications")
+    op.drop_index("idx_notifications_application_created", table_name="generation_notifications")
     op.drop_table("generation_notifications")
     op.drop_index(op.f("ix_rag_generation_jobs_template_stage"), table_name="rag_generation_jobs")
     op.drop_index(op.f("ix_rag_generation_jobs_status"), table_name="rag_generation_jobs")
@@ -746,6 +768,7 @@ def downgrade() -> None:  # noqa: PLR0915
     op.drop_index(op.f("ix_granting_institution_sources_deleted_at"), table_name="granting_institution_sources")
     op.drop_index(op.f("ix_granting_institution_sources_created_at"), table_name="granting_institution_sources")
     op.drop_table("granting_institution_sources")
+    op.drop_index(op.f("ix_rag_sources_parent_id"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_indexing_status"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_deleted_at"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_created_at"), table_name="rag_sources")

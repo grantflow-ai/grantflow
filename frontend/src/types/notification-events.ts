@@ -43,14 +43,13 @@ export function isTemplateEvent(event: NotificationEvent): event is TemplateGene
 	return ["cfp_data_extracted", "grant_template_created", "metadata_generated", "sections_extracted"].includes(event);
 }
 
-export const ERROR_EVENTS = new Set<NotificationEvent>([
-	"indexing_failed",
+export const ERROR_EVENTS = new Set<NotificationEvent>(["indexing_failed", "internal_error", "pipeline_error"]);
+
+export const WARNING_EVENTS = new Set<NotificationEvent>([
 	"indexing_timeout",
 	"insufficient_context_error",
-	"internal_error",
 	"job_cancelled",
 	"llm_timeout",
-	"pipeline_error",
 ]);
 
 export const SUCCESS_EVENTS = new Set<NotificationEvent>([
