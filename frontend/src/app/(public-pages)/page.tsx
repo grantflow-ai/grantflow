@@ -23,9 +23,9 @@ export default async function LandingPage() {
 		<div className="flex w-full flex-col">
 			<HeroBanner />
 			<BenefitsSection />
+			<CoreFeaturesSection />
 			<EarlyAccessSection />
 			<PaymentPlans />
-			<CoreFeaturesSection />
 			<TestimonialsSection />
 			<CTASection />
 			<CookieConsentProvider />
