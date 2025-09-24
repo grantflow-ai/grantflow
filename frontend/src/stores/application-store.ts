@@ -18,8 +18,9 @@ import {
 	deleteApplicationSource,
 	deleteTemplateSource,
 } from "@/actions/sources";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { DEFAULT_APPLICATION_TITLE, WizardStep } from "@/constants";
 import { useOrganizationStore } from "@/stores/organization-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
@@ -175,6 +176,28 @@ interface ApplicationActions {
 	) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
 }
+
+const shouldStartPollingAfterSourceAdd = (
+	currentStep: WizardStep,
+	pollingIsActive: boolean,
+	ragSources?: { status: string }[],
+): boolean => {
+	if (currentStep !== WizardStep.APPLICATION_DETAILS) return false;
+	if (pollingIsActive) return false;
+	if (!ragSources) return false;
+	return ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING");
+};
+
+const shouldStopPollingAfterSourceRemove = (
+	currentStep: WizardStep,
+	pollingIsActive: boolean,
+	ragSources?: { status: string }[],
+): boolean => {
+	if (currentStep !== WizardStep.APPLICATION_DETAILS) return false;
+	if (!pollingIsActive) return false;
+	if (!ragSources || ragSources.length === 0) return true;
+	return !ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING");
+};
 
 const uploadFileInDevelopment = async (
 	file: FileWithId,
@@ -413,6 +436,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		if (!selectedOrganizationId) return;
 
 		await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+		const { checkRagSourcesStatus, currentStep, polling } = useWizardStore.getState();
+		const { application: updatedApp } = get();
+
+		if (shouldStartPollingAfterSourceAdd(currentStep, polling.isActive, updatedApp?.grant_template?.rag_sources)) {
+			log.info("[Application Store] Starting RAG source polling after file upload", {
+				fileId: file.id,
+				fileName: file.name,
+				parentId,
+			});
+			polling.start(checkRagSourcesStatus, 2000, false);
+		}
 	},
 
 	addPendingUpload: (file: FileWithId, sourceType: SourceType) => {
@@ -461,6 +496,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+			const { checkRagSourcesStatus, currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+
+			if (
+				shouldStartPollingAfterSourceAdd(currentStep, polling.isActive, updatedApp?.grant_template?.rag_sources)
+			) {
+				log.info("[Application Store] Starting RAG source polling after URL add", {
+					parentId,
+					url,
+				});
+				polling.start(checkRagSourcesStatus, 2000, false);
+			}
 		} catch (error) {
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
@@ -735,6 +783,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+			const { currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+			const ragSources = updatedApp?.grant_template?.rag_sources;
+
+			if (shouldStopPollingAfterSourceRemove(currentStep, polling.isActive, ragSources)) {
+				log.info("[Application Store] Stopping RAG source polling after file removal", {
+					fileId: fileToRemove.id,
+					fileName: fileToRemove.name,
+					remainingSourcesCount: ragSources?.length ?? 0,
+				});
+				polling.stop();
+			}
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
@@ -767,59 +828,22 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	removeUrl: async (urlToRemove: string, parentId: string) => {
 		const { application } = get();
-
-		if (!validateStateForRagSource(application, parentId, "removeUrl")) {
-			return;
-		}
+		if (!validateStateForRagSource(application, parentId, "removeUrl")) return;
 
 		const isApplicationParent = parentId === application!.id;
-
 		const ragSources = isApplicationParent
 			? application!.rag_sources
 			: (application!.grant_template?.rag_sources ?? []);
-
-		log.info("[removeUrl] Debug info", {
-			isApplicationParent,
-			parentId,
-			ragSources: ragSources.map((source) => ({
-				filename: source.filename,
-				hasUrl: !!source.url,
-				sourceId: source.sourceId,
-				url: source.url,
-				urlMatch: source.url === urlToRemove,
-			})),
-			ragSourcesCount: ragSources.length,
-			urlToRemove,
-		});
-
 		const ragSource = ragSources.find((source) => source.url === urlToRemove);
 
 		if (!ragSource) {
-			log.error("[removeUrl] Source not found", {
-				availableUrls: ragSources.filter((s) => s.url).map((s) => s.url),
-				urlToRemove,
-			});
 			toast.error("Cannot remove URL: Source not found");
 			return;
 		}
 
-		log.info("[removeUrl] Found source to delete", {
-			sourceId: ragSource.sourceId,
-			url: ragSource.url,
-		});
-
 		try {
-			log.info("[removeUrl] About to call delete API", {
-				deleteFunction: isApplicationParent ? "deleteApplicationSource" : "deleteTemplateSource",
-				parentId,
-				projectId: application!.project_id,
-				sourceId: ragSource.sourceId,
-			});
-
 			const { selectedOrganizationId } = useOrganizationStore.getState();
-			if (!selectedOrganizationId) {
-				throw new Error("No organization selected");
-			}
+			if (!selectedOrganizationId) throw new Error("No organization selected");
 
 			await (isApplicationParent
 				? deleteApplicationSource(selectedOrganizationId, application!.project_id, parentId, ragSource.sourceId)
@@ -831,23 +855,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 						ragSource.sourceId,
 					));
 
-			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
-			log.info("[rag_sources_check] URL removal completed, triggering getApplication", {
-				beforeApplicationRagSources: formatApplicationRagSources(application),
-				beforeGrantSections: formatGrantSections(application),
-				beforeRagSources: formatRagSources(application),
-				isApplicationParent,
-				parentId,
-				sourceId: ragSource.sourceId,
-				templateId: application?.grant_template?.id,
-				url: urlToRemove,
-			});
-
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
-			log.info("[removeUrl] getApplication completed");
+
+			const { currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+			const updatedRagSources = updatedApp?.grant_template?.rag_sources;
+
+			if (shouldStopPollingAfterSourceRemove(currentStep, polling.isActive, updatedRagSources)) {
+				polling.stop();
+			}
 		} catch (error) {
-			log.error("[removeUrl] Error occurred", error);
+			log.error("removeUrl error", error);
 			toast.error("Failed to remove URL. Please try again.");
 		}
 	},

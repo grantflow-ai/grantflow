@@ -37,8 +37,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		if (!grantTemplate) return false;
 		if (grantTemplate.grant_sections.length > 0) return false;
 		if (isGeneratingTemplate) return false;
-		if (templateGenerationFailed) return false;
-		return true;
+		return !templateGenerationFailed;
 	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed]);
 
 	useEffect(() => {

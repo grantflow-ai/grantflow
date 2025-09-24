@@ -43,7 +43,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 			}
 		};
 
-		load();
+		void load();
 	}, [searchParams]);
 
 	const loadGrants = async (reset = false) => {
@@ -79,7 +79,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
 	const loadMore = () => {
 		if (!loading && hasMore) {
-			loadGrants(false);
+			void loadGrants(false);
 		}
 	};
 

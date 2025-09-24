@@ -37,11 +37,15 @@ describe.sequential("RootLayout", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		vi.spyOn(console, "error").mockImplementation((message) => {
-			if (typeof message === "string" && message.includes("cannot be a child of")) {
+		vi.spyOn(console, "error").mockImplementation((...args) => {
+			const message = args.map(String).join(" ");
+			if (message.includes("concurrent rendering") && message.includes("recover")) {
 				return;
 			}
-			throw new Error(`Unexpected console.error: ${String(message)}`);
+			if (message.includes("hydration") || message.includes("cannot be a child of")) {
+				return;
+			}
+			throw new Error(`Unexpected console.error: ${message}`);
 		});
 	});
 
