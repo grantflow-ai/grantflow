@@ -43,6 +43,7 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 			clearOrganization: () => {
 				set({
 					organization: null,
+					organizations: [],
 					selectedOrganizationId: null,
 				});
 			},

@@ -1,10 +1,14 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface NavigationActions {
 	clearActiveApplication: () => void;
 	clearActiveProject: () => void;
 
-	goBack: () => { applicationId: null | string; projectId: null | string } | null;
+	goBack: () => {
+		applicationId: null | string;
+		projectId: null | string;
+	} | null;
 	navigateToApplication: (
 		projectId: string,
 		projectName: string,
@@ -21,6 +25,8 @@ interface NavigationActions {
 	setActiveApplication: (applicationId: string, applicationTitle: string) => void;
 
 	setActiveProject: (projectId: string, projectName: string) => void;
+
+	setStateHydrated: (stateHydrated: boolean) => void;
 }
 
 interface NavigationContext {
@@ -36,6 +42,8 @@ interface NavigationContext {
 		projectId: null | string;
 		timestamp: number;
 	}[];
+
+	stateHydrated: boolean;
 }
 
 const initialState: NavigationContext = {
@@ -44,99 +52,118 @@ const initialState: NavigationContext = {
 	activeProjectId: null,
 	activeProjectName: null,
 	navigationHistory: [],
+	stateHydrated: false,
 };
 
-export const useNavigationStore = create<NavigationActions & NavigationContext>()((set, get) => ({
-	...initialState,
+const handleRehydration = (state: (NavigationActions & NavigationContext) | undefined) => {
+	state?.setStateHydrated(true);
+};
 
-	clearActiveApplication: () => {
-		set({
-			activeApplicationId: null,
-			activeApplicationTitle: null,
-		});
-	},
+const onRehydrateStorage = () => handleRehydration;
 
-	clearActiveProject: () => {
-		set({
-			activeApplicationId: null,
-			activeApplicationTitle: null,
-			activeProjectId: null,
-			activeProjectName: null,
-		});
-	},
+export const useNavigationStore = create<NavigationActions & NavigationContext>()(
+	persist(
+		(set, get) => ({
+			...initialState,
 
-	goBack: () => {
-		const { navigationHistory } = get();
-		if (navigationHistory.length > 1) {
-			const updatedHistory = navigationHistory.slice(0, -1);
-			const previousEntry = updatedHistory.at(-1);
+			clearActiveApplication: () => {
+				set({
+					activeApplicationId: null,
+					activeApplicationTitle: null,
+				});
+			},
 
-			set({
-				activeApplicationId: previousEntry?.applicationId ?? null,
-				activeApplicationTitle: null,
-				activeProjectId: previousEntry?.projectId ?? null,
-				activeProjectName: null,
-				navigationHistory: updatedHistory,
-			});
+			clearActiveProject: () => {
+				set({
+					activeApplicationId: null,
+					activeApplicationTitle: null,
+					activeProjectId: null,
+					activeProjectName: null,
+				});
+			},
 
-			return previousEntry ?? null;
-		}
-		return null;
-	},
+			goBack: () => {
+				const { navigationHistory } = get();
+				if (navigationHistory.length > 1) {
+					const updatedHistory = navigationHistory.slice(0, -1);
+					const previousEntry = updatedHistory.at(-1);
 
-	navigateToApplication: (
-		projectId: string,
-		projectName: string,
-		applicationId: string,
-		applicationTitle: string,
-	) => {
-		const { pushToHistory, setActiveApplication, setActiveProject } = get();
-		pushToHistory(globalThis.location.pathname);
-		setActiveProject(projectId, projectName);
-		setActiveApplication(applicationId, applicationTitle);
-	},
+					set({
+						activeApplicationId: previousEntry?.applicationId ?? null,
+						activeApplicationTitle: null,
+						activeProjectId: previousEntry?.projectId ?? null,
+						activeProjectName: null,
+						navigationHistory: updatedHistory,
+					});
 
-	navigateToProject: (projectId: string, projectName: string) => {
-		const { pushToHistory, setActiveProject } = get();
-		pushToHistory(globalThis.location.pathname);
-		setActiveProject(projectId, projectName);
-	},
+					return previousEntry ?? null;
+				}
+				return null;
+			},
 
-	pushToHistory: (path: string) => {
-		const { activeApplicationId, activeProjectId, navigationHistory } = get();
-		const newEntry = {
-			applicationId: activeApplicationId,
-			path,
-			projectId: activeProjectId,
-			timestamp: Date.now(),
-		};
+			navigateToApplication: (
+				projectId: string,
+				projectName: string,
+				applicationId: string,
+				applicationTitle: string,
+			) => {
+				const { pushToHistory, setActiveApplication, setActiveProject } = get();
+				pushToHistory(globalThis.location.pathname);
+				setActiveProject(projectId, projectName);
+				setActiveApplication(applicationId, applicationTitle);
+			},
 
-		const updatedHistory = [...navigationHistory, newEntry].slice(-20);
-		set({ navigationHistory: updatedHistory });
-	},
+			navigateToProject: (projectId: string, projectName: string) => {
+				const { pushToHistory, setActiveProject } = get();
+				pushToHistory(globalThis.location.pathname);
+				setActiveProject(projectId, projectName);
+			},
 
-	reset: () => {
-		set(initialState);
-	},
+			pushToHistory: (path: string) => {
+				const { activeApplicationId, activeProjectId, navigationHistory } = get();
+				const newEntry = {
+					applicationId: activeApplicationId,
+					path,
+					projectId: activeProjectId,
+					timestamp: Date.now(),
+				};
 
-	setActiveApplication: (applicationId: string, applicationTitle: string) => {
-		const { activeProjectId } = get();
-		if (!activeProjectId) {
-			return;
-		}
+				const updatedHistory = [...navigationHistory, newEntry].slice(-20);
+				set({ navigationHistory: updatedHistory });
+			},
 
-		set({
-			activeApplicationId: applicationId,
-			activeApplicationTitle: applicationTitle,
-		});
-	},
+			reset: () => {
+				set({ ...initialState, stateHydrated: true });
+			},
 
-	setActiveProject: (projectId: string, projectName: string) => {
-		set({
-			activeApplicationId: null,
-			activeApplicationTitle: null,
-			activeProjectId: projectId,
-			activeProjectName: projectName,
-		});
-	},
-}));
+			setActiveApplication: (applicationId: string, applicationTitle: string) => {
+				const { activeProjectId } = get();
+				if (!activeProjectId) {
+					return;
+				}
+
+				set({
+					activeApplicationId: applicationId,
+					activeApplicationTitle: applicationTitle,
+				});
+			},
+
+			setActiveProject: (projectId: string, projectName: string) => {
+				set({
+					activeApplicationId: null,
+					activeApplicationTitle: null,
+					activeProjectId: projectId,
+					activeProjectName: projectName,
+				});
+			},
+
+			setStateHydrated: (stateHydrated: boolean) => {
+				set({ stateHydrated });
+			},
+		}),
+		{
+			name: "navigation-store",
+			onRehydrateStorage,
+		},
+	),
+);
