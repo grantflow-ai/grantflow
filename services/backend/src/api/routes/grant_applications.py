@@ -54,11 +54,9 @@ logger = get_logger(__name__)
 
 
 def _sanitize_filename(title: str) -> str:
-    """Sanitize filename to match frontend pattern - keep only alphanumeric, hyphens, and underscores."""
     if not title or not title.strip():
         return "application"
 
-    # Keep only alphanumeric characters, hyphens, and underscores (same as frontend)
     sanitized = re.sub(r"[^a-zA-Z0-9\-_]", "_", title.strip())
 
     return sanitized or "application"
@@ -825,8 +823,6 @@ async def handle_download_application(
     session_maker: async_sessionmaker[Any],
     file_format: Literal["markdown", "pdf", "docx"] = Parameter(query="format", default="markdown"),
 ) -> Response[bytes]:
-    """Download a grant application in the specified format (markdown, PDF, or DOCX)."""
-
     async with session_maker() as session:
         try:
             application = await retrieve_application(
@@ -836,21 +832,17 @@ async def handle_download_application(
         except ValidationError as e:
             raise NotFoundException("Application not found") from e
 
-        # Validate that the application belongs to the correct project
         if application.project_id != project_id:
             raise NotFoundException("Application not found")
 
         if not application.text or not application.text.strip():
             raise ValidationException("Application has no content to download")
 
-        # Validate application status
         if application.status != ApplicationStatusEnum.WORKING_DRAFT:
             raise ValidationException("Application must be in WORKING_DRAFT status to download")
 
-        # Get the application text (which is markdown)
         markdown_content = application.text
 
-        # Generate safe filename
         safe_title = _sanitize_filename(application.title)
 
         try:
@@ -860,14 +852,12 @@ async def handle_download_application(
                 filename = f"{safe_title}.md"
 
             elif file_format == "pdf":
-                # Convert markdown to HTML, then HTML to PDF
                 html_content = markdown(markdown_content, extensions=["tables", "fenced_code", "nl2br"])
                 content = await html_to_pdf(html_content)
                 content_type = SUPPORTED_FILE_EXTENSIONS["pdf"]
                 filename = f"{safe_title}.pdf"
 
             elif file_format == "docx":
-                # Convert markdown to DOCX
                 content = markdown_to_docx(markdown_content)
                 content_type = SUPPORTED_FILE_EXTENSIONS["docx"]
                 filename = f"{safe_title}.docx"
@@ -893,7 +883,6 @@ async def handle_download_application(
             )
 
         except Exception as e:
-            # Log detailed error internally
             logger.error(
                 "Failed to convert application content",
                 application_id=str(application_id),
@@ -902,5 +891,4 @@ async def handle_download_application(
                 error_type=type(e).__name__,
                 organization_id=str(organization_id),
             )
-            # Return generic error to client to prevent information leakage
             raise BackendError("Document conversion failed. Please try again or contact support.") from e

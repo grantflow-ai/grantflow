@@ -52,7 +52,6 @@ async def perform_shared_retrieval(
     application_id: str,
     trace_id: str,
 ) -> str:
-    # Generate objective-specific query terms to add to shared context
     additional_queries = []
 
     for obj in research_objectives:
@@ -68,11 +67,9 @@ async def perform_shared_retrieval(
             if len(key_terms) > 1:
                 additional_queries.extend(key_terms[:2])
 
-    # Use work plan context with objective-specific additions
     search_queries = list(grant_section["search_queries"])
     search_queries.extend(additional_queries)
 
-    # Create task description for objective enrichment
     combined_context = "\n\n".join(
         [
             f"Research Objective {obj['number']}: {obj['title']}\nResearch Objective {obj['number']}: {obj['title']}"
@@ -127,11 +124,9 @@ async def handle_batch_enrich_objectives(
             for obj in batch
         ]
 
-        # Use resilient batching - don't let one failed objective kill the entire batch
         batch_size = min(4, len(batch_coroutines)) if batch_coroutines else 1
         batch_results = await batched_gather(*batch_coroutines, batch_size=batch_size, return_exceptions=True)
 
-        # Process results with error handling
         for i, result in enumerate(batch_results):
             if isinstance(result, Exception):
                 obj = batch[i]
@@ -142,7 +137,6 @@ async def handle_batch_enrich_objectives(
                     error=str(result),
                     trace_id=trace_id,
                 )
-                # Create minimal fallback enrichment
                 fallback_enrichment = {
                     "research_objective": {
                         "description": f"[Enrichment failed for objective {obj.get('number', 'Unknown')}]",

@@ -20,9 +20,6 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
-# Note: Shared work plan context was removed due to fundamental design flaw
-# Different stages need different contextual processing, not identical shared context
-
 MAX_RESULTS: Final[int] = 15
 MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
 MIN_QUALITY_SCORE: Final[float] = 7.0
@@ -51,10 +48,6 @@ def _get_cached_documents(cache_key: str) -> list[str] | None:
 def _cache_documents(cache_key: str, documents: list[str]) -> None:
     _document_cache[cache_key] = (documents, time.time())
     logger.debug("Document cache set", cache_key=cache_key, count=len(documents))
-
-
-# Batched retrieval removed - fundamentally flawed approach
-# Context-specific retrieval is essential for quality results
 
 
 RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT: Final[str] = """

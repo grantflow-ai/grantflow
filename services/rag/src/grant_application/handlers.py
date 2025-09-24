@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-# Batch size constants for different operations
 SECTION_GENERATION_BATCH_SIZE: Final[int] = 4
 WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
 
@@ -100,7 +99,6 @@ async def handle_generate_sections_stage(
         for section in long_form_sections
     ]
 
-    # Use error-resilient batching - continue even if some sections fail
     section_results = await batched_gather(
         *generation_coroutines, batch_size=SECTION_GENERATION_BATCH_SIZE, return_exceptions=True
     )
@@ -121,7 +119,6 @@ async def handle_generate_sections_stage(
                 error=str(result),
                 trace_id=trace_id,
             )
-            # Provide fallback content instead of failing completely
             section_texts[section_id] = (
                 f"[Failed to generate {section['title']} section: {error_type}. Manual completion required.]"
             )
@@ -129,7 +126,6 @@ async def handle_generate_sections_stage(
         else:
             section_texts[section_id] = cast("str", result)
 
-    # Log generation summary
     if failed_sections:
         logger.warning(
             "Some sections failed generation",
@@ -141,7 +137,6 @@ async def handle_generate_sections_stage(
 
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
 
-    # Debug logging for section generation summary
     logger.debug(
         "Section generation completed",
         total_sections=len(long_form_sections),
@@ -251,32 +246,28 @@ async def handle_enrich_terminology_stage(
         for enrichment_response in dto["enrichment_responses"]
     ]
 
-    # Wikidata API is unreliable - continue even if some enrichments fail
     wikidata_enrichments = await batched_gather(
         *wikidata_enrichment_coroutines, batch_size=WIKIDATA_ENRICHMENT_BATCH_SIZE, return_exceptions=True
     )
 
-    # Process results with proper counting
     processed_enrichments: list[EnrichmentDataDTO] = []
     successful_count = 0
     failed_count = 0
 
     for i, result in enumerate(wikidata_enrichments):
         if isinstance(result, Exception):
-            logger.warning(  # Changed from debug to warning for consistency
+            logger.warning(
                 "Wikidata enrichment failed",
                 enrichment_index=i,
                 error=str(result),
                 trace_id=trace_id,
             )
-            # Use empty enrichment as fallback
             processed_enrichments.append(cast("EnrichmentDataDTO", {}))
             failed_count += 1
         else:
             processed_enrichments.append(cast("EnrichmentDataDTO", result))
             successful_count += 1
 
-    # Debug logging for wikidata enrichment summary
     logger.debug(
         "Wikidata enrichment completed",
         total_enrichments=len(wikidata_enrichments),

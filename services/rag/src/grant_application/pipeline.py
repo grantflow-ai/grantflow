@@ -228,7 +228,6 @@ async def _handle_pipeline_error(
     error_traceback = traceback.format_exc()
     error_context = getattr(error, "context", None)
 
-    # Get additional pipeline state context
     pipeline_context = {
         "current_stage": current_stage.value,
         "stage_index": GRANT_APPLICATION_STAGES_ORDER.index(current_stage),
@@ -240,7 +239,6 @@ async def _handle_pipeline_error(
         "completed_stages": [],
     }
 
-    # Try to get checkpoint data for additional context
     try:
         checkpoint_data = await job_manager.get_checkpoint_data()
         if checkpoint_data:

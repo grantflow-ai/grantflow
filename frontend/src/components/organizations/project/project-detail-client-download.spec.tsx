@@ -7,7 +7,6 @@ import * as grantApplicationActions from "@/actions/grant-applications";
 import { APPLICATION_STATUS } from "@/constants/download";
 import { ProjectDetailClient } from "./project-detail-client";
 
-// Mock all the required modules
 vi.mock("@/actions/grant-applications", () => ({
 	createApplication: vi.fn(),
 	deleteApplication: vi.fn(),
@@ -54,7 +53,6 @@ vi.mock("swr", () => ({
 	mutate: vi.fn(),
 }));
 
-// Mock all the store hooks
 vi.mock("@/stores/navigation-store", () => ({
 	useNavigationStore: () => ({
 		navigateToApplication: vi.fn(),
@@ -111,7 +109,6 @@ describe("ProjectDetailClient Download Functionality", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 
-		// Mock SWR to return applications data
 		const mockUseSWR = vi.mocked((await import("swr")).default);
 		mockUseSWR.mockImplementation((key: any) => {
 			if (key?.includes("applications")) {
@@ -161,10 +158,8 @@ describe("ProjectDetailClient Download Functionality", () => {
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			// Should show download button for WORKING_DRAFT application
 			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
 
-			// Should not show download button for IN_PROGRESS application
 			const draftCard = screen.getByTestId("application-card-Draft Application");
 			expect(draftCard).toBeInTheDocument();
 		});
@@ -175,13 +170,11 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const mockBlob = new Blob(["# Test Application\\n\\nContent"], { type: "text/markdown" });
 		mockDownloadApplication.mockResolvedValue(mockBlob);
 
-		// Mock URL.createObjectURL and related browser APIs
 		const mockCreateObjectURL = vi.fn(() => "blob:test-url");
 		const mockRevokeObjectURL = vi.fn();
 		globalThis.URL.createObjectURL = mockCreateObjectURL;
 		globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
-		// Mock document.createElement for download link
 		const mockLink = {
 			click: vi.fn(),
 			download: "",
@@ -198,11 +191,9 @@ describe("ProjectDetailClient Download Functionality", () => {
 			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
 		});
 
-		// Find and click the download button (this will be in the ApplicationDownloadMenu)
 		const downloadButton = screen.getByRole("button", { name: /download/i });
 		await user.click(downloadButton);
 
-		// Select markdown format
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
 
@@ -228,7 +219,6 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const mockBlob = new Blob([new ArrayBuffer(1024)], { type: "application/pdf" });
 		mockDownloadApplication.mockResolvedValue(mockBlob);
 
-		// Mock browser APIs
 		globalThis.URL.createObjectURL = vi.fn(() => "blob:test-pdf-url");
 		globalThis.URL.revokeObjectURL = vi.fn();
 
@@ -288,7 +278,6 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const mockBlob = new Blob(["content"], { type: "text/markdown" });
 		mockDownloadApplication.mockResolvedValue(mockBlob);
 
-		// Mock SWR to return application with special characters in title
 		const mockUseSWR = vi.mocked((await import("swr")).default);
 		mockUseSWR.mockImplementation((key: any) => {
 			if (key?.includes("applications")) {
@@ -345,7 +334,6 @@ describe("ProjectDetailClient Download Functionality", () => {
 		await user.click(markdownOption);
 
 		await waitFor(() => {
-			// Filename should be sanitized
 			expect(mockLink.download).toBe("Test__App___With___Special____Characters___.md");
 		});
 	});
@@ -353,7 +341,6 @@ describe("ProjectDetailClient Download Functionality", () => {
 	it("manages loading state correctly", async () => {
 		const user = userEvent.setup();
 
-		// Make download hang to test loading state
 		let resolveDownload: (blob: Blob) => void;
 		const downloadPromise = new Promise<Blob>((resolve) => {
 			resolveDownload = resolve;
@@ -372,13 +359,11 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
 
-		// Button should be disabled while downloading
 		await waitFor(() => {
 			expect(downloadButton).toBeDisabled();
 			expect(screen.getByText("Downloading...")).toBeInTheDocument();
 		});
 
-		// Resolve the download
 		resolveDownload!(new Blob(["content"], { type: "text/markdown" }));
 
 		await waitFor(() => {

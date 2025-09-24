@@ -3,7 +3,6 @@ import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplicationDownloadMenu } from "./application-download-menu";
 
-// Mock the dropdown menu components
 vi.mock("@/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-menu">{children}</div>,
 	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
@@ -47,7 +46,6 @@ describe("ApplicationDownloadMenu", () => {
 		expect(trigger).not.toBeDisabled();
 		expect(screen.getByText("Download")).toBeInTheDocument();
 
-		// Check for SVG icon presence
 		const downloadIcon = screen.getByTestId("dropdown-menu").querySelector("svg");
 		expect(downloadIcon).toBeInTheDocument();
 	});
@@ -60,7 +58,6 @@ describe("ApplicationDownloadMenu", () => {
 		expect(trigger).toBeDisabled();
 		expect(screen.getByText("Downloading...")).toBeInTheDocument();
 
-		// Check for SVG icon presence
 		const loaderIcon = screen.getByTestId("dropdown-menu").querySelector("svg");
 		expect(loaderIcon).toBeInTheDocument();
 	});
@@ -126,11 +123,9 @@ describe("ApplicationDownloadMenu", () => {
 		await user.click(trigger);
 
 		await waitFor(() => {
-			// Check that menu items are present
 			const menuItems = screen.getAllByTestId("dropdown-item");
 			expect(menuItems).toHaveLength(3);
 
-			// Each menu item should have an icon and text
 			menuItems.forEach((item) => {
 				expect(item.querySelector("svg")).toBeInTheDocument();
 			});
@@ -143,13 +138,10 @@ describe("ApplicationDownloadMenu", () => {
 
 		const trigger = screen.getByRole("button");
 
-		// Button should be disabled
 		expect(trigger).toBeDisabled();
 
-		// Try to click the disabled button - it should not trigger the callback
 		await user.click(trigger);
 
-		// onDownload should not have been called
 		expect(mockOnDownload).not.toHaveBeenCalled();
 	});
 
@@ -157,7 +149,6 @@ describe("ApplicationDownloadMenu", () => {
 		render(<ApplicationDownloadMenu disabled={false} onDownload={mockOnDownload} />);
 
 		const trigger = screen.getByRole("button");
-		// Check that the className contains expected styling patterns
 		const { className } = trigger;
 		expect(className).toContain("cursor-pointer");
 		expect(className).not.toContain("cursor-not-allowed");
@@ -167,7 +158,6 @@ describe("ApplicationDownloadMenu", () => {
 		render(<ApplicationDownloadMenu disabled={true} onDownload={mockOnDownload} />);
 
 		const trigger = screen.getByRole("button");
-		// Check that the className contains expected styling patterns
 		const { className } = trigger;
 		expect(className).toContain("cursor-not-allowed");
 		expect(className).not.toContain("cursor-pointer");
