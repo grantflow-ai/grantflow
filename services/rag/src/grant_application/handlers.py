@@ -85,11 +85,11 @@ async def handle_generate_sections_stage(
 
     generation_coroutines = [
         handle_generate_section_text(
-            section,
-            grant_application.research_objectives or [],
-            shared_context,
-            cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
-            trace_id,
+            section=section,
+            research_deep_dives=grant_application.research_objectives or [],
+            shared_context=shared_context,
+            cfp_analysis=cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
+            trace_id=trace_id,
         )
         for section in long_form_sections
     ]

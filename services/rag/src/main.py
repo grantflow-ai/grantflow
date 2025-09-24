@@ -197,6 +197,15 @@ async def handle_request(
             trace_id=request.trace_id,
         )
         return
+    except ValidationError as e:
+        logger.warning(
+            "Validation error - acknowledging message to prevent retries",
+            error=str(e),
+            request_type=type(request).__name__,
+            trace_id=request.trace_id,
+        )
+        # Return success to acknowledge the message and prevent retries
+        return
 
 
 async def before_server_start() -> None:

@@ -243,7 +243,9 @@ async def test_validate_enrichment_response_short_instructions() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Short",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -262,7 +264,9 @@ async def test_validate_enrichment_response_short_description() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Short",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -281,7 +285,9 @@ async def test_validate_enrichment_response_missing_tasks() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -299,7 +305,9 @@ async def test_validate_enrichment_response_mismatched_task_count(sample_researc
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -307,7 +315,9 @@ async def test_validate_enrichment_response_mismatched_task_count(sample_researc
             },
             "research_tasks": [
                 {
+                    "enriched_objective": "Test enriched task objective with sufficient length",
                     "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                    "scientific_context": "Test task scientific context with background",
                     "instructions": "Test instructions that are longer than fifty characters",
                     "description": "Test description that is longer than fifty characters",
                     "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -326,7 +336,9 @@ async def test_validate_enrichment_response_invalid_task_fields() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -334,7 +346,9 @@ async def test_validate_enrichment_response_invalid_task_fields() -> None:
             },
             "research_tasks": [
                 {
+                    "enriched_objective": "Test task enriched objective with sufficient length",
                     "core_scientific_terms": ["term1", "term2"],
+                    "scientific_context": "Test task scientific context with background information for validation",
                     "instructions": "Test instructions that are longer than fifty characters",
                     "description": "Test description that is longer than fifty characters",
                     "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -401,7 +415,9 @@ async def test_validation_with_empty_research_objective() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -421,7 +437,9 @@ async def test_validation_comprehensive_task_validation() -> None:
         "ObjectiveEnrichmentDTO",
         {
             "research_objective": {
+                "enriched_objective": "Test enriched objective with sufficient length for validation",
                 "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                "scientific_context": "Test scientific context that provides background information",
                 "instructions": "Test instructions that are longer than fifty characters",
                 "description": "Test description that is longer than fifty characters",
                 "guiding_questions": ["Q1", "Q2", "Q3"],
@@ -429,7 +447,9 @@ async def test_validation_comprehensive_task_validation() -> None:
             },
             "research_tasks": [
                 {
+                    "enriched_objective": "Test task enriched objective with sufficient length",
                     "core_scientific_terms": ["term1", "term2", "term3", "term4", "term5"],
+                    "scientific_context": "Test task scientific context with background information that meets the minimum length requirement",
                     "instructions": "Short",
                     "description": "Test description that is longer than fifty characters",
                     "guiding_questions": ["Q1", "Q2", "Q3"],

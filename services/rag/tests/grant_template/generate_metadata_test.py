@@ -489,9 +489,9 @@ async def test_handle_generate_grant_template_metadata_success(
     mock_evaluation.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-async def test_handle_generate_grant_template_metadata_no_long_form_sections(mock_completions: AsyncMock) -> None:
-    mock_completions.return_value = {"sections": []}
+@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+async def test_handle_generate_grant_template_metadata_no_long_form_sections(mock_evaluation: AsyncMock) -> None:
+    mock_evaluation.return_value = {"sections": []}
 
     long_form_sections: list[ExtractedSectionDTO] = []
 
@@ -504,7 +504,7 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(moc
     )
 
     assert result == []
-    mock_completions.assert_called_once()
+    mock_evaluation.assert_called_once()
 
 
 @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
