@@ -1,7 +1,7 @@
 from time import time
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
+from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
@@ -259,7 +259,7 @@ async def generate_long_form_text(
             task_description=compress_prompt_text(
                 SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow), aggressive=True
             ),
-            model=ANTHROPIC_SONNET_MODEL,
+            model=GENERATION_MODEL,
             timeout=timeout,
             trace_id=trace_id,
         )

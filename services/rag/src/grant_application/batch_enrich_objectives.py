@@ -1,18 +1,18 @@
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, cast
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
-
-if TYPE_CHECKING:
-    from services.rag.src.grant_application.dto import StageDTO
-    from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
     handle_enrich_objective,
 )
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.token_optimization import estimate_prompt_tokens
@@ -52,14 +52,8 @@ async def perform_shared_retrieval(
     application_id: str,
     trace_id: str,
 ) -> str:
-    combined_context = "\n\n".join(
-        [
-            f"Research Objective {obj['number']}: {obj['title']}\nResearch Objective {obj['number']}: {obj['title']}"
-            for obj in research_objectives
-        ]
-    )
-
-    search_queries = list(grant_section["search_queries"])
+    # Generate objective-specific query terms to add to shared context
+    additional_queries = []
 
     for obj in research_objectives:
         title_words = obj["title"].lower().split()
@@ -69,10 +63,22 @@ async def perform_shared_retrieval(
             if len(w) > 3 and w not in {"research", "objective", "study", "investigate", "analysis", "development"}
         ]
         if key_terms:
-            search_queries.append(" ".join(key_terms[:3]))
+            additional_queries.append(" ".join(key_terms[:3]))
 
             if len(key_terms) > 1:
-                search_queries.extend(key_terms[:2])
+                additional_queries.extend(key_terms[:2])
+
+    # Use work plan context with objective-specific additions
+    search_queries = list(grant_section["search_queries"])
+    search_queries.extend(additional_queries)
+
+    # Create task description for objective enrichment
+    combined_context = "\n\n".join(
+        [
+            f"Research Objective {obj['number']}: {obj['title']}\nResearch Objective {obj['number']}: {obj['title']}"
+            for obj in research_objectives
+        ]
+    )
 
     retrieval_result = await retrieve_documents(
         application_id=application_id,
@@ -121,7 +127,41 @@ async def handle_batch_enrich_objectives(
             for obj in batch
         ]
 
-        batch_results = await batched_gather(*batch_coroutines, batch_size=min(4, len(batch_coroutines)))
-        all_deep_dives.extend(batch_results)
+        # Use resilient batching - don't let one failed objective kill the entire batch
+        batch_size = min(4, len(batch_coroutines)) if batch_coroutines else 1
+        batch_results = await batched_gather(*batch_coroutines, batch_size=batch_size, return_exceptions=True)
+
+        # Process results with error handling
+        for i, result in enumerate(batch_results):
+            if isinstance(result, Exception):
+                obj = batch[i]
+                logger.error(
+                    "Objective enrichment failed",
+                    objective_number=obj.get("number"),
+                    objective_title=obj.get("title"),
+                    error=str(result),
+                    trace_id=trace_id,
+                )
+                # Create minimal fallback enrichment
+                fallback_enrichment = {
+                    "research_objective": {
+                        "description": f"[Enrichment failed for objective {obj.get('number', 'Unknown')}]",
+                        "instructions": "Manual enrichment required.",
+                        "guiding_questions": ["What are the key components of this research objective?"],
+                        "search_queries": [obj.get("title", "research objective")],
+                    },
+                    "research_tasks": [
+                        {
+                            "description": f"[Enrichment failed for task {task.get('number', 'Unknown')}]",
+                            "instructions": "Manual enrichment required.",
+                            "guiding_questions": ["What are the specific steps for this task?"],
+                            "search_queries": [task.get("title", "research task")],
+                        }
+                        for task in obj.get("research_tasks", [])
+                    ],
+                }
+                all_deep_dives.append(cast("ObjectiveEnrichmentDTO", fallback_enrichment))
+            else:
+                all_deep_dives.append(cast("ObjectiveEnrichmentDTO", result))
 
     return all_deep_dives

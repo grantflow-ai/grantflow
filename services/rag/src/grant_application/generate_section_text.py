@@ -127,6 +127,16 @@ async def handle_generate_section_text(
 ) -> str:
     section_title = section["title"]
 
+    logger.debug(
+        "Starting section text generation",
+        section_id=section["id"],
+        section_title=section_title,
+        max_words=section["max_words"],
+        shared_context_chars=len(shared_context),
+        research_objectives_count=len(research_deep_dives),
+        trace_id=trace_id,
+    )
+
     research_context_parts = [
         f"""
         ## Research Objective {research_objective["number"]}: {research_objective["title"]}
@@ -189,6 +199,16 @@ async def handle_generate_section_text(
         section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
     )
 
+    logger.debug(
+        "Prepared context and requirements for section generation",
+        section_id=section["id"],
+        section_title=section_title,
+        combined_context_chars=len(validated_context),
+        cfp_requirements_chars=len(cfp_requirements_text),
+        has_cfp_requirements=bool(cfp_requirements_text),
+        trace_id=trace_id,
+    )
+
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
         instructions=section["generation_instructions"],
@@ -197,10 +217,38 @@ async def handle_generate_section_text(
     )
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    return await with_prompt_evaluation(
+    logger.debug(
+        "Generated and compressed prompt for section",
+        section_id=section["id"],
+        section_title=section_title,
+        original_prompt_chars=len(full_prompt),
+        compressed_prompt_chars=len(compressed_prompt),
+        compression_ratio=round(len(compressed_prompt) / len(full_prompt), 2) if full_prompt else 0,
+        trace_id=trace_id,
+    )
+
+    result = await with_prompt_evaluation(
         prompt_identifier="section_generation",
         prompt_handler=partial(generate_section_text, section=section),
         prompt=compressed_prompt,
         trace_id=trace_id,
         **get_evaluation_kwargs("generate_section_text", job_manager),
     )
+
+    if result:
+        word_count = len(result.split())
+        char_count = len(result)
+    else:
+        word_count = char_count = 0
+
+    logger.info(
+        "Completed section text generation",
+        section_id=section["id"],
+        section_title=section_title,
+        generated_words=word_count,
+        generated_chars=char_count,
+        target_max_words=section["max_words"],
+        trace_id=trace_id,
+    )
+
+    return result

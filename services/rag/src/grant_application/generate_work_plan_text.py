@@ -1,10 +1,10 @@
-from asyncio import gather
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from packages.db.src.json_objects import ResearchDeepDive
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
+from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.dto import ResearchComponentGenerationDTO
@@ -20,6 +20,11 @@ if TYPE_CHECKING:
     from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
+
+MAX_SHARED_QUERIES: Final[int] = 15
+MAX_SHARED_TOKENS: Final[int] = 12000
+DEFAULT_BATCH_SIZE: Final[int] = 5
+COMPONENT_TIMEOUT: Final[float] = 480.0
 
 TASK_CONTENT_GUIDELINES: Final[str] = """For this task:
 - Be specific about the methodologies, protocols, and techniques that will be used
@@ -104,7 +109,7 @@ async def handle_work_plan_component_generation(
     *,
     min_words: int,
     max_words: int,
-    timeout: float = 480,
+    timeout: float = COMPONENT_TIMEOUT,
     **kwargs: Any,
 ) -> str:
     return await generate_long_form_text(
@@ -112,7 +117,7 @@ async def handle_work_plan_component_generation(
         min_words=min_words,
         prompt_identifier="generate_work_component",
         task_description=prompt,
-        model=ANTHROPIC_SONNET_MODEL,
+        model=GENERATION_MODEL,
         timeout=timeout,
         **kwargs,
     )
@@ -124,6 +129,7 @@ async def generate_work_plan_component_text(
     component: ResearchComponentGenerationDTO,
     form_inputs: ResearchDeepDive,
     work_plan_text: str,
+    shared_rag_results: list[str] | None = None,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -149,15 +155,36 @@ async def generate_work_plan_component_text(
         object_title=component["title"],
     )
 
-    rag_results = await retrieve_documents(
-        application_id=application_id,
-        task_description=prompt,
-        search_queries=component["search_queries"],
-        form_inputs=form_inputs,
-        section_title=component["title"],
-        with_guided_retrieval=True,
-        trace_id=trace_id,
-    )
+    rag_results = []
+
+    if shared_rag_results is not None:
+        rag_results.extend(shared_rag_results[:5])
+
+    if component["search_queries"]:
+        try:
+            component_specific_results = await retrieve_documents(
+                application_id=application_id,
+                task_description=prompt,
+                search_queries=component["search_queries"][:3],
+                form_inputs=form_inputs,
+                section_title=component["title"],
+                with_guided_retrieval=True,
+                max_tokens=3000,
+                trace_id=trace_id,
+            )
+            rag_results.extend(component_specific_results)
+        except Exception as e:
+            logger.debug(
+                "Component-specific retrieval failed, using shared context only",
+                component=component["number"],
+                error=str(e),
+                trace_id=trace_id,
+            )
+
+    if not rag_results and shared_rag_results:
+        rag_results = shared_rag_results
+    elif not rag_results:
+        rag_results = ["No relevant context found. Generate based on instructions and requirements."]
 
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
@@ -166,6 +193,7 @@ async def generate_work_plan_component_text(
         trace_id=trace_id,
     ):
         return source_validation_error
+
     try:
         return await with_prompt_evaluation(
             max_words=component["max_words"],
@@ -178,8 +206,32 @@ async def generate_work_plan_component_text(
             trace_id=trace_id,
             **get_evaluation_kwargs("generate_work_plan", job_manager),
         )
-    except EvaluationError:
-        return "Failed to generate component text."
+    except EvaluationError as e:
+        logger.warning(
+            "Component failed evaluation",
+            component_number=component["number"],
+            component_title=component["title"],
+            error=str(e),
+            trace_id=trace_id,
+        )
+        return f"[Failed quality evaluation for {component['title']}. Manual review required.]"
+    except TimeoutError:
+        logger.warning(
+            "Component generation timed out",
+            component_number=component["number"],
+            component_title=component["title"],
+            trace_id=trace_id,
+        )
+        return f"[Generation timed out for {component['title']}. Consider simplifying requirements.]"
+    except Exception as e:
+        logger.error(
+            "Unexpected error in component generation",
+            component_number=component["number"],
+            component_title=component["title"],
+            error=str(e),
+            trace_id=trace_id,
+        )
+        return f"[Unexpected error generating {component['title']}.]"
 
 
 async def generate_workplan_section(
@@ -189,26 +241,120 @@ async def generate_workplan_section(
     components: list[ResearchComponentGenerationDTO],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    retrieve_shared_context: bool = True,
 ) -> str:
-    all_texts = await gather(
-        *[
-            generate_work_plan_component_text(
-                application_id=application_id,
-                component=component,
-                work_plan_text="",
-                form_inputs=form_inputs,
+    await job_manager.ensure_not_cancelled()
+
+    shared_rag_results: list[str] = []
+    if retrieve_shared_context:
+        all_search_queries = []
+        for component in components:
+            all_search_queries.extend(component["search_queries"])
+
+        unique_queries = list(dict.fromkeys(all_search_queries))[:MAX_SHARED_QUERIES]
+
+        if unique_queries:
+            logger.info(
+                "Retrieving shared RAG context",
+                query_count=len(unique_queries),
+                component_count=len(components),
                 trace_id=trace_id,
-                job_manager=job_manager,
             )
-            for component in components
-        ]
+
+            try:
+                shared_rag_results = await retrieve_documents(
+                    application_id=application_id,
+                    search_queries=unique_queries,
+                    task_description="Generate comprehensive research work plan with objectives and tasks",
+                    max_tokens=MAX_SHARED_TOKENS,
+                    trace_id=trace_id,
+                )
+            except Exception as e:
+                logger.warning(
+                    "Failed to retrieve shared RAG context, continuing without it",
+                    error=str(e),
+                    trace_id=trace_id,
+                )
+
+    generation_tasks = [
+        generate_work_plan_component_text(
+            application_id=application_id,
+            component=component,
+            work_plan_text="",
+            form_inputs=form_inputs,
+            shared_rag_results=shared_rag_results if retrieve_shared_context else None,
+            trace_id=trace_id,
+            job_manager=job_manager,
+        )
+        for component in components
+    ]
+
+    logger.info(
+        "Starting parallel component generation",
+        total_components=len(components),
+        batch_size=batch_size,
+        trace_id=trace_id,
     )
 
-    work_plan_text = ""
-    for component, text in zip(components, all_texts, strict=True):
-        if "." not in component["number"]:
-            work_plan_text += f"\n\n### Objective {component['number']}: {component['title']}\n{text}"
+    all_texts = await batched_gather(*generation_tasks, batch_size=batch_size, return_exceptions=True)
+
+    await job_manager.ensure_not_cancelled()
+
+    text_parts: list[str] = []
+    successful_count = 0
+    failed_components = []
+
+    for component, result in zip(components, all_texts, strict=True):
+        if len(text_parts) % 10 == 0:
+            await job_manager.ensure_not_cancelled()
+
+        component_text: str
+
+        if isinstance(result, Exception):
+            error_type = type(result).__name__
+            logger.error(
+                "Component generation failed",
+                component_number=component["number"],
+                component_title=component["title"],
+                error_type=error_type,
+                error=str(result),
+                trace_id=trace_id,
+            )
+
+            if isinstance(result, EvaluationError):
+                component_text = f"[Failed quality evaluation for {component['title']}. Manual review required.]"
+            elif isinstance(result, TimeoutError):
+                component_text = f"[Generation timed out for {component['title']}. Consider simplifying requirements.]"
+            else:
+                component_text = f"[Error generating {component['title']}: {error_type}]"
+
+            failed_components.append(
+                {
+                    "number": component["number"],
+                    "title": component["title"],
+                    "error_type": error_type,
+                }
+            )
         else:
-            work_plan_text += f"\n\n#### {component['number']}: {component['title']}\n{text}"
+            component_text = cast("str", result)
+            successful_count += 1
+
+        if "." not in component["number"]:
+            text_parts.append(f"### Objective {component['number']}: {component['title']}\n{component_text}")
+        else:
+            text_parts.append(f"#### {component['number']}: {component['title']}\n{component_text}")
+
+    work_plan_text = "\n\n".join(text_parts) if text_parts else ""
+
+    logger.info(
+        "Work plan generation complete",
+        total_components=len(components),
+        successful=successful_count,
+        failed=len(failed_components),
+        failed_components=failed_components,
+        total_words=len(work_plan_text.split()),
+        trace_id=trace_id,
+    )
 
     return work_plan_text.strip()
