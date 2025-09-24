@@ -79,7 +79,6 @@ def test_validate_missing_objective_fields() -> None:
     for field in fields:
         enrichment_data: dict[str, Any] = {}
 
-        # Add all required fields except the one we're testing
         for f in fields:
             if f != field:
                 if f == "core_scientific_terms":
@@ -177,7 +176,6 @@ def test_validate_task_fields() -> None:
     for field in fields:
         task_data: dict[str, Any] = {}
 
-        # Add all required fields except the one we're testing
         for f in fields:
             if f != field:
                 if f == "core_scientific_terms":

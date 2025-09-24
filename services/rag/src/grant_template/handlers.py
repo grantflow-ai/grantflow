@@ -69,6 +69,7 @@ async def handle_cfp_extraction_stage(
             str(org.id): {"full_name": org.full_name, "abbreviation": org.abbreviation} for org in funding_organizations
         },
         session_maker=session_maker,
+        job_manager=job_manager,
         trace_id=trace_id,
     )
 
@@ -157,6 +158,7 @@ async def handle_section_extraction_stage(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
         trace_id=trace_id,
+        job_manager=job_manager,
         organization=analysis_result["organization"],
     )
 
@@ -194,6 +196,7 @@ async def handle_generate_metadata_stage(
         organization=section_extraction_result["organization"],
         long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s.get("is_title_only")],
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}

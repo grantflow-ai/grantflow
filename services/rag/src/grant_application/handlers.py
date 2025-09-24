@@ -20,7 +20,7 @@ from services.rag.src.grant_application.dto import (
 from services.rag.src.grant_application.enrich_terminology_stage import enrich_objective_with_wikidata
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
-from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
+from services.rag.src.grant_application.generate_work_plan_text import generate_workplan_section
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 
@@ -90,6 +90,7 @@ async def handle_generate_sections_stage(
             shared_context=shared_context,
             cfp_analysis=cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
             trace_id=trace_id,
+            job_manager=job_manager,
         )
         for section in long_form_sections
     ]
@@ -136,6 +137,7 @@ async def handle_extract_relationships_stage(
         grant_section=dto["work_plan_section"],
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
@@ -169,6 +171,7 @@ async def handle_enrich_objectives_stage(
         application_id=str(grant_application.id),
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
@@ -274,43 +277,23 @@ async def handle_generate_research_plan_stage(
             ]
         )
 
-    work_plan_text = ""
+    # Calculate total tasks for notification
+    total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
 
-    total_objectives = len(research_objectives)
-
-    objective_task_groups = []
-    for count in range(1, total_objectives + 1):
-        objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
-        tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
-        objective_task_groups.append((objective, tasks))
-
-    objective_results = await batched_gather(
-        *[
-            generate_objective_with_tasks(
-                application_id=str(grant_application.id),
-                form_inputs=grant_application.form_inputs or {},
-                objective=objective,
-                tasks=tasks,
-                work_plan_text=work_plan_text,
-                trace_id=trace_id,
-            )
-            for objective, tasks in objective_task_groups
-        ],
-        batch_size=4,
+    work_plan_text = await generate_workplan_section(
+        application_id=str(grant_application.id),
+        form_inputs=grant_application.form_inputs or {},
+        components=dtos,
+        trace_id=trace_id,
+        job_manager=job_manager,
     )
-
-    for objective, objective_text, task_results in objective_results:
-        work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
-
-        for research_task, research_task_text in task_results:
-            work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
     await job_manager.add_notification(
         event=NotificationEvents.RESEARCH_PLAN_COMPLETED,
         message="Research plan complete",
         notification_type="success",
         data={
-            "objectives": total_objectives,
+            "objectives": len(research_objectives),
             "tasks": total_tasks,
             "words": len(work_plan_text.split()),
         },

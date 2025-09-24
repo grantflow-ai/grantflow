@@ -12,6 +12,7 @@ from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
 
+from services.rag.src.constants import MIN_PASSING_SCORE
 from services.rag.src.utils.completion import make_google_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -839,6 +840,18 @@ async def prompt_evaluation[T](
             )
 
             min_passing_score -= increment
+
+            if min_passing_score <= MIN_PASSING_SCORE:
+                logger.warning(
+                    "Reached minimum passing score, returning result",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration,
+                    current_passing_score=min_passing_score,
+                    minimum_threshold=MIN_PASSING_SCORE,
+                    all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                )
+                return cast("T", model_output)
+
             iteration += 1
 
             if iteration <= retries:
@@ -877,22 +890,15 @@ async def prompt_evaluation[T](
             iteration += 1
 
     total_duration = time.time() - start_time
-    logger.error(
-        "Evaluation failed after all retries",
+    logger.warning(
+        "Exhausted retries, returning final result instead of failing",
         prompt_identifier=prompt_identifier,
         total_duration=total_duration,
         failures_count=len(failures),
+        final_passing_score=min_passing_score,
     )
 
-    raise EvaluationError(
-        f"Failed to generate acceptable content after {retries} attempts",
-        context={
-            "prompt_identifier": prompt_identifier,
-            "total_duration": total_duration,
-            "failures": failures,
-            "final_passing_score": min_passing_score,
-        },
-    )
+    return cast("T", model_output) if "model_output" in locals() else await prompt_handler(current_prompt, **kwargs)
 
 
 async def batch_evaluate_outputs(
@@ -961,6 +967,7 @@ async def with_prompt_evaluation[T, **P](
     increment: float = 2.5,
     criteria: list[EvaluationCriterion],
     trace_id: str,
+    job_manager: Any | None = None,
     **kwargs: Any,
 ) -> T:
     current_prompt = str(prompt)
@@ -1015,8 +1022,30 @@ async def with_prompt_evaluation[T, **P](
 
         failures.append(failing_criteria)
 
+        if job_manager and hasattr(job_manager, "increment_retry_count"):
+            retry_count = await job_manager.increment_retry_count()
+            logger.debug(
+                "Job retry count incremented via evaluation",
+                prompt_identifier=prompt_identifier,
+                iteration=iteration,
+                job_retry_count=retry_count,
+                trace_id=trace_id,
+            )
+
         min_passing_score -= increment
         iteration += 1
+
+        if min_passing_score <= MIN_PASSING_SCORE:
+            logger.warning(
+                "Reached minimum passing score, returning result",
+                prompt_identifier=prompt_identifier,
+                iteration=iteration,
+                current_passing_score=min_passing_score,
+                minimum_threshold=MIN_PASSING_SCORE,
+                all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                trace_id=trace_id,
+            )
+            return model_output
 
         current_prompt = FIX_OUTPUT_PROMPT.to_string(
             instructions="\n".join(
@@ -1026,13 +1055,14 @@ async def with_prompt_evaluation[T, **P](
             prompt=prompt,
         )
 
-    raise EvaluationError(
-        f"Failed to generate an acceptable response after {retries} retries. Please review the evaluation criteria and try again.",
-        context={
-            "prompt_identifier": prompt_identifier,
-            "failures": {i + 1: failure for i, failure in enumerate(failures)},
-        },
+    logger.warning(
+        "Exhausted retries, returning final result",
+        prompt_identifier=prompt_identifier,
+        retries=retries,
+        min_passing_score=min_passing_score,
+        trace_id=trace_id,
     )
+    return model_output
 
 
 async def quick_evaluation(

@@ -1,8 +1,12 @@
 from collections import defaultdict
-from typing import Any, Final, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
 
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import ExtractionSectionsStageDTO
+    from services.rag.src.utils.job_manager import JobManager
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -11,9 +15,10 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import util
 
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -551,100 +556,12 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
     )
 
 
-evaluation_criteria = [
-    EvaluationCriterion(
-        name="Section Extraction",
-        evaluation_instructions="""
-        Evaluate whether the extracted sections are accurate and complete:
-            - At least 90% of identifiable sections from source materials are present
-            - Sections are correctly identified and classified with proper terminology
-            - Section titles are correct, consistent, and match source material language
-            - No critical sections are missing based on CFP requirements
-        """,
-        weight=1.5,
-    ),
-    EvaluationCriterion(
-        name="Content Architecture",
-        evaluation_instructions="""
-        Assess the logical organization and completeness of content:
-            - Sections follow a coherent hierarchical structure limited to 5 levels
-            - Section dependencies form a logical flow without circular references
-            - Organization between sections follows standard grant application patterns
-            - Section relationships reflect natural content flow and research narrative
-            - Sections are balanced in depth across different components
-            - Proper parent-child relationships are established for all nested sections
-        """,
-    ),
-    EvaluationCriterion(
-        name="Work Plan Identification",
-        evaluation_instructions="""
-        Verify Work plan section identification:
-            - Exactly one section is marked as detailed research_plan
-            - The correct section is identified as the research_plan given the available sources
-            - Research Plan contains research objectives and experimental steps
-            - Research Plan section is appropriately placed in hierarchy
-            - Research Plan doesn't contain ineligible content (background, significance, etc.)
-            - Research Plan section is positioned appropriately in relation to other sections
-        """,
-        weight=1.5,
-    ),
-    EvaluationCriterion(
-        name="Section Type Classification",
-        evaluation_instructions="""
-        Verify accuracy of section type flags:
-            - Long-form sections correctly identified based on length requirements
-            - Title-only sections properly marked
-            - Clinical trial sections accurately identified
-            - Types align with section content and purpose
-            - No conflicting type assignments exist
-            - Edge cases are handled appropriately (e.g., sections that could be multiple types)
-        """,
-    ),
-    EvaluationCriterion(
-        name="Source Material Compliance",
-        evaluation_instructions="""
-        Evaluate adherence to source materials:
-            - Primary: Organization guidelines (when provided)
-            - Secondary: CFP requirements
-            - Section names match source terminology with at least 90% accuracy
-            - All required sections from sources are included
-            - Structure follows source-specified organization
-            - Any conflicts between organization guidelines and CFP requirements are resolved appropriately
-            - Domain-specific requirements for the scientific field are met
-        """,
-        weight=1.2,
-    ),
-    EvaluationCriterion(
-        name="Contextual Relevance",
-        evaluation_instructions="""
-        Assess how well the structure fits the specific funding context:
-            - Sections are appropriate for the specific scientific domain
-            - Structure aligns with the funding type (research grant, fellowship, etc.)
-            - Extracted sections reflect the specific focus areas mentioned in the CFP
-            - Template sections are relevant to the funding organization's priorities
-            - Structure accommodates any special requirements unique to this CFP
-            - Sections support a coherent scientific narrative appropriate for the field
-        """,
-    ),
-    EvaluationCriterion(
-        name="Completeness & Proportionality",
-        evaluation_instructions="""
-        Evaluate the completeness and balance of the extracted structure:
-            - The overall structure covers all necessary components of a competitive application
-            - Section proportions reflect appropriate emphasis based on CFP priorities
-            - No obvious gaps exist in the logical flow of the application
-            - Structure allows for complete presentation of scientific ideas
-            - Balance between technical sections and impact/significance sections
-            - Appropriate space allocation for different components based on their importance
-        """,
-    ),
-]
-
-
 async def handle_extract_sections(
     cfp_content: list[CFPContentSection],
     cfp_subject: str,
     trace_id: str,
+    *,
+    job_manager: "JobManager[ExtractionSectionsStageDTO]",
     organization: OrganizationNamespace | None = None,
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
@@ -670,35 +587,12 @@ async def handle_extract_sections(
         else ""
     )
 
-    criteria = [*evaluation_criteria]
-
-    if organization:
-        criteria.append(
-            EvaluationCriterion(
-                name="Organization-Specific Compliance",
-                evaluation_instructions="""
-                Verify strict compliance with this specific organization's guidelines:
-                    - Section structure exactly matches these organization's requirements (at least 95% accuracy)
-                    - Naming conventions precisely follow this organization's standards and terminology
-                    - All organization-specific required sections are included without exception
-                    - Hierarchy precisely reflects this organization's documented preferences
-                    - Any deviations from organization guidelines are explicitly justified by CFP requirements
-                    - Organization-specific formatting or structural requirements are correctly implemented
-                    - Special section types unique to this organization are properly identified
-                """,
-                weight=1.3,
-            )
-        )
-
     result = await with_prompt_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
-        criteria=criteria,
-        passing_score=75,
-        increment=15,
-        retries=3,
         trace_id=trace_id,
+        **get_evaluation_kwargs("extract_sections", job_manager),
     )
 
     return await filter_extracted_sections(result["sections"], trace_id)

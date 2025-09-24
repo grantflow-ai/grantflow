@@ -5,7 +5,7 @@ import pytest
 from packages.db.src.json_objects import ResearchDeepDive
 
 from services.rag.src.dto import ResearchComponentGenerationDTO
-from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
+from services.rag.src.grant_application.generate_work_plan_text import generate_workplan_section
 
 
 @pytest.fixture
@@ -64,8 +64,9 @@ def sample_form_inputs() -> ResearchDeepDive:
 
 
 @patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_success(
+async def test_generate_workplan_section_success(
     mock_generate_component_text: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_objective: ResearchComponentGenerationDTO,
     sample_tasks: list[ResearchComponentGenerationDTO],
     sample_form_inputs: ResearchDeepDive,
@@ -95,33 +96,24 @@ async def test_generate_objective_with_tasks_success(
     test_app_id = str(uuid4())
     test_trace_id = str(uuid4())
 
-    result = await generate_objective_with_tasks(
+    all_components = [sample_objective, *sample_tasks]
+
+    result = await generate_workplan_section(
         application_id=test_app_id,
         form_inputs=sample_form_inputs,
-        objective=sample_objective,
-        tasks=sample_tasks,
-        work_plan_text="",
+        components=all_components,
         trace_id=test_trace_id,
+        job_manager=mock_job_manager,
     )
 
-    assert isinstance(result, tuple)
-    assert len(result) == 3
+    assert isinstance(result, str)
+    assert "### Objective 1: Develop novel biomarkers" in result
+    assert "#### 1.1: Identify candidate biomarkers" in result
+    assert "#### 1.2: Validate biomarkers" in result
 
-    objective_returned, objective_text, task_results = result
-
-    assert objective_returned == sample_objective
-    assert objective_text == mock_objective_text
-
-    assert isinstance(task_results, list)
-    assert len(task_results) == 2
-
-    task1_returned, task1_text = task_results[0]
-    assert task1_returned == sample_tasks[0]
-    assert task1_text == mock_task_texts[0]
-
-    task2_returned, task2_text = task_results[1]
-    assert task2_returned == sample_tasks[1]
-    assert task2_text == mock_task_texts[1]
+    assert mock_objective_text.strip() in result
+    assert mock_task_texts[0].strip() in result
+    assert mock_task_texts[1].strip() in result
 
     assert mock_generate_component_text.call_count == 3
 
@@ -137,187 +129,3 @@ async def test_generate_objective_with_tasks_success(
 
     third_call = mock_generate_component_text.call_args_list[2]
     assert third_call.kwargs["component"] == sample_tasks[1]
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_no_tasks(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_form_inputs: ResearchDeepDive,
-) -> None:
-    mock_objective_text = "Standalone objective text without subtasks."
-    mock_generate_component_text.return_value = mock_objective_text
-
-    result = await generate_objective_with_tasks(
-        application_id=str(uuid4()),
-        form_inputs=sample_form_inputs,
-        objective=sample_objective,
-        tasks=[],
-        work_plan_text="",
-        trace_id=str(uuid4()),
-    )
-
-    objective_returned, objective_text, task_results = result
-
-    assert objective_returned == sample_objective
-    assert objective_text == mock_objective_text
-    assert isinstance(task_results, list)
-    assert len(task_results) == 0
-
-    mock_generate_component_text.assert_called_once()
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_single_task(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_form_inputs: ResearchDeepDive,
-) -> None:
-    single_task = [
-        ResearchComponentGenerationDTO(
-            number="1.1",
-            title="Single task",
-            description="Perform comprehensive analysis",
-            instructions="Use appropriate methodology",
-            guiding_questions=["How to achieve the goal?"],
-            search_queries=["analysis methodology"],
-            relationships=[],
-            max_words=150,
-            type="task",
-        )
-    ]
-
-    mock_objective_text = "Objective text for single task scenario."
-    mock_task_text = "Single task implementation details."
-    mock_generate_component_text.side_effect = [mock_objective_text, mock_task_text]
-
-    result = await generate_objective_with_tasks(
-        application_id=str(uuid4()),
-        form_inputs=sample_form_inputs,
-        objective=sample_objective,
-        tasks=single_task,
-        work_plan_text="",
-        trace_id=str(uuid4()),
-    )
-
-    objective_returned, objective_text, task_results = result
-
-    assert objective_returned == sample_objective
-    assert objective_text == mock_objective_text
-    assert len(task_results) == 1
-
-    task_returned, task_text = task_results[0]
-    assert task_returned == single_task[0]
-    assert task_text == mock_task_text
-
-    assert mock_generate_component_text.call_count == 2
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_existing_work_plan_text(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_tasks: list[ResearchComponentGenerationDTO],
-    sample_form_inputs: ResearchDeepDive,
-) -> None:
-    existing_work_plan = """
-    # Research Plan Overview
-
-    This project aims to advance cancer diagnostics through innovative approaches.
-    Previous objectives have established the foundation for biomarker discovery.
-    """
-
-    mock_objective_text = "Objective text building on existing work plan."
-    mock_task_text = "Task text with context from previous objectives."
-    mock_generate_component_text.side_effect = [mock_objective_text, mock_task_text, mock_task_text]
-
-    result = await generate_objective_with_tasks(
-        application_id=str(uuid4()),
-        form_inputs=sample_form_inputs,
-        objective=sample_objective,
-        tasks=sample_tasks,
-        work_plan_text=existing_work_plan,
-        trace_id=str(uuid4()),
-    )
-
-    _objective_returned, objective_text, task_results = result
-    assert objective_text == mock_objective_text
-    assert len(task_results) == 2
-
-    first_call = mock_generate_component_text.call_args_list[0]
-    assert first_call.kwargs["work_plan_text"] == existing_work_plan
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_empty_form_inputs(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_tasks: list[ResearchComponentGenerationDTO],
-) -> None:
-    mock_objective_text = "Objective text without form context."
-    mock_task_text = "Task text without form context."
-    mock_generate_component_text.side_effect = [mock_objective_text, mock_task_text, mock_task_text]
-
-    result = await generate_objective_with_tasks(
-        application_id=str(uuid4()),
-        form_inputs=ResearchDeepDive(),
-        objective=sample_objective,
-        tasks=sample_tasks,
-        work_plan_text="",
-        trace_id=str(uuid4()),
-    )
-
-    _objective_returned, objective_text, task_results = result
-    assert objective_text == mock_objective_text
-    assert len(task_results) == 2
-
-    first_call = mock_generate_component_text.call_args_list[0]
-    assert first_call.kwargs["form_inputs"] == ResearchDeepDive()
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_error_handling(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_tasks: list[ResearchComponentGenerationDTO],
-    sample_form_inputs: ResearchDeepDive,
-) -> None:
-    mock_generate_component_text.side_effect = Exception("Component generation service error")
-
-    with pytest.raises(Exception, match="Component generation service error"):
-        await generate_objective_with_tasks(
-            application_id=str(uuid4()),
-            form_inputs=sample_form_inputs,
-            objective=sample_objective,
-            tasks=sample_tasks,
-            work_plan_text="",
-            trace_id=str(uuid4()),
-        )
-
-    mock_generate_component_text.assert_called_once()
-
-
-@patch("services.rag.src.grant_application.generate_work_plan_text.generate_work_plan_component_text")
-async def test_generate_objective_with_tasks_task_generation_error(
-    mock_generate_component_text: AsyncMock,
-    sample_objective: ResearchComponentGenerationDTO,
-    sample_tasks: list[ResearchComponentGenerationDTO],
-    sample_form_inputs: ResearchDeepDive,
-) -> None:
-    mock_objective_text = "Successful objective generation."
-    mock_generate_component_text.side_effect = [
-        mock_objective_text,
-        Exception("Task generation error"),
-    ]
-
-    with pytest.raises(Exception, match="Task generation error"):
-        await generate_objective_with_tasks(
-            application_id=str(uuid4()),
-            form_inputs=sample_form_inputs,
-            objective=sample_objective,
-            tasks=sample_tasks,
-            work_plan_text="",
-            trace_id=str(uuid4()),
-        )
-
-    assert mock_generate_component_text.call_count == 3

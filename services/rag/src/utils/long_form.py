@@ -144,6 +144,7 @@ async def handle_long_form_text_generation(
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
+    timeout: float = 300,
     trace_id: str,
     **sources: Any,
 ) -> str:
@@ -171,6 +172,7 @@ async def handle_long_form_text_generation(
             system_prompt=LONG_FORM_GENERATION_SYSTEM_PROMPT,
             temperature=0.4,
             top_p=0.9,
+            timeout=timeout,
             trace_id=trace_id,
         )
 
@@ -212,6 +214,7 @@ async def generate_long_form_text(
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
+    timeout: float = 300,
     trace_id: str,
     **sources: Any,
 ) -> str:
@@ -230,6 +233,7 @@ async def generate_long_form_text(
         task_description=task_description,
         max_api_calls=max_api_calls,
         model=model,
+        timeout=timeout,
         trace_id=trace_id,
         **sources,
     )
@@ -256,6 +260,7 @@ async def generate_long_form_text(
                 SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow), aggressive=True
             ),
             model=ANTHROPIC_SONNET_MODEL,
+            timeout=timeout,
             trace_id=trace_id,
         )
 

@@ -70,6 +70,7 @@ def sample_form_inputs() -> dict[str, Any]:
 async def test_handle_extract_relationships_success(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -97,6 +98,7 @@ async def test_handle_extract_relationships_success(
         grant_section=sample_grant_section,
         form_inputs=sample_form_inputs,
         trace_id=test_trace_id,
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, dict)
@@ -127,6 +129,7 @@ async def test_handle_extract_relationships_success(
 async def test_handle_extract_relationships_empty_objectives(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
@@ -139,6 +142,7 @@ async def test_handle_extract_relationships_empty_objectives(
         grant_section=sample_grant_section,
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, dict)
@@ -153,6 +157,7 @@ async def test_handle_extract_relationships_empty_objectives(
 async def test_handle_extract_relationships_single_objective(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
@@ -176,6 +181,7 @@ async def test_handle_extract_relationships_single_objective(
         grant_section=sample_grant_section,
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, dict)
@@ -190,6 +196,7 @@ async def test_handle_extract_relationships_single_objective(
 async def test_handle_extract_relationships_complex_dependencies(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -219,6 +226,7 @@ async def test_handle_extract_relationships_complex_dependencies(
         grant_section=sample_grant_section,
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert len(result["1"]) == 2
@@ -237,6 +245,7 @@ async def test_handle_extract_relationships_complex_dependencies(
 async def test_handle_extract_relationships_no_form_inputs(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
 ) -> None:
@@ -254,6 +263,7 @@ async def test_handle_extract_relationships_no_form_inputs(
         grant_section=sample_grant_section,
         form_inputs={},
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, dict)
@@ -269,6 +279,7 @@ async def test_handle_extract_relationships_no_form_inputs(
 async def test_handle_extract_relationships_error_handling(
     mock_with_prompt_evaluation: AsyncMock,
     mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -283,6 +294,7 @@ async def test_handle_extract_relationships_error_handling(
             grant_section=sample_grant_section,
             form_inputs=sample_form_inputs,
             trace_id=str(uuid4()),
+            job_manager=mock_job_manager,
         )
 
     mock_with_prompt_evaluation.assert_called_once()
