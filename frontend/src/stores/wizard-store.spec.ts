@@ -174,7 +174,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithShortTitle });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(false);
 			const applicationWithLongTitle = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
@@ -183,7 +184,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithLongTitle });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result2 = useWizardStore.getState().validateStepNext();
+			expect(result2.isValid).toBe(true);
 		});
 
 		it("should require RAG sources to exist for APPLICATION_DETAILS", () => {
@@ -197,7 +199,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result3 = useWizardStore.getState().validateStepNext();
+			expect(result3.isValid).toBe(false);
 		});
 
 		it("should require RAG sources to be processed (FINISHED or FAILED) for APPLICATION_DETAILS", () => {
@@ -213,7 +216,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithCreatedSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result4 = useWizardStore.getState().validateStepNext();
+			expect(result4.isValid).toBe(false);
 			const applicationWithIndexingSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -225,7 +229,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithIndexingSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result5 = useWizardStore.getState().validateStepNext();
+			expect(result5.isValid).toBe(false);
 			const applicationWithFinishedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -237,7 +242,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithFinishedSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result6 = useWizardStore.getState().validateStepNext();
+			expect(result6.isValid).toBe(true);
 			const applicationWithFailedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -249,7 +255,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithFailedSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result7 = useWizardStore.getState().validateStepNext();
+			expect(result7.isValid).toBe(true);
 			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -261,7 +268,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithMixedSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result8 = useWizardStore.getState().validateStepNext();
+			expect(result8.isValid).toBe(true);
 		});
 
 		it("should handle edge cases for APPLICATION_DETAILS validation", () => {
@@ -272,7 +280,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutTemplate });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result9 = useWizardStore.getState().validateStepNext();
+			expect(result9.isValid).toBe(false);
 			const applicationWithUndefinedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: undefined,
@@ -281,7 +290,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithUndefinedSources });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result10 = useWizardStore.getState().validateStepNext();
+			expect(result10.isValid).toBe(false);
 		});
 
 		it("should require grant sections for APPLICATION_STRUCTURE", () => {
@@ -293,7 +303,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithoutSections });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result11 = useWizardStore.getState().validateStepNext();
+			expect(result11.isValid).toBe(false);
 			const applicationWithSections = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
@@ -301,7 +312,8 @@ describe.sequential("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application: applicationWithSections });
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result12 = useWizardStore.getState().validateStepNext();
+			expect(result12.isValid).toBe(true);
 		});
 	});
 
@@ -415,7 +427,8 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithFormInputs });
 
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result13 = useWizardStore.getState().validateStepNext();
+			expect(result13.isValid).toBe(true);
 		});
 
 		it("should fail RESEARCH_DEEP_DIVE validation with missing fields", () => {
@@ -437,7 +450,8 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithPartialInputs });
 
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result14 = useWizardStore.getState().validateStepNext();
+			expect(result14.isValid).toBe(false);
 		});
 
 		it("should validate RESEARCH_PLAN step requires objectives with tasks", () => {
@@ -456,7 +470,8 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithObjectives });
 
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(true);
+			const result15 = useWizardStore.getState().validateStepNext();
+			expect(result15.isValid).toBe(true);
 		});
 
 		it("should fail RESEARCH_PLAN validation with objectives but no tasks", () => {
@@ -475,7 +490,8 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithEmptyTasks });
 
-			expect(useWizardStore.getState().validateStepNext().isValid).toBe(false);
+			const result16 = useWizardStore.getState().validateStepNext();
+			expect(result16.isValid).toBe(false);
 		});
 	});
 
@@ -538,6 +554,95 @@ describe.sequential("wizard store", () => {
 			polling.stop();
 			expect(useWizardStore.getState().polling.isActive).toBe(false);
 			expect(useWizardStore.getState().polling.intervalId).toBeNull();
+		});
+	});
+
+	describe("RAG source polling", () => {
+		it("should stop polling when navigating away from APPLICATION_DETAILS", async () => {
+			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
+			const mockStop = vi.fn();
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "INDEXING" as const }],
+				}),
+			});
+
+			useApplicationStore.setState({
+				application,
+				getApplication: mockGetApplication,
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
+			});
+
+			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
+
+			await useWizardStore.getState().checkRagSourcesStatus();
+
+			expect(mockStop).toHaveBeenCalled();
+			expect(mockGetApplication).not.toHaveBeenCalled();
+		});
+
+		it("should stop polling when all sources are processed", async () => {
+			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
+			const mockStop = vi.fn();
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" as const },
+						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({
+				application,
+				getApplication: mockGetApplication,
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
+			});
+
+			await useWizardStore.getState().checkRagSourcesStatus();
+
+			useApplicationStore.setState({ application });
+
+			expect(mockStop).toHaveBeenCalled();
+		});
+
+		it("should continue polling when sources are still processing", async () => {
+			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
+			const mockStop = vi.fn();
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" as const },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({
+				application,
+				getApplication: mockGetApplication,
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
+			});
+
+			await useWizardStore.getState().checkRagSourcesStatus();
+
+			expect(mockStop).not.toHaveBeenCalled();
+			expect(mockGetApplication).toHaveBeenCalled();
 		});
 	});
 

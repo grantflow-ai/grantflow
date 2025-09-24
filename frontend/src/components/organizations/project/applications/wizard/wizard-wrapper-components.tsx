@@ -418,7 +418,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	}, [router]);
 
 	const handleRightButtonClick = useCallback(async () => {
-		const currentValidation = await validateStepNext();
+		const currentValidation = validateStepNext();
 		if (!currentValidation.isValid) {
 			await handleValidationError(currentValidation);
 			return;
