@@ -1,10 +1,14 @@
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.grant_application.enrich_research_objective import (
     ObjectiveEnrichmentDTO,
     handle_enrich_objective,
@@ -88,6 +92,7 @@ async def handle_batch_enrich_objectives(
     application_id: str,
     form_inputs: ResearchDeepDive,
     trace_id: str,
+    job_manager: "JobManager[StageDTO]",
 ) -> list[ObjectiveEnrichmentDTO]:
     if not research_objectives:
         return []
@@ -110,7 +115,8 @@ async def handle_batch_enrich_objectives(
                     keywords=grant_section["keywords"],
                     topics=grant_section["topics"],
                     trace_id=trace_id,
-                )
+                ),
+                job_manager=job_manager,
             )
             for obj in batch
         ]

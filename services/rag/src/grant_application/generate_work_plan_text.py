@@ -1,5 +1,5 @@
 from asyncio import gather
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from packages.db.src.json_objects import ResearchDeepDive
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
@@ -8,11 +8,16 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.dto import ResearchComponentGenerationDTO
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_application.dto import StageDTO
+    from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
 
@@ -93,57 +98,13 @@ GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
-evaluation_criteria = [
-    EvaluationCriterion(
-        name="Completeness",
-        evaluation_instructions="""
-        - Ensure all aspects of the research task or objective are addressed given the provided word limits.
-        - If information is missing, **MISSING INFORMATION** is inserted as expected.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Grounding",
-        evaluation_instructions="""
-        - Confirm that the content is firmly grounded in the sources.
-        - Verify accurate reflection of relationships with other objectives/tasks in the narrative.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Information Density",
-        evaluation_instructions="""
-        - Ensure high information density with minimal redundancy.
-        - Confirm the use of expert terminology to convey complex concepts effectively.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Scientific Accuracy",
-        evaluation_instructions="""
-        - Verify the use of precise, field-specific technical terminology.
-        - Ensure factual accuracy.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Style",
-        evaluation_instructions="""
-        - Ensure a formal, data-driven tone is maintained.
-        - Emphasize succinctness and specificity in the text.
-        """,
-    ),
-    EvaluationCriterion(
-        name="Hellucination",
-        evaluation_instructions="""
-        - Ensure the text does not contain hallucinated information (invented facts, persons, terms, etc.).
-        """,
-        weight=1.2,
-    ),
-]
-
 
 async def handle_work_plan_component_generation(
     prompt: str,
     *,
     min_words: int,
     max_words: int,
+    timeout: float = 480,
     **kwargs: Any,
 ) -> str:
     return await generate_long_form_text(
@@ -152,6 +113,7 @@ async def handle_work_plan_component_generation(
         prompt_identifier="generate_work_component",
         task_description=prompt,
         model=ANTHROPIC_SONNET_MODEL,
+        timeout=timeout,
         **kwargs,
     )
 
@@ -163,6 +125,7 @@ async def generate_work_plan_component_text(
     form_inputs: ResearchDeepDive,
     work_plan_text: str,
     trace_id: str,
+    job_manager: "JobManager[StageDTO]",
 ) -> str:
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
@@ -205,7 +168,6 @@ async def generate_work_plan_component_text(
         return source_validation_error
     try:
         return await with_prompt_evaluation(
-            criteria=evaluation_criteria,
             max_words=component["max_words"],
             min_words=int(component["max_words"] * MIN_WORDS_RATIO),
             prompt=prompt,
@@ -213,44 +175,40 @@ async def generate_work_plan_component_text(
             prompt_identifier="generate_work_component",
             rag_results=rag_results,
             user_input=form_inputs,
-            passing_score=85,
-            increment=10,
-            retries=5,
             trace_id=trace_id,
+            **get_evaluation_kwargs("generate_work_plan", job_manager),
         )
     except EvaluationError:
         return "Failed to generate component text."
 
 
-async def generate_objective_with_tasks(
+async def generate_workplan_section(
     *,
     application_id: str,
     form_inputs: ResearchDeepDive,
-    objective: ResearchComponentGenerationDTO,
-    tasks: list[ResearchComponentGenerationDTO],
-    work_plan_text: str,
+    components: list[ResearchComponentGenerationDTO],
     trace_id: str,
-) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
-    research_objective_text = await generate_work_plan_component_text(
-        application_id=application_id,
-        component=objective,
-        work_plan_text=work_plan_text,
-        form_inputs=form_inputs,
-        trace_id=trace_id,
-    )
-
-    research_task_texts = await gather(
+    job_manager: "JobManager[StageDTO]",
+) -> str:
+    all_texts = await gather(
         *[
             generate_work_plan_component_text(
                 application_id=application_id,
-                component=research_task,
-                work_plan_text=work_plan_text,
+                component=component,
+                work_plan_text="",
                 form_inputs=form_inputs,
                 trace_id=trace_id,
+                job_manager=job_manager,
             )
-            for research_task in tasks
+            for component in components
         ]
     )
 
-    task_results = list(zip(tasks, research_task_texts, strict=True))
-    return objective, research_objective_text, task_results
+    work_plan_text = ""
+    for component, text in zip(components, all_texts, strict=True):
+        if "." not in component["number"]:
+            work_plan_text += f"\n\n### Objective {component['number']}: {component['title']}\n{text}"
+        else:
+            work_plan_text += f"\n\n#### {component['number']}: {component['title']}\n{text}"
+
+    return work_plan_text.strip()

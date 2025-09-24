@@ -204,7 +204,6 @@ async def handle_request(
             request_type=type(request).__name__,
             trace_id=request.trace_id,
         )
-        # Return success to acknowledge the message and prevent retries
         return
 
 

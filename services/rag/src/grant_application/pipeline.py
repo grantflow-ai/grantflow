@@ -104,7 +104,7 @@ async def _initialize_pipeline(
 
     existing_job = await job_manager.get_or_create_job_for_stage()
 
-    if not await job_manager.get_checkpoint_data():
+    if existing_job.status == RagGenerationStatusEnum.PENDING:
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     return job_manager, existing_job
