@@ -372,7 +372,7 @@ data "archive_file" "app_hosting_function" {
   }
 
   source {
-    content  = file("${path.module}/../../../functions/requirements.txt")
+    content  = file("${path.root}/../functions/requirements.txt")
     filename = "requirements.txt"
   }
 }
