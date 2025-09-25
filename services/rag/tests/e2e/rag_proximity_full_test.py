@@ -14,76 +14,11 @@ from services.rag.src.grant_application.generate_section_text import (
     _format_cfp_requirements_for_section,
 )
 from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.tests.utils.rouge_utils import calculate_rouge_l, calculate_rouge_n
 
 
 async def generate_section_text(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return {}
-
-
-def calculate_rouge_l(reference_text: str, generated_text: str) -> float:
-    if not reference_text or not generated_text:
-        return 0.0
-
-    ref_tokens = reference_text.lower().split()
-    gen_tokens = generated_text.lower().split()
-
-    if not ref_tokens or not gen_tokens:
-        return 0.0
-
-    def lcs_length(x: list[str], y: list[str]) -> int:
-        m, n = len(x), len(y)
-        dp = [[0] * (n + 1) for _ in range(m + 1)]
-
-        for i in range(1, m + 1):
-            for j in range(1, n + 1):
-                if x[i - 1] == y[j - 1]:
-                    dp[i][j] = dp[i - 1][j - 1] + 1
-                else:
-                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
-
-        return dp[m][n]
-
-    lcs_len = lcs_length(ref_tokens, gen_tokens)
-
-    if lcs_len == 0:
-        return 0.0
-
-    precision = lcs_len / len(gen_tokens)
-    recall = lcs_len / len(ref_tokens)
-
-    if precision + recall == 0:
-        return 0.0
-
-    return (2 * precision * recall) / (precision + recall)
-
-
-def calculate_rouge_n(reference_text: str, generated_text: str, n: int = 2) -> float:
-    if not reference_text or not generated_text:
-        return 0.0
-
-    ref_tokens = reference_text.lower().split()
-    gen_tokens = generated_text.lower().split()
-
-    if len(ref_tokens) < n or len(gen_tokens) < n:
-        return 0.0
-
-    def create_ngrams(tokens: list[str], n: int) -> set[tuple[str, ...]]:
-        return {tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)}
-
-    ref_ngrams = create_ngrams(ref_tokens, n)
-    gen_ngrams = create_ngrams(gen_tokens, n)
-
-    if not ref_ngrams or not gen_ngrams:
-        return 0.0
-
-    overlap = len(ref_ngrams & gen_ngrams)
-    precision = overlap / len(gen_ngrams)
-    recall = overlap / len(ref_ngrams)
-
-    if precision + recall == 0:
-        return 0.0
-
-    return (2 * precision * recall) / (precision + recall)
 
 
 def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None) -> str:
@@ -103,7 +38,7 @@ def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysi
     """.strip()
 
 
-async def measure_real_rag_proximity(
+async def measure_rag_proximity(
     section: GrantLongFormSection,
     application_id: str,
     cfp_analysis: CFPSectionAnalysis | None = None,
@@ -150,7 +85,7 @@ async def measure_real_rag_proximity(
 
 
 @performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.RETRIEVAL, timeout=900)
-async def test_real_rag_proximity_analysis(
+async def test_rag_proximity_analysis(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
@@ -180,7 +115,7 @@ async def test_real_rag_proximity_analysis(
             raise ValueError("No substantial long-form sections found")
 
         logger.info(
-            "Found %d long-form sections for REAL RAG proximity analysis",
+            "Found %d long-form sections for RAG proximity analysis",
             len(long_form_sections),
         )
 
@@ -188,9 +123,9 @@ async def test_real_rag_proximity_analysis(
 
     for section in long_form_sections[:3]:
         section_title = section.get("title", "Unknown")
-        logger.info("Analyzing REAL RAG proximity for section: %s", section_title)
+        logger.info("Analyzing RAG proximity for section: %s", section_title)
 
-        section_rag_metrics = await measure_real_rag_proximity(
+        section_rag_metrics = await measure_rag_proximity(
             section=section,
             application_id=melanoma_alliance_full_application_id,
             cfp_analysis=cfp_analysis,
@@ -199,7 +134,7 @@ async def test_real_rag_proximity_analysis(
         proximity_results.append(section_rag_metrics)
 
         logger.info(
-            "REAL RAG Section %s - ROUGE-L scores: Req→RAG=%.3f, ROUGE-2=%.3f",
+            "RAG Section %s - ROUGE-L scores: Req→RAG=%.3f, ROUGE-2=%.3f",
             section_title,
             section_rag_metrics["section_to_rag_rouge_l"],
             section_rag_metrics["section_to_rag_rouge_2"],
@@ -218,16 +153,16 @@ async def test_real_rag_proximity_analysis(
         "total_documents_retrieved": sum(r["retrieval_document_count"] for r in proximity_results),
     }
 
-    assert aggregate_metrics["avg_section_to_rag_rouge_l"] > 0.05, "REAL RAG Section to RAG proximity too low"
-    assert total_time < 900, "REAL RAG Analysis took too long"
+    assert aggregate_metrics["avg_section_to_rag_rouge_l"] > 0.05, "RAG Section to RAG proximity too low"
+    assert total_time < 900, "RAG Analysis took too long"
 
     evaluation_results = {
-        "test_type": "real_rag_proximity_analysis",
+        "test_type": "rag_proximity_analysis",
         "application_id": melanoma_alliance_full_application_id,
         "methodology": {
-            "rag_system": "real_database_vector_search",
+            "rag_system": "database_vector_search",
             "rouge_metrics": ["ROUGE-L", "ROUGE-2"],
-            "measurement_points": ["section_requirements → real_database_retrieval"],
+            "measurement_points": ["section_requirements → database_retrieval"],
             "sections_analyzed": len(proximity_results),
         },
         "aggregate_metrics": aggregate_metrics,
@@ -236,31 +171,31 @@ async def test_real_rag_proximity_analysis(
             "min_section_to_rag_rouge_l": 0.05,
         },
         "performance_comparison": {
-            "uses_real_vector_db": True,
-            "uses_real_embeddings": True,
+            "uses_vector_db": True,
+            "uses_embeddings": True,
             "uses_cosine_similarity": True,
             "no_mocking": True,
         },
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
-    output_path = RESULTS_FOLDER / "rag_evaluation" / "real_rag_proximity_analysis.json"
+    output_path = RESULTS_FOLDER / "rag_evaluation" / "rag_proximity_analysis.json"
     save_evaluation_results(evaluation_results, output_path)
 
     logger.info(
-        "✅ REAL RAG proximity analysis completed - Avg ROUGE-L: %.3f, Avg ROUGE-2: %.3f",
+        "✅ RAG proximity analysis completed - Avg ROUGE-L: %.3f, Avg ROUGE-2: %.3f",
         aggregate_metrics["avg_section_to_rag_rouge_l"],
         aggregate_metrics["avg_section_to_rag_rouge_2"],
     )
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1200)
-async def test_real_rag_full_pipeline_with_generation(
+async def test_rag_full_pipeline_with_generation(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    logger.info("🚀 Starting REAL RAG full pipeline with text generation assessment")
+    logger.info("🚀 Starting RAG full pipeline with text generation assessment")
 
     start_time = time.time()
 
@@ -365,21 +300,17 @@ async def test_real_rag_full_pipeline_with_generation(
         "total_words_generated": sum([int(cast("int", m["generated_word_count"])) for m in pipeline_proximity_metrics]),
     }
 
-    assert overall_metrics["avg_section_to_rag_proximity"] > 0.05, (
-        "REAL RAG Pipeline section to RAG proximity insufficient"
-    )
-    assert overall_metrics["avg_rag_to_writing_proximity"] > 0.10, (
-        "REAL RAG Pipeline RAG to writing proximity insufficient"
-    )
-    assert overall_metrics["avg_end_to_end_proximity"] > 0.08, "REAL RAG Pipeline end-to-end proximity insufficient"
-    assert overall_metrics["avg_information_preservation"] > 0.08, "REAL RAG Overall information preservation too low"
-    assert overall_metrics["total_sections_processed"] >= 3, "REAL RAG Insufficient sections processed"
+    assert overall_metrics["avg_section_to_rag_proximity"] > 0.05, "RAG Pipeline section to RAG proximity insufficient"
+    assert overall_metrics["avg_rag_to_writing_proximity"] > 0.10, "RAG Pipeline RAG to writing proximity insufficient"
+    assert overall_metrics["avg_end_to_end_proximity"] > 0.08, "RAG Pipeline end-to-end proximity insufficient"
+    assert overall_metrics["avg_information_preservation"] > 0.08, "RAG Overall information preservation too low"
+    assert overall_metrics["total_sections_processed"] >= 3, "RAG Insufficient sections processed"
 
     comprehensive_results = {
-        "test_type": "real_rag_full_pipeline_assessment",
+        "test_type": "rag_full_pipeline_assessment",
         "application_id": melanoma_alliance_full_application_id,
         "methodology": {
-            "rag_system": "real_database_vector_search_with_generation",
+            "rag_system": "database_vector_search_with_generation",
             "rouge_metric": "ROUGE-L",
             "measurement_approach": "end_to_end_pipeline_evaluation",
             "information_preservation_formula": "0.25*section_to_rag + 0.35*rag_to_writing + 0.40*section_to_writing",
@@ -393,8 +324,8 @@ async def test_real_rag_full_pipeline_with_generation(
             "poor_preservation": "<0.08",
         },
         "performance_comparison": {
-            "uses_real_vector_db": True,
-            "uses_real_embeddings": True,
+            "uses_vector_db": True,
+            "uses_embeddings": True,
             "uses_cosine_similarity": True,
             "no_mocking": True,
             "includes_text_generation": True,
@@ -402,11 +333,11 @@ async def test_real_rag_full_pipeline_with_generation(
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
-    output_path = RESULTS_FOLDER / "rag_evaluation" / "real_rag_full_pipeline.json"
+    output_path = RESULTS_FOLDER / "rag_evaluation" / "rag_full_pipeline.json"
     save_evaluation_results(comprehensive_results, output_path)
 
     logger.info(
-        "✅ REAL RAG Full pipeline assessment completed",
+        "✅ RAG Full pipeline assessment completed",
         extra={
             "sections_processed": overall_metrics["total_sections_processed"],
             "avg_preservation_score": f"{overall_metrics['avg_information_preservation']:.3f}",

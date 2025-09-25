@@ -74,23 +74,27 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
 
 
 def _get_section_length_requirements(section_title: str) -> str:
+    """Generate length requirements text for specific section types"""
     section_title_lower = section_title.lower()
 
-    if "abstract" in section_title_lower:
-        return "Target length: 250-500 words for comprehensive yet concise overview"
-    if "research strategy" in section_title_lower or "approach" in section_title_lower:
-        return "Target length: 800-1200 words for detailed methodology and experimental design"
-    if "preliminary" in section_title_lower or "pilot" in section_title_lower:
-        return "Target length: 600-900 words for demonstrating feasibility and initial findings"
-    if "aims" in section_title_lower or "objectives" in section_title_lower:
-        return "Target length: 400-700 words per aim for clear, specific, and measurable goals"
-    if "background" in section_title_lower or "significance" in section_title_lower:
-        return "Target length: 700-1000 words for comprehensive context and rationale"
-    if "methods" in section_title_lower or "methodology" in section_title_lower:
-        return "Target length: 600-1000 words for detailed experimental procedures"
-    if "timeline" in section_title_lower or "plan" in section_title_lower:
-        return "Target length: 400-600 words for clear milestones and deliverables"
-    return "Target length: 600-1000 words for comprehensive section coverage"
+    # Use match-case for pattern matching section requirements
+    match True:
+        case _ if "abstract" in section_title_lower:
+            return "Target length: 250-500 words for comprehensive yet concise overview"
+        case _ if "research strategy" in section_title_lower or "approach" in section_title_lower:
+            return "Target length: 800-1200 words for detailed methodology and experimental design"
+        case _ if "preliminary" in section_title_lower or "pilot" in section_title_lower:
+            return "Target length: 600-900 words for demonstrating feasibility and initial findings"
+        case _ if "aims" in section_title_lower or "objectives" in section_title_lower:
+            return "Target length: 400-700 words per aim for clear, specific, and measurable goals"
+        case _ if "background" in section_title_lower or "significance" in section_title_lower:
+            return "Target length: 700-1000 words for comprehensive context and rationale"
+        case _ if "methods" in section_title_lower or "methodology" in section_title_lower:
+            return "Target length: 600-1000 words for detailed experimental procedures"
+        case _ if "timeline" in section_title_lower or "plan" in section_title_lower:
+            return "Target length: 400-600 words for clear milestones and deliverables"
+        case _:
+            return "Target length: 600-1000 words for comprehensive section coverage"
 
 
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
