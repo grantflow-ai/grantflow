@@ -68,6 +68,20 @@ interface SortableSectionProps {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }
 
+const createInitialFormData = (section: GrantSection): SectionFormData => {
+	const generatedAiPrompt = aiPrompt(section.title);
+	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
+	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
+
+	return {
+		aiPrompt: effectiveAiPrompt,
+		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
+		max_words: hasMaxWords(section) ? section.max_words : 3000,
+		title: section.title,
+		useWords: true,
+	};
+};
+
 export function SortableSection({
 	isDetailedSection: _isDetailedSection,
 	isDragDisabled = false,
@@ -98,32 +112,19 @@ export function SortableSection({
 		id: section.id,
 	});
 
-	const generatedAiPrompt = aiPrompt(section.title);
-	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
-	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
-
-	const [formData, setFormData] = useState<SectionFormData>({
-		aiPrompt: effectiveAiPrompt,
-		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
-		max_words: hasMaxWords(section) ? section.max_words : 3000,
-		title: section.title,
-		useWords: true,
-	});
+	const [formData, setFormData] = useState<SectionFormData>(() => createInitialFormData(section));
 
 	useEffect(() => {
-		setFormData({
-			aiPrompt: effectiveAiPrompt,
-			isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
-			max_words: hasMaxWords(section) ? section.max_words : 3000,
-			title: section.title,
-			useWords: true,
-		});
-	}, [section, effectiveAiPrompt]);
+		setFormData(createInitialFormData(section));
+	}, [section]);
 
 	const style = {
-		opacity: isCurrentlyDragging ? 0.5 : 1,
+		filter: isCurrentlyDragging ? "blur(1px)" : "none",
+		opacity: isCurrentlyDragging ? 0.3 : 1,
 		transform: active ? "none" : CSS.Transform.toString(transform),
-		transition: isCurrentlyDragging ? "none" : transition,
+		transition: isCurrentlyDragging
+			? "none"
+			: (transition ?? "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)"),
 	};
 
 	const sectionHasMaxWords = hasMaxWords(section) && Boolean(section.max_words);
@@ -162,44 +163,48 @@ export function SortableSection({
 
 	return (
 		<SectionWithDropIndicators section={section}>
-			{/** biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 			<div
-				className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+				className={isSubsection ? "relative w-full" : ""}
 				data-sortable-id={section.id}
-				data-testid="section-container"
-				onMouseEnter={handleMouseEnter}
 				ref={setNodeRef}
 				style={style}
 			>
-				<SectionHeader
-					attributes={attributes}
-					isDragDisabled={isDragDisabled}
-					isExpanded={isExpanded}
-					isSubsection={isSubsection}
-					listeners={listeners}
-					onAddSubsection={onAddSubsection}
-					onDelete={_onDelete}
-					onHeaderClick={handleHeaderClick}
-					onToggleExpand={onToggleExpand}
-					section={section}
-					sectionHasMaxWords={sectionHasMaxWords}
-				/>
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
+				<div
+					className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+					data-testid="section-container"
+					onMouseEnter={handleMouseEnter}
+				>
+					<SectionHeader
+						attributes={attributes}
+						isDragDisabled={isDragDisabled}
+						isExpanded={isExpanded}
+						isSubsection={isSubsection}
+						listeners={listeners}
+						onAddSubsection={onAddSubsection}
+						onDelete={_onDelete}
+						onHeaderClick={handleHeaderClick}
+						onToggleExpand={onToggleExpand}
+						section={section}
+						sectionHasMaxWords={sectionHasMaxWords}
+					/>
 
-				{isExpanded && (
-					<div
-						className="transition-all duration-200 ease-in-out opacity-100"
-						data-testid="edit-form-container"
-					>
-						<SectionEditForm
-							formData={formData}
-							isSubsection={isSubsection}
-							onCancel={onToggleExpand}
-							onSave={handleSave}
-							section={section}
-							setFormData={setFormData}
-						/>
-					</div>
-				)}
+					{isExpanded && (
+						<div
+							className="transition-all duration-200 ease-in-out opacity-100"
+							data-testid="edit-form-container"
+						>
+							<SectionEditForm
+								formData={formData}
+								isSubsection={isSubsection}
+								onCancel={onToggleExpand}
+								onSave={handleSave}
+								section={section}
+								setFormData={setFormData}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 		</SectionWithDropIndicators>
 	);
@@ -401,11 +406,12 @@ function SectionHeader({
 			<div
 				{...(isDragDisabled ? {} : attributes)}
 				{...(isDragDisabled ? {} : listeners)}
-				className={`relative size-6 ${isDragDisabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:cursor-grab active:cursor-grabbing"}`}
+				className={`relative flex items-center justify-center -m-2 p-2 ${isDragDisabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:cursor-grab active:cursor-grabbing"}`}
 				data-interactive="true"
+				style={{ touchAction: "none" }}
 			>
 				<GripVertical
-					className={`size-6 ${isDragDisabled ? "text-gray-300" : "text-gray-400 hover:text-gray-600"} transition-colors`}
+					className={`size-6 ${isDragDisabled ? "text-gray-300" : "text-gray-400 hover:text-gray-600"} transition-colors pointer-events-none`}
 				/>
 			</div>
 

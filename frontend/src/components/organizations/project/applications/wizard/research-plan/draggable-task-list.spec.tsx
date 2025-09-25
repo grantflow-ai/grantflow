@@ -3,18 +3,22 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DraggableTaskList } from "./draggable-task-list";
 
-vi.mock("@/hooks/use-drag-and-drop", () => ({
-	useDragAndDrop: vi.fn((_handlers, config) => {
-		return {
-			activeItem: undefined,
-			DragDropWrapper: ({ children }: { children: React.ReactNode }) => (
-				<div data-strategy={config?.strategy} data-testid="drag-drop-wrapper">
-					{children}
-				</div>
-			),
-			isItemDragging: vi.fn(() => false),
-		};
-	}),
+// Mock @dnd-kit components
+vi.mock("@dnd-kit/core", () => ({
+	closestCenter: vi.fn(),
+	DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,
+	KeyboardSensor: vi.fn(),
+	PointerSensor: vi.fn(),
+	useSensor: vi.fn(() => ({})),
+	useSensors: vi.fn(() => []),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+	SortableContext: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="sortable-context">{children}</div>
+	),
+	sortableKeyboardCoordinates: vi.fn(),
+	verticalListSortingStrategy: vi.fn(),
 }));
 
 const mockUpdateTasksForObjective = vi.fn();
@@ -138,14 +142,13 @@ describe("DraggableTaskList", () => {
 		it("renders drag drop wrapper with correct strategy", () => {
 			render(<DraggableTaskList {...defaultProps} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
-			expect(screen.getByTestId("drag-drop-wrapper")).toHaveAttribute("data-strategy", "vertical");
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
 		it("wraps content in DragDropWrapper", () => {
 			render(<DraggableTaskList {...defaultProps} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 	});
 
@@ -155,7 +158,7 @@ describe("DraggableTaskList", () => {
 
 			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskReorder={onTaskReorder} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 		});
 
@@ -172,7 +175,7 @@ describe("DraggableTaskList", () => {
 		it("renders properly in read-only mode", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={3} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.queryByTestId("add-task-button")).not.toBeInTheDocument();
 		});
 
@@ -269,7 +272,7 @@ describe("DraggableTaskList", () => {
 			render(<DraggableTaskList {...defaultProps} />);
 
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
 		it("shows add button in editing mode", () => {
@@ -325,7 +328,7 @@ describe("DraggableTaskList", () => {
 		it("handles reordering operations gracefully", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.getByTestId("task-item-0")).toBeInTheDocument();
 		});
 
@@ -346,7 +349,7 @@ describe("DraggableTaskList", () => {
 		it("handles store integration gracefully", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 	});
 
@@ -363,13 +366,13 @@ describe("DraggableTaskList", () => {
 
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
 		it("maintains focus management through drag operations", () => {
 			render(<DraggableTaskList {...defaultProps} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 	});
 
@@ -394,7 +397,7 @@ describe("DraggableTaskList", () => {
 		it("handles rapid operations efficiently", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});
 	});
