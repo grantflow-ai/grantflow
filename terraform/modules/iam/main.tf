@@ -111,6 +111,41 @@ resource "google_project_iam_member" "github_actions_run_admin" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# Required for Workload Identity Pool management
+resource "google_project_iam_member" "github_actions_workload_identity_admin" {
+  project = "grantflow"
+  role    = "roles/iam.workloadIdentityPoolAdmin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for logging metrics management
+resource "google_project_iam_member" "github_actions_logging_admin" {
+  project = "grantflow"
+  role    = "roles/logging.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Pub/Sub topic management
+resource "google_project_iam_member" "github_actions_pubsub_admin" {
+  project = "grantflow"
+  role    = "roles/pubsub.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Storage bucket management
+resource "google_project_iam_member" "github_actions_storage_admin" {
+  project = "grantflow"
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Monitoring resources
+resource "google_project_iam_member" "github_actions_monitoring_admin" {
+  project = "grantflow"
+  role    = "roles/monitoring.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account_iam_member" "github_actions_service_account_user" {
   service_account_id = google_service_account.cloud_storage_admin.name
