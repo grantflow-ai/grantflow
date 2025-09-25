@@ -81,8 +81,7 @@ describe.sequential("useDragAndDrop", () => {
 
 		it("should accept custom config", () => {
 			const config: DragDropConfig = {
-				enableKeyboard: false,
-				enablePointer: true,
+				strategy: "horizontal",
 			};
 
 			const { result } = renderHook(() => useDragAndDrop({}, config));
@@ -301,8 +300,7 @@ describe.sequential("useDragAndDrop", () => {
 
 		it("should disable keyboard sensor when configured", () => {
 			const config: DragDropConfig = {
-				enableKeyboard: false,
-				enablePointer: true,
+				strategy: "vertical",
 			};
 
 			const { result } = renderHook(() => useDragAndDrop({}, config));
@@ -312,8 +310,7 @@ describe.sequential("useDragAndDrop", () => {
 
 		it("should disable pointer sensor when configured", () => {
 			const config: DragDropConfig = {
-				enableKeyboard: true,
-				enablePointer: false,
+				strategy: "horizontal",
 			};
 
 			const { result } = renderHook(() => useDragAndDrop({}, config));
@@ -323,8 +320,7 @@ describe.sequential("useDragAndDrop", () => {
 
 		it("should handle configuration with both sensors disabled", () => {
 			const config: DragDropConfig = {
-				enableKeyboard: false,
-				enablePointer: false,
+				strategy: "vertical",
 			};
 
 			const { result } = renderHook(() => useDragAndDrop({}, config));

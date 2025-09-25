@@ -403,6 +403,7 @@ function SectionHeader({
 				{...(isDragDisabled ? {} : listeners)}
 				className={`relative flex items-center justify-center -m-2 p-2 ${isDragDisabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:cursor-grab active:cursor-grabbing"}`}
 				data-interactive="true"
+				style={{ touchAction: "none" }}
 			>
 				<GripVertical
 					className={`size-6 ${isDragDisabled ? "text-gray-300" : "text-gray-400 hover:text-gray-600"} transition-colors pointer-events-none`}

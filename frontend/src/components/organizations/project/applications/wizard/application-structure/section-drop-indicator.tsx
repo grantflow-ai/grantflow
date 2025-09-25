@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { GrantSection } from "@/types/grant-sections";
 import { calculateDropIndicatorVisibility } from "@/utils/grant-sections";
 import { useDragDropContext, type ZoneType } from "./drag-drop-context";
@@ -32,45 +32,11 @@ export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }:
 }
 
 export function SectionWithDropIndicators({ children, section }: SectionWithDropIndicatorsProps) {
-	const [isDraggedOver, setIsDraggedOver] = useState(false);
-	const [isDraggedWide, setIsDraggedWide] = useState(false);
-
 	const dragContext = useDragDropContext();
-	const { isAnyDragging } = dragContext;
+	const { dragOverId, dragOverZone, isAnyDragging } = dragContext;
 
-	useEffect(() => {
-		if (!isAnyDragging) {
-			setIsDraggedOver(false);
-			setIsDraggedWide(false);
-			return;
-		}
-
-		const checkDragState = () => {
-			const element: HTMLElement | null = document.querySelector(`[data-sortable-id="${section.id}"]`);
-			const isOver = element?.dataset ? Object.hasOwn(element.dataset, "dragOver") : false;
-			const isWide = element?.dataset ? element.dataset.dragWide === "true" : false;
-			setIsDraggedOver(isOver);
-			setIsDraggedWide(isWide);
-		};
-
-		const observer = new MutationObserver(() => {
-			checkDragState();
-		});
-
-		const element = document.querySelector(`[data-sortable-id="${section.id}"]`);
-		if (element) {
-			observer.observe(element, {
-				attributeFilter: ["data-drag-over", "data-drag-wide"],
-				attributes: true,
-			});
-		}
-
-		checkDragState();
-
-		return () => {
-			observer.disconnect();
-		};
-	}, [section.id, isAnyDragging]);
+	const isDraggedOver = dragOverId === section.id;
+	const isDraggedWide = isDraggedOver && dragOverZone === "child";
 
 	const dropIndicators = useMemo(() => {
 		if (!(isDraggedOver && isAnyDragging)) {

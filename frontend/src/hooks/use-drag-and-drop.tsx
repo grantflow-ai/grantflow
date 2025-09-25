@@ -11,6 +11,7 @@ import {
 	type DragStartEvent,
 	KeyboardSensor,
 	PointerSensor,
+	TouchSensor,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
@@ -21,13 +22,12 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type React from "react";
-import { useCallback } from "react";
+import { useEffect, useMemo } from "react";
 import { useDragOverlayStore } from "@/stores/drag-overlay-store";
+import { log } from "@/utils/logger/client";
 
 export interface DragDropConfig {
 	collisionDetection?: CollisionDetection;
-	enableKeyboard?: boolean;
-	enablePointer?: boolean;
 	strategy?: "horizontal" | "vertical";
 }
 
@@ -65,35 +65,41 @@ export function useDragAndDrop<T extends DragDropItem>(
 	config: DragDropConfig = {},
 ): DragDropResult<T> {
 	const { onDragEnd, onDragMove, onDragOver, onDragStart, onReorder } = handlers;
-	const {
-		collisionDetection = closestCenter,
-		enableKeyboard = true,
-		enablePointer = true,
-		strategy = "vertical",
-	} = config;
+	const { collisionDetection = closestCenter, strategy = "vertical" } = config;
 
-	const pointerSensor = useSensor(PointerSensor, {
-		activationConstraint: {
-			delay: 100,
-			distance: 8,
-			tolerance: 20,
-		},
-	});
-	const keyboardSensor = useSensor(KeyboardSensor, {
-		coordinateGetter: sortableKeyboardCoordinates,
-	});
+	useEffect(() => {
+		log.info("[useDragAndDrop] Hook mounted", {
+			hasOnDragEnd: !!onDragEnd,
+			hasOnDragMove: !!onDragMove,
+			hasOnDragOver: !!onDragOver,
+			hasOnDragStart: !!onDragStart,
+			hasOnReorder: !!onReorder,
+			strategy,
+		});
+	}, [onDragEnd, onDragMove, onDragOver, onDragStart, onReorder, strategy]);
 
-	const sensorArray = [];
-	if (enablePointer) {
-		sensorArray.push(pointerSensor);
-	}
-	if (enableKeyboard) {
-		sensorArray.push(keyboardSensor);
-	}
-	const sensors = useSensors(...sensorArray);
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				delay: 100,
+				distance: 8,
+				tolerance: 20,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 100,
+				tolerance: 20,
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
 
-	const DragDropWrapper = useCallback(
-		function DragDropWrapper({
+	// Memoize the component to prevent recreation on every render
+	const DragDropWrapper = useMemo(() => {
+		return function DragDropWrapperComponent({
 			children,
 			items,
 			renderDragOverlay,
@@ -103,7 +109,15 @@ export function useDragAndDrop<T extends DragDropItem>(
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 		}) {
 			const handleDragStart = (event: DragStartEvent) => {
+				log.info("[DragDropWrapper] Drag start event", {
+					activeId: event.active.id,
+				});
+
 				const draggedItem = items.find((item) => item.id === event.active.id);
+				log.info("[DragDropWrapper] Found dragged item", {
+					found: !!draggedItem,
+					itemId: draggedItem?.id,
+				});
 
 				onDragStart?.(event, draggedItem);
 				useDragOverlayStore.getState().setActiveItem(draggedItem);
@@ -112,6 +126,11 @@ export function useDragAndDrop<T extends DragDropItem>(
 			const handleDragOver = async (event: DragOverEvent) => {
 				const { active, over } = event;
 
+				log.info("[DragDropWrapper] Drag over event", {
+					activeId: active.id,
+					overId: over?.id,
+				});
+
 				const activeItem = items.find((item) => item.id === active.id);
 				const overItem = over ? items.find((item) => item.id === over.id) : undefined;
 
@@ -119,19 +138,36 @@ export function useDragAndDrop<T extends DragDropItem>(
 			};
 
 			const handleDragMove = (event: DragMoveEvent) => {
+				log.info("[DragDropWrapper] Drag move event", {
+					activeId: event.active?.id,
+					collisionCount: event.collisions?.length ?? 0,
+				});
 				onDragMove?.(event);
 			};
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
 				if (!onReorder) {
+					log.info("[DragDropWrapper] No onReorder handler, skipping reorder");
 					return;
 				}
 
 				const activeIndex = items.findIndex((item) => item.id === activeItem.id);
 				const overIndex = items.findIndex((item) => item.id === overItem.id);
 
+				log.info("[DragDropWrapper] Reordering", {
+					activeId: activeItem.id,
+					activeIndex,
+					overId: overItem.id,
+					overIndex,
+				});
+
 				if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
 					await onReorder(items, activeIndex, overIndex, activeItem, overItem);
+				} else {
+					log.warn("[DragDropWrapper] Invalid indices for reorder", {
+						activeIndex,
+						overIndex,
+					});
 				}
 			};
 
@@ -139,13 +175,20 @@ export function useDragAndDrop<T extends DragDropItem>(
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
 
+				log.info("[DragDropWrapper] Drag end event", {
+					activeId: active.id,
+					overId: over?.id,
+				});
+
 				useDragOverlayStore.getState().clearActiveItem();
 
 				if (!over) {
+					log.info("[DragDropWrapper] Drag end with no over item, returning");
 					return;
 				}
 
 				if (active.id === over.id) {
+					log.info("[DragDropWrapper] Active and over items are the same, no reorder");
 					const activeItem = items.find((item) => item.id === active.id);
 					if (onDragEnd) {
 						await onDragEnd(event, activeItem, activeItem);
@@ -158,10 +201,20 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 				if (activeItem && overItem) {
 					const shouldReorder = activeItem.id !== overItem.id;
+					log.info("[DragDropWrapper] Checking reorder", {
+						activeItem: activeItem.id,
+						overItem: overItem.id,
+						shouldReorder,
+					});
 
 					if (shouldReorder) {
 						await handleReorder(activeItem, overItem);
 					}
+				} else {
+					log.warn("[DragDropWrapper] Missing active or over item", {
+						activeItem: !!activeItem,
+						overItem: !!overItem,
+					});
 				}
 
 				if (onDragEnd) {
@@ -198,9 +251,8 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 				return <DragOverlay>{renderOverlay ? renderOverlay(activeItem as T) : null}</DragOverlay>;
 			}
-		},
-		[sensors, onDragStart, onDragOver, onDragMove, onDragEnd, onReorder, strategy, collisionDetection],
-	);
+		};
+	}, [sensors, onDragStart, onDragOver, onDragMove, onDragEnd, onReorder, strategy, collisionDetection]);
 
 	return {
 		activeItem: undefined,
