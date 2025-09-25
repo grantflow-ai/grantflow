@@ -40,7 +40,20 @@ export function isApplicationEvent(event: NotificationEvent): event is Applicati
 }
 
 export function isTemplateEvent(event: NotificationEvent): event is TemplateGenerationEvent {
-	return ["cfp_data_extracted", "grant_template_created", "metadata_generated", "sections_extracted"].includes(event);
+	const templateEvents: TemplateGenerationEvent[] = [
+		"cfp_data_extracted",
+		"grant_template_created",
+		"indexing_failed",
+		"indexing_timeout",
+		"insufficient_context_error",
+		"internal_error",
+		"job_cancelled",
+		"llm_timeout",
+		"metadata_generated",
+		"pipeline_error",
+		"sections_extracted",
+	];
+	return templateEvents.includes(event as TemplateGenerationEvent);
 }
 
 export const ERROR_EVENTS = new Set<NotificationEvent>(["indexing_failed", "internal_error", "pipeline_error"]);

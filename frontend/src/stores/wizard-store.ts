@@ -30,11 +30,6 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
-export interface TemplateGenerationStatus {
-	event: TemplateGenerationEvent;
-	message: string;
-}
-
 export interface ValidationResult {
 	isValid: boolean;
 	metadata?: {
@@ -81,8 +76,8 @@ interface WizardActions {
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	setTemplateGenerationEvent: (event: null | TemplateGenerationEvent) => void;
 	setTemplateGenerationFailed: (failed: boolean) => void;
-	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
@@ -110,8 +105,8 @@ interface WizardState {
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationEvent: null | TemplateGenerationEvent;
 	templateGenerationFailed: boolean;
-	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 export function determineAppropriateStep(applicationId: string): null | WizardStep {
@@ -176,8 +171,8 @@ const initialWizardState: WizardState = {
 		isActive: false,
 	},
 	showResearchPlanInfoBanner: true,
+	templateGenerationEvent: null,
 	templateGenerationFailed: false,
-	templateGenerationStatus: null,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -774,8 +769,8 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					...currentState.polling,
 					...initialWizardState.polling,
 				},
+				templateGenerationEvent: initialWizardState.templateGenerationEvent,
 				templateGenerationFailed: initialWizardState.templateGenerationFailed,
-				templateGenerationStatus: initialWizardState.templateGenerationStatus,
 			});
 		},
 
@@ -838,17 +833,17 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}));
 		},
 
+		setTemplateGenerationEvent: (event: null | TemplateGenerationEvent) => {
+			set((state) => ({
+				...state,
+				templateGenerationEvent: event,
+			}));
+		},
+
 		setTemplateGenerationFailed: (failed: boolean) => {
 			set((state) => ({
 				...state,
 				templateGenerationFailed: failed,
-			}));
-		},
-
-		setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
-			set((state) => ({
-				...state,
-				templateGenerationStatus: status,
 			}));
 		},
 
