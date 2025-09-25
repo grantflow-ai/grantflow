@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createApplication } from "@/actions/grant-applications";
@@ -28,6 +28,7 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import ProgressCircle from "@/components/applications/wizard/circular-progress";
 
 interface DashboardClientProps {
 	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;
@@ -46,6 +47,22 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
+	const [progress, setProgress] = useState(0);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setProgress((prev)=> {
+				if(prev > 100){
+					clearInterval(interval);
+					return 100;
+					
+				}else{
+					return prev + 1;
+				}
+			})
+		}, 50);
+		return () => clearInterval(interval);
+	}, []);
 
 	const { data: projects = initialProjects, mutate } = useSWR(
 		validatedOrganizationId ? ["projects", validatedOrganizationId] : null,
@@ -221,6 +238,14 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 			{projects.length === 1 && projects[0].applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
+<section className="flex flex-col items-center justify-center gap-12 min-h-screen bg-[#FAF9FB]">
+				<ProgressCircle progress={progress} />
+				<div className=" flex flex-col items-center gap-2 text-center ">
+					<h3 className="font-medium font-cabin text-[28px] text-app-black">{progress < 100 ? "Great job! Your Application Draft Is Being Generated" : "Your Application Draft Is Ready"}</h3>
+					<p className="font-sans font-base font-normal text-app-gray-700">{progress < 100 ? "We’re preparing your draft. You’ll be able to download it here, and we’ll also send a copy to your inbox shortly." : "You can download it directly here. We’ve also sent a copy to your inbox for your convenience."}</p>
+				</div>
+
+			</section>
 			<section className="w-full h-full">
 				<main className="w-full h-full flex flex-col">
 					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
