@@ -170,7 +170,9 @@ async def create_signed_upload_url(
     )
 
     # Dev bypass: return special URL for direct indexer upload ~keep
-    if get_env("DEBUG", fallback="False").lower() == "true" and not get_env(
+    if get_env(
+        "DEBUG", fallback="false", raise_on_missing=False
+    ).lower() == "true" and not get_env(
         "STORAGE_EMULATOR_HOST", raise_on_missing=False
     ):
         dev_url = f"dev://indexer/{blob_path}"
