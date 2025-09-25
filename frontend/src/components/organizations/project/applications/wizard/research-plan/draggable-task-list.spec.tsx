@@ -82,7 +82,7 @@ const defaultProps = {
 	onTaskAdd: vi.fn(),
 	onTaskDelete: vi.fn(),
 	onTaskReorder: vi.fn(),
-	onTaskValuesChange: vi.fn(),
+	onTaskValueChange: vi.fn(),
 	tasks: mockTasks,
 };
 
@@ -197,15 +197,17 @@ describe("DraggableTaskList", () => {
 
 		it("passes task value change events to onTaskValuesChange", async () => {
 			const user = userEvent.setup();
-			const onTaskValuesChange = vi.fn();
+			const onTaskValueChange = vi.fn();
 
-			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskValuesChange={onTaskValuesChange} />);
+			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskValueChange={onTaskValueChange} />);
 
 			const updateButton = screen.getByTestId("update-task-0");
 			await user.click(updateButton);
 
-			expect(onTaskValuesChange).toHaveBeenCalledWith({
-				0: { description: "First task description", title: "Updated Title" },
+			expect(onTaskValueChange).toHaveBeenCalledWith({
+				description: "First task description",
+				number: 0,
+				title: "Updated Title",
 			});
 		});
 
@@ -229,7 +231,7 @@ describe("DraggableTaskList", () => {
 					isEditing={true}
 					onTaskAdd={undefined}
 					onTaskDelete={undefined}
-					onTaskValuesChange={undefined}
+					onTaskValueChange={undefined}
 				/>,
 			);
 
@@ -299,7 +301,13 @@ describe("DraggableTaskList", () => {
 		});
 
 		it("handles tasks with undefined descriptions", () => {
-			const tasksWithUndefinedDesc = [{ description: undefined, number: 1, title: "Task with undefined desc" }];
+			const tasksWithUndefinedDesc = [
+				{
+					description: undefined,
+					number: 1,
+					title: "Task with undefined desc",
+				},
+			];
 
 			render(<DraggableTaskList {...defaultProps} tasks={tasksWithUndefinedDesc} />);
 
