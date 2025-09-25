@@ -22,7 +22,7 @@
 		"@tiptap/react": "^3.5.1",
 		"@tiptap/starter-kit": "^3.5.1",
 		"@tool-belt/type-predicates": "^1.4.0",
-		"nanoid": "^5.1.5",
+		"nanoid": "^5.1.6",
 		"prosemirror-markdown": "^1.13.2",
 		"prosemirror-model": "^1.25.3",
 		"react-hotkeys-hook": "^5.1.0",

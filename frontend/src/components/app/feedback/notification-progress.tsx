@@ -1,7 +1,7 @@
-import type { RagProcessingStatus } from "@/hooks/use-application-notifications";
+import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 
 interface NotificationProgressProps {
-	notification: RagProcessingStatus;
+	notification: RagProcessingStatusMessage;
 }
 
 const EVENT_INDICATORS: Record<string, string> = {
@@ -18,7 +18,8 @@ const EVENT_INDICATORS: Record<string, string> = {
 };
 
 export function NotificationProgress({ notification }: NotificationProgressProps) {
-	const { event, message } = notification;
+	const { event } = notification;
+	const message = event.replaceAll("_", " ");
 
 	return (
 		<div className="space-y-2" data-testid="notification-progress">

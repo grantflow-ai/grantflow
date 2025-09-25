@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS, WARNING_EVENTS } from "@/types/notification-events";
+import {
+	ERROR_EVENTS,
+	type NotificationEvent,
+	SUCCESS_EVENTS,
+	type TemplateGenerationEvent,
+	WARNING_EVENTS,
+} from "@/types/notification-events";
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
@@ -11,12 +17,12 @@ interface NotificationHandlerProps {
 
 type ToastId = number | string | undefined;
 
-export function NotificationHandler({ notification }: NotificationHandlerProps) {
+export function RagNotificationHandler({ notification }: NotificationHandlerProps) {
 	const [toastId, setToastId] = useState<ToastId>();
 	const previousEventRef = useRef<null | string>(null);
 
 	useEffect(() => {
-		const { event } = notification.data;
+		const { event } = notification;
 
 		if (shouldDismissToast(event, previousEventRef.current, toastId)) {
 			toast.dismiss(toastId);
@@ -31,7 +37,8 @@ export function NotificationHandler({ notification }: NotificationHandlerProps) 
 }
 
 function displayNotification(notification: RagProcessingStatusMessage): ToastId {
-	const { data, event, message } = notification.data;
+	const { data, event } = notification;
+	const message = generateMessageFromEvent(event, data);
 
 	switch (notification.type) {
 		case "error": {
@@ -51,11 +58,11 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 			break;
 		}
 		default: {
-			if (ERROR_EVENTS.has(event)) {
+			if (ERROR_EVENTS.has(event as TemplateGenerationEvent)) {
 				showErrorToast(message, data, "error");
-			} else if (WARNING_EVENTS.has(event)) {
+			} else if (WARNING_EVENTS.has(event as TemplateGenerationEvent)) {
 				showWarningToast(message, data, "warning");
-			} else if (SUCCESS_EVENTS.has(event)) {
+			} else if (SUCCESS_EVENTS.has(event as TemplateGenerationEvent)) {
 				showSuccessToast(message, event, "success");
 			} else {
 				showInfoToast(message, data, "info");
@@ -64,6 +71,36 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 	}
 
 	return undefined;
+}
+
+function generateMessageFromEvent(event: string, data: Record<string, unknown>): string {
+	switch (event) {
+		case "cfp_data_extracted": {
+			const organization = data.organization as string;
+			const subject = data.subject as string;
+			if (organization && subject) {
+				return `Extracted grant details from organization ${organization}: ${subject.slice(0, 60)}...`;
+			}
+			return "Successfully extracted grant application details";
+		}
+		case "grant_template_created": {
+			const sections = data.sections as number;
+			const organization = data.organization as string;
+			return `Created template with ${sections} sections for ${organization || "grant application"}`;
+		}
+		case "metadata_generated": {
+			const sections = data.sections as number;
+			return `Generated metadata for ${sections} sections`;
+		}
+		case "sections_extracted": {
+			const categories = data.categories_found as number;
+			const sentences = data.total_sentences as number;
+			return `Extracted ${categories} sections with ${sentences} requirements`;
+		}
+		default: {
+			return `Processing ${event.replaceAll("_", " ")}`;
+		}
+	}
 }
 
 function shouldDismissToast(event: string, _previousEvent: null | string, toastId: ToastId): boolean {

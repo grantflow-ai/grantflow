@@ -2,7 +2,7 @@ import { Factory } from "interface-forge";
 import type { FormData, Grant, SearchParams } from "@/components/grant-finder/types";
 import { SourceIndexingStatus } from "@/enums";
 import type {
-	RagProcessingStatus as RagProcessingStatusType,
+	RagProcessingStatusMessage as RagProcessingStatusType,
 	SourceProcessingNotification,
 	WebsocketMessage,
 } from "@/hooks/use-application-notifications";
@@ -470,17 +470,13 @@ export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketM
 );
 
 export const RagProcessingStatusFactory = new Factory<RagProcessingStatusType>((factory) => ({
-	data: factory.datatype.boolean()
-		? {
-				[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int(
-					{
-						max: 10,
-						min: 1,
-					},
-				),
-				...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
-			}
-		: undefined,
+	data: {
+		[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int({
+			max: 10,
+			min: 1,
+		}),
+		...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
+	},
 	event: factory.helpers.arrayElement([
 		"grant_application_generation_completed",
 		"objectives_enriched",
@@ -490,14 +486,28 @@ export const RagProcessingStatusFactory = new Factory<RagProcessingStatusType>((
 		"job_cancelled",
 		"pipeline_error",
 	]) as NotificationEvent,
-	message: factory.lorem.sentence(),
+	parent_id: factory.string.uuid(),
+	type: "info",
 }));
 
-export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<RagProcessingStatusType>>((factory) => {
-	const status = RagProcessingStatusFactory.build();
+export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Record<string, unknown>>>((factory) => {
 	return {
-		data: status,
-		event: status.event,
+		data: {
+			[factory.helpers.arrayElement(["section_count", "objective_count", "total_tasks"])]: factory.number.int({
+				max: 10,
+				min: 1,
+			}),
+			...(factory.datatype.boolean() ? { organization: factory.company.name() } : {}),
+		},
+		event: factory.helpers.arrayElement([
+			"grant_application_generation_completed",
+			"objectives_enriched",
+			"section_texts_generated",
+			"cfp_data_extracted",
+			"grant_template_created",
+			"job_cancelled",
+			"pipeline_error",
+		]) as NotificationEvent,
 		parent_id: factory.string.uuid(),
 		type: "info",
 	};

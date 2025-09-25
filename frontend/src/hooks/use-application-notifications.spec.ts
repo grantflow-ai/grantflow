@@ -411,11 +411,7 @@ describe("Type Guards", () => {
 		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
 
 		const validNotification = RagProcessingStatusMessageFactory.build({
-			data: {
-				data: { section_count: 5 },
-				event: "sections_extracted",
-				message: "Extracting sections...",
-			},
+			data: { section_count: 5 },
 			event: "sections_extracted",
 			parent_id: "test-id",
 			type: "info",
@@ -424,11 +420,7 @@ describe("Type Guards", () => {
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
 
 		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
-			data: {
-				data: undefined,
-				event: "sections_extracted",
-				message: "Processing...",
-			},
+			data: {},
 			event: "sections_extracted",
 			parent_id: "test-id",
 			type: "info",
