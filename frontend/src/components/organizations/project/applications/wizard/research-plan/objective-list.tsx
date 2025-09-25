@@ -1,12 +1,18 @@
 "use client";
 
-import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { horizontalListSortingStrategy, SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useCallback, useMemo } from "react";
 import type { ResearchObjective } from "@/stores/wizard-store";
 import { DraggableObjectiveCard } from "./draggable-objective-card";
-
-interface ObjectiveDragDropItem extends DragDropItem {
-	number: number;
-}
 
 interface ObjectiveListProps {
 	editingObjectiveId: null | number;
@@ -67,53 +73,69 @@ export function ObjectiveList({
 	onSave,
 	setEditingObjectiveId,
 }: ObjectiveListProps) {
-	const dragDropItems: ObjectiveDragDropItem[] = objectives.map((obj) => ({
-		id: String(obj.number),
-		number: obj.number,
-		order: obj.number,
-		parent_id: null,
-	}));
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
 
-	const { DragDropWrapper } = useDragAndDrop<ObjectiveDragDropItem>({
-		onReorder: async (_items, oldIndex, newIndex) => {
-			await onReorder(objectives, oldIndex, newIndex);
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
+
+			if (!over || active.id === over.id) {
+				return;
+			}
+
+			const oldIndex = objectives.findIndex((obj) => String(obj.number) === active.id);
+			const newIndex = objectives.findIndex((obj) => String(obj.number) === over.id);
+
+			if (oldIndex !== -1 && newIndex !== -1) {
+				await onReorder(objectives, oldIndex, newIndex);
+			}
 		},
-	});
+		[objectives, onReorder],
+	);
 
-	const editingIndex = editingObjectiveId
-		? objectives.findIndex((obj) => obj.number === editingObjectiveId)
-		: undefined;
+	const editingIndex = useMemo(
+		() =>
+			editingObjectiveId === null ? undefined : objectives.findIndex((obj) => obj.number === editingObjectiveId),
+		[editingObjectiveId, objectives],
+	);
+
+	const sortableIds = useMemo(() => objectives.map((obj) => String(obj.number)), [objectives]);
+
+	const gridCols = useMemo(() => getGridCols(objectives.length, editingIndex), [objectives.length, editingIndex]);
+
+	const gridStyle = useMemo(() => getGridStyle(objectives.length, editingIndex), [objectives.length, editingIndex]);
 
 	return (
-		<DragDropWrapper items={dragDropItems}>
-			<div
-				className={`grid gap-4 ${getGridCols(objectives.length, editingIndex)}`}
-				style={getGridStyle(objectives.length, editingIndex)}
-			>
-				{objectives.map((objective, index) => (
-					<div
-						className={objectives.length === 1 ? "col-start-1" : ""}
-						key={`${objective.title}-${objective.description}-${index}`}
-					>
-						<DraggableObjectiveCard
-							index={index + 1}
-							isEditing={editingObjectiveId === objective.number}
-							objective={objective}
-							objectivesCount={objectives.length}
-							onCancel={() => {
-								setEditingObjectiveId(null);
-							}}
-							onEdit={() => {
-								onEdit(objective.number);
-							}}
-							onRemove={() => {
-								onRemove(objective);
-							}}
-							onSave={onSave}
-						/>
-					</div>
-				))}
-			</div>
-		</DragDropWrapper>
+		<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+			<SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+				<div className={`grid gap-4 ${gridCols}`} style={gridStyle}>
+					{objectives.map((objective, index) => (
+						<div className={objectives.length === 1 ? "col-start-1" : ""} key={objective.number}>
+							<DraggableObjectiveCard
+								index={index + 1}
+								isEditing={editingObjectiveId === objective.number}
+								objective={objective}
+								objectivesCount={objectives.length}
+								onCancel={() => {
+									setEditingObjectiveId(null);
+								}}
+								onEdit={() => {
+									onEdit(objective.number);
+								}}
+								onRemove={() => {
+									onRemove(objective);
+								}}
+								onSave={onSave}
+							/>
+						</div>
+					))}
+				</div>
+			</SortableContext>
+		</DndContext>
 	);
 }
