@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
@@ -6,6 +7,8 @@ from uuid import UUID
 from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import Parameter
+from litestar.response import Response
+from markdown import markdown
 from packages.db.src.enums import (
     ApplicationStatusEnum,
     SourceIndexingStatusEnum,
@@ -27,6 +30,7 @@ from packages.db.src.tables import (
     RagUrl,
 )
 from packages.db.src.utils import retrieve_application
+from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 from packages.shared_utils.src.exceptions import (
     BackendError,
     DatabaseError,
@@ -43,8 +47,19 @@ from sqlalchemy.sql.functions import count
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
+from services.backend.src.utils.docx import markdown_to_docx
+from services.backend.src.utils.pdf import html_to_pdf
 
 logger = get_logger(__name__)
+
+
+def _sanitize_filename(title: str) -> str:
+    if not title or not title.strip():
+        return "application"
+
+    sanitized = re.sub(r"[^a-zA-Z0-9\-_]", "_", title.strip())
+
+    return sanitized or "application"
 
 
 class CreateApplicationRequestBody(TypedDict):
@@ -101,7 +116,6 @@ class GrantTemplateResponse(TypedDict):
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
-    rag_job_id: NotRequired[str]
     created_at: str
     updated_at: str
 
@@ -118,7 +132,6 @@ class ApplicationResponse(TypedDict):
     text: NotRequired[str]
     grant_template: NotRequired[GrantTemplateResponse]
     rag_sources: list[SourceResponse]
-    rag_job_id: NotRequired[str]
     parent_id: NotRequired[str]
     deadline: NotRequired[str]
     editor_document_id: str | None
@@ -431,7 +444,7 @@ async def handle_generate_application(
         rag_sources_count = await session.scalar(
             select(count())
             .select_from(GrantApplicationSource)
-            .join(RagSource)
+            .join(RagSource, GrantApplicationSource.rag_source_id == RagSource.id)
             .where(
                 GrantApplicationSource.grant_application_id == application.id,
                 GrantApplicationSource.deleted_at.is_(None),
@@ -670,7 +683,7 @@ async def handle_duplicate_application(
                         "status": ApplicationStatusEnum.IN_PROGRESS,
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
-                        "text": None,
+                        "text": original_app.text,
                         "parent_id": application_id,
                     }
                 )
@@ -795,3 +808,87 @@ async def handle_list_organization_applications(
                 has_more=False,
             ),
         )
+
+
+@get(
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/download",
+    operation_id="DownloadApplication",
+    tags=["Grant Applications"],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+)
+async def handle_download_application(
+    organization_id: UUID,
+    project_id: UUID,
+    application_id: UUID,
+    session_maker: async_sessionmaker[Any],
+    file_format: Literal["markdown", "pdf", "docx"] = Parameter(query="format", default="markdown"),
+) -> Response[bytes]:
+    async with session_maker() as session:
+        try:
+            application = await retrieve_application(
+                session=session,
+                application_id=application_id,
+            )
+        except ValidationError as e:
+            raise NotFoundException("Application not found") from e
+
+        if application.project_id != project_id:
+            raise NotFoundException("Application not found")
+
+        if not application.text or not application.text.strip():
+            raise ValidationException("Application has no content to download")
+
+        if application.status != ApplicationStatusEnum.WORKING_DRAFT:
+            raise ValidationException("Application must be in WORKING_DRAFT status to download")
+
+        markdown_content = application.text
+
+        safe_title = _sanitize_filename(application.title)
+
+        try:
+            if file_format == "markdown":
+                content = markdown_content.encode("utf-8")
+                content_type = SUPPORTED_FILE_EXTENSIONS["md"]
+                filename = f"{safe_title}.md"
+
+            elif file_format == "pdf":
+                html_content = markdown(markdown_content, extensions=["tables", "fenced_code", "nl2br"])
+                content = await html_to_pdf(html_content)
+                content_type = SUPPORTED_FILE_EXTENSIONS["pdf"]
+                filename = f"{safe_title}.pdf"
+
+            elif file_format == "docx":
+                content = markdown_to_docx(markdown_content)
+                content_type = SUPPORTED_FILE_EXTENSIONS["docx"]
+                filename = f"{safe_title}.docx"
+
+            else:
+                raise ValidationException(f"Unsupported format: {file_format}")
+
+            logger.info(
+                "Application downloaded",
+                application_id=str(application_id),
+                format=file_format,
+                content_size=len(content),
+                organization_id=str(organization_id),
+            )
+
+            return Response(
+                content=content,
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Length": str(len(content)),
+                },
+            )
+
+        except Exception as e:
+            logger.error(
+                "Failed to convert application content",
+                application_id=str(application_id),
+                format=file_format,
+                error=str(e),
+                error_type=type(e).__name__,
+                organization_id=str(organization_id),
+            )
+            raise BackendError("Document conversion failed. Please try again or contact support.") from e

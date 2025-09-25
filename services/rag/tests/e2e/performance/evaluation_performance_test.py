@@ -675,7 +675,7 @@ async def test_smart_evaluation_routing(
             )
 
         assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
-        assert analysis.recommended_evaluation_mode in ["thorough_evaluation", "optimized_prompt_evaluation"]
+        assert analysis.recommended_evaluation_mode in ["thorough_evaluation", "prompt_evaluation"]
         assert analysis.recommended_timeout > 60
 
         logger.info(

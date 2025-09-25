@@ -158,7 +158,7 @@ async def test_handle_grant_application_notifications_success(
 
     assert mock_pull_notifications.call_count >= 1
     call_kwargs = mock_pull_notifications.call_args_list[0].kwargs
-    assert call_kwargs["parent_id"] == application.id
+    assert call_kwargs["application_id"] == application.id
 
 
 async def test_handle_grant_application_notifications_failed_status(

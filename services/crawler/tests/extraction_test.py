@@ -343,10 +343,10 @@ async def test_crawl_basic(
             session_key=session_key,
         )
 
-        assert len(results) == 2
+        assert len(results) == 1
         result = results[0]
         assert result["url"] == mock_url
-        assert len(result["document_links"]) == 2
+        assert len(result["document_links"]) == 0
         assert (
             result["markdown_content"]
             == "# Test Content\n\nThis is a test paragraph with some content."

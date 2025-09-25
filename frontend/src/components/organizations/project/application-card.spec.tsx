@@ -9,8 +9,11 @@ describe("ApplicationCard", () => {
 	const mockOnDuplicate = vi.fn();
 	const mockOnOpen = vi.fn();
 
+	const mockOnDownload = vi.fn();
+
 	const defaultProps = {
 		onDelete: mockOnDelete,
+		onDownload: mockOnDownload,
 		onDuplicate: mockOnDuplicate,
 		onOpen: mockOnOpen,
 	};

@@ -21,5 +21,6 @@ async def test_client(
 ) -> AsyncGenerator[AsyncTestClient[Any]]:
     os.environ.setdefault("STORAGE_EMULATOR_HOST", gcs_emulator_host)
     app.state.session_maker = async_session_maker
+    app.debug = True
     async with AsyncTestClient(app=app) as client:
         yield client

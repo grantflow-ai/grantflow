@@ -1,9 +1,8 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationFactory, ProjectFactory } from "::testing/factories";
+import { ApplicationFactory, ListOrganizationsResponseFactory, ProjectFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -32,6 +31,14 @@ vi.mock("@/actions/project", () => ({
 	getProject: vi.fn(),
 }));
 
+vi.mock("@/actions/organization", () => ({
+	getOrganizations: vi.fn(),
+}));
+
+vi.mock("@/hooks/use-org-cookie", () => ({
+	useOrgCookie: vi.fn(),
+}));
+
 vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
@@ -41,10 +48,21 @@ vi.mock("@/utils/logger/client", () => ({
 }));
 
 describe("NavigationContextProvider", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		resetAllStores();
 		setupAuthenticatedTest();
 		vi.clearAllMocks();
+
+		const { getOrganizations } = await import("@/actions/organization");
+		const mockOrganizations = ListOrganizationsResponseFactory.build();
+		vi.mocked(getOrganizations).mockResolvedValue(Object.values(mockOrganizations));
+
+		const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+		vi.mocked(useOrgCookie).mockReturnValue({
+			clearOrganizationCookie: vi.fn(),
+			selectedOrganizationId: null,
+			setOrganizationCookie: vi.fn(),
+		});
 	});
 
 	afterEach(() => {
@@ -82,16 +100,21 @@ describe("NavigationContextProvider", () => {
 	});
 
 	describe("redirection logic", () => {
-		it("should redirect when no organization is selected", () => {
-			useOrganizationStore.setState({ selectedOrganizationId: null });
-
+		it("should redirect when no organization is selected", async () => {
+			useOrganizationStore.setState({
+				selectedOrganizationId: null,
+			});
+			const { getOrganizations } = await import("@/actions/organization");
+			vi.mocked(getOrganizations).mockResolvedValue(Object.values([]));
 			render(
 				<NavigationContextProvider>
 					<div data-testid="children">Test content</div>
 				</NavigationContextProvider>,
 			);
 
-			expect(mockRouter.replace).toHaveBeenCalledWith("/projects");
+			await waitFor(() => {
+				expect(mockRouter.replace).toHaveBeenCalledWith("/projects");
+			});
 		});
 
 		it("should redirect when project is required but not provided", () => {
@@ -123,7 +146,7 @@ describe("NavigationContextProvider", () => {
 			expect(mockRouter.replace).toHaveBeenCalledWith("/projects");
 		});
 
-		it("should use custom redirect path", () => {
+		it("should use custom redirect path", async () => {
 			useOrganizationStore.setState({ selectedOrganizationId: null });
 
 			render(
@@ -132,7 +155,9 @@ describe("NavigationContextProvider", () => {
 				</NavigationContextProvider>,
 			);
 
-			expect(mockRouter.replace).toHaveBeenCalledWith("/custom-path");
+			await waitFor(() => {
+				expect(mockRouter.replace).toHaveBeenCalledWith("/custom-path");
+			});
 		});
 	});
 
@@ -144,7 +169,17 @@ describe("NavigationContextProvider", () => {
 
 			const setProjectSpy = vi.spyOn(useProjectStore.getState(), "setProject");
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({ activeProjectId: "project-123" });
 
 			render(
@@ -166,10 +201,21 @@ describe("NavigationContextProvider", () => {
 
 			const setApplicationSpy = vi.spyOn(useApplicationStore.getState(), "setApplication");
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({
 				activeApplicationId: "app-123",
 				activeProjectId: "project-123",
+				stateHydrated: true,
 			});
 
 			render(
@@ -194,7 +240,17 @@ describe("NavigationContextProvider", () => {
 			vi.mocked(getProject).mockResolvedValue(mockProject);
 			vi.mocked(getApplication).mockResolvedValue(mockApplication);
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({
 				activeApplicationId: "app-123",
 				activeProjectId: "project-123",
@@ -220,7 +276,17 @@ describe("NavigationContextProvider", () => {
 
 			const clearActiveProjectSpy = vi.spyOn(useNavigationStore.getState(), "clearActiveProject");
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({ activeProjectId: "project-123" });
 
 			render(
@@ -243,7 +309,17 @@ describe("NavigationContextProvider", () => {
 
 			const clearActiveApplicationSpy = vi.spyOn(useNavigationStore.getState(), "clearActiveApplication");
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({
 				activeApplicationId: "app-123",
 				activeProjectId: "project-123",
@@ -267,7 +343,17 @@ describe("NavigationContextProvider", () => {
 			const { getProject } = await import("@/actions/project");
 			vi.mocked(getProject).mockRejectedValue(new Error("Project not found"));
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: vi.fn(),
+				selectedOrganizationId: "org-123",
+				setOrganizationCookie: vi.fn(),
+			});
+
 			useNavigationStore.setState({ activeProjectId: "project-123" });
 
 			vi.useFakeTimers();
@@ -306,13 +392,18 @@ describe("NavigationContextProvider", () => {
 			);
 
 			expect(getProject).not.toHaveBeenCalled();
-			expect(mockRouter.replace).toHaveBeenCalledWith("/projects");
+			await waitFor(() => {
+				expect(mockRouter.replace).toHaveBeenCalledWith("/projects");
+			});
 		});
 
 		it("should handle missing navigation state gracefully", async () => {
 			const { getApplication } = await import("@/actions/grant-applications");
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
 			useNavigationStore.setState({
 				activeApplicationId: null,
 				activeProjectId: null,
@@ -334,7 +425,10 @@ describe("NavigationContextProvider", () => {
 			const { getProject } = await import("@/actions/project");
 			vi.mocked(getProject).mockRejectedValue(new Error("Project not found"));
 
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
+			useOrganizationStore.setState({
+				organizations: Object.values(ListOrganizationsResponseFactory.build()),
+				selectedOrganizationId: "org-123",
+			});
 			useNavigationStore.setState({ activeProjectId: "project-123" });
 
 			vi.useFakeTimers();

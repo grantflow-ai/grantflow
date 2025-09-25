@@ -25,7 +25,25 @@ async def verify_rag_sources_indexed(
     entity_type: type[GrantApplication | GrantTemplate],
     trace_id: str,
     total_sleep_duration: int = 0,
+    max_wait_seconds: int = 600,
 ) -> None:
+    if total_sleep_duration >= max_wait_seconds:
+        logger.error(
+            "Timeout waiting for sources to be indexed",
+            parent_id=str(parent_id),
+            entity_type=entity_type.__name__,
+            total_wait_seconds=total_sleep_duration,
+            trace_id=trace_id,
+        )
+        raise ValidationError(
+            f"Timeout waiting for sources to be indexed after {total_sleep_duration} seconds",
+            context={
+                "parent_id": str(parent_id),
+                "entity_type": entity_type.__name__,
+                "max_wait_seconds": max_wait_seconds,
+            },
+        )
+
     async with session_maker() as session:
         try:
             if entity_type == GrantApplication:
@@ -47,43 +65,73 @@ async def verify_rag_sources_indexed(
                     )
                 )
         except SQLAlchemyError as e:
+            logger.error(
+                "Database error while checking indexing status",
+                parent_id=str(parent_id),
+                entity_type=entity_type.__name__,
+                error=str(e),
+                trace_id=trace_id,
+            )
             raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
-        else:
-            if any(
-                source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
-                for source in rag_sources
-            ):
-                await sleep(10)
-                return await verify_rag_sources_indexed(
-                    parent_id=parent_id,
-                    session_maker=session_maker,
-                    entity_type=entity_type,
-                    trace_id=trace_id,
-                    total_sleep_duration=total_sleep_duration + 10,
-                )
 
-            if not any(source.indexing_status == SourceIndexingStatusEnum.FINISHED for source in rag_sources):
-                failed_sources = [
-                    source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED
-                ]
-                total_sources = len(list(rag_sources))
+    sources_still_indexing = [
+        source
+        for source in rag_sources
+        if source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
+    ]
 
-                logger.warning(
-                    "Document indexing failed",
-                    parent_id=str(parent_id),
-                    entity_type=entity_type.__name__,
-                    failed_count=len(failed_sources),
-                    total_count=total_sources,
-                    trace_id=trace_id,
-                )
+    if sources_still_indexing:
+        logger.debug(
+            "Sources still indexing, waiting",
+            parent_id=str(parent_id),
+            entity_type=entity_type.__name__,
+            sources_indexing=len(sources_still_indexing),
+            total_sources=len(rag_sources),
+            wait_duration=total_sleep_duration,
+            trace_id=trace_id,
+        )
+        await sleep(10)
+        return await verify_rag_sources_indexed(
+            parent_id=parent_id,
+            session_maker=session_maker,
+            entity_type=entity_type,
+            trace_id=trace_id,
+            total_sleep_duration=total_sleep_duration + 10,
+            max_wait_seconds=max_wait_seconds,
+        )
 
-                entity_name = "grant_application" if entity_type == GrantApplication else "grant_template"
-                raise ValidationError(
-                    "All rag sources have failed to be indexed",
-                    context={
-                        f"{entity_name}_id": str(parent_id),
-                        "failed_sources": len(failed_sources),
-                        "total_sources": total_sources,
-                        "error_type": "indexing_failure",
-                    },
-                )
+    if not any(source.indexing_status == SourceIndexingStatusEnum.FINISHED for source in rag_sources):
+        failed_sources = [source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED]
+        total_sources = len(rag_sources)
+
+        logger.warning(
+            "Document indexing failed",
+            parent_id=str(parent_id),
+            entity_type=entity_type.__name__,
+            failed_count=len(failed_sources),
+            total_count=total_sources,
+            trace_id=trace_id,
+        )
+
+        entity_name = "grant_application" if entity_type == GrantApplication else "grant_template"
+        raise ValidationError(
+            "All rag sources have failed to be indexed",
+            context={
+                f"{entity_name}_id": str(parent_id),
+                "failed_sources": len(failed_sources),
+                "total_sources": total_sources,
+                "error_type": "indexing_failure",
+            },
+        )
+
+    finished_sources = [source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FINISHED]
+    logger.info(
+        "Sources indexed successfully",
+        parent_id=str(parent_id),
+        entity_type=entity_type.__name__,
+        finished_count=len(finished_sources),
+        total_count=len(rag_sources),
+        total_wait_seconds=total_sleep_duration,
+        trace_id=trace_id,
+    )
+    return None

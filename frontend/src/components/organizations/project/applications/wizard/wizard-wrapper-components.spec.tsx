@@ -23,7 +23,11 @@ vi.mock("next/navigation", () => ({
 	}),
 }));
 
-vi.mock("@/utils/segment");
+vi.mock("@/utils/segment", () => ({
+	analyticsIdentify: vi.fn().mockResolvedValue(undefined),
+	getAnalytics: vi.fn(),
+	trackWizardEvent: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	afterEach(() => {
@@ -149,6 +153,18 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				validateStepNext: mockValidateStepNext,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						...ApplicationFactory.build().grant_template!,
+						rag_sources: [],
+					},
+					title: "Short",
+				},
+				areAppOperationsInProgress: false,
 			});
 
 			render(<WizardFooter />);
@@ -498,6 +514,17 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
 			});
 
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						...ApplicationFactory.build().grant_template!,
+						grant_sections: [],
+					},
+				},
+				areAppOperationsInProgress: false,
+			});
+
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -520,6 +547,20 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
 
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					rag_sources: [
+						{
+							filename: "test-file.pdf",
+							sourceId: "test-source-id",
+							status: "FINISHED",
+							url: undefined,
+						},
+					],
+				},
+			});
+
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -537,6 +578,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useWizardStore.setState({
 				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
 				generateApplication: mockGenerateApplication,
+				isGeneratingApplication: false,
 				toNextStep: mockToNextStep,
 				validateStepNext: vi.fn(() => ({ isValid: true, reason: "test validation passed" })),
 			});
@@ -544,6 +586,16 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Test background context",
+						hypothesis: "Test hypothesis",
+						impact: "Test impact",
+						novelty_and_innovation: "Test novelty and innovation",
+						preliminary_data: "Test preliminary data",
+						rationale: "Test rationale",
+						research_feasibility: "Test research feasibility",
+						team_excellence: "Test team excellence",
+					},
 					text: undefined,
 				},
 			});
@@ -574,6 +626,16 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Background context text",
+						hypothesis: "Hypothesis text",
+						impact: "Impact text",
+						novelty_and_innovation: "Novelty text",
+						preliminary_data: "Preliminary data text",
+						rationale: "Rationale text",
+						research_feasibility: "Research feasibility text",
+						team_excellence: "Team excellence text",
+					},
 					text: "Existing application text",
 				},
 			});
@@ -605,7 +667,14 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			await user.click(dashboardButton);
 
 			expect(mockPush).toHaveBeenCalledWith("/organization");
-			expect(mockReset).toHaveBeenCalledOnce();
+
+			// Wait for the delayed reset call
+			await waitFor(
+				() => {
+					expect(mockReset).toHaveBeenCalledOnce();
+				},
+				{ timeout: 1500 },
+			);
 		});
 
 		it("calls toPreviousStep when back button is clicked", async () => {
@@ -640,6 +709,16 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Background context text",
+						hypothesis: "Hypothesis text",
+						impact: "Impact text",
+						novelty_and_innovation: "Novelty text",
+						preliminary_data: "Preliminary data text",
+						rationale: "Rationale text",
+						research_feasibility: "Research feasibility text",
+						team_excellence: "Team excellence text",
+					},
 					text: undefined,
 				},
 			});
@@ -805,8 +884,15 @@ describe.sequential("WizardHeader", () => {
 			const exitButton = screen.getByTestId("exit-button");
 			await user.click(exitButton);
 
-			expect(mockReset).toHaveBeenCalledOnce();
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
+
+			// Wait for the delayed reset call
+			await waitFor(
+				() => {
+					expect(mockReset).toHaveBeenCalledOnce();
+				},
+				{ timeout: 1500 },
+			);
 		});
 
 		it("navigates to projects list if no project_id available", async () => {
@@ -947,6 +1033,22 @@ describe("WizardFooter - Analytics Tracking", () => {
 				currentStep: WizardStep.RESEARCH_PLAN,
 			});
 
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					research_objectives: [
+						{
+							number: 1,
+							research_tasks: [
+								{ description: "Test task 1", number: 1, title: "Test task 1" },
+								{ description: "Test task 2", number: 2, title: "Test task 2" },
+							],
+							title: "Test objective",
+						},
+					],
+				},
+			});
+
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
@@ -1014,6 +1116,16 @@ describe("WizardFooter - Analytics Tracking", () => {
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
+					form_inputs: {
+						background_context: "Background context text",
+						hypothesis: "Hypothesis text",
+						impact: "Impact text",
+						novelty_and_innovation: "Novelty text",
+						preliminary_data: "Preliminary data text",
+						rationale: "Rationale text",
+						research_feasibility: "Research feasibility text",
+						team_excellence: "Team excellence text",
+					},
 					text: "",
 				},
 			});
@@ -1063,20 +1175,26 @@ describe("WizardFooter - Analytics Tracking", () => {
 	describe("Error tracking", () => {
 		it("tracks ERROR_CONTINUE when validation fails on next", async () => {
 			const validateStepNextSpy = vi.fn(() => ({
-				isValid: true,
-				reason: ApplicationDetailsValidationReason.VALID,
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
 			}));
 
 			useWizardStore.setState({
 				validateStepNext: validateStepNextSpy,
 			});
 
-			render(<WizardFooter />);
-
-			validateStepNextSpy.mockReturnValue({
-				isValid: false,
-				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					},
+					title: "Valid Long Title for Testing",
+				},
 			});
+
+			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
 			await user.click(continueButton);
@@ -1093,20 +1211,10 @@ describe("WizardFooter - Analytics Tracking", () => {
 		it("tracks validation error details for missing title", async () => {
 			const user = userEvent.setup();
 
-			let callCount = 0;
-			const validateStepNextSpy = vi.fn(() => {
-				callCount++;
-				if (callCount === 1) {
-					return {
-						isValid: true,
-						reason: ApplicationDetailsValidationReason.VALID,
-					};
-				}
-				return {
-					isValid: false,
-					reason: ApplicationDetailsValidationReason.TITLE_INVALID,
-				};
-			});
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.TITLE_INVALID,
+			}));
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -1116,7 +1224,11 @@ describe("WizardFooter - Analytics Tracking", () => {
 			useApplicationStore.setState({
 				application: {
 					...useApplicationStore.getState().application!,
-					title: "",
+					grant_template: {
+						...useApplicationStore.getState().application!.grant_template!,
+						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					},
+					title: "Valid Long Title for Testing",
 				},
 			});
 
@@ -1138,20 +1250,10 @@ describe("WizardFooter - Analytics Tracking", () => {
 		it("tracks validation error for missing RAG sources", async () => {
 			const user = userEvent.setup();
 
-			let callCount = 0;
-			const validateStepNextSpy = vi.fn(() => {
-				callCount++;
-				if (callCount === 1) {
-					return {
-						isValid: true,
-						reason: ApplicationDetailsValidationReason.VALID,
-					};
-				}
-				return {
-					isValid: false,
-					reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
-				};
-			});
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.RAG_SOURCES_MISSING,
+			}));
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -1163,8 +1265,9 @@ describe("WizardFooter - Analytics Tracking", () => {
 					...useApplicationStore.getState().application!,
 					grant_template: {
 						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [],
+						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
 					},
+					title: "Valid Long Title for Testing",
 				},
 			});
 
@@ -1186,20 +1289,10 @@ describe("WizardFooter - Analytics Tracking", () => {
 		it("tracks validation error for processing RAG sources", async () => {
 			const user = userEvent.setup();
 
-			let callCount = 0;
-			const validateStepNextSpy = vi.fn(() => {
-				callCount++;
-				if (callCount === 1) {
-					return {
-						isValid: true,
-						reason: ApplicationDetailsValidationReason.VALID,
-					};
-				}
-				return {
-					isValid: false,
-					reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
-				};
-			});
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
+			}));
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -1211,11 +1304,9 @@ describe("WizardFooter - Analytics Tracking", () => {
 					...useApplicationStore.getState().application!,
 					grant_template: {
 						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
-							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
-						],
+						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
 					},
+					title: "Valid Long Title for Testing",
 				},
 			});
 

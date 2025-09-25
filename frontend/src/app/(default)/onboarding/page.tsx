@@ -9,10 +9,8 @@ import { z } from "zod";
 
 import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
-import AppInput from "@/components/app/fields/input-field";
 import { LogoDark } from "@/components/branding/icons/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useUserStore } from "@/stores/user-store";
 import { updateUserProfile } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
@@ -104,37 +102,33 @@ export default function Onboarding() {
 							title="Complete Your Profile"
 						/>
 						<AppCardContent>
-							<Form {...form}>
-								<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-									<FormField
-										control={form.control}
-										name="displayName"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Display Name</FormLabel>
-												<FormControl>
-													<AppInput
-														{...field}
-														data-testid="onboarding-display-name-input"
-														disabled={isLoading}
-														placeholder="Enter your display name"
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
+							<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+								<div>
+									<label htmlFor="displayName">Display Name</label>
+									<input
+										{...form.register("displayName")}
+										className="w-full px-3 py-2 border border-gray-300 rounded-md"
+										data-testid="onboarding-display-name-input"
+										disabled={isLoading}
+										id="displayName"
+										placeholder="Enter your display name"
 									/>
+									{form.formState.errors.displayName && (
+										<span className="text-red-500 text-sm">
+											{form.formState.errors.displayName.message}
+										</span>
+									)}
+								</div>
 
-									<SubmitButton
-										className="w-full"
-										data-testid="onboarding-submit-button"
-										isLoading={isLoading}
-										type="submit"
-									>
-										Complete Setup
-									</SubmitButton>
-								</form>
-							</Form>
+								<SubmitButton
+									className="w-full"
+									data-testid="onboarding-submit-button"
+									isLoading={isLoading}
+									type="submit"
+								>
+									Complete Setup
+								</SubmitButton>
+							</form>
 						</AppCardContent>
 					</AppCard>
 				</div>

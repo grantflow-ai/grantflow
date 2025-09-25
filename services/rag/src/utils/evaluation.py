@@ -12,6 +12,7 @@ from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
 
+from services.rag.src.constants import MIN_PASSING_SCORE
 from services.rag.src.utils.completion import make_google_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -106,7 +107,7 @@ MAX_TIMEOUT_MULTIPLIER: Final[float] = 2.0
 PERFORMANCE_HISTORY_SIZE: Final[int] = 100
 
 
-@dataclass
+@dataclass(slots=True)
 class EvaluationCriterion:
     name: str
     evaluation_instructions: str
@@ -129,7 +130,7 @@ class ContentComplexity(Enum):
     VERY_COMPLEX = "very_complex"
 
 
-@dataclass
+@dataclass(slots=True)
 class ComplexityAnalysis:
     complexity_level: ContentComplexity
     word_count: int
@@ -144,7 +145,7 @@ class ComplexityAnalysis:
     analysis_details: dict[str, Any]
 
 
-@dataclass
+@dataclass(slots=True)
 class PerformanceMetrics:
     complexity_level: ContentComplexity
     criteria_count: int
@@ -250,7 +251,7 @@ class AdaptiveTimeoutCalculator:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class CacheEntry:
     result: EvaluationToolResponse
     timestamp: float
@@ -573,7 +574,7 @@ def _get_routing_recommendations(
         ContentComplexity.SIMPLE: "quick_evaluation",
         ContentComplexity.MODERATE: "standard_evaluation",
         ContentComplexity.COMPLEX: "thorough_evaluation",
-        ContentComplexity.VERY_COMPLEX: "optimized_prompt_evaluation",
+        ContentComplexity.VERY_COMPLEX: "prompt_evaluation",
     }
 
     base_timeout = base_timeouts[complexity_level]
@@ -635,7 +636,7 @@ async def smart_evaluate_output(
             result = await quick_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "thorough_evaluation":
             result = await thorough_evaluation(criteria, prompt, model_output, trace_id)
-        elif evaluation_mode == "optimized_prompt_evaluation":
+        elif evaluation_mode == "prompt_evaluation":
             result = await fast_evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
@@ -741,7 +742,7 @@ async def fast_evaluate_output(
         ) from e
 
 
-async def optimized_prompt_evaluation[T](
+async def prompt_evaluation[T](
     *,
     prompt_identifier: str,
     passing_score: int = 70,
@@ -773,7 +774,7 @@ async def optimized_prompt_evaluation[T](
         trace_id=trace_id,
     )
 
-    while iteration <= retries:
+    while iteration <= retries + 1:
         iteration_start = time.time()
 
         try:
@@ -808,7 +809,15 @@ async def optimized_prompt_evaluation[T](
             overall_score = total_weighted_score / total_weight if total_weight > 0 else 0
 
             if not failing_criteria:
-                time.time() - start_time
+                total_duration = time.time() - start_time
+                logger.info(
+                    "Evaluation passed",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration,
+                    overall_score=overall_score,
+                    total_duration=total_duration,
+                    trace_id=trace_id,
+                )
                 return cast("T", model_output)
 
             if (
@@ -816,7 +825,16 @@ async def optimized_prompt_evaluation[T](
                 and excellent_scores >= len(criteria) // 2
                 and overall_score >= min_passing_score * 0.9
             ):
-                time.time() - start_time
+                total_duration = time.time() - start_time
+                logger.info(
+                    "Early termination - good enough",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration,
+                    overall_score=overall_score,
+                    excellent_scores=excellent_scores,
+                    total_duration=total_duration,
+                    trace_id=trace_id,
+                )
                 return cast("T", model_output)
 
             iteration_duration = time.time() - iteration_start
@@ -838,23 +856,35 @@ async def optimized_prompt_evaluation[T](
                 }
             )
 
-            min_passing_score -= increment
             iteration += 1
 
-            if iteration <= retries:
-                improvement_instructions = []
-                for criterion_name, result in failing_criteria.items():
-                    improvement_instructions.append(f"- {criterion_name}: {result['instructions']}")
+            if iteration > retries + 1 or min_passing_score - increment < MIN_PASSING_SCORE:
+                logger.info(
+                    "Evaluation complete - returning result",
+                    prompt_identifier=prompt_identifier,
+                    iteration=iteration - 1,
+                    retries=retries,
+                    reason="exhausted_retries" if iteration > retries else "at_minimum_score",
+                    current_passing_score=min_passing_score,
+                    all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                )
+                return cast("T", model_output)
 
-                current_prompt = f"""
-                Improve the previous output based on this feedback:
-                {chr(10).join(improvement_instructions)}
+            min_passing_score -= increment
 
-                Original prompt: {prompt}
-                Previous output: {model_output}
+            improvement_instructions = []
+            for criterion_name, result in failing_criteria.items():
+                improvement_instructions.append(f"- {criterion_name}: {result['instructions']}")
 
-                Generate an improved version that addresses the feedback above.
-                """
+            current_prompt = f"""
+            Improve the previous output based on this feedback:
+            {chr(10).join(improvement_instructions)}
+
+            Original prompt: {prompt}
+            Previous output: {model_output}
+
+            Generate an improved version that addresses the feedback above.
+            """
 
         except EvaluationError:
             raise
@@ -877,22 +907,15 @@ async def optimized_prompt_evaluation[T](
             iteration += 1
 
     total_duration = time.time() - start_time
-    logger.error(
-        "Evaluation failed after all retries",
+    logger.warning(
+        "Exhausted retries, returning final result instead of failing",
         prompt_identifier=prompt_identifier,
         total_duration=total_duration,
         failures_count=len(failures),
+        final_passing_score=min_passing_score,
     )
 
-    raise EvaluationError(
-        f"Failed to generate acceptable content after {retries} attempts",
-        context={
-            "prompt_identifier": prompt_identifier,
-            "total_duration": total_duration,
-            "failures": failures,
-            "final_passing_score": min_passing_score,
-        },
-    )
+    return cast("T", model_output) if "model_output" in locals() else await prompt_handler(current_prompt, **kwargs)
 
 
 async def batch_evaluate_outputs(
@@ -961,6 +984,7 @@ async def with_prompt_evaluation[T, **P](
     increment: float = 2.5,
     criteria: list[EvaluationCriterion],
     trace_id: str,
+    job_manager: Any | None = None,
     **kwargs: Any,
 ) -> T:
     current_prompt = str(prompt)
@@ -1015,8 +1039,30 @@ async def with_prompt_evaluation[T, **P](
 
         failures.append(failing_criteria)
 
+        if job_manager and hasattr(job_manager, "increment_retry_count"):
+            retry_count = await job_manager.increment_retry_count()
+            logger.debug(
+                "Job retry count incremented via evaluation",
+                prompt_identifier=prompt_identifier,
+                iteration=iteration,
+                job_retry_count=retry_count,
+                trace_id=trace_id,
+            )
+
         min_passing_score -= increment
         iteration += 1
+
+        if min_passing_score <= MIN_PASSING_SCORE:
+            logger.warning(
+                "Reached minimum passing score, returning result",
+                prompt_identifier=prompt_identifier,
+                iteration=iteration,
+                current_passing_score=min_passing_score,
+                minimum_threshold=MIN_PASSING_SCORE,
+                all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+                trace_id=trace_id,
+            )
+            return model_output
 
         current_prompt = FIX_OUTPUT_PROMPT.to_string(
             instructions="\n".join(
@@ -1026,13 +1072,14 @@ async def with_prompt_evaluation[T, **P](
             prompt=prompt,
         )
 
-    raise EvaluationError(
-        f"Failed to generate an acceptable response after {retries} retries. Please review the evaluation criteria and try again.",
-        context={
-            "prompt_identifier": prompt_identifier,
-            "failures": {i + 1: failure for i, failure in enumerate(failures)},
-        },
+    logger.warning(
+        "Exhausted retries, returning final result",
+        prompt_identifier=prompt_identifier,
+        retries=retries,
+        min_passing_score=min_passing_score,
+        trace_id=trace_id,
     )
+    return model_output
 
 
 async def quick_evaluation(

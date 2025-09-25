@@ -153,13 +153,15 @@ def get_logger(name: str) -> FilteringBoundLogger:
             format_exc_info,
         )
 
-        is_local_dev = get_env("DEBUG", raise_on_missing=False) and not get_env(
-            "K_SERVICE", raise_on_missing=False
-        )
+        is_local_dev = get_env(
+            "DEBUG", fallback="false", raise_on_missing=False
+        ) and not get_env("K_SERVICE", raise_on_missing=False)
 
         # Set log level - DEBUG if DEBUG env var is set, otherwise INFO
         log_level = (
-            logging.DEBUG if get_env("DEBUG", raise_on_missing=False) else logging.INFO
+            logging.DEBUG
+            if get_env("DEBUG", fallback="false", raise_on_missing=False)
+            else logging.INFO
         )
 
         configure_once(

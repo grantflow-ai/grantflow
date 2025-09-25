@@ -42,11 +42,11 @@ export function BenefitsSection() {
 				<Image
 					alt="background"
 					aria-hidden="true"
-					className="size-full object-none xl:object-cover"
+					className="size-full object-cover xl:object-cover"
 					height={0}
 					priority
 					src="/assets/landing-bg-pattern.svg"
-					style={{ height: "auto", width: "100%" }}
+					style={{ minHeight: "100%", width: "100%" }}
 					width={0}
 				/>
 			</div>
@@ -100,7 +100,7 @@ function BenefitsCard({
 				benefitsCardBorder,
 			)}
 		>
-			<div className="bg-background inline-flex items-center gap-1 rounded-2xl px-2.5 py-0.5 text-white">
+			<div className="bg-dark inline-flex items-center gap-1 rounded-2xl px-2.5 py-0.5 text-white">
 				<BadgeIcon className="size-5 md:size-4" />
 				<span className="font-button align-bottom md:text-sm">{badge}</span>
 			</div>

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
 import OnboardingPage from "./page";
@@ -67,7 +67,7 @@ describe("OnboardingPage", () => {
 		expect(mockRouterReplace).toHaveBeenCalledWith("/organization");
 	});
 
-	it("renders onboarding form when profile is incomplete", () => {
+	it("renders onboarding form when profile is incomplete", async () => {
 		mockUseUserStore.mockReturnValue({
 			setUser: vi.fn(),
 			user: {
@@ -79,8 +79,11 @@ describe("OnboardingPage", () => {
 
 		render(<OnboardingPage />);
 
-		expect(screen.getByTestId("onboarding-container")).toBeInTheDocument();
-		expect(screen.getByText("Complete Your Profile")).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId("onboarding-container")).toBeInTheDocument();
+		});
+
+		expect(screen.getAllByText("Complete Your Profile")[0]).toBeInTheDocument();
 		expect(screen.getByTestId("onboarding-display-name-input")).toBeInTheDocument();
 		expect(screen.getByTestId("onboarding-submit-button")).toBeInTheDocument();
 	});

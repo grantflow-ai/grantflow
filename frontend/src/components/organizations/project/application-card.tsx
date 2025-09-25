@@ -1,9 +1,12 @@
 import { format } from "date-fns";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { APPLICATION_STATUS } from "@/constants/download";
 import type { API } from "@/types/api-types";
+import type { DownloadFormat } from "@/types/download";
 import { getDeadlineInfo } from "@/utils/date-time";
 import { CardActionMenu } from "../dashboard/card-action-menu";
+import { ApplicationDownloadMenu } from "./application-download-menu";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -43,14 +46,24 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
+	isDownloading?: boolean;
 	onDelete: (id: string) => void;
+	onDownload: (applicationId: string, format: DownloadFormat) => void;
 	onDuplicate: (id: string, currentTitle: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
 
-export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
+export function ApplicationCard({
+	application,
+	isDownloading = false,
+	onDelete,
+	onDownload,
+	onDuplicate,
+	onOpen,
+}: ApplicationCardProps) {
 	const deadlineInfo = getDeadlineInfo(application.deadline);
 	const statusStyles = statusStyleMap[application.status];
+	const isDownloadEnabled = application.status === APPLICATION_STATUS.WORKING_DRAFT;
 	return (
 		<div
 			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4 bg-preview-bg border-[#E1DFEB] hover:border-primary hover:border-2 transition-all"
@@ -80,7 +93,15 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 						</div>
 					</div>
 
-					<div>
+					<div className="flex items-center pt-2 gap-3">
+						{isDownloadEnabled && (
+							<ApplicationDownloadMenu
+								disabled={isDownloading}
+								onDownload={(format) => {
+									onDownload(application.id, format);
+								}}
+							/>
+						)}
 						<CardActionMenu
 							onDelete={() => {
 								onDelete(application.id);
@@ -138,16 +159,18 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 					</div>
 				)}
 
-				<AppButton
-					className="ml-auto w-[97px] py-0.5 bg-white"
-					data-testid={`application-card-open-button-${application.id}`}
-					onClick={() => {
-						onOpen(application.id, application.title);
-					}}
-					variant="secondary"
-				>
-					Open
-				</AppButton>
+				<div className="ml-auto flex items-center gap-2">
+					<AppButton
+						className="w-[97px] py-0.5 bg-white"
+						data-testid={`application-card-open-button-${application.id}`}
+						onClick={() => {
+							onOpen(application.id, application.title);
+						}}
+						variant="secondary"
+					>
+						Open
+					</AppButton>
+				</div>
 			</main>
 		</div>
 	);

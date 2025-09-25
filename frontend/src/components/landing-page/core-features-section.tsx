@@ -1,7 +1,10 @@
-import Image from "next/image";
 import type { HTMLProps } from "react";
+import { cn } from "@/lib/utils";
 import { AnimatedFeatureArticle } from "./feature-articles-animated";
 import { ScrollFadeElement } from "./scroll-fade-element";
+
+const coreFeaturesCardBorder = "border-2 border-solid border-primary/70 rounded p-5";
+const coreFeaturesCardBackground = "bg-white/80";
 
 const CORE_FEATURES = [
 	{
@@ -33,26 +36,22 @@ export function CoreFeaturesSection() {
 			className="relative w-full bg-white overflow-hidden"
 			data-testid="core-features-section"
 		>
-			<div className="absolute inset-0 z-0">
-				<Image
-					alt="background"
-					aria-hidden="true"
-					className="size-full object-none xl:object-cover"
-					height={0}
-					priority
-					src="/assets/landing-bg-pattern.svg"
-					style={{ height: "auto", width: "100%" }}
-					width={0}
-				/>
-			</div>
+			<div className="absolute inset-0 z-0 bg-[var(--app-gray-20)]" />
+
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-[120px] text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2
-						className="font-heading xl-my-10 my-3 px-8 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"
+						className="font-heading xl-mt-10 mt-3 px-8 text-3xl font-medium md:mt-5 md:text-4xl lg:mt-8 mb-3"
 						id="core-features-heading"
 					>
 						Core Features Designed for Researchers
 					</h2>
+					<p className="font-normal text-base">
+						{" "}
+						From your research insights to a polished first draft of your grant application, streamline
+						project management, real‑time collaboration, and AI‑driven field‑specific writing in one unified
+						workspace.
+					</p>
 				</ScrollFadeElement>
 				<div
 					className="ps-5.5 relative w-full overflow-hidden sm:hidden"
@@ -61,7 +60,11 @@ export function CoreFeaturesSection() {
 					<div className="scrollbar-hide gap-5.5 flex w-full snap-x snap-mandatory overflow-x-auto py-6 text-start">
 						{CORE_FEATURES.map((feature, index) => (
 							<FeatureArticle
-								className={`w-[90%] flex-none snap-start ${index === CORE_FEATURES.length - 1 ? "mr-4" : ""}`}
+								className={cn(
+									`w-[90%] flex-none snap-start ${index === CORE_FEATURES.length - 1 ? "mr-4" : ""}`,
+									coreFeaturesCardBackground,
+									coreFeaturesCardBorder,
+								)}
 								featureDescription={feature.description}
 								featureTitle={feature.title}
 								key={index}
@@ -75,6 +78,7 @@ export function CoreFeaturesSection() {
 				>
 					{CORE_FEATURES.map((feature, index) => (
 						<AnimatedFeatureArticle
+							className={cn(coreFeaturesCardBackground, coreFeaturesCardBorder)}
 							featureDescription={feature.description}
 							featureTitle={feature.title}
 							key={index}
@@ -96,7 +100,11 @@ function FeatureArticle({
 	featureTitle: string;
 } & HTMLProps<HTMLElement>) {
 	return (
-		<article className={className} id="feature-item" {...props}>
+		<article
+			className={cn("size-full text-stone-800 py-8 px-6 md:px-[22px]", className)}
+			id="feature-item"
+			{...props}
+		>
 			<div className="border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-b-background size-0 border-x-transparent" />
 			<h3 className="font-heading my-5 text-2xl font-medium md:my-3">{featureTitle}</h3>
 			<p className="text-lg md:text-sm md:leading-tight">{featureDescription}</p>

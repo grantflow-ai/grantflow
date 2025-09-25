@@ -19,7 +19,7 @@ from packages.shared_utils.src.serialization import (
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class SampleModel:
     name: str
     value: int
@@ -30,7 +30,7 @@ class SampleEnum(Enum):
     B = "b"
 
 
-@dataclass
+@dataclass(slots=True)
 class SampleModelWithEnum:
     enum_field: SampleEnum
 

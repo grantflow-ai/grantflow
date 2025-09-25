@@ -87,7 +87,7 @@ const mockDuplicateProjectResponse = DuplicateProjectResponseFactory.build({
 	description: "Test Description",
 	grant_applications: [
 		{
-			completed_at: undefined,
+			completed_at: null,
 			id: "duplicated-app-1",
 			title: "Application 1",
 		},
@@ -244,7 +244,7 @@ describe("Project Actions", () => {
 				...mockDuplicateProjectResponse,
 				grant_applications: [
 					{
-						completed_at: undefined,
+						completed_at: null,
 						id: "duplicated-app-1",
 						title: "Application 1",
 					},

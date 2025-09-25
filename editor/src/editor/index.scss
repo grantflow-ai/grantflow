@@ -3,6 +3,10 @@
 body {
   --tt-toolbar-height: 40px;
   --tt-theme-text: var(--tt-gray-light-900);
+  --color-green-100: oklch(0.962 0.044 156.743);
+  --color-green-700: oklch(0.527 0.154 150.069);
+  --color-red-100: oklch(0.936 0.032 17.717);
+  --color-red-700: oklch(0.505 0.213 27.518);
 
   .dark & {
     --tt-theme-text: var(--tt-gray-dark-900);
@@ -63,5 +67,56 @@ body {
 @media screen and (max-width: 768px) {
   .simple-editor-content .tiptap.ProseMirror.simple-editor {
     padding: 1rem 1.5rem;
+  }
+}
+
+span.insertion {
+  color: var(--color-green-700);
+  background-color: var(--color-green-100);
+  cursor: text;
+
+  &:focus {
+    outline: none;
+    border: none;
+  }
+}
+
+span.deletion {
+  color: var(--color-red-700);
+  background-color: var(--color-red-100);
+  text-decoration: line-through;
+}
+
+.suggestion-tooltip {
+  display: inline-flex;
+  background-color: white;
+  box-shadow: 0px 0.54px 1.49px 0px #00000005, 0px 1.5px 4.13px 0px #00000008,
+    0px 3.62px 9.95px 0px #0000000a, 0px 12px 20px 0px #0000000f;
+  border-radius: 0.2rem;
+  padding: 0.2rem;
+  position: absolute;
+  left: 60%;
+  top: 1.5rem;
+  width: max-content;
+  user-select: none;
+  z-index: 100;
+
+  .button-group {
+    justify-content: center;
+  }
+  
+  button {
+    cursor: pointer;
+    background: var(--color-green-100);
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 0.675rem;
+    font-weight: 500;
+    padding: 0.275rem 0.625rem;
+  }
+
+  .destructive {
+    margin-right: 0.2rem;
+    background-color: var(--color-red-100);
   }
 }

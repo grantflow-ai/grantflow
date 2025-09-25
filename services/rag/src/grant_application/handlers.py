@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
@@ -9,6 +9,7 @@ from packages.shared_utils.src.text import normalize_markdown
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.dto import (
+    EnrichmentDataDTO,
     EnrichObjectivesStageDTO,
     EnrichTerminologyStageDTO,
     ExtractRelationshipsStageDTO,
@@ -20,7 +21,7 @@ from services.rag.src.grant_application.dto import (
 from services.rag.src.grant_application.enrich_terminology_stage import enrich_objective_with_wikidata
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
-from services.rag.src.grant_application.generate_work_plan_text import generate_objective_with_tasks
+from services.rag.src.grant_application.generate_work_plan_text import generate_workplan_section
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 
@@ -29,6 +30,9 @@ if TYPE_CHECKING:
     from packages.db.src.tables import GrantApplication
 
 logger = get_logger(__name__)
+
+SECTION_GENERATION_BATCH_SIZE: Final[int] = 4
+WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
 
 
 async def handle_generate_sections_stage(
@@ -85,23 +89,61 @@ async def handle_generate_sections_stage(
 
     generation_coroutines = [
         handle_generate_section_text(
-            section,
-            grant_application.research_objectives or [],
-            shared_context,
-            cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
-            trace_id,
+            section=section,
+            research_deep_dives=grant_application.research_objectives or [],
+            shared_context=shared_context,
+            cfp_analysis=cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
+            trace_id=trace_id,
+            job_manager=job_manager,
         )
         for section in long_form_sections
     ]
 
-    section_results = await batched_gather(*generation_coroutines, batch_size=4)
+    section_results = await batched_gather(
+        *generation_coroutines, batch_size=SECTION_GENERATION_BATCH_SIZE, return_exceptions=True
+    )
 
     section_texts: dict[str, str] = {}
+    failed_sections = []
+
     for section, result in zip(long_form_sections, section_results, strict=False):
         section_id = section["id"]
-        section_texts[section_id] = result
+
+        if isinstance(result, Exception):
+            error_type = type(result).__name__
+            logger.error(
+                "Section generation failed",
+                section_id=section_id,
+                section_title=section["title"],
+                error_type=error_type,
+                error=str(result),
+                trace_id=trace_id,
+            )
+            section_texts[section_id] = (
+                f"[Failed to generate {section['title']} section: {error_type}. Manual completion required.]"
+            )
+            failed_sections.append({"id": section_id, "title": section["title"], "error": error_type})
+        else:
+            section_texts[section_id] = cast("str", result)
+
+    if failed_sections:
+        logger.warning(
+            "Some sections failed generation",
+            total_sections=len(long_form_sections),
+            successful_sections=len(long_form_sections) - len(failed_sections),
+            failed_sections=failed_sections,
+            trace_id=trace_id,
+        )
 
     section_text_list = [SectionText(section_id=section_id, text=text) for section_id, text in section_texts.items()]
+
+    logger.debug(
+        "Section generation completed",
+        total_sections=len(long_form_sections),
+        successful_sections=len(long_form_sections) - len(failed_sections),
+        failed_sections=len(failed_sections),
+        trace_id=trace_id,
+    )
 
     await job_manager.add_notification(
         event=NotificationEvents.SECTION_TEXTS_GENERATED,
@@ -136,6 +178,7 @@ async def handle_extract_relationships_stage(
         grant_section=dto["work_plan_section"],
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
@@ -169,6 +212,7 @@ async def handle_enrich_objectives_stage(
         application_id=str(grant_application.id),
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
+        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
@@ -202,7 +246,35 @@ async def handle_enrich_terminology_stage(
         for enrichment_response in dto["enrichment_responses"]
     ]
 
-    wikidata_enrichments = await batched_gather(*wikidata_enrichment_coroutines, batch_size=4)
+    wikidata_enrichments = await batched_gather(
+        *wikidata_enrichment_coroutines, batch_size=WIKIDATA_ENRICHMENT_BATCH_SIZE, return_exceptions=True
+    )
+
+    processed_enrichments: list[EnrichmentDataDTO] = []
+    successful_count = 0
+    failed_count = 0
+
+    for i, result in enumerate(wikidata_enrichments):
+        if isinstance(result, Exception):
+            logger.warning(
+                "Wikidata enrichment failed",
+                enrichment_index=i,
+                error=str(result),
+                trace_id=trace_id,
+            )
+            processed_enrichments.append(cast("EnrichmentDataDTO", {}))
+            failed_count += 1
+        else:
+            processed_enrichments.append(cast("EnrichmentDataDTO", result))
+            successful_count += 1
+
+    logger.debug(
+        "Wikidata enrichment completed",
+        total_enrichments=len(wikidata_enrichments),
+        successful_enrichments=successful_count,
+        failed_enrichments=failed_count,
+        trace_id=trace_id,
+    )
 
     await job_manager.add_notification(
         event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
@@ -218,7 +290,7 @@ async def handle_enrich_terminology_stage(
         work_plan_section=dto["work_plan_section"],
         relationships=dto["relationships"],
         enrichment_responses=dto["enrichment_responses"],
-        wikidata_enrichments=wikidata_enrichments,
+        wikidata_enrichments=processed_enrichments,
     )
 
 
@@ -274,43 +346,22 @@ async def handle_generate_research_plan_stage(
             ]
         )
 
-    work_plan_text = ""
+    total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
 
-    total_objectives = len(research_objectives)
-
-    objective_task_groups = []
-    for count in range(1, total_objectives + 1):
-        objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
-        tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
-        objective_task_groups.append((objective, tasks))
-
-    objective_results = await batched_gather(
-        *[
-            generate_objective_with_tasks(
-                application_id=str(grant_application.id),
-                form_inputs=grant_application.form_inputs or {},
-                objective=objective,
-                tasks=tasks,
-                work_plan_text=work_plan_text,
-                trace_id=trace_id,
-            )
-            for objective, tasks in objective_task_groups
-        ],
-        batch_size=4,
+    work_plan_text = await generate_workplan_section(
+        application_id=str(grant_application.id),
+        form_inputs=grant_application.form_inputs or {},
+        components=dtos,
+        trace_id=trace_id,
+        job_manager=job_manager,
     )
-
-    for objective, objective_text, task_results in objective_results:
-        work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
-
-        for research_task, research_task_text in task_results:
-            work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
     await job_manager.add_notification(
         event=NotificationEvents.RESEARCH_PLAN_COMPLETED,
         message="Research plan complete",
         notification_type="success",
         data={
-            "objectives": total_objectives,
+            "objectives": len(research_objectives),
             "tasks": total_tasks,
             "words": len(work_plan_text.split()),
         },

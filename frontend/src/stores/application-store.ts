@@ -10,7 +10,6 @@ import {
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
-import { retrieveRagJob } from "@/actions/rag-jobs";
 import {
 	crawlApplicationUrl,
 	crawlTemplateUrl,
@@ -19,9 +18,9 @@ import {
 	deleteApplicationSource,
 	deleteTemplateSource,
 } from "@/actions/sources";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { DEFAULT_APPLICATION_TITLE, WizardStep } from "@/constants";
 import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
@@ -88,73 +87,13 @@ interface ApplicationState {
 
 type SourceType = "application" | "template";
 
-function handleRagJobDataResponse(
-	jobData: API.RetrieveRagJob.Http200.ResponseBody,
-	_ragJobId: string,
-	set: (state: (state: ApplicationActions & ApplicationState) => ApplicationActions & ApplicationState) => void,
-): void {
-	const shouldRestore = jobData.status === "PROCESSING" || jobData.status === "PENDING";
-
-	if (shouldRestore) {
-		set((state) => ({
-			...state,
-			ragJobState: {
-				isRestoring: false,
-				restoredJob: jobData,
-			},
-		}));
-
-		const progressText =
-			jobData.current_stage && jobData.total_stages
-				? `Stage ${jobData.current_stage} of ${jobData.total_stages}`
-				: "In progress";
-
-		toast.info(`🔄 Restored progress: ${progressText}`, {
-			description: "Continuing from where you left off...",
-			duration: 4000,
-		});
-	} else {
-		set((state) => ({
-			...state,
-			ragJobState: {
-				isRestoring: false,
-				restoredJob: null,
-			},
-		}));
-	}
-}
-
-function validateJobRestoration(application: ApplicationType): {
+function validateJobRestoration(_application: ApplicationType): {
 	isValid: boolean;
 	projectId?: string;
 	ragJobId?: string;
 } {
-	if (!application) {
-		return { isValid: false };
-	}
-
-	const ragJobId = application.rag_job_id ?? application.grant_template?.rag_job_id;
-
-	if (!ragJobId) {
-		return { isValid: false };
-	}
-
-	if (!application.project_id) {
-		log.error("checkAndRestoreJobState: No project_id in application context");
-		return { isValid: false };
-	}
-
-	const { project } = useProjectStore.getState();
-	if (project?.id && project.id !== application.project_id) {
-		log.warn("application-store: validateJobRestoration: Project ID mismatch detected", {
-			applicationProjectId: application.project_id,
-			currentProjectId: project.id,
-			ragJobId,
-		});
-		return { isValid: false };
-	}
-
-	return { isValid: true, projectId: application.project_id, ragJobId };
+	// TODO: Implement new job restoration logic if needed
+	return { isValid: false };
 }
 
 const initialState: ApplicationState = {
@@ -237,6 +176,28 @@ interface ApplicationActions {
 	) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
 }
+
+const shouldStartPollingAfterSourceAdd = (
+	currentStep: WizardStep,
+	pollingIsActive: boolean,
+	ragSources?: { status: string }[],
+): boolean => {
+	if (currentStep !== WizardStep.APPLICATION_DETAILS) return false;
+	if (pollingIsActive) return false;
+	if (!ragSources) return false;
+	return ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING");
+};
+
+const shouldStopPollingAfterSourceRemove = (
+	currentStep: WizardStep,
+	pollingIsActive: boolean,
+	ragSources?: { status: string }[],
+): boolean => {
+	if (currentStep !== WizardStep.APPLICATION_DETAILS) return false;
+	if (!pollingIsActive) return false;
+	if (!ragSources || ragSources.length === 0) return true;
+	return !ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING");
+};
 
 const uploadFileInDevelopment = async (
 	file: FileWithId,
@@ -475,6 +436,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		if (!selectedOrganizationId) return;
 
 		await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+		const { checkRagSourcesStatus, currentStep, polling } = useWizardStore.getState();
+		const { application: updatedApp } = get();
+
+		if (shouldStartPollingAfterSourceAdd(currentStep, polling.isActive, updatedApp?.grant_template?.rag_sources)) {
+			log.info("[Application Store] Starting RAG source polling after file upload", {
+				fileId: file.id,
+				fileName: file.name,
+				parentId,
+			});
+			polling.start(checkRagSourcesStatus, 2000, false);
+		}
 	},
 
 	addPendingUpload: (file: FileWithId, sourceType: SourceType) => {
@@ -523,64 +496,32 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+			const { checkRagSourcesStatus, currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+
+			if (
+				shouldStartPollingAfterSourceAdd(currentStep, polling.isActive, updatedApp?.grant_template?.rag_sources)
+			) {
+				log.info("[Application Store] Starting RAG source polling after URL add", {
+					parentId,
+					url,
+				});
+				polling.start(checkRagSourcesStatus, 2000, false);
+			}
 		} catch (error) {
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
 		}
 	},
 
-	checkAndRestoreJobState: async () => {
-		const { application } = get();
-		const validationResult = validateJobRestoration(application);
-
+	checkAndRestoreJobState: () => {
+		// TODO: Implement new job restoration logic if needed
+		const validationResult = validateJobRestoration(get().application);
 		if (!validationResult.isValid) {
-			return;
+			return Promise.resolve();
 		}
-
-		const { projectId, ragJobId } = validationResult;
-
-		assertIsNotNullish(projectId, {
-			message: "projectId should be defined when validation passes",
-		});
-		assertIsNotNullish(ragJobId, {
-			message: "ragJobId should be defined when validation passes",
-		});
-
-		log.info("checkAndRestoreJobState: Attempting RAG job restoration", {
-			applicationId: application?.id,
-			projectId,
-			ragJobId,
-			timestamp: new Date().toISOString(),
-		});
-
-		set((state) => ({
-			...state,
-			ragJobState: {
-				...state.ragJobState,
-				isRestoring: true,
-			},
-		}));
-
-		try {
-			const { selectedOrganizationId } = useOrganizationStore.getState();
-			if (!selectedOrganizationId) {
-				throw new Error("No organization selected");
-			}
-			const jobData = await retrieveRagJob(selectedOrganizationId, projectId, ragJobId);
-			handleRagJobDataResponse(jobData, ragJobId, set);
-		} catch (error) {
-			set((state) => ({
-				...state,
-				ragJobState: {
-					isRestoring: false,
-					restoredJob: null,
-				},
-			}));
-			log.error("checkAndRestoreJobState: Failed to restore job state", error, {
-				projectId,
-				ragJobId,
-			});
-		}
+		return Promise.resolve();
 	},
 
 	clearPendingUploads: (sourceType?: SourceType) => {
@@ -842,6 +783,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
+
+			const { currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+			const ragSources = updatedApp?.grant_template?.rag_sources;
+
+			if (shouldStopPollingAfterSourceRemove(currentStep, polling.isActive, ragSources)) {
+				log.info("[Application Store] Stopping RAG source polling after file removal", {
+					fileId: fileToRemove.id,
+					fileName: fileToRemove.name,
+					remainingSourcesCount: ragSources?.length ?? 0,
+				});
+				polling.stop();
+			}
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
@@ -874,59 +828,22 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	removeUrl: async (urlToRemove: string, parentId: string) => {
 		const { application } = get();
-
-		if (!validateStateForRagSource(application, parentId, "removeUrl")) {
-			return;
-		}
+		if (!validateStateForRagSource(application, parentId, "removeUrl")) return;
 
 		const isApplicationParent = parentId === application!.id;
-
 		const ragSources = isApplicationParent
 			? application!.rag_sources
 			: (application!.grant_template?.rag_sources ?? []);
-
-		log.info("[removeUrl] Debug info", {
-			isApplicationParent,
-			parentId,
-			ragSources: ragSources.map((source) => ({
-				filename: source.filename,
-				hasUrl: !!source.url,
-				sourceId: source.sourceId,
-				url: source.url,
-				urlMatch: source.url === urlToRemove,
-			})),
-			ragSourcesCount: ragSources.length,
-			urlToRemove,
-		});
-
 		const ragSource = ragSources.find((source) => source.url === urlToRemove);
 
 		if (!ragSource) {
-			log.error("[removeUrl] Source not found", {
-				availableUrls: ragSources.filter((s) => s.url).map((s) => s.url),
-				urlToRemove,
-			});
 			toast.error("Cannot remove URL: Source not found");
 			return;
 		}
 
-		log.info("[removeUrl] Found source to delete", {
-			sourceId: ragSource.sourceId,
-			url: ragSource.url,
-		});
-
 		try {
-			log.info("[removeUrl] About to call delete API", {
-				deleteFunction: isApplicationParent ? "deleteApplicationSource" : "deleteTemplateSource",
-				parentId,
-				projectId: application!.project_id,
-				sourceId: ragSource.sourceId,
-			});
-
 			const { selectedOrganizationId } = useOrganizationStore.getState();
-			if (!selectedOrganizationId) {
-				throw new Error("No organization selected");
-			}
+			if (!selectedOrganizationId) throw new Error("No organization selected");
 
 			await (isApplicationParent
 				? deleteApplicationSource(selectedOrganizationId, application!.project_id, parentId, ragSource.sourceId)
@@ -938,23 +855,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 						ragSource.sourceId,
 					));
 
-			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
-			log.info("[rag_sources_check] URL removal completed, triggering getApplication", {
-				beforeApplicationRagSources: formatApplicationRagSources(application),
-				beforeGrantSections: formatGrantSections(application),
-				beforeRagSources: formatRagSources(application),
-				isApplicationParent,
-				parentId,
-				sourceId: ragSource.sourceId,
-				templateId: application?.grant_template?.id,
-				url: urlToRemove,
-			});
-
 			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
-			log.info("[removeUrl] getApplication completed");
+
+			const { currentStep, polling } = useWizardStore.getState();
+			const { application: updatedApp } = get();
+			const updatedRagSources = updatedApp?.grant_template?.rag_sources;
+
+			if (shouldStopPollingAfterSourceRemove(currentStep, polling.isActive, updatedRagSources)) {
+				polling.stop();
+			}
 		} catch (error) {
-			log.error("[removeUrl] Error occurred", error);
+			log.error("removeUrl error", error);
 			toast.error("Failed to remove URL. Please try again.");
 		}
 	},
@@ -1101,7 +1013,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("updateGrantSections: Starting", {
 			hasApplication: !!application,
 			hasGrantTemplate: !!application?.grant_template,
-			sectionCount: sections.length,
+			sectionCount: sections?.length ?? 0,
 			templateId: application?.grant_template?.id,
 		});
 
@@ -1114,14 +1026,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			...application,
 			grant_template: {
 				...application.grant_template,
-				grant_sections: sections,
+				grant_sections: sections ?? [],
 			},
 		};
 
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
-			grant_sections: sections.map((section) => ({
+			grant_sections: (sections ?? []).map((section) => ({
 				id: section.id,
 				max_words: section.max_words,
 				order: section.order,
@@ -1129,7 +1041,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				title: section.title,
 			})),
 			projectId: updatedApplication.project_id,
-			sectionCount: sections.length,
+			sectionCount: (sections ?? []).length,
 			template_rag_sources: formatRagSources(updatedApplication),
 			templateId: updatedApplication.grant_template?.id,
 		});
@@ -1146,18 +1058,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				application.id,
 				application.grant_template.id,
 				{
-					grant_sections: sections,
+					grant_sections: sections ?? [],
 				},
 			);
 
 			log.info("updateGrantSections: Success", {
-				grant_sections: sections.map((section) => ({
+				grant_sections: (sections ?? []).map((section) => ({
 					id: section.id,
 					order: section.order,
 					parent_id: section.parent_id,
 					title: section.title,
 				})),
-				sectionCount: sections.length,
+				sectionCount: (sections ?? []).length,
 			});
 		} catch (error) {
 			const restoredApplication: NonNullable<ApplicationType> = {

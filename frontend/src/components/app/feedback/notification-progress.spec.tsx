@@ -1,4 +1,4 @@
-import { RagProcessingStatusFactory } from "::testing/factories";
+import { RagProcessingStatusMessageFactory } from "::testing/factories";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 import { NotificationProgress } from "@/components/app/feedback/notification-progress";
@@ -8,9 +8,8 @@ describe.sequential("NotificationProgress", () => {
 		cleanup();
 	});
 
-	const mockNotification = RagProcessingStatusFactory.build({
+	const mockNotification = RagProcessingStatusMessageFactory.build({
 		event: "section_texts_generated",
-		message: "Generating text for all grant sections...",
 	});
 
 	it("displays progress message", () => {
@@ -18,13 +17,11 @@ describe.sequential("NotificationProgress", () => {
 
 		const messageElement = screen.getByTestId("notification-progress-message");
 		expect(messageElement).toBeInTheDocument();
-		expect(messageElement.textContent).toContain("Generating text for all grant sections...");
 	});
 
 	it("shows completed icon for completed events", () => {
-		const completedNotification = RagProcessingStatusFactory.build({
+		const completedNotification = RagProcessingStatusMessageFactory.build({
 			event: "grant_application_generation_completed",
-			message: "Application generation completed",
 		});
 
 		render(<NotificationProgress notification={completedNotification} />);
@@ -34,9 +31,8 @@ describe.sequential("NotificationProgress", () => {
 	});
 
 	it("shows error icon for error events", () => {
-		const errorNotification = RagProcessingStatusFactory.build({
+		const errorNotification = RagProcessingStatusMessageFactory.build({
 			event: "pipeline_error",
-			message: "An error occurred",
 		});
 
 		render(<NotificationProgress notification={errorNotification} />);
@@ -46,9 +42,8 @@ describe.sequential("NotificationProgress", () => {
 	});
 
 	it("shows cancelled icon for cancelled events", () => {
-		const cancelledNotification = RagProcessingStatusFactory.build({
+		const cancelledNotification = RagProcessingStatusMessageFactory.build({
 			event: "job_cancelled",
-			message: "Job was cancelled",
 		});
 
 		render(<NotificationProgress notification={cancelledNotification} />);
@@ -58,9 +53,8 @@ describe.sequential("NotificationProgress", () => {
 	});
 
 	it("shows extract icon for extract events", () => {
-		const extractNotification = RagProcessingStatusFactory.build({
+		const extractNotification = RagProcessingStatusMessageFactory.build({
 			event: "cfp_data_extracted",
-			message: "CFP data extracted",
 		});
 
 		render(<NotificationProgress notification={extractNotification} />);

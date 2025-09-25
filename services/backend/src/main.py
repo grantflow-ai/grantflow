@@ -11,6 +11,7 @@ from services.backend.src.api.routes.files import handle_convert_file
 from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
+    handle_download_application,
     handle_duplicate_application,
     handle_generate_application,
     handle_list_applications,
@@ -148,6 +149,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_application,
     handle_update_application,
     handle_delete_application,
+    handle_download_application,
     handle_duplicate_application,
     handle_generate_application,
     handle_trigger_autofill,

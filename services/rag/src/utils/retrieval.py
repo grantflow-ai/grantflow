@@ -19,7 +19,8 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 
 logger = get_logger(__name__)
 
-MAX_RESULTS: Final[int] = 100
+
+MAX_RESULTS: Final[int] = 15
 MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
 MIN_QUALITY_SCORE: Final[float] = 7.0
 

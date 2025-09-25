@@ -347,9 +347,9 @@ async def test_enrich_terminology_stage_success(
     mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
 
 
-@patch("services.rag.src.grant_application.handlers.generate_objective_with_tasks")
+@patch("services.rag.src.grant_application.handlers.generate_workplan_section")
 async def test_generate_research_plan_stage_success(
-    mock_generate_objective_with_tasks: AsyncMock,
+    mock_generate_workplan_section: AsyncMock,
     mock_grant_application_job_manager: JobManager[Any],
     grant_application: GrantApplication,
     sample_work_plan_section: GrantLongFormSection,
@@ -412,20 +412,15 @@ async def test_generate_research_plan_stage_success(
         ],
     )
 
-    mock_generate_objective_with_tasks.return_value = (
-        {"number": 1, "title": "Develop novel biomarkers"},
-        "Generated objective text",
-        [
-            (
-                {"number": 1, "title": "Identify candidate biomarkers"},
-                "Generated task 1 text",
-            ),
-            (
-                {"number": 2, "title": "Validate biomarkers"},
-                "Generated task 2 text",
-            ),
-        ],
-    )
+    mock_generate_workplan_section.return_value = """
+### Objective 1: Develop novel biomarkers
+Generated objective text
+
+#### 1.1: Identify candidate biomarkers
+Generated task 1 text
+
+#### 1.2: Validate biomarkers
+Generated task 2 text""".strip()
 
     result = await handle_generate_research_plan_stage(
         grant_application=grant_application,

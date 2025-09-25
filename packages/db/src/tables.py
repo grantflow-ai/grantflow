@@ -232,10 +232,14 @@ class RagSource(BaseWithUUIDPK):
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
     indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parent_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("rag_sources.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     text_vectors: Relationship[list["TextVector"]] = relationship(
         "TextVector", back_populates="rag_source", cascade="all, delete-orphan"
     )
+    parent: Relationship["RagSource | None"] = relationship("RagSource", remote_side="RagSource.id", backref="children")
 
     __mapper_args__ = {  # noqa: RUF012
         "polymorphic_identity": "rag_source",
@@ -578,19 +582,28 @@ class RagGenerationJob(BaseWithUUIDPK):
 class GenerationNotification(BaseWithUUIDPK):
     __tablename__ = "generation_notifications"
 
-    rag_job_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), index=True
+    grant_application_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    rag_job_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="CASCADE"), index=True, nullable=True
     )
 
     data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     event: Mapped[str] = mapped_column(String(100), index=True)
     message: Mapped[str] = mapped_column(Text)
-    notification_type: Mapped[str] = mapped_column(String(20), default="info")
+    notification_type: Mapped[Literal["info", "error", "warning", "success"]] = mapped_column(
+        String(20), default="info"
+    )
 
+    grant_application: Relationship["GrantApplication"] = relationship("GrantApplication")
     rag_job: Relationship["RagGenerationJob"] = relationship("RagGenerationJob")
 
-    __table_args__ = (Index("idx_rag_notifications_job_created", "rag_job_id", "created_at"),)
+    __table_args__ = (
+        Index("idx_notifications_application_created", "grant_application_id", "created_at"),
+        Index("idx_notifications_job_created", "rag_job_id", "created_at"),
+    )
 
 
 class Notification(BaseWithUUIDPK):

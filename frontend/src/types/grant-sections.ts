@@ -4,7 +4,7 @@ export type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
 >["grant_sections"][0];
 
-export type UpdateGrantSection = API.UpdateGrantTemplate.RequestBody["grant_sections"][0];
+export type UpdateGrantSection = NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0];
 
 export const hasDetailedResearchPlan = (
 	section: GrantSection,

@@ -25,7 +25,7 @@ from packages.shared_utils.src.url_utils import normalize_url
 from sklearn.metrics.pairwise import cosine_similarity
 from trafilatura import extract
 
-from services.crawler.src.constants import FILE_RX, MAX_DEPTH
+from services.crawler.src.constants import DOWNLOAD_FILES, FILE_RX, MAX_DEPTH
 from services.crawler.src.utils import (
     download_file,
     download_page_html,
@@ -447,43 +447,51 @@ async def crawl(
             save_duration_ms=round(save_duration * 1000, 2),
         )
 
-        download_start = time.time()
-        downloaded_files = await download_documents(
-            doc_links, temp_dir, downloaded_files
-        )
-        download_duration = time.time() - download_start
+        if DOWNLOAD_FILES:
+            download_start = time.time()
+            downloaded_files = await download_documents(
+                doc_links, temp_dir, downloaded_files
+            )
+            download_duration = time.time() - download_start
 
-        logger.debug(
-            "Documents downloaded",
-            url=url,
-            doc_count=len(doc_links),
-            total_downloaded=len(downloaded_files),
-            download_duration_ms=round(download_duration * 1000, 2),
-        )
+            logger.debug(
+                "Documents downloaded",
+                url=url,
+                doc_count=len(doc_links),
+                total_downloaded=len(downloaded_files),
+                download_duration_ms=round(download_duration * 1000, 2),
+            )
+        else:
+            logger.debug(
+                "File downloads disabled",
+                url=url,
+                doc_count=len(doc_links),
+            )
 
         page_result: CrawlResult = {
             "url": url,
-            "document_links": cast("list[str]", list(doc_links)),
+            "document_links": cast("list[str]", list(doc_links))
+            if DOWNLOAD_FILES
+            else [],
             "markdown_content": md_out,
             "text_content": str(page_text),
             "saved_path": str(page_path),
         }
         results.append(page_result)
 
-        relevant_start = time.time()
-        relevant_links = await find_relevant_links(
-            normal_links, main_embeddings, memory_store, session_key
-        )
-        relevant_duration = time.time() - relevant_start
-
-        logger.debug(
-            "Relevant links found",
-            url=url,
-            relevant_count=len(relevant_links),
-            relevant_duration_ms=round(relevant_duration * 1000, 2),
-        )
-
         if depth < MAX_DEPTH:
+            relevant_start = time.time()
+            relevant_links = await find_relevant_links(
+                normal_links, main_embeddings, memory_store, session_key
+            )
+            relevant_duration = time.time() - relevant_start
+
+            logger.debug(
+                "Relevant links found",
+                url=url,
+                relevant_count=len(relevant_links),
+                relevant_duration_ms=round(relevant_duration * 1000, 2),
+            )
             if relevant_links:
                 logger.debug(
                     "Starting recursive crawls",

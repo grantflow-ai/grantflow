@@ -81,7 +81,7 @@ async def handle_scraper_request() -> ScraperResponse:
     logger.info("Received scraper request")
 
     discord_webhook_url = get_env("DISCORD_WEBHOOK_URL", raise_on_missing=False, fallback="")
-    environment = get_env("ENVIRONMENT", raise_on_missing=False, fallback="staging")
+    environment = get_env("ENVIRONMENT", raise_on_missing=False, fallback="development")
 
     try:
         logger.info("Using PostgreSQL for grant storage")

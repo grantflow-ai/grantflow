@@ -152,7 +152,7 @@ RagRequest = (
 
 
 class WebsocketMessage[T](TypedDict):
-    type: Literal["info", "error", "data"]
+    type: Literal["info", "error", "warning", "success", "data"]
     parent_id: UUID
     event: str
     data: T

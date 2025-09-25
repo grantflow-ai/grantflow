@@ -146,6 +146,8 @@ async def cancel_rag_job_by_id(
             raise NotFoundException("RAG job not found")
 
         project_match = False
+        grant_application_id = None
+
         if job.grant_template_id:
             template = await session.scalar(
                 select(GrantTemplate)
@@ -158,6 +160,8 @@ async def cancel_rag_job_by_id(
                 )
             )
             project_match = template is not None
+            if template:
+                grant_application_id = template.grant_application_id
         elif job.grant_application_id:
             application = await session.scalar(
                 select(GrantApplication).where(
@@ -167,25 +171,27 @@ async def cancel_rag_job_by_id(
                 )
             )
             project_match = application is not None
+            if application:
+                grant_application_id = application.id
 
         if not project_match:
             raise NotFoundException("RAG job not found")
 
         if job.status in [RagGenerationStatusEnum.COMPLETED, RagGenerationStatusEnum.CANCELLED]:
             logger.info("Job already complete or cancelled", job_id=str(job.id), status=job.status.value)
-            return
+        else:
+            job.status = RagGenerationStatusEnum.CANCELLED
 
-        job.status = RagGenerationStatusEnum.CANCELLED
+            notification = GenerationNotification(
+                grant_application_id=grant_application_id,
+                rag_job_id=job.id,
+                event=NotificationEvents.JOB_CANCELLED,
+                message="Job has been cancelled by user request",
+                notification_type="warning",
+            )
+            session.add(notification)
 
-        notification = GenerationNotification(
-            rag_job_id=job.id,
-            event=NotificationEvents.JOB_CANCELLED,
-            message="Job has been cancelled by user request",
-            notification_type="warning",
-        )
-        session.add(notification)
-
-        logger.info("Job cancelled successfully", job_id=str(job.id))
+            logger.info("Job cancelled successfully", job_id=str(job.id))
 
 
 @delete(

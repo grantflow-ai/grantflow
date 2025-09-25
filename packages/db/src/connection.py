@@ -13,11 +13,11 @@ def get_async_engine() -> AsyncEngine:
     if engine_ref.value is None:
         engine_ref.value = create_async_engine(
             get_env("DATABASE_CONNECTION_STRING"),
-            echo=True,
-            pool_size=10,
-            max_overflow=5,
-            pool_timeout=30,
-            pool_recycle=1800,
+            echo=get_env("DEBUG", fallback="false", raise_on_missing=False).lower() in ["true", "1"],
+            pool_size=int(get_env("DB_POOL_SIZE", fallback="20")),
+            max_overflow=int(get_env("DB_MAX_OVERFLOW", fallback="10")),
+            pool_timeout=int(get_env("DB_POOL_TIMEOUT", fallback="60")),
+            pool_recycle=int(get_env("DB_POOL_RECYCLE", fallback="3600")),
             pool_pre_ping=True,
         )
     return engine_ref.value
