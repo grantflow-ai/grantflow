@@ -8,6 +8,8 @@ import { SectionDropIndicator, SectionWithDropIndicators } from "./section-drop-
 const mockDragContext: DragDropContextData = {
 	activeIndex: -1,
 	activeItem: null,
+	dragOverId: null,
+	dragOverZone: null,
 	isAnyDragging: false,
 	overIndex: -1,
 	overItem: null,
@@ -202,6 +204,8 @@ describe("SectionWithDropIndicators", () => {
 			const dragContext: DragDropContextData = {
 				activeIndex: 0,
 				activeItem: sections[0],
+				dragOverId: sections[1].id,
+				dragOverZone: null,
 				isAnyDragging: true,
 				overIndex: 1,
 				overItem: sections[1],
@@ -238,6 +242,8 @@ describe("SectionWithDropIndicators", () => {
 			const dragContext: DragDropContextData = {
 				activeIndex: 1,
 				activeItem: sections[1],
+				dragOverId: sections[2].id,
+				dragOverZone: null,
 				isAnyDragging: true,
 				overIndex: 2,
 				overItem: sections[2],
@@ -267,6 +273,8 @@ describe("SectionWithDropIndicators", () => {
 			const dragContext: DragDropContextData = {
 				activeIndex: -1,
 				activeItem: null,
+				dragOverId: null,
+				dragOverZone: null,
 				isAnyDragging: true,
 				overIndex: -1,
 				overItem: null,

@@ -1,5 +1,19 @@
 "use client";
 
+import {
+	DndContext,
+	type DragEndEvent,
+	type DragMoveEvent,
+	type DragOverEvent,
+	DragOverlay,
+	type DragStartEvent,
+	KeyboardSensor,
+	PointerSensor,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Plus } from "lucide-react";
 import Image from "next/image";
 import type { RefObject } from "react";
@@ -8,8 +22,8 @@ import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
+import { useDragOverlayStore } from "@/stores/drag-overlay-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
 import {
@@ -22,8 +36,9 @@ import {
 	updateBackendWithReorderedSections,
 	updateReorder,
 } from "@/utils/grant-sections";
+import { log } from "@/utils/logger/client";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
-import { DragDropContext, type DragDropContextData, type ZoneType } from "./drag-drop-context";
+import { DragDropContext, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -39,87 +54,6 @@ interface SectionListProps {
 	subsectionsByParent: Record<string, GrantSection[]>;
 	toggleSectionExpanded: (sectionId: string) => void;
 }
-
-const updateDragOverVisualState = (overId: string | undefined, dragState: DragDropContextData): void => {
-	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
-
-	if (overId) {
-		const overElement = document.querySelector<HTMLElement>(`[data-sortable-id="${overId}"]`);
-
-		if (prevOverElement && prevOverElement !== overElement) {
-			delete prevOverElement.dataset.dragOver;
-		}
-
-		if (setLastSubsectionDragOver(dragState)) {
-			return;
-		}
-
-		if (overElement) {
-			overElement.dataset.dragOver = "true";
-		}
-	} else if (prevOverElement) {
-		delete prevOverElement.dataset.dragOver;
-	}
-};
-
-const updateDragWideVisualState = (zone: null | ZoneType): void => {
-	const dragOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
-
-	if (dragOverElement) {
-		dragOverElement.dataset.dragWide = zone === "child" ? "true" : "false";
-	}
-};
-
-const setLastSubsectionDragOver = ({
-	activeIndex,
-	activeItem,
-	overIndex,
-	overItem,
-	sections,
-	zone,
-}: DragDropContextData): boolean => {
-	if (
-		!(
-			activeItem &&
-			overItem &&
-			sections.length > 0 &&
-			overItem.parent_id === null &&
-			hasSubSections(overItem.id, sections)
-		)
-	) {
-		return false;
-	}
-
-	if (zone === "child") {
-		return false;
-	}
-
-	if (activeItem.parent_id !== null && activeIndex > overIndex) {
-		return false;
-	}
-
-	const subsections = sections.filter((s) => s.parent_id === overItem.id);
-	const lastSubsection = subsections.at(-1);
-
-	if (!lastSubsection) {
-		return false;
-	}
-
-	const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
-	if (lastSubElement) {
-		lastSubElement.dataset.dragOver = "true";
-		return true;
-	}
-	return false;
-};
-
-const clearDragOverVisualState = (): void => {
-	const allDragOverElements = document.querySelectorAll<HTMLElement>('[data-drag-over="true"]');
-	allDragOverElements.forEach((element) => {
-		delete element.dataset.dragOver;
-		delete element.dataset.dragWide;
-	});
-};
 
 const handleMainToSubReorder = async (
 	sections: GrantSection[],
@@ -386,6 +320,10 @@ export function DragDropSectionManager({
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
+	const [dragOverState, setDragOverState] = useState<{
+		overId: null | string;
+		zone: null | ZoneType;
+	}>({ overId: null, zone: null });
 	const dragStateRef = useRef({
 		activeIndex: -1,
 		activeItem: null as GrantSection | null,
@@ -399,9 +337,11 @@ export function DragDropSectionManager({
 	const getDragState = useCallback(
 		() => ({
 			...dragStateRef.current,
+			dragOverId: dragOverState.overId,
+			dragOverZone: dragOverState.zone,
 			sections: grantSections,
 		}),
-		[grantSections],
+		[grantSections, dragOverState],
 	);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
@@ -589,13 +529,157 @@ export function DragDropSectionManager({
 		[newlyCreatedSectionIds],
 	);
 
-	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
-		() => ({
-			onDragEnd: (_event) => {
-				if (pendingParentChange) {
-					setPendingParentChange(null);
+	// Initialize sensors for drag and drop
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				delay: 100,
+				distance: 8,
+				tolerance: 20,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 100,
+				tolerance: 20,
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
+
+	const handleDragStart = useCallback(
+		(event: DragStartEvent) => {
+			log.info("[DragDropSectionManager] handleDragStart", {
+				activeId: event.active.id,
+			});
+
+			const activeItem = grantSections.find((s) => s.id === event.active.id);
+			if (!activeItem) return;
+
+			log.info("[DragDropSectionManager] Found active item", {
+				activeItemId: activeItem.id,
+				activeItemTitle: activeItem.title,
+			});
+
+			if (expandedSectionId !== null) {
+				setExpandedSectionId(null);
+			}
+
+			const activeIndex = grantSections.findIndex((s) => s.id === activeItem.id);
+			dragStateRef.current = {
+				...dragStateRef.current,
+				activeIndex,
+				activeItem,
+				isAnyDragging: true,
+			};
+
+			useDragOverlayStore.getState().setActiveItem(activeItem);
+		},
+		[grantSections, expandedSectionId],
+	);
+
+	const handleDragMove = useCallback((event: DragMoveEvent) => {
+		if (!event.collisions || event.collisions.length === 0) {
+			return;
+		}
+
+		const [collision] = event.collisions;
+
+		if (collision.data && (Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))) {
+			const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
+			const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
+
+			dragStateRef.current = {
+				...dragStateRef.current,
+				zone,
+				zonePercent,
+			};
+
+			setDragOverState((prev) => ({
+				...prev,
+				zone,
+			}));
+		}
+	}, []);
+
+	const handleDragOver = useCallback(
+		(event: DragOverEvent) => {
+			const { active, over } = event;
+
+			log.info("[DragDropSectionManager] handleDragOver", {
+				activeId: active.id,
+				overId: over?.id,
+			});
+
+			if (!over) {
+				dragStateRef.current = {
+					...dragStateRef.current,
+					overIndex: -1,
+					overItem: null,
+				};
+				setDragOverState({ overId: null, zone: null });
+				return;
+			}
+
+			const activeItem = grantSections.find((s) => s.id === active.id);
+			const overItem = grantSections.find((s) => s.id === over.id);
+
+			if (!overItem) return;
+
+			const overIndex = grantSections.findIndex((s) => s.id === overItem.id);
+			const activeIndex = activeItem ? grantSections.findIndex((s) => s.id === activeItem.id) : -1;
+
+			dragStateRef.current = {
+				...dragStateRef.current,
+				activeIndex,
+				activeItem: activeItem ?? null,
+				overIndex,
+				overItem,
+			};
+
+			// Handle last subsection special case
+			if (activeItem && overItem.parent_id === null && hasSubSections(overItem.id, grantSections)) {
+				const { zone } = dragStateRef.current;
+				if (zone !== "child" && !(activeItem.parent_id !== null && activeIndex > overIndex)) {
+					const subsections = grantSections.filter((s) => s.parent_id === overItem.id);
+					const lastSubsection = subsections.at(-1);
+					if (lastSubsection) {
+						setDragOverState({ overId: lastSubsection.id, zone });
+						return;
+					}
 				}
-				clearDragOverVisualState();
+			}
+
+			setDragOverState({
+				overId: overItem.id,
+				zone: dragStateRef.current.zone,
+			});
+		},
+		[grantSections],
+	);
+
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
+
+			log.info("[DragDropSectionManager] handleDragEnd", {
+				activeId: active.id,
+				overId: over?.id,
+			});
+
+			useDragOverlayStore.getState().clearActiveItem();
+
+			if (pendingParentChange) {
+				setPendingParentChange(null);
+			}
+
+			setDragOverState({ overId: null, zone: null });
+
+			const resetDragState = () => {
 				dragStateRef.current = {
 					activeIndex: -1,
 					activeItem: null,
@@ -605,112 +689,69 @@ export function DragDropSectionManager({
 					zone: null,
 					zonePercent: null,
 				};
-			},
-			onDragMove: (event) => {
-				if (!event.collisions || event.collisions.length === 0) {
-					return;
-				}
+			};
 
-				const [collision] = event.collisions;
+			if (!over || active.id === over.id) {
+				resetDragState();
+				return;
+			}
 
-				if (
-					collision.data &&
-					(Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))
-				) {
-					const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
-					const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
+			const activeItem = grantSections.find((s) => s.id === active.id);
+			const overItem = grantSections.find((s) => s.id === over.id);
 
-					dragStateRef.current = {
-						...dragStateRef.current,
-						zone,
-						zonePercent,
-					};
+			if (!(activeItem && overItem)) {
+				resetDragState();
+				return;
+			}
 
-					updateDragWideVisualState(zone);
-				}
-			},
-			onDragOver: (_event, activeItem, overItem) => {
-				const overIndex = overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1;
+			const activeIndex = grantSections.findIndex((s) => s.id === activeItem.id);
+			const overIndex = grantSections.findIndex((s) => s.id === overItem.id);
 
-				dragStateRef.current = {
-					...dragStateRef.current,
-					overIndex,
-					overItem: overItem ?? null,
-				};
+			log.info("[DragDropSectionManager] Processing reorder", {
+				activeIndex,
+				overIndex,
+				zone: dragStateRef.current.zone,
+			});
 
-				updateDragOverVisualState(overItem?.id, {
-					...dragStateRef.current,
-					activeItem: activeItem ?? null,
-					overIndex,
-					overItem: overItem ?? null,
-					sections: grantSections,
-				});
-			},
-			onDragStart: (_event, activeItem) => {
-				if (expandedSectionId !== null) {
-					setExpandedSectionId(null);
-				}
-				const activeIndex = activeItem ? grantSections.findIndex((s) => s.id === activeItem.id) : -1;
+			const isActiveMain = activeItem.parent_id === null;
+			const isOverMain = overItem.parent_id === null;
 
-				dragStateRef.current = {
-					...dragStateRef.current,
+			if (isActiveMain && isOverMain) {
+				await handleMainToMainReorder(
+					grantSections,
 					activeIndex,
-					activeItem: activeItem ?? null,
-					isAnyDragging: activeIndex !== -1,
-				};
-			},
-			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
-				if (activeItem.id === overItem.id) {
-					return;
-				}
-
-				const isActiveMain = activeItem.parent_id === null;
-				const isOverMain = overItem.parent_id === null;
-
-				if (isActiveMain && isOverMain) {
-					await handleMainToMainReorder(
-						sections,
-						activeIndex,
-						overIndex,
-						activeItem,
-						overItem,
-						toUpdateGrantSection,
-						useApplicationStore.getState().updateGrantSections,
-						dragStateRef.current.zone,
-						dialogRef,
-					);
-					return;
-				}
-
-				if (!(isActiveMain || isOverMain)) {
-					await handleSubToSubReorder(
-						sections,
-						activeIndex,
-						overIndex,
-						activeItem,
-						overItem,
-						toUpdateGrantSection,
-						useApplicationStore.getState().updateGrantSections,
-					);
-					return;
-				}
-
-				if (!isActiveMain && isOverMain) {
-					await handleSubToMainReorder(
-						sections,
-						activeIndex,
-						overIndex,
-						activeItem,
-						overItem,
-						toUpdateGrantSection,
-						useApplicationStore.getState().updateGrantSections,
-						dragStateRef.current.zone,
-					);
-					return;
-				}
-
+					overIndex,
+					activeItem,
+					overItem,
+					toUpdateGrantSection,
+					useApplicationStore.getState().updateGrantSections,
+					dragStateRef.current.zone,
+					dialogRef,
+				);
+			} else if (!(isActiveMain || isOverMain)) {
+				await handleSubToSubReorder(
+					grantSections,
+					activeIndex,
+					overIndex,
+					activeItem,
+					overItem,
+					toUpdateGrantSection,
+					useApplicationStore.getState().updateGrantSections,
+				);
+			} else if (!isActiveMain && isOverMain) {
+				await handleSubToMainReorder(
+					grantSections,
+					activeIndex,
+					overIndex,
+					activeItem,
+					overItem,
+					toUpdateGrantSection,
+					useApplicationStore.getState().updateGrantSections,
+					dragStateRef.current.zone,
+				);
+			} else {
 				await handleMainToSubReorder(
-					sections,
+					grantSections,
 					activeIndex,
 					overIndex,
 					activeItem,
@@ -719,16 +760,12 @@ export function DragDropSectionManager({
 					useApplicationStore.getState().updateGrantSections,
 					dialogRef,
 				);
-			},
-		}),
-		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef, grantSections],
+			}
+
+			resetDragState();
+		},
+		[grantSections, pendingParentChange, toUpdateGrantSection, dialogRef],
 	);
-
-	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
-
-	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers, {
-		collisionDetection: zoneCollisionDetection,
-	});
 
 	const sortedSections = useMemo(() => [...grantSections].toSorted((a, b) => a.order - b.order), [grantSections]);
 
@@ -748,11 +785,8 @@ export function DragDropSectionManager({
 		[sortedSections],
 	);
 
-	const renderDragOverlay = useCallback((activeSection: GrantSection | undefined) => {
-		if (!activeSection) return null;
-
-		return <SectionDragOverlay activeSection={activeSection} />;
-	}, []);
+	const { activeItem } = useDragOverlayStore();
+	const sortableIds = useMemo(() => grantSections.map((s) => s.id), [grantSections]);
 
 	return (
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
@@ -768,27 +802,39 @@ export function DragDropSectionManager({
 				</AppButton>
 			</div>
 			<ScrollArea className="flex-1">
-				<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
-					<DragDropContext.Provider value={{ getDragState }}>
-						<div className="mb-3 space-y-2 p-1">
-							{grantSections.length > 0 && (
-								<SectionList
-									expandedSectionId={expandedSectionId}
-									handleAddNewSection={handleAddNewSection}
-									handleDeleteSection={handleDeleteSection}
-									handleSectionInteraction={handleSectionInteraction}
-									handleUpdateSection={handleUpdateSection}
-									isDetailedSection={isDetailedSection}
-									mainSections={mainSections}
-									newlyCreatedSectionIds={newlyCreatedSectionIds}
-									subsectionsByParent={subsectionsByParent}
-									toggleSectionExpanded={toggleSectionExpanded}
-									toUpdateGrantSection={toUpdateGrantSection}
-								/>
-							)}
-						</div>
-					</DragDropContext.Provider>
-				</DragDropWrapper>
+				<DndContext
+					collisionDetection={zoneCollisionDetection}
+					onDragEnd={handleDragEnd}
+					onDragMove={handleDragMove}
+					onDragOver={handleDragOver}
+					onDragStart={handleDragStart}
+					sensors={sensors}
+				>
+					<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+						<DragDropContext.Provider value={{ getDragState }}>
+							<div className="mb-3 space-y-2 p-1">
+								{grantSections.length > 0 && (
+									<SectionList
+										expandedSectionId={expandedSectionId}
+										handleAddNewSection={handleAddNewSection}
+										handleDeleteSection={handleDeleteSection}
+										handleSectionInteraction={handleSectionInteraction}
+										handleUpdateSection={handleUpdateSection}
+										isDetailedSection={isDetailedSection}
+										mainSections={mainSections}
+										newlyCreatedSectionIds={newlyCreatedSectionIds}
+										subsectionsByParent={subsectionsByParent}
+										toggleSectionExpanded={toggleSectionExpanded}
+										toUpdateGrantSection={toUpdateGrantSection}
+									/>
+								)}
+							</div>
+						</DragDropContext.Provider>
+					</SortableContext>
+					<DragOverlay>
+						{activeItem && <SectionDragOverlay activeSection={activeItem as GrantSection} />}
+					</DragOverlay>
+				</DndContext>
 			</ScrollArea>
 		</div>
 	);
