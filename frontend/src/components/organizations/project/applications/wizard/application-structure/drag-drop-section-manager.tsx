@@ -70,9 +70,14 @@ const updateDragWideVisualState = (zone: null | ZoneType): void => {
 	}
 };
 
-const setLastSubsectionDragOver = (dragState: DragDropContextData): boolean => {
-	const { activeIndex, activeItem, overIndex, overItem, sections, zone } = dragState;
-
+const setLastSubsectionDragOver = ({
+	activeIndex,
+	activeItem,
+	overIndex,
+	overItem,
+	sections,
+	zone,
+}: DragDropContextData): boolean => {
 	if (
 		!(
 			activeItem &&
@@ -795,7 +800,7 @@ function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) 
 
 	return (
 		<div
-			className={`group rounded outline-2 outline-offset-[-1px] outline-primary transition-all duration-200 bg-white shadow-xl ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+			className={`group rounded outline-2 outline-offset-[-1px] outline-primary transition-all duration-200 bg-white shadow-xl ${isSubsection ? "px-3 py-2" : "px-3 py-4"}`}
 			style={{ minWidth: isSubsection ? "410px" : "300px" }}
 		>
 			<div className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}>
