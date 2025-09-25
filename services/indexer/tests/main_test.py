@@ -43,12 +43,12 @@ def mock_process_source() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.process_source") as mock:
         embedding = [0.1] * 384
 
-        def side_effect(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], str]:
+        def side_effect(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
             source_id = kwargs.get("source_id", str(UUID("00000000-0000-0000-0000-000000000000")))
             vectors = [
                 {"chunk": {"content": "test", "metadata": {}}, "embedding": embedding, "rag_source_id": source_id}
             ]
-            return vectors, "Test extracted content"
+            return vectors, "Test extracted content", None
 
         mock.side_effect = side_effect
         yield mock
@@ -135,6 +135,7 @@ async def test_handle_file_indexing_grant_application(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
             .returning(RagSource.id)
@@ -213,6 +214,7 @@ async def test_handle_file_indexing_funding_organization(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
             .returning(RagSource.id)
@@ -285,6 +287,7 @@ async def test_handle_file_indexing_grant_template(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
             .returning(RagSource.id)
@@ -422,6 +425,7 @@ async def test_handle_file_indexing_processing_error(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
         )
@@ -486,6 +490,7 @@ async def test_handle_database_error(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
         )
@@ -554,6 +559,7 @@ async def test_handle_file_indexing_existing_file(
                     "indexing_status": SourceIndexingStatusEnum.FINISHED,
                     "text_content": "Existing content",
                     "source_type": "rag_file",
+                    "parent_id": None,
                 }
             )
             .returning(RagSource.id)
@@ -613,6 +619,7 @@ async def test_handle_file_indexing_file_parsing_error(
                     "indexing_status": SourceIndexingStatusEnum.CREATED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
         )
@@ -678,6 +685,7 @@ async def test_handle_file_indexing_retry_failed_file(
                     "indexing_status": SourceIndexingStatusEnum.FAILED,
                     "text_content": "",
                     "source_type": RAG_FILE,
+                    "parent_id": None,
                 }
             )
             .returning(RagSource.id)

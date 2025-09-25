@@ -43,6 +43,7 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 			clearOrganization: () => {
 				set({
 					organization: null,
+					organizations: [],
 					selectedOrganizationId: null,
 				});
 			},
@@ -102,8 +103,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 
 			updateOrganization: async (organizationId: string, data: API.UpdateOrganization.RequestBody) => {
 				const { organization, organizations } = get();
-				const previousOrganization = organization;
-				const previousOrganizations = organizations;
 
 				try {
 					await handleUpdateOrganization(organizationId, data);
@@ -119,8 +118,8 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 					toast.success("Organization updated successfully");
 				} catch (error: unknown) {
 					set({
-						organization: previousOrganization,
-						organizations: previousOrganizations,
+						organization,
+						organizations,
 					});
 					log.error("updateOrganization", error);
 					toast.error("Failed to update organization");

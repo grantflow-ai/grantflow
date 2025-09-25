@@ -22,7 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import type React from "react";
 import { useCallback } from "react";
-import { useDragOverlayStore } from "../stores/drag-overlay-store";
+import { useDragOverlayStore } from "@/stores/drag-overlay-store";
 
 export interface DragDropConfig {
 	collisionDetection?: CollisionDetection;

@@ -390,7 +390,7 @@ describe("Type Guards", () => {
 			},
 			event: "source_processing",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isSourceProcessingNotificationMessage(validNotification)).toBe(true);
@@ -401,7 +401,7 @@ describe("Type Guards", () => {
 			},
 			event: "other_event",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isSourceProcessingNotificationMessage(invalidNotification)).toBe(false);
@@ -411,27 +411,19 @@ describe("Type Guards", () => {
 		const { isRagProcessingStatusMessage } = await import("./use-application-notifications");
 
 		const validNotification = RagProcessingStatusMessageFactory.build({
-			data: {
-				data: { section_count: 5 },
-				event: "sections_extracted",
-				message: "Extracting sections...",
-			},
+			data: { section_count: 5 },
 			event: "sections_extracted",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isRagProcessingStatusMessage(validNotification)).toBe(true);
 
 		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
-			data: {
-				data: undefined,
-				event: "sections_extracted",
-				message: "Processing...",
-			},
+			data: {},
 			event: "sections_extracted",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		});
 
 		expect(isRagProcessingStatusMessage(validNotificationWithoutData)).toBe(true);
@@ -442,7 +434,7 @@ describe("Type Guards", () => {
 			},
 			event: "source_processing",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isRagProcessingStatusMessage(invalidNotification)).toBe(false);
@@ -458,7 +450,7 @@ describe("Type Guards", () => {
 			},
 			event: "section_texts_generated",
 			parent_id: "test-id",
-			type: "data",
+			type: "info",
 		};
 
 		expect(isRagProcessingStatusMessage(notificationWithStages)).toBe(true);

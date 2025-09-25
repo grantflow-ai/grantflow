@@ -5,6 +5,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { getOtp } from "@/actions/otp";
 import type { SourceIndexingStatus } from "@/enums";
 import type { NotificationEvent } from "@/types/notification-events";
+import { isApplicationEvent, isTemplateEvent } from "@/types/notification-events";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 
@@ -19,12 +20,7 @@ export interface AutofillProgressNotification {
 	total_stages?: number;
 }
 
-export interface RagProcessingStatus {
-	data?: Record<string, unknown>;
-	event: NotificationEvent;
-	message: string;
-}
-export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
+export type RagProcessingStatusMessage = WebsocketMessage<Record<string, unknown>>;
 
 export interface SourceProcessingNotification {
 	identifier: string;
@@ -39,7 +35,7 @@ export interface WebsocketMessage<T> {
 	event: string;
 	parent_id: string;
 	trace_id?: string;
-	type: "data" | "error" | "info";
+	type: "error" | "info" | "success" | "warning";
 }
 
 export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
@@ -52,10 +48,15 @@ export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProce
 		"indexing_status" in value.data &&
 		"source_id" in value.data,
 );
-export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>(
-	(value: unknown) =>
-		isWebsocketMessage(value) && isRecord(value.data) && "event" in value.data && "message" in value.data,
-);
+export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>((value: unknown) => {
+	if (!(isWebsocketMessage(value) && isRecord(value.data) && "event" in value)) {
+		return false;
+	}
+
+	const event = value.event as NotificationEvent;
+	return isTemplateEvent(event) || isApplicationEvent(event);
+});
+
 export const isAutofillProgressMessage = createTypeGuard<AutofillProgressMessage>(
 	(value: unknown) =>
 		isWebsocketMessage(value) && isRecord(value.data) && "autofill_type" in value.data && "message" in value.data,

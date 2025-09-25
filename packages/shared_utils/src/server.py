@@ -182,7 +182,7 @@ def create_litestar_app(
             allow_headers=["*"],
             max_age=86400,
         ),
-        debug=get_env("DEBUG", fallback="", raise_on_missing=False).lower()
+        debug=get_env("DEBUG", fallback="false", raise_on_missing=False).lower()
         in ["true", "1"],
         exception_handlers={
             SQLAlchemyError: exception_handler,

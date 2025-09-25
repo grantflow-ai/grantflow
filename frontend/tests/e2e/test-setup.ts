@@ -151,7 +151,6 @@ export const test = base.extend({
 						},
 						id: TEST_APPLICATION_ID,
 						project_id: TEST_PROJECT_ID,
-						rag_job_id: null,
 						rag_sources: [],
 						research_objectives: [],
 						status: "DRAFT",

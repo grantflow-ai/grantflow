@@ -135,9 +135,6 @@ async def test_retrieve_projects(
         )
         await session.commit()
 
-    projects_data[:3]
-    projects_data[3]
-
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(

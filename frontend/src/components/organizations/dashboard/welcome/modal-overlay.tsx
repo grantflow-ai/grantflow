@@ -10,11 +10,10 @@ const WelcomeModalOverlay = React.forwardRef<
 	React.ComponentRef<typeof DialogPrimitive.Overlay>,
 	React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => {
-	const overlayRef = ref;
 	return (
 		<DialogPrimitive.Overlay
 			className={cn("fixed inset-0 z-50 bg-popup/40 animate-in fade-in-0", className)}
-			ref={overlayRef}
+			ref={ref}
 			{...props}
 		/>
 	);
@@ -29,7 +28,6 @@ const WelcomeModalContent = React.forwardRef<
 	React.ComponentRef<typeof DialogPrimitive.Content>,
 	WelcomeModalContentProps
 >(({ children, className, showCloseButton = false, ...props }, ref) => {
-	const contentRef = ref;
 	return (
 		<DialogPrimitive.Portal>
 			<WelcomeModalOverlay />
@@ -38,7 +36,7 @@ const WelcomeModalContent = React.forwardRef<
 					"fixed left-[50%] top-[50%] z-50 grid w-full max-w-[954px] translate-x-[-50%] translate-y-[-50%] gap-0 border-0 bg-white p-0 shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg",
 					className,
 				)}
-				ref={contentRef}
+				ref={ref}
 				{...props}
 			>
 				<VisuallyHidden.Root>

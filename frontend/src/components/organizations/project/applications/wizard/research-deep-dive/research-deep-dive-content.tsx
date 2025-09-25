@@ -83,7 +83,7 @@ const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
 };
 
 export function ResearchDeepDiveContent() {
-	const formInputs = (useApplicationStore((state) => state.application?.form_inputs) ?? {}) as FormInputs;
+	const formInputs = useApplicationStore((state) => state.application?.form_inputs) ?? {};
 
 	log.info("Form inputs", { formInputs });
 
@@ -120,7 +120,7 @@ function AnswerCard({
 	selectedQuestion: number;
 }) {
 	const { key: questionKey, question } = RESEARCH_QUESTIONS[selectedQuestion];
-	const formInputsAnswer = formInputs[questionKey] || "";
+	const formInputsAnswer = formInputs[questionKey] ?? "";
 
 	const [answerValue, setAnswerValue] = useState(formInputsAnswer);
 

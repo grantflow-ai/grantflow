@@ -190,7 +190,7 @@ export function PersonalSettingsClient() {
 												className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
 												onClick={(e) => {
 													e.stopPropagation();
-													handleDeletePhoto();
+													void handleDeletePhoto();
 												}}
 												type="button"
 											>

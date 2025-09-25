@@ -2,9 +2,13 @@ import hashlib
 import re
 import time
 from collections import defaultdict
-from typing import Any, Final, TypedDict
+from typing import TYPE_CHECKING, Any, Final, TypedDict
 
 from packages.db.src.json_objects import CategorizationAnalysisResult
+
+if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import ExtractCFPContentStageDTO
+    from services.rag.src.utils.job_manager import JobManager
 from packages.db.src.tables import RagSource, TextVector
 from packages.shared_utils.src.ai import REASONING_MODEL
 from packages.shared_utils.src.dto import ExtractedCFPData
@@ -14,12 +18,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
+from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.category_extraction import (
     categorize_text,
     format_nlp_analysis_for_prompt,
 )
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
@@ -143,22 +148,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks = chunks_by_source.get(source_id, [])
 
         nlp_analysis = await categorize_text(text_content)
-        sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
-        {
-            k: len(v)
-            for k, v in [
-                ("money", nlp_analysis["money"]),
-                ("date_time", nlp_analysis["date_time"]),
-                ("writing_related", nlp_analysis["writing_related"]),
-                ("other_numbers", nlp_analysis["other_numbers"]),
-                ("recommendations", nlp_analysis["recommendations"]),
-                ("orders", nlp_analysis["orders"]),
-                ("positive_instructions", nlp_analysis["positive_instructions"]),
-                ("negative_instructions", nlp_analysis["negative_instructions"]),
-                ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
-            ]
-            if v
-        }
         rag_sources_data.append(
             RagSourceData(
                 source_id=str(source_id),
@@ -344,6 +333,7 @@ async def handle_extract_cfp_data(
     source_ids: list[str],
     organization_mapping: dict[str, dict[str, str]],
     session_maker: async_sessionmaker[Any],
+    job_manager: "JobManager[ExtractCFPContentStageDTO]",
     trace_id: str,
 ) -> ExtractedCFPData:
     cache_key = _create_cache_key(source_ids, organization_mapping)
@@ -364,51 +354,8 @@ async def handle_extract_cfp_data(
         prompt=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
             rag_sources=formatted_sources, organization_mapping=organization_mapping
         ),
-        increment=10,
-        retries=3,
-        passing_score=80,
-        criteria=[
-            EvaluationCriterion(
-                name="Multi-Source Synthesis",
-                evaluation_instructions="""
-                Assess whether information from all available sources has been properly synthesized and conflicts resolved appropriately.
-                """,
-                weight=0.8,
-            ),
-            EvaluationCriterion(
-                name="NLP-Enhanced Extraction Quality",
-                evaluation_instructions="""
-                Evaluate whether the extraction effectively leveraged the NLP semantic analysis to prioritize mandatory requirements (Orders/Positive Instructions),
-                evaluation criteria, and formatting requirements over optional recommendations and administrative details.
-                Check if Date/Time categories from NLP analysis were properly identified for deadlines.
-                Assess if the extraction properly distinguished between mandatory vs optional content using NLP categorization.
-                """,
-                weight=0.9,
-            ),
-            EvaluationCriterion(
-                name="Correctness",
-                evaluation_instructions="""
-                Assess whether extracted content correctly reflects the explicit grant requirements from all sources, avoiding extraneous administrative details.
-                """,
-            ),
-            EvaluationCriterion(
-                name="Structural Completeness",
-                evaluation_instructions="""
-                Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria from all relevant sources.
-                Verify that critical restrictions and prohibitions identified in NLP analysis are included.
-                """,
-                weight=0.9,
-            ),
-            EvaluationCriterion(
-                name="Filtering Accuracy",
-                evaluation_instructions="""
-                Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information from all sources.
-                Ensure that NLP-identified mandatory requirements are retained while optional recommendations are appropriately categorized.
-                """,
-                weight=0.7,
-            ),
-        ],
         trace_id=trace_id,
+        **get_evaluation_kwargs("extract_cfp_data", job_manager),
     )
 
     _cache_cfp_result(cache_key, result)

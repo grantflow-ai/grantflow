@@ -8,11 +8,11 @@ from packages.db.src.tables import (
     GenerationNotification,
     RagGenerationJob,
 )
-from packages.shared_utils.src.exceptions import RagJobCancelledError
+from packages.shared_utils.src.exceptions import DatabaseError, RagJobCancelledError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
 from packages.shared_utils.src.serialization import to_builtins
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -311,6 +311,7 @@ class JobManager[DTOType]:
 
         async with self.session_maker() as session, session.begin():
             notification = GenerationNotification(
+                grant_application_id=self.grant_application_id,
                 rag_job_id=self.current_job.id,
                 event=event,
                 message=message,
@@ -331,23 +332,34 @@ class JobManager[DTOType]:
         if not self.current_job:
             raise RuntimeError("No current job set. Create a job first.")
 
-        async with self.session_maker() as session, session.begin():
-            job = await session.get(RagGenerationJob, self.current_job.id)
-            if not job:
-                raise RuntimeError(f"Job {self.current_job.id} not found")
+        try:
+            async with self.session_maker() as session, session.begin():
+                job = await session.get(RagGenerationJob, self.current_job.id)
+                if not job:
+                    raise RuntimeError(f"Job {self.current_job.id} not found")
 
-            job.retry_count += 1
+                job.retry_count += 1
 
-            logger.debug(
-                "Job retry count incremented",
-                entity_type=self.entity_type,
-                entity_id=str(self.entity_id),
-                job_id=str(job.id),
-                retry_count=job.retry_count,
-                trace_id=self.trace_id,
-            )
+                logger.debug(
+                    "Job retry count incremented",
+                    entity_type=self.entity_type,
+                    entity_id=str(self.entity_id),
+                    job_id=str(job.id),
+                    retry_count=job.retry_count,
+                    trace_id=self.trace_id,
+                )
 
-            return int(job.retry_count)
+                return int(job.retry_count)
+        except SQLAlchemyError as e:
+            raise DatabaseError(
+                f"Failed to increment retry count for job {self.current_job.id}",
+                context={
+                    "job_id": str(self.current_job.id),
+                    "entity_type": self.entity_type,
+                    "entity_id": str(self.entity_id),
+                    "original_error": str(e),
+                },
+            ) from e
 
     async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
         if not self.current_job:

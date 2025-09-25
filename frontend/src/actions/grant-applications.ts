@@ -1,6 +1,7 @@
 "use server";
 
 import type { API } from "@/types/api-types";
+import type { DownloadFormat } from "@/types/download";
 import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
@@ -28,6 +29,24 @@ export async function deleteApplication(
 		getClient().delete(`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}`, {
 			headers: await createAuthHeaders(),
 		}),
+	);
+}
+
+export async function downloadApplication(
+	organizationId: string,
+	projectId: string,
+	applicationId: string,
+	format: DownloadFormat,
+): Promise<Blob> {
+	return withAuthRedirect(
+		getClient()
+			.get(
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/download?format=${format}`,
+				{
+					headers: await createAuthHeaders(),
+				},
+			)
+			.blob(),
 	);
 }
 

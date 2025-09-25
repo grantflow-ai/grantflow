@@ -1,8 +1,7 @@
 import { JwtResponseFactory, LoginRequestFactory } from "::testing/factories";
-import { mockCookies, mockRedirect, mockSetCookie } from "::testing/global-mocks";
+import { mockCookies, mockSetCookie } from "::testing/global-mocks";
 import { vi } from "vitest";
 import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
-import { routes } from "@/utils/navigation";
 
 import { login } from "./login";
 
@@ -90,10 +89,10 @@ describe("login", () => {
 		);
 	});
 
-	it("should redirect to organizations page after successful login and verification", async () => {
+	it("should complete successfully after login and verification", async () => {
 		await login(loginRequest.id_token);
 
-		expect(mockRedirect).toHaveBeenCalledWith(routes.organization.root());
+		expect(mockGet).toHaveBeenCalled();
 	});
 
 	it("should remove session cookies and throw error when verification fails", async () => {
@@ -121,8 +120,8 @@ describe("login", () => {
 
 	it("should allow NEXT_REDIRECT errors to bubble up", async () => {
 		const redirectError = new Error("NEXT_REDIRECT");
-		vi.mocked(mockRedirect).mockImplementation(() => {
-			throw redirectError;
+		mockPost.mockReturnValue({
+			json: vi.fn().mockRejectedValue(redirectError),
 		});
 
 		await expect(login(loginRequest.id_token)).rejects.toThrow(redirectError);

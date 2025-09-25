@@ -10,9 +10,7 @@ from spacy.tokens import Span
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.token_optimization import (
-    optimized_count_tokens as count_tokens,
-)
-from services.rag.src.utils.token_optimization import (
+    count_tokens,
     smart_parse_documents_with_batched_tokens,
 )
 

@@ -109,7 +109,6 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 	};
 
 	const isLastStep = currentStep === WIZARD_STEPS.length - 1;
-	const showSummary = isLastStep;
 
 	return (
 		<div className="rounded-xl border border-blue-600 bg-white p-8 lg:p-12" data-testid="search-wizard">
@@ -124,7 +123,7 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 			</div>
 
 			{}
-			{showSummary && (
+			{isLastStep && (
 				<div className="mb-8" data-testid="wizard-form-summary">
 					<FormSummary formData={formData} />
 				</div>

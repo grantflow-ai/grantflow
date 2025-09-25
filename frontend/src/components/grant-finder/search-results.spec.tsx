@@ -2,8 +2,8 @@ import { GrantFactory, SearchParamsFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import * as grantsActions from "@/actions/grants";
+import type { API } from "@/types/api-types";
 import { SearchResults } from "./search-results";
 
 vi.mock("@/actions/grants");
@@ -25,7 +25,7 @@ describe.sequential("SearchResults", () => {
 		it("renders search results container with testid", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["CRISPR"] });
 			const mockGrants = GrantFactory.batch(3);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -49,7 +49,7 @@ describe.sequential("SearchResults", () => {
 				keywords: ["CRISPR", "gene editing"],
 			});
 			const mockGrants = GrantFactory.batch(5);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -65,7 +65,7 @@ describe.sequential("SearchResults", () => {
 		it("displays grants in grid layout", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["immunotherapy"] });
 			const mockGrants = GrantFactory.batch(3);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -89,7 +89,7 @@ describe.sequential("SearchResults", () => {
 					title: "Immunology Study",
 				}),
 			];
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -107,7 +107,7 @@ describe.sequential("SearchResults", () => {
 				GrantFactory.build({ id: "unique-grant-id" }),
 				GrantFactory.build({ id: "another-grant-id" }),
 			];
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -123,7 +123,7 @@ describe.sequential("SearchResults", () => {
 				{ ...GrantFactory.build(), id: "" },
 				{ ...GrantFactory.build(), id: "" },
 			];
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -192,7 +192,7 @@ describe.sequential("SearchResults", () => {
 		it("shows load more button when there are more results", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["popular"] });
 			const mockGrants = GrantFactory.batch(20);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -206,7 +206,7 @@ describe.sequential("SearchResults", () => {
 		it("hides load more button when no more results", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["limited"] });
 			const mockGrants = GrantFactory.batch(10);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -413,7 +413,7 @@ describe.sequential("SearchResults", () => {
 		it("does not make redundant API calls", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["performance"] });
 			const mockGrants = GrantFactory.batch(5);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -481,7 +481,7 @@ describe.sequential("SearchResults", () => {
 		it("has proper button states", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["button-states"] });
 			const mockGrants = GrantFactory.batch(20);
-			mockSearchGrants.mockResolvedValue(mockGrants);
+			mockSearchGrants.mockResolvedValue(mockGrants as API.GrantsHandleSearchGrants.Http200.ResponseBody);
 
 			render(<SearchResults searchParams={searchParams} />);
 

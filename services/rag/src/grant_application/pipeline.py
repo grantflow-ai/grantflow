@@ -1,7 +1,8 @@
+import time
 import traceback
 from typing import TYPE_CHECKING, Any, cast
 
-from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import ApplicationStatusEnum, GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication, GrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
@@ -48,6 +49,11 @@ logger = get_logger(__name__)
 async def _determine_current_stage(
     application_id: Any, session_maker: async_sessionmaker[Any]
 ) -> GrantApplicationStageEnum:
+    logger.debug(
+        "Determining current pipeline stage",
+        application_id=str(application_id),
+    )
+
     async with session_maker() as session:
         result = await session.execute(
             select_active(RagGenerationJob)
@@ -65,23 +71,55 @@ async def _determine_current_stage(
         )
         jobs = result.scalars().all()
 
+        logger.debug(
+            "Found pipeline jobs for stage determination",
+            application_id=str(application_id),
+            job_count=len(jobs),
+            job_statuses=[job.status.value for job in jobs],
+        )
+
         if not jobs:
-            return GRANT_APPLICATION_STAGES_ORDER[0]
+            current_stage = GRANT_APPLICATION_STAGES_ORDER[0]
+            logger.debug(
+                "No existing jobs found, starting with first stage",
+                application_id=str(application_id),
+                current_stage=current_stage.value,
+            )
+            return current_stage
 
         processed_stages = set()
 
         for job in jobs:
             if job.application_stage:
                 if job.status in [RagGenerationStatusEnum.PENDING, RagGenerationStatusEnum.PROCESSING]:
+                    logger.debug(
+                        "Found active job, resuming stage",
+                        application_id=str(application_id),
+                        current_stage=job.application_stage.value,
+                        job_status=job.status.value,
+                        job_id=str(job.id),
+                    )
                     return cast("GrantApplicationStageEnum", job.application_stage)
                 if job.status == RagGenerationStatusEnum.COMPLETED:
                     processed_stages.add(job.application_stage)
 
         for stage in GRANT_APPLICATION_STAGES_ORDER:
             if stage not in processed_stages:
+                logger.debug(
+                    "Determined next stage to process",
+                    application_id=str(application_id),
+                    current_stage=stage.value,
+                    completed_stages=[s.value for s in processed_stages],
+                )
                 return stage
 
-        return GRANT_APPLICATION_STAGES_ORDER[-1]
+        final_stage = GRANT_APPLICATION_STAGES_ORDER[-1]
+        logger.debug(
+            "All stages completed, returning final stage",
+            application_id=str(application_id),
+            final_stage=final_stage.value,
+        )
+        return final_stage
 
 
 async def _initialize_pipeline(
@@ -104,7 +142,7 @@ async def _initialize_pipeline(
 
     existing_job = await job_manager.get_or_create_job_for_stage()
 
-    if not await job_manager.get_checkpoint_data():
+    if existing_job.status == RagGenerationStatusEnum.PENDING:
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     return job_manager, existing_job
@@ -190,6 +228,35 @@ async def _handle_pipeline_error(
     error_traceback = traceback.format_exc()
     error_context = getattr(error, "context", None)
 
+    pipeline_context = {
+        "current_stage": current_stage.value,
+        "stage_index": GRANT_APPLICATION_STAGES_ORDER.index(current_stage),
+        "total_stages": len(GRANT_APPLICATION_STAGES_ORDER),
+        "remaining_stages": [
+            stage.value
+            for stage in GRANT_APPLICATION_STAGES_ORDER[GRANT_APPLICATION_STAGES_ORDER.index(current_stage) + 1 :]
+        ],
+        "completed_stages": [],
+    }
+
+    try:
+        checkpoint_data = await job_manager.get_checkpoint_data()
+        if checkpoint_data:
+            pipeline_context["checkpoint_available"] = True
+            pipeline_context["checkpoint_keys_count"] = len(checkpoint_data.keys())
+            if "section_texts" in checkpoint_data:
+                pipeline_context["checkpoint_sections_count"] = len(checkpoint_data["section_texts"])
+        else:
+            pipeline_context["checkpoint_available"] = False
+    except Exception as checkpoint_error:
+        logger.warning(
+            "Failed to retrieve checkpoint data for error context",
+            application_id=str(application_id),
+            checkpoint_error=str(checkpoint_error),
+            trace_id=trace_id,
+        )
+        pipeline_context["checkpoint_error"] = type(checkpoint_error).__name__
+
     logger.error(
         "Backend error in grant application generation pipeline",
         error=error,
@@ -198,7 +265,9 @@ async def _handle_pipeline_error(
         application_id=str(application_id),
         job_id=str(job_id) if job_id else None,
         trace_id=trace_id,
-        stage=current_stage,
+        stage=current_stage.value,
+        pipeline_context=pipeline_context,
+        error_context=error_context,
     )
 
     user_message, event_type = _get_error_details(error)
@@ -234,15 +303,32 @@ async def _handle_pipeline_error(
                 "user_message": user_message,
             },
         )
-        await job_manager.add_notification(
-            event=event_type,
-            message=user_message,
-            notification_type="error",
-            data={
-                "error_type": error.__class__.__name__,
-                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
-            },
-        )
+        if event_type in [
+            NotificationEvents.INDEXING_TIMEOUT,
+            NotificationEvents.INSUFFICIENT_CONTEXT_ERROR,
+            NotificationEvents.LLM_TIMEOUT,
+        ]:
+            await job_manager.add_notification(
+                event=event_type,
+                message=user_message,
+                notification_type="warning",
+                data={
+                    "error_type": error.__class__.__name__,
+                    "recoverable": True,
+                    "retryable": True,
+                },
+            )
+        else:
+            await job_manager.add_notification(
+                event=event_type,
+                message=user_message,
+                notification_type="error",
+                data={
+                    "error_type": error.__class__.__name__,
+                    "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
+                    "retryable": False,
+                },
+            )
     except SQLAlchemyError as e:
         raise DatabaseError("Failed to record pipeline error in database") from e
 
@@ -252,14 +338,26 @@ async def handle_grant_application_pipeline(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    current_stage = await _determine_current_stage(grant_application.id, session_maker)
-
+    pipeline_start_time = time.perf_counter()
     application_id = grant_application.id
+
     logger.info(
         "Starting grant application text generation pipeline",
-        application_id=application_id,
-        stage=current_stage,
+        application_id=str(application_id),
+        application_title=grant_application.title,
         trace_id=trace_id,
+    )
+
+    current_stage = await _determine_current_stage(application_id, session_maker)
+
+    logger.info(
+        "Grant application pipeline stage determined",
+        application_id=str(application_id),
+        current_stage=current_stage.value,
+        stage_index=GRANT_APPLICATION_STAGES_ORDER.index(current_stage),
+        total_stages=len(GRANT_APPLICATION_STAGES_ORDER),
+        trace_id=trace_id,
+        elapsed_ms=round((time.perf_counter() - pipeline_start_time) * 1000, 2),
     )
 
     try:
@@ -267,10 +365,33 @@ async def handle_grant_application_pipeline(
             grant_application, current_stage, session_maker, trace_id
         )
 
+        logger.debug(
+            "Pipeline initialization completed",
+            application_id=str(application_id),
+            job_id=str(existing_job.id),
+            job_status=existing_job.status.value,
+            trace_id=trace_id,
+        )
+
         grant_template = await _verify_prerequisites(grant_application, session_maker, trace_id)
+
+        logger.debug(
+            "Prerequisites verified, starting stage processing",
+            application_id=str(application_id),
+            current_stage=current_stage.value,
+            template_id=str(grant_template.id),
+            trace_id=trace_id,
+        )
+
+        stage_start_time = time.perf_counter()
 
         match current_stage:
             case GrantApplicationStageEnum.GENERATE_SECTIONS:
+                logger.info(
+                    "Starting GENERATE_SECTIONS stage",
+                    application_id=str(application_id),
+                    trace_id=trace_id,
+                )
                 await job_manager.ensure_not_cancelled()
 
                 dto = await handle_generate_sections_stage(
@@ -279,13 +400,35 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
+                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
+                logger.info(
+                    "Completed GENERATE_SECTIONS stage",
+                    application_id=str(application_id),
+                    sections_generated=len(dto["section_texts"]),
+                    stage_elapsed_ms=stage_elapsed,
+                    trace_id=trace_id,
+                )
+
                 await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
+                logger.info(
+                    "Starting EXTRACT_RELATIONSHIPS stage",
+                    application_id=str(application_id),
+                    trace_id=trace_id,
+                )
+
                 checkpoint_data = await job_manager.get_checkpoint_data()
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                logger.debug(
+                    "Retrieved checkpoint data for EXTRACT_RELATIONSHIPS",
+                    application_id=str(application_id),
+                    checkpoint_sections=len(checkpoint_data.get("section_texts", [])),
+                    trace_id=trace_id,
+                )
 
                 await job_manager.ensure_not_cancelled()
 
@@ -295,13 +438,36 @@ async def handle_grant_application_pipeline(
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
+
+                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
+                logger.info(
+                    "Completed EXTRACT_RELATIONSHIPS stage",
+                    application_id=str(application_id),
+                    relationships_extracted=len(dto["relationships"]),
+                    stage_elapsed_ms=stage_elapsed,
+                    trace_id=trace_id,
+                )
+
                 await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
+                logger.info(
+                    "Starting ENRICH_RESEARCH_OBJECTIVES stage",
+                    application_id=str(application_id),
+                    trace_id=trace_id,
+                )
+
                 checkpoint_data = await job_manager.get_checkpoint_data()
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                logger.debug(
+                    "Retrieved checkpoint data for ENRICH_RESEARCH_OBJECTIVES",
+                    application_id=str(application_id),
+                    checkpoint_relationships=len(checkpoint_data.get("relationships", {})),
+                    trace_id=trace_id,
+                )
 
                 await job_manager.ensure_not_cancelled()
 
@@ -311,13 +477,36 @@ async def handle_grant_application_pipeline(
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
+
+                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
+                logger.info(
+                    "Completed ENRICH_RESEARCH_OBJECTIVES stage",
+                    application_id=str(application_id),
+                    enrichments_processed=len(dto["enrichment_responses"]),
+                    stage_elapsed_ms=stage_elapsed,
+                    trace_id=trace_id,
+                )
+
                 await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
+                logger.info(
+                    "Starting ENRICH_TERMINOLOGY stage",
+                    application_id=str(application_id),
+                    trace_id=trace_id,
+                )
+
                 checkpoint_data = await job_manager.get_checkpoint_data()
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                logger.debug(
+                    "Retrieved checkpoint data for ENRICH_TERMINOLOGY",
+                    application_id=str(application_id),
+                    checkpoint_enrichments=len(checkpoint_data.get("enrichment_responses", [])),
+                    trace_id=trace_id,
+                )
 
                 await job_manager.ensure_not_cancelled()
 
@@ -326,13 +515,36 @@ async def handle_grant_application_pipeline(
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
+
+                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
+                logger.info(
+                    "Completed ENRICH_TERMINOLOGY stage",
+                    application_id=str(application_id),
+                    wikidata_enrichments=len(dto["wikidata_enrichments"]),
+                    stage_elapsed_ms=stage_elapsed,
+                    trace_id=trace_id,
+                )
+
                 await job_manager.transition_to_next_stage(dto)
                 return
 
             case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
+                logger.info(
+                    "Starting GENERATE_RESEARCH_PLAN stage (final stage)",
+                    application_id=str(application_id),
+                    trace_id=trace_id,
+                )
+
                 checkpoint_data = await job_manager.get_checkpoint_data()
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
+
+                logger.debug(
+                    "Retrieved checkpoint data for GENERATE_RESEARCH_PLAN",
+                    application_id=str(application_id),
+                    checkpoint_wikidata=len(checkpoint_data.get("wikidata_enrichments", [])),
+                    trace_id=trace_id,
+                )
 
                 await job_manager.ensure_not_cancelled()
 
@@ -343,9 +555,12 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
+                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(
-                    "Pipeline completed, saving application",
+                    "Completed GENERATE_RESEARCH_PLAN stage, preparing to save application",
                     application_id=str(application_id),
+                    research_plan_words=len(final_dto["research_plan_text"].split()),
+                    stage_elapsed_ms=stage_elapsed,
                     trace_id=trace_id,
                 )
 
@@ -354,10 +569,26 @@ async def handle_grant_application_pipeline(
                 complete_section_texts = {text["section_id"]: text["text"] for text in final_dto["section_texts"]}
                 complete_section_texts[final_dto["work_plan_section"]["id"]] = final_dto["research_plan_text"]
 
+                logger.debug(
+                    "Generating final application text",
+                    application_id=str(application_id),
+                    total_sections=len(complete_section_texts),
+                    trace_id=trace_id,
+                )
+
                 application_text = generate_application_text(
                     title=grant_application.title,
                     grant_sections=grant_template.grant_sections,
                     section_texts=complete_section_texts,
+                )
+
+                word_count = len(application_text.split()) if application_text else 0
+                logger.info(
+                    "Generated complete application text",
+                    application_id=str(application_id),
+                    word_count=word_count,
+                    character_count=len(application_text) if application_text else 0,
+                    trace_id=trace_id,
                 )
 
                 try:
@@ -365,7 +596,7 @@ async def handle_grant_application_pipeline(
                         await session.execute(
                             update(GrantApplication)
                             .where(GrantApplication.id == application_id)
-                            .values(text=application_text)
+                            .values(text=application_text, status=ApplicationStatusEnum.WORKING_DRAFT)
                         )
 
                         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
@@ -375,10 +606,25 @@ async def handle_grant_application_pipeline(
                             notification_type="success",
                             data={
                                 "application_id": str(application_id),
-                                "word_count": len(application_text.split()) if application_text else 0,
+                                "word_count": word_count,
                             },
                         )
+
+                    logger.info(
+                        "Successfully saved application to database and updated status",
+                        application_id=str(application_id),
+                        word_count=word_count,
+                        status=ApplicationStatusEnum.WORKING_DRAFT.value,
+                        trace_id=trace_id,
+                    )
+
                 except SQLAlchemyError as sql_error:
+                    logger.error(
+                        "Failed to save application to database",
+                        application_id=str(application_id),
+                        sql_error=str(sql_error),
+                        trace_id=trace_id,
+                    )
                     raise DatabaseError(
                         "Failed to save application to database",
                         context={"application_id": str(application_id), "sql_error": str(sql_error)},
@@ -388,7 +634,15 @@ async def handle_grant_application_pipeline(
                     application_id=application_id,
                     trace_id=trace_id,
                 )
-                logger.info("Email notification published", application_id=str(application_id), trace_id=trace_id)
+
+                pipeline_elapsed = round((time.perf_counter() - pipeline_start_time) * 1000, 2)
+                logger.info(
+                    "Grant application pipeline completed successfully",
+                    application_id=str(application_id),
+                    total_pipeline_elapsed_ms=pipeline_elapsed,
+                    final_word_count=word_count,
+                    trace_id=trace_id,
+                )
 
                 return
 

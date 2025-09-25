@@ -128,6 +128,7 @@ export default eslintTS.config(
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
+			"perfectionist/sort-exports": "off",
 			"perfectionist/sort-imports": "off",
 			"perfectionist/sort-named-imports": "off",
 			"prefer-const": ["error", { destructuring: "all" }],

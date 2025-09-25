@@ -218,34 +218,30 @@ export function ApplicationStructureSourcesPreview({
 }
 
 function AnalyzingSteps() {
-	const templateGenerationStatus = useWizardStore((state) => state.templateGenerationStatus);
+	const templateGenerationEvent = useWizardStore((state) => state.templateGenerationEvent);
 	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
 	const [showStepsDetails, setShowStepsDetails] = useState(false);
 	const [hasError, setHasError] = useState(false);
 
 	useEffect(() => {
-		if (templateGenerationStatus?.event) {
-			const stepGroup = eventToVisualStepMap[templateGenerationStatus.event];
+		if (templateGenerationEvent) {
+			const stepGroup = eventToVisualStepMap[templateGenerationEvent];
 
 			if (stepGroup === -1) {
 				setHasError(true);
 				return;
 			}
 			setHasError(false);
-
-			const isIndexingEvent =
-				templateGenerationStatus.event === "cfp_data_extracted" ||
-				templateGenerationStatus.event === "sections_extracted";
-			setShowStepsDetails(!isIndexingEvent);
+			setShowStepsDetails(true);
 
 			if (stepGroup >= 0) {
 				const newVisibleSteps = stepGroup + 1;
 				setMaxVisibleSteps((prev) => Math.max(prev, newVisibleSteps));
 			}
 		}
-	}, [templateGenerationStatus]);
+	}, [templateGenerationEvent]);
 
-	if (hasError && templateGenerationStatus) {
+	if (hasError && templateGenerationEvent) {
 		return (
 			<div className="relative space-y-6 mt-6">
 				<div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -258,7 +254,7 @@ function AnalyzingSteps() {
 								Template Generation Failed
 							</h4>
 							<p className="mt-1 text-sm text-red-700" data-testid="error-message">
-								{templateGenerationStatus.message}
+								Template generation failed
 							</p>
 						</div>
 					</div>

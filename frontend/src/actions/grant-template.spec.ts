@@ -102,7 +102,7 @@ describe("Grant Template Actions", () => {
 						search_queries: ["introduction research"],
 						title: "Introduction",
 						topics: ["research background"],
-					}),
+					}) as NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0],
 				],
 				submission_date: "2024-12-31",
 			});

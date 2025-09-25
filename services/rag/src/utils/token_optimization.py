@@ -30,7 +30,7 @@ async def batch_count_tokens(texts: list[str]) -> list[int]:
     return [cached_estimate_token_count(text) for text in texts]
 
 
-async def optimized_count_tokens(text: str) -> int:
+async def count_tokens(text: str) -> int:
     if not text:
         return 0
 

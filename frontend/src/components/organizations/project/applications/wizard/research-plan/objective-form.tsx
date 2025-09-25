@@ -10,11 +10,11 @@ import { FloatingActionPanel } from "./floating-action-panel";
 
 export type ObjectiveFormData = {
 	tasks: ObjectiveFormTask[];
-} & Omit<API.UpdateApplication.RequestBody["research_objectives"][0], "research_tasks">;
+} & Omit<NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0], "research_tasks">;
 
 export type ObjectiveFormTask = {
 	id: string;
-} & API.UpdateApplication.RequestBody["research_objectives"][0]["research_tasks"][0];
+} & NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0]["research_tasks"][0];
 
 interface ObjectiveFormProps {
 	className?: string;

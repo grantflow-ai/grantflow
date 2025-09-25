@@ -224,13 +224,30 @@ async def handle_grant_template_pipeline(
             },
         )
 
-        await job_manager.add_notification(
-            event=event_type,
-            message=user_message,
-            notification_type="error",
-            data={
-                "error_type": e.__class__.__name__,
-                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
-            },
-        )
+        if event_type in [
+            NotificationEvents.INDEXING_TIMEOUT,
+            NotificationEvents.INSUFFICIENT_CONTEXT_ERROR,
+            NotificationEvents.LLM_TIMEOUT,
+        ]:
+            await job_manager.add_notification(
+                event=event_type,
+                message=user_message,
+                notification_type="warning",
+                data={
+                    "error_type": e.__class__.__name__,
+                    "recoverable": True,
+                    "retryable": True,
+                },
+            )
+        else:
+            await job_manager.add_notification(
+                event=event_type,
+                message=user_message,
+                notification_type="error",
+                data={
+                    "error_type": e.__class__.__name__,
+                    "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
+                    "retryable": False,
+                },
+            )
         return None

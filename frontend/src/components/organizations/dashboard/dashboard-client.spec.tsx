@@ -3,6 +3,7 @@ import { ListOrganizationsResponseFactory, ProjectListItemFactory } from "::test
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { API } from "@/types/api-types";
 import { DashboardClient } from "./dashboard-client";
 
 vi.mock("next/navigation", () => ({
@@ -148,7 +149,7 @@ const MockDeleteProjectModal = vi.mocked(
 describe("DashboardClient", () => {
 	const defaultProps = {
 		initialOrganizations: ListOrganizationsResponseFactory.build(),
-		initialProjects: ProjectListItemFactory.batch(3),
+		initialProjects: ProjectListItemFactory.batch(3) as API.ListProjects.Http200.ResponseBody,
 	};
 
 	beforeEach(() => {

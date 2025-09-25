@@ -34,6 +34,7 @@ class NotificationTypeEnum(StrEnum):
     INFO = "INFO"
     WARNING = "WARNING"
     SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
 
 
 class GrantTemplateStageEnum(StrEnum):

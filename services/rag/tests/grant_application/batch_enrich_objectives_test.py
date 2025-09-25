@@ -61,6 +61,7 @@ def sample_form_inputs() -> ResearchDeepDive:
 async def test_handle_batch_enrich_objectives_success(
     mock_batched_gather: AsyncMock,
     mock_handle_enrich_objective: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -119,6 +120,7 @@ async def test_handle_batch_enrich_objectives_success(
         application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, list)
@@ -147,6 +149,7 @@ async def test_handle_batch_enrich_objectives_success(
 async def test_handle_batch_enrich_objectives_empty_list(
     mock_batched_gather: AsyncMock,
     mock_handle_enrich_objective: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
@@ -156,6 +159,7 @@ async def test_handle_batch_enrich_objectives_empty_list(
         application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, list)
@@ -169,6 +173,7 @@ async def test_handle_batch_enrich_objectives_empty_list(
 async def test_handle_batch_enrich_objectives_single_objective(
     mock_batched_gather: AsyncMock,
     mock_handle_enrich_objective: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
@@ -208,6 +213,7 @@ async def test_handle_batch_enrich_objectives_single_objective(
         application_id=str(uuid4()),
         form_inputs=sample_form_inputs,
         trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
     )
 
     assert isinstance(result, list)
@@ -221,6 +227,7 @@ async def test_handle_batch_enrich_objectives_single_objective(
 async def test_handle_batch_enrich_objectives_error_propagation(
     mock_batched_gather: AsyncMock,
     mock_handle_enrich_objective: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -234,6 +241,7 @@ async def test_handle_batch_enrich_objectives_error_propagation(
             application_id=str(uuid4()),
             form_inputs=sample_form_inputs,
             trace_id=str(uuid4()),
+            job_manager=mock_job_manager,
         )
 
     mock_batched_gather.assert_called_once()
@@ -246,6 +254,7 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
     mock_batched_gather: AsyncMock,
     mock_handle_enrich_objective: AsyncMock,
     mock_perform_shared_retrieval: AsyncMock,
+    mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
@@ -262,6 +271,7 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
         application_id=test_app_id,
         form_inputs=sample_form_inputs,
         trace_id=test_trace_id,
+        job_manager=mock_job_manager,
     )
 
     mock_perform_shared_retrieval.assert_called_once_with(

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = get_logger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class DetailedBenchmarkMetrics:
     test_name: str
     vector_dimension: int

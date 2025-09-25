@@ -1,4 +1,4 @@
-from typing import Final, Literal, TypedDict
+from typing import Final, Literal, TypedDict, cast
 
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
@@ -16,6 +16,8 @@ from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
+
+RESEARCH_FIELD_BATCH_SIZE: Final[int] = 4
 
 logger = get_logger(__name__)
 
@@ -165,14 +167,41 @@ async def _generate_field_answer(
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
+    field_names = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
     results = await batched_gather(
         *[
             _generate_field_answer(
                 field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id
             )
-            for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
+            for key in field_names
         ],
-        batch_size=4,
+        batch_size=RESEARCH_FIELD_BATCH_SIZE,
+        return_exceptions=True,
     )
 
-    return ResearchDeepDive(**dict(zip(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys(), results, strict=True)))  # type: ignore[typeddict-item,no-any-return]
+    field_values = {}
+    failed_fields = []
+
+    for field_name, result in zip(field_names, results, strict=True):
+        if isinstance(result, Exception):
+            logger.warning(
+                "Research deep dive field generation failed",
+                field_name=field_name,
+                error=str(result),
+                trace_id=trace_id,
+            )
+            field_values[field_name] = f"[Failed to generate {field_name}. Manual completion required.]"
+            failed_fields.append(field_name)
+        else:
+            field_values[field_name] = cast("str", result)
+
+    if failed_fields:
+        logger.warning(
+            "Some research deep dive fields failed",
+            total_fields=len(field_names),
+            successful_fields=len(field_names) - len(failed_fields),
+            failed_fields=failed_fields,
+            trace_id=trace_id,
+        )
+
+    return cast("ResearchDeepDive", ResearchDeepDive(**field_values))  # type: ignore[typeddict-item]

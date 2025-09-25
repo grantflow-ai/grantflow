@@ -59,7 +59,9 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 			const params = new URLSearchParams({
 				gracePeriod: result.grace_period_days.toString(),
 				message: "account-deleted",
-				scheduledDate: result.scheduled_deletion_date,
+				scheduledDate:
+					(result as { scheduled_deletion_date?: string } & typeof result).scheduled_deletion_date ??
+					new Date().toISOString(),
 			});
 
 			router.push(`/login?${params.toString()}`);

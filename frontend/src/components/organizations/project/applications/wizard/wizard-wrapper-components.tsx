@@ -83,8 +83,10 @@ export function WizardHeader() {
 	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
 
 	const handleExit = () => {
-		reset();
 		router.push(routes.organization.project.detail());
+		setTimeout(() => {
+			reset();
+		}, 1000);
 	};
 
 	return (
@@ -314,28 +316,59 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: need validationResult to run granularly
-	const validationResult = useMemo(validateStepNext, [
-		applicationText,
-		appRagSources,
+	const disabled = useMemo(() => {
+		switch (currentStep) {
+			case WizardStep.APPLICATION_DETAILS: {
+				const hasValidTitle = title && title.length >= 10;
+				const hasRagSources = ragSources && ragSources.length > 0;
+				const ragSourcesProcessing = ragSources?.some(
+					(source) => source.status === "CREATED" || source.status === "INDEXING",
+				);
+				return !(hasValidTitle && hasRagSources) || ragSourcesProcessing;
+			}
+			case WizardStep.APPLICATION_STRUCTURE: {
+				return !grantSections || grantSections.length === 0;
+			}
+			case WizardStep.KNOWLEDGE_BASE: {
+				return !appRagSources || appRagSources.length === 0;
+			}
+			case WizardStep.RESEARCH_DEEP_DIVE: {
+				const requiredFields = [
+					"background_context",
+					"hypothesis",
+					"rationale",
+					"novelty_and_innovation",
+					"impact",
+					"team_excellence",
+					"research_feasibility",
+					"preliminary_data",
+				] as const;
+				const allFieldsFilled =
+					formInputs &&
+					requiredFields.every((field) => {
+						const value = formInputs[field];
+
+						return value?.trim();
+					});
+				return isGeneratingApplication || !allFieldsFilled;
+			}
+			case WizardStep.RESEARCH_PLAN: {
+				return !researchObjectives?.some((obj) => obj.research_tasks.length > 0);
+			}
+			default: {
+				return false;
+			}
+		}
+	}, [
 		currentStep,
+		isGeneratingApplication,
 		title,
 		ragSources,
 		grantSections,
+		appRagSources,
 		researchObjectives,
 		formInputs,
-		validateStepNext,
 	]);
-
-	const disabled = useMemo(() => {
-		const { isValid } = validationResult;
-
-		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-			return isGeneratingApplication || !isValid;
-		}
-
-		return !isValid;
-	}, [validationResult, currentStep, isGeneratingApplication]);
 
 	const { leftIcon, rightButtonText, rightIcon } = useMemo(
 		() => generateFooterRightButtonProps(currentStep, disabled, hasApplicationText),
@@ -383,7 +416,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const handleCompleteStep = useCallback(() => {
 		router.push(routes.organization.root());
-		useWizardStore.getState().reset();
+		setTimeout(() => {
+			useWizardStore.getState().reset();
+		}, 1000);
 	}, [router]);
 
 	const handleRightButtonClick = useCallback(async () => {
@@ -421,69 +456,59 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		validateStepNext,
 	]);
 
-	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled) {
+	if (currentStep === WizardStep.APPLICATION_DETAILS && disabled) {
+		let tooltipMessage = "Please ensure all requirements are met";
+
+		if (!title || title.length < 10) {
+			tooltipMessage = APPLICATION_DETAILS_TOOLTIP_MESSAGES[ApplicationDetailsValidationReason.TITLE_INVALID];
+		} else if (!ragSources || ragSources.length === 0) {
+			tooltipMessage =
+				APPLICATION_DETAILS_TOOLTIP_MESSAGES[ApplicationDetailsValidationReason.RAG_SOURCES_MISSING];
+		} else if (ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING")) {
+			const processingCount = ragSources.filter(
+				(source) => source.status === "CREATED" || source.status === "INDEXING",
+			).length;
+			tooltipMessage = APPLICATION_DETAILS_TOOLTIP_MESSAGES[
+				ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
+			](processingCount, ragSources.length);
+		}
+
 		return (
-			<AppButton
-				data-testid="continue-button"
-				disabled={disabled}
-				leftIcon={leftIcon}
-				onClick={handleRightButtonClick}
-				rightIcon={rightIcon}
-				size="lg"
-				variant="primary"
-			>
-				{rightButtonText}
-			</AppButton>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<div className="inline-block">
+						<AppButton
+							data-testid="continue-button"
+							disabled={disabled}
+							leftIcon={leftIcon}
+							onClick={handleRightButtonClick}
+							rightIcon={rightIcon}
+							size="lg"
+							variant="primary"
+						>
+							{rightButtonText}
+						</AppButton>
+					</div>
+				</TooltipTrigger>
+				<TooltipContent side="left" sideOffset={12}>
+					{tooltipMessage}
+				</TooltipContent>
+			</Tooltip>
 		);
 	}
-
-	const detailsValidationReason = validationResult.reason as ApplicationDetailsValidationReason;
-
-	if (detailsValidationReason === ApplicationDetailsValidationReason.VALID) {
-		return (
-			<AppButton
-				data-testid="continue-button"
-				disabled={disabled}
-				leftIcon={leftIcon}
-				onClick={handleRightButtonClick}
-				rightIcon={rightIcon}
-				size="lg"
-				variant="primary"
-			>
-				{rightButtonText}
-			</AppButton>
-		);
-	}
-
-	const tooltipMessage =
-		detailsValidationReason === ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
-			? APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason](
-					validationResult.metadata?.processingCount ?? 0,
-					validationResult.metadata?.totalCount ?? 0,
-				)
-			: APPLICATION_DETAILS_TOOLTIP_MESSAGES[detailsValidationReason];
 
 	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<div className="inline-block">
-					<AppButton
-						data-testid="continue-button"
-						disabled={disabled}
-						leftIcon={leftIcon}
-						onClick={handleRightButtonClick}
-						rightIcon={rightIcon}
-						size="lg"
-						variant="primary"
-					>
-						{rightButtonText}
-					</AppButton>
-				</div>
-			</TooltipTrigger>
-			<TooltipContent side="left" sideOffset={12}>
-				{tooltipMessage}
-			</TooltipContent>
-		</Tooltip>
+		<AppButton
+			data-testid="continue-button"
+			disabled={disabled}
+			leftIcon={leftIcon}
+			onClick={handleRightButtonClick}
+			rightIcon={rightIcon}
+			size="lg"
+			variant="primary"
+		>
+			{rightButtonText}
+		</AppButton>
 	);
 }
 

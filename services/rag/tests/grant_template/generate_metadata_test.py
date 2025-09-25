@@ -403,7 +403,10 @@ async def test_generate_grant_template_insufficient_context_error(mock_google_co
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 @patch("services.rag.src.utils.completion.make_google_completions_request")
 async def test_handle_generate_grant_template_metadata_success(
-    mock_google_completions: AsyncMock, mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock
+    mock_google_completions: AsyncMock,
+    mock_create_search_queries: AsyncMock,
+    mock_evaluation: AsyncMock,
+    mock_job_manager: AsyncMock,
 ) -> None:
     mock_metadata = {
         "sections": [
@@ -467,6 +470,7 @@ async def test_handle_generate_grant_template_metadata_success(
     }
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="Comprehensive CFP content for advanced research programs",
         cfp_subject="National Research Initiative",
         organization=organization,
@@ -489,13 +493,16 @@ async def test_handle_generate_grant_template_metadata_success(
     mock_evaluation.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.handle_completions_request")
-async def test_handle_generate_grant_template_metadata_no_long_form_sections(mock_completions: AsyncMock) -> None:
-    mock_completions.return_value = {"sections": []}
+@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+async def test_handle_generate_grant_template_metadata_no_long_form_sections(
+    mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
+) -> None:
+    mock_evaluation.return_value = {"sections": []}
 
     long_form_sections: list[ExtractedSectionDTO] = []
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="CFP content without long form sections",
         cfp_subject="Short Form Grant",
         organization=None,
@@ -504,13 +511,13 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(moc
     )
 
     assert result == []
-    mock_completions.assert_called_once()
+    mock_evaluation.assert_called_once()
 
 
 @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 async def test_handle_generate_grant_template_metadata_filters_long_form_sections(
-    mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock
+    mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
 ) -> None:
     mock_metadata = {
         "sections": [
@@ -559,6 +566,7 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
     ]
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="CFP content with mixed section types",
         cfp_subject="Mixed Sections Grant",
         organization=None,
@@ -575,7 +583,7 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
 @patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 async def test_handle_generate_grant_template_metadata_preserves_order(
-    mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock
+    mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
 ) -> None:
     mock_metadata = {
         "sections": [
@@ -623,6 +631,7 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
     ]
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="CFP content for order testing",
         cfp_subject="Order Test Grant",
         organization=None,
@@ -638,7 +647,7 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
 
 
 @pytest.mark.e2e_full
-async def test_integration_generate_metadata_workflow() -> None:
+async def test_integration_generate_metadata_workflow(mock_job_manager: AsyncMock) -> None:
     cfp_content = """
     National Cancer Institute Research Grant Program
 
@@ -682,6 +691,7 @@ async def test_integration_generate_metadata_workflow() -> None:
     }
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content=cfp_content,
         cfp_subject="Novel Biomarkers for Early Cancer Detection",
         organization=organization,
@@ -711,7 +721,7 @@ async def test_integration_generate_metadata_workflow() -> None:
 
 @pytest.mark.e2e_full
 @pytest.mark.e2e_full
-async def test_integration_generate_metadata_with_dependencies() -> None:
+async def test_integration_generate_metadata_with_dependencies(mock_job_manager: AsyncMock) -> None:
     extracted_sections: list[ExtractedSectionDTO] = [
         {
             "title": "Abstract",
@@ -734,6 +744,7 @@ async def test_integration_generate_metadata_with_dependencies() -> None:
     ]
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="CFP with dependency requirements",
         cfp_subject="Dependent Sections Grant",
         organization=None,
@@ -757,10 +768,11 @@ async def test_integration_generate_metadata_with_dependencies() -> None:
 
 
 @pytest.mark.e2e_full
-async def test_integration_generate_metadata_empty_sections() -> None:
+async def test_integration_generate_metadata_empty_sections(mock_job_manager: AsyncMock) -> None:
     extracted_sections: list[ExtractedSectionDTO] = []
 
     result = await handle_generate_grant_template_metadata(
+        job_manager=mock_job_manager,
         cfp_content="CFP with no long form sections",
         cfp_subject="No Sections Grant",
         organization=None,

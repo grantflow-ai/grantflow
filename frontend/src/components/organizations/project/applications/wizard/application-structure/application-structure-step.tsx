@@ -15,7 +15,7 @@ import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 const isDetailedSection = (
 	section: GrantSection,
-): section is API.UpdateGrantTemplate.RequestBody["grant_sections"][0] => {
+): section is NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0] => {
 	return "max_words" in section;
 };
 
@@ -37,8 +37,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		if (!grantTemplate) return false;
 		if (grantTemplate.grant_sections.length > 0) return false;
 		if (isGeneratingTemplate) return false;
-		if (templateGenerationFailed) return false;
-		return true;
+		return !templateGenerationFailed;
 	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed]);
 
 	useEffect(() => {
