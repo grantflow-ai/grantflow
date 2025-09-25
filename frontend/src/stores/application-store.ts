@@ -1,5 +1,5 @@
 import { assertIsNotNullish } from "@tool-belt/type-predicates";
-import { deepmerge } from "deepmerge-ts";
+import { deepmergeCustom } from "deepmerge-ts";
 import ky, { HTTPError } from "ky";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -71,6 +71,12 @@ const formatApplicationRagSources = (application: ApplicationType): string => {
 
 	return `files: [${files}], urls: [${urls}]`;
 };
+
+const arrayReplaceDeepMerge = deepmergeCustom({
+	mergeArrays: (value) => {
+		return value.at(-1);
+	},
+});
 
 interface ApplicationState {
 	application: ApplicationType;
@@ -913,7 +919,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		set({ areAppOperationsInProgress: true });
 
-		const updatedApplication = deepmerge(existingApplication, data) as NonNullable<ApplicationType>;
+		const updatedApplication = arrayReplaceDeepMerge(existingApplication, data) as NonNullable<ApplicationType>;
 
 		log.info("[rag_sources_check] Application state updated via updateApplication (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
@@ -965,7 +971,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	updateApplicationTitle: async (organizationId: string, projectId: string, applicationId: string, title: string) => {
 		const { application } = get();
 
-		assertIsNotNullish(application, { message: "Application must exist to update title" });
+		assertIsNotNullish(application, {
+			message: "Application must exist to update title",
+		});
 
 		const originalTitle = application.title;
 

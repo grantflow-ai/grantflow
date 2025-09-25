@@ -6,7 +6,7 @@ import { useCallback } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import { useWizardStore } from "@/stores/wizard-store";
+import { type ResearchObjective, useWizardStore } from "@/stores/wizard-store";
 import { DraggableTaskItem } from "./draggable-task-item";
 
 interface DraggableTaskListProps {
@@ -16,7 +16,7 @@ interface DraggableTaskListProps {
 	onTaskAdd?: () => void;
 	onTaskDelete?: (taskIndex: number) => void;
 	onTaskReorder?: (oldIndex: number, newIndex: number) => void;
-	onTaskValuesChange?: (taskValues: Record<number, { description: string; title: string }>) => void;
+	onTaskValueChange?: (taskValue: ResearchObjective["research_tasks"][0]) => void;
 	tasks: Task[];
 }
 
@@ -37,7 +37,7 @@ export function DraggableTaskList({
 	onTaskAdd,
 	onTaskDelete,
 	onTaskReorder,
-	onTaskValuesChange,
+	onTaskValueChange,
 	tasks,
 }: DraggableTaskListProps) {
 	const dragDropItems: TaskDragDropItem[] = tasks.map((_, index) => ({
@@ -51,11 +51,9 @@ export function DraggableTaskList({
 
 	const handleValueChange = useCallback(
 		(taskIndex: number, title: string, description: string) => {
-			const taskValues: Record<number, { description: string; title: string }> = {};
-			taskValues[taskIndex] = { description, title };
-			onTaskValuesChange?.(taskValues);
+			onTaskValueChange?.({ description, number: taskIndex, title });
 		},
-		[onTaskValuesChange],
+		[onTaskValueChange],
 	);
 
 	const { DragDropWrapper } = useDragAndDrop<TaskDragDropItem>(
@@ -110,7 +108,7 @@ export function DraggableTaskList({
 					{tasks.map((task, taskIndex) => (
 						<DraggableTaskItem
 							isEditing={isEditing}
-							key={`objective-${objectiveIndex}-task-${taskIndex}`}
+							key={`objective-${objectiveIndex}-task-${taskIndex + 1}`}
 							objectiveIndex={objectiveIndex}
 							onTaskDelete={() => onTaskDelete?.(taskIndex)}
 							onValueChange={handleValueChange}
