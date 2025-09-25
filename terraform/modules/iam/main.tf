@@ -90,6 +90,27 @@ resource "google_project_iam_member" "github_actions_cloudsql_viewer" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# Required for Terraform to read IAM policies
+resource "google_project_iam_member" "github_actions_iam_viewer" {
+  project = "grantflow"
+  role    = "roles/iam.securityReviewer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for BigQuery dataset management
+resource "google_project_iam_member" "github_actions_bigquery_admin" {
+  project = "grantflow"
+  role    = "roles/bigquery.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Cloud Run service deployments
+resource "google_project_iam_member" "github_actions_run_admin" {
+  project = "grantflow"
+  role    = "roles/run.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account_iam_member" "github_actions_service_account_user" {
   service_account_id = google_service_account.cloud_storage_admin.name
