@@ -8,36 +8,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_application.handlers import handle_generate_sections_stage
-from services.rag.tests.e2e.rag_proximity_test import calculate_rouge_l
-
-
-def calculate_rouge_n_grams(reference_text: str, generated_text: str, n: int) -> float:
-    if not reference_text or not generated_text:
-        return 0.0
-
-    ref_tokens = reference_text.lower().split()
-    gen_tokens = generated_text.lower().split()
-
-    if len(ref_tokens) < n or len(gen_tokens) < n:
-        return 0.0
-
-    def create_ngrams(tokens: list[str], n: int) -> set[tuple[str, ...]]:
-        return {tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)}
-
-    ref_ngrams = create_ngrams(ref_tokens, n)
-    gen_ngrams = create_ngrams(gen_tokens, n)
-
-    if not ref_ngrams or not gen_ngrams:
-        return 0.0
-
-    overlap = len(ref_ngrams & gen_ngrams)
-    precision = overlap / len(gen_ngrams)
-    recall = overlap / len(ref_ngrams)
-
-    if precision + recall == 0:
-        return 0.0
-
-    return (2 * precision * recall) / (precision + recall)
+from services.rag.tests.utils.rouge_utils import calculate_rouge_l, calculate_rouge_n_grams
 
 
 def extract_ngrams_for_analysis(text: str, n: int) -> set[tuple[str, ...]]:
@@ -149,7 +120,7 @@ async def analyze_generated_content(
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_APPLICATION, timeout=1800)
-async def test_rag_focused_prompts_real_generation(
+async def test_rag_focused_prompts_generation(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,
     async_session_maker: async_sessionmaker[Any],
@@ -258,7 +229,7 @@ async def run_rag_focused_baseline_iterations(iterations: int = 5) -> dict[str, 
 
     return {
         "message": "Use pytest to run the actual test with database fixtures",
-        "command": "E2E_TESTS=1 PYTHONPATH=. uv run pytest services/rag/tests/e2e/rag_focused_generation_test.py::test_rag_focused_prompts_real_generation -v",
+        "command": "E2E_TESTS=1 PYTHONPATH=. uv run pytest services/rag/tests/e2e/rag_focused_generation_test.py::test_rag_focused_prompts_generation -v",
     }
 
 
