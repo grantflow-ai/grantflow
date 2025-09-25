@@ -1,6 +1,13 @@
 name: "Deploy with Terraform"
 
 on:
+  push:
+    paths:
+      - '.github/workflows/deploy-terraform.yaml'
+    branches:
+      - main
+      - development
+
   workflow_run:
     workflows:
       - "Build Backend"
