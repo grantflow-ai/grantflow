@@ -43,14 +43,12 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	const [title, setTitle] = useState(objective.title);
 	const [description, setDescription] = useState(objective.description);
 	const [tasks, setTasks] = useState<ResearchObjective["research_tasks"]>(objective.research_tasks);
-	const [taskValues, setTaskValues] = useState<Record<number, { description: string; title: string }>>({});
 
-	const handleTaskValuesChange = useCallback(
-		(newTaskValues: Record<number, { description: string; title: string }>) => {
-			setTaskValues((prev) => ({ ...prev, ...newTaskValues }));
-		},
-		[],
-	);
+	const handleTaskValueChange = useCallback((newTaskValue: ResearchObjective["research_tasks"][0]) => {
+		setTasks((prevTasks) => {
+			return prevTasks.map((task, index) => (index === newTaskValue.number ? newTaskValue : task));
+		});
+	}, []);
 
 	const handleTaskDelete = (taskIndex: number) => {
 		setTasks((prevTasks: ResearchObjective["research_tasks"]) =>
@@ -83,15 +81,10 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 	};
 
 	const handleSave = () => {
-		const updatedTasks = tasks.map((task: ResearchObjective["research_tasks"][0], index: number) => ({
-			...task,
-			...taskValues[index],
-		}));
-
 		onSave({
 			...objective,
 			description,
-			research_tasks: updatedTasks,
+			research_tasks: tasks,
 			title,
 		});
 	};
@@ -134,7 +127,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 				onTaskAdd={handleTaskAdd}
 				onTaskDelete={handleTaskDelete}
 				onTaskReorder={handleTaskReorder}
-				onTaskValuesChange={handleTaskValuesChange}
+				onTaskValueChange={handleTaskValueChange}
 				tasks={tasks}
 			/>
 		</div>
