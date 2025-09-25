@@ -167,6 +167,13 @@ resource "google_project_iam_member" "github_actions_cloudscheduler_admin" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# Required for Secret Manager management
+resource "google_project_iam_member" "github_actions_secretmanager_admin" {
+  project = "grantflow"
+  role    = "roles/secretmanager.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account_iam_member" "github_actions_service_account_user" {
   service_account_id = google_service_account.cloud_storage_admin.name
