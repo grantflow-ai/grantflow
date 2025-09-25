@@ -203,7 +203,7 @@ describe.sequential("wizard store", () => {
 			expect(result3.isValid).toBe(false);
 		});
 
-		it("should require RAG sources to be processed (FINISHED or FAILED) for APPLICATION_DETAILS", () => {
+		it("should allow proceeding regardless of RAG source processing status for APPLICATION_DETAILS", () => {
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
 			const applicationWithCreatedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -217,7 +217,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithCreatedSources });
 			const result4 = useWizardStore.getState().validateStepNext();
-			expect(result4.isValid).toBe(false);
+			expect(result4.isValid).toBe(true);
 			const applicationWithIndexingSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -230,7 +230,7 @@ describe.sequential("wizard store", () => {
 
 			useApplicationStore.setState({ application: applicationWithIndexingSources });
 			const result5 = useWizardStore.getState().validateStepNext();
-			expect(result5.isValid).toBe(false);
+			expect(result5.isValid).toBe(true);
 			const applicationWithFinishedSources = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [

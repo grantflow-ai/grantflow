@@ -233,12 +233,6 @@ function getValidationErrorMessage(
 			if (!ragSources || ragSources.length === 0) {
 				return "Please upload at least one document or URL";
 			}
-			if (ragSources.some((source) => source.status === "CREATED" || source.status === "INDEXING")) {
-				const processingCount = ragSources.filter(
-					(source) => source.status === "CREATED" || source.status === "INDEXING",
-				).length;
-				return `Processing ${processingCount} of ${ragSources.length} sources. Please wait for processing to complete.`;
-			}
 			return "Please ensure all requirements are met";
 		}
 		case WizardStep.APPLICATION_STRUCTURE: {
