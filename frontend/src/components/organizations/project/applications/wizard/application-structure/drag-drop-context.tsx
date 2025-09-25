@@ -17,6 +17,8 @@ interface DragDropContext {
 interface DragDropContextData extends ZoneCollisionData {
 	activeIndex: number;
 	activeItem: GrantSection | null;
+	dragOverId: null | string;
+	dragOverZone: null | ZoneType;
 	isAnyDragging: boolean;
 	overIndex: number;
 	overItem: GrantSection | null;

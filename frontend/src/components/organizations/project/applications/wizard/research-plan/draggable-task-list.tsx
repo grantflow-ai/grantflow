@@ -1,11 +1,20 @@
 "use client";
 
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Plus } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { type ResearchObjective, useWizardStore } from "@/stores/wizard-store";
 import { DraggableTaskItem } from "./draggable-task-item";
 
@@ -26,10 +35,6 @@ interface Task {
 	title: string;
 }
 
-interface TaskDragDropItem extends DragDropItem {
-	taskIndex: number;
-}
-
 export function DraggableTaskList({
 	isEditing,
 	objectiveIndex,
@@ -40,14 +45,14 @@ export function DraggableTaskList({
 	onTaskValueChange,
 	tasks,
 }: DraggableTaskListProps) {
-	const dragDropItems: TaskDragDropItem[] = tasks.map((_, index) => ({
-		id: `${objectiveIndex}-task-${index}`,
-		order: index,
-		parent_id: String(objectiveIndex),
-		taskIndex: index,
-	}));
-
 	const updateTasksForObjective = useWizardStore((state) => state.updateTasksForObjective);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
 
 	const handleValueChange = useCallback(
 		(taskIndex: number, title: string, description: string) => {
@@ -56,9 +61,18 @@ export function DraggableTaskList({
 		[onTaskValueChange],
 	);
 
-	const { DragDropWrapper } = useDragAndDrop<TaskDragDropItem>(
-		{
-			onReorder: async (_items, oldIndex, newIndex) => {
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
+
+			if (!over || active.id === over.id) {
+				return;
+			}
+
+			const oldIndex = tasks.findIndex((_, index) => `${objectiveIndex}-task-${index}` === active.id);
+			const newIndex = tasks.findIndex((_, index) => `${objectiveIndex}-task-${index}` === over.id);
+
+			if (oldIndex !== -1 && newIndex !== -1) {
 				if (onTaskReorder) {
 					onTaskReorder(oldIndex, newIndex);
 				} else if (objectiveNumber) {
@@ -67,11 +81,14 @@ export function DraggableTaskList({
 					reorderedTasks.splice(newIndex, 0, movedTask);
 					await updateTasksForObjective(objectiveNumber, reorderedTasks);
 				}
-			},
+			}
 		},
-		{
-			strategy: "vertical",
-		},
+		[tasks, objectiveIndex, onTaskReorder, objectiveNumber, updateTasksForObjective],
+	);
+
+	const sortableIds = useMemo(
+		() => tasks.map((_, index) => `${objectiveIndex}-task-${index}`),
+		[tasks, objectiveIndex],
 	);
 
 	return (
@@ -103,22 +120,24 @@ export function DraggableTaskList({
 					)}
 				</div>
 			)}
-			<DragDropWrapper items={dragDropItems}>
-				<div className="space-y-1">
-					{tasks.map((task, taskIndex) => (
-						<DraggableTaskItem
-							isEditing={isEditing}
-							key={`objective-${objectiveIndex}-task-${taskIndex + 1}`}
-							objectiveIndex={objectiveIndex}
-							onTaskDelete={() => onTaskDelete?.(taskIndex)}
-							onValueChange={handleValueChange}
-							task={task}
-							taskIndex={taskIndex}
-							totalTasks={tasks.length}
-						/>
-					))}
-				</div>
-			</DragDropWrapper>
+			<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+				<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+					<div className="space-y-1">
+						{tasks.map((task, taskIndex) => (
+							<DraggableTaskItem
+								isEditing={isEditing}
+								key={`${objectiveIndex}-task-${taskIndex}`}
+								objectiveIndex={objectiveIndex}
+								onTaskDelete={() => onTaskDelete?.(taskIndex)}
+								onValueChange={handleValueChange}
+								task={task}
+								taskIndex={taskIndex}
+								totalTasks={tasks.length}
+							/>
+						))}
+					</div>
+				</SortableContext>
+			</DndContext>
 		</div>
 	);
 }

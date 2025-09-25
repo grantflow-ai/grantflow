@@ -10,6 +10,8 @@ const mockDragDropContext = {
 	getDragState: (): DragDropContextData => ({
 		activeIndex: -1,
 		activeItem: null,
+		dragOverId: null,
+		dragOverZone: null,
 		isAnyDragging: false,
 		overIndex: -1,
 		overItem: null,
