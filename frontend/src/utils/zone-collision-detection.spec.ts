@@ -191,7 +191,7 @@ describe("createZoneCollisionDetection", () => {
 			});
 		});
 
-		it("handles exact 16% boundary (should be child zone)", () => {
+		it("handles exact 16% boundary (should be sibling zone with 25% threshold)", () => {
 			const args = createMockArgs({
 				pointerCoordinates: { x: 464, y: 230 },
 			});
@@ -202,8 +202,24 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result[0].data).toMatchObject({
-				zone: "child",
+				zone: "sibling",
 				zonePercent: 16,
+			});
+		});
+
+		it("handles exact 25% boundary (should be child zone)", () => {
+			const args = createMockArgs({
+				pointerCoordinates: { x: 500, y: 230 }, // 25% = (500 - 400) / 400 = 0.25
+			});
+			const defaultCollisions = [createMockCollision()];
+			mockedPointerWithin.mockReturnValue(defaultCollisions);
+
+			const collisionDetection = createZoneCollisionDetection();
+			const result = collisionDetection(args);
+
+			expect(result[0].data).toMatchObject({
+				zone: "child",
+				zonePercent: 25,
 			});
 		});
 

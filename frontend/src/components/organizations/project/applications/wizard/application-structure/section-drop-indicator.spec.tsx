@@ -1,6 +1,6 @@
 import { GrantSectionFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DragDropContextData } from "./drag-drop-context";
 import { DragDropContext } from "./drag-drop-context";
 import { SectionDropIndicator, SectionWithDropIndicators } from "./section-drop-indicator";
@@ -39,42 +39,23 @@ vi.mock("@/utils/grant-sections", async () => {
 	};
 });
 
-const mockElement = {
-	getAttribute: vi.fn(),
-	hasAttribute: vi.fn(),
-};
-
-const mockObserver = {
-	disconnect: vi.fn(),
-	observe: vi.fn(),
-};
-
-const originalMutationObserver = globalThis.MutationObserver;
-// eslint-disable-next-line @typescript-eslint/no-deprecated
-const originalQuerySelector = globalThis.document.querySelector;
+const testSection = GrantSectionFactory.build({ id: "test-section", order: 0, parent_id: null });
 
 beforeEach(() => {
-	globalThis.MutationObserver = vi.fn(() => mockObserver) as any;
-	// eslint-disable-next-line @typescript-eslint/no-deprecated
-	globalThis.document.querySelector = vi.fn(() => mockElement) as any;
 	vi.clearAllMocks();
-	mockElement.hasAttribute.mockReturnValue(false);
-	mockElement.getAttribute.mockReturnValue("false");
 
 	Object.assign(mockDragContext, {
 		activeIndex: -1,
 		activeItem: null,
+		dragOverId: null,
+		dragOverZone: null,
 		isAnyDragging: false,
 		overIndex: -1,
 		overItem: null,
 		sections: [],
+		zone: null,
+		zonePercent: null,
 	});
-});
-
-afterEach(() => {
-	globalThis.MutationObserver = originalMutationObserver;
-	// eslint-disable-next-line @typescript-eslint/no-deprecated
-	globalThis.document.querySelector = originalQuerySelector;
 });
 
 const createRealDragContextProvider = (contextData: DragDropContextData) => {
@@ -125,11 +106,9 @@ describe("SectionDropIndicator", () => {
 });
 
 describe("SectionWithDropIndicators", () => {
-	const section = GrantSectionFactory.build();
-
 	it("renders children when no drag is active", () => {
 		render(
-			<SectionWithDropIndicators section={section}>
+			<SectionWithDropIndicators section={testSection}>
 				<div>Test Content</div>
 			</SectionWithDropIndicators>,
 		);
@@ -147,7 +126,7 @@ describe("SectionWithDropIndicators", () => {
 		});
 
 		render(
-			<SectionWithDropIndicators section={section}>
+			<SectionWithDropIndicators section={testSection}>
 				<div>Test Content</div>
 			</SectionWithDropIndicators>,
 		);
@@ -157,42 +136,50 @@ describe("SectionWithDropIndicators", () => {
 		expect(screen.getByTestId("drop-indicator-below")).toBeInTheDocument();
 	});
 
-	it("sets up MutationObserver when dragging is active", () => {
+	it("renders drop indicators when dragging is active and section is dragged over", () => {
 		Object.assign(mockDragContext, {
+			activeItem: GrantSectionFactory.build({ id: "other-section" }),
+			dragOverId: testSection.id,
+			dragOverZone: "sibling",
 			isAnyDragging: true,
+			overItem: testSection,
 		});
 
 		render(
-			<SectionWithDropIndicators section={section}>
+			<SectionWithDropIndicators section={testSection}>
 				<div>Test Content</div>
 			</SectionWithDropIndicators>,
 		);
 
-		// eslint-disable-next-line @typescript-eslint/no-deprecated
-		expect(globalThis.document.querySelector).toHaveBeenCalledWith(`[data-sortable-id="${section.id}"]`);
-		expect(mockObserver.observe).toHaveBeenCalled();
+		expect(screen.getByTestId("drop-indicator-above")).toBeInTheDocument();
+		expect(screen.getByTestId("drop-indicator-below")).toBeInTheDocument();
 	});
 
-	it("cleans up MutationObserver on unmount", () => {
+	it("hides drop indicators when not dragging or not dragged over", () => {
 		Object.assign(mockDragContext, {
-			isAnyDragging: true,
+			activeItem: null,
+			dragOverId: null,
+			dragOverZone: null,
+			isAnyDragging: false,
+			overItem: null,
 		});
 
-		const { unmount } = render(
-			<SectionWithDropIndicators section={section}>
+		render(
+			<SectionWithDropIndicators section={testSection}>
 				<div>Test Content</div>
 			</SectionWithDropIndicators>,
 		);
 
-		unmount();
+		const aboveIndicator = screen.getByTestId("drop-indicator-above");
+		const belowIndicator = screen.getByTestId("drop-indicator-below");
 
-		expect(mockObserver.disconnect).toHaveBeenCalled();
+		expect(aboveIndicator).toHaveClass("opacity-0");
+		expect(belowIndicator).toHaveClass("opacity-0");
 	});
 
 	describe("Integration Tests with Real Drag Context", () => {
 		beforeEach(() => {
 			vi.clearAllMocks();
-			mockElement.hasAttribute.mockReturnValue(false);
 		});
 
 		it("integrates SectionWithDropIndicators with real drag context provider", () => {
@@ -267,7 +254,7 @@ describe("SectionWithDropIndicators", () => {
 			expect(screen.getByText("Target Section")).toBeInTheDocument();
 		});
 
-		it("properly manages MutationObserver lifecycle with real context", () => {
+		it("properly unmounts component with real drag context", () => {
 			const sections = [GrantSectionFactory.build({ id: "test-section", order: 0, parent_id: null })];
 
 			const dragContext: DragDropContextData = {
