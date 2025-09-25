@@ -257,7 +257,7 @@ transform: rotate(-20deg) translateX(-80px);
 }
 
 
-[role = "progressbar"] {
+.progress-circle {
 --size: 246px;
 --bar-width: 20px;
 --color-red: #7068FF;
@@ -297,16 +297,16 @@ transition: --progress 0.3s linear;
 
 
 
-.progressbar:not([role = "progressbar"]) {
+.progress-circle:not(.progress-circle) {
     position: relative;
     
 }
 }
-[role = "progressbar"][aria-valuenow = "100"] {
+.progress-circle[aria-valuenow="100"] {
     animation: backgroundchangeonprogresscompleted 0.5s forwards;
     animation-delay: 0.6s;
 }
-[role = "progressbar"][aria-valuenow = "100"]::after {
+.progress-circle[aria-valuenow="100"]::after {
     animation: progressComplete 0.5s forwards;
     animation-delay: 0.6s;
 }
