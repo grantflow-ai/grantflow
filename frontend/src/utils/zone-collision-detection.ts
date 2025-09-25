@@ -53,7 +53,14 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 			}>;
 		} & Collision;
 
-		if (!collidingSection || collidingSection.parent_id !== null) {
+		if (!collidingSection) {
+			return defaultCollisions;
+		}
+
+		// For subsections being dragged, we still want to detect zones when over main sections
+		// This allows converting subsections to parents by dropping them in the sibling zone
+		if (collidingSection.parent_id !== null) {
+			// If we're over a subsection, no zone detection is needed
 			return defaultCollisions;
 		}
 

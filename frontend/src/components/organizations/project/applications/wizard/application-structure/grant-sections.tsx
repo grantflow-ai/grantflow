@@ -167,42 +167,46 @@ export function SortableSection({
 		<SectionWithDropIndicators section={section}>
 			{/** biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 			<div
-				className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+				className={isSubsection ? "relative w-full" : ""}
 				data-sortable-id={section.id}
-				data-testid="section-container"
-				onMouseEnter={handleMouseEnter}
 				ref={setNodeRef}
 				style={style}
 			>
-				<SectionHeader
-					attributes={attributes}
-					isDragDisabled={isDragDisabled}
-					isExpanded={isExpanded}
-					isSubsection={isSubsection}
-					listeners={listeners}
-					onAddSubsection={onAddSubsection}
-					onDelete={_onDelete}
-					onHeaderClick={handleHeaderClick}
-					onToggleExpand={onToggleExpand}
-					section={section}
-					sectionHasMaxWords={sectionHasMaxWords}
-				/>
+				<div
+					className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+					data-testid="section-container"
+					onMouseEnter={handleMouseEnter}
+				>
+					<SectionHeader
+						attributes={attributes}
+						isDragDisabled={isDragDisabled}
+						isExpanded={isExpanded}
+						isSubsection={isSubsection}
+						listeners={listeners}
+						onAddSubsection={onAddSubsection}
+						onDelete={_onDelete}
+						onHeaderClick={handleHeaderClick}
+						onToggleExpand={onToggleExpand}
+						section={section}
+						sectionHasMaxWords={sectionHasMaxWords}
+					/>
 
-				{isExpanded && (
-					<div
-						className="transition-all duration-200 ease-in-out opacity-100"
-						data-testid="edit-form-container"
-					>
-						<SectionEditForm
-							formData={formData}
-							isSubsection={isSubsection}
-							onCancel={onToggleExpand}
-							onSave={handleSave}
-							section={section}
-							setFormData={setFormData}
-						/>
-					</div>
-				)}
+					{isExpanded && (
+						<div
+							className="transition-all duration-200 ease-in-out opacity-100"
+							data-testid="edit-form-container"
+						>
+							<SectionEditForm
+								formData={formData}
+								isSubsection={isSubsection}
+								onCancel={onToggleExpand}
+								onSave={handleSave}
+								section={section}
+								setFormData={setFormData}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 		</SectionWithDropIndicators>
 	);
