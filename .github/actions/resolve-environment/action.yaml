@@ -38,8 +38,8 @@ runs:
         else
           ENVIRONMENT="staging"
           ENV_LATEST="staging-latest"
-          BACKEND_URL="https://api-staging.grantflow.ai"
-          CRDT_URL="wss://crdt-staging.grantflow.ai"
+          BACKEND_URL="https://staging-api.grantflow.ai"
+          CRDT_URL="wss://staging-crdt.grantflow.ai"
           SITE_URL="https://staging.grantflow.ai"
         fi
 
