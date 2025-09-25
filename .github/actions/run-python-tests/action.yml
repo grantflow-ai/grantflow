@@ -38,37 +38,19 @@ runs:
               version: 1.0
 
         - name: Set up PostgreSQL
+          if: contains('backend,indexer,crawler,rag,scraper,db', inputs.target)
+          uses: ./.github/actions/setup-postgresql
+          with:
+              port: "5433"
+              database: "postgres"
+              username: "runner"
+              password: "testpass"
+
+        - name: Export database connection for tests
+          if: contains('backend,indexer,crawler,rag,scraper,db', inputs.target)
           shell: bash
           run: |
-              # Only set up PostgreSQL for services that need database access
-              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "scraper" || "${{ inputs.target }}" == "db" ]]; then
-                  # Install PostgreSQL 17 and pgvector
-                  sudo apt-get update
-                  sudo apt-get install -y wget ca-certificates
-                  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-                  echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-                  sudo apt-get update
-                  sudo apt-get install -y postgresql-17 postgresql-client-17 postgresql-contrib-17
-                  
-                  # Install pgvector extension
-                  sudo apt-get install -y postgresql-17-pgvector
-                  
-                  # Configure PostgreSQL to use version 17 by default
-                  sudo pg_createcluster 17 main --start
-                  sudo systemctl start postgresql
-                  sudo systemctl enable postgresql
-                  
-                  # Create test user and set up database (using PostgreSQL 17 cluster)
-                  sudo -u postgres createuser --superuser runner --port=5433
-                  sudo -u postgres psql --port=5433 -c "ALTER USER runner WITH PASSWORD 'testpass';"
-                  
-                  # Set DATABASE_CONNECTION_STRING for tests (PostgreSQL 17 runs on port 5433)
-                  echo "DATABASE_CONNECTION_STRING=postgresql+asyncpg://runner:testpass@localhost:5433/postgres" >> $GITHUB_ENV
-                  
-                  # Test connection and create vector extension
-                  psql "postgresql://runner:testpass@localhost:5433/postgres" -c "SELECT version();"
-                  psql "postgresql://runner:testpass@localhost:5433/postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
-              fi
+              echo "DATABASE_CONNECTION_STRING=postgresql+asyncpg://runner:testpass@localhost:5433/postgres" >> $GITHUB_ENV
 
         - name: Install Dependencies for Target
           shell: bash
