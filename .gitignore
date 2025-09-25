@@ -64,7 +64,6 @@ frontend/functions/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/
-# functions/requirements.txt - Needed for Terraform
 GEMINI.md
 htmlcov/
 models/
@@ -73,7 +72,6 @@ openapi.json
 out/
 override.tf
 override.tf.json
-requirements.txt
 sentence-transformers/
 storybook-static/
 temp/
