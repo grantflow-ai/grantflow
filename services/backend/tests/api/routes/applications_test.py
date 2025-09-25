@@ -782,7 +782,7 @@ async def test_download_application_filename_sanitization(
 
     assert response.status_code == HTTPStatus.OK
     content_disposition = response.headers["content-disposition"]
-    assert 'filename="Test_App___With____Special____Characters___.md"' in content_disposition
+    assert 'filename="Test_App_With_Special_Characters.md"' in content_disposition
     filename_part = content_disposition.split('filename="')[1].split('"')[0]
     assert all(char.isalnum() or char in "-_." for char in filename_part)
 
