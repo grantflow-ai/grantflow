@@ -74,9 +74,9 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 	const pointerSensor = useSensor(PointerSensor, {
 		activationConstraint: {
-			delay: 0,
-			distance: 2,
-			tolerance: 5,
+			delay: 100,
+			distance: 8,
+			tolerance: 20,
 		},
 	});
 	const keyboardSensor = useSensor(KeyboardSensor, {
@@ -106,7 +106,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const draggedItem = items.find((item) => item.id === event.active.id);
 
 				onDragStart?.(event, draggedItem);
-
 				useDragOverlayStore.getState().setActiveItem(draggedItem);
 			};
 
