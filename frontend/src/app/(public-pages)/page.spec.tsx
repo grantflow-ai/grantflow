@@ -163,9 +163,9 @@ describe.sequential("LandingPage", () => {
 
 		expect(sections[0]).toHaveAttribute("data-testid", "mock-hero-banner");
 		expect(sections[1]).toHaveAttribute("data-testid", "mock-benefits-section");
-		expect(sections[2]).toHaveAttribute("data-testid", "mock-early-access-section");
-		expect(sections[3]).toHaveAttribute("data-testid", "mock-payment-plans");
-		expect(sections[4]).toHaveAttribute("data-testid", "mock-core-features-section");
+		expect(sections[2]).toHaveAttribute("data-testid", "mock-core-features-section");
+		expect(sections[3]).toHaveAttribute("data-testid", "mock-early-access-section");
+		expect(sections[4]).toHaveAttribute("data-testid", "mock-payment-plans");
 		expect(sections[5]).toHaveAttribute("data-testid", "mock-testimonials-section");
 		expect(sections[6]).toHaveAttribute("data-testid", "cta-section");
 		expect(sections[7]).toHaveAttribute("data-testid", "mock-cookie-consent-provider");

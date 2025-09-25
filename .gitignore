@@ -64,7 +64,7 @@ frontend/functions/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/
-functions/requirements.txt
+# functions/requirements.txt - Needed for Terraform
 GEMINI.md
 htmlcov/
 models/

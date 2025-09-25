@@ -36,7 +36,7 @@ export function CoreFeaturesSection() {
 			className="relative w-full bg-white overflow-hidden"
 			data-testid="core-features-section"
 		>
-			<div className="absolute inset-0 z-0 bg-[var(--app-gray-20)]"></div>
+			<div className="absolute inset-0 z-0 bg-[var(--app-gray-20)]" />
 
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-[120px] text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">
