@@ -37,6 +37,7 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
+import { createDeleteDialogConfig, openConfirmationDialog, SECTION_MOVE_DIALOG_CONFIG } from "./confirmation-dialogs";
 import { DragDropContext, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
@@ -87,8 +88,6 @@ const handleMainToSubReorder = async (
 	}
 
 	const handleConfirmMove = async () => {
-		dialogRef.current?.close();
-
 		const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
 		const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
 		const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
@@ -106,27 +105,9 @@ const handleMainToSubReorder = async (
 		}
 	};
 
-	dialogRef.current?.open({
-		content: null,
-		description:
-			"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
-		dismissOnOutsideClick: false,
-		footer: (
-			<div className="flex justify-between w-full">
-				<AppButton
-					data-testid="cancel-move-button"
-					onClick={() => dialogRef.current?.close()}
-					variant="secondary"
-				>
-					Cancel
-				</AppButton>
-				<AppButton data-testid="confirm-move-button" onClick={handleConfirmMove} variant="primary">
-					Convert and Remove
-				</AppButton>
-			</div>
-		),
-		minWidth: "min-w-xl",
-		title: "This action will affect the section structure!",
+	openConfirmationDialog(dialogRef, {
+		...SECTION_MOVE_DIALOG_CONFIG,
+		onConfirm: handleConfirmMove,
 	});
 };
 
@@ -219,8 +200,6 @@ const handleMainToMainChildZoneReorder = async (
 	}
 
 	const handleConfirmMove = async () => {
-		dialogRef.current?.close();
-
 		const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
 		const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
 		const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
@@ -238,27 +217,9 @@ const handleMainToMainChildZoneReorder = async (
 		}
 	};
 
-	dialogRef.current?.open({
-		content: null,
-		description:
-			"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
-		dismissOnOutsideClick: false,
-		footer: (
-			<div className="flex justify-between w-full">
-				<AppButton
-					data-testid="cancel-move-button"
-					onClick={() => dialogRef.current?.close()}
-					variant="secondary"
-				>
-					Cancel
-				</AppButton>
-				<AppButton data-testid="confirm-move-button" onClick={handleConfirmMove} variant="primary">
-					Convert and Remove
-				</AppButton>
-			</div>
-		),
-		minWidth: "min-w-xl",
-		title: "This action will affect the section structure!",
+	openConfirmationDialog(dialogRef, {
+		...SECTION_MOVE_DIALOG_CONFIG,
+		onConfirm: handleConfirmMove,
 	});
 };
 
@@ -423,35 +384,9 @@ export function DragDropSectionManager({
 			const subSections = grantSections.filter((s) => s.parent_id === sectionId);
 			const hasSubSections = subSections.length > 0;
 
-			dialogRef.current?.open({
-				content: null,
-				description: hasSubSections
-					? "All content within this section and its sub-sections will be permanently removed. This action cannot be undone."
-					: "All content within this section will be permanently removed. This action cannot be undone.",
-				dismissOnOutsideClick: false,
-				footer: (
-					<div className="flex justify-between w-full">
-						<AppButton
-							data-testid="cancel-delete-button"
-							onClick={() => dialogRef.current?.close()}
-							variant="secondary"
-						>
-							Cancel
-						</AppButton>
-						<AppButton
-							data-testid="confirm-delete-button"
-							onClick={async () => {
-								await performDelete(sectionId);
-								dialogRef.current?.close();
-							}}
-							variant="primary"
-						>
-							Delete Section
-						</AppButton>
-					</div>
-				),
-				minWidth: "min-w-xl",
-				title: "Are you sure you want to delete this section?",
+			openConfirmationDialog(dialogRef, {
+				...createDeleteDialogConfig(hasSubSections),
+				onConfirm: () => performDelete(sectionId),
 			});
 		},
 		[grantSections, dialogRef, performDelete],

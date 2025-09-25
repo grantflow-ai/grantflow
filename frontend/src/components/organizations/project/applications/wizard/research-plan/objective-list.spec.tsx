@@ -7,12 +7,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ObjectiveList } from "./objective-list";
 
-vi.mock("@/hooks/use-drag-and-drop", () => ({
-	useDragAndDrop: () => ({
-		DragDropWrapper: ({ children }: { children: React.ReactNode }) => (
-			<div data-testid="drag-drop-wrapper">{children}</div>
-		),
-	}),
+// Mock @dnd-kit components
+vi.mock("@dnd-kit/core", () => ({
+	closestCenter: vi.fn(),
+	DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,
+	KeyboardSensor: vi.fn(),
+	PointerSensor: vi.fn(),
+	useSensor: vi.fn(() => ({})),
+	useSensors: vi.fn(() => []),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+	horizontalListSortingStrategy: vi.fn(),
+	SortableContext: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="sortable-context">{children}</div>
+	),
+	sortableKeyboardCoordinates: vi.fn(),
 }));
 
 vi.mock("./draggable-objective-card", () => ({
@@ -85,7 +95,7 @@ describe.sequential("ObjectiveList", () => {
 		it("renders drag drop wrapper and all objective cards", () => {
 			renderObjectiveList();
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 
 			const cards = screen.getAllByTestId("draggable-objective-card");
 			expect(cards).toHaveLength(3);
@@ -197,7 +207,7 @@ describe.sequential("ObjectiveList", () => {
 		it("handles reorder callback correctly", async () => {
 			const { props } = renderObjectiveList();
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(props.onReorder).toBeDefined();
 		});
 	});
@@ -206,7 +216,7 @@ describe.sequential("ObjectiveList", () => {
 		it("handles empty objectives array", () => {
 			renderObjectiveList({ objectives: [] });
 
-			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
+			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.queryByTestId("draggable-objective-card")).not.toBeInTheDocument();
 		});
 
