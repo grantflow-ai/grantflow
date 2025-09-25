@@ -37,53 +37,12 @@ concurrency:
 
 jobs:
     build:
-        name: Build Frontend Bundle
-        runs-on: ubuntu-latest-m
-        timeout-minutes: 30
+        name: Build Frontend
+        uses: ./.github/workflows/build-service.yaml
+        with:
+            service: frontend
+            timeout: 60
         permissions:
             contents: read
             id-token: write
-        if: github.event_name != 'pull_request'
-        outputs:
-            build_id: ${{ steps.build_info.outputs.image_tag }}
-            commit_sha: ${{ github.sha }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-
-            - name: Setup workspace
-              uses: ./.github/actions/setup-node-workspace
-
-            - name: Build editor
-              run: cd editor && pnpm build
-
-            - name: Resolve environment
-              id: build_info
-              uses: ./.github/actions/resolve-environment
-
-            - name: Build frontend
-              run: cd frontend && pnpm build
-              env:
-                  NEXT_PUBLIC_BUILD_ID: ${{ steps.build_info.outputs.image_tag }}
-                  NEXT_PUBLIC_COMMIT_SHA: ${{ github.sha }}
-                  NEXT_PUBLIC_BACKEND_API_BASE_URL: ${{ steps.build_info.outputs.backend_url }}
-                  NEXT_PUBLIC_CRDT_SERVER_URL: ${{ steps.build_info.outputs.crdt_url }}
-                  NEXT_PUBLIC_SITE_URL: ${{ steps.build_info.outputs.site_url }}
-                  NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-                  NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-                  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-                  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
-                  NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID }}
-                  NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID }}
-                  NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
-                  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-
-            - name: Upload build artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: frontend-build-${{ steps.build_info.outputs.image_tag }}
-                  path: |
-                      frontend/.next/
-                      frontend/out/
-                      frontend/package.json
-                  retention-days: 7
+        secrets: inherit
