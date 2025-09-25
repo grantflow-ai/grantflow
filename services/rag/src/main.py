@@ -95,14 +95,9 @@ async def _handle_autofill_request(
                 trace_id=request.trace_id,
                 elapsed_ms=round((time.perf_counter() - start_time) * 1000, 2),
             )
-            raise ValidationError(
-                f"Grant application {request.application_id} not found or has been deleted",
-                context={
-                    "application_id": str(request.application_id),
-                    "request_type": type(request).__name__,
-                    "trace_id": request.trace_id,
-                },
-            )
+            # Return early instead of raising an error - acknowledge the message
+            # This handles stale Pub/Sub messages for deleted applications
+            return
 
     logger.debug(
         "Found application for autofill",
@@ -156,10 +151,9 @@ async def _handle_grant_template_request(
                 trace_id=request.trace_id,
                 elapsed_ms=round((time.perf_counter() - start_time) * 1000, 2),
             )
-            raise ValidationError(
-                f"Grant template {request.parent_id} not found",
-                context={"template_id": str(request.parent_id), "trace_id": request.trace_id},
-            )
+            # Return early instead of raising an error - acknowledge the message
+            # This handles stale Pub/Sub messages for deleted templates
+            return
 
     logger.debug(
         "Found grant template for processing",

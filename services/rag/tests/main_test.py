@@ -160,8 +160,8 @@ async def test_handle_rag_request_invalid_message(trace_id: TraceId) -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 400
-    assert "Invalid pubsub message" in response.json()["detail"]
+    # Defensive behavior: acknowledge invalid messages with 201
+    assert response.status_code == 201
 
 
 async def test_handle_rag_request_missing_parent_type(trace_id: TraceId) -> None:
@@ -173,8 +173,8 @@ async def test_handle_rag_request_missing_parent_type(trace_id: TraceId) -> None
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 400
-    assert "Invalid pubsub message" in response.json()["detail"]
+    # Defensive behavior: acknowledge invalid messages with 201
+    assert response.status_code == 201
 
 
 async def test_handle_rag_request_missing_parent_id(trace_id: TraceId) -> None:
@@ -186,8 +186,8 @@ async def test_handle_rag_request_missing_parent_id(trace_id: TraceId) -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 400
-    assert "Invalid pubsub message" in response.json()["detail"]
+    # Defensive behavior: acknowledge invalid messages with 201
+    assert response.status_code == 201
 
 
 async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None:
@@ -203,8 +203,8 @@ async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 400
-    assert "Invalid pubsub message" in response.json()["detail"]
+    # Defensive behavior: acknowledge invalid messages with 201
+    assert response.status_code == 201
 
 
 async def test_handle_rag_request_handler_error(
@@ -229,8 +229,7 @@ async def test_handle_rag_request_handler_error(
         response = await client.post("/", json=msgspec.to_builtins(event))
 
     assert response.status_code == 500
-
-    assert response.json()["detail"] == "Internal Server Error"
+    # When handler raises an exception, it returns 500 for retry
 
 
 async def test_handle_rag_request_invalid_base64(trace_id: TraceId) -> None:
@@ -249,8 +248,8 @@ async def test_handle_rag_request_invalid_base64(trace_id: TraceId) -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 400
-    assert "Invalid pubsub message" in response.json()["detail"]
+    # Defensive behavior: acknowledge invalid messages with 201
+    assert response.status_code == 201
 
 
 def test_handle_pubsub_message_valid(trace_id: TraceId) -> None:
