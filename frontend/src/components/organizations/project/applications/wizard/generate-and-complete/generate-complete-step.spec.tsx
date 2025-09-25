@@ -15,23 +15,27 @@ afterEach(() => {
 });
 
 describe.sequential("GenerateCompleteStep", () => {
-	it("renders static congratulations content", () => {
-		const { container } = render(<GenerateCompleteStep progress={0} />);
+	it("renders the progress bar and generating text when progress is incomplete", () => {
+		render(<GenerateCompleteStep progress={50} />);
 
-		expect(container.querySelector('[data-testid="generate-complete-step"]')).toBeInTheDocument();
+		expect(screen.getByRole("progressbar")).toBeInTheDocument();
 		expect(screen.getByText("Great job! Your Application Draft Is Being Generated")).toBeInTheDocument();
 		expect(
-			screen.getByText("We're now generating your draft and will send it to your inbox shortly."),
+			screen.getByText(
+				"We’re preparing your draft. You’ll be able to download it here, and we’ll also send a copy to your inbox shortly.",
+			),
 		).toBeInTheDocument();
-
-		expect(container.querySelector("button")).not.toBeInTheDocument();
 	});
 
-	it("renders the logo image", () => {
-		render(<GenerateCompleteStep progress={0} />);
+	it("renders the progress bar and ready text when progress is complete", () => {
+		render(<GenerateCompleteStep progress={100} />);
 
-		const logo = screen.getByAltText("GrantFlow logo");
-		expect(logo).toBeInTheDocument();
-		expect(logo).toHaveAttribute("src", "/icons/preview-logo.svg");
+		expect(screen.getByRole("progressbar")).toBeInTheDocument();
+		expect(screen.getByText("Your Application Draft Is Ready")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"You can download it directly here. We’ve also sent a copy to your inbox for your convenience.",
+			),
+		).toBeInTheDocument();
 	});
 });
