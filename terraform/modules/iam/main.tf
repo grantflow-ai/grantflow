@@ -146,6 +146,27 @@ resource "google_project_iam_member" "github_actions_monitoring_admin" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# Required for Cloud Functions management
+resource "google_project_iam_member" "github_actions_cloudfunctions_admin" {
+  project = "grantflow"
+  role    = "roles/cloudfunctions.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Service Networking management
+resource "google_project_iam_member" "github_actions_servicenetworking_admin" {
+  project = "grantflow"
+  role    = "roles/servicenetworking.networksAdmin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Required for Cloud Scheduler management
+resource "google_project_iam_member" "github_actions_cloudscheduler_admin" {
+  project = "grantflow"
+  role    = "roles/cloudscheduler.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account_iam_member" "github_actions_service_account_user" {
   service_account_id = google_service_account.cloud_storage_admin.name
