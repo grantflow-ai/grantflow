@@ -1,6 +1,6 @@
 "use client";
 
-// import { useEffect,useState  } from "react";
+import styles from "./circular-progress.module.css";
 
 interface ProgressCircleProps {
 	progress: number;
@@ -13,7 +13,7 @@ export default function ProgressCircle({ progress }: ProgressCircleProps) {
 			aria-valuemax={100}
 			aria-valuemin={0}
 			aria-valuenow={progress}
-			className="progress-circle"
+			className={styles["progress-circle"]}
 			role="progressbar"
 			style={
 				{
