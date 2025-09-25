@@ -14,7 +14,7 @@ export const databaseExtension = new Database({
 
 			const crdt = rows.length === 0 ? null : rows[0].crdt;
 			logger.info({ documentId: documentName, hasCrdt: crdt !== null }, "crdt_state_fetched");
-			return crdt;
+			return crdt ?? null;
 		} catch (err) {
 			logger.error({ documentId: documentName, err }, "crdt_state_fetch_failed");
 			throw err;
@@ -22,7 +22,7 @@ export const databaseExtension = new Database({
 	},
 	store: async ({ documentName, state }) => {
 		try {
-			await db.update(editorDocuments).set({ crdt: state }).where(eq(editorDocuments.id, documentName));
+			await db.update(editorDocuments).set({ crdt: state as Uint8Array }).where(eq(editorDocuments.id, documentName));
 			logger.info({ documentId: documentName }, "crdt_state_persisted");
 		} catch (err) {
 			logger.error({ documentId: documentName, err }, "crdt_state_persist_failed");
