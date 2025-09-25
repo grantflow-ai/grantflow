@@ -1285,45 +1285,6 @@ describe("WizardFooter - Analytics Tracking", () => {
 				});
 			});
 		});
-
-		it("tracks validation error for processing RAG sources", async () => {
-			const user = userEvent.setup();
-
-			const validateStepNextSpy = vi.fn(() => ({
-				isValid: false,
-				reason: ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING,
-			}));
-
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: validateStepNextSpy,
-			});
-
-			useApplicationStore.setState({
-				application: {
-					...useApplicationStore.getState().application!,
-					grant_template: {
-						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
-					},
-					title: "Valid Long Title for Testing",
-				},
-			});
-
-			render(<WizardFooter />);
-
-			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).not.toBeDisabled();
-
-			await user.click(continueButton);
-
-			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
-					errorType: "validation",
-					validationErrors: expect.arrayContaining(["rag-sources-processing"]),
-				});
-			});
-		});
 	});
 
 	describe("Context validation", () => {

@@ -345,12 +345,6 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 			reasonMessage = "No RAG sources (count: 0)";
 			break;
 		}
-		case ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING: {
-			reasonMessage = `RAG sources still processing (${validation.processingCount} of ${validation.totalCount})`;
-			metadata.processingCount = validation.processingCount;
-			metadata.totalCount = validation.totalCount;
-			break;
-		}
 		case ApplicationDetailsValidationReason.TITLE_INVALID: {
 			reasonMessage = `Title invalid (length: ${application.title ? application.title.length : 0}, min: ${MIN_TITLE_LENGTH})`;
 			break;
