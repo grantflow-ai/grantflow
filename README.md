@@ -356,7 +356,7 @@ the instructions in the [Getting Started](#getting-started) section.
 ### Backend Services
 
 Backend services are deployed to Cloud Run:
-- API: `https://api-staging.grantflow.ai` (staging)
+- API: `https://staging-api.grantflow.ai` (staging)
 - Services: backend, indexer, crawler, rag, scraper
 - Database: Cloud SQL PostgreSQL
 - Storage: GCS buckets
