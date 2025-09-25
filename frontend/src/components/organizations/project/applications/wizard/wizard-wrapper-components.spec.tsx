@@ -667,7 +667,14 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			await user.click(dashboardButton);
 
 			expect(mockPush).toHaveBeenCalledWith("/organization");
-			expect(mockReset).toHaveBeenCalledOnce();
+
+			// Wait for the delayed reset call
+			await waitFor(
+				() => {
+					expect(mockReset).toHaveBeenCalledOnce();
+				},
+				{ timeout: 1500 },
+			);
 		});
 
 		it("calls toPreviousStep when back button is clicked", async () => {
@@ -877,8 +884,15 @@ describe.sequential("WizardHeader", () => {
 			const exitButton = screen.getByTestId("exit-button");
 			await user.click(exitButton);
 
-			expect(mockReset).toHaveBeenCalledOnce();
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
+
+			// Wait for the delayed reset call
+			await waitFor(
+				() => {
+					expect(mockReset).toHaveBeenCalledOnce();
+				},
+				{ timeout: 1500 },
+			);
 		});
 
 		it("navigates to projects list if no project_id available", async () => {
