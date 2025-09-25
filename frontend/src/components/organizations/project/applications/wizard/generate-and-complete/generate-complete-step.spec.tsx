@@ -16,7 +16,7 @@ afterEach(() => {
 
 describe.sequential("GenerateCompleteStep", () => {
 	it("renders static congratulations content", () => {
-		const { container } = render(<GenerateCompleteStep />);
+		const { container } = render(<GenerateCompleteStep progress={0} />);
 
 		expect(container.querySelector('[data-testid="generate-complete-step"]')).toBeInTheDocument();
 		expect(screen.getByText("Great job! Your Application Draft Is Being Generated")).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe.sequential("GenerateCompleteStep", () => {
 	});
 
 	it("renders the logo image", () => {
-		render(<GenerateCompleteStep />);
+		render(<GenerateCompleteStep progress={0} />);
 
 		const logo = screen.getByAltText("GrantFlow logo");
 		expect(logo).toBeInTheDocument();
