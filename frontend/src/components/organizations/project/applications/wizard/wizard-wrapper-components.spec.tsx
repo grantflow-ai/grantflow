@@ -147,7 +147,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 	});
 
 	describe.sequential("Button State Management", () => {
-		it("disables continue button when step validation fails", () => {
+		it("keeps continue button enabled when step validation fails", () => {
 			const mockValidateStepNext = vi.fn(() => ({ isValid: false, reason: "test validation failed" }));
 
 			useWizardStore.setState({
@@ -170,7 +170,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
 		it("disables back button when template is generating", () => {
@@ -185,7 +185,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			expect(backButton).toBeDisabled();
 		});
 
-		it("disables continue button when RAG sources are not processed (APPLICATION_DETAILS)", () => {
+		it("keeps continue button enabled when RAG sources are not processed (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
@@ -209,7 +209,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
 		it("enables continue button when RAG sources are processed (APPLICATION_DETAILS)", () => {
@@ -266,7 +266,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
-		it("disables continue button when RAG sources are CREATED (APPLICATION_DETAILS)", () => {
+		it("keeps continue button enabled when RAG sources are CREATED (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
@@ -290,10 +290,10 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
-		it("handles edge cases with no RAG sources (APPLICATION_DETAILS)", () => {
+		it("keeps continue button enabled with no RAG sources (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
@@ -314,10 +314,10 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
-		it("handles edge case with no grant template (APPLICATION_DETAILS)", () => {
+		it("keeps continue button enabled with no grant template (APPLICATION_DETAILS)", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
@@ -335,7 +335,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			expect(continueButtons[0]).not.toBeDisabled();
 		});
 
 		it("uses local validation only for APPLICATION_DETAILS step", () => {
@@ -367,7 +367,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 	});
 
 	describe.sequential("Tooltip Functionality", () => {
-		it("displays tooltip when button is disabled due to missing RAG sources", async () => {
+		it("does not display tooltip - buttons are always enabled", async () => {
 			const user = userEvent.setup();
 
 			useWizardStore.setState({
@@ -390,15 +390,15 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).not.toBeDisabled();
 
 			await user.hover(continueButton.parentElement!);
 			await waitFor(() => {
-				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+				expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 			});
 		});
 
-		it("displays tooltip when button is disabled due to RAG sources processing", async () => {
+		it("does not display tooltip for processing RAG sources - buttons are always enabled", async () => {
 			const user = userEvent.setup();
 
 			useWizardStore.setState({
@@ -429,15 +429,15 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).not.toBeDisabled();
 
 			await user.hover(continueButton.parentElement!);
 			await waitFor(() => {
-				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+				expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 			});
 		});
 
-		it("displays tooltip when button is disabled due to invalid title", async () => {
+		it("does not display tooltip for invalid title - buttons are always enabled", async () => {
 			const user = userEvent.setup();
 
 			useWizardStore.setState({
@@ -464,11 +464,11 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).not.toBeDisabled();
 
 			await user.hover(continueButton.parentElement!);
 			await waitFor(() => {
-				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+				expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 			});
 		});
 
@@ -528,7 +528,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			render(<WizardFooter />);
 
 			const continueButton = screen.getByTestId("continue-button");
-			expect(continueButton).toBeDisabled();
+			expect(continueButton).not.toBeDisabled();
 
 			await user.hover(continueButton);
 
