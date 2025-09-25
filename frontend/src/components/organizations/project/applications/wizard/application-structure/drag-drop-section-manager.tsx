@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	closestCenter,
 	DndContext,
 	type DragEndEvent,
 	type DragMoveEvent,
@@ -37,7 +38,6 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { log } from "@/utils/logger/client";
-import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
 import { DragDropContext, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
@@ -549,8 +549,6 @@ export function DragDropSectionManager({
 		}),
 	);
 
-	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
-
 	const handleDragStart = useCallback(
 		(event: DragStartEvent) => {
 			log.info("[DragDropSectionManager] handleDragStart", {
@@ -803,7 +801,7 @@ export function DragDropSectionManager({
 			</div>
 			<ScrollArea className="flex-1">
 				<DndContext
-					collisionDetection={zoneCollisionDetection}
+					collisionDetection={closestCenter}
 					onDragEnd={handleDragEnd}
 					onDragMove={handleDragMove}
 					onDragOver={handleDragOver}
@@ -846,12 +844,16 @@ function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) 
 
 	return (
 		<div
-			className={`group rounded outline-2 outline-offset-[-1px] outline-primary transition-all duration-200 bg-white shadow-xl ${isSubsection ? "px-3 py-2" : "px-3 py-4"}`}
-			style={{ minWidth: isSubsection ? "410px" : "300px" }}
+			className={`group rounded-lg border-2 border-primary bg-white/95 backdrop-blur-sm shadow-2xl transition-all duration-200 ${isSubsection ? "ml-12 px-3 py-2" : "px-3 py-4"}`}
+			style={{
+				minWidth: isSubsection ? "410px" : "500px",
+				opacity: 0.9,
+				transform: "rotate(-2deg)",
+			}}
 		>
 			<div className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}>
 				<div className="relative size-6 cursor-grabbing">
-					<GripVertical className="size-6 text-gray-400" />
+					<GripVertical className="size-6 text-primary animate-pulse" />
 				</div>
 
 				<div className="flex flex-1 items-center justify-between">

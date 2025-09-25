@@ -20,14 +20,18 @@ export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }:
 	const marginClass = position === "above" ? "mb-1" : "mt-1";
 	const positionClass = position === "above" ? "-top-2" : "-bottom-2";
 	const visibilityClasses = isVisible
-		? `h-2 opacity-100 scale-y-100 ${marginClass} ${positionClass}`
+		? `h-3 opacity-100 scale-y-100 ${marginClass} ${positionClass}`
 		: `h-0 opacity-0 scale-y-0 mb-0 mt-0 ${positionClass}`;
 
 	return (
 		<div
-			className={`absolute right-0 bg-primary rounded-xs transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
+			className={`absolute right-0 bg-gradient-to-r from-primary via-primary-600 to-primary rounded-sm shadow-lg transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
 			data-testid={`drop-indicator-${position}`}
-		/>
+		>
+			{isVisible && (
+				<div className="h-full w-full animate-pulse bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+			)}
+		</div>
 	);
 }
 

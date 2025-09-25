@@ -121,9 +121,10 @@ export function SortableSection({
 	}, [section, effectiveAiPrompt]);
 
 	const style = {
-		opacity: isCurrentlyDragging ? 0.5 : 1,
+		filter: isCurrentlyDragging ? "blur(1px)" : "none",
+		opacity: isCurrentlyDragging ? 0.3 : 1,
 		transform: active ? "none" : CSS.Transform.toString(transform),
-		transition: isCurrentlyDragging ? "none" : transition,
+		transition: isCurrentlyDragging ? "none" : transition || "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
 	};
 
 	const sectionHasMaxWords = hasMaxWords(section) && Boolean(section.max_words);

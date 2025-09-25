@@ -2,6 +2,7 @@ import {
 	type Active,
 	type Collision,
 	type CollisionDetection,
+	closestCenter,
 	type Data,
 	type DataRef,
 	pointerWithin,
@@ -13,7 +14,11 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 	return (args) => {
 		const { active, droppableRects, pointerCoordinates } = args;
 
-		const defaultCollisions = pointerWithin(args);
+		// Use closestCenter as the primary detection for better drop experience
+		const closestCollisions = closestCenter(args);
+
+		// Fall back to pointerWithin if closestCenter returns nothing
+		const defaultCollisions = closestCollisions.length > 0 ? closestCollisions : pointerWithin(args);
 
 		if (!pointerCoordinates || defaultCollisions.length === 0) {
 			return defaultCollisions;
@@ -54,7 +59,8 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 
 		const relativeX = pointerCoordinates.x - rect.left;
 		const zonePercent = (relativeX / rect.width) * 100;
-		const zone: ZoneType = zonePercent < 16 ? "sibling" : "child";
+		// Increase the sibling zone from 16% to 25% for easier dropping
+		const zone: ZoneType = zonePercent < 25 ? "sibling" : "child";
 
 		return defaultCollisions.map((collision) => ({
 			...collision,
