@@ -56,23 +56,18 @@ export function DraggableTaskList({
 		[onTaskValueChange],
 	);
 
-	const { DragDropWrapper } = useDragAndDrop<TaskDragDropItem>(
-		{
-			onReorder: async (_items, oldIndex, newIndex) => {
-				if (onTaskReorder) {
-					onTaskReorder(oldIndex, newIndex);
-				} else if (objectiveNumber) {
-					const reorderedTasks = [...tasks];
-					const [movedTask] = reorderedTasks.splice(oldIndex, 1);
-					reorderedTasks.splice(newIndex, 0, movedTask);
-					await updateTasksForObjective(objectiveNumber, reorderedTasks);
-				}
-			},
+	const { DragDropWrapper } = useDragAndDrop<TaskDragDropItem>({
+		onReorder: async (_items, oldIndex, newIndex) => {
+			if (onTaskReorder) {
+				onTaskReorder(oldIndex, newIndex);
+			} else if (objectiveNumber) {
+				const reorderedTasks = [...tasks];
+				const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+				reorderedTasks.splice(newIndex, 0, movedTask);
+				await updateTasksForObjective(objectiveNumber, reorderedTasks);
+			}
 		},
-		{
-			strategy: "vertical",
-		},
-	);
+	});
 
 	return (
 		<div className="space-y-3">

@@ -68,6 +68,20 @@ interface SortableSectionProps {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }
 
+const createInitialFormData = (section: GrantSection): SectionFormData => {
+	const generatedAiPrompt = aiPrompt(section.title);
+	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
+	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
+
+	return {
+		aiPrompt: effectiveAiPrompt,
+		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
+		max_words: hasMaxWords(section) ? section.max_words : 3000,
+		title: section.title,
+		useWords: true,
+	};
+};
+
 export function SortableSection({
 	isDetailedSection: _isDetailedSection,
 	isDragDisabled = false,
@@ -98,27 +112,11 @@ export function SortableSection({
 		id: section.id,
 	});
 
-	const generatedAiPrompt = aiPrompt(section.title);
-	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
-	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
-
-	const [formData, setFormData] = useState<SectionFormData>({
-		aiPrompt: effectiveAiPrompt,
-		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
-		max_words: hasMaxWords(section) ? section.max_words : 3000,
-		title: section.title,
-		useWords: true,
-	});
+	const [formData, setFormData] = useState<SectionFormData>(() => createInitialFormData(section));
 
 	useEffect(() => {
-		setFormData({
-			aiPrompt: effectiveAiPrompt,
-			isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
-			max_words: hasMaxWords(section) ? section.max_words : 3000,
-			title: section.title,
-			useWords: true,
-		});
-	}, [section, effectiveAiPrompt]);
+		setFormData(createInitialFormData(section));
+	}, [section]);
 
 	const style = {
 		filter: isCurrentlyDragging ? "blur(1px)" : "none",
@@ -165,13 +163,13 @@ export function SortableSection({
 
 	return (
 		<SectionWithDropIndicators section={section}>
-			{/** biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 			<div
 				className={isSubsection ? "relative w-full" : ""}
 				data-sortable-id={section.id}
 				ref={setNodeRef}
 				style={style}
 			>
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 				<div
 					className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 					data-testid="section-container"

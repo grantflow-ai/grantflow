@@ -74,16 +74,11 @@ export function ObjectiveList({
 		parent_id: null,
 	}));
 
-	const { DragDropWrapper } = useDragAndDrop<ObjectiveDragDropItem>(
-		{
-			onReorder: async (_items, oldIndex, newIndex) => {
-				await onReorder(objectives, oldIndex, newIndex);
-			},
+	const { DragDropWrapper } = useDragAndDrop<ObjectiveDragDropItem>({
+		onReorder: async (_items, oldIndex, newIndex) => {
+			await onReorder(objectives, oldIndex, newIndex);
 		},
-		{
-			strategy: "horizontal",
-		},
-	);
+	});
 
 	const editingIndex = editingObjectiveId
 		? objectives.findIndex((obj) => obj.number === editingObjectiveId)
