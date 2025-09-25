@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	closestCenter,
 	DndContext,
 	type DragEndEvent,
 	type DragMoveEvent,
@@ -38,6 +37,7 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { log } from "@/utils/logger/client";
+import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
 import { DragDropContext, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
@@ -141,9 +141,23 @@ const handleSubToMainReorder = async (
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 	zone?: null | ZoneType,
 ): Promise<boolean> => {
+	log.info("[handleSubToMainReorder] Processing sub-to-main reorder", {
+		activeId: activeItem.id,
+		activeParentId: activeItem.parent_id,
+		overId: overItem.id,
+		overParentId: overItem.parent_id,
+		zone,
+	});
+
 	const newParentId = zone === "sibling" ? null : determineNewParentId(overItem, zone ?? "child");
 	const targetIndexInChildZone = activeIndex < overIndex ? overIndex : overIndex + 1;
 	const targetIndex = zone === "sibling" ? overIndex : targetIndexInChildZone;
+
+	log.info("[handleSubToMainReorder] Calculated new parent", {
+		newParentId,
+		targetIndex,
+		zone,
+	});
 
 	if (
 		zone !== "sibling" &&
@@ -530,6 +544,8 @@ export function DragDropSectionManager({
 	);
 
 	// Initialize sensors for drag and drop
+	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
+
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -590,6 +606,12 @@ export function DragDropSectionManager({
 		if (collision.data && (Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))) {
 			const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
 			const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
+
+			log.info("[handleDragMove] Zone detected", {
+				collisionId: collision.id,
+				zone,
+				zonePercent,
+			});
 
 			dragStateRef.current = {
 				...dragStateRef.current,
@@ -801,7 +823,7 @@ export function DragDropSectionManager({
 			</div>
 			<ScrollArea className="flex-1">
 				<DndContext
-					collisionDetection={closestCenter}
+					collisionDetection={zoneCollisionDetection}
 					onDragEnd={handleDragEnd}
 					onDragMove={handleDragMove}
 					onDragOver={handleDragOver}
@@ -847,8 +869,6 @@ function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) 
 			className={`group rounded-lg border-2 border-primary bg-white/95 backdrop-blur-sm shadow-2xl transition-all duration-200 ${isSubsection ? "ml-12 px-3 py-2" : "px-3 py-4"}`}
 			style={{
 				minWidth: isSubsection ? "410px" : "500px",
-				opacity: 0.9,
-				transform: "rotate(-2deg)",
 			}}
 		>
 			<div className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}>
