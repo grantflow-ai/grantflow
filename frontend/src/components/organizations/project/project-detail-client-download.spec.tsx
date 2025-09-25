@@ -91,6 +91,34 @@ vi.mock("@/stores/user-store", () => ({
 	}),
 }));
 
+vi.mock("@/components/ui/dropdown-menu", () => ({
+	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-menu">{children}</div>,
+	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="dropdown-content">{children}</div>
+	),
+	DropdownMenuItem: ({ children, onClick }: any) => (
+		<div
+			data-testid="dropdown-item"
+			onClick={onClick}
+			onKeyDown={(e: React.KeyboardEvent) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onClick?.(e);
+				}
+			}}
+			role="menuitem"
+			tabIndex={0}
+		>
+			{children}
+		</div>
+	),
+	DropdownMenuTrigger: ({ children, className, disabled, onClick }: any) => (
+		<button className={className} disabled={disabled} onClick={onClick} type="button">
+			{children}
+		</button>
+	),
+}));
+
 vi.mock("@/hooks/use-project-title-editing", () => ({
 	useProjectTitleEditing: () => ({
 		handleSave: vi.fn(),
@@ -158,9 +186,9 @@ describe("ProjectDetailClient Download Functionality", () => {
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-123")).toBeInTheDocument();
 
-			const draftCard = screen.getByTestId("application-card-Draft Application");
+			const draftCard = screen.getByTestId("application-card-app-456");
 			expect(draftCard).toBeInTheDocument();
 		});
 	});
@@ -175,24 +203,32 @@ describe("ProjectDetailClient Download Functionality", () => {
 		globalThis.URL.createObjectURL = mockCreateObjectURL;
 		globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
-		const mockLink = {
-			click: vi.fn(),
-			download: "",
-			href: "",
-			remove: vi.fn(),
-		};
+		const mockLink = document.createElement("a");
+		mockLink.click = vi.fn();
+		mockLink.remove = vi.fn();
+
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+			if (tagName === "a") {
+				return mockLink;
+			}
+			return originalCreateElement(tagName);
+		});
+
 		const mockAppend = vi.fn();
-		vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
 		vi.spyOn(document.body, "append").mockImplementation(mockAppend);
 
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-123")).toBeInTheDocument();
 		});
 
-		const downloadButton = screen.getByRole("button", { name: /download/i });
-		await user.click(downloadButton);
+		const downloadMenus = screen.getAllByTestId("dropdown-menu");
+		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		expect(downloadButton).toBeInTheDocument();
+		await user.click(downloadButton!);
 
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
@@ -209,7 +245,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 
 		expect(mockCreateObjectURL).toHaveBeenCalledWith(mockBlob);
 		expect(mockLink.href).toBe("blob:test-url");
-		expect(mockLink.download).toBe("Test Application.md");
+		expect(mockLink.download).toBe("Test_Application.md");
 		expect(mockLink.click).toHaveBeenCalled();
 		expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:test-url");
 	});
@@ -222,30 +258,38 @@ describe("ProjectDetailClient Download Functionality", () => {
 		globalThis.URL.createObjectURL = vi.fn(() => "blob:test-pdf-url");
 		globalThis.URL.revokeObjectURL = vi.fn();
 
-		const mockLink = {
-			click: vi.fn(),
-			download: "",
-			href: "",
-			remove: vi.fn(),
-		};
-		vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
+		const mockLink = document.createElement("a");
+		mockLink.click = vi.fn();
+		mockLink.remove = vi.fn();
+
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+			if (tagName === "a") {
+				return mockLink;
+			}
+			return originalCreateElement(tagName);
+		});
+
 		vi.spyOn(document.body, "append").mockImplementation(vi.fn());
 
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-123")).toBeInTheDocument();
 		});
 
-		const downloadButton = screen.getByRole("button", { name: /download/i });
-		await user.click(downloadButton);
+		const downloadMenus = screen.getAllByTestId("dropdown-menu");
+		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		expect(downloadButton).toBeInTheDocument();
+		await user.click(downloadButton!);
 
 		const pdfOption = await screen.findByText("PDF (.pdf)");
 		await user.click(pdfOption);
 
 		await waitFor(() => {
 			expect(mockDownloadApplication).toHaveBeenCalledWith("org-123", expect.any(String), "app-123", "pdf");
-			expect(mockLink.download).toBe("Test Application.pdf");
+			expect(mockLink.download).toBe("Test_Application.pdf");
 		});
 	});
 
@@ -257,11 +301,13 @@ describe("ProjectDetailClient Download Functionality", () => {
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-123")).toBeInTheDocument();
 		});
 
-		const downloadButton = screen.getByRole("button", { name: /download/i });
-		await user.click(downloadButton);
+		const downloadMenus = screen.getAllByTestId("dropdown-menu");
+		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		expect(downloadButton).toBeInTheDocument();
+		await user.click(downloadButton!);
 
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
@@ -310,31 +356,37 @@ describe("ProjectDetailClient Download Functionality", () => {
 		globalThis.URL.createObjectURL = vi.fn(() => "blob:test-url");
 		globalThis.URL.revokeObjectURL = vi.fn();
 
-		const mockLink = {
-			click: vi.fn(),
-			download: "",
-			href: "",
-			remove: vi.fn(),
-		};
-		vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
+		const mockLink = document.createElement("a");
+		mockLink.click = vi.fn();
+		mockLink.remove = vi.fn();
+
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+			if (tagName === "a") {
+				return mockLink;
+			}
+			return originalCreateElement(tagName);
+		});
+
 		vi.spyOn(document.body, "append").mockImplementation(vi.fn());
 
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(
-				screen.getByTestId('application-card-Test <App> "With" /Special: \\Characters|?*'),
-			).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-special")).toBeInTheDocument();
 		});
 
-		const downloadButton = screen.getByRole("button", { name: /download/i });
-		await user.click(downloadButton);
+		const downloadMenus = screen.getAllByTestId("dropdown-menu");
+		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		expect(downloadButton).toBeInTheDocument();
+		await user.click(downloadButton!);
 
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
 
 		await waitFor(() => {
-			expect(mockLink.download).toBe("Test__App___With___Special____Characters___.md");
+			expect(mockLink.download).toBe("Test__App___With___Special___Characters___.md");
 		});
 	});
 
@@ -350,25 +402,30 @@ describe("ProjectDetailClient Download Functionality", () => {
 		render(<ProjectDetailClient />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("application-card-Test Application")).toBeInTheDocument();
+			expect(screen.getByTestId("application-card-app-123")).toBeInTheDocument();
 		});
 
-		const downloadButton = screen.getByRole("button", { name: /download/i });
-		await user.click(downloadButton);
+		const downloadMenus = screen.getAllByTestId("dropdown-menu");
+		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		expect(downloadButton).toBeInTheDocument();
+		await user.click(downloadButton!);
 
 		const markdownOption = await screen.findByText("Markdown (.md)");
 		await user.click(markdownOption);
 
 		await waitFor(() => {
 			expect(downloadButton).toBeDisabled();
-			expect(screen.getByText("Downloading...")).toBeInTheDocument();
+			const svgIcon = downloadButton!.querySelector("svg");
+			expect(svgIcon).toBeInTheDocument();
+			expect(svgIcon).toHaveClass("animate-spin");
 		});
 
 		resolveDownload!(new Blob(["content"], { type: "text/markdown" }));
 
 		await waitFor(() => {
 			expect(downloadButton).not.toBeDisabled();
-			expect(screen.getByText("Download")).toBeInTheDocument();
+			const downloadIcon = downloadButton!.querySelector("svg");
+			expect(downloadIcon).toBeInTheDocument();
 		});
 	});
 });

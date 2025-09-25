@@ -44,10 +44,10 @@ describe("ApplicationDownloadMenu", () => {
 		const trigger = screen.getByRole("button");
 		expect(trigger).toBeInTheDocument();
 		expect(trigger).not.toBeDisabled();
-		expect(screen.getByText("Download")).toBeInTheDocument();
 
 		const downloadIcon = screen.getByTestId("dropdown-menu").querySelector("svg");
 		expect(downloadIcon).toBeInTheDocument();
+		expect(downloadIcon).toHaveClass("lucide-download");
 	});
 
 	it("renders download button in disabled state", () => {
@@ -56,10 +56,11 @@ describe("ApplicationDownloadMenu", () => {
 		const trigger = screen.getByRole("button");
 		expect(trigger).toBeInTheDocument();
 		expect(trigger).toBeDisabled();
-		expect(screen.getByText("Downloading...")).toBeInTheDocument();
 
 		const loaderIcon = screen.getByTestId("dropdown-menu").querySelector("svg");
 		expect(loaderIcon).toBeInTheDocument();
+		expect(loaderIcon).toHaveClass("lucide-loader-circle");
+		expect(loaderIcon).toHaveClass("animate-spin");
 	});
 
 	it("shows download options when clicked", async () => {

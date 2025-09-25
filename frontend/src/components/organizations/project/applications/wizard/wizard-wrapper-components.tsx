@@ -83,8 +83,10 @@ export function WizardHeader() {
 	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
 
 	const handleExit = () => {
-		reset();
 		router.push(routes.organization.project.detail());
+		setTimeout(() => {
+			reset();
+		}, 1000);
 	};
 
 	return (
@@ -414,7 +416,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const handleCompleteStep = useCallback(() => {
 		router.push(routes.organization.root());
-		useWizardStore.getState().reset();
+		setTimeout(() => {
+			useWizardStore.getState().reset();
+		}, 1000);
 	}, [router]);
 
 	const handleRightButtonClick = useCallback(async () => {
