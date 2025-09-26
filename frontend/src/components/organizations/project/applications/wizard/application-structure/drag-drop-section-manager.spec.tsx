@@ -64,6 +64,17 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+vi.mock("@/utils/debounce", () => ({
+	createDebounce: vi.fn((fn) => ({
+		call: vi.fn(fn),
+	})),
+	useDebounce: vi.fn((callback) => {
+		return (...args: unknown[]) => {
+			callback(...args);
+		};
+	}),
+}));
+
 const mockUpdateGrantSections = vi.fn();
 const mockIsDetailedSection = vi.fn((section: GrantSection) => "max_words" in section);
 

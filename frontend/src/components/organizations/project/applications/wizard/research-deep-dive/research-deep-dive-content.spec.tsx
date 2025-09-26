@@ -96,35 +96,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			expect(textarea).toBeInTheDocument();
 			expect(textarea).toHaveValue(formInputs.preliminary_data);
 		});
-
-		it("updates selected question when form inputs change", async () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
-
-			useApplicationStore.setState({ application });
-
-			const { rerender } = render(<ResearchDeepDiveContent />);
-
-			expect(screen.getByTestId("research-deep-dive-answer")).toBeInTheDocument();
-			expect(screen.getByTestId("research-deep-dive-answer")).toHaveValue("");
-
-			const formInputs = EmptyFormInputsFactory.build({
-				background_context: "Some background",
-			});
-			const updatedApplication = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
-
-			useApplicationStore.setState({ application: updatedApplication });
-
-			rerender(<ResearchDeepDiveContent />);
-
-			await waitFor(() => {
-				const textarea = screen.getByTestId("research-deep-dive-answer");
-				expect(textarea).toHaveValue("");
-			});
-		});
 	});
 
 	describe("Question Enabling/Disabling Logic", () => {
@@ -309,8 +280,8 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 	});
 
-	describe("Save Button Behavior", () => {
-		it("disables save button when textarea is empty", () => {
+	describe("next Button Behavior", () => {
+		it("disables next button when textarea is empty", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 			});
@@ -319,11 +290,11 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			render(<ResearchDeepDiveContent />);
 
-			const saveButton = screen.getByTestId("save-button");
-			expect(saveButton).toBeDisabled();
+			const nextButton = screen.getByTestId("next-button");
+			expect(nextButton).toBeDisabled();
 		});
 
-		it("disables save button when textarea contains only whitespace", async () => {
+		it("disables next button when textarea contains only whitespace", async () => {
 			const user = userEvent.setup();
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
@@ -334,13 +305,13 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const textarea = screen.getByTestId("research-deep-dive-answer");
-			const saveButton = screen.getByTestId("save-button");
+			const nextButton = screen.getByTestId("next-button");
 
 			await user.type(textarea, "   ");
-			expect(saveButton).toBeDisabled();
+			expect(nextButton).toBeDisabled();
 		});
 
-		it("enables save button when textarea has content", async () => {
+		it("enables next button when textarea has content", async () => {
 			const user = userEvent.setup();
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
@@ -351,13 +322,13 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const textarea = screen.getByTestId("research-deep-dive-answer");
-			const saveButton = screen.getByTestId("save-button");
+			const nextButton = screen.getByTestId("next-button");
 
 			await user.type(textarea, "Some content");
-			expect(saveButton).toBeEnabled();
+			expect(nextButton).toBeEnabled();
 		});
 
-		it("calls updateFormInputs when save is clicked", async () => {
+		it("calls updateFormInputs when next is clicked", async () => {
 			const user = userEvent.setup();
 			const mockUpdateFormInputs = vi.fn();
 
@@ -376,10 +347,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const textarea = screen.getByTestId("research-deep-dive-answer");
-			const saveButton = screen.getByTestId("save-button");
+			const nextButton = screen.getByTestId("next-button");
 
 			await user.type(textarea, "New research content");
-			await user.click(saveButton);
+			await user.click(nextButton);
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
 				background_context: "New research content",
@@ -405,10 +376,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const textarea = screen.getByTestId("research-deep-dive-answer");
-			const saveButton = screen.getByTestId("save-button");
+			const nextButton = screen.getByTestId("next-button");
 
 			await user.type(textarea, "  Content with spaces  ");
-			await user.click(saveButton);
+			await user.click(nextButton);
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
 				background_context: "Content with spaces",

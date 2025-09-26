@@ -59,6 +59,8 @@ export interface AppButtonProps
 	extends Omit<React.ComponentProps<"button">, "size" | "variant">,
 		VariantProps<typeof appButtonVariants> {
 	asChild?: boolean;
+	iconContainerClass?: string;
+	keepIconSize?: boolean;
 	leftIcon?: React.ReactNode;
 	rightIcon?: React.ReactNode;
 	size?: "lg" | "md" | "sm";
@@ -70,6 +72,8 @@ export function AppButton({
 	asChild,
 	children,
 	className,
+	iconContainerClass,
+	keepIconSize,
 	leftIcon,
 	rightIcon,
 	size,
@@ -94,9 +98,17 @@ export function AppButton({
 
 	return (
 		<Button asChild={asChild} className={combinedClassNames} {...props}>
-			{leftIcon && <span className="mr-2 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
+			{leftIcon && (
+				<span className={cn("mr-2 inline-flex items-center", iconContainerClass)}>
+					{resizedIcon(leftIcon, keepIconSize)}{" "}
+				</span>
+			)}
 			{children}
-			{rightIcon && <span className="ml-2 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
+			{rightIcon && (
+				<span className={cn("ml-2 inline-flex items-center", iconContainerClass)}>
+					{resizedIcon(rightIcon, keepIconSize)}
+				</span>
+			)}
 		</Button>
 	);
 }
