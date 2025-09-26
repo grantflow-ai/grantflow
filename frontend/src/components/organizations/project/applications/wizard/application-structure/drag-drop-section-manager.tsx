@@ -347,7 +347,10 @@ export function DragDropSectionManager({
 					return toUpdateGrantSection({ ...section, ...updates });
 				}
 				if (isBecomingResearchPlan && hasDetailedResearchPlan(section)) {
-					return toUpdateGrantSection({ ...section, is_detailed_research_plan: false });
+					return toUpdateGrantSection({
+						...section,
+						is_detailed_research_plan: false,
+					});
 				}
 				return toUpdateGrantSection(section);
 			});

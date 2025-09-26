@@ -57,7 +57,7 @@ export function Deadline() {
 
 	return (
 		<div
-			className="rounded-xs bg-app-lavender-gray relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-app-black"
+			className="rounded-xs bg-app-lavender-gray relative box-border flex flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-app-black"
 			data-testid="deadline-component"
 		>
 			<Image alt="Deadline" height={16} src="/icons/deadline.svg" width={16} />

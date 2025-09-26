@@ -81,6 +81,7 @@ const arrayReplaceDeepMerge = deepmergeCustom({
 interface ApplicationState {
 	application: ApplicationType;
 	areAppOperationsInProgress: boolean;
+	isSaving: boolean;
 	pendingUploads: {
 		application: Set<FileWithId>;
 		template: Set<FileWithId>;
@@ -105,6 +106,7 @@ function validateJobRestoration(_application: ApplicationType): {
 const initialState: ApplicationState = {
 	application: null,
 	areAppOperationsInProgress: false,
+	isSaving: false,
 	pendingUploads: {
 		application: new Set(),
 		template: new Set(),
@@ -172,6 +174,7 @@ interface ApplicationActions {
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
+	setSaving: (isSaving: boolean) => void;
 	softReset: () => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (
@@ -902,6 +905,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application });
 	},
 
+	setSaving: (isSaving: boolean) => {
+		set({ isSaving });
+	},
+
 	softReset: () => {
 		const currentApplication = get().application;
 		set({
@@ -917,7 +924,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			message: "Application should not be null when calling updateApplication",
 		});
 
-		set({ areAppOperationsInProgress: true });
+		set({ areAppOperationsInProgress: true, isSaving: true });
 
 		const updatedApplication = arrayReplaceDeepMerge(existingApplication, data) as NonNullable<ApplicationType>;
 
@@ -964,7 +971,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.error("updateApplication", new Error(`Failed to update application: ${e}`));
 			toast.error("Failed to update application");
 		} finally {
-			set({ areAppOperationsInProgress: false });
+			set({ areAppOperationsInProgress: false, isSaving: false });
 		}
 	},
 
@@ -1030,13 +1037,16 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		const updatedApplication: NonNullable<ApplicationType> = {
-			...application,
-			grant_template: {
-				...application.grant_template,
-				grant_sections: sections ?? [],
-			},
-		};
+		const createApplicationWithSections = (grantSections: typeof previousGrantSections | typeof sections) =>
+			({
+				...application,
+				grant_template: {
+					...application.grant_template,
+					grant_sections: grantSections ?? [],
+				},
+			}) as NonNullable<ApplicationType>;
+
+		const updatedApplication = createApplicationWithSections(sections);
 
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
@@ -1053,7 +1063,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			template_rag_sources: formatRagSources(updatedApplication),
 			templateId: updatedApplication.grant_template?.id,
 		});
-		set({ application: updatedApplication });
+		set({ application: updatedApplication, isSaving: true });
 
 		try {
 			const { selectedOrganizationId } = useOrganizationStore.getState();
@@ -1069,7 +1079,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					grant_sections: sections ?? [],
 				},
 			);
-
 			log.info("updateGrantSections: Success", {
 				grant_sections: (sections ?? []).map((section) => ({
 					id: section.id,
@@ -1080,13 +1089,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				sectionCount: (sections ?? []).length,
 			});
 		} catch (error) {
-			const restoredApplication: NonNullable<ApplicationType> = {
-				...application,
-				grant_template: {
-					...application.grant_template,
-					grant_sections: previousGrantSections ?? [],
-				},
-			};
+			const restoredApplication = createApplicationWithSections(previousGrantSections);
 			log.info("[rag_sources_check] Application state reverted via updateGrantSections (API failure)", {
 				application_rag_sources: formatApplicationRagSources(restoredApplication),
 				applicationId: restoredApplication.id,
@@ -1098,6 +1101,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
+		} finally {
+			set({ isSaving: false });
 		}
 	},
 }));

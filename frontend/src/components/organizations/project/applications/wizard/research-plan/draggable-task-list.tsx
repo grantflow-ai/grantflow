@@ -126,7 +126,11 @@ export function DraggableTaskList({
 						{tasks.map((task, taskIndex) => (
 							<DraggableTaskItem
 								isEditing={isEditing}
-								key={`${objectiveIndex}-task-${taskIndex}`}
+								key={
+									isEditing
+										? `${objectiveIndex}-task-${taskIndex}-${task.title}`
+										: `${objectiveIndex}-task-${taskIndex}`
+								}
 								objectiveIndex={objectiveIndex}
 								onTaskDelete={() => onTaskDelete?.(taskIndex)}
 								onValueChange={handleValueChange}
