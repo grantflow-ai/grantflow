@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
+import { useDebounce } from "@/utils/debounce";
 import { SectionWithDropIndicators } from "./section-drop-indicator";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -25,8 +26,7 @@ Output format: Paragraphs, no bullet points`;
 interface SectionEditFormProps {
 	formData: SectionFormData;
 	isSubsection: boolean;
-	onCancel: () => void;
-	onSave: () => void;
+	onDelete: () => void;
 	section: GrantSection;
 	setFormData: (data: SectionFormData) => void;
 }
@@ -113,6 +113,7 @@ export function SortableSection({
 	});
 
 	const [formData, setFormData] = useState<SectionFormData>(() => createInitialFormData(section));
+	const debouncedUpdate = useDebounce(onUpdate, 5000);
 
 	useEffect(() => {
 		setFormData(createInitialFormData(section));
@@ -128,17 +129,6 @@ export function SortableSection({
 	};
 
 	const sectionHasMaxWords = hasMaxWords(section) && Boolean(section.max_words);
-
-	const handleSave = useCallback(() => {
-		onUpdate({
-			max_words: formData.max_words,
-			title: formData.title,
-			...(formData.isResearchPlan !== undefined && {
-				is_detailed_research_plan: formData.isResearchPlan,
-			}),
-		});
-		onToggleExpand();
-	}, [formData, onUpdate, onToggleExpand]);
 
 	const handleHeaderClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -197,10 +187,18 @@ export function SortableSection({
 							<SectionEditForm
 								formData={formData}
 								isSubsection={isSubsection}
-								onCancel={onToggleExpand}
-								onSave={handleSave}
+								onDelete={_onDelete}
 								section={section}
-								setFormData={setFormData}
+								setFormData={(data) => {
+									setFormData(data);
+									debouncedUpdate({
+										max_words: data.max_words,
+										title: data.title,
+										...(data.isResearchPlan !== undefined && {
+											is_detailed_research_plan: data.isResearchPlan,
+										}),
+									});
+								}}
 							/>
 						</div>
 					)}
@@ -210,7 +208,7 @@ export function SortableSection({
 	);
 }
 
-function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, setFormData }: SectionEditFormProps) {
+function SectionEditForm({ formData, isSubsection, onDelete, section, setFormData }: SectionEditFormProps) {
 	return (
 		<div className="px-6 py-3">
 			<div className="space-y-5">
@@ -362,12 +360,16 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 				</div>
 			</div>
 
-			<div className="flex justify-between gap-2 pt-6">
-				<AppButton data-testid="cancel-button" onClick={onCancel} variant="secondary">
-					Cancel
-				</AppButton>
-				<AppButton data-testid="save-button" onClick={onSave}>
-					Save
+			<div className="flex justify-between items-center gap-2 pt-6">
+				<AppButton
+					data-testid="delete-button"
+					iconContainerClass="mr-1"
+					keepIconSize
+					leftIcon={<Image alt="Delete" height={20} src="/icons/delete.svg" width={20} />}
+					onClick={onDelete}
+					variant="link"
+				>
+					Delete Section
 				</AppButton>
 			</div>
 		</div>

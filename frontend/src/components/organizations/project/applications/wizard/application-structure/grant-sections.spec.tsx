@@ -61,6 +61,14 @@ vi.mock("@/components/ui/tooltip", () => ({
 	TooltipTrigger: vi.fn(({ children }) => <div>{children}</div>),
 }));
 
+vi.mock("@/utils/debounce", () => ({
+	useDebounce: vi.fn((callback) => {
+		return (...args: unknown[]) => {
+			callback(...args);
+		};
+	}),
+}));
+
 vi.mock("next/image", () => ({
 	__esModule: true,
 	default: ({ alt }: { alt: string }) => <div data-testid={`image-${alt}`} />,
@@ -124,8 +132,7 @@ describe("SortableSection", () => {
 
 		expect(screen.getByTestId("edit-form-container")).toBeInTheDocument();
 		expect(screen.getByTestId(`section-name-${section.id}`)).toBeInTheDocument();
-		expect(screen.getByTestId("save-button")).toBeInTheDocument();
-		expect(screen.getByTestId("cancel-button")).toBeInTheDocument();
+		expect(screen.getByTestId("delete-button")).toBeInTheDocument();
 	});
 
 	it("hides edit form when not expanded", () => {
@@ -180,7 +187,9 @@ describe("SortableSection", () => {
 	});
 
 	it("updates form data when section name is changed", async () => {
-		const section = GrantSectionDetailedFactory.build({ title: "Original Title" });
+		const section = GrantSectionDetailedFactory.build({
+			title: "Original Title",
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -252,7 +261,9 @@ describe("SortableSection", () => {
 	});
 
 	it("toggles research plan designation", async () => {
-		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: false });
+		const section = GrantSectionDetailedFactory.build({
+			is_detailed_research_plan: false,
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -263,7 +274,7 @@ describe("SortableSection", () => {
 		expect(toggle).toHaveAttribute("aria-checked", "true");
 	});
 
-	it("calls onUpdate with correct data when save is clicked", async () => {
+	it("calls onUpdate with correct data automatically after 5 seconds", async () => {
 		const section = GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
 			max_words: 3000,
@@ -283,14 +294,11 @@ describe("SortableSection", () => {
 		const researchPlanToggle = screen.getByTestId("research-plan-checkbox");
 		await user.click(researchPlanToggle);
 
-		await user.click(screen.getByTestId("save-button"));
-
 		expect(mockOnUpdate).toHaveBeenCalledWith({
 			is_detailed_research_plan: true,
 			max_words: 5000,
 			title: "Updated Title",
 		});
-		expect(mockOnToggleExpand).toHaveBeenCalled();
 	});
 
 	describe("newly created sections", () => {
@@ -365,13 +373,13 @@ describe("SortableSection", () => {
 		});
 	});
 
-	it("calls onToggleExpand when cancel is clicked", async () => {
+	it("calls onDelete when delete is clicked", async () => {
 		const section = GrantSectionDetailedFactory.build();
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
-		await user.click(screen.getByTestId("cancel-button"));
-		expect(mockOnToggleExpand).toHaveBeenCalledOnce();
+		await user.click(screen.getByTestId("delete-button"));
+		expect(mockOnDelete).toHaveBeenCalledOnce();
 	});
 
 	it("applies subsection styles when isSubsection is true", () => {
@@ -402,9 +410,9 @@ describe("SortableSection", () => {
 	});
 
 	it("generates AI prompt based on section title when no generation_instructions", () => {
-		const section = GrantSectionBaseFactory.build({ title: "Background" } as unknown as Parameters<
-			typeof GrantSectionBaseFactory.build
-		>[0]);
+		const section = GrantSectionBaseFactory.build({
+			title: "Background",
+		} as unknown as Parameters<typeof GrantSectionBaseFactory.build>[0]);
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -457,7 +465,9 @@ describe("SortableSection", () => {
 	});
 
 	it("displays research plan badge with icon when is_detailed_research_plan is true", () => {
-		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: true });
+		const section = GrantSectionDetailedFactory.build({
+			is_detailed_research_plan: true,
+		});
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
@@ -468,7 +478,9 @@ describe("SortableSection", () => {
 	});
 
 	it("does not display research plan badge when is_detailed_research_plan is false", () => {
-		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: false });
+		const section = GrantSectionDetailedFactory.build({
+			is_detailed_research_plan: false,
+		});
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
@@ -497,9 +509,9 @@ describe("SortableSection", () => {
 	});
 
 	it("falls back to generated AI prompt when generation_instructions not available", () => {
-		const section = GrantSectionBaseFactory.build({ title: "Background" } as unknown as Parameters<
-			typeof GrantSectionBaseFactory.build
-		>[0]);
+		const section = GrantSectionBaseFactory.build({
+			title: "Background",
+		} as unknown as Parameters<typeof GrantSectionBaseFactory.build>[0]);
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -510,13 +522,14 @@ describe("SortableSection", () => {
 	});
 
 	it("calls onUpdate with research plan designation when toggled", async () => {
-		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: false });
+		const section = GrantSectionDetailedFactory.build({
+			is_detailed_research_plan: false,
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
 		const toggle = screen.getByTestId("research-plan-checkbox");
 		await user.click(toggle);
-		await user.click(screen.getByTestId("save-button"));
 
 		expect(mockOnUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -559,7 +572,9 @@ describe("Utility Functions", () => {
 		});
 
 		it("provides proper type narrowing for detailed sections", () => {
-			const section = GrantSectionDetailedFactory.build({ generation_instructions: "test instructions" });
+			const section = GrantSectionDetailedFactory.build({
+				generation_instructions: "test instructions",
+			});
 
 			if (hasGenerationInstructions(section)) {
 				expect(section.generation_instructions).toBe("test instructions");
@@ -581,7 +596,9 @@ describe("Utility Functions", () => {
 		});
 
 		it("provides proper type narrowing for detailed sections", () => {
-			const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: true });
+			const section = GrantSectionDetailedFactory.build({
+				is_detailed_research_plan: true,
+			});
 
 			if (hasDetailedResearchPlan(section)) {
 				expect(section.is_detailed_research_plan).toBe(true);

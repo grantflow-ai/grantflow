@@ -20,7 +20,7 @@ export function AiAutofillButton({ className, disabled, isLoading, onClick }: Ai
 			)}
 		>
 			<button
-				className="relative items-center rounded-[40px] flex gap-1 px-4 py-1 bg-[linear-gradient(to_left,#1E13F8_2%,#392FFA_20%,#4B42FC_42%,#635BFEB5_99%)] text-white shiny overflow-hidden transition-transform active:scale-95 cursor-pointer"
+				className="w-max relative items-center rounded-[40px] flex gap-1 px-4 py-1 bg-[linear-gradient(to_left,#1E13F8_2%,#392FFA_20%,#4B42FC_42%,#635BFEB5_99%)] text-white shiny overflow-hidden transition-transform active:scale-95 cursor-pointer"
 				disabled={disabled ?? isLoading}
 				onClick={onClick}
 				type="button"
