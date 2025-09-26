@@ -114,10 +114,8 @@ async def test_generate_field_answer_with_context(mock_logger: MagicMock, trace_
         assert len(result) >= 50
         mock_completion.assert_called_once()
 
-        # Verify the call was made with compressed prompt containing shared context
         _args, kwargs = mock_completion.call_args
         assert "messages" in kwargs
-        # The shared context should be included in the compressed prompt
 
 
 def test_function_import_deep_dive() -> None:
@@ -261,7 +259,6 @@ async def test_generate_research_deep_dive_content_with_mocks(
         assert isinstance(result, dict)
         assert "background_context" in result
 
-        # Verify shared context approach was used
-        mock_search.assert_called_once()  # Only one search query generation
-        mock_retrieve.assert_called_once()  # Only one document retrieval
-        assert mock_generate.call_count == 8  # 8 fields generated with shared context
+        mock_search.assert_called_once()
+        mock_retrieve.assert_called_once()
+        assert mock_generate.call_count == 8

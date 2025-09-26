@@ -116,7 +116,6 @@ async def handle_autofill_request(
                 trace_id=trace_id,
             )
 
-            # Save research objectives to database
             try:
                 async with session_maker() as session, session.begin():
                     await session.execute(
@@ -132,7 +131,6 @@ async def handle_autofill_request(
                     trace_id=trace_id,
                 )
 
-                # Send success notification
                 await publish_notification(
                     parent_id=application_id,
                     event=NotificationEvents.AUTOFILL_COMPLETED,
@@ -171,13 +169,12 @@ async def handle_autofill_request(
                 trace_id=trace_id,
             )
 
-            # Save research deep dive to database
             try:
                 async with session_maker() as session, session.begin():
                     await session.execute(
                         update(GrantApplication)
                         .where(GrantApplication.id == application_id)
-                        .values(research_deep_dive=research_deep_dive)
+                        .values(form_inputs=research_deep_dive)
                     )
 
                 logger.info(
@@ -189,7 +186,6 @@ async def handle_autofill_request(
                     trace_id=trace_id,
                 )
 
-                # Send success notification
                 await publish_notification(
                     parent_id=application_id,
                     event=NotificationEvents.AUTOFILL_COMPLETED,
@@ -237,7 +233,6 @@ async def handle_autofill_request(
         if error_context:
             detailed_error_message += f"\nContext: {error_context}"
 
-        # Send error notification
         try:
             await publish_notification(
                 parent_id=application_id,
@@ -267,5 +262,4 @@ async def handle_autofill_request(
                 trace_id=trace_id,
             )
 
-        # Re-raise the original error
         raise
