@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useApplicationStore } from "@/stores/application-store";
+import { getSubsectionsByParent, useApplicationStore } from "@/stores/application-store";
 import { useDragOverlayStore } from "@/stores/drag-overlay-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
@@ -718,20 +718,7 @@ export function DragDropSectionManager({
 
 	const mainSections = useMemo(() => sortedSections.filter((section) => !section.parent_id), [sortedSections]);
 
-	const subsectionsByParent = useMemo(
-		() =>
-			sortedSections.reduce<Record<string, typeof grantSections>>((acc, section) => {
-				if (section.parent_id) {
-					if (!(section.parent_id in acc)) {
-						acc[section.parent_id] = [];
-					}
-					acc[section.parent_id].push(section);
-				}
-				return acc;
-			}, {}),
-		[sortedSections],
-	);
-
+	const subsectionsByParent = useMemo(() => getSubsectionsByParent(sortedSections), [sortedSections]);
 	const { activeItem } = useDragOverlayStore();
 	const sortableIds = useMemo(() => grantSections.map((s) => s.id), [grantSections]);
 
