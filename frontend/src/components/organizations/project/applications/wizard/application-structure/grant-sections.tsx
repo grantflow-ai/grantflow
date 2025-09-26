@@ -113,7 +113,7 @@ export function SortableSection({
 	});
 
 	const [formData, setFormData] = useState<SectionFormData>(() => createInitialFormData(section));
-	const debouncedUpdate = useDebounce(onUpdate, 5000);
+	const debouncedUpdate = useDebounce(onUpdate, 3000);
 
 	useEffect(() => {
 		setFormData(createInitialFormData(section));

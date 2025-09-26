@@ -23,6 +23,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
+import type { GrantSection } from "@/types/grant-sections";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 import { withRetry } from "@/utils/retry";
@@ -156,6 +157,60 @@ const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise
 			description: "Please ensure you have added a title and at least one document source.",
 		});
 	}
+};
+
+export const getSubsectionsByParent = (sections: GrantSection[]) => {
+	return sections.reduce<Record<string, GrantSection[]>>((acc, section) => {
+		if (section.parent_id) {
+			if (!(section.parent_id in acc)) {
+				acc[section.parent_id] = [];
+			}
+			acc[section.parent_id].push(section);
+		}
+		return acc;
+	}, {});
+};
+
+const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+	if (!sections) {
+		return {
+			message: null,
+			sections,
+		};
+	}
+
+	const subsectionsByParent = getSubsectionsByParent(sections);
+	const updatedSectionMaxWords: Record<string, number> = {};
+
+	for (const parentId in subsectionsByParent) {
+		const subsections = subsectionsByParent[parentId];
+		const subsectionsTotalWords = subsections.reduce(
+			(acc, activeSection) =>
+				acc + ("max_words" in activeSection && Boolean(activeSection.max_words) ? activeSection.max_words : 0),
+			0,
+		);
+
+		const parent = sections.find((section) => section.id === parentId);
+		if (parent?.max_words && parent.max_words < subsectionsTotalWords) {
+			updatedSectionMaxWords[parentId] = subsectionsTotalWords;
+		}
+	}
+
+	if (Object.keys(updatedSectionMaxWords).length > 0) {
+		return {
+			message: "Main section total updated automatically to reflect changes in sub-section limits.",
+			sections: sections.map((section) =>
+				section.id in updatedSectionMaxWords
+					? { ...section, max_words: updatedSectionMaxWords[section.id] }
+					: section,
+			),
+		};
+	}
+
+	return {
+		message: null,
+		sections,
+	};
 };
 
 interface ApplicationActions {
@@ -1046,12 +1101,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			}) as NonNullable<ApplicationType>;
 
-		const updatedApplication = createApplicationWithSections(sections);
+		const { message, sections: wordCountFixedSections } = syncSectionCharacterCount(sections ?? []);
+		if (message) {
+			toast.success(message);
+			log.info("updateGrantSections: Section character count synced", {
+				message,
+			});
+		}
+		const updatedApplication = createApplicationWithSections(wordCountFixedSections);
 
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
-			grant_sections: (sections ?? []).map((section) => ({
+			grant_sections: (wordCountFixedSections ?? []).map((section) => ({
 				id: section.id,
 				max_words: section.max_words,
 				order: section.order,
@@ -1076,11 +1138,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				application.id,
 				application.grant_template.id,
 				{
-					grant_sections: sections ?? [],
+					grant_sections: wordCountFixedSections ?? [],
 				},
 			);
 			log.info("updateGrantSections: Success", {
-				grant_sections: (sections ?? []).map((section) => ({
+				grant_sections: (wordCountFixedSections ?? []).map((section) => ({
 					id: section.id,
 					order: section.order,
 					parent_id: section.parent_id,
