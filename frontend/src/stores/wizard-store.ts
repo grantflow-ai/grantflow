@@ -30,6 +30,50 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
+const resetAutofillState = (
+	set: (fn: (state: WizardState) => WizardState) => void,
+	type: "research_deep_dive" | "research_plan",
+) => {
+	set((state) => ({
+		...state,
+		autofillMessageId: null,
+		autofillType: null,
+		isAutofillLoading: {
+			...state.isAutofillLoading,
+			[type]: false,
+		},
+	}));
+};
+
+const hasAutofillResults = (
+	type: "research_deep_dive" | "research_plan",
+	application: NonNullable<API.RetrieveApplication.Http200.ResponseBody>,
+): boolean => {
+	if (type === "research_plan" && application.research_objectives) {
+		return application.research_objectives.some((obj) => obj.research_tasks && obj.research_tasks.length > 0);
+	}
+
+	if (type === "research_deep_dive" && application.form_inputs) {
+		const requiredFields = [
+			"background_context",
+			"hypothesis",
+			"rationale",
+			"novelty_and_innovation",
+			"impact",
+			"team_excellence",
+			"research_feasibility",
+			"preliminary_data",
+		] as const;
+
+		return requiredFields.some((field) => {
+			const fieldValue = application.form_inputs?.[field]?.trim();
+			return fieldValue && fieldValue.length > 0;
+		});
+	}
+
+	return false;
+};
+
 export interface ValidationResult {
 	isValid: boolean;
 	metadata?: {
@@ -482,47 +526,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				return;
 			}
 
-			const resetAutofillState = (type: "research_deep_dive" | "research_plan") => {
-				set((state) => ({
-					...state,
-					autofillMessageId: null,
-					autofillType: null,
-					isAutofillLoading: {
-						...state.isAutofillLoading,
-						[type]: false,
-					},
-				}));
-			};
-
-			const checkHasResults = (
-				type: "research_deep_dive" | "research_plan",
-				updatedApp: NonNullable<typeof application>,
-			): boolean => {
-				if (type === "research_plan" && updatedApp.research_objectives) {
-					return updatedApp.research_objectives.some((obj) => (obj.research_tasks?.length ?? 0) > 0);
-				}
-
-				if (type === "research_deep_dive" && updatedApp.form_inputs) {
-					const requiredFields = [
-						"background_context",
-						"hypothesis",
-						"rationale",
-						"novelty_and_innovation",
-						"impact",
-						"team_excellence",
-						"research_feasibility",
-						"preliminary_data",
-					] as const;
-
-					return requiredFields.some((field) => {
-						const fieldValue = updatedApp.form_inputs?.[field]?.trim();
-						return fieldValue && fieldValue.length > 0;
-					});
-				}
-
-				return false;
-			};
-
 			try {
 				const { selectedOrganizationId } = useOrganizationStore.getState();
 				if (!selectedOrganizationId) return;
@@ -530,16 +533,16 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				await getApplication(selectedOrganizationId, application.project_id, application.id);
 				const { application: updatedApplication } = useApplicationStore.getState();
 
-				if (updatedApplication && checkHasResults(autofillType, updatedApplication)) {
+				if (updatedApplication && hasAutofillResults(autofillType, updatedApplication)) {
 					polling.stop();
-					resetAutofillState(autofillType);
+					resetAutofillState(set, autofillType);
 					toast.success("Autofill completed successfully!");
 				}
 			} catch (error) {
 				log.error("checkAutofillResults", error);
 				polling.stop();
 				toast.error("Failed to check autofill results. Please try again or contact support.");
-				resetAutofillState(autofillType);
+				resetAutofillState(set, autofillType);
 			}
 		},
 

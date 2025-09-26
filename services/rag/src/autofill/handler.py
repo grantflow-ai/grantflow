@@ -107,12 +107,12 @@ async def handle_autofill_request(
                 application_id=str(application_id),
                 trace_id=trace_id,
             )
-            generated_content = await generate_research_plan_content(application=application, trace_id=trace_id)
+            research_objectives = await generate_research_plan_content(application=application, trace_id=trace_id)
 
             logger.info(
                 "Research plan content generated successfully",
                 application_id=str(application_id),
-                objectives_count=len(generated_content),
+                objectives_count=len(research_objectives),
                 trace_id=trace_id,
             )
 
@@ -122,13 +122,13 @@ async def handle_autofill_request(
                     await session.execute(
                         update(GrantApplication)
                         .where(GrantApplication.id == application_id)
-                        .values(research_objectives=generated_content)
+                        .values(research_objectives=research_objectives)
                     )
 
                 logger.info(
                     "Successfully saved research plan to database",
                     application_id=str(application_id),
-                    objectives_count=len(generated_content),
+                    objectives_count=len(research_objectives),
                     trace_id=trace_id,
                 )
 
@@ -141,7 +141,7 @@ async def handle_autofill_request(
                         "message": "Research plan autofill completed successfully",
                         "notification_type": "success",
                         "autofill_type": "research_plan",
-                        "objectives_count": len(generated_content),
+                        "objectives_count": len(research_objectives),
                     },
                 )
 
@@ -162,12 +162,12 @@ async def handle_autofill_request(
                 application_id=str(application_id),
                 trace_id=trace_id,
             )
-            generated_content = await generate_research_deep_dive_content(application=application, trace_id=trace_id)
+            research_deep_dive = await generate_research_deep_dive_content(application=application, trace_id=trace_id)
 
             logger.info(
                 "Research deep dive content generated successfully",
                 application_id=str(application_id),
-                fields_count=len([k for k, v in generated_content.items() if v and not v.startswith("[Failed")]),
+                fields_count=len([k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]),
                 trace_id=trace_id,
             )
 
@@ -177,13 +177,13 @@ async def handle_autofill_request(
                     await session.execute(
                         update(GrantApplication)
                         .where(GrantApplication.id == application_id)
-                        .values(research_deep_dive=generated_content)
+                        .values(research_deep_dive=research_deep_dive)
                     )
 
                 logger.info(
                     "Successfully saved research deep dive to database",
                     application_id=str(application_id),
-                    fields_count=len([k for k, v in generated_content.items() if v and not v.startswith("[Failed")]),
+                    fields_count=len([k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]),
                     trace_id=trace_id,
                 )
 
@@ -197,7 +197,7 @@ async def handle_autofill_request(
                         "notification_type": "success",
                         "autofill_type": "research_deep_dive",
                         "fields_generated": len(
-                            [k for k, v in generated_content.items() if v and not v.startswith("[Failed")]
+                            [k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]
                         ),
                     },
                 )
