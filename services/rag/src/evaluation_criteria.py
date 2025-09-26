@@ -154,6 +154,89 @@ def get_content_depth_criterion(weight: float = 0.9) -> EvaluationCriterion:
     )
 
 
+def get_content_depth_detail_criterion(weight: float = 1.0) -> EvaluationCriterion:
+    return EvaluationCriterion(
+        name="Content Depth and Detail",
+        evaluation_instructions="""
+        Evaluate whether the content provides sufficient depth, specific details, and comprehensive coverage of the topic.
+            - Content should be substantive (600+ words for major sections)
+            - Include specific examples, methodologies, and timelines
+            - Demonstrate expert knowledge with concrete details
+            - Avoid generic statements in favor of specific, actionable content
+        """,
+        weight=weight,
+    )
+
+
+def get_structural_completeness_criterion(weight: float = 0.95) -> EvaluationCriterion:
+    return EvaluationCriterion(
+        name="Structural Completeness",
+        evaluation_instructions="""
+        Assess whether the content includes key structural elements and proper organization.
+            - Clear objectives and research questions
+            - Methodological approaches and experimental designs
+            - Work plan elements with timelines
+            - Expected outcomes and success metrics
+            - Proper section organization with headers and subheadings
+        """,
+        weight=weight,
+    )
+
+
+def get_context_integration_evidence_criterion(weight: float = 0.85) -> EvaluationCriterion:
+    return EvaluationCriterion(
+        name="Context Integration and Evidence",
+        evaluation_instructions="""
+        Evaluate how effectively the content integrates information from the provided research context.
+            - Clear use of provided research context and retrieval data
+            - Specific evidence from context incorporated naturally
+            - Strong connections to stated research objectives
+            - Relevant citations and references to context material
+            - Claims supported by context evidence
+            - Research objectives clearly addressed
+            - Context information woven into narrative seamlessly
+            - No contradictions with provided context
+        """,
+        weight=weight,
+    )
+
+
+def get_academic_quality_rigor_criterion(weight: float = 0.8) -> EvaluationCriterion:
+    return EvaluationCriterion(
+        name="Academic Quality and Rigor",
+        evaluation_instructions="""
+        Assess the professional quality, scientific accuracy, and academic appropriateness of the writing.
+            - Professional, scholarly tone throughout
+            - Precise scientific terminology used correctly
+            - Clear, concise writing with proper grammar
+            - Appropriate academic register and style
+            - Demonstrates understanding of research methodologies
+            - Uses appropriate statistical and analytical approaches
+            - Shows awareness of field standards and best practices
+            - Maintains objectivity and scientific rigor
+        """,
+        weight=weight,
+    )
+
+
+def get_rag_data_integration_criterion(weight: float = 0.85) -> EvaluationCriterion:
+    return EvaluationCriterion(
+        name="RAG Data Integration and N-gram Usage",
+        evaluation_instructions="""
+        Assess the extensive use of RAG scientific data and effective n-gram integration.
+            - **MAXIMIZES USE OF RAG CONTEXT** - quotes, references, and incorporates provided scientific data extensively
+            - Demonstrates clear evidence of pre-identifying n-grams (1-grams, 2-grams, 3-grams, 4-grams) from RAG sources
+            - Integrates identified scientific terms naturally throughout the text
+            - Shows extensive quoting and paraphrasing from provided research context
+            - Uses RAG data as primary source material rather than generic statements
+            - Incorporates specific findings, methodologies, and results from RAG context
+            - Maintains scientific rigor by grounding claims in provided research data
+            - Demonstrates that the text is built FROM the RAG context, not just supplemented by it
+        """,
+        weight=weight,
+    )
+
+
 def get_feasibility_innovation_criterion(weight: float = 0.7) -> EvaluationCriterion:
     return EvaluationCriterion(
         name="Feasibility & Innovation",
@@ -276,11 +359,12 @@ def get_enrich_objectives_config() -> StageConfig:
 def get_generate_section_text_config() -> StageConfig:
     return StageConfig(
         criteria=[
-            get_scientific_accuracy_criterion(1.0),
-            get_content_depth_criterion(0.9),
-            get_source_grounding_criterion(0.8),
-            get_structure_clarity_criterion(0.8),
-            get_feasibility_innovation_criterion(0.7),
+            get_content_depth_detail_criterion(1.0),
+            get_structural_completeness_criterion(0.95),
+            get_context_integration_evidence_criterion(0.85),
+            get_rag_data_integration_criterion(0.85),
+            get_academic_quality_rigor_criterion(0.8),
+            get_feasibility_innovation_criterion(0.75),
         ],
     )
 
