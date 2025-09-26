@@ -236,6 +236,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 			{projects.length === 1 && projects[0].applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
+
 			<section className="w-full h-full">
 				<main className="w-full h-full flex flex-col">
 					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />

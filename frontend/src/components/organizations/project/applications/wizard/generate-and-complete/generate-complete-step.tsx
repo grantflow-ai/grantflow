@@ -1,30 +1,25 @@
 "use client";
 
-import Image from "next/image";
+import ProgressCircle from "@/components/applications/wizard/circular-progress";
 
-export function GenerateCompleteStep() {
+export function GenerateCompleteStep({ progress }: { progress: number }) {
 	return (
 		<div
-			className="flex size-full flex-col p-6 bg-preview-bg items-center justify-center"
+			className="flex size-full flex-col items-center justify-center bg-[#FAF9FB] p-6"
 			data-testid="generate-complete-step"
 		>
-			<div className="flex flex-col items-center justify-center text-center space-y-8">
-				<div className="flex items-center justify-center w-full">
-					<Image
-						alt="GrantFlow logo"
-						className="opacity-40"
-						height={100}
-						src="/icons/preview-logo.svg"
-						style={{ height: "auto", maxHeight: 120 }}
-						width={100}
-					/>
-				</div>
-				<div className="space-y-2">
-					<h3 className="text-3xl font-medium font-heading text-gray-900">
-						Great job! Your Application Draft Is Being Generated
+			<div className="flex flex-col items-center justify-center gap-12 text-center">
+				<ProgressCircle progress={progress} />
+				<div className="flex flex-col items-center gap-2">
+					<h3 className="font-medium font-cabin text-[28px] text-app-black">
+						{progress < 100
+							? "Great job! Your Application Draft Is Being Generated"
+							: "Your Application Draft Is Ready"}
 					</h3>
-					<p className="text-gray-700 w-full leading-tight">
-						We&apos;re now generating your draft and will send it to your inbox shortly.
+					<p className="max-w-xl font-sans font-base font-normal text-app-gray-700">
+						{progress < 100
+							? "We’re preparing your draft. You’ll be able to download it here, and we’ll also send a copy to your inbox shortly."
+							: "You can download it directly here. We’ve also sent a copy to your inbox for your convenience."}
 					</p>
 				</div>
 			</div>

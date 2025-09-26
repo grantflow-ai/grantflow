@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RagNotificationHandler } from "@/components/shared/rag-notification-handler";
 import { WizardStep } from "@/constants";
@@ -44,6 +44,7 @@ export function WizardClientComponent({
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const getApplication = useApplicationStore((state) => state.getApplication);
 	const dialogRef = useRef<null | WizardDialogRef>(null);
+	const [generationProgress, setGenerationProgress] = useState(0);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplicationId,
@@ -60,7 +61,7 @@ export function WizardClientComponent({
 			/>
 		),
 		"Application Structure": <ApplicationStructureStep dialogRef={dialogRef} key="Application Structure" />,
-		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
+		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" progress={generationProgress} />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
 		"Research Plan": <ResearchPlanStep dialogRef={dialogRef} key="Research Plan" />,
@@ -156,6 +157,24 @@ export function WizardClientComponent({
 	]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
+
+	useEffect(() => {
+		if (!latestRagNotification) return;
+
+		const { event } = latestRagNotification;
+		const progressMap: Record<string, number> = {
+			grant_application_generation_completed: 100,
+			objectives_enriched: 16,
+			relationships_extracted: 32,
+			research_plan_completed: 48,
+			section_texts_generated: 64,
+			wikidata_enhancement_complete: 80,
+		};
+
+		if (event in progressMap) {
+			setGenerationProgress(progressMap[event]);
+		}
+	}, [latestRagNotification]);
 
 	useEffect(() => {
 		if (latestRagNotification) {
