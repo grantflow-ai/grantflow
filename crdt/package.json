@@ -11,7 +11,7 @@
 		"zod": "^4.1.11"
 	},
 	"devDependencies": {
-		"tsx": "^4.20.5"
+		"tsx": "^4.20.6"
 	},
 	"engines": {
 		"node": ">=22.0.0"
