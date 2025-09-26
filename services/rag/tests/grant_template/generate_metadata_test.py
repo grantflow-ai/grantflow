@@ -647,7 +647,44 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
 
 
 @pytest.mark.e2e_full
-async def test_integration_generate_metadata_workflow(mock_job_manager: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
+async def test_integration_generate_metadata_workflow(
+    mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
+) -> None:
+    mock_metadata = {
+        "sections": [
+            {
+                "id": "project_summary",
+                "keywords": ["cancer", "detection", "biomarkers", "research", "innovation"],
+                "topics": ["background", "objectives", "methodology"],
+                "generation_instructions": "Generate a comprehensive project summary highlighting key research objectives",
+                "depends_on": [],
+                "max_words": 500,
+                "search_queries": ["cancer detection research", "biomarker discovery"],
+            },
+            {
+                "id": "research_plan",
+                "keywords": ["methodology", "research", "plan", "detection"],
+                "topics": ["approach", "timeline", "methods"],
+                "generation_instructions": "Detailed research methodology and approach",
+                "depends_on": ["project_summary"],
+                "max_words": 3000,
+                "search_queries": ["research methodology", "cancer research plan"],
+            },
+            {
+                "id": "budget_justification",
+                "keywords": ["budget", "justification", "costs", "resources"],
+                "topics": ["personnel", "equipment", "materials"],
+                "generation_instructions": "Justify budget requirements for the project",
+                "depends_on": ["research_plan"],
+                "max_words": 1000,
+                "search_queries": ["budget justification", "research costs"],
+            },
+        ]
+    }
+    mock_evaluation.return_value = mock_metadata
+    mock_retrieve_docs.return_value = []
     cfp_content = """
     National Cancer Institute Research Grant Program
 
@@ -720,8 +757,44 @@ async def test_integration_generate_metadata_workflow(mock_job_manager: AsyncMoc
 
 
 @pytest.mark.e2e_full
-@pytest.mark.e2e_full
-async def test_integration_generate_metadata_with_dependencies(mock_job_manager: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
+async def test_integration_generate_metadata_with_dependencies(
+    mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
+) -> None:
+    mock_metadata = {
+        "sections": [
+            {
+                "id": "abstract",
+                "keywords": ["abstract", "summary", "overview"],
+                "topics": ["project_overview"],
+                "generation_instructions": "Write a clear abstract summarizing the project",
+                "depends_on": [],
+                "max_words": 250,
+                "search_queries": ["project abstract", "research summary"],
+            },
+            {
+                "id": "background",
+                "keywords": ["background", "context", "literature"],
+                "topics": ["background_context"],
+                "generation_instructions": "Provide background and context for the research",
+                "depends_on": ["abstract"],
+                "max_words": 800,
+                "search_queries": ["research background", "literature review"],
+            },
+            {
+                "id": "methodology",
+                "keywords": ["methodology", "methods", "approach"],
+                "topics": ["research_methods"],
+                "generation_instructions": "Describe the methodology and approach",
+                "depends_on": ["background"],
+                "max_words": 1200,
+                "search_queries": ["research methodology", "experimental design"],
+            },
+        ]
+    }
+    mock_evaluation.return_value = mock_metadata
+    mock_retrieve_docs.return_value = []
     extracted_sections: list[ExtractedSectionDTO] = [
         {
             "title": "Abstract",
@@ -768,7 +841,13 @@ async def test_integration_generate_metadata_with_dependencies(mock_job_manager:
 
 
 @pytest.mark.e2e_full
-async def test_integration_generate_metadata_empty_sections(mock_job_manager: AsyncMock) -> None:
+@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
+async def test_integration_generate_metadata_empty_sections(
+    mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
+) -> None:
+    mock_evaluation.return_value = {"sections": []}
+    mock_retrieve_docs.return_value = []
     extracted_sections: list[ExtractedSectionDTO] = []
 
     result = await handle_generate_grant_template_metadata(
