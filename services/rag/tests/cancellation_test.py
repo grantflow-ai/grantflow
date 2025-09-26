@@ -198,7 +198,7 @@ async def test_concurrent_job_cancellation(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,  # Match the stage used by manager
+            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
             retry_count=0,
         )
         session.add(job)
@@ -219,7 +219,6 @@ async def test_concurrent_job_cancellation(
 
     await manager.ensure_not_cancelled()
 
-    # Cancel the job after it's been loaded
     async with async_session_maker() as session, session.begin():
         stmt = select(RagGenerationJob).where(RagGenerationJob.id == job_id)
         result = await session.execute(stmt)
