@@ -297,9 +297,12 @@ def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
     assert result is False
 
 
-@patch("services.rag.src.grant_template.extract_sections.get_embedding_model")
+@patch("services.rag.src.grant_template.extract_sections.exclude_embeddings_ref")
 @patch("services.rag.src.grant_template.extract_sections.run_sync")
-async def test_get_exclude_embeddings_cached(mock_run_sync: AsyncMock, mock_get_model: AsyncMock) -> None:
+async def test_get_exclude_embeddings_cached(mock_run_sync: AsyncMock, mock_ref: MagicMock) -> None:
+    # Reset the cache to ensure test starts clean
+    mock_ref.value = None
+
     mock_model = MagicMock()
     mock_tensor = MagicMock()
     mock_tensor.tolist.return_value = [0.1, 0.2, 0.3]
@@ -307,11 +310,16 @@ async def test_get_exclude_embeddings_cached(mock_run_sync: AsyncMock, mock_get_
     mock_run_sync.return_value = mock_model
 
     result1 = await get_exclude_embeddings()
+
+    # The function should have set the cached value
+    assert mock_ref.value == [0.1, 0.2, 0.3]
     assert result1 == [0.1, 0.2, 0.3]
 
+    # Second call should use cached value
     result2 = await get_exclude_embeddings()
     assert result2 == [0.1, 0.2, 0.3]
 
+    # Should only call run_sync once due to caching
     mock_run_sync.assert_called_once()
 
 

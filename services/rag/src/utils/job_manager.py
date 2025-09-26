@@ -64,6 +64,7 @@ class JobManager[DTOType]:
                                     RagGenerationStatusEnum.PENDING,
                                     RagGenerationStatusEnum.PROCESSING,
                                     RagGenerationStatusEnum.COMPLETED,
+                                    RagGenerationStatusEnum.CANCELLED,
                                 ]
                             ),
                         )
@@ -78,6 +79,7 @@ class JobManager[DTOType]:
                                     RagGenerationStatusEnum.PENDING,
                                     RagGenerationStatusEnum.PROCESSING,
                                     RagGenerationStatusEnum.COMPLETED,
+                                    RagGenerationStatusEnum.CANCELLED,
                                 ]
                             ),
                         )
@@ -94,6 +96,10 @@ class JobManager[DTOType]:
                         trace_id=self.trace_id,
                     )
                     self.current_job = existing_job
+
+                    if existing_job.status == RagGenerationStatusEnum.CANCELLED:
+                        raise RagJobCancelledError("Job cancelled")
+
                     return cast("RagGenerationJob", existing_job)
 
                 parent_job_id = await self._get_parent_job_id(session)
