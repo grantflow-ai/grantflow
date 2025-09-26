@@ -206,30 +206,37 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 
 const logGrantSectionsUpdate = (
 	application: NonNullable<ApplicationType>,
-	sections: GrantSection[],
+	sections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
 	isSuccess: boolean,
 	isOptimistic = false,
 ) => {
 	const logType = isSuccess ? "info" : "error";
-	const messagePrefix = isOptimistic ? "optimistic" : isSuccess ? "API success" : "API failure";
+	let messagePrefix: string;
+	if (isOptimistic) {
+		messagePrefix = "optimistic";
+	} else if (isSuccess) {
+		messagePrefix = "API success";
+	} else {
+		messagePrefix = "API failure";
+	}
 
 	log[logType](`[rag_sources_check] Application state updated via updateGrantSections (${messagePrefix})`, {
 		application_rag_sources: formatApplicationRagSources(application),
 		applicationId: application.id,
-		grant_sections: sections.map((section) => ({
+		grant_sections: (sections ?? []).map((section) => ({
 			id: section.id,
 			order: section.order,
 			parent_id: section.parent_id,
 			title: section.title,
 		})),
 		projectId: application.project_id,
-		sectionCount: sections.length,
+		sectionCount: (sections ?? []).length,
 		template_rag_sources: formatRagSources(application),
 		templateId: application.grant_template?.id,
 	});
 };
 
-const updateGrantTemplateAPI = async (application: NonNullable<ApplicationType>, processedSections: GrantSection[]) => {
+const updateGrantTemplateAPI = async (application: NonNullable<ApplicationType>, processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
 	const { selectedOrganizationId } = useOrganizationStore.getState();
 	if (!selectedOrganizationId) {
 		throw new Error("No organization selected");
@@ -240,7 +247,7 @@ const updateGrantTemplateAPI = async (application: NonNullable<ApplicationType>,
 		application.project_id,
 		application.id,
 		application.grant_template?.id ?? "",
-		{ grant_sections: processedSections ?? [] },
+		{ grant_sections: processedSections },
 	);
 };
 
@@ -248,7 +255,6 @@ interface ApplicationActions {
 	addFile: (file: FileWithId, parentId: string) => Promise<void>;
 	addPendingUpload: (file: FileWithId, sourceType: SourceType) => void;
 	addUrl: (url: string, parentId: string) => Promise<void>;
-	checkAndRestoreJobState: () => Promise<void>;
 	clearPendingUploads: (sourceType?: SourceType) => void;
 	clearRestoredJobState: () => void;
 	createApplication: (organizationId: string, projectId: string) => Promise<void>;
@@ -608,11 +614,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
 		}
-	},
-
-	checkAndRestoreJobState: () => {
-		// TODO: Implement new job restoration logic if needed
-		return Promise.resolve();
 	},
 
 	clearPendingUploads: (sourceType?: SourceType) => {
