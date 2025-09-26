@@ -59,20 +59,14 @@ def _sanitize_filename(title: str) -> str:
 
     title = title.strip()
 
-    # Check if title contains problematic characters
     if re.search(r'[<>:"/\\|?*]', title):
-        # For titles with special characters, replace all non-alphanumeric with underscores
         sanitized = re.sub(r"[^a-zA-Z0-9\-_]", "_", title)
-        # Clean up multiple consecutive underscores
         sanitized = re.sub(r"_{2,}", "_", sanitized)
-        # Remove leading/trailing underscores
         sanitized = sanitized.strip("_")
     else:
-        # For simple titles, just preserve spaces and basic punctuation
         sanitized = title
 
-    # Ensure filename doesn't exceed filesystem limits (255 chars including extension)
-    if len(sanitized) > 250:  # Leave room for file extension
+    if len(sanitized) > 250:
         sanitized = sanitized[:250].rstrip(" _")
 
     return sanitized or "application"

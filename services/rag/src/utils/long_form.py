@@ -22,14 +22,6 @@ MAX_API_CALLS: Final[int] = 5
 
 
 def select_optimal_model_for_length(max_words: int) -> str:
-    """Select optimal Gemini model based on target word count.
-
-    Args:
-        max_words: Target maximum word count for generation
-
-    Returns:
-        Model name string - Flash for ≤600 words, Flash-Lite for >600 words
-    """
     if max_words <= 600:
         return GEMINI_FLASH_MODEL
     return GEMINI_FLASH_LITE_MODEL

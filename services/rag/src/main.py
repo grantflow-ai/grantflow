@@ -95,8 +95,6 @@ async def _handle_autofill_request(
                 trace_id=request.trace_id,
                 elapsed_ms=round((time.perf_counter() - start_time) * 1000, 2),
             )
-            # Return early instead of raising an error - acknowledge the message
-            # This handles stale Pub/Sub messages for deleted applications
             return
 
     logger.debug(
@@ -151,8 +149,6 @@ async def _handle_grant_template_request(
                 trace_id=request.trace_id,
                 elapsed_ms=round((time.perf_counter() - start_time) * 1000, 2),
             )
-            # Return early instead of raising an error - acknowledge the message
-            # This handles stale Pub/Sub messages for deleted templates
             return
 
     logger.debug(

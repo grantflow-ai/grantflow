@@ -668,7 +668,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			expect(mockPush).toHaveBeenCalledWith("/organization");
 
-			// Wait for the delayed reset call
 			await waitFor(
 				() => {
 					expect(mockReset).toHaveBeenCalledOnce();
@@ -886,7 +885,6 @@ describe.sequential("WizardHeader", () => {
 
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 
-			// Wait for the delayed reset call
 			await waitFor(
 				() => {
 					expect(mockReset).toHaveBeenCalledOnce();

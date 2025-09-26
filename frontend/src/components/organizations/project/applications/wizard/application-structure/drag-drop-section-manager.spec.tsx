@@ -7,7 +7,6 @@ import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection } from "@/types/grant-sections";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 
-// Mock the drag overlay store
 const mockSetActiveItem = vi.fn();
 const mockClearActiveItem = vi.fn();
 
@@ -28,7 +27,6 @@ vi.mock("@/stores/drag-overlay-store", () => ({
 	),
 }));
 
-// Mock @dnd-kit components
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),
 	DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,
