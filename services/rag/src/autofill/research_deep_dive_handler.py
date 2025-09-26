@@ -164,14 +164,73 @@ async def _generate_field_answer(
     return response["answer"].strip()
 
 
+async def _generate_field_answer_with_context(
+    field_name: ResearchDeepDiveKey,
+    application: GrantApplication,
+    objectives_text: str,
+    shared_context: str,
+    trace_id: str,
+) -> str:
+    prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
+        application_title=application.title,
+        objectives_text=objectives_text,
+        question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
+    )
+
+    full_prompt = prompt_with_title.to_string(context=shared_context)
+    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+
+    response: AnswerResponse = await handle_completions_request(
+        prompt_identifier="research_deep_dive_generation",
+        messages=compressed_prompt,
+        system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
+        response_schema=answer_response_schema,
+        response_type=AnswerResponse,
+        validator=_validate_answer_response,
+        temperature=TEMPERATURE,
+        trace_id=trace_id,
+    )
+
+    return response["answer"].strip()
+
+
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
+    all_questions = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.values())
+    comprehensive_prompt = f"""
+    Answer the following research questions for a grant application titled: "{application.title}"
+
+    Research Questions:
+    {chr(10).join(f"{i + 1}. {q}" for i, q in enumerate(all_questions))}
+
+    Research Objectives:
+    {objectives_text}
+    """
+
+    logger.info("Generating shared search queries for all research deep dive fields", trace_id=trace_id)
+    search_queries = await handle_create_search_queries(user_prompt=comprehensive_prompt)
+
+    logger.info("Retrieving documents with shared context", trace_id=trace_id)
+    shared_context = await retrieve_documents(
+        application_id=str(application.id),
+        search_queries=search_queries,
+        task_description=comprehensive_prompt,
+        max_tokens=MAX_RETRIEVAL_TOKENS,
+        trace_id=trace_id,
+    )
+    shared_context_text = "\n".join(shared_context)
+
     field_names = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
+
     results = await batched_gather(
         *[
-            _generate_field_answer(
-                field_name=key, application=application, objectives_text=objectives_text, trace_id=trace_id
+            _generate_field_answer_with_context(
+                field_name=key,
+                application=application,
+                objectives_text=objectives_text,
+                shared_context=shared_context_text,
+                trace_id=trace_id,
             )
             for key in field_names
         ],

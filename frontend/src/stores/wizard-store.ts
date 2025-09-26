@@ -16,7 +16,7 @@ import { trackWizardEvent } from "@/utils/segment";
 import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 
 const DEBOUNCE_DELAY_MS = 2000;
-const POLLING_INTERVAL_DURATION = 2000;
+const POLLING_INTERVAL_DURATION = 10_000;
 export const MIN_TITLE_LENGTH = 10;
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
@@ -29,6 +29,35 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 ];
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
+
+const hasAutofillResults = (
+	type: "research_deep_dive" | "research_plan",
+	application: NonNullable<API.RetrieveApplication.Http200.ResponseBody>,
+): boolean => {
+	if (type === "research_plan" && application.research_objectives) {
+		return application.research_objectives.some((obj) => obj.research_tasks.length > 0);
+	}
+
+	if (type === "research_deep_dive" && application.form_inputs) {
+		const requiredFields = [
+			"background_context",
+			"hypothesis",
+			"rationale",
+			"novelty_and_innovation",
+			"impact",
+			"team_excellence",
+			"research_feasibility",
+			"preliminary_data",
+		] as const;
+
+		return requiredFields.some((field) => {
+			const fieldValue = application.form_inputs?.[field]?.trim();
+			return Boolean(fieldValue && fieldValue.length > 0);
+		});
+	}
+
+	return false;
+};
 
 export interface ValidationResult {
 	isValid: boolean;
@@ -56,6 +85,7 @@ type RagSourceStatus = NonNullable<
 
 interface WizardActions {
 	checkApplicationGeneration: () => Promise<void>;
+	checkAutofillResults: () => Promise<void>;
 	checkRagSourcesStatus: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
 	createObjective: (objective: ResearchObjective) => Promise<void>;
@@ -96,6 +126,8 @@ interface WizardActions {
 interface WizardState {
 	applicationGenerationComplete: boolean;
 	applicationGenerationFailed: boolean;
+	autofillMessageId: null | string;
+	autofillType: "research_deep_dive" | "research_plan" | null;
 	currentStep: WizardStep;
 	isAutofillLoading: {
 		research_deep_dive: boolean;
@@ -159,6 +191,8 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 const initialWizardState: WizardState = {
 	applicationGenerationComplete: false,
 	applicationGenerationFailed: false,
+	autofillMessageId: null,
+	autofillType: null,
 	currentStep: WizardStep.APPLICATION_DETAILS,
 	isAutofillLoading: {
 		research_deep_dive: false,
@@ -469,6 +503,50 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}
 		},
 
+		checkAutofillResults: async () => {
+			const { application, getApplication } = useApplicationStore.getState();
+			const { autofillMessageId, autofillType, polling } = get();
+
+			if (!(application && autofillType && autofillMessageId)) {
+				return;
+			}
+
+			try {
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (!selectedOrganizationId) return;
+
+				await getApplication(selectedOrganizationId, application.project_id, application.id);
+				const { application: updatedApplication } = useApplicationStore.getState();
+
+				if (updatedApplication && hasAutofillResults(autofillType, updatedApplication)) {
+					polling.stop();
+					set((state) => ({
+						...state,
+						autofillMessageId: null,
+						autofillType: null,
+						isAutofillLoading: {
+							...state.isAutofillLoading,
+							[autofillType]: false,
+						},
+					}));
+					toast.success("Autofill completed successfully!");
+				}
+			} catch (error) {
+				log.error("checkAutofillResults", error);
+				polling.stop();
+				toast.error("Failed to check autofill results. Please try again or contact support.");
+				set((state) => ({
+					...state,
+					autofillMessageId: null,
+					autofillType: null,
+					isAutofillLoading: {
+						...state.isAutofillLoading,
+						[autofillType]: false,
+					},
+				}));
+			}
+		},
+
 		checkRagSourcesStatus: async () => {
 			const { currentStep, polling } = get();
 
@@ -755,6 +833,8 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			set({
 				applicationGenerationComplete: initialWizardState.applicationGenerationComplete,
 				applicationGenerationFailed: initialWizardState.applicationGenerationFailed,
+				autofillMessageId: initialWizardState.autofillMessageId,
+				autofillType: initialWizardState.autofillType,
 				currentStep: initialWizardState.currentStep,
 				isAutofillLoading: initialWizardState.isAutofillLoading,
 				isGeneratingApplication: initialWizardState.isGeneratingApplication,
@@ -930,6 +1010,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		) => {
 			const { application } = useApplicationStore.getState();
 			const { selectedOrganizationId } = useOrganizationStore.getState();
+			const { polling } = get();
 
 			const validationError = validateAutofillRequirements(application);
 			if (validationError) return;
@@ -964,6 +1045,14 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					field_name: fieldName,
 					message_id: response.message_id,
 				});
+
+				set((state) => ({
+					...state,
+					autofillMessageId: response.message_id,
+					autofillType: type,
+				}));
+
+				polling.start(get().checkAutofillResults, POLLING_INTERVAL_DURATION, false);
 
 				await trackAutofillEvent(
 					get().currentStep,
