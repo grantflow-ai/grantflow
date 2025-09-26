@@ -22,6 +22,9 @@ const createMockFileWithId = (name: string, id?: string): FileWithId => {
 	const file = new File(["test content"], name, { type: "application/pdf" });
 	return Object.assign(file, { id: id ?? crypto.randomUUID() });
 };
+const { toastSuccessMock } = vi.hoisted(() => {
+	return { toastSuccessMock: vi.fn() };
+});
 
 vi.mock("@/actions/grant-applications", () => ({
 	createApplication: vi.fn(),
@@ -69,11 +72,12 @@ vi.mock("ky", () => ({
 		}
 	},
 }));
+
 vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
 		info: vi.fn(),
-		success: vi.fn(),
+		success: toastSuccessMock,
 	},
 }));
 vi.mock("@/stores/organization-store", () => ({
@@ -314,6 +318,140 @@ describe("Application Store", () => {
 			);
 		});
 
+		it("should sync subsection max words with parent", async () => {
+			useApplicationStore.getState().reset();
+			const sections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					max_words: 500,
+					order: 0,
+					title: "Introduction",
+				}),
+				GrantSectionDetailedFactory.build({
+					id: "2",
+					max_words: 400,
+					order: 1,
+					parent_id: "1",
+					title: "child 1",
+				}),
+				GrantSectionDetailedFactory.build({
+					id: "3",
+					max_words: 300,
+					order: 2,
+					parent_id: "1",
+					title: "child 2",
+				}),
+			];
+			const wordCountFixedSections = structuredClone(sections);
+			wordCountFixedSections[0].max_words = 700;
+
+			const application: API.RetrieveApplication.Http200.ResponseBody = {
+				completed_at: undefined,
+				created_at: "2023-01-01T00:00:00Z",
+				deadline: undefined,
+				editor_document_id: "123",
+				editor_document_init: false,
+				form_inputs: undefined,
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					grant_sections: [],
+					id: "test-template-id",
+				},
+				id: "test-app-id",
+				project_id: "test-project-id",
+				rag_sources: [],
+				research_objectives: undefined,
+				status: "WORKING_DRAFT",
+				text: undefined,
+				title: "Test Application",
+				updated_at: "2023-01-01T00:00:00Z",
+			};
+
+			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
+
+			useApplicationStore.setState({ application });
+
+			const { updateGrantSections } = useApplicationStore.getState();
+
+			await updateGrantSections(sections);
+
+			expect(updateGrantTemplate).toHaveBeenCalledWith(
+				"mock-org-id",
+				"test-project-id",
+				"test-app-id",
+				"test-template-id",
+				{ grant_sections: wordCountFixedSections },
+			);
+
+			expect(toastSuccessMock).toHaveBeenCalled();
+		});
+
+		it("should not not change parent word count if child total is less", async () => {
+			useApplicationStore.getState().reset();
+			const sections = [
+				GrantSectionDetailedFactory.build({
+					id: "1",
+					max_words: 500,
+					order: 0,
+					title: "Introduction",
+				}),
+				GrantSectionDetailedFactory.build({
+					id: "2",
+					max_words: 100,
+					order: 1,
+					parent_id: "1",
+					title: "child 1",
+				}),
+				GrantSectionDetailedFactory.build({
+					id: "3",
+					max_words: 300,
+					order: 2,
+					parent_id: "1",
+					title: "child 2",
+				}),
+			];
+
+			const application: API.RetrieveApplication.Http200.ResponseBody = {
+				completed_at: undefined,
+				created_at: "2023-01-01T00:00:00Z",
+				deadline: undefined,
+				editor_document_id: "123",
+				editor_document_init: false,
+				form_inputs: undefined,
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					grant_sections: [],
+					id: "test-template-id",
+				},
+				id: "test-app-id",
+				project_id: "test-project-id",
+				rag_sources: [],
+				research_objectives: undefined,
+				status: "WORKING_DRAFT",
+				text: undefined,
+				title: "Test Application",
+				updated_at: "2023-01-01T00:00:00Z",
+			};
+
+			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
+
+			useApplicationStore.setState({ application });
+
+			const { updateGrantSections } = useApplicationStore.getState();
+
+			await updateGrantSections(sections);
+
+			expect(updateGrantTemplate).toHaveBeenCalledWith(
+				"mock-org-id",
+				"test-project-id",
+				"test-app-id",
+				"test-template-id",
+				{ grant_sections: sections },
+			);
+
+			expect(toastSuccessMock).not.toHaveBeenCalled();
+		});
+
 		it("should handle missing grant template gracefully", async () => {
 			useApplicationStore.getState().reset();
 
@@ -374,7 +512,9 @@ describe("Application Store", () => {
 		});
 
 		it("should use production upload with localhost backend in test environment", async () => {
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -400,7 +540,9 @@ describe("Application Store", () => {
 		it("should use production upload with remote backend", async () => {
 			vi.clearAllMocks();
 
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -435,7 +577,9 @@ describe("Application Store", () => {
 
 	describe("file and URL management", () => {
 		it("should validate state for RAG source operations", async () => {
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -464,7 +608,9 @@ describe("Application Store", () => {
 		});
 
 		it("should handle invalid parentId validation", async () => {
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -476,7 +622,9 @@ describe("Application Store", () => {
 		});
 
 		it("should handle missing organization selection", async () => {
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -496,7 +644,9 @@ describe("Application Store", () => {
 		});
 
 		it("should handle file removal with missing file ID", async () => {
-			const fileWithoutId = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const fileWithoutId = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -510,7 +660,9 @@ describe("Application Store", () => {
 		});
 
 		it("should add files with parentId", async () => {
-			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			const file = new File(["content"], "test.pdf", {
+				type: "application/pdf",
+			});
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
@@ -537,7 +689,9 @@ describe("Application Store", () => {
 		it("should add URLs with parentId", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
-			vi.mocked(crawlTemplateUrl).mockResolvedValue({ source_id: "source-123" });
+			vi.mocked(crawlTemplateUrl).mockResolvedValue({
+				source_id: "source-123",
+			});
 			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
@@ -578,7 +732,12 @@ describe("Application Store", () => {
 		});
 
 		it("should remove URLs", async () => {
-			const ragSource = { id: "source-1", sourceId: "source-1", status: "FINISHED", url: "https://example.com" };
+			const ragSource = {
+				id: "source-1",
+				sourceId: "source-1",
+				status: "FINISHED",
+				url: "https://example.com",
+			};
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
@@ -655,7 +814,9 @@ describe("Application Store", () => {
 		it("should handle grant template validation errors (422 status)", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 			const httpError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Validation failed" }), { status: 422 }),
+				new Response(JSON.stringify({ detail: "Validation failed" }), {
+					status: 422,
+				}),
 				{} as any,
 				{} as any,
 			);
@@ -675,7 +836,9 @@ describe("Application Store", () => {
 		it("should handle non-422 errors in template generation", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 			const httpError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Server error" }), { status: 500 }),
+				new Response(JSON.stringify({ detail: "Server error" }), {
+					status: 500,
+				}),
 				{} as any,
 				{} as any,
 			);
