@@ -117,10 +117,16 @@ async def test_extract_relationships_stage_requires_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
+    )
+    # Mock the generate sections stage that makes API calls
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+        return_value=sample_generate_sections_dto,
     )
     mock_handle_extract_relationships = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
@@ -154,10 +160,16 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
+    )
+    # Mock the generate sections stage that makes API calls
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+        return_value=sample_generate_sections_dto,
     )
     mock_handle_enrich_objectives = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
