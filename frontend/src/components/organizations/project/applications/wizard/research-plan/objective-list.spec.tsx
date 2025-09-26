@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ObjectiveList } from "./objective-list";
 
-// Mock @dnd-kit components
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),
 	DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,

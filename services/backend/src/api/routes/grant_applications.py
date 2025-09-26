@@ -57,7 +57,17 @@ def _sanitize_filename(title: str) -> str:
     if not title or not title.strip():
         return "application"
 
-    sanitized = re.sub(r"[^a-zA-Z0-9\-_]", "_", title.strip())
+    title = title.strip()
+
+    if re.search(r'[<>:"/\\|?*]', title):
+        sanitized = re.sub(r"[^a-zA-Z0-9\-_]", "_", title)
+        sanitized = re.sub(r"_{2,}", "_", sanitized)
+        sanitized = sanitized.strip("_")
+    else:
+        sanitized = title
+
+    if len(sanitized) > 250:
+        sanitized = sanitized[:250].rstrip(" _")
 
     return sanitized or "application"
 

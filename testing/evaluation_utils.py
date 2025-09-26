@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Final, cast
 
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.serialization import deserialize
@@ -51,6 +51,83 @@ def calculate_embedding_statistics(vectors: list[VectorDTO]) -> dict[str, float]
         "min_embedding_norm": min(norms),
         "max_embedding_norm": max(norms),
     }
+
+
+_NOISE_CHARACTERS: Final[frozenset[str]] = frozenset("|*#[]{}<>`")
+_MIN_ALPHA_RATIO: Final[float] = 0.45
+_MAX_NOISE_RATIO: Final[float] = 0.12
+
+_MAX_CONTENT_LENGTH_FOR_SCORING: Final[int] = 1200
+_LENGTH_SCORE_DIVISOR: Final[float] = 4000.0
+_MEDIA_CONTENT_PENALTY: Final[float] = 0.15
+
+
+def _chunk_metrics(content: str) -> tuple[float, float, int]:
+    text = content.strip()
+    if not text:
+        return 0.0, 1.0, 0
+
+    length = len(text)
+    alpha_ratio = sum(ch.isalnum() for ch in text) / length
+    noise_ratio = sum(1 for ch in text if ch in _NOISE_CHARACTERS) / length
+
+    return alpha_ratio, noise_ratio, length
+
+
+def _calculate_chunk_score(content: str) -> float:
+    alpha_ratio, noise_ratio, length = _chunk_metrics(content)
+
+    score = (alpha_ratio - noise_ratio) + min(length, _MAX_CONTENT_LENGTH_FOR_SCORING) / _LENGTH_SCORE_DIVISOR
+
+    if "![" in content or "media/" in content:
+        score -= _MEDIA_CONTENT_PENALTY
+
+    return score
+
+
+def _is_preferred_chunk(content: str) -> bool:
+    alpha_ratio, noise_ratio, _length = _chunk_metrics(content)
+    return alpha_ratio >= _MIN_ALPHA_RATIO and noise_ratio <= _MAX_NOISE_RATIO
+
+
+def _select_indices_by_score_and_preference(
+    scored_indices: list[tuple[float, int]], preferred_indices: list[int], limit: int
+) -> list[int]:
+    selected_indices: list[int] = []
+    selected_indices.extend(preferred_indices[:limit])
+
+    if len(selected_indices) < limit:
+        for _score, idx in sorted(scored_indices, key=lambda item: item[0], reverse=True):
+            if idx in selected_indices:
+                continue
+            selected_indices.append(idx)
+            if len(selected_indices) == limit:
+                break
+
+    return selected_indices
+
+
+def select_representative_chunks(vectors: list[VectorDTO], limit: int = 3) -> list[VectorDTO]:
+    if limit <= 0 or not vectors:
+        return []
+
+    normalized_limit = min(limit, len(vectors))
+    preferred_indices: list[int] = []
+    scored_indices: list[tuple[float, int]] = []
+
+    for idx, vector in enumerate(vectors):
+        content = vector["chunk"].get("content", "")
+        score = _calculate_chunk_score(content)
+
+        if _is_preferred_chunk(content):
+            preferred_indices.append(idx)
+
+        scored_indices.append((score, idx))
+
+    selected_indices = _select_indices_by_score_and_preference(scored_indices, preferred_indices, normalized_limit)
+    selected_indices.sort()
+
+    return [vectors[idx] for idx in selected_indices]
 
 
 def assess_chunk_quality(vectors: list[VectorDTO]) -> dict[str, Any]:
