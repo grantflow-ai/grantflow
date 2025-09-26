@@ -79,10 +79,8 @@ async def test_template_job_manager_detects_cancelled_job(
         trace_id="test-trace",
     )
 
-    await manager.get_or_create_job_for_stage()
-
     with pytest.raises(RagJobCancelledError, match="Job cancelled"):
-        await manager.ensure_not_cancelled()
+        await manager.get_or_create_job_for_stage()
 
 
 @pytest.mark.asyncio
@@ -102,10 +100,8 @@ async def test_application_job_manager_detects_cancelled_job(
         trace_id="test-trace",
     )
 
-    await manager.get_or_create_job_for_stage()
-
     with pytest.raises(RagJobCancelledError, match="Job cancelled"):
-        await manager.ensure_not_cancelled()
+        await manager.get_or_create_job_for_stage()
 
 
 @pytest.mark.asyncio
@@ -202,7 +198,7 @@ async def test_concurrent_job_cancellation(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,  # Match the stage used by manager
             retry_count=0,
         )
         session.add(job)
@@ -223,6 +219,7 @@ async def test_concurrent_job_cancellation(
 
     await manager.ensure_not_cancelled()
 
+    # Cancel the job after it's been loaded
     async with async_session_maker() as session, session.begin():
         stmt = select(RagGenerationJob).where(RagGenerationJob.id == job_id)
         result = await session.execute(stmt)
