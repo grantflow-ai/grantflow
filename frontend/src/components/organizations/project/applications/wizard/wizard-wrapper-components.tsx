@@ -12,6 +12,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
 import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { routes } from "@/utils/navigation";
+import { Autosave } from "./autosave";
 import { Deadline } from "./deadline";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
@@ -103,6 +104,7 @@ export function WizardHeader() {
 									: application?.title}
 							</h1>
 							<Deadline />
+							<Autosave />
 						</>
 					) : (
 						<div className="invisible" />
@@ -115,7 +117,7 @@ export function WizardHeader() {
 					size="lg"
 					variant="link"
 				>
-					{isFirstStep ? "Exit" : "Save and Exit"}
+					{isFirstStep ? "Exit" : "Close"}
 				</AppButton>
 			</div>
 

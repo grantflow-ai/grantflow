@@ -52,7 +52,9 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 
 	const handleTaskDelete = (taskIndex: number) => {
 		setTasks((prevTasks: ResearchObjective["research_tasks"]) =>
-			prevTasks.filter((_task: ResearchObjective["research_tasks"][0], idx: number) => idx !== taskIndex),
+			prevTasks
+				.filter((_task: ResearchObjective["research_tasks"][0], idx: number) => idx !== taskIndex)
+				.map((task, index) => ({ ...task, number: index })),
 		);
 	};
 

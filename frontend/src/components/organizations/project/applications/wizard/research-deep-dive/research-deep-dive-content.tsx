@@ -8,6 +8,7 @@ import TextareaField from "@/components/app/fields/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { useDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
 
 type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
@@ -28,17 +29,26 @@ const placeholders: Record<keyof FormInputs, string> = {
 };
 
 const RESEARCH_QUESTIONS: { key: keyof FormInputs; question: string }[] = [
-	{ key: "background_context", question: "What is the context and background of your research?" },
+	{
+		key: "background_context",
+		question: "What is the context and background of your research?",
+	},
 	{
 		key: "hypothesis",
 		question: "What is the central hypothesis or key question your research aims to address?",
 	},
-	{ key: "rationale", question: "Why is this research important and what motivates its pursuit?" },
+	{
+		key: "rationale",
+		question: "Why is this research important and what motivates its pursuit?",
+	},
 	{
 		key: "novelty_and_innovation",
 		question: "What makes your approach unique or innovative compared to existing research?",
 	},
-	{ key: "impact", question: "How will your research contribute to the field and society?" },
+	{
+		key: "impact",
+		question: "How will your research contribute to the field and society?",
+	},
 	{
 		key: "team_excellence",
 		question: "What makes your team uniquely qualified to carry out this project?",
@@ -90,10 +100,6 @@ export function ResearchDeepDiveContent() {
 	const questionFlowState = useMemo(() => getQuestionFlowState(formInputs), [formInputs]);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(() => questionFlowState.selectedQuestion);
 
-	useEffect(() => {
-		setSelectedQuestion(questionFlowState.selectedQuestion);
-	}, [questionFlowState.selectedQuestion]);
-
 	return (
 		<div className="flex w-full gap-6 px-16" data-testid="research-deep-dive-content">
 			<QuestionsList onSelectQuestion={setSelectedQuestion} questionFlowState={questionFlowState} />
@@ -104,7 +110,12 @@ export function ResearchDeepDiveContent() {
 				onBack={() => {
 					setSelectedQuestion(selectedQuestion - 1);
 				}}
+				onNext={() => {
+					setSelectedQuestion(selectedQuestion + 1);
+				}}
 				selectedQuestion={selectedQuestion}
+				showBack={selectedQuestion > 0}
+				showNext={selectedQuestion < RESEARCH_QUESTIONS.length - 1}
 			/>
 		</div>
 	);
@@ -113,11 +124,17 @@ export function ResearchDeepDiveContent() {
 function AnswerCard({
 	formInputs,
 	onBack,
+	onNext,
 	selectedQuestion,
+	showBack,
+	showNext,
 }: {
 	formInputs: FormInputs;
 	onBack: () => void;
+	onNext: () => void;
 	selectedQuestion: number;
+	showBack: boolean;
+	showNext: boolean;
 }) {
 	const { key: questionKey, question } = RESEARCH_QUESTIONS[selectedQuestion];
 	const formInputsAnswer = formInputs[questionKey] ?? "";
@@ -128,7 +145,6 @@ function AnswerCard({
 		setAnswerValue(formInputsAnswer);
 	}, [formInputsAnswer]);
 
-	const isBackVisible = selectedQuestion >= 1;
 	const isSaveEnabled = answerValue.trim().length > 0;
 
 	const handleSave = async () => {
@@ -136,6 +152,13 @@ function AnswerCard({
 			await useWizardStore.getState().updateFormInputs({ ...formInputs, [questionKey]: answerValue.trim() });
 		}
 	};
+
+	const handleNext = () => {
+		onNext();
+		void handleSave();
+	};
+
+	const handleSaveDebounced = useDebounce(handleSave, 5000);
 
 	return (
 		<div className="w-1/2">
@@ -145,6 +168,7 @@ function AnswerCard({
 					className="min-h-96 w-full focus:outline-app-gray-600 focus-visible:outline-app-gray-600 focus-visible:border-app-gray-600"
 					onChange={(e) => {
 						setAnswerValue(e.target.value);
+						handleSaveDebounced();
 					}}
 					placeholder={placeholders[questionKey]}
 					testId="research-deep-dive-answer"
@@ -152,21 +176,23 @@ function AnswerCard({
 				/>
 
 				<div className="flex justify-between w-full gap-3">
-					{isBackVisible && (
+					{showBack && (
 						<AppButton data-testid="back-button" onClick={onBack} variant="secondary">
 							Back
 						</AppButton>
 					)}
-					<div className={isBackVisible ? "" : "ml-auto"}>
-						<AppButton
-							data-testid="save-button"
-							disabled={!isSaveEnabled}
-							onClick={handleSave}
-							variant="primary"
-						>
-							Save
-						</AppButton>
-					</div>
+					{showNext && (
+						<div className={showBack ? "" : "ml-auto"}>
+							<AppButton
+								data-testid="next-button"
+								disabled={!isSaveEnabled}
+								onClick={handleNext}
+								variant="primary"
+							>
+								Next
+							</AppButton>
+						</div>
+					)}
 				</div>
 			</AppCard>
 		</div>
