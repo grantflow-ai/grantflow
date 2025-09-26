@@ -329,7 +329,7 @@ async def test_missing_cfp_analysis_validation(
         )
 
 
-async def test_pipeline_creates_real_job_entry(
+async def test_pipeline_creates_database_job_entry(
     mocker: MockerFixture,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,

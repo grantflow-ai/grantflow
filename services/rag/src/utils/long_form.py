@@ -1,7 +1,13 @@
 from time import time
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import GENERATION_MODEL
+from packages.shared_utils.src.ai import (
+    CUSTOM_MODEL_REASON,
+    GEMINI_FLASH_LITE_MODEL,
+    GEMINI_FLASH_MODEL,
+    GENERATION_MODEL,
+    MODEL_SELECTION_REASON,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
@@ -14,15 +20,25 @@ logger = get_logger(__name__)
 
 MAX_API_CALLS: Final[int] = 5
 
+
+def select_optimal_model_for_length(max_words: int) -> str:
+    if max_words <= 600:
+        return GEMINI_FLASH_MODEL
+    return GEMINI_FLASH_LITE_MODEL
+
+
 LONG_FORM_GENERATION_SYSTEM_PROMPT: Final[str] = """
 You are a specialized long-form text generation component in a RAG system dedicated to generating STEM grant applications.
 
 Your primary responsibility is to generate scientifically accurate, well-structured, and cohesive text that meets rigorous academic standards. You excel at:
-1. Synthesizing information from provided sources without fabricating details
-2. Maintaining consistent technical terminology and precise scientific language
-3. Writing with high information density appropriate for expert reviewers
-4. Ensuring logical flow between text segments in multi-part generation
-5. Flagging missing information rather than inventing content
+1. **MAXIMIZING USE OF PROVIDED SCIENTIFIC DATA** - the sources contain real research papers and data from scientists
+2. Synthesizing information from provided sources without fabricating details - quote and reference extensively
+3. Maintaining consistent technical terminology and precise scientific language FROM THE PROVIDED SOURCES
+4. Writing with high information density appropriate for expert reviewers USING RAG DATA
+5. Ensuring logical flow between text segments in multi-part generation
+6. Flagging missing information rather than inventing content
+7. **Pre-identifying and incorporating scientific n-grams** from sources before writing
+8. Using compound scientific terminology and domain-specific phrases for professional precision FROM RAG CONTEXT
 """
 
 
@@ -44,18 +60,29 @@ LONG_FORM_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     **Length Requirements**: The complete text must be between ${min_words} words (minimum) and ${max_words} words (maximum).
 
-    ## Source Materials
-    Use ONLY the following sources for your generation. Do not incorporate external knowledge or make up information.
+    ## Source Materials (Scientific Papers Data)
+    **CRITICAL: These are real research papers and scientific data provided by scientists. You MUST use this data extensively.**
     <sources>
     ${sources}
     </sources>
 
     ## Generation Guidelines
-    1. Content Analysis:
+    1. **RAG Data Usage (PRIMARY REQUIREMENT)**:
+       - **QUOTE AND REFERENCE EXTENSIVELY** from the provided scientific sources
+       - These sources contain real research data that scientists want incorporated
+       - Before writing, identify specific n-grams from sources:
+         * At least 5 scientific 1-grams (technical terms)
+         * 5-10 relevant 2-grams (compound terms)
+         * 5-10 relevant 3-grams (technical phrases)
+         * 5-10 relevant 4-grams (complex expressions)
+       - Treat sources as your primary material - maximize their usage
+
+    2. Content Analysis:
        - Carefully assess the task description and source materials
        - Identify all available and missing information critical to the task
+       - **Focus on extracting maximum value from provided scientific data**
 
-    2. Continuation Strategy:
+    3. Continuation Strategy:
        - Seamlessly continue from the previously generated text
        - Maintain consistent scientific terminology, writing style, and narrative flow
        - Never repeat content already covered in previous segments
@@ -68,7 +95,15 @@ LONG_FORM_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Arrange content in a logical sequence with clear transitions between ideas
        - Do not define acronyms; assume a separate acronyms table exists
 
-    4. Information Integrity:
+    4. Scientific Terminology and N-gram Integration:
+       - Prioritize scientific terms, bigrams, and 3-grams from the provided sources
+       - Use compound scientific terminology naturally (e.g., "tumor microenvironment", "single-cell sequencing")
+       - Incorporate technical bigrams and trigrams throughout the text for professional precision
+       - Employ domain-specific 4-gram sequences where appropriate
+       - Maintain consistent usage of specialized terminology from source materials
+       - Create coherent technical phrases that enhance scientific rigor and specificity
+
+    5. Information Integrity:
        - NEVER invent or fabricate facts, data, or methodologies not present in the sources
        - When critical information is missing, use this exact format: `**[MISSING INFORMATION: specific description]**`
        - Cite sources accurately if citation formats are provided in source materials
@@ -214,25 +249,37 @@ async def generate_long_form_text(
     task_description: str,
     max_api_calls: int = MAX_API_CALLS,
     model: str = GENERATION_MODEL,
+    buffer_words: int = 150,
     timeout: float = 300,
     trace_id: str,
     **sources: Any,
 ) -> str:
+    buffered_min_words = min_words + buffer_words
+    buffered_max_words = max_words + buffer_words
+
+    optimal_model = select_optimal_model_for_length(max_words)
+    selected_model = optimal_model if model == GENERATION_MODEL else model
+
     logger.info(
         "Starting long-form text generation",
         prompt_identifier=prompt_identifier,
         min_words=min_words,
         max_words=max_words,
+        buffer_words=buffer_words,
+        buffered_min_words=buffered_min_words,
+        buffered_max_words=buffered_max_words,
+        selected_model=selected_model,
+        model_selection_reason=MODEL_SELECTION_REASON if selected_model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
         trace_id=trace_id,
     )
 
     long_form_text = await handle_long_form_text_generation(
-        max_words=max_words,
-        min_words=min_words,
+        max_words=buffered_max_words,
+        min_words=buffered_min_words,
         prompt_identifier=prompt_identifier,
         task_description=task_description,
         max_api_calls=max_api_calls,
-        model=model,
+        model=selected_model,
         timeout=timeout,
         trace_id=trace_id,
         **sources,
@@ -253,13 +300,13 @@ async def generate_long_form_text(
         words_overflow = long_form_length - max_words
 
         long_form_text = await handle_long_form_text_generation(
-            max_words=max_words,
-            min_words=min_words,
+            max_words=buffered_max_words,
+            min_words=buffered_min_words,
             prompt_identifier=f"{prompt_identifier}_shorten_{attempts}",
             task_description=compress_prompt_text(
                 SHORTEN_TEXT_PROMPT.to_string(text=long_form_text, words_overflow=words_overflow), aggressive=True
             ),
-            model=GENERATION_MODEL,
+            model=selected_model,
             timeout=timeout,
             trace_id=trace_id,
         )

@@ -73,36 +73,82 @@ def _format_cfp_requirements_for_section(section_title: str, cfp_analysis: CFPSe
     return cfp_text
 
 
+def _get_section_length_requirements(section_title: str) -> str:
+    section_title_lower = section_title.lower()
+
+    match True:
+        case _ if "abstract" in section_title_lower:
+            return "Target length: 250-500 words for comprehensive yet concise overview"
+        case _ if "research strategy" in section_title_lower or "approach" in section_title_lower:
+            return "Target length: 800-1200 words for detailed methodology and experimental design"
+        case _ if "preliminary" in section_title_lower or "pilot" in section_title_lower:
+            return "Target length: 600-900 words for demonstrating feasibility and initial findings"
+        case _ if "aims" in section_title_lower or "objectives" in section_title_lower:
+            return "Target length: 400-700 words per aim for clear, specific, and measurable goals"
+        case _ if "background" in section_title_lower or "significance" in section_title_lower:
+            return "Target length: 700-1000 words for comprehensive context and rationale"
+        case _ if "methods" in section_title_lower or "methodology" in section_title_lower:
+            return "Target length: 600-1000 words for detailed experimental procedures"
+        case _ if "timeline" in section_title_lower or "plan" in section_title_lower:
+            return "Target length: 400-600 words for clear milestones and deliverables"
+        case _:
+            return "Target length: 600-1000 words for comprehensive section coverage"
+
+
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_generation",
     template="""
     Write the ${section_title} section for a grant application.
+
+    ## Length Requirements
+    ${length_requirements}
 
     ## Instructions
     ${instructions}
 
     ${cfp_requirements}
 
-    ## Research Context
+    ## Research Context (Scientific Papers Data)
     ${context}
 
+    ## CRITICAL: RAG Data Usage Requirements
+    **You are writing based on scientific papers and research data provided above. The scientists have given us this specific data to use.**
+
+    MANDATORY STEPS BEFORE WRITING:
+    1. **Extract and quote extensively** from the research context - this is real scientific data that MUST be incorporated
+    2. **Pre-identify specific n-grams** from the RAG context to use:
+       - Find at least 5 scientific 1-grams (single technical terms)
+       - Find 5-10 relevant 2-grams (compound terms like "tumor microenvironment")
+       - Find 5-10 relevant 3-grams (technical phrases like "single-cell RNA sequencing")
+       - Find 5-10 relevant 4-grams (complex expressions like "tumor-associated macrophage polarization states")
+    3. **Plan integration** of these identified terms throughout your writing
+
     ## Content Requirements
-        - Write substantive, detailed content with specific examples and evidence
-        - Include clear objectives, methodological approaches, and expected outcomes
+        - **QUOTE AND USE RAG DATA EXTENSIVELY** - this is provided scientific research that must be incorporated
+        - Write substantive, detailed content with specific examples and evidence FROM THE RAG CONTEXT
+        - Include clear objectives, methodological approaches, and expected outcomes BASED ON PROVIDED DATA
         - Structure content with clear headings, subheadings, and logical flow
         - Incorporate timeline information, milestones, and work plan elements where relevant
-        - Use professional academic language with precise scientific terminology
-        - Ensure content directly addresses all section requirements comprehensively
-        - Provide sufficient detail to demonstrate expertise and feasibility
-        - Include specific research questions, hypotheses, and experimental designs
-        - Address potential challenges and mitigation strategies
-        - Connect to broader research context and clinical significance
+        - Use professional academic language with precise scientific terminology FROM THE RAG
+        - Ensure content directly addresses all section requirements comprehensively USING RAG DATA
+        - Provide sufficient detail to demonstrate expertise and feasibility WITH RAG EVIDENCE
+        - Include specific research questions, hypotheses, and experimental designs FROM RAG CONTEXT
+        - Address potential challenges and mitigation strategies MENTIONED IN RAG DATA
+        - Connect to broader research context and clinical significance AS PROVIDED IN RAG
+
+    ## Scientific Writing with RAG Integration
+        - **Primary Goal**: Maximize use of provided RAG research context - quote, paraphrase, and reference extensively
+        - **Secondary Goal**: Use the pre-identified n-grams naturally throughout the text for scientific style
+        - Weave the identified 1-grams, 2-grams, 3-grams, and 4-grams into the narrative seamlessly
+        - Maintain scientific rigor by grounding ALL claims in the provided research context
+        - Treat the RAG context as your primary source material - you are synthesizing scientific papers
 
     ## Format Guidelines
         - Use markdown formatting with proper headers (## for main sections, ### for subsections)
         - Include bullet points or numbered lists for clarity where appropriate
-        - Aim for comprehensive coverage - target 600-1000 words for substantial sections
-        - Include specific metrics, timelines, and measurable outcomes
+        - Aim for comprehensive coverage within specified word count targets
+        - Include specific metrics, timelines, and measurable outcomes FROM RAG DATA
+        - Quote or reference specific findings, methodologies, and results from the research context
 """,
 )
 
@@ -195,9 +241,8 @@ async def handle_generate_section_text(
 
     validated_context = combined_context
 
-    cfp_requirements_text = _format_cfp_requirements_for_section(
-        section_title, cfp_analysis["cfp_analysis"] if cfp_analysis else None
-    )
+    cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis["cfp_analysis"])
+    length_requirements = _get_section_length_requirements(section_title)
 
     logger.debug(
         "Prepared context and requirements for section generation",
@@ -211,6 +256,7 @@ async def handle_generate_section_text(
 
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
+        length_requirements=length_requirements,
         instructions=section["generation_instructions"],
         cfp_requirements=cfp_requirements_text,
         context=validated_context,

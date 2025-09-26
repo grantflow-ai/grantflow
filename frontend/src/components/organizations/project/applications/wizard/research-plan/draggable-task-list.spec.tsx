@@ -3,7 +3,6 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DraggableTaskList } from "./draggable-task-list";
 
-// Mock @dnd-kit components
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),
 	DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,

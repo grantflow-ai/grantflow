@@ -80,7 +80,7 @@ TEST_APPLICATIONS = {
 
 
 @pytest.fixture
-def real_application_ids() -> dict[str, str]:
+def application_ids() -> dict[str, str]:
     return TEST_APPLICATIONS
 
 
