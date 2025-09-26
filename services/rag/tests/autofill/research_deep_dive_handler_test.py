@@ -89,6 +89,37 @@ async def test_generate_field_answer(mock_logger: MagicMock, trace_id: str) -> N
         mock_completion.assert_called_once()
 
 
+async def test_generate_field_answer_with_context(mock_logger: MagicMock, trace_id: str) -> None:
+    from packages.db.src.tables import GrantApplication
+
+    from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer_with_context
+
+    with patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion:
+        mock_completion.return_value = {
+            "answer": "This is a generated answer using shared context that provides comprehensive details about the research background based on the provided documents. "
+            * 5
+        }
+
+        app = GrantApplication(id="test-id", title="Test Application")
+        shared_context = "Document content 1\nDocument content 2\nDocument content 3"
+
+        result = await _generate_field_answer_with_context(
+            field_name="background_context",
+            application=app,
+            objectives_text="Test objectives",
+            shared_context=shared_context,
+            trace_id=trace_id,
+        )
+
+        assert len(result) >= 50
+        mock_completion.assert_called_once()
+
+        # Verify the call was made with compressed prompt containing shared context
+        _args, kwargs = mock_completion.call_args
+        assert "messages" in kwargs
+        # The shared context should be included in the compressed prompt
+
+
 def test_function_import_deep_dive() -> None:
     import inspect
 
@@ -214,7 +245,8 @@ async def test_generate_research_deep_dive_content_with_mocks(
             "services.rag.src.autofill.research_deep_dive_handler.retrieve_documents", new_callable=AsyncMock
         ) as mock_retrieve,
         patch(
-            "services.rag.src.autofill.research_deep_dive_handler._generate_field_answer", new_callable=AsyncMock
+            "services.rag.src.autofill.research_deep_dive_handler._generate_field_answer_with_context",
+            new_callable=AsyncMock,
         ) as mock_generate,
     ):
         mock_search.return_value = ["search query 1", "search query 2"]
@@ -228,3 +260,8 @@ async def test_generate_research_deep_dive_content_with_mocks(
 
         assert isinstance(result, dict)
         assert "background_context" in result
+
+        # Verify shared context approach was used
+        mock_search.assert_called_once()  # Only one search query generation
+        mock_retrieve.assert_called_once()  # Only one document retrieval
+        assert mock_generate.call_count == 8  # 8 fields generated with shared context

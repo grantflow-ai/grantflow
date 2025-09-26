@@ -182,6 +182,7 @@ services:
       - rag
     build:
       dockerfile: ./services/rag/Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
       GOOGLE_CLOUD_PROJECT: grantflow
@@ -199,6 +200,20 @@ services:
       - ./services/rag:/app/services/rag:cached
       - ./packages:/app/packages:cached
     command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload --reload-dir services/rag/src --reload-dir packages"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
       db:
         condition: service_healthy

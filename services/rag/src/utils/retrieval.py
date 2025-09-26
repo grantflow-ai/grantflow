@@ -20,12 +20,12 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
-MAX_RESULTS: Final[int] = 15
+MAX_RESULTS: Final[int] = 10  # Reduced from 15 to decrease memory usage
 MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
 MIN_QUALITY_SCORE: Final[float] = 7.0
 
 _document_cache: dict[str, tuple[list[str], float]] = {}
-CACHE_TTL_SECONDS: Final[int] = 300
+CACHE_TTL_SECONDS: Final[int] = 1800  # Increased from 5min to 30min for better caching
 
 
 def _create_cache_key(**kwargs: Any) -> str:
@@ -194,8 +194,8 @@ async def retrieve_vectors_for_embedding(
 ) -> list[TextVector]:
     session_maker = get_session_maker()
 
-    max_threshold = 1.0
-    threshold = min(0.25 + 0.15 * iteration, max_threshold)
+    max_threshold = 0.8  # Reduced from 1.0 to limit search iterations
+    threshold = min(0.3 + 0.2 * iteration, max_threshold)  # Larger steps: 0.3, 0.5, 0.7
     similarity_conditions = [TextVector.embedding.cosine_distance(embedding) <= threshold for embedding in embeddings]
 
     async with session_maker() as session:

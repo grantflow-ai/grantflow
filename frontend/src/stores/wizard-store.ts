@@ -535,14 +535,14 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 				if (updatedApplication && hasAutofillResults(autofillType, updatedApplication)) {
 					polling.stop();
-					resetAutofillState(set, autofillType);
+					resetAutofillState((state) => ({ ...state }), autofillType);
 					toast.success("Autofill completed successfully!");
 				}
 			} catch (error) {
 				log.error("checkAutofillResults", error);
 				polling.stop();
 				toast.error("Failed to check autofill results. Please try again or contact support.");
-				resetAutofillState(set, autofillType);
+				resetAutofillState((state) => ({ ...state }), autofillType);
 			}
 		},
 

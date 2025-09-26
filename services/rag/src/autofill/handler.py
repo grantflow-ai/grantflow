@@ -167,7 +167,7 @@ async def handle_autofill_request(
             logger.info(
                 "Research deep dive content generated successfully",
                 application_id=str(application_id),
-                fields_count=len([k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]),
+                fields_count=len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]),
                 trace_id=trace_id,
             )
 
@@ -183,7 +183,9 @@ async def handle_autofill_request(
                 logger.info(
                     "Successfully saved research deep dive to database",
                     application_id=str(application_id),
-                    fields_count=len([k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]),
+                    fields_count=len(
+                        [k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]
+                    ),
                     trace_id=trace_id,
                 )
 
@@ -197,7 +199,7 @@ async def handle_autofill_request(
                         "notification_type": "success",
                         "autofill_type": "research_deep_dive",
                         "fields_generated": len(
-                            [k for k, v in research_deep_dive.items() if v and not v.startswith("[Failed")]
+                            [k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]
                         ),
                     },
                 )
