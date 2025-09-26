@@ -1,16 +1,16 @@
 from time import time
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import GENERATION_MODEL
-from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
-
-from services.rag.src.constants import (
+from packages.shared_utils.src.ai import (
     CUSTOM_MODEL_REASON,
     GEMINI_FLASH_LITE_MODEL,
     GEMINI_FLASH_MODEL,
+    GENERATION_MODEL,
     MODEL_SELECTION_REASON,
 )
+from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
+
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -22,6 +22,14 @@ MAX_API_CALLS: Final[int] = 5
 
 
 def select_optimal_model_for_length(max_words: int) -> str:
+    """Select optimal Gemini model based on target word count.
+
+    Args:
+        max_words: Target maximum word count for generation
+
+    Returns:
+        Model name string - Flash for ≤600 words, Flash-Lite for >600 words
+    """
     if max_words <= 600:
         return GEMINI_FLASH_MODEL
     return GEMINI_FLASH_LITE_MODEL

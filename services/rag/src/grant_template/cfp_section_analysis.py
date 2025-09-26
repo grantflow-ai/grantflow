@@ -6,6 +6,7 @@ from packages.db.src.json_objects import (
     CFPAnalysisResult,
     CFPSectionAnalysis,
 )
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
@@ -18,7 +19,6 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-GEMINI_2_5_FLASH_MODEL: Final[str] = "gemini-2.5-flash"
 
 CFP_SECTION_ANALYZER_SYSTEM_PROMPT: Final[str] = """
 You are a specialized CFP (Call for Proposals) analyzer that extracts comprehensive section requirements
@@ -288,7 +288,7 @@ async def analyze_cfp_sections(
 
     return await handle_completions_request(
         prompt_identifier="cfp_section_analyzer",
-        model=GEMINI_2_5_FLASH_MODEL,
+        model=GEMINI_FLASH_MODEL,
         messages=prompt.to_string(),
         response_schema=CFP_SECTION_ANALYZER_SCHEMA,
         response_type=CFPSectionAnalysis,
