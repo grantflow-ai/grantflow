@@ -21,6 +21,7 @@ SUPPORTED_FILE_EXTENSIONS = {
 
 
 class NotificationEvents(StrEnum):
+    AUTOFILL_COMPLETED = "autofill_completed"
     CFP_DATA_EXTRACTED = "cfp_data_extracted"
     GRANT_APPLICATION_GENERATION_COMPLETED = "grant_application_generation_completed"
     GRANT_TEMPLATE_CREATED = "grant_template_created"

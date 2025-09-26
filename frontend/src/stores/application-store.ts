@@ -95,15 +95,6 @@ interface ApplicationState {
 
 type SourceType = "application" | "template";
 
-function validateJobRestoration(_application: ApplicationType): {
-	isValid: boolean;
-	projectId?: string;
-	ragJobId?: string;
-} {
-	// TODO: Implement new job restoration logic if needed
-	return { isValid: false };
-}
-
 const initialState: ApplicationState = {
 	application: null,
 	areAppOperationsInProgress: false,
@@ -213,11 +204,57 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 	};
 };
 
+const logGrantSectionsUpdate = (
+	application: NonNullable<ApplicationType>,
+	sections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
+	isSuccess: boolean,
+	isOptimistic = false,
+) => {
+	const logType = isSuccess ? "info" : "error";
+	let messagePrefix: string;
+	if (isOptimistic) {
+		messagePrefix = "optimistic";
+	} else if (isSuccess) {
+		messagePrefix = "API success";
+	} else {
+		messagePrefix = "API failure";
+	}
+
+	log[logType](`[rag_sources_check] Application state updated via updateGrantSections (${messagePrefix})`, {
+		application_rag_sources: formatApplicationRagSources(application),
+		applicationId: application.id,
+		grant_sections: (sections ?? []).map((section) => ({
+			id: section.id,
+			order: section.order,
+			parent_id: section.parent_id,
+			title: section.title,
+		})),
+		projectId: application.project_id,
+		sectionCount: (sections ?? []).length,
+		template_rag_sources: formatRagSources(application),
+		templateId: application.grant_template?.id,
+	});
+};
+
+const updateGrantTemplateAPI = async (application: NonNullable<ApplicationType>, processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+	const { selectedOrganizationId } = useOrganizationStore.getState();
+	if (!selectedOrganizationId) {
+		throw new Error("No organization selected");
+	}
+
+	await updateGrantTemplate(
+		selectedOrganizationId,
+		application.project_id,
+		application.id,
+		application.grant_template?.id ?? "",
+		{ grant_sections: processedSections },
+	);
+};
+
 interface ApplicationActions {
 	addFile: (file: FileWithId, parentId: string) => Promise<void>;
 	addPendingUpload: (file: FileWithId, sourceType: SourceType) => void;
 	addUrl: (url: string, parentId: string) => Promise<void>;
-	checkAndRestoreJobState: () => Promise<void>;
 	clearPendingUploads: (sourceType?: SourceType) => void;
 	clearRestoredJobState: () => void;
 	createApplication: (organizationId: string, projectId: string) => Promise<void>;
@@ -577,15 +614,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
 		}
-	},
-
-	checkAndRestoreJobState: () => {
-		// TODO: Implement new job restoration logic if needed
-		const validationResult = validateJobRestoration(get().application);
-		if (!validationResult.isValid) {
-			return Promise.resolve();
-		}
-		return Promise.resolve();
 	},
 
 	clearPendingUploads: (sourceType?: SourceType) => {
@@ -1080,13 +1108,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const { application } = get();
 		const previousGrantSections = application?.grant_template?.grant_sections;
 
-		log.info("updateGrantSections: Starting", {
-			hasApplication: !!application,
-			hasGrantTemplate: !!application?.grant_template,
-			sectionCount: sections?.length ?? 0,
-			templateId: application?.grant_template?.id,
-		});
-
 		if (!application?.grant_template?.id) {
 			log.warn("updateGrantSections: No grant template ID found");
 			return;
@@ -1101,48 +1122,20 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			}) as NonNullable<ApplicationType>;
 
-		const { message, sections: wordCountFixedSections } = syncSectionCharacterCount(sections ?? []);
+		const { message, sections: processedSections } = syncSectionCharacterCount(sections ?? []);
 		if (message) {
 			toast.success(message);
-			log.info("updateGrantSections: Section character count synced", {
-				message,
-			});
+			log.info("updateGrantSections: Section character count synced", { message });
 		}
-		const updatedApplication = createApplicationWithSections(wordCountFixedSections);
 
-		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
-			application_rag_sources: formatApplicationRagSources(updatedApplication),
-			applicationId: updatedApplication.id,
-			grant_sections: (wordCountFixedSections ?? []).map((section) => ({
-				id: section.id,
-				max_words: section.max_words,
-				order: section.order,
-				parent_id: section.parent_id,
-				title: section.title,
-			})),
-			projectId: updatedApplication.project_id,
-			sectionCount: (sections ?? []).length,
-			template_rag_sources: formatRagSources(updatedApplication),
-			templateId: updatedApplication.grant_template?.id,
-		});
+		const updatedApplication = createApplicationWithSections(processedSections);
+		logGrantSectionsUpdate(updatedApplication, processedSections ?? [], true, true);
 		set({ application: updatedApplication, isSaving: true });
 
 		try {
-			const { selectedOrganizationId } = useOrganizationStore.getState();
-			if (!selectedOrganizationId) {
-				throw new Error("No organization selected");
-			}
-			await updateGrantTemplate(
-				selectedOrganizationId,
-				application.project_id,
-				application.id,
-				application.grant_template.id,
-				{
-					grant_sections: wordCountFixedSections ?? [],
-				},
-			);
+			await updateGrantTemplateAPI(application, processedSections ?? []);
 			log.info("updateGrantSections: Success", {
-				grant_sections: (wordCountFixedSections ?? []).map((section) => ({
+				grant_sections: (processedSections ?? []).map((section) => ({
 					id: section.id,
 					order: section.order,
 					parent_id: section.parent_id,
@@ -1152,14 +1145,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 		} catch (error) {
 			const restoredApplication = createApplicationWithSections(previousGrantSections);
-			log.info("[rag_sources_check] Application state reverted via updateGrantSections (API failure)", {
-				application_rag_sources: formatApplicationRagSources(restoredApplication),
-				applicationId: restoredApplication.id,
-				grant_sections: previousGrantSections ?? [],
-				projectId: restoredApplication.project_id,
-				template_rag_sources: formatRagSources(restoredApplication),
-				templateId: restoredApplication.grant_template?.id,
-			});
+			logGrantSectionsUpdate(restoredApplication, previousGrantSections ?? [], false);
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
