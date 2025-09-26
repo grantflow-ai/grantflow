@@ -61,7 +61,7 @@ describe.sequential("ObjectiveForm", () => {
 		await user.type(screen.getByTestId("task-description-0"), "First task description");
 
 		await user.click(screen.getByTestId("add-task-button"));
-		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
+		expect(await screen.findByTestId("task-title-1")).toBeInTheDocument();
 
 		expect(screen.getByTestId("task-title-0")).toBeInTheDocument();
 		expect(screen.getByTestId("task-title-1")).toBeInTheDocument();
