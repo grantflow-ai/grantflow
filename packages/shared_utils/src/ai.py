@@ -21,7 +21,6 @@ ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
 )
 REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-flash")
 
-# Specific Gemini model constants for length-based optimization
 GEMINI_FLASH_MODEL: Final[str] = "gemini-2.5-flash"
 GEMINI_FLASH_LITE_MODEL: Final[str] = "gemini-2.5-flash-lite"
 MODEL_SELECTION_REASON: Final[str] = "Flash for ≤600w, Flash-Lite for >600w"

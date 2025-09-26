@@ -466,7 +466,6 @@ export function DragDropSectionManager({
 		[newlyCreatedSectionIds],
 	);
 
-	// Initialize sensors for drag and drop
 	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
 
 	const sensors = useSensors(
@@ -598,7 +597,6 @@ export function DragDropSectionManager({
 
 			updateDragStateForOver(activeItem, overItem, activeIndex, overIndex);
 
-			// Handle last subsection special case
 			if (activeItem && handleLastSubsectionCase(activeItem, overItem, activeIndex, overIndex)) {
 				return;
 			}

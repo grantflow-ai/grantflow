@@ -125,8 +125,6 @@ async def test_rag_focused_prompts_generation(
     melanoma_alliance_full_application_id: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test RAG-focused prompts with real database content generation (single iteration)"""
-
     logger.info("🚀 Starting RAG-focused prompts test with real generation")
 
     start_time = time.time()
@@ -225,8 +223,6 @@ async def test_rag_focused_prompts_generation(
 
 
 async def run_rag_focused_baseline_iterations(iterations: int = 5) -> dict[str, str]:
-    """Run multiple iterations of the RAG-focused generation test"""
-
     return {
         "message": "Use pytest to run the actual test with database fixtures",
         "command": "E2E_TESTS=1 PYTHONPATH=. uv run pytest services/rag/tests/e2e/rag_focused_generation_test.py::test_rag_focused_prompts_generation -v",

@@ -53,12 +53,10 @@ def calculate_embedding_statistics(vectors: list[VectorDTO]) -> dict[str, float]
     }
 
 
-# Chunk quality assessment constants
 _NOISE_CHARACTERS: Final[frozenset[str]] = frozenset("|*#[]{}<>`")
 _MIN_ALPHA_RATIO: Final[float] = 0.45
 _MAX_NOISE_RATIO: Final[float] = 0.12
 
-# Scoring constants for chunk quality calculation
 _MAX_CONTENT_LENGTH_FOR_SCORING: Final[int] = 1200
 _LENGTH_SCORE_DIVISOR: Final[float] = 4000.0
 _MEDIA_CONTENT_PENALTY: Final[float] = 0.15
@@ -77,23 +75,10 @@ def _chunk_metrics(content: str) -> tuple[float, float, int]:
 
 
 def _calculate_chunk_score(content: str) -> float:
-    """Calculate a quality score for a chunk of content.
-
-    The score is based on alphanumeric ratio, noise ratio, and length.
-    Media content (images, media files) receives a penalty.
-
-    Args:
-        content: The text content to score
-
-    Returns:
-        A quality score (higher is better)
-    """
     alpha_ratio, noise_ratio, length = _chunk_metrics(content)
 
-    # Base score: alphanumeric content minus noise, plus length bonus
     score = (alpha_ratio - noise_ratio) + min(length, _MAX_CONTENT_LENGTH_FOR_SCORING) / _LENGTH_SCORE_DIVISOR
 
-    # Apply penalty for media content (markdown images, media paths)
     if "![" in content or "media/" in content:
         score -= _MEDIA_CONTENT_PENALTY
 

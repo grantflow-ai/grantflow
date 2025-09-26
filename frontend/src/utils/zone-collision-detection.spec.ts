@@ -209,7 +209,7 @@ describe("createZoneCollisionDetection", () => {
 
 		it("handles exact 25% boundary (should be child zone)", () => {
 			const args = createMockArgs({
-				pointerCoordinates: { x: 500, y: 230 }, // 25% = (500 - 400) / 400 = 0.25
+				pointerCoordinates: { x: 500, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);

@@ -1,16 +1,4 @@
-"""ROUGE metric utilities for RAG testing."""
-
-
 def calculate_rouge_l(reference_text: str, generated_text: str) -> float:
-    """Calculate ROUGE-L score between reference and generated text.
-
-    Args:
-        reference_text: The reference text
-        generated_text: The generated text to compare
-
-    Returns:
-        ROUGE-L F1 score (0.0 to 1.0)
-    """
     if not reference_text or not generated_text:
         return 0.0
 
@@ -48,16 +36,6 @@ def calculate_rouge_l(reference_text: str, generated_text: str) -> float:
 
 
 def calculate_rouge_n(reference_text: str, generated_text: str, n: int = 2) -> float:
-    """Calculate ROUGE-N score between reference and generated text.
-
-    Args:
-        reference_text: The reference text
-        generated_text: The generated text to compare
-        n: The n-gram size (default: 2 for bigrams)
-
-    Returns:
-        ROUGE-N F1 score (0.0 to 1.0)
-    """
     if not reference_text or not generated_text:
         return 0.0
 
@@ -87,20 +65,6 @@ def calculate_rouge_n(reference_text: str, generated_text: str, n: int = 2) -> f
 
 
 def calculate_rouge_n_grams(reference_text: str, generated_text: str, n: int) -> float:
-    """Calculate ROUGE-N F1 score using string-based n-grams.
-
-    This implementation is equivalent to calculate_rouge_n but uses string joining
-    for n-gram creation instead of tuples. Returns proper F1 score combining
-    precision and recall.
-
-    Args:
-        reference_text: The reference text
-        generated_text: The generated text to compare
-        n: The n-gram size
-
-    Returns:
-        ROUGE-N F1 score (0.0 to 1.0)
-    """
     if not reference_text or not generated_text or n <= 0:
         return 0.0
 
@@ -116,17 +80,14 @@ def calculate_rouge_n_grams(reference_text: str, generated_text: str, n: int) ->
     if not ref_ngrams or not gen_ngrams:
         return 0.0
 
-    # Count matches for precision and recall calculation
     matches = 0
     for ngram in gen_ngrams:
         if ngram in ref_ngrams:
             matches += 1
 
-    # Calculate precision and recall
     precision = matches / len(gen_ngrams)
     recall = matches / len(ref_ngrams)
 
-    # Return F1 score (harmonic mean of precision and recall)
     if precision + recall == 0:
         return 0.0
 

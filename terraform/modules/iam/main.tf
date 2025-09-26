@@ -90,91 +90,78 @@ resource "google_project_iam_member" "github_actions_cloudsql_viewer" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Terraform to read IAM policies
 resource "google_project_iam_member" "github_actions_iam_viewer" {
   project = "grantflow"
   role    = "roles/iam.securityReviewer"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for BigQuery dataset management
 resource "google_project_iam_member" "github_actions_bigquery_admin" {
   project = "grantflow"
   role    = "roles/bigquery.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Cloud Run service deployments
 resource "google_project_iam_member" "github_actions_run_admin" {
   project = "grantflow"
   role    = "roles/run.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Workload Identity Pool management
 resource "google_project_iam_member" "github_actions_workload_identity_admin" {
   project = "grantflow"
   role    = "roles/iam.workloadIdentityPoolAdmin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for logging metrics management
 resource "google_project_iam_member" "github_actions_logging_admin" {
   project = "grantflow"
   role    = "roles/logging.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Pub/Sub topic management
 resource "google_project_iam_member" "github_actions_pubsub_admin" {
   project = "grantflow"
   role    = "roles/pubsub.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Storage bucket management
 resource "google_project_iam_member" "github_actions_storage_admin" {
   project = "grantflow"
   role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Monitoring resources
 resource "google_project_iam_member" "github_actions_monitoring_admin" {
   project = "grantflow"
   role    = "roles/monitoring.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Cloud Functions management
 resource "google_project_iam_member" "github_actions_cloudfunctions_admin" {
   project = "grantflow"
   role    = "roles/cloudfunctions.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Service Networking management
 resource "google_project_iam_member" "github_actions_servicenetworking_admin" {
   project = "grantflow"
   role    = "roles/servicenetworking.networksAdmin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Cloud Scheduler management
 resource "google_project_iam_member" "github_actions_cloudscheduler_admin" {
   project = "grantflow"
   role    = "roles/cloudscheduler.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Secret Manager management
 resource "google_project_iam_member" "github_actions_secretmanager_admin" {
   project = "grantflow"
   role    = "roles/secretmanager.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Required for Cloud KMS management
 resource "google_project_iam_member" "github_actions_cloudkms_admin" {
   project = "grantflow"
   role    = "roles/cloudkms.admin"
