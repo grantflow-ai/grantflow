@@ -1,6 +1,7 @@
 import traceback
 from typing import Any
 
+from packages.db.src.json_objects import ResearchDeepDive
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
@@ -77,6 +78,149 @@ def _get_autofill_error_details(error: BackendError) -> tuple[str, str]:
     )
 
 
+async def _save_research_plan_to_database(
+    research_objectives: list[Any],
+    application_id: Any,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    try:
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(research_objectives=research_objectives)
+            )
+
+        logger.info(
+            "Successfully saved research plan to database",
+            application_id=str(application_id),
+            objectives_count=len(research_objectives),
+            trace_id=trace_id,
+        )
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to save research plan to database",
+            application_id=str(application_id),
+            sql_error=str(e),
+            trace_id=trace_id,
+        )
+        raise DatabaseError(
+            "Failed to save research plan to database",
+            context={"application_id": str(application_id), "sql_error": str(e)},
+        ) from e
+
+
+async def _save_research_deep_dive_to_database(
+    research_deep_dive: ResearchDeepDive,
+    application_id: Any,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    try:
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(form_inputs=research_deep_dive)
+            )
+
+        logger.info(
+            "Successfully saved research deep dive to database",
+            application_id=str(application_id),
+            fields_count=len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]),
+            trace_id=trace_id,
+        )
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to save research deep dive to database",
+            application_id=str(application_id),
+            sql_error=str(e),
+            trace_id=trace_id,
+        )
+        raise DatabaseError(
+            "Failed to save research deep dive to database",
+            context={"application_id": str(application_id), "sql_error": str(e)},
+        ) from e
+
+
+async def _send_autofill_success_notification(
+    application_id: Any,
+    autofill_type: str,
+    trace_id: str,
+    **extra_data: Any,
+) -> None:
+    try:
+        await publish_notification(
+            parent_id=application_id,
+            event=NotificationEvents.AUTOFILL_COMPLETED,
+            trace_id=trace_id,
+            data={
+                "message": f"{autofill_type.replace('_', ' ').title()} autofill completed successfully",
+                "notification_type": "success",
+                "autofill_type": autofill_type,
+                **extra_data,
+            },
+        )
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to send autofill success notification",
+            application_id=str(application_id),
+            sql_error=str(e),
+            trace_id=trace_id,
+        )
+        raise DatabaseError("Failed to send autofill success notification") from e
+
+
+async def _handle_autofill_error(
+    error: BackendError,
+    application_id: Any,
+    request: ResearchPlanAutofillRequest | ResearchDeepDiveAutofillRequest,
+    trace_id: str,
+) -> None:
+    error_traceback = traceback.format_exc()
+    error_context = getattr(error, "context", None)
+    request_type = type(request).__name__
+
+    logger.error(
+        "Backend error during autofill processing",
+        error=error,
+        error_type=type(error).__name__,
+        error_message=str(error),
+        application_id=str(application_id),
+        request_type=request_type,
+        trace_id=trace_id,
+        error_context=error_context,
+        error_traceback=error_traceback,
+    )
+
+    user_message, event_type = _get_autofill_error_details(error)
+    autofill_type = "research_plan" if isinstance(request, ResearchPlanAutofillRequest) else "research_deep_dive"
+
+    try:
+        await publish_notification(
+            parent_id=application_id,
+            event=event_type,
+            trace_id=trace_id,
+            data={
+                "message": user_message,
+                "notification_type": "error" if event_type == NotificationEvents.PIPELINE_ERROR else "warning",
+                "autofill_type": autofill_type,
+                "error_type": error.__class__.__name__,
+                "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
+                "retryable": event_type in [NotificationEvents.INDEXING_TIMEOUT, NotificationEvents.LLM_TIMEOUT],
+            },
+        )
+    except SQLAlchemyError as e:
+        logger.warning(
+            "Failed to send error notification for autofill failure",
+            application_id=str(application_id),
+            sql_error=str(e),
+            original_error=str(error),
+            trace_id=trace_id,
+        )
+
+
 async def handle_autofill_request(
     request: ResearchPlanAutofillRequest | ResearchDeepDiveAutofillRequest,
     application: GrantApplication,
@@ -116,44 +260,11 @@ async def handle_autofill_request(
                 trace_id=trace_id,
             )
 
-            try:
-                async with session_maker() as session, session.begin():
-                    await session.execute(
-                        update(GrantApplication)
-                        .where(GrantApplication.id == application_id)
-                        .values(research_objectives=research_objectives)
-                    )
+            await _save_research_plan_to_database(research_objectives, application_id, session_maker, trace_id)
+            await _send_autofill_success_notification(
+                application_id, "research_plan", trace_id, objectives_count=len(research_objectives)
+            )
 
-                logger.info(
-                    "Successfully saved research plan to database",
-                    application_id=str(application_id),
-                    objectives_count=len(research_objectives),
-                    trace_id=trace_id,
-                )
-
-                await publish_notification(
-                    parent_id=application_id,
-                    event=NotificationEvents.AUTOFILL_COMPLETED,
-                    trace_id=trace_id,
-                    data={
-                        "message": "Research plan autofill completed successfully",
-                        "notification_type": "success",
-                        "autofill_type": "research_plan",
-                        "objectives_count": len(research_objectives),
-                    },
-                )
-
-            except SQLAlchemyError as sql_error:
-                logger.error(
-                    "Failed to save research plan to database",
-                    application_id=str(application_id),
-                    sql_error=str(sql_error),
-                    trace_id=trace_id,
-                )
-                raise DatabaseError(
-                    "Failed to save research plan to database",
-                    context={"application_id": str(application_id), "sql_error": str(sql_error)},
-                ) from sql_error
         else:
             logger.debug(
                 "Generating research deep dive content",
@@ -169,97 +280,12 @@ async def handle_autofill_request(
                 trace_id=trace_id,
             )
 
-            try:
-                async with session_maker() as session, session.begin():
-                    await session.execute(
-                        update(GrantApplication)
-                        .where(GrantApplication.id == application_id)
-                        .values(form_inputs=research_deep_dive)
-                    )
-
-                logger.info(
-                    "Successfully saved research deep dive to database",
-                    application_id=str(application_id),
-                    fields_count=len(
-                        [k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]
-                    ),
-                    trace_id=trace_id,
-                )
-
-                await publish_notification(
-                    parent_id=application_id,
-                    event=NotificationEvents.AUTOFILL_COMPLETED,
-                    trace_id=trace_id,
-                    data={
-                        "message": "Research deep dive autofill completed successfully",
-                        "notification_type": "success",
-                        "autofill_type": "research_deep_dive",
-                        "fields_generated": len(
-                            [k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]
-                        ),
-                    },
-                )
-
-            except SQLAlchemyError as sql_error:
-                logger.error(
-                    "Failed to save research deep dive to database",
-                    application_id=str(application_id),
-                    sql_error=str(sql_error),
-                    trace_id=trace_id,
-                )
-                raise DatabaseError(
-                    "Failed to save research deep dive to database",
-                    context={"application_id": str(application_id), "sql_error": str(sql_error)},
-                ) from sql_error
+            await _save_research_deep_dive_to_database(research_deep_dive, application_id, session_maker, trace_id)
+            fields_generated = len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")])
+            await _send_autofill_success_notification(
+                application_id, "research_deep_dive", trace_id, fields_generated=fields_generated
+            )
 
     except BackendError as error:
-        traceback.format_exc()
-        error_context = getattr(error, "context", None)
-
-        logger.error(
-            "Backend error during autofill processing",
-            error=error,
-            error_type=type(error).__name__,
-            error_message=str(error),
-            application_id=str(application_id),
-            request_type=request_type,
-            trace_id=trace_id,
-            error_context=error_context,
-        )
-
-        user_message, event_type = _get_autofill_error_details(error)
-
-        detailed_error_message = f"{type(error).__name__}: {error!s}"
-        if error_context:
-            detailed_error_message += f"\nContext: {error_context}"
-
-        try:
-            await publish_notification(
-                parent_id=application_id,
-                event=event_type,
-                trace_id=trace_id,
-                data={
-                    "message": user_message,
-                    "notification_type": "error" if event_type == NotificationEvents.PIPELINE_ERROR else "warning",
-                    "autofill_type": "research_plan"
-                    if isinstance(request, ResearchPlanAutofillRequest)
-                    else "research_deep_dive",
-                    "error_type": error.__class__.__name__,
-                    "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
-                    "retryable": event_type
-                    in [
-                        NotificationEvents.INDEXING_TIMEOUT,
-                        NotificationEvents.LLM_TIMEOUT,
-                    ],
-                },
-            )
-        except Exception as notification_error:
-            logger.warning(
-                "Failed to send error notification for autofill failure",
-                application_id=str(application_id),
-                notification_error=str(notification_error),
-                original_error=str(error),
-                trace_id=trace_id,
-            )
-
+        await _handle_autofill_error(error, application_id, request, trace_id)
         raise
