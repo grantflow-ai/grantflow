@@ -197,7 +197,6 @@ async def _generate_field_answer_with_context(
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
 
-    # Generate comprehensive search queries once for all fields
     all_questions = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.values())
     comprehensive_prompt = f"""
     Answer the following research questions for a grant application titled: "{application.title}"
@@ -224,7 +223,6 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
 
     field_names = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
 
-    # Generate each field with shared context
     results = await batched_gather(
         *[
             _generate_field_answer_with_context(

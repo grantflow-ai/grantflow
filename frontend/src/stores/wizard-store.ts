@@ -30,27 +30,12 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
-const resetAutofillState = (
-	set: (fn: (state: WizardState) => WizardState) => void,
-	type: "research_deep_dive" | "research_plan",
-) => {
-	set((state) => ({
-		...state,
-		autofillMessageId: null,
-		autofillType: null,
-		isAutofillLoading: {
-			...state.isAutofillLoading,
-			[type]: false,
-		},
-	}));
-};
-
 const hasAutofillResults = (
 	type: "research_deep_dive" | "research_plan",
 	application: NonNullable<API.RetrieveApplication.Http200.ResponseBody>,
 ): boolean => {
 	if (type === "research_plan" && application.research_objectives) {
-		return application.research_objectives.some((obj) => obj.research_tasks && obj.research_tasks.length > 0);
+		return application.research_objectives.some((obj) => obj.research_tasks.length > 0);
 	}
 
 	if (type === "research_deep_dive" && application.form_inputs) {
@@ -67,7 +52,7 @@ const hasAutofillResults = (
 
 		return requiredFields.some((field) => {
 			const fieldValue = application.form_inputs?.[field]?.trim();
-			return fieldValue && fieldValue.length > 0;
+			return Boolean(fieldValue && fieldValue.length > 0);
 		});
 	}
 
@@ -535,14 +520,30 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 				if (updatedApplication && hasAutofillResults(autofillType, updatedApplication)) {
 					polling.stop();
-					resetAutofillState((state) => ({ ...state }), autofillType);
+					set((state) => ({
+						...state,
+						autofillMessageId: null,
+						autofillType: null,
+						isAutofillLoading: {
+							...state.isAutofillLoading,
+							[autofillType]: false,
+						},
+					}));
 					toast.success("Autofill completed successfully!");
 				}
 			} catch (error) {
 				log.error("checkAutofillResults", error);
 				polling.stop();
 				toast.error("Failed to check autofill results. Please try again or contact support.");
-				resetAutofillState((state) => ({ ...state }), autofillType);
+				set((state) => ({
+					...state,
+					autofillMessageId: null,
+					autofillType: null,
+					isAutofillLoading: {
+						...state.isAutofillLoading,
+						[autofillType]: false,
+					},
+				}));
 			}
 		},
 
@@ -1045,7 +1046,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					message_id: response.message_id,
 				});
 
-				// Set autofill tracking state and start polling
 				set((state) => ({
 					...state,
 					autofillMessageId: response.message_id,

@@ -123,7 +123,6 @@ async def test_extract_relationships_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # Mock the generate sections stage that makes API calls
     mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
         return_value=sample_generate_sections_dto,
@@ -166,7 +165,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # Mock the generate sections stage that makes API calls
     mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
         return_value=sample_generate_sections_dto,

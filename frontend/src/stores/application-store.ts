@@ -411,7 +411,6 @@ const uploadFileInProduction = async (
 	});
 };
 
-// Helper functions for updateGrantSections to reduce complexity
 const _processGrantSections = (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
 	const { message, sections: wordCountFixedSections } = syncSectionCharacterCount(sections ?? []);
 	if (message) {
