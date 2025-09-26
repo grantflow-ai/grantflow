@@ -158,7 +158,7 @@ function AnswerCard({
 		void handleSave();
 	};
 
-	const handleSaveDebounced = useDebounce(handleSave, 5000);
+	const handleSaveDebounced = useDebounce(handleSave, 3000);
 
 	return (
 		<div className="w-1/2">
