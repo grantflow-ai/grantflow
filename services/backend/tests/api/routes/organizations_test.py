@@ -591,7 +591,7 @@ async def test_create_logo_upload_url_success(
     project_owner_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    with patch("services.backend.src.api.routes.organization_logos.create_signed_logo_upload_url") as mock_create_url:
+    with patch("services.backend.src.api.routes.organizations.create_signed_logo_upload_url") as mock_create_url:
         mock_create_url.return_value = "https://signed-upload-url.com"
 
         response = await test_client.post(
@@ -630,7 +630,7 @@ async def test_upload_organization_logo_success(
 ) -> None:
     fake_logo_data = b"fake png data"
 
-    with patch("services.backend.src.api.routes.organization_logos.upload_organization_logo") as mock_upload:
+    with patch("services.backend.src.api.routes.organizations.upload_organization_logo") as mock_upload:
         mock_upload.return_value = f"https://storage.googleapis.com/bucket/organizations/{organization.id}/logo.png"
 
         files = {"logo": ("logo.png", fake_logo_data, "image/png")}
@@ -690,7 +690,7 @@ async def test_delete_organization_logo_success(
     project_owner_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    with patch("services.backend.src.api.routes.organization_logos.delete_organization_logo") as mock_delete:
+    with patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete:
         mock_delete.return_value = None
 
         response = await test_client.delete(
@@ -710,7 +710,7 @@ async def test_delete_organization_logo_not_found(
 ) -> None:
     non_existent_org_id = uuid4()
 
-    with patch("services.backend.src.api.routes.organization_logos.delete_organization_logo") as mock_delete:
+    with patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete:
         mock_delete.return_value = None
 
         response = await test_client.delete(
