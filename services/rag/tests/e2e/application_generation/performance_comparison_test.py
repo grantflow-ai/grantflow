@@ -63,14 +63,15 @@ async def test_application_generation_performance_baseline(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
             .options(selectinload(GrantApplication.grant_template))
+            .options(selectinload(GrantApplication.rag_jobs))
         )
 
         if not updated_application:
             raise ValueError("Failed to retrieve updated application")
 
         section_texts = {}
-        if updated_application.rag_job and updated_application.rag_job.checkpoint_data:
-            checkpoint_data = updated_application.rag_job.checkpoint_data
+        if updated_application.rag_jobs and updated_application.rag_jobs[0].checkpoint_data:
+            checkpoint_data = updated_application.rag_jobs[0].checkpoint_data
             if "section_texts" in checkpoint_data:
                 section_texts = {text["section_id"]: text["text"] for text in checkpoint_data["section_texts"]}
         text = generate_application_text(
@@ -159,17 +160,18 @@ async def test_generation_smoke_test(
             select_active(GrantApplication)
             .where(GrantApplication.id == grant_application.id)
             .options(selectinload(GrantApplication.grant_template))
+            .options(selectinload(GrantApplication.rag_jobs))
         )
 
         if not updated_application:
             raise ValueError("Failed to retrieve updated application")
 
-        if updated_application.rag_job:
+        if updated_application.rag_jobs:
             pass
 
         section_texts = {}
-        if updated_application.rag_job and updated_application.rag_job.checkpoint_data:
-            checkpoint_data = updated_application.rag_job.checkpoint_data
+        if updated_application.rag_jobs and updated_application.rag_jobs[0].checkpoint_data:
+            checkpoint_data = updated_application.rag_jobs[0].checkpoint_data
             if "section_texts" in checkpoint_data:
                 section_texts = {text["section_id"]: text["text"] for text in checkpoint_data["section_texts"]}
         text = generate_application_text(
@@ -187,7 +189,7 @@ async def test_generation_smoke_test(
     assert isinstance(text, str), "Generated text should be a string"
 
     assert section_texts is not None, "Section texts should not be None"
-    if updated_application.rag_job and updated_application.rag_job.status.value == "FAILED":
+    if updated_application.rag_jobs and updated_application.rag_jobs[0].status.value == "FAILED":
         return
     assert isinstance(section_texts, dict), "Section texts should be a dictionary"
 

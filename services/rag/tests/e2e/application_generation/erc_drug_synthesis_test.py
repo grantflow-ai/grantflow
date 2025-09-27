@@ -80,8 +80,8 @@ async def test_generate_erc_application_for_drug_synthesis(
             raise ValueError("Failed to retrieve updated application")
 
         section_texts = {}
-        if updated_application.rag_job and updated_application.rag_job.checkpoint_data:
-            checkpoint_data = updated_application.rag_job.checkpoint_data
+        if updated_application.rag_jobs and updated_application.rag_jobs[0].checkpoint_data:
+            checkpoint_data = updated_application.rag_jobs[0].checkpoint_data
             if "section_texts" in checkpoint_data:
                 section_texts = {text["section_id"]: text["text"] for text in checkpoint_data["section_texts"]}
         text = generate_application_text(
