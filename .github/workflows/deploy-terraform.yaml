@@ -210,6 +210,7 @@ jobs:
       pull-requests: write
     env:
       TF_VAR_project_id: grantflow
+      TF_VAR_image_tag: ${{ needs.collect-build-info.outputs.environment == 'production' && (github.event.workflow_run.head_sha || github.sha) || format('staging-{0}', github.event.workflow_run.head_sha || github.sha) }}
       ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
     outputs:
       plan_exitcode: ${{ steps.plan.outputs.exitcode }}
@@ -273,7 +274,7 @@ jobs:
                 rag) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.rag" ;;
                 scraper) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.scraper" ;;
                 crdt) TARGET_FLAGS="$TARGET_FLAGS -target=module.cloud_run.google_cloud_run_v2_service.crdt_server" ;;
-                frontend) echo "Note: Frontend deployment is handled separately, not via Terraform" ;;
+                frontend) TARGET_FLAGS="$TARGET_FLAGS -target=module.app_hosting" ;;
               esac
             done
           fi
@@ -349,6 +350,7 @@ jobs:
       issues: write
     env:
       TF_VAR_project_id: grantflow
+      TF_VAR_image_tag: ${{ needs.collect-build-info.outputs.environment == 'production' && (github.event.workflow_run.head_sha || github.sha) || format('staging-{0}', github.event.workflow_run.head_sha || github.sha) }}
       ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
     steps:
       - name: Checkout
