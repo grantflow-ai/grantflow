@@ -56,7 +56,7 @@ export function WizardFooter() {
 
 	return (
 		<footer
-			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary p-6"
+			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary py-4 px-6"
 			data-testid="wizard-footer"
 		>
 			<LeftButton currentStep={currentStep} />
@@ -83,7 +83,7 @@ export function WizardHeader() {
 	};
 
 	return (
-		<header className="w-full border-b-1 border-gray-100 p-4 sm:p-6" data-testid="wizard-header">
+		<header className="w-full border-b-1 border-gray-100 p-4 md:pb-5 sm:pt-6 sm:px-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					<ThemeBadge
