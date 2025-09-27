@@ -78,7 +78,14 @@ async def test_duplicate_project_success(
     assert response.status_code == 201
     data = response.json()
 
-    assert data["name"] == f"Copy of {project.name}"
+    # Handle name truncation for very long project names
+    expected_name = f"Copy of {project.name}"
+    if len(expected_name) > 255:
+        max_original_name_length = 255 - 8 - 3  # "Copy of " (8) + "..." (3)
+        truncated_name = project.name[:max_original_name_length]
+        expected_name = f"Copy of {truncated_name}..."
+
+    assert data["name"] == expected_name
     assert data["description"] == project.description
     assert data["logo_url"] == project.logo_url
     assert data["id"] != str(project.id)
