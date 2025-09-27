@@ -1072,6 +1072,7 @@ describe.sequential("wizard store", () => {
 					preliminary_data: "",
 					rationale: "",
 					research_feasibility: "",
+					scientific_infrastructure: "",
 					team_excellence: "",
 				},
 				grant_template: GrantTemplateFactory.build({
@@ -1191,7 +1192,7 @@ describe.sequential("wizard store", () => {
 			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
-		it("should return GENERATE_AND_COMPLETE when form inputs are populated and all prerequisites met", () => {
+		it("should return RESEARCH_DEEP_DIVE when form inputs are populated but no application text", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: {
 					background_context: "Background context filled",
@@ -1222,10 +1223,10 @@ describe.sequential("wizard store", () => {
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
+			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
 		});
 
-		it("should return RESEARCH_DEEP_DIVE when research objectives have tasks but no form inputs", () => {
+		it("should return RESEARCH_PLAN when research objectives have tasks but no form inputs", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1246,10 +1247,10 @@ describe.sequential("wizard store", () => {
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
+			expect(result).toBe(WizardStep.RESEARCH_PLAN);
 		});
 
-		it("should return RESEARCH_PLAN when application has rag sources but no objectives", () => {
+		it("should return KNOWLEDGE_BASE when application has rag sources but no objectives", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1263,10 +1264,10 @@ describe.sequential("wizard store", () => {
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.RESEARCH_PLAN);
+			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 
-		it("should return KNOWLEDGE_BASE when grant template has sections but no rag sources", () => {
+		it("should return APPLICATION_STRUCTURE when grant template has sections but no rag sources", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1280,10 +1281,10 @@ describe.sequential("wizard store", () => {
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
+			expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
 		});
 
-		it("should return APPLICATION_STRUCTURE when grant sections are empty", () => {
+		it("should return APPLICATION_DETAILS when grant sections are empty with form inputs undefined", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1297,7 +1298,7 @@ describe.sequential("wizard store", () => {
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
 		it("should prioritize higher steps when multiple conditions are met", () => {
@@ -1431,7 +1432,7 @@ describe.sequential("wizard store", () => {
 						team_excellence: "",
 					},
 					grant_template: GrantTemplateFactory.build({
-						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						grant_sections: [],
 					}),
 					id: "app-123",
 					rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
