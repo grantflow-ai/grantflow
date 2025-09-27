@@ -29,13 +29,11 @@ LOGO_MIME_TYPES: dict[str, str] = {
 
 
 def get_max_logo_size() -> int:
-    """Get maximum logo size from environment or default to 5MB."""
     size_mb = int(get_env("LOGO_MAX_SIZE_MB", fallback="5"))
     return size_mb * 1024 * 1024
 
 
 def get_logo_credentials() -> Credentials:
-    """Get credentials for logo bucket access."""
     if get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False):
         return cast("Credentials", AnonymousCredentials())  # type: ignore[no-untyped-call]
 
@@ -57,7 +55,6 @@ def get_logo_credentials() -> Credentials:
 
 
 def get_logo_storage_client() -> storage.Client:
-    """Get storage client for logo operations."""
     if logo_storage_client_ref.value:
         return logo_storage_client_ref.value
 
@@ -71,7 +68,6 @@ def get_logo_storage_client() -> storage.Client:
 
 
 def get_logo_bucket() -> storage.Bucket:
-    """Get the logos bucket instance."""
     if not logo_bucket_ref.value:
         storage_client = get_logo_storage_client()
         bucket_name = get_env("LOGO_BUCKET_NAME", raise_on_missing=False)
@@ -85,12 +81,10 @@ def get_logo_bucket() -> storage.Bucket:
 
 
 def construct_logo_path(organization_id: UUID) -> str:
-    """Construct the object path for an organization logo."""
     return f"organizations/{organization_id}/logo"
 
 
 def get_logo_url(organization_id: UUID, file_extension: str) -> str:
-    """Get the public URL for an organization logo."""
     environment = get_env("ENVIRONMENT", fallback="staging")
     bucket_name = get_env("LOGO_BUCKET_NAME", fallback=f"grantflow-{environment}-logos")
     object_path = f"{construct_logo_path(organization_id)}.{file_extension}"
@@ -98,7 +92,6 @@ def get_logo_url(organization_id: UUID, file_extension: str) -> str:
 
 
 def validate_logo_file(file_content: bytes, content_type: str) -> None:
-    """Validate logo file content and type."""
     if content_type not in LOGO_MIME_TYPES:
         raise ValidationError(
             f"Unsupported logo format: {content_type}",
@@ -111,22 +104,18 @@ def validate_logo_file(file_content: bytes, content_type: str) -> None:
 
 
 async def upload_organization_logo(organization_id: UUID, file_content: bytes, content_type: str) -> str:
-    """Upload organization logo to GCS. Returns the public URL of the uploaded logo."""
     validate_logo_file(file_content, content_type)
 
     bucket = await run_sync(get_logo_bucket)
     file_extension = LOGO_MIME_TYPES[content_type]
     blob_path = f"{construct_logo_path(organization_id)}.{file_extension}"
 
-    # Upload new logo first
     blob = bucket.blob(blob_path)
     await run_sync(lambda: blob.upload_from_string(file_content, content_type=content_type))
 
-    # Set cache control for CDN
-    blob.cache_control = "public, max-age=86400"  # 24 hours
+    blob.cache_control = "public, max-age=86400"
     await run_sync(blob.patch)
 
-    # Clean up old formats after successful upload
     await cleanup_old_logo_formats(organization_id, file_extension)
 
     public_url = get_logo_url(organization_id, file_extension)
@@ -143,7 +132,6 @@ async def upload_organization_logo(organization_id: UUID, file_content: bytes, c
 
 
 async def cleanup_old_logo_formats(organization_id: UUID, current_extension: str) -> None:
-    """Delete old logo formats, keeping the current one."""
     try:
         bucket = await run_sync(get_logo_bucket)
         base_path = construct_logo_path(organization_id)
@@ -171,11 +159,9 @@ async def cleanup_old_logo_formats(organization_id: UUID, current_extension: str
 
 
 async def delete_organization_logo(organization_id: UUID) -> None:
-    """Delete organization logo from GCS."""
     bucket = await run_sync(get_logo_bucket)
     base_path = construct_logo_path(organization_id)
 
-    # Delete all possible logo formats
     for extension in LOGO_MIME_TYPES.values():
         blob_path = f"{base_path}.{extension}"
         blob = bucket.blob(blob_path)
@@ -187,11 +173,10 @@ async def delete_organization_logo(organization_id: UUID) -> None:
                 blob_path=blob_path,
             )
         except NotFound:
-            pass  # Logo doesn't exist, continue
+            pass
 
 
 async def get_organization_logo_info(organization_id: UUID) -> dict[str, Any] | None:
-    """Get info about existing organization logo."""
     bucket = await run_sync(get_logo_bucket)
     base_path = construct_logo_path(organization_id)
 
@@ -213,7 +198,6 @@ async def get_organization_logo_info(organization_id: UUID) -> dict[str, Any] | 
 
 
 async def create_signed_logo_upload_url(organization_id: UUID, content_type: str) -> str:
-    """Create a signed URL for direct logo upload to GCS."""
     if content_type not in LOGO_MIME_TYPES:
         raise ValidationError(
             f"Unsupported logo format: {content_type}",
@@ -230,7 +214,7 @@ async def create_signed_logo_upload_url(organization_id: UUID, content_type: str
     signed_url = await run_sync(
         lambda: blob.generate_signed_url(
             version="v4",
-            expiration=ONE_MINUTE_SECONDS * 5,  # 5 minutes
+            expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
             headers=headers,
             content_type=content_type,

@@ -248,7 +248,6 @@ describe("useWizardAnalytics", () => {
 		it("should provide stable interface", () => {
 			const { result } = renderHook(() => useWizardAnalytics());
 
-			// Verify hook provides expected interface
 			expect(typeof result.current.trackEvent).toBe("function");
 			expect(typeof result.current.trackFileUpload).toBe("function");
 			expect(typeof result.current.trackLinkAdd).toBe("function");

@@ -319,7 +319,6 @@ async def test_result_quality_by_dimension(
             from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, OrganizationFactory, ProjectFactory, RagFileFactory
 
-            # Create objects with proper dependencies
             organization = OrganizationFactory.build()
             project = ProjectFactory.build(organization_id=organization.id)
             grant_app = GrantApplicationFactory.build(project_id=project.id)
@@ -329,7 +328,7 @@ async def test_result_quality_by_dimension(
             session.add(project)
             session.add(grant_app)
             session.add(rag_source)
-            await session.flush()  # Get IDs assigned
+            await session.flush()
 
             app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)

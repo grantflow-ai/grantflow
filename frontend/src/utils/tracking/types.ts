@@ -1,29 +1,22 @@
 import type { TrackingEvents } from "./events";
 
-/**
- * Base properties for all tracking events
- */
 export interface BaseEventProperties {
 	applicationId?: string;
 	organizationId?: string;
-	path?: string; // Current page path
+	path?: string;
 	projectId?: string;
 	referrer?: string;
 	sessionId: string;
-	source?: string; // Where the action originated from
+	source?: string;
 	timestamp: string;
 	userId?: string;
 }
 
-/**
- * Event-specific property definitions
- */
 export interface EventProperties {
 	[TrackingEvents.AI_AUTOFILL_USED]: {
 		fieldName: string;
 	} & BaseEventProperties;
 
-	// Application Events
 	[TrackingEvents.APPLICATION_CREATE]: {
 		source: "empty-state" | "main-cta" | "onboarding" | "sidebar";
 	} & BaseEventProperties;
@@ -33,7 +26,7 @@ export interface EventProperties {
 	} & BaseEventProperties;
 
 	[TrackingEvents.APPLICATION_GENERATE_COMPLETE]: {
-		duration: number; // milliseconds
+		duration: number;
 		generationType: "application" | "template";
 		success: boolean;
 	} & BaseEventProperties;
@@ -52,7 +45,6 @@ export interface EventProperties {
 		participantCount: number;
 	} & BaseEventProperties;
 
-	// Collaboration Events
 	[TrackingEvents.COLLABORATION_SESSION_START]: BaseEventProperties;
 
 	[TrackingEvents.CONTENT_GENERATED]: {
@@ -64,7 +56,6 @@ export interface EventProperties {
 		source: "empty-state";
 	} & BaseEventProperties;
 
-	// CTA Events
 	[TrackingEvents.CTA_NEW_APPLICATION_MAIN]: {
 		source: "dashboard" | "project-actions-header" | "project-page";
 	} & BaseEventProperties;
@@ -73,7 +64,6 @@ export interface EventProperties {
 		source: "sidebar";
 	} & BaseEventProperties;
 
-	// Error Events
 	[TrackingEvents.ERROR_API_CRITICAL]: {
 		endpoint: string;
 		errorMessage: string;
@@ -89,7 +79,6 @@ export interface EventProperties {
 		generationType: "application" | "template";
 	} & BaseEventProperties;
 
-	// Document Management
 	[TrackingEvents.FILE_UPLOAD_COMPLETE]: {
 		fileName: string;
 		fileSize: number;
@@ -108,13 +97,11 @@ export interface EventProperties {
 
 	[TrackingEvents.ONBOARDING_SKIP]: BaseEventProperties;
 
-	// Onboarding Events
 	[TrackingEvents.ONBOARDING_START]: {
 		isNewProject: boolean;
 		projectName?: string;
 	} & BaseEventProperties;
 	[TrackingEvents.PAGE_VIEW_APPLICATION]: BaseEventProperties;
-	// Page View Events
 	[TrackingEvents.PAGE_VIEW_DASHBOARD]: BaseEventProperties;
 	[TrackingEvents.PAGE_VIEW_EDITOR]: BaseEventProperties;
 	[TrackingEvents.PAGE_VIEW_LOGIN]: BaseEventProperties;
@@ -122,14 +109,13 @@ export interface EventProperties {
 
 	[TrackingEvents.PAGE_VIEW_SIGNUP]: BaseEventProperties;
 
-	// Project Events
 	[TrackingEvents.PROJECT_CREATE]: {
 		fromOnboarding: boolean;
 		projectName: string;
 	} & BaseEventProperties;
 
 	[TrackingEvents.PROJECT_INVITE_SENT]: {
-		inviteeEmail: string; // Hashed or anonymized
+		inviteeEmail: string;
 		role: string;
 	} & BaseEventProperties;
 
@@ -148,7 +134,6 @@ export interface EventProperties {
 
 	[TrackingEvents.TEMPLATE_APPROVED]: BaseEventProperties;
 
-	// AI & Generation Events
 	[TrackingEvents.TEMPLATE_GENERATE]: BaseEventProperties;
 
 	[TrackingEvents.URL_ADDED]: {
@@ -163,7 +148,6 @@ export interface EventProperties {
 
 	[TrackingEvents.USER_LOGOUT]: BaseEventProperties;
 
-	// User Events
 	[TrackingEvents.USER_SIGNUP]: {
 		method: "email" | "github" | "google";
 		referralSource?: string;
@@ -191,7 +175,6 @@ export interface EventProperties {
 		validationErrors?: string[];
 	} & BaseEventProperties;
 
-	// Wizard Events
 	[TrackingEvents.WIZARD_START]: BaseEventProperties;
 	[TrackingEvents.WIZARD_STEP_1_LINK]: {
 		domain: string;

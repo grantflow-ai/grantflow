@@ -58,7 +58,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 				try {
 					await handleDeleteOrganizationLogo(organizationId);
 
-					// Update the organization in state to remove the logo URL
 					const updatedOrganization = await handleGetOrganization(organizationId);
 					const updatedOrganizations = await handleGetOrganizations();
 
@@ -166,7 +165,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 				try {
 					const response = await handleUploadOrganizationLogo(organizationId, file);
 
-					// Update the organization in state with the new logo URL
 					const updatedOrganization = await handleGetOrganization(organizationId);
 					const updatedOrganizations = await handleGetOrganizations();
 

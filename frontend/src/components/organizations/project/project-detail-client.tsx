@@ -219,7 +219,6 @@ export function ProjectDetailClient() {
 		setIsCreatingApplication(true);
 
 		try {
-			// Track the CTA click (VSP-362)
 			await trackEvent(TrackingEvents.CTA_NEW_APPLICATION_MAIN, {
 				organizationId: selectedOrganizationId,
 				projectId: project.id,

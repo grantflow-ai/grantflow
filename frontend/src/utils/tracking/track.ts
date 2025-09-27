@@ -4,9 +4,6 @@ import { TrackingEvents } from "./events";
 import { getSessionId } from "./session";
 import type { EventProperties, TrackableEvent } from "./types";
 
-/**
- * Track errors with context
- */
 export async function trackError(
 	errorType: "api" | "auth" | "generation",
 	properties: {
@@ -43,13 +40,9 @@ export async function trackError(
 
 			break;
 		}
-		// No default
 	}
 }
 
-/**
- * Generic tracking function for all events
- */
 export async function trackEvent<T extends TrackableEvent>(
 	event: T,
 	properties: Omit<EventProperties[T], "path" | "sessionId" | "timestamp">,
@@ -78,9 +71,6 @@ export async function trackEvent<T extends TrackableEvent>(
 	}
 }
 
-/**
- * Track page views
- */
 export async function trackPageView(pageName: string, properties: Record<string, unknown> = {}): Promise<void> {
 	const pageViewEvents: Record<string, TrackableEvent> = {
 		application: TrackingEvents.PAGE_VIEW_APPLICATION,

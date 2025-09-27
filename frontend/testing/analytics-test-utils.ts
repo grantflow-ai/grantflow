@@ -27,7 +27,6 @@ export function createMockWizardAnalyticsHook() {
 }
 
 export function setupAnalyticsMocks(): AnalyticsTestHelpers {
-	// Ensure the tracking module is mocked properly
 	const mockTrackEvent = vi.mocked(tracking.trackEvent);
 
 	const getTrackedEvents = () => {

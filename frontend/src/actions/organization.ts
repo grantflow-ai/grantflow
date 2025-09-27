@@ -88,7 +88,7 @@ export async function deleteOrganizationLogo(organizationId: string) {
 			.delete(`organizations/${organizationId}/logo`, {
 				headers: await createAuthHeaders(),
 			})
-			.text(), // 204 returns empty body
+			.text(),
 	);
 }
 
