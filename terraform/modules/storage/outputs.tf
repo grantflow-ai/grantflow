@@ -27,3 +27,18 @@ output "scraper_bucket_self_link" {
   description = "The URI of the scraper bucket"
   value       = google_storage_bucket.scraper.self_link
 }
+
+output "logos_bucket_name" {
+  description = "The name of the logos bucket"
+  value       = google_storage_bucket.logos.name
+}
+
+output "logos_bucket_url" {
+  description = "The URL of the logos bucket"
+  value       = google_storage_bucket.logos.url
+}
+
+output "logos_bucket_self_link" {
+  description = "The URI of the logos bucket"
+  value       = google_storage_bucket.logos.self_link
+}

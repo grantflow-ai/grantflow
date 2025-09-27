@@ -372,11 +372,15 @@ async def test_delete_organization_success(
         session.add(collaborator)
         await session.commit()
 
-    with patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule:
+    with (
+        patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule,
+        patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete_logo,
+    ):
         mock_schedule.return_value = {
             "scheduled_hard_delete_at": datetime.now(UTC) + timedelta(days=30),
             "grace_period_days": 30,
         }
+        mock_delete_logo.return_value = None
 
         response = await test_client.delete(
             f"/organizations/{organization.id}",
@@ -453,8 +457,12 @@ async def test_delete_organization_schedule_error(
     project_owner_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    with patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule:
+    with (
+        patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule,
+        patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete_logo,
+    ):
         mock_schedule.side_effect = Exception("Firebase error")
+        mock_delete_logo.return_value = None
 
         response = await test_client.delete(
             f"/organizations/{organization.id}",
@@ -575,3 +583,213 @@ async def test_restore_organization_firestore_error(
     assert response.status_code == HTTPStatus.OK
     org_data = response.json()
     assert org_data["id"] == str(organization.id)
+
+
+# Organization Logo Tests
+
+
+async def test_create_logo_upload_url_success(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    with patch("services.backend.src.api.routes.organization_logos.create_signed_logo_upload_url") as mock_create_url:
+        mock_create_url.return_value = "https://signed-upload-url.com"
+
+        response = await test_client.post(
+            f"/organizations/{organization.id}/logo/upload-url",
+            headers={"Authorization": f"Bearer {otp_code}"},
+            params={"content_type": "image/png"},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+        assert "upload_url" in data
+        assert "logo_url" in data
+        assert data["upload_url"] == "https://signed-upload-url.com"
+
+
+async def test_create_logo_upload_url_invalid_content_type(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    response = await test_client.post(
+        f"/organizations/{organization.id}/logo/upload-url",
+        headers={"Authorization": f"Bearer {otp_code}"},
+        params={"content_type": "application/pdf"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def test_upload_organization_logo_success(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    fake_logo_data = b"fake png data"
+
+    with patch("services.backend.src.api.routes.organization_logos.upload_organization_logo") as mock_upload:
+        mock_upload.return_value = f"https://storage.googleapis.com/bucket/organizations/{organization.id}/logo.png"
+
+        files = {"logo": ("logo.png", fake_logo_data, "image/png")}
+        response = await test_client.post(
+            f"/organizations/{organization.id}/logo", headers={"Authorization": f"Bearer {otp_code}"}, files=files
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+        assert "logo_url" in data
+        assert data["logo_url"].startswith("https://storage.googleapis.com/bucket/organizations/")
+
+        mock_upload.assert_called_once_with(
+            organization_id=organization.id, file_content=fake_logo_data, content_type="image/png"
+        )
+
+
+async def test_upload_organization_logo_no_file(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    response = await test_client.post(
+        f"/organizations/{organization.id}/logo",
+        headers={"Authorization": f"Bearer {otp_code}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def test_upload_organization_logo_collaborator_forbidden(
+    test_client: TestingClientType,
+    organization: Organization,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    # Create a collaborator user
+    collaborator_uid = "collaborator-uid"
+
+    async with async_session_maker() as session, session.begin():
+        org_user = OrganizationUser(
+            firebase_uid=collaborator_uid, organization_id=organization.id, role=UserRoleEnum.COLLABORATOR
+        )
+        session.add(org_user)
+
+    headers = {"Authorization": f"Bearer {collaborator_uid}"}
+    fake_logo_data = b"fake png data"
+    files = {"logo": ("logo.png", fake_logo_data, "image/png")}
+
+    response = await test_client.post(f"/organizations/{organization.id}/logo", headers=headers, files=files)
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_delete_organization_logo_success(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    with patch("services.backend.src.api.routes.organization_logos.delete_organization_logo") as mock_delete:
+        mock_delete.return_value = None
+
+        response = await test_client.delete(
+            f"/organizations/{organization.id}/logo",
+            headers={"Authorization": f"Bearer {otp_code}"},
+        )
+
+        assert response.status_code == HTTPStatus.NO_CONTENT
+
+        mock_delete.assert_called_once_with(organization.id)
+
+
+async def test_delete_organization_logo_not_found(
+    test_client: TestingClientType,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    non_existent_org_id = uuid4()
+
+    with patch("services.backend.src.api.routes.organization_logos.delete_organization_logo") as mock_delete:
+        mock_delete.return_value = None
+
+        response = await test_client.delete(
+            f"/organizations/{non_existent_org_id}/logo",
+            headers={"Authorization": f"Bearer {otp_code}"},
+        )
+
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+async def test_organization_update_with_valid_logo_url(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    valid_logo_url = f"https://storage.googleapis.com/grantflow-staging-logos/organizations/{organization.id}/logo.png"
+
+    with patch("packages.shared_utils.src.env.get_env") as mock_get_env:
+        mock_get_env.side_effect = lambda key, fallback=None: {
+            "ENVIRONMENT": "staging",
+            "LOGO_BUCKET_NAME": "grantflow-staging-logos",
+        }.get(key, fallback)
+
+        response = await test_client.patch(
+            f"/organizations/{organization.id}",
+            headers={"Authorization": f"Bearer {otp_code}"},
+            json={"logo_url": valid_logo_url},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+        assert data["logo_url"] == valid_logo_url
+
+
+async def test_organization_update_with_invalid_logo_url(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    invalid_logo_url = "https://evil-site.com/malicious-logo.png"
+
+    with patch("packages.shared_utils.src.env.get_env") as mock_get_env:
+        mock_get_env.side_effect = lambda key, fallback=None: {
+            "ENVIRONMENT": "staging",
+            "LOGO_BUCKET_NAME": "grantflow-staging-logos",
+        }.get(key, fallback)
+
+        response = await test_client.patch(
+            f"/organizations/{organization.id}",
+            headers={"Authorization": f"Bearer {otp_code}"},
+            json={"logo_url": invalid_logo_url},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert "Invalid logo URL" in response.text
+
+
+async def test_organization_deletion_removes_logo(
+    test_client: TestingClientType,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
+    otp_code: str,
+) -> None:
+    with (
+        patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete_logo,
+        patch("services.backend.src.utils.firebase.schedule_organization_deletion") as mock_schedule,
+    ):
+        mock_schedule.return_value = {"scheduled_hard_delete_at": datetime.now(UTC), "grace_period_days": 30}
+
+        response = await test_client.delete(
+            f"/organizations/{organization.id}",
+            headers={"Authorization": f"Bearer {otp_code}"},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        mock_delete_logo.assert_called_once_with(organization.id)

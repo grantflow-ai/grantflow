@@ -2338,6 +2338,78 @@ export namespace API {
 	}
 
 
+	export namespace UploadOrganizationLogo {
+		export namespace Http200 {
+			export type ResponseBody = {
+				logo_url: string;
+			};
+		}
+
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+
+		export interface PathParameters {
+			organization_id: string;
+		}
+	}
+
+
+	export namespace CreateOrganizationLogoUploadUrl {
+		export namespace Http200 {
+			export type ResponseBody = {
+				logo_url: string;
+				upload_url: string;
+			};
+		}
+
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+
+		export interface PathParameters {
+			organization_id: string;
+		}
+
+		export interface QueryParameters {
+			content_type: string;
+		}
+	}
+
+
+	export namespace DeleteOrganizationLogo {
+		export namespace Http204 {
+			export type ResponseBody = null;
+		}
+
+
+		export namespace Http400 {
+			export type ResponseBody = {
+				detail: string;
+				extra?: Record<string, unknown> | null | unknown[];
+				status_code: number;
+			};
+		}
+
+
+		export interface PathParameters {
+			organization_id: string;
+		}
+	}
+
+
 	export namespace UpdateOrganizationInvitation {
 		export namespace Http200 {
 			export type ResponseBody = {

@@ -173,3 +173,49 @@ resource "google_storage_bucket_iam_member" "scraper_bucket_object_creator" {
   role   = "roles/storage.objectCreator"
   member = "serviceAccount:scraper-service@grantflow.iam.gserviceaccount.com"
 }
+
+resource "google_storage_bucket" "logos" {
+  name                        = "grantflow-${var.environment}-logos"
+  location                    = var.location
+  force_destroy               = false
+  storage_class               = "STANDARD"
+  uniform_bucket_level_access = true
+  public_access_prevention    = "inherited"
+
+  cors {
+    origin          = var.environment == "staging" ? ["http://localhost:*", "https://staging--grantflow-staging.us-central1.hosted.app", "https://staging.grantflow.ai"] : ["http://localhost:*", "https://grantflow.ai", "https://www.grantflow.ai"]
+    method          = ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"]
+    response_header = ["Content-Type", "Content-Length", "Cache-Control"]
+    max_age_seconds = 86400
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 365
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  encryption {
+    default_kms_key_name = google_kms_crypto_key.bucket_key.id
+  }
+
+  labels = {
+    environment = var.environment
+    purpose     = "organization-logos"
+  }
+}
+
+resource "google_storage_bucket_iam_member" "logos_public_read" {
+  bucket = google_storage_bucket.logos.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+resource "google_storage_bucket_iam_member" "logos_backend_object_admin" {
+  bucket = google_storage_bucket.logos.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${var.backend_service_account_email}"
+}

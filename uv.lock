@@ -1463,15 +1463,15 @@ wheels = [
 
 [[package]]
 name = "html-to-markdown"
-version = "1.15.0"
+version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "nh3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/36/03/232cce6c964e2ebd0863f359545cfe9fa568a8388a631854457493b8dcad/html_to_markdown-1.15.0.tar.gz", hash = "sha256:02dba1945e94939acd4d7d7474a08a4940dc66d894b3f6040b4a283fb501debc", size = 44826, upload-time = "2025-09-26T05:29:24.006Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/17/4769ba8c297e6e741012f47cc1007d0d63e0204ba5e860f8d126673824d4/html_to_markdown-1.16.0.tar.gz", hash = "sha256:f730872b62b7552b7f86d26f0e8a28f24934b0a47fd8cc8ed428b3d3027dfbf8", size = 47682, upload-time = "2025-09-27T09:34:08.288Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/3b/fde2bd312073694bafde24dd6785ef1e183864cb6dccaa79b13513bac786/html_to_markdown-1.15.0-py3-none-any.whl", hash = "sha256:198c9880407952b6c15a78e85a636276d59755d113380cdc8a878e1190290ee3", size = 37701, upload-time = "2025-09-26T05:29:22.812Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/7f/5e6e48087ef56b3e1ecf6ffec09fbc716d88abdc98f1821a91e8582759b6/html_to_markdown-1.16.0-py3-none-any.whl", hash = "sha256:f52c515fcb696a153c8340583d6d3090923a72697a269b627ecb054a03dac762", size = 40018, upload-time = "2025-09-27T09:34:06.779Z" },
 ]
 
 [package.optional-dependencies]
@@ -1746,7 +1746,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.17.3"
+version = "3.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1763,9 +1763,9 @@ dependencies = [
     { name = "python-calamine" },
     { name = "python-pptx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/83/37/c9481886a75d188f7304563711d3289151a6a76400a0c4adf7a99508cf75/kreuzberg-3.17.3.tar.gz", hash = "sha256:933904c0134d70e8368f00522ae22d192fb1bcf5ca66216f4f1c30911c9e1c21", size = 16314583, upload-time = "2025-09-23T05:54:20.32Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/2c/7b1baccf3ce1b5106cbf023348e508efd913e9b233d8300c5d25887ca96e/kreuzberg-3.18.0.tar.gz", hash = "sha256:3aa921492c454106f6b8098e8aef6d0485307fa6462a5f70b048a3dc45de3088", size = 16493280, upload-time = "2025-09-27T09:40:04.16Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/a5/1e73fdaf65911f8958ee108feae2403235d344ecc54ef95243e3051163f3/kreuzberg-3.17.3-py3-none-any.whl", hash = "sha256:1877841cfc4ff5e275b6b8ebfb05d9939d6ea0ce63158db6e9c71c6816cc875d", size = 219026, upload-time = "2025-09-23T05:54:17.974Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/92/174a44526005d72c66c5b4acc47068917c9d12b2c12200481ba10318f0f3/kreuzberg-3.18.0-py3-none-any.whl", hash = "sha256:85e3ae2e68fa6873658ea7d1208418545f5c0a9b4e532a0299f869c74061f71f", size = 220260, upload-time = "2025-09-27T09:40:01.638Z" },
 ]
 
 [package.optional-dependencies]

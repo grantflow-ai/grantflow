@@ -3,9 +3,11 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 import {
+	deleteOrganizationLogo as handleDeleteOrganizationLogo,
 	getOrganization as handleGetOrganization,
 	getOrganizations as handleGetOrganizations,
 	updateOrganization as handleUpdateOrganization,
+	uploadOrganizationLogo as handleUploadOrganizationLogo,
 } from "@/actions/organization";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
@@ -27,12 +29,14 @@ const initialState: OrganizationState = {
 
 interface OrganizationActions {
 	clearOrganization: () => void;
+	deleteOrganizationLogo: (organizationId: string) => Promise<void>;
 	getOrganization: (organizationId: string) => Promise<void>;
 	getOrganizations: () => Promise<void>;
 	selectOrganization: (organizationId: string) => void;
 	setOrganization: (organization: OrganizationType) => void;
 	setOrganizations: (organizations: OrganizationsListType) => void;
 	updateOrganization: (organizationId: string, data: API.UpdateOrganization.RequestBody) => Promise<void>;
+	uploadOrganizationLogo: (organizationId: string, file: File) => Promise<string>;
 }
 
 export const useOrganizationStore = create<OrganizationActions & OrganizationState>()(
@@ -46,6 +50,36 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 					organizations: [],
 					selectedOrganizationId: null,
 				});
+			},
+
+			deleteOrganizationLogo: async (organizationId: string) => {
+				const { organization, organizations } = get();
+
+				try {
+					await handleDeleteOrganizationLogo(organizationId);
+
+					// Update the organization in state to remove the logo URL
+					const updatedOrganization = await handleGetOrganization(organizationId);
+					const updatedOrganizations = await handleGetOrganizations();
+
+					set({
+						organization: organization?.id === organizationId ? updatedOrganization : organization,
+						organizations: updatedOrganizations,
+					});
+
+					log.info("organization-store.ts: deleteOrganizationLogo", {
+						message: "Organization logo deleted successfully",
+						organizationId,
+					});
+				} catch (error: unknown) {
+					set({
+						organization,
+						organizations,
+					});
+					log.error("deleteOrganizationLogo", error);
+					toast.error("Failed to delete organization logo");
+					throw error;
+				}
 			},
 
 			getOrganization: async (organizationId: string) => {
@@ -123,6 +157,39 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 					});
 					log.error("updateOrganization", error);
 					toast.error("Failed to update organization");
+				}
+			},
+
+			uploadOrganizationLogo: async (organizationId: string, file: File) => {
+				const { organization, organizations } = get();
+
+				try {
+					const response = await handleUploadOrganizationLogo(organizationId, file);
+
+					// Update the organization in state with the new logo URL
+					const updatedOrganization = await handleGetOrganization(organizationId);
+					const updatedOrganizations = await handleGetOrganizations();
+
+					set({
+						organization: organization?.id === organizationId ? updatedOrganization : organization,
+						organizations: updatedOrganizations,
+					});
+
+					log.info("organization-store.ts: uploadOrganizationLogo", {
+						logoUrl: response.logo_url,
+						message: "Organization logo uploaded successfully",
+						organizationId,
+					});
+
+					return response.logo_url;
+				} catch (error: unknown) {
+					set({
+						organization,
+						organizations,
+					});
+					log.error("uploadOrganizationLogo", error);
+					toast.error("Failed to upload organization logo");
+					throw error;
 				}
 			},
 		}),

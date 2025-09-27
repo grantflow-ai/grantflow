@@ -65,7 +65,7 @@ export async function trackEvent<T extends TrackableEvent>(
 			...properties,
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			path: typeof globalThis.window === "undefined" ? undefined : globalThis.window?.location?.pathname,
-			 
+
 			referrer: typeof document === "undefined" ? undefined : document.referrer,
 			sessionId: getSessionId(),
 			timestamp: new Date().toISOString(),

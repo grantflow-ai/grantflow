@@ -40,6 +40,17 @@ export async function createOrganizationInvitation(
 	);
 }
 
+export async function createOrganizationLogoUploadUrl(organizationId: string, contentType: string) {
+	return withAuthRedirect(
+		getClient()
+			.post(`organizations/${organizationId}/logo/upload-url`, {
+				headers: await createAuthHeaders(),
+				searchParams: { content_type: contentType },
+			})
+			.json<API.CreateOrganizationLogoUploadUrl.Http200.ResponseBody>(),
+	);
+}
+
 export async function createOrganizationSourceUploadUrl(organizationId: string, fileName: string) {
 	return withAuthRedirect(
 		getClient()
@@ -68,6 +79,16 @@ export async function deleteOrganizationInvitation(organizationId: string, invit
 				headers: await createAuthHeaders(),
 			})
 			.json<API.DeleteOrganizationInvitation.Http204.ResponseBody>(),
+	);
+}
+
+export async function deleteOrganizationLogo(organizationId: string) {
+	return withAuthRedirect(
+		getClient()
+			.delete(`organizations/${organizationId}/logo`, {
+				headers: await createAuthHeaders(),
+			})
+			.text(), // 204 returns empty body
 	);
 }
 
@@ -169,5 +190,19 @@ export async function updateOrganizationMemberRole(
 				json: data,
 			})
 			.json<API.UpdateMemberRole.Http200.ResponseBody>(),
+	);
+}
+
+export async function uploadOrganizationLogo(organizationId: string, file: File) {
+	const formData = new FormData();
+	formData.append("logo", file);
+
+	return withAuthRedirect(
+		getClient()
+			.post(`organizations/${organizationId}/logo`, {
+				body: formData,
+				headers: await createAuthHeaders(),
+			})
+			.json<API.UploadOrganizationLogo.Http200.ResponseBody>(),
 	);
 }
