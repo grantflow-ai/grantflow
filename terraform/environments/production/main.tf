@@ -39,6 +39,23 @@ module "iam" {
   source = "../../modules/iam"
 }
 
+module "artifact_registry" {
+  source                  = "../../modules/artifact_registry"
+  project_id              = var.project_id
+  location                = "us-east1"
+  environment             = var.environment
+  repository_name         = "grantflow"
+  retention_days          = 30  # Keep production images longer
+  keep_recent_count       = 50  # Keep more recent images in production
+  keep_tag_prefixes       = ["v", "release-", "production-", "latest"]
+  ci_service_account      = module.iam.github_actions_service_account_email
+  reader_service_accounts = [
+    module.iam.backend_service_account_email,
+    module.iam.scraper_service_account_email,
+    module.iam.rag_service_account_email
+  ]
+}
+
 module "network" {
   source     = "../../modules/network"
   project_id = var.project_id
