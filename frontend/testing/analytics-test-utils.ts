@@ -1,15 +1,12 @@
 import { expect, type Mock, vi } from "vitest";
-import type { TrackableWizardEvent, WizardEventProperties } from "@/utils/analytics-events";
-import * as segment from "@/utils/segment";
+import type { EventProperties, TrackableEvent } from "@/utils/tracking";
+import * as tracking from "@/utils/tracking";
 
 export interface AnalyticsTestHelpers {
-	expectEventTracked: <T extends TrackableWizardEvent>(
-		event: T,
-		expectedProperties?: Partial<WizardEventProperties[T]>,
-	) => void;
+	expectEventTracked: <T extends TrackableEvent>(event: T, expectedProperties?: Partial<EventProperties[T]>) => void;
 	expectNoEventsTracked: () => void;
 	getTrackedEvents: () => { event: string; properties: any }[];
-	mockTrackWizardEvent: Mock;
+	mockTrackEvent: Mock;
 	resetAnalyticsMocks: () => void;
 }
 
@@ -17,7 +14,6 @@ export function createMockWizardAnalyticsHook() {
 	return {
 		context: {
 			applicationId: "test-app-id",
-			currentStep: "Application Details" as const,
 			organizationId: "test-org-id",
 			projectId: "test-project-id",
 		},
@@ -31,20 +27,23 @@ export function createMockWizardAnalyticsHook() {
 }
 
 export function setupAnalyticsMocks(): AnalyticsTestHelpers {
-	const mockTrackWizardEvent = vi.mocked(segment.trackWizardEvent);
+	// Ensure the tracking module is mocked properly
+	const mockTrackEvent = vi.mocked(tracking.trackEvent);
 
 	const getTrackedEvents = () => {
-		return mockTrackWizardEvent.mock.calls.map(([event, properties]) => ({
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		return (mockTrackEvent.mock?.calls || []).map(([event, properties]) => ({
 			event,
 			properties,
 		}));
 	};
 
-	const expectEventTracked = <T extends TrackableWizardEvent>(
+	const expectEventTracked = <T extends TrackableEvent>(
 		event: T,
-		expectedProperties?: Partial<WizardEventProperties[T]>,
+		expectedProperties?: Partial<EventProperties[T]>,
 	) => {
-		const { calls } = mockTrackWizardEvent.mock;
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		const calls = mockTrackEvent.mock?.calls || [];
 		const eventCall = calls.find(([calledEvent]) => calledEvent === event);
 
 		expect(eventCall).toBeDefined();
@@ -58,18 +57,21 @@ export function setupAnalyticsMocks(): AnalyticsTestHelpers {
 	};
 
 	const expectNoEventsTracked = () => {
-		expect(mockTrackWizardEvent).not.toHaveBeenCalled();
+		expect(mockTrackEvent).not.toHaveBeenCalled();
 	};
 
 	const resetAnalyticsMocks = () => {
-		mockTrackWizardEvent.mockClear();
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (mockTrackEvent && typeof mockTrackEvent.mockClear === "function") {
+			mockTrackEvent.mockClear();
+		}
 	};
 
 	return {
 		expectEventTracked,
 		expectNoEventsTracked,
 		getTrackedEvents,
-		mockTrackWizardEvent,
+		mockTrackEvent,
 		resetAnalyticsMocks,
 	};
 }

@@ -9,10 +9,9 @@ import type { TemplateGenerationEvent } from "@/types/notification-events";
 
 type ApplicationType = NonNullable<ReturnType<typeof useApplicationStore.getState>["application"]>;
 
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
-import { trackWizardEvent } from "@/utils/segment";
+import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 
 const DEBOUNCE_DELAY_MS = 2000;
@@ -327,19 +326,17 @@ const trackAutofillEvent = async (
 	fieldName?: string,
 ): Promise<void> => {
 	if (currentStep === WizardStep.KNOWLEDGE_BASE) {
-		await trackWizardEvent(WizardAnalyticsEvent.STEP_3_AI, {
+		await trackEvent(TrackingEvents.WIZARD_STEP_3_AI, {
 			aiType: "autofill",
 			applicationId,
-			currentStep,
 			fieldName,
 			organizationId,
 			projectId,
 		});
 	} else if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-		await trackWizardEvent(WizardAnalyticsEvent.STEP_5_AI, {
+		await trackEvent(TrackingEvents.WIZARD_STEP_5_AI, {
 			aiType: "autofill",
 			applicationId,
-			currentStep,
 			fieldName,
 			organizationId,
 			projectId,
@@ -638,10 +635,9 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				const { application } = useApplicationStore.getState();
 				const { selectedOrganizationId } = useOrganizationStore.getState();
 				if (application && selectedOrganizationId) {
-					await trackWizardEvent(WizardAnalyticsEvent.STEP_4_ADD, {
+					await trackEvent(TrackingEvents.WIZARD_STEP_4_ADD, {
 						applicationId: application.id,
 						contentType: "objective",
-						currentStep: WizardStep.RESEARCH_PLAN,
 						fieldName: "research_objective",
 						organizationId: selectedOrganizationId,
 						projectId: application.project_id,

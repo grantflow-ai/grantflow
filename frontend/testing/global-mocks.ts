@@ -189,6 +189,24 @@ vi.mock("@/utils/segment", () => ({
 	trackWizardEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/utils/tracking", () => ({
+	trackError: vi.fn().mockResolvedValue(undefined),
+	trackEvent: vi.fn().mockResolvedValue(undefined),
+	TrackingEvents: {
+		CTA_NEW_APPLICATION_MAIN: "main-cta-new-application",
+		CTA_NEW_APPLICATION_SIDEBAR: "sidebar-cta-new-application",
+		ONBOARDING_START: "onboarding-start-new",
+		WIZARD_ERROR_BACK: "wizard-error-back",
+		WIZARD_ERROR_CONTINUE: "wizard-error-continue",
+		WIZARD_STEP_1_NEXT: "wizard-step-1-next",
+		WIZARD_STEP_2_APPROVE: "wizard-step-2-approve",
+		WIZARD_STEP_3_NEXT: "wizard-step-3-next",
+		WIZARD_STEP_4_NEXT: "wizard-step-4-next",
+		WIZARD_STEP_5_GENERATE: "wizard-step-5-generate",
+	},
+	trackPageView: vi.fn().mockResolvedValue(undefined),
+}));
+
 export {
 	mockCookies,
 	mockGetCookie,
