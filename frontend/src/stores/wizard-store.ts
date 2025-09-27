@@ -147,44 +147,34 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 		return null;
 	}
 
-	if (application.text && application.text.trim().length > 0) {
-		return WizardStep.GENERATE_AND_COMPLETE;
+	const hasGrantSections = (application.grant_template?.grant_sections.length ?? 0) > 0;
+	if (!hasGrantSections) {
+		return WizardStep.APPLICATION_DETAILS;
 	}
 
-	const formInputs = application.form_inputs;
-	if (formInputs) {
-		const requiredFields = [
-			"background_context",
-			"hypothesis",
-			"rationale",
-			"novelty_and_innovation",
-			"impact",
-			"team_excellence",
-			"research_feasibility",
-			"preliminary_data",
-		] as const;
-
-		const allFieldsFilled = requiredFields.some(
-			(field) => formInputs[field] && formInputs[field].trim().length > 0,
-		);
-		if (allFieldsFilled) {
-			return WizardStep.RESEARCH_DEEP_DIVE;
-		}
-	}
-
-	if (application.research_objectives?.some((obj) => obj.research_tasks.length > 0)) {
-		return WizardStep.RESEARCH_PLAN;
-	}
-
-	if (application.rag_sources.length > 0) {
-		return WizardStep.KNOWLEDGE_BASE;
-	}
-
-	if (application.grant_template?.grant_sections && application.grant_template.grant_sections.length > 0) {
+	const hasRagSources = application.rag_sources.length > 0;
+	if (!hasRagSources) {
 		return WizardStep.APPLICATION_STRUCTURE;
 	}
 
-	return WizardStep.APPLICATION_DETAILS;
+	const hasObjectivesWithTasks = application.research_objectives?.some((obj) => obj.research_tasks.length > 0);
+	if (!hasObjectivesWithTasks) {
+		return WizardStep.KNOWLEDGE_BASE;
+	}
+
+	const formInputs = application.form_inputs;
+	const hasFilledFormInputs =
+		formInputs && Object.values(formInputs).some((value) => value && value.trim().length > 0);
+	if (!hasFilledFormInputs) {
+		return WizardStep.RESEARCH_PLAN;
+	}
+
+	const hasApplicationText = application.text && application.text.trim().length > 0;
+	if (!hasApplicationText) {
+		return WizardStep.RESEARCH_DEEP_DIVE;
+	}
+
+	return WizardStep.GENERATE_AND_COMPLETE;
 }
 
 const initialWizardState: WizardState = {
