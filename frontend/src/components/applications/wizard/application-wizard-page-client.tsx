@@ -38,12 +38,7 @@ export function ApplicationWizardPageClient() {
 			userSelectedStepRef.current = appropriateStep;
 		}
 
-		const timeoutId = setTimeout(() => {
-			void useApplicationStore.getState().checkAndRestoreJobState();
-		}, 0);
-
 		return () => {
-			clearTimeout(timeoutId);
 			userSelectedStepRef.current = null;
 		};
 	}, [applicationId]);

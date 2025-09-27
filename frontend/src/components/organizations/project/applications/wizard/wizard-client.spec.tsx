@@ -225,20 +225,6 @@ describe.sequential("WizardClientComponent", () => {
 
 			expect(screen.getByTestId("wizard-page")).toBeInTheDocument();
 		});
-
-		it("does not handle store initialization or job state", async () => {
-			const mockCheckAndRestoreJobState = vi.fn();
-
-			useApplicationStore.setState({
-				checkAndRestoreJobState: mockCheckAndRestoreJobState,
-			});
-
-			renderWizardClient();
-
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(mockCheckAndRestoreJobState).not.toHaveBeenCalled();
-		});
 	});
 
 	describe("Cleanup on Unmount", () => {

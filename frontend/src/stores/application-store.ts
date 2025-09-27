@@ -177,7 +177,10 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 		const subsections = subsectionsByParent[parentId];
 		const subsectionsTotalWords = subsections.reduce(
 			(acc, activeSection) =>
-				acc + ("max_words" in activeSection && Boolean(activeSection.max_words) ? activeSection.max_words : 0),
+				acc +
+				("max_words" in activeSection && typeof activeSection.max_words === "number"
+					? activeSection.max_words
+					: 0),
 			0,
 		);
 
@@ -204,9 +207,17 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 	};
 };
 
+interface GrantSectionBase {
+	[key: string]: unknown;
+	id: string;
+	order: number;
+	parent_id: null | string;
+	title: string;
+}
+
 const logGrantSectionsUpdate = (
 	application: NonNullable<ApplicationType>,
-	sections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
+	sections: GrantSectionBase[] | null | undefined,
 	isSuccess: boolean,
 	isOptimistic = false,
 ) => {
@@ -236,7 +247,10 @@ const logGrantSectionsUpdate = (
 	});
 };
 
-const updateGrantTemplateAPI = async (application: NonNullable<ApplicationType>, processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+const updateGrantTemplateAPI = async (
+	application: NonNullable<ApplicationType>,
+	processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
+) => {
 	const { selectedOrganizationId } = useOrganizationStore.getState();
 	if (!selectedOrganizationId) {
 		throw new Error("No organization selected");

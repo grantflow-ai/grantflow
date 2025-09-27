@@ -856,87 +856,33 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("RAG job restoration", () => {
-		describe.sequential("checkAndRestoreJobState", () => {
-			it("should not restore when application is null", async () => {
-				useApplicationStore.setState({ application: null });
+	describe("clearRestoredJobState", () => {
+		it("should clear restored job state", () => {
+			const jobData = {
+				created_at: "2023-01-01T00:00:00Z",
+				current_stage: "3",
+				id: "job-123",
+				job_type: "grant_template_generation",
+				retry_count: 0,
+				status: "PROCESSING" as const,
+				total_stages: 6,
+				updated_at: "2023-01-01T00:30:00Z",
+			};
 
-				const { checkAndRestoreJobState } = useApplicationStore.getState();
-
-				await checkAndRestoreJobState();
-
-				expect(retrieveRagJob).not.toHaveBeenCalled();
-				const state = useApplicationStore.getState();
-				expect(state.ragJobState.restoredJob).toBeNull();
+			useApplicationStore.setState({
+				ragJobState: {
+					isRestoring: false,
+					restoredJob: jobData,
+				},
 			});
 
-			it("should not restore job state (functionality disabled)", async () => {
-				vi.mocked(retrieveRagJob).mockClear();
+			const { clearRestoredJobState } = useApplicationStore.getState();
 
-				const application = ApplicationFactory.build();
-				useApplicationStore.setState({ application });
+			clearRestoredJobState();
 
-				const { checkAndRestoreJobState } = useApplicationStore.getState();
-				await checkAndRestoreJobState();
-
-				expect(retrieveRagJob).not.toHaveBeenCalled();
-				const state = useApplicationStore.getState();
-				expect(state.ragJobState.restoredJob).toBeNull();
-			});
-
-			it.skip("should restore PROCESSING job state - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-
-			it.skip("should restore PENDING job state - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-
-			it.skip("should not restore COMPLETED job state - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-
-			it.skip("should not restore FAILED job state - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-
-			it.skip("should check grant template rag_job_id if application rag_job_id is missing - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-
-			it.skip("should handle API errors gracefully - disabled after rag_job_id removal", async () => {
-				// TODO: Update this test when new job restoration logic is implemented
-			});
-		});
-
-		describe("clearRestoredJobState", () => {
-			it("should clear restored job state", () => {
-				const jobData = {
-					created_at: "2023-01-01T00:00:00Z",
-					current_stage: "3",
-					id: "job-123",
-					job_type: "grant_template_generation",
-					retry_count: 0,
-					status: "PROCESSING" as const,
-					total_stages: 6,
-					updated_at: "2023-01-01T00:30:00Z",
-				};
-
-				useApplicationStore.setState({
-					ragJobState: {
-						isRestoring: false,
-						restoredJob: jobData,
-					},
-				});
-
-				const { clearRestoredJobState } = useApplicationStore.getState();
-
-				clearRestoredJobState();
-
-				const state = useApplicationStore.getState();
-				expect(state.ragJobState.restoredJob).toBeNull();
-				expect(state.ragJobState.isRestoring).toBe(false);
-			});
+			const state = useApplicationStore.getState();
+			expect(state.ragJobState.restoredJob).toBeNull();
+			expect(state.ragJobState.isRestoring).toBe(false);
 		});
 	});
 

@@ -220,26 +220,6 @@ describe("ApplicationWizardPageClient", () => {
 				expect(applicationSoftResetSpy).toHaveBeenCalled();
 			});
 		});
-
-		it("should call checkAndRestoreJobState after timeout", async () => {
-			const application = ApplicationWithTemplateFactory.build();
-			useApplicationStore.setState({ application });
-			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
-			useProjectStore.setState({
-				project: ProjectFactory.build({
-					id: "project-123",
-					name: "Test Project",
-				}),
-			});
-
-			const checkAndRestoreJobStateSpy = vi.spyOn(useApplicationStore.getState(), "checkAndRestoreJobState");
-
-			render(<ApplicationWizardPageClient />);
-
-			await waitFor(() => {
-				expect(checkAndRestoreJobStateSpy).toHaveBeenCalled();
-			});
-		});
 	});
 
 	describe("wizard client rendering", () => {

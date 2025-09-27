@@ -43,7 +43,7 @@
 		"react": "19.1.1",
 		"react-cookie": "^8.0.1",
 		"react-dom": "19.1.1",
-		"react-email": "^4.2.11",
+		"react-email": "^4.2.12",
 		"react-hook-form": "^7.63.0",
 		"react-use-websocket": "^4.13.0",
 		"resend": "^6.1.0",
@@ -57,7 +57,7 @@
 		"zustand": "5.0.8"
 	},
 	"devDependencies": {
-		"@react-email/preview-server": "4.2.11"
+		"@react-email/preview-server": "4.2.12"
 	},
 	"engines": {
 		"node": ">=22.0.0"
