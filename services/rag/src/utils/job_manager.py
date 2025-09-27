@@ -399,12 +399,7 @@ class JobManager[DTOType]:
             self.current_job = job
 
     async def get_checkpoint_data(self) -> dict[str, Any] | None:
-        if not self.current_job or not self.current_job.parent_job_id:
+        if not self.current_job:
             return None
 
-        async with self.session_maker() as session:
-            parent_job = await session.get(RagGenerationJob, self.current_job.parent_job_id)
-            if not parent_job:
-                return None
-
-            return cast("dict[str, Any] | None", parent_job.checkpoint_data)
+        return self.current_job.checkpoint_data

@@ -48,7 +48,7 @@ async def job_with_extract_cfp_checkpoint(
 async def job_with_analyze_cfp_checkpoint(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
+    sample_extract_cfp_dto: ExtractCFPContentStageDTO,
 ) -> None:
     from packages.db.src.tables import RagGenerationJob
 
@@ -60,7 +60,7 @@ async def job_with_analyze_cfp_checkpoint(
             status=RagGenerationStatusEnum.PROCESSING,
             template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
             retry_count=0,
-            checkpoint_data=_serialize_checkpoint_data(sample_analyze_cfp_dto),
+            checkpoint_data=_serialize_checkpoint_data(sample_extract_cfp_dto),
         )
         session.add(job)
         await session.commit()
@@ -68,6 +68,28 @@ async def job_with_analyze_cfp_checkpoint(
 
 @pytest.fixture
 async def job_with_extract_sections_checkpoint(
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
+) -> None:
+    from packages.db.src.tables import RagGenerationJob
+
+    from services.rag.src.utils.job_manager import _serialize_checkpoint_data
+
+    async with async_session_maker() as session:
+        job = RagGenerationJob(
+            grant_template_id=grant_template.id,
+            status=RagGenerationStatusEnum.PROCESSING,
+            template_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
+            retry_count=0,
+            checkpoint_data=_serialize_checkpoint_data(sample_analyze_cfp_dto),
+        )
+        session.add(job)
+        await session.commit()
+
+
+@pytest.fixture
+async def job_with_generate_metadata_checkpoint(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     sample_sections_dto: ExtractionSectionsStageDTO,
@@ -80,7 +102,7 @@ async def job_with_extract_sections_checkpoint(
         job = RagGenerationJob(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.EXTRACT_SECTIONS,
+            template_stage=GrantTemplateStageEnum.GENERATE_METADATA,
             retry_count=0,
             checkpoint_data=_serialize_checkpoint_data(sample_sections_dto),
         )
@@ -190,9 +212,10 @@ async def test_pipeline_stage_execution_analyze_cfp_content_stage(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
-    job_with_extract_cfp_checkpoint: None,
+    job_with_analyze_cfp_checkpoint: None,
     trace_id: str,
     create_pubsub_topics: None,
+    mock_handle_completions_request: None,
 ) -> None:
     mock_handle_cfp_analysis = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage",
@@ -214,9 +237,10 @@ async def test_pipeline_stage_execution_extract_sections_stage(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     sample_sections_dto: ExtractionSectionsStageDTO,
-    job_with_analyze_cfp_checkpoint: None,
+    job_with_extract_sections_checkpoint: None,
     trace_id: str,
     create_pubsub_topics: None,
+    mock_handle_completions_request: None,
 ) -> None:
     mock_handle_section_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_section_extraction_stage",
@@ -237,9 +261,10 @@ async def test_pipeline_stage_execution_generate_metadata_stage_final(
     mocker: MockerFixture,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    job_with_extract_sections_checkpoint: None,
+    job_with_generate_metadata_checkpoint: None,
     trace_id: str,
     create_pubsub_topics: None,
+    mock_handle_completions_request: None,
 ) -> None:
     mock_grant_sections = [{"id": "section1", "title": "Project Summary"}]
     mock_handle_generate_metadata = mocker.patch(
@@ -412,9 +437,10 @@ async def test_pipeline_data_flow_checkpoint_data_casting_analyze_stage(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     sample_extract_cfp_dto: ExtractCFPContentStageDTO,
-    job_with_extract_cfp_checkpoint: None,
+    job_with_analyze_cfp_checkpoint: None,
     trace_id: str,
     create_pubsub_topics: None,
+    mock_handle_completions_request: None,
 ) -> None:
     mock_handle_cfp_analysis = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_cfp_analysis_stage",
@@ -436,9 +462,10 @@ async def test_pipeline_data_flow_checkpoint_data_casting_sections_stage(
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
     sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO,
-    job_with_analyze_cfp_checkpoint: None,
+    job_with_extract_sections_checkpoint: None,
     trace_id: str,
     create_pubsub_topics: None,
+    mock_handle_completions_request: None,
 ) -> None:
     mock_handle_section_extraction = mocker.patch(
         "services.rag.src.grant_template.pipeline.handle_section_extraction_stage",

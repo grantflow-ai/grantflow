@@ -198,6 +198,20 @@ def mock_job_manager() -> AsyncMock:
 
 
 @pytest.fixture
+def mock_handle_completions_request(mocker: MockerFixture) -> AsyncMock:
+    """Mock handle_completions_request for structured responses."""
+    mock = mocker.patch("services.rag.src.utils.completion.handle_completions_request")
+    # Default return a dict that can be cast to any response type
+    mock.return_value = {
+        "summary": "Mocked summary",
+        "sections": [],
+        "objectives": [],
+        "content": "Mocked content",
+    }
+    return mock
+
+
+@pytest.fixture
 def organization_mapping() -> dict[str, dict[str, str]]:
     return {
         "e8e8b0df-d6d9-4a27-bb1a-7b8e5a5b8c8e": {"name": "Melanoma Research Alliance", "abbreviation": "MRA"},

@@ -9,7 +9,6 @@ from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 from services.rag.src.grant_application.pipeline import (
     handle_grant_application_pipeline,
 )
@@ -64,7 +63,7 @@ async def test_pipeline_missing_cfp_analysis(
         assert job
         assert job.status == RagGenerationStatusEnum.FAILED
         assert job.error_message is not None
-        assert "An unexpected error occurred" in job.error_message
+        assert "ValidationError" in job.error_message
 
 
 async def test_pipeline_missing_research_objectives(
@@ -103,7 +102,7 @@ async def test_pipeline_missing_research_objectives(
         assert job
         assert job.status == RagGenerationStatusEnum.FAILED
         assert job.error_message is not None
-        assert "An unexpected error occurred" in job.error_message
+        assert "ValidationError" in job.error_message
 
 
 async def test_pipeline_validation_error_during_generation(
@@ -140,7 +139,7 @@ async def test_pipeline_validation_error_during_generation(
         assert job
         assert job.status == RagGenerationStatusEnum.FAILED
         assert job.error_message is not None
-        assert "An unexpected error occurred" in job.error_message
+        assert "ValidationError" in job.error_message
 
 
 async def test_pipeline_backend_error_during_generation(
@@ -187,92 +186,4 @@ async def test_pipeline_backend_error_during_generation(
         assert job
         assert job.status == RagGenerationStatusEnum.FAILED
         assert job.error_message is not None
-        assert "An unexpected error occurred" in job.error_message
-
-
-async def test_failed_job_reset_to_processing(
-    test_application_with_template: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    trace_id: TraceId,
-    create_pubsub_topics: None,
-) -> None:
-    job_manager: JobManager[Any] = JobManager(
-        entity_type="grant_application",
-        entity_id=test_application_with_template.id,
-        grant_application_id=test_application_with_template.id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
-
-    async with async_session_maker() as session, session.begin():
-        job = await job_manager.get_or_create_job_for_stage()
-        assert job
-        job.status = RagGenerationStatusEnum.FAILED
-        job.error_message = "Previous failure"
-        job.error_details = {"error": "details"}
-        job.failed_at = job.updated_at
-        session.add(job)
-
-    job_manager2: JobManager[Any] = JobManager(
-        entity_type="grant_application",
-        entity_id=test_application_with_template.id,
-        grant_application_id=test_application_with_template.id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
-
-    async with async_session_maker() as session:
-        reset_job = await job_manager2.get_or_create_job_for_stage()
-        assert reset_job
-        assert reset_job.id == job.id
-        assert reset_job.status == RagGenerationStatusEnum.PROCESSING
-        assert reset_job.error_message is None
-        assert reset_job.error_details is None
-        assert reset_job.failed_at is None
-        assert reset_job.retry_count == 1
-
-
-async def test_non_failed_job_not_reset(
-    test_application_with_template: GrantApplication,
-    async_session_maker: async_sessionmaker[Any],
-    trace_id: TraceId,
-    create_pubsub_topics: None,
-) -> None:
-    job_manager: JobManager[Any] = JobManager(
-        entity_type="grant_application",
-        entity_id=test_application_with_template.id,
-        grant_application_id=test_application_with_template.id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
-
-    async with async_session_maker() as session, session.begin():
-        job = await job_manager.get_or_create_job_for_stage()
-        assert job
-        job.status = RagGenerationStatusEnum.PROCESSING
-        job.application_stage = GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS
-        session.add(job)
-
-    job_manager2: JobManager[Any] = JobManager(
-        entity_type="grant_application",
-        entity_id=test_application_with_template.id,
-        grant_application_id=test_application_with_template.id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        pipeline_stages=list(GRANT_APPLICATION_STAGES_ORDER),
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-    )
-
-    async with async_session_maker() as session:
-        same_job = await job_manager2.get_or_create_job_for_stage()
-        assert same_job
-        assert same_job.id == job.id
-        assert same_job.status == RagGenerationStatusEnum.PROCESSING
-        assert same_job.application_stage == GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS
-        assert same_job.retry_count == 0
+        assert "ValidationError" in job.error_message

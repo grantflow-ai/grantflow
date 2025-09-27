@@ -317,10 +317,19 @@ async def test_result_quality_by_dimension(
             await modifier.modify_index_parameters(m=32, ef_construction=256)
 
             from packages.db.src.tables import GrantApplicationSource
-            from testing.factories import GrantApplicationFactory, RagFileFactory
+            from testing.factories import GrantApplicationFactory, OrganizationFactory, ProjectFactory, RagFileFactory
 
-            grant_app = await GrantApplicationFactory.create_async()
-            rag_source = await RagFileFactory.create_async(content_type="application/pdf")
+            # Create objects with proper dependencies
+            organization = OrganizationFactory.build()
+            project = ProjectFactory.build(organization_id=organization.id)
+            grant_app = GrantApplicationFactory.build(project_id=project.id)
+            rag_source = RagFileFactory.build(mime_type="application/pdf")
+
+            session.add(organization)
+            session.add(project)
+            session.add(grant_app)
+            session.add(rag_source)
+            await session.flush()  # Get IDs assigned
 
             app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
