@@ -52,9 +52,12 @@ from services.backend.src.api.routes.organization_invitations import (
     handle_list_organization_invitations,
     handle_update_organization_invitation,
 )
-from services.backend.src.api.routes.organization_logos import (
+from services.backend.src.api.routes.organizations import (
     handle_create_logo_upload_url,
     handle_delete_organization_logo,
+    handle_get_organization,
+    handle_list_organizations,
+    handle_restore_organization,
     handle_upload_organization_logo,
 )
 from services.backend.src.api.routes.organizations import (
@@ -62,11 +65,6 @@ from services.backend.src.api.routes.organizations import (
 )
 from services.backend.src.api.routes.organizations import (
     handle_delete_organization as handle_delete_org,
-)
-from services.backend.src.api.routes.organizations import (
-    handle_get_organization,
-    handle_list_organizations,
-    handle_restore_organization,
 )
 from services.backend.src.api.routes.organizations import (
     handle_update_organization as handle_update_org,

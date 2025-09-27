@@ -600,7 +600,7 @@ async def test_create_logo_upload_url_success(
             params={"content_type": "image/png"},
         )
 
-        assert response.status_code == HTTPStatus.OK
+        assert response.status_code == HTTPStatus.CREATED
         data = response.json()
         assert "upload_url" in data
         assert "logo_url" in data
@@ -638,7 +638,9 @@ async def test_upload_organization_logo_success(
             f"/organizations/{organization.id}/logo", headers={"Authorization": f"Bearer {otp_code}"}, files=files
         )
 
-        assert response.status_code == HTTPStatus.OK
+        if response.status_code != HTTPStatus.CREATED:
+            pass
+        assert response.status_code == HTTPStatus.CREATED
         data = response.json()
         assert "logo_url" in data
         assert data["logo_url"].startswith("https://storage.googleapis.com/bucket/organizations/")
