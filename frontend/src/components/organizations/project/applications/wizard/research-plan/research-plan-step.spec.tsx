@@ -16,8 +16,8 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
-import * as segment from "@/utils/segment";
+import * as tracking from "@/utils/tracking";
+import { TrackingEvents } from "@/utils/tracking";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 
@@ -25,7 +25,7 @@ vi.mock("@/actions/grant-applications", () => ({
 	updateApplication: vi.fn(),
 }));
 
-vi.mock("@/utils/segment");
+vi.mock("@/utils/tracking");
 
 vi.mock("@/utils/logger", () => ({
 	log: {
@@ -802,10 +802,9 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(addObjectiveButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_4_ADD, {
 					applicationId: "app-123",
 					contentType: "objective",
-					currentStep: WizardStep.RESEARCH_PLAN,
 					fieldName: "Test Objective",
 					organizationId: "org-123",
 					projectId: "proj-123",
@@ -825,16 +824,16 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
-				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(1);
-				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
 				expect(calls[0][1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "First Objective",
 				});
 			});
 
-			vi.mocked(segment.trackWizardEvent).mockClear();
+			vi.mocked(tracking.trackEvent).mockClear();
 
 			await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -847,9 +846,9 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
-				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(1);
-				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_4_ADD);
+				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
 				expect(calls[0][1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "Second Objective",
@@ -877,7 +876,7 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_4_ADD, {
 					contentType: "objective",
 					fieldName: "Multi-task Objective",
 				});
@@ -923,7 +922,7 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_4_ADD, {
 					contentType: "objective",
 					fieldName: "Failed Objective",
 				});
@@ -959,7 +958,7 @@ describe.sequential("ResearchPlanStep", () => {
 			await user.click(screen.getByTestId("add-objective-button"));
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_4_ADD, {
 					contentType: "objective",
 					fieldName: "Final Objective",
 				});

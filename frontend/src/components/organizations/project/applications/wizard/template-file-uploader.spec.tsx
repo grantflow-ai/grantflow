@@ -15,8 +15,8 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
-import * as segment from "@/utils/segment";
+import * as tracking from "@/utils/tracking";
+import { TrackingEvents } from "@/utils/tracking";
 
 import { TemplateFileUploader } from "./template-file-uploader";
 
@@ -26,7 +26,7 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-vi.mock("@/utils/segment");
+vi.mock("@/utils/tracking");
 
 vi.mock("@/components/app/buttons/app-button", () => ({
 	AppButton: vi.fn(({ children, leftIcon, ...props }) => (
@@ -460,9 +460,8 @@ describe("TemplateFileUploader", () => {
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_1_UPLOAD, {
 					applicationId: "app-123",
-					currentStep: WizardStep.APPLICATION_DETAILS,
 					fileName: "document.pdf",
 					fileSize: 1_024_000,
 					fileType: "application/pdf",
@@ -488,8 +487,7 @@ describe("TemplateFileUploader", () => {
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_3_UPLOAD, {
-					currentStep: WizardStep.KNOWLEDGE_BASE,
+				expectEventTracked(TrackingEvents.WIZARD_STEP_3_UPLOAD, {
 					fileName: "research.docx",
 					fileSize: 2_048_000,
 					fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -534,24 +532,24 @@ describe("TemplateFileUploader", () => {
 			await user.upload(fileInput, file3);
 
 			await waitFor(() => {
-				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(3);
 
-				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
 				expect(calls[0][1]).toMatchObject({
 					fileName: "doc1.pdf",
 					fileSize: 1_024_000,
 					fileType: "application/pdf",
 				});
 
-				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[1][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
 				expect(calls[1][1]).toMatchObject({
 					fileName: "doc2.pdf",
 					fileSize: 2_048_000,
 					fileType: "application/pdf",
 				});
 
-				expect(calls[2][0]).toBe(WizardAnalyticsEvent.STEP_1_UPLOAD);
+				expect(calls[2][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
 				expect(calls[2][1]).toMatchObject({
 					fileName: "doc3.pdf",
 					fileSize: 3_072_000,
@@ -617,7 +615,7 @@ describe("TemplateFileUploader", () => {
 
 			await waitFor(() => {
 				expect(mockRemovePendingUpload).toHaveBeenCalled();
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_1_UPLOAD, {
 					fileName: "document.pdf",
 					fileSize: 1_024_000,
 					fileType: "application/pdf",

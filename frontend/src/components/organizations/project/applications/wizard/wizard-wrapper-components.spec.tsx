@@ -8,7 +8,7 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
+import { TrackingEvents } from "@/utils/tracking";
 import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
@@ -1000,9 +1000,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_NEXT, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_1_NEXT, {
 					applicationId: "app-123",
-					currentStep: WizardStep.APPLICATION_DETAILS,
 					organizationId: "org-123",
 					projectId: "proj-123",
 				});
@@ -1020,9 +1019,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_3_NEXT, {
-					currentStep: WizardStep.KNOWLEDGE_BASE,
-				});
+				expectEventTracked(TrackingEvents.WIZARD_STEP_3_NEXT, {});
 			});
 		});
 
@@ -1053,9 +1050,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_4_NEXT, {
-					currentStep: WizardStep.RESEARCH_PLAN,
-				});
+				expectEventTracked(TrackingEvents.WIZARD_STEP_4_NEXT, {});
 			});
 		});
 
@@ -1095,8 +1090,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(approveButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_2_APPROVE, {
-					currentStep: WizardStep.APPLICATION_STRUCTURE,
+				expectEventTracked(TrackingEvents.WIZARD_STEP_2_APPROVE, {
 					sectionsCount: 2,
 					templateId: "template-123",
 				});
@@ -1136,8 +1130,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(generateButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_5_GENERATE, {
-					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				expectEventTracked(TrackingEvents.WIZARD_STEP_5_GENERATE, {
 					generationType: "application",
 				});
 			});
@@ -1163,8 +1156,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				const events = vi.mocked(setupAnalyticsMocks().mockTrackWizardEvent).mock.calls;
-				const generationEvent = events.find(([event]) => event === WizardAnalyticsEvent.STEP_5_GENERATE);
+				const events = vi.mocked(setupAnalyticsMocks().mockTrackEvent).mock.calls;
+				const generationEvent = events.find(([event]) => event === TrackingEvents.WIZARD_STEP_5_GENERATE);
 				expect(generationEvent).toBeUndefined();
 			});
 		});
@@ -1198,8 +1191,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
-					currentStep: WizardStep.APPLICATION_DETAILS,
+				expectEventTracked(TrackingEvents.WIZARD_ERROR_CONTINUE, {
 					errorType: "validation",
 					validationErrors: ["rag-sources-missing"],
 				});
@@ -1238,7 +1230,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+				expectEventTracked(TrackingEvents.WIZARD_ERROR_CONTINUE, {
 					errorType: "validation",
 					validationErrors: expect.arrayContaining(["title-invalid"]),
 				});
@@ -1277,7 +1269,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await user.click(continueButton);
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
+				expectEventTracked(TrackingEvents.WIZARD_ERROR_CONTINUE, {
 					errorType: "validation",
 					validationErrors: expect.arrayContaining(["rag-sources-missing"]),
 				});

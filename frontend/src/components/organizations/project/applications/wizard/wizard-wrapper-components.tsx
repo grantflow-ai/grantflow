@@ -10,8 +10,8 @@ import { WizardStep } from "@/constants";
 import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
 import { routes } from "@/utils/navigation";
+import { TrackingEvents } from "@/utils/tracking";
 import { Autosave } from "./autosave";
 import { Deadline } from "./deadline";
 
@@ -354,7 +354,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const handleStructureStep = useCallback(async () => {
 		if (grantTemplate) {
-			await trackEvent(WizardAnalyticsEvent.STEP_2_APPROVE, {
+			await trackEvent(TrackingEvents.WIZARD_STEP_2_APPROVE, {
 				sectionsCount: grantTemplate.grant_sections.length,
 				templateId: grantTemplate.id,
 			});
@@ -370,7 +370,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 			return;
 		}
 
-		await trackEvent(WizardAnalyticsEvent.STEP_5_GENERATE, {
+		await trackEvent(TrackingEvents.WIZARD_STEP_5_GENERATE, {
 			generationType: "application",
 		});
 		const success = await useWizardStore.getState().generateApplication();

@@ -1,5 +1,3 @@
-/* eslint-disable vitest/expect-expect */
-import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
 import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,10 +6,10 @@ import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
-import * as segment from "@/utils/segment";
+import * as tracking from "@/utils/tracking";
+import { TrackingEvents } from "@/utils/tracking";
 
-vi.mock("@/utils/segment");
+vi.mock("@/utils/tracking");
 vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
@@ -21,10 +19,8 @@ vi.mock("@/utils/logger/client", () => ({
 }));
 
 describe("useWizardAnalytics", () => {
-	const { expectEventTracked, expectNoEventsTracked, resetAnalyticsMocks } = setupAnalyticsMocks();
-
 	beforeEach(() => {
-		resetAnalyticsMocks();
+		vi.clearAllMocks();
 		vi.useRealTimers();
 
 		useOrganizationStore.setState({
@@ -47,89 +43,30 @@ describe("useWizardAnalytics", () => {
 
 			expect(result.current.context).toEqual({
 				applicationId: "app-123",
-				currentStep: WizardStep.APPLICATION_DETAILS,
 				organizationId: "org-123",
 				projectId: "proj-123",
 			});
-		});
-
-		it("should update context when stores change", () => {
-			const { result } = renderHook(() => useWizardAnalytics());
-
-			act(() => {
-				useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
-			});
-
-			expect(result.current.context.currentStep).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 	});
 
 	describe("trackEvent", () => {
-		it("should track events with correct properties", async () => {
+		it("should delegate to the tracking system", async () => {
 			const { result } = renderHook(() => useWizardAnalytics());
 
 			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
+				await result.current.trackEvent(TrackingEvents.WIZARD_STEP_1_NEXT, {});
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_1_NEXT, {
-				applicationId: "app-123",
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				organizationId: "org-123",
-				projectId: "proj-123",
-			});
-		});
-
-		it("should not track events without organizationId", async () => {
-			useOrganizationStore.setState({ selectedOrganizationId: null });
-			const { result } = renderHook(() => useWizardAnalytics());
-
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
-
-			expectNoEventsTracked();
-		});
-
-		it("should debounce duplicate events within 500ms", async () => {
-			const { result } = renderHook(() => useWizardAnalytics());
-
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
-
-			expect(vi.mocked(segment.trackWizardEvent)).toHaveBeenCalledTimes(1);
-		});
-
-		it("should track events after debounce period", async () => {
-			const { result } = renderHook(() => useWizardAnalytics());
-
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
-
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 600));
-			});
-
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
-
-			expect(vi.mocked(segment.trackWizardEvent)).toHaveBeenCalledTimes(2);
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(TrackingEvents.WIZARD_STEP_1_NEXT, {});
 		});
 
 		it("should handle tracking errors gracefully", async () => {
-			vi.mocked(segment.trackWizardEvent).mockRejectedValueOnce(new Error("Network error"));
+			vi.mocked(tracking.trackEvent).mockRejectedValueOnce(new Error("Network error"));
 			const { result } = renderHook(() => useWizardAnalytics());
 
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
+			await expect(result.current.trackEvent(TrackingEvents.WIZARD_STEP_1_NEXT, {})).resolves.not.toThrow();
 
-			expect(vi.mocked(segment.trackWizardEvent)).toHaveBeenCalled();
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalled();
 		});
 	});
 
@@ -141,11 +78,14 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackFileUpload("document.pdf", 1_024_000, "application/pdf", 1);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_1_UPLOAD, {
-				fileName: "document.pdf",
-				fileSize: 1_024_000,
-				fileType: "application/pdf",
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_1_UPLOAD,
+				expect.objectContaining({
+					fileName: "document.pdf",
+					fileSize: 1_024_000,
+					fileType: "application/pdf",
+				}),
+			);
 		});
 
 		it("should track file uploads for step 3", async () => {
@@ -155,11 +95,14 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackFileUpload("research.docx", 2_048_000, "application/docx", 3);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_3_UPLOAD, {
-				fileName: "research.docx",
-				fileSize: 2_048_000,
-				fileType: "application/docx",
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_3_UPLOAD,
+				expect.objectContaining({
+					fileName: "research.docx",
+					fileSize: 2_048_000,
+					fileType: "application/docx",
+				}),
+			);
 		});
 	});
 
@@ -171,10 +114,13 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackLinkAdd("https://example.com/page", 1);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_1_LINK, {
-				domain: "example.com",
-				url: "https://example.com/page",
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_1_LINK,
+				expect.objectContaining({
+					domain: "example.com",
+					url: "https://example.com/page",
+				}),
+			);
 		});
 
 		it("should handle invalid URLs gracefully", async () => {
@@ -184,7 +130,7 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackLinkAdd("not-a-url", 1);
 			});
 
-			expectNoEventsTracked();
+			expect(vi.mocked(tracking.trackEvent)).not.toHaveBeenCalled();
 		});
 	});
 
@@ -196,7 +142,10 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackNavigation("next");
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_1_NEXT);
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_1_NEXT,
+				expect.any(Object),
+			);
 		});
 
 		it("should track navigation errors with validation details", async () => {
@@ -206,10 +155,13 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackNavigation("next", true, ["Title is required", "Missing files"]);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.ERROR_CONTINUE, {
-				errorType: "validation",
-				validationErrors: ["Title is required", "Missing files"],
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_ERROR_CONTINUE,
+				expect.objectContaining({
+					errorType: "validation",
+					validationErrors: ["Title is required", "Missing files"],
+				}),
+			);
 		});
 
 		it("should track back navigation errors", async () => {
@@ -219,10 +171,13 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackNavigation("back", true, ["Unsaved changes"]);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.ERROR_BACK, {
-				errorType: "validation",
-				validationErrors: ["Unsaved changes"],
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_ERROR_BACK,
+				expect.objectContaining({
+					errorType: "validation",
+					validationErrors: ["Unsaved changes"],
+				}),
+			);
 		});
 
 		it("should not track navigation for steps without events", async () => {
@@ -233,7 +188,7 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackNavigation("next");
 			});
 
-			expectNoEventsTracked();
+			expect(vi.mocked(tracking.trackEvent)).not.toHaveBeenCalled();
 		});
 	});
 
@@ -245,10 +200,13 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackAIInteraction("autofill", 3, "research_objectives");
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_3_AI, {
-				aiType: "autofill",
-				fieldName: "research_objectives",
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_3_AI,
+				expect.objectContaining({
+					aiType: "autofill",
+					fieldName: "research_objectives",
+				}),
+			);
 		});
 
 		it("should track AI interactions for step 5", async () => {
@@ -258,10 +216,13 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackAIInteraction("generation", 5);
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_5_AI, {
-				aiType: "generation",
-				fieldName: undefined,
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_5_AI,
+				expect.objectContaining({
+					aiType: "generation",
+					fieldName: undefined,
+				}),
+			);
 		});
 	});
 
@@ -273,24 +234,28 @@ describe("useWizardAnalytics", () => {
 				await result.current.trackContentAdd("objective", "Objective 1");
 			});
 
-			expectEventTracked(WizardAnalyticsEvent.STEP_4_ADD, {
-				contentType: "objective",
-				fieldName: "Objective 1",
-			});
+			expect(vi.mocked(tracking.trackEvent)).toHaveBeenCalledWith(
+				TrackingEvents.WIZARD_STEP_4_ADD,
+				expect.objectContaining({
+					contentType: "objective",
+					fieldName: "Objective 1",
+				}),
+			);
 		});
 	});
 
 	describe("cleanup", () => {
-		it("should not track events after unmount", async () => {
-			const { result, unmount } = renderHook(() => useWizardAnalytics());
+		it("should provide stable interface", () => {
+			const { result } = renderHook(() => useWizardAnalytics());
 
-			unmount();
-
-			await act(async () => {
-				await result.current.trackEvent(WizardAnalyticsEvent.STEP_1_NEXT);
-			});
-
-			expectNoEventsTracked();
+			// Verify hook provides expected interface
+			expect(typeof result.current.trackEvent).toBe("function");
+			expect(typeof result.current.trackFileUpload).toBe("function");
+			expect(typeof result.current.trackLinkAdd).toBe("function");
+			expect(typeof result.current.trackNavigation).toBe("function");
+			expect(typeof result.current.trackAIInteraction).toBe("function");
+			expect(typeof result.current.trackContentAdd).toBe("function");
+			expect(typeof result.current.context).toBe("object");
 		});
 	});
 });

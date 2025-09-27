@@ -15,14 +15,14 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
-import * as segment from "@/utils/segment";
+import * as tracking from "@/utils/tracking";
+import { TrackingEvents } from "@/utils/tracking";
 import * as validation from "@/utils/validation";
 
 import { UrlInput } from "./url-input";
 
 vi.mock("@/utils/validation");
-vi.mock("@/utils/segment");
+vi.mock("@/utils/tracking");
 
 const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
@@ -633,9 +633,8 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_1_LINK, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_1_LINK, {
 					applicationId: "app-123",
-					currentStep: WizardStep.APPLICATION_DETAILS,
 					domain: "example.com",
 					organizationId: "org-123",
 					projectId: "proj-123",
@@ -656,8 +655,7 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
-					currentStep: WizardStep.KNOWLEDGE_BASE,
+				expectEventTracked(TrackingEvents.WIZARD_STEP_3_LINK, {
 					domain: "research.org",
 					url: "https://research.org/publications/paper.pdf",
 				});
@@ -683,16 +681,16 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				const { calls } = vi.mocked(segment.trackWizardEvent).mock;
+				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(2);
 
-				expect(calls[0][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
 				expect(calls[0][1]).toMatchObject({
 					domain: "first.com",
 					url: "https://first.com/doc",
 				});
 
-				expect(calls[1][0]).toBe(WizardAnalyticsEvent.STEP_1_LINK);
+				expect(calls[1][0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
 				expect(calls[1][1]).toMatchObject({
 					domain: "second.com",
 					url: "https://second.com/paper",
@@ -712,7 +710,7 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_3_LINK, {
 					domain: "sub.domain.example.co.uk",
 					url: "https://sub.domain.example.co.uk/path/to/resource?query=param#hash",
 				});
@@ -801,7 +799,7 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			await waitFor(() => {
-				expectEventTracked(WizardAnalyticsEvent.STEP_3_LINK, {
+				expectEventTracked(TrackingEvents.WIZARD_STEP_3_LINK, {
 					domain: "example.com",
 					url: "https://example.com/doc",
 				});

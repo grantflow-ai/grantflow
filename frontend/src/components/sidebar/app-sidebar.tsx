@@ -20,6 +20,7 @@ import { useNewApplicationModalStore } from "@/stores/new-application-modal-stor
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { routes } from "@/utils/navigation";
+import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
 
@@ -37,6 +38,16 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	const handleLogout = () => {
 		setUser(null);
 		router.push("/login");
+	};
+
+	const handleNewApplicationClick = async () => {
+		// Track sidebar CTA click
+		await trackEvent(TrackingEvents.CTA_NEW_APPLICATION_SIDEBAR, {
+			organizationId: organization?.id,
+			source: "sidebar",
+		});
+
+		openModal();
 	};
 	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
 		e.preventDefault();
@@ -94,7 +105,7 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 						<button
 							className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
 							data-testid="new-application-button"
-							onClick={openModal}
+							onClick={handleNewApplicationClick}
 							type="button"
 						>
 							<Plus className="size-4 shrink-0" />

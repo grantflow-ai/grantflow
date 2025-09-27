@@ -13,8 +13,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
-import { WizardAnalyticsEvent } from "@/utils/analytics-events";
-import { trackWizardEvent } from "@/utils/segment";
+import { TrackingEvents, trackEvent } from "@/utils/tracking";
 
 interface NewApplicationModalProps {
 	isOpen: boolean;
@@ -61,7 +60,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate, project
 				isNewProject = false;
 			}
 
-			await trackWizardEvent(WizardAnalyticsEvent.ONBOARDING_START_NEW, {
+			await trackEvent(TrackingEvents.ONBOARDING_START, {
 				isNewProject,
 				organizationId: selectedOrganizationId ?? "",
 				projectName,

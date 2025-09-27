@@ -32,6 +32,7 @@ import { useUserStore } from "@/stores/user-store";
 import type { DownloadFormat } from "@/types/download";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
+import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 
 export function ProjectDetailClient() {
@@ -218,6 +219,13 @@ export function ProjectDetailClient() {
 		setIsCreatingApplication(true);
 
 		try {
+			// Track the CTA click (VSP-362)
+			await trackEvent(TrackingEvents.CTA_NEW_APPLICATION_MAIN, {
+				organizationId: selectedOrganizationId,
+				projectId: project.id,
+				source: "project-actions-header",
+			});
+
 			const application = await createApplication(selectedOrganizationId, project.id, {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
