@@ -340,6 +340,10 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		[currentStep, hasApplicationText],
 	);
 
+	const validation = validateStepNext();
+	const isStep1 = currentStep === WizardStep.APPLICATION_DETAILS;
+	const shouldDisableButton = !(isStep1 || validation.isValid);
+
 	const handleValidationError = useCallback(
 		async (validation: ValidationResult) => {
 			const errorDetails: string[] = [];
@@ -428,6 +432,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	return (
 		<AppButton
 			data-testid="continue-button"
+			disabled={shouldDisableButton}
 			leftIcon={leftIcon}
 			onClick={handleRightButtonClick}
 			rightIcon={rightIcon}
