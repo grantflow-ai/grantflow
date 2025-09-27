@@ -189,7 +189,7 @@ async def test_handle_generate_section_text_with_evaluation(
     assert call_kwargs["retries"] == 2
     assert call_kwargs["passing_score"] == 60
     assert call_kwargs["trace_id"] == trace_id
-    assert len(call_kwargs["criteria"]) == 5
+    assert len(call_kwargs["criteria"]) == 6
 
     prompt_handler = call_kwargs["prompt_handler"]
     assert hasattr(prompt_handler, "func")

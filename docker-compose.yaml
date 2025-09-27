@@ -8,14 +8,14 @@ services:
       - backend
       - scraper
       - crdt
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     restart: always
     environment:
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
       POSTGRES_DB: local
     ports:
-      - "5433:5432" 
+      - "5433:5432"
     volumes:
       - data:/var/lib/postgresql/data
       - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
@@ -204,10 +204,10 @@ services:
       resources:
         limits:
           memory: 4G
-          cpus: '2.0'
+          cpus: "2.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
