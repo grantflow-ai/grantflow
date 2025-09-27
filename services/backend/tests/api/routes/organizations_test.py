@@ -585,9 +585,6 @@ async def test_restore_organization_firestore_error(
     assert org_data["id"] == str(organization.id)
 
 
-# Organization Logo Tests
-
-
 async def test_create_logo_upload_url_success(
     test_client: TestingClientType,
     organization: Organization,
@@ -670,7 +667,6 @@ async def test_upload_organization_logo_collaborator_forbidden(
     organization: Organization,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create a collaborator user
     collaborator_uid = "collaborator-uid"
 
     async with async_session_maker() as session, session.begin():

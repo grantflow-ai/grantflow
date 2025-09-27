@@ -199,9 +199,7 @@ def mock_job_manager() -> AsyncMock:
 
 @pytest.fixture
 def mock_handle_completions_request(mocker: MockerFixture) -> AsyncMock:
-    """Mock handle_completions_request for structured responses."""
     mock = mocker.patch("services.rag.src.utils.completion.handle_completions_request")
-    # Default return a dict that can be cast to any response type
     mock.return_value = {
         "summary": "Mocked summary",
         "sections": [],

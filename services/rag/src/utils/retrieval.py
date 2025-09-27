@@ -305,7 +305,6 @@ async def _retrieve_documents_cached(
     trace_id: str,
     kwargs: dict[str, Any],
 ) -> list[str]:
-    # Ensure trace_id is not in kwargs for cache key creation
     kwargs_for_cache = {k: v for k, v in kwargs.items() if k != "trace_id"}
 
     cache_key = _create_cache_key(
@@ -387,7 +386,6 @@ async def _retrieve_documents_cached(
             total_duration_ms=round(total_duration * 1000, 2),
             trace_id=trace_id,
         )
-        # Cache the results before returning
         _cache_documents(cache_key, processed_contents)
         return processed_contents
 

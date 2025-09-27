@@ -3,11 +3,12 @@ from uuid import UUID
 
 from google.cloud import firestore
 from litestar import delete, get, patch, post
+from litestar.datastructures import UploadFile
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization, OrganizationUser
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import DatabaseError
+from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
@@ -17,7 +18,13 @@ from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest, TableIdResponse
 from services.backend.src.utils.firebase import schedule_organization_deletion
-from services.backend.src.utils.logo_gcs import delete_organization_logo
+from services.backend.src.utils.logo_gcs import (
+    LOGO_MIME_TYPES,
+    create_signed_logo_upload_url,
+    delete_organization_logo,
+    get_logo_url,
+    upload_organization_logo,
+)
 
 logger = get_logger(__name__)
 
@@ -69,6 +76,15 @@ class DeleteOrganizationResponse(TypedDict):
     scheduled_deletion_date: str
     grace_period_days: int
     restoration_info: str
+
+
+class LogoUploadResponse(TypedDict):
+    logo_url: str
+
+
+class LogoUploadUrlResponse(TypedDict):
+    upload_url: str
+    logo_url: str
 
 
 ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = 30
@@ -195,7 +211,6 @@ async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
-    # Validate logo URL if provided
     logo_url = data.get("logo_url")
     if logo_url:
         environment = get_env("ENVIRONMENT", fallback="staging")
@@ -275,7 +290,6 @@ async def handle_delete_organization(
 
             await session.commit()
 
-            # Delete organization logo from GCS
             await delete_organization_logo(organization_id)
             logger.info("Organization logo deleted during organization deletion", organization_id=str(organization_id))
         except SQLAlchemyError as e:
@@ -368,3 +382,98 @@ async def handle_restore_organization(
         logger.warning("Failed to cancel organization deletion in Firestore", exc_info=e)
 
     return response_data
+
+
+@post(
+    "/organizations/{organization_id:uuid}/logo/upload-url",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+)
+async def handle_create_logo_upload_url(
+    organization_id: UUID,
+    content_type: str,
+) -> LogoUploadUrlResponse:
+    """Create a signed URL for direct logo upload to GCS."""
+    try:
+        upload_url = await create_signed_logo_upload_url(organization_id=organization_id, content_type=content_type)
+
+        file_extension = LOGO_MIME_TYPES[content_type]
+        expected_logo_url = get_logo_url(organization_id, file_extension)
+
+        return LogoUploadUrlResponse(upload_url=upload_url, logo_url=expected_logo_url)
+
+    except ValidationError as e:
+        raise ValidationException(str(e)) from e
+
+
+@post(
+    "/organizations/{organization_id:uuid}/logo",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+)
+async def handle_upload_organization_logo(
+    request: APIRequest,
+    session_maker: async_sessionmaker[Any],
+    organization_id: UUID,
+) -> LogoUploadResponse:
+    """Upload organization logo via multipart form data."""
+    form_data = await request.form()
+    logo_file = form_data.get("logo")
+
+    if not logo_file or not isinstance(logo_file, UploadFile):
+        raise ValidationException("No logo file provided")
+
+    if not logo_file.content_type:
+        raise ValidationException("Content-Type header is required for logo files")
+
+    if logo_file.content_type not in LOGO_MIME_TYPES:
+        raise ValidationException(
+            f"Unsupported file type: {logo_file.content_type}. Supported types: {', '.join(LOGO_MIME_TYPES.keys())}"
+        )
+
+    try:
+        file_content = await logo_file.read()
+        content_type = logo_file.content_type
+
+        logo_url = await upload_organization_logo(
+            organization_id=organization_id, file_content=file_content, content_type=content_type
+        )
+
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(Organization)
+                .where(Organization.id == organization_id, Organization.deleted_at.is_(None))
+                .values(logo_url=logo_url)
+            )
+
+        logger.info(
+            "Organization logo uploaded and database updated", organization_id=str(organization_id), logo_url=logo_url
+        )
+
+        return LogoUploadResponse(logo_url=logo_url)
+
+    except ValidationError as e:
+        logger.warning("Logo upload validation failed", organization_id=str(organization_id), error=str(e))
+        raise ValidationException(str(e)) from e
+
+
+@delete(
+    "/organizations/{organization_id:uuid}/logo",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
+)
+async def handle_delete_organization_logo(
+    session_maker: async_sessionmaker[Any],
+    organization_id: UUID,
+) -> None:
+    """Delete organization logo."""
+    await delete_organization_logo(organization_id)
+
+    async with session_maker() as session, session.begin():
+        result = await session.execute(
+            update(Organization)
+            .where(Organization.id == organization_id, Organization.deleted_at.is_(None))
+            .values(logo_url=None)
+        )
+
+        if result.rowcount == 0:
+            raise ValidationException("Organization not found")
+
+    logger.info("Organization logo deleted", organization_id=str(organization_id))

@@ -55,7 +55,7 @@ def test_get_max_logo_size_custom() -> None:
 def test_validate_logo_file_success() -> None:
     file_content = b"fake png data"
     content_type = "image/png"
-    validate_logo_file(file_content, content_type)  # Should not raise
+    validate_logo_file(file_content, content_type)
 
 
 def test_validate_logo_file_invalid_mime_type() -> None:
@@ -130,7 +130,6 @@ async def test_cleanup_old_logo_formats() -> None:
 
         await cleanup_old_logo_formats(org_id, current_extension)
 
-        # Should attempt to delete all formats except the current one
         expected_calls = len(LOGO_MIME_TYPES) - 1
         assert mock_bucket.blob.call_count == expected_calls
 
@@ -150,14 +149,12 @@ async def test_delete_organization_logo_success() -> None:
             return_value=mock_bucket,
         ),
     ):
-        # Mock NotFound exception for non-existent files
         from google.cloud.exceptions import NotFound
 
         mock_run_sync.side_effect = [NotFound("not found")] * len(LOGO_MIME_TYPES)
 
         await delete_organization_logo(org_id)
 
-        # Should attempt to delete all possible logo formats
         assert mock_bucket.blob.call_count == len(LOGO_MIME_TYPES.values())
 
 
@@ -184,7 +181,7 @@ async def test_get_organization_logo_info_exists() -> None:
         mock_run_sync.side_effect = [
             True,
             None,
-        ]  # exists() returns True, reload() returns None
+        ]
 
         result = await get_organization_logo_info(org_id)
 
@@ -209,7 +206,6 @@ async def test_get_organization_logo_info_not_exists() -> None:
             return_value=mock_bucket,
         ),
     ):
-        # All exists() calls return False
         mock_run_sync.return_value = False
 
         result = await get_organization_logo_info(org_id)

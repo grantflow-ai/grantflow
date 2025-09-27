@@ -41,11 +41,9 @@ async def handle_create_logo_upload_url(
     organization_id: UUID,
     content_type: str,
 ) -> LogoUploadUrlResponse:
-    """Create a signed URL for direct logo upload to GCS."""
     try:
         upload_url = await create_signed_logo_upload_url(organization_id=organization_id, content_type=content_type)
 
-        # Determine the expected logo URL after upload
         file_extension = LOGO_MIME_TYPES[content_type]
         expected_logo_url = get_logo_url(organization_id, file_extension)
 
@@ -65,8 +63,6 @@ async def handle_upload_organization_logo(
     session_maker: async_sessionmaker[Any],
     organization_id: UUID,
 ) -> LogoUploadResponse:
-    """Upload organization logo via multipart form data."""
-    # Get file from request
     form_data = await request.form()
     logo_file = form_data.get("logo")
 
@@ -85,12 +81,10 @@ async def handle_upload_organization_logo(
         file_content = await logo_file.read()
         content_type = logo_file.content_type
 
-        # Upload to GCS
         logo_url = await upload_organization_logo(
             organization_id=organization_id, file_content=file_content, content_type=content_type
         )
 
-        # Update organization record
         async with session_maker() as session, session.begin():
             await session.execute(
                 update(Organization)
@@ -118,11 +112,8 @@ async def handle_delete_organization_logo(
     session_maker: async_sessionmaker[Any],
     organization_id: UUID,
 ) -> None:
-    """Delete organization logo."""
-    # Delete from GCS
     await delete_organization_logo(organization_id)
 
-    # Update organization record
     async with session_maker() as session, session.begin():
         result = await session.execute(
             update(Organization)

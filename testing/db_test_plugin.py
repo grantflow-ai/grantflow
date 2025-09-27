@@ -143,25 +143,21 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 
 async def cleanup_orphaned_test_databases(connection_string: str) -> None:
-    """Clean up orphaned test databases from previous runs."""
     try:
         conn = await connect(connection_string)
         try:
-            # Find all test databases
             result = await conn.fetch("SELECT datname FROM pg_database WHERE datname LIKE 'grantflow_test_%'")
 
             for record in result:
                 db_name = record["datname"]
                 logger.info("Cleaning up orphaned test database: %s", db_name)
 
-                # Terminate connections
                 await conn.execute(f"""
                     SELECT pg_terminate_backend(pid)
                     FROM pg_stat_activity
                     WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
                 """)
 
-                # Drop database
                 await conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
 
         finally:
@@ -185,7 +181,6 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
 
     admin_connection_string = urlunparse(parsed)
 
-    # Clean up orphaned databases on first run (master worker only)
     if worker_id == "master":
         await cleanup_orphaned_test_databases(admin_connection_string)
 
@@ -204,20 +199,15 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
 
         test_conn = await connect(test_connection_string, timeout=10)
 
-        # Try to create uuid-ossp extension, but don't fail if it's not available
-        # since we use gen_random_uuid() which doesn't require uuid-ossp in PostgreSQL 13+
         try:
             await test_conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
         except Exception as e:
-            # Check if we can use gen_random_uuid() without uuid-ossp (PostgreSQL 13+)
             try:
                 await test_conn.fetchval("SELECT gen_random_uuid();")
                 logger.debug("uuid-ossp not available, but gen_random_uuid() works natively")
             except Exception:
                 logger.warning("uuid-ossp extension not available and gen_random_uuid() doesn't work: %s", e)
-                # Continue anyway as our code might not need UUID generation in tests
 
-        # Create vector extension which is required
         await test_conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
         await test_conn.close()

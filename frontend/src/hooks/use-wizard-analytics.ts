@@ -69,7 +69,6 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 			const now = Date.now();
 			const lastEvent = lastEventRef.current;
 
-			// Optimize: check timestamp first (cheaper operation)
 			if (lastEvent && now - lastEvent.timestamp < DEBOUNCE_MS && lastEvent.event === eventName) {
 				log.info("Skipping duplicate event", { event: eventName, timeDiff: now - lastEvent.timestamp });
 				return;

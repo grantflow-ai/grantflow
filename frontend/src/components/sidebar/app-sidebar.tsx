@@ -41,7 +41,6 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	};
 
 	const handleNewApplicationClick = async () => {
-		// Track sidebar CTA click
 		await trackEvent(TrackingEvents.CTA_NEW_APPLICATION_SIDEBAR, {
 			organizationId: organization?.id,
 			source: "sidebar",
