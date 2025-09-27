@@ -33,7 +33,7 @@
 		"deepmerge-ts": "^7.1.5",
 		"firebase": "^12.3.0",
 		"framer-motion": "^12.23.22",
-		"ky": "^1.10.0",
+		"ky": "^1.11.0",
 		"loglayer": "^6.7.0",
 		"lucide-react": "^0.544.0",
 		"motion": "^12.23.22",
