@@ -931,7 +931,15 @@ async def handle_duplicate_project(
             if not original_project:
                 raise NotFoundException("Project not found")
 
-            new_title = data.get("title", f"Copy of {original_project.name}")
+            # Ensure the title doesn't exceed the 255 character database limit
+            default_title = f"Copy of {original_project.name}"
+            if len(default_title) > 255:
+                # Truncate to fit within limit, leaving room for "Copy of " (8 chars) and "..." (3 chars)
+                max_original_name_length = 255 - 8 - 3
+                truncated_name = original_project.name[:max_original_name_length]
+                default_title = f"Copy of {truncated_name}..."
+
+            new_title = data.get("title", default_title)
             new_project = await session.scalar(
                 insert(Project)
                 .values(
