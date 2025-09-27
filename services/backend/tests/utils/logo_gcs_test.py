@@ -28,7 +28,7 @@ def test_get_logo_url() -> None:
     org_id = uuid4()
     file_extension = "png"
 
-    with patch("packages.shared_utils.src.logo_gcs.get_env") as mock_get_env:
+    with patch("services.backend.src.utils.logo_gcs.get_env") as mock_get_env:
         mock_get_env.side_effect = lambda key, fallback=None: {
             "ENVIRONMENT": "staging",
             "LOGO_BUCKET_NAME": "grantflow-staging-logos",
@@ -41,13 +41,13 @@ def test_get_logo_url() -> None:
 
 
 def test_get_max_logo_size_default() -> None:
-    with patch("packages.shared_utils.src.logo_gcs.get_env") as mock_get_env:
+    with patch("services.backend.src.utils.logo_gcs.get_env") as mock_get_env:
         mock_get_env.return_value = "5"
         assert get_max_logo_size() == 5 * 1024 * 1024
 
 
 def test_get_max_logo_size_custom() -> None:
-    with patch("packages.shared_utils.src.logo_gcs.get_env") as mock_get_env:
+    with patch("services.backend.src.utils.logo_gcs.get_env") as mock_get_env:
         mock_get_env.return_value = "10"
         assert get_max_logo_size() == 10 * 1024 * 1024
 
@@ -69,7 +69,7 @@ def test_validate_logo_file_invalid_mime_type() -> None:
 
 
 def test_validate_logo_file_too_large() -> None:
-    with patch("packages.shared_utils.src.logo_gcs.get_max_logo_size", return_value=100):
+    with patch("services.backend.src.utils.logo_gcs.get_max_logo_size", return_value=100):
         file_content = b"x" * 101
         content_type = "image/png"
 
@@ -90,13 +90,13 @@ async def test_upload_organization_logo_success() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
-        patch("packages.shared_utils.src.logo_gcs.cleanup_old_logo_formats") as mock_cleanup,
-        patch("packages.shared_utils.src.logo_gcs.get_logo_url") as mock_get_url,
+        patch("services.backend.src.utils.logo_gcs.cleanup_old_logo_formats") as mock_cleanup,
+        patch("services.backend.src.utils.logo_gcs.get_logo_url") as mock_get_url,
     ):
         mock_get_url.return_value = "https://storage.googleapis.com/bucket/path/logo.png"
         mock_run_sync.return_value = None
@@ -118,9 +118,9 @@ async def test_cleanup_old_logo_formats() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
     ):
@@ -143,9 +143,9 @@ async def test_delete_organization_logo_success() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
     ):
@@ -170,12 +170,12 @@ async def test_get_organization_logo_info_exists() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
-        patch("packages.shared_utils.src.logo_gcs.get_logo_url") as mock_get_url,
+        patch("services.backend.src.utils.logo_gcs.get_logo_url") as mock_get_url,
     ):
         mock_get_url.return_value = "https://storage.googleapis.com/bucket/path/logo.png"
         mock_run_sync.side_effect = [
@@ -200,9 +200,9 @@ async def test_get_organization_logo_info_not_exists() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
     ):
@@ -223,9 +223,9 @@ async def test_create_signed_logo_upload_url_success() -> None:
     mock_bucket.blob.return_value = mock_blob
 
     with (
-        patch("packages.shared_utils.src.logo_gcs.run_sync") as mock_run_sync,
+        patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
         patch(
-            "packages.shared_utils.src.logo_gcs.get_logo_bucket",
+            "services.backend.src.utils.logo_gcs.get_logo_bucket",
             return_value=mock_bucket,
         ),
     ):
