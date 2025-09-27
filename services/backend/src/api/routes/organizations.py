@@ -6,6 +6,7 @@ from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization, OrganizationUser
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import delete as sa_delete
@@ -16,6 +17,7 @@ from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest, TableIdResponse
 from services.backend.src.utils.firebase import schedule_organization_deletion
+from services.backend.src.utils.logo_gcs import delete_organization_logo
 
 logger = get_logger(__name__)
 
@@ -193,6 +195,18 @@ async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> OrganizationResponse:
+    # Validate logo URL if provided
+    logo_url = data.get("logo_url")
+    if logo_url:
+        environment = get_env("ENVIRONMENT", fallback="staging")
+        logo_bucket_name = get_env("LOGO_BUCKET_NAME", fallback=f"grantflow-{environment}-logos")
+        expected_url_prefix = f"https://storage.googleapis.com/{logo_bucket_name}/organizations/{organization_id}/"
+
+        if not logo_url.startswith(expected_url_prefix):
+            raise ValidationException(
+                "Invalid logo URL. Logo must be uploaded through the organization logo endpoints."
+            )
+
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
@@ -260,6 +274,10 @@ async def handle_delete_organization(
             )
 
             await session.commit()
+
+            # Delete organization logo from GCS
+            await delete_organization_logo(organization_id)
+            logger.info("Organization logo deleted during organization deletion", organization_id=str(organization_id))
         except SQLAlchemyError as e:
             logger.error("Error deleting organization", exc_info=e)
             raise DatabaseError("Error deleting organization", context=str(e)) from e

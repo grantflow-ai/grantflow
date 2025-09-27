@@ -3,6 +3,10 @@
 **/.venv
 **/__pycache__/
 **/http-client.private.env.json
+**/TODO.md
+**/todo.md
+**/*TODO*.md
+**/*todo*.md
 *.iml
 *.pem
 *.plan

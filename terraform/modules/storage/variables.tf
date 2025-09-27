@@ -51,3 +51,8 @@ variable "uniform_bucket_access" {
   type        = bool
   default     = true
 }
+
+variable "backend_service_account_email" {
+  description = "Email of the backend service account for GCS access"
+  type        = string
+}

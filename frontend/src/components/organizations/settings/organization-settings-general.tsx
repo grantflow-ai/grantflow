@@ -22,7 +22,7 @@ export function OrganizationSettingsGeneral({
 	organizationId,
 	userRole = UserRole.COLLABORATOR,
 }: OrganizationSettingsGeneralProps) {
-	const { organization, updateOrganization } = useOrganizationStore();
+	const { deleteOrganizationLogo, organization, updateOrganization, uploadOrganizationLogo } = useOrganizationStore();
 	const { user } = useUserStore();
 	const [organizationName, setOrganizationName] = useState("");
 	const [institutionName, setInstitutionName] = useState("");
@@ -52,7 +52,7 @@ export function OrganizationSettingsGeneral({
 		}
 	}, [searchParams]);
 
-	const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (!canEdit) return;
 
 		const file = event.target.files?.[0];
@@ -70,7 +70,8 @@ export function OrganizationSettingsGeneral({
 
 		setIsUploading(true);
 		try {
-			toast.success("Logo upload functionality coming soon");
+			await uploadOrganizationLogo(organizationId, file);
+			toast.success("Logo uploaded successfully");
 		} catch (error) {
 			log.error("Error uploading logo", error);
 			toast.error("Failed to upload logo");
@@ -83,10 +84,19 @@ export function OrganizationSettingsGeneral({
 		}
 	};
 
-	const handleLogoDelete = () => {
-		// TODO: Implement logo deletion functionality
+	const handleLogoDelete = async () => {
 		if (!canEdit) return;
-		toast.success("Logo delete functionality coming soon");
+
+		setIsUploading(true);
+		try {
+			await deleteOrganizationLogo(organizationId);
+			toast.success("Logo deleted successfully");
+		} catch (error) {
+			log.error("Error deleting logo", error);
+			toast.error("Failed to delete logo");
+		} finally {
+			setIsUploading(false);
+		}
 	};
 
 	const handleLogoContainerClick = () => {

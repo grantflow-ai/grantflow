@@ -52,6 +52,11 @@ from services.backend.src.api.routes.organization_invitations import (
     handle_list_organization_invitations,
     handle_update_organization_invitation,
 )
+from services.backend.src.api.routes.organization_logos import (
+    handle_create_logo_upload_url,
+    handle_delete_organization_logo,
+    handle_upload_organization_logo,
+)
 from services.backend.src.api.routes.organizations import (
     handle_create_organization as handle_create_org,
 )
@@ -129,6 +134,9 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_organization_invitation,
     handle_update_organization_invitation,
     handle_delete_organization_invitation,
+    handle_create_logo_upload_url,
+    handle_upload_organization_logo,
+    handle_delete_organization_logo,
     handle_create_project,
     handle_retrieve_projects,
     handle_retrieve_project,

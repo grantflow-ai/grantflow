@@ -65,14 +65,15 @@ module "database" {
 }
 
 module "storage" {
-  source                = "../../modules/storage"
-  bucket_name           = "grantflow-staging-uploads"
-  environment           = var.environment
-  location              = "US"
-  retention_days        = 7
-  enable_versioning     = false
-  enable_lifecycle      = true
-  uniform_bucket_access = true
+  source                        = "../../modules/storage"
+  bucket_name                   = "grantflow-staging-uploads"
+  environment                   = var.environment
+  location                      = "US"
+  retention_days                = 7
+  enable_versioning             = false
+  enable_lifecycle              = true
+  uniform_bucket_access         = true
+  backend_service_account_email = module.iam.backend_service_account_email
 }
 
 module "cloud_run" {
