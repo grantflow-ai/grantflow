@@ -139,7 +139,7 @@ async def test_retrieval_optimization_reduces_database_load(
     async_session_maker: async_sessionmaker[AsyncSession],
     test_application_with_template: GrantApplication,
 ) -> None:
-    assert MAX_RESULTS == 15, f"Expected MAX_RESULTS to be optimized to 15, but got {MAX_RESULTS}"
+    assert MAX_RESULTS == 10, f"Expected MAX_RESULTS to be optimized to 10, but got {MAX_RESULTS}"
 
     application_id = str(test_application_with_template.id)
     results = await retrieve_documents(

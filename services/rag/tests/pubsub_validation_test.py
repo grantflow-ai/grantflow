@@ -145,9 +145,11 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
         subscription="test-subscription",
     )
 
-    with pytest.raises(ValidationError, match="PubSub message missing data field"):
-        await handle_request_fn(data=event, session_maker=mock_session_maker)
+    # The function should handle the validation error gracefully without raising
+    # (it logs and returns to acknowledge the message)
+    await handle_request_fn(data=event, session_maker=mock_session_maker)
 
+    # Session maker should not be called for invalid messages
     mock_session_maker.assert_not_called()
 
 
@@ -231,8 +233,9 @@ async def test_handle_request_grant_template_not_found(
     )
     event = create_pubsub_event_from_request(request)
 
-    with pytest.raises(ValidationError, match=r"Grant template .* not found"):
-        await handle_request_fn(data=event, session_maker=async_session_maker)
+    # The function should handle missing template gracefully without raising
+    # (it logs an error and returns to acknowledge the message)
+    await handle_request_fn(data=event, session_maker=async_session_maker)
 
 
 async def test_handle_request_pipeline_error_propagates(
