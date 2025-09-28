@@ -12,7 +12,7 @@ from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.constants import MIN_PASSING_SCORE
+from services.rag.src.constants import MIN_PASSING_SCORE, MISSING_INFO_FORMAT
 from services.rag.src.utils.completion import make_google_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -47,8 +47,8 @@ EVALUATION_PROMPT = PromptTemplate(
         5. Provide concrete instructions for improvement, if the sources provided in the prompt are insufficient or the output is inaccurate.
 
     **IMPORTANT**:
-        - If information is missing the model should signify this with `**[MISSING INFORMATION: specific description]**` rather than invent facts.
-        - If `**[MISSING INFORMATION: specific description]**` is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.
+        - If information is missing the model should signify this with `${missing_info_format}` rather than invent facts.
+        - If `${missing_info_format}` is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.
     """,
 )
 
@@ -76,7 +76,7 @@ FIX_OUTPUT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     2. Apply the necessary changes, and ensure that the output meets the requirements and validation criteria.
     3. Respond with the updated model output adhering with the output instruction in the prompt.
 
-    **IMPORTANT**: If information is insufficient, write `**[MISSING INFORMATION: specific description]**`
+    **IMPORTANT**: If information is insufficient, write `${missing_info_format}`
     """,
 )
 
@@ -407,7 +407,9 @@ async def evaluate_prompt_output(
         response_schema=json_schema,
         system_prompt=EVALUATION_SYSTEM_PROMPT,
         model=EVALUATION_MODEL,
-        messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
+        messages=EVALUATION_PROMPT.to_string(
+            prompt=prompt, model_output=model_output, missing_info_format=MISSING_INFO_FORMAT
+        ),
         temperature=0.2,
         top_p=0.7,
         trace_id=trace_id,
@@ -1078,6 +1080,7 @@ async def with_prompt_evaluation[T, **P](
             ),
             model_output=model_output,
             prompt=prompt,
+            missing_info_format=MISSING_INFO_FORMAT,
         )
 
     logger.warning(

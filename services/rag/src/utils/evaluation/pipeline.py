@@ -17,6 +17,9 @@ from services.rag.src.utils.evaluation.dto import (
     StructuralMetrics,
 )
 from services.rag.src.utils.evaluation.quality import evaluate_scientific_quality_advanced
+from services.rag.src.utils.evaluation.quality_standards import (
+    evaluate_missing_information,
+)
 from services.rag.src.utils.evaluation.scientific_analysis import analyze_scientific_content_cpu
 from services.rag.src.utils.evaluation.source_grounding import evaluate_source_grounding_advanced
 from services.rag.src.utils.evaluation.structural import evaluate_structure_advanced
@@ -370,6 +373,19 @@ async def evaluate_scientific_content(
 
         alignment_modifier = (objective_alignment - 0.5) * 0.1
         overall_score = base_overall_score * (1 + alignment_modifier)
+
+        # Apply quality bonus for proper MISSING INFORMATION usage
+        missing_info_metrics = evaluate_missing_information(content)
+        if missing_info_metrics["quality_bonus"] > 0:
+            overall_score = min(100.0, overall_score + missing_info_metrics["quality_bonus"] * 100)
+            logger.debug(
+                "Applied MISSING INFO quality bonus",
+                original_score=base_overall_score,
+                bonus=missing_info_metrics["quality_bonus"],
+                adjusted_score=overall_score,
+                missing_info_count=missing_info_metrics["count"],
+                trace_id=trace_id,
+            )
 
         recommendation, confidence = determine_recommendation_with_confidence(
             overall_score,

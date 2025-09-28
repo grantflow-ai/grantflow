@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
-from services.rag.src.constants import INITIAL_PASSING_SCORE, MAX_RETRIES, SCORE_INCREMENT
+from services.rag.src.constants import INITIAL_PASSING_SCORE, MAX_RETRIES, MISSING_INFO_INSTRUCTION, SCORE_INCREMENT
 from services.rag.src.utils.evaluation import EvaluationCriterion
 
 if TYPE_CHECKING:
@@ -14,11 +14,11 @@ GENERATE_WORK_PLAN_TIMEOUT: Final[float] = 480.0
 def get_completeness_criterion(weight: float = 0.9) -> EvaluationCriterion:
     return EvaluationCriterion(
         name="Completeness",
-        evaluation_instructions="""
+        evaluation_instructions=f"""
         - Verify all required components and sections are present
         - Ensure content addresses all aspects within word/scope limits
         - Check that no critical information is missing or omitted
-        - If information is unavailable, **MISSING INFORMATION** markers are acceptable
+        - {MISSING_INFO_INSTRUCTION}
         """,
         weight=weight,
     )
