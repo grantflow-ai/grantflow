@@ -106,3 +106,15 @@ variable "email_notifications_ack_deadline" {
   type        = number
   default     = 60
 }
+
+variable "fn_alerts_apphosting_staging_url" {
+  description = "URL of the App Hosting alerts function"
+  type        = string
+  default     = ""
+}
+
+variable "fn_alerts_budget_staging_url" {
+  description = "URL of the Budget alerts function"
+  type        = string
+  default     = ""
+}
