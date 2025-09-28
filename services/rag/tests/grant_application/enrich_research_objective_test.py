@@ -378,39 +378,39 @@ async def test_enrich_objective_generation_success(
     mock_handle_completions_request.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation")
+@patch("services.rag.src.grant_application.enrich_research_objective.with_evaluation")
 async def test_handle_enrich_objective_success(
-    mock_with_prompt_evaluation: AsyncMock,
+    mock_with_evaluation: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_dto_input: EnrichObjectiveInputDTO,
     valid_enrichment_response: ObjectiveEnrichmentDTO,
 ) -> None:
-    mock_with_prompt_evaluation.return_value = valid_enrichment_response
+    mock_with_evaluation.return_value = valid_enrichment_response
 
     result = await handle_enrich_objective(sample_dto_input, job_manager=mock_job_manager)
 
     assert result == valid_enrichment_response
 
-    mock_with_prompt_evaluation.assert_called_once()
-    call_args = mock_with_prompt_evaluation.call_args
+    mock_with_evaluation.assert_called_once()
+    call_args = mock_with_evaluation.call_args
     assert call_args.kwargs["prompt_identifier"] == "enrich_objective"
     assert call_args.kwargs["passing_score"] == 60
     assert call_args.kwargs["increment"] == 10
     assert "criteria" in call_args.kwargs
 
 
-@patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation")
+@patch("services.rag.src.grant_application.enrich_research_objective.with_evaluation")
 async def test_handle_enrich_objective_error_handling(
-    mock_with_prompt_evaluation: AsyncMock,
+    mock_with_evaluation: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_dto_input: EnrichObjectiveInputDTO,
 ) -> None:
-    mock_with_prompt_evaluation.side_effect = Exception("Enrichment service error")
+    mock_with_evaluation.side_effect = Exception("Enrichment service error")
 
     with pytest.raises(Exception, match="Enrichment service error"):
         await handle_enrich_objective(sample_dto_input, job_manager=mock_job_manager)
 
-    mock_with_prompt_evaluation.assert_called_once()
+    mock_with_evaluation.assert_called_once()
 
 
 async def test_validation_with_empty_research_objective() -> None:

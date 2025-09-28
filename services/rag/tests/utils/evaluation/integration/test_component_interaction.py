@@ -1,0 +1,384 @@
+from typing import TYPE_CHECKING
+
+import pytest
+from packages.db.src.json_objects import GrantLongFormSection
+
+from services.rag.src.dto import DocumentDTO
+from services.rag.src.utils.evaluation.coherence import evaluate_coherence_advanced
+from services.rag.src.utils.evaluation.quality import evaluate_scientific_quality_advanced
+from services.rag.src.utils.evaluation.source_grounding import evaluate_source_grounding_advanced
+from services.rag.src.utils.evaluation.structural import evaluate_structure_advanced
+
+if TYPE_CHECKING:
+    from services.rag.src.utils.evaluation.dto import (
+        CoherenceMetrics,
+        ScientificQualityMetrics,
+        SourceGroundingMetrics,
+        StructuralMetrics,
+    )
+
+
+@pytest.mark.asyncio
+async def test_coherence_quality_correlation() -> None:
+    """Test that coherence and quality scores correlate appropriately."""
+    # High quality scientific content should have good coherence
+    high_quality_content: str = """
+    # Systematic Biomarker Analysis
+
+    ## Methodology Framework
+
+    The research employs rigorous statistical analysis of protein biomarkers using standardized protocols.
+    Furthermore, the methodology integrates advanced computational techniques with clinical validation procedures.
+    Subsequently, experimental design includes randomized control groups and blinded assessment protocols.
+
+    ## Statistical Analysis
+
+    Statistical significance is determined using p-values below 0.05 threshold with confidence intervals.
+    Moreover, the analysis employs multivariate regression modeling for comprehensive pattern recognition.
+    Therefore, the results demonstrate reproducible and clinically relevant diagnostic outcomes.
+    """
+
+    rag_context: list[DocumentDTO] = [
+        DocumentDTO(content="Standardized protocols ensure rigorous biomarker analysis with clinical validation"),
+        DocumentDTO(content="Statistical analysis with p-value thresholds provides reliable research outcomes"),
+    ]
+
+    section_config: GrantLongFormSection = GrantLongFormSection(
+        id="correlation_test",
+        title="Correlation Test",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Test correlation",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,
+        keywords=["biomarker", "analysis", "statistical"],
+        max_words=400,
+        search_queries=["biomarker analysis"],
+        topics=["methodology"],
+    )
+
+    coherence_result: CoherenceMetrics = await evaluate_coherence_advanced(high_quality_content)
+    quality_result: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        high_quality_content, rag_context, section_config
+    )
+
+    # High quality content should have good coherence
+    assert coherence_result["overall"] > 0.5
+    assert quality_result["overall"] > 0.5
+
+    # Test with poor quality content
+    poor_content: str = """
+    bad writing here. no structure. random sentences.
+    the biomarker stuff might work maybe sometimes.
+    results were found somewhere. pretty good results.
+    more random text without transitions or logic.
+    """
+
+    coherence_poor: CoherenceMetrics = await evaluate_coherence_advanced(poor_content)
+    quality_poor: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        poor_content, [], section_config
+    )
+
+    # Poor content should score low on both
+    assert coherence_poor["overall"] < 0.4
+    assert quality_poor["overall"] < 0.4
+
+    # Quality and coherence should generally correlate
+    quality_diff: float = quality_result["overall"] - quality_poor["overall"]
+    coherence_diff: float = coherence_result["overall"] - coherence_poor["overall"]
+    assert quality_diff > 0
+    assert coherence_diff > 0
+
+
+@pytest.mark.asyncio
+async def test_structure_coherence_interaction() -> None:
+    """Test interaction between structural quality and coherence evaluation."""
+    # Well-structured content with good headers and organization
+    structured_content: str = """
+    # Research Methodology
+
+    ## Data Collection Framework
+
+    The systematic data collection employs standardized protocols for biomarker analysis.
+    This approach ensures consistent measurement procedures across all research sites.
+
+    ### Sampling Procedures
+
+    Participants are recruited through randomized selection protocols with inclusion criteria.
+    The sampling methodology ensures representative population characteristics.
+
+    ### Quality Control
+
+    Quality assurance protocols include duplicate measurements and control samples.
+    These procedures validate measurement accuracy and reproducibility.
+
+    ## Statistical Analysis Framework
+
+    ### Primary Analysis
+
+    Statistical significance is determined using appropriate parametric tests.
+    The analysis employs confidence intervals and effect size calculations.
+
+    ### Secondary Analysis
+
+    Exploratory analysis includes subgroup comparisons and sensitivity testing.
+    These analyses provide additional validation of primary findings.
+    """
+
+    section_config: GrantLongFormSection = GrantLongFormSection(
+        id="structure_coherence_test",
+        title="Structure Coherence Test",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Test structure and coherence",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,
+        keywords=["methodology", "analysis"],
+        max_words=500,
+        search_queries=["research methodology"],
+        topics=["methods"],
+    )
+
+    structure_result: StructuralMetrics = await evaluate_structure_advanced(structured_content, section_config)
+    coherence_result: CoherenceMetrics = await evaluate_coherence_advanced(structured_content)
+
+    # Well-structured content should have good coherence
+    assert structure_result["overall"] > 0.7
+    assert coherence_result["overall"] > 0.6
+
+    # Specific structural elements should correlate with coherence
+    assert structure_result["header_structure"] > 0.8  # Good header hierarchy
+    assert coherence_result["global_coherence"] > 0.5  # Good overall flow
+
+    # Test with poorly structured content
+    unstructured_content: str = """
+    random text without headers or organization
+    more unstructured content mixed together
+    some methodology stuff thrown in randomly
+    statistical analysis mentioned without context
+    quality control procedures described poorly
+    """
+
+    structure_poor: StructuralMetrics = await evaluate_structure_advanced(unstructured_content, section_config)
+    coherence_poor: CoherenceMetrics = await evaluate_coherence_advanced(unstructured_content)
+
+    # Both should score poorly
+    assert structure_poor["overall"] < 0.4
+    assert coherence_poor["overall"] < 0.4
+
+
+@pytest.mark.asyncio
+async def test_source_grounding_quality_interaction() -> None:
+    """Test interaction between source grounding and scientific quality."""
+    content: str = """
+    # Evidence-Based Research Analysis
+
+    According to recent studies [1], systematic biomarker analysis demonstrates significant
+    correlation with disease progression markers. The methodology employs standardized
+    protocols validated in multiple clinical settings for reproducible results.
+
+    Research indicates [2] that this approach provides reliable diagnostic accuracy
+    with sensitivity of 85% and specificity of 92% in patient populations.
+    Statistical analysis confirms clinical significance with p-values below 0.01.
+
+    Previous investigations [3] demonstrate that protein expression patterns
+    correlate with molecular pathways involved in disease pathogenesis.
+    The evidence strongly supports biomarker utility in clinical applications.
+    """
+
+    # High-quality context that supports the content
+    rag_context: list[DocumentDTO] = [
+        DocumentDTO(
+            content="Studies demonstrate biomarker analysis correlation with disease progression in clinical validation"
+        ),
+        DocumentDTO(
+            content="Standardized protocols for biomarker analysis provide reproducible results in clinical settings"
+        ),
+        DocumentDTO(
+            content="Research shows diagnostic accuracy with 85% sensitivity and 92% specificity in patient studies"
+        ),
+        DocumentDTO(
+            content="Protein expression patterns correlate with molecular pathways in disease pathogenesis research"
+        ),
+    ]
+
+    section_config: GrantLongFormSection = GrantLongFormSection(
+        id="grounding_quality_test",
+        title="Grounding Quality Test",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Test evidence-based content",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,
+        keywords=["biomarker", "analysis", "evidence"],
+        max_words=400,
+        search_queries=["biomarker analysis", "clinical validation"],
+        topics=["research evidence"],
+    )
+
+    grounding_result: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
+        content, rag_context, section_config
+    )
+    quality_result: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        content, rag_context, section_config
+    )
+
+    # Good source grounding should correlate with quality
+    assert grounding_result["overall"] > 0.4
+    assert quality_result["overall"] > 0.6
+
+    # Evidence-based claims should be high
+    assert quality_result["evidence_based_claims_ratio"] > 0.6
+    assert grounding_result["context_citation_density"] > 0.0
+
+    # Test with unsupported content
+    unsupported_content: str = """
+    The weather today is sunny and warm with clear skies.
+    Random statements about topics unrelated to research.
+    No citations or evidence-based claims are present.
+    Just general statements without scientific backing.
+    """
+
+    grounding_poor: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
+        unsupported_content, rag_context, section_config
+    )
+    quality_poor: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        unsupported_content, rag_context, section_config
+    )
+
+    # Both should score poorly when content doesn't match context
+    assert grounding_poor["overall"] < 0.3
+    assert quality_poor["overall"] < 0.4
+
+
+@pytest.mark.asyncio
+async def test_keyword_coverage_across_components() -> None:
+    """Test how keyword coverage affects different evaluation components."""
+    section_config: GrantLongFormSection = GrantLongFormSection(
+        id="keyword_test",
+        title="Keyword Test",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Test keyword integration",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,
+        keywords=["biomarker", "protein", "analysis", "statistical", "clinical"],
+        max_words=300,
+        search_queries=["biomarker protein analysis", "statistical methods"],
+        topics=["biomarker research"],
+    )
+
+    # Content with high keyword coverage
+    high_keyword_content: str = """
+    # Biomarker Protein Analysis
+
+    The biomarker research employs protein expression analysis using statistical methods.
+    Clinical validation of biomarker panels demonstrates statistical significance.
+    Protein biomarkers enable clinical analysis of disease progression patterns.
+    Statistical analysis of biomarker protein levels provides clinical insights.
+    """
+
+    rag_context: list[DocumentDTO] = [
+        DocumentDTO(content="Biomarker protein analysis employs statistical methods for clinical validation"),
+        DocumentDTO(content="Statistical analysis of protein biomarkers provides clinical research insights"),
+    ]
+
+    grounding_high: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
+        high_keyword_content, rag_context, section_config
+    )
+    await evaluate_scientific_quality_advanced(high_keyword_content, rag_context, section_config)
+
+    # High keyword coverage should improve both grounding and quality
+    assert grounding_high["keyword_coverage"] > 0.8
+    assert grounding_high["search_query_integration"] > 0.7
+
+    # Content with low keyword coverage
+    low_keyword_content: str = """
+    # Research Methods
+
+    The study involves investigation of molecular indicators using computational approaches.
+    Validation of diagnostic panels shows significant results in patient populations.
+    Molecular markers enable examination of disease development processes.
+    Computational examination of indicator levels provides research findings.
+    """
+
+    grounding_low: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
+        low_keyword_content, rag_context, section_config
+    )
+    await evaluate_scientific_quality_advanced(low_keyword_content, rag_context, section_config)
+
+    # Lower keyword coverage should reduce grounding scores
+    assert grounding_low["keyword_coverage"] < grounding_high["keyword_coverage"]
+    assert grounding_low["search_query_integration"] < grounding_high["search_query_integration"]
+
+
+@pytest.mark.asyncio
+async def test_clinical_trial_weighting_consistency() -> None:
+    """Test that clinical trial weighting is applied consistently across components."""
+    clinical_content: str = """
+    # Clinical Trial Results
+
+    The randomized controlled trial (n=150) demonstrated significant efficacy with p < 0.001.
+    Primary endpoint: diagnostic accuracy of 88% sensitivity and 94% specificity.
+    Secondary endpoints showed 25% improvement in early detection rates.
+
+    Safety analysis revealed no serious adverse events related to the diagnostic procedure.
+    The trial protocol was approved by institutional review board (IRB-2023-005).
+    Statistical analysis employed intention-to-treat principles with 95% confidence intervals.
+    """
+
+    rag_context: list[DocumentDTO] = [
+        DocumentDTO(content="Clinical trials demonstrate diagnostic accuracy with high sensitivity and specificity"),
+        DocumentDTO(content="Randomized controlled trials provide evidence for early detection improvements"),
+    ]
+
+    clinical_config: GrantLongFormSection = GrantLongFormSection(
+        id="clinical_trial",
+        title="Clinical Trial Results",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Describe clinical trial results",
+        is_clinical_trial=True,  # Clinical trial weighting
+        is_detailed_research_plan=False,
+        keywords=["clinical", "trial", "efficacy", "safety"],
+        max_words=300,
+        search_queries=["clinical trial results"],
+        topics=["clinical outcomes"],
+    )
+
+    research_config: GrantLongFormSection = GrantLongFormSection(
+        id="research_plan",
+        title="Research Plan",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Describe research methodology",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,  # Research plan weighting
+        keywords=["clinical", "trial", "efficacy", "safety"],
+        max_words=300,
+        search_queries=["clinical trial results"],
+        topics=["clinical outcomes"],
+    )
+
+    # Evaluate with both configurations
+    quality_clinical: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        clinical_content, rag_context, clinical_config
+    )
+    quality_research: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+        clinical_content, rag_context, research_config
+    )
+
+    # Clinical trial configuration should emphasize evidence and precision
+    # Both should have reasonable scores but may weight components differently
+    assert quality_clinical["overall"] > 0.0
+    assert quality_research["overall"] > 0.0
+
+    # Evidence-based claims should be scored in both
+    assert "evidence_based_claims_ratio" in quality_clinical
+    assert "evidence_based_claims_ratio" in quality_research

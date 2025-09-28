@@ -637,7 +637,7 @@ async def smart_evaluate_output(
         elif evaluation_mode == "thorough_evaluation":
             result = await thorough_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "prompt_evaluation":
-            result = await fast_evaluate_output(
+            result = await evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
                 model_output=model_output,
@@ -677,7 +677,7 @@ async def smart_evaluate_output(
     return result, complexity_analysis
 
 
-async def fast_evaluate_output(
+async def evaluate_output(
     *,
     criteria: list[EvaluationCriterion],
     prompt: str,
@@ -780,7 +780,7 @@ async def prompt_evaluation[T](
         try:
             model_output = await prompt_handler(current_prompt, **kwargs)
 
-            evaluation_result = await fast_evaluate_output(
+            evaluation_result = await evaluate_output(
                 criteria=criteria,
                 prompt=current_prompt,
                 model_output=model_output,
@@ -927,7 +927,7 @@ async def batch_evaluate_outputs(
 
     async def evaluate_single_task(task: dict[str, Any]) -> EvaluationToolResponse | Exception:
         try:
-            return await fast_evaluate_output(
+            return await evaluate_output(
                 criteria=task["criteria"],
                 prompt=task["prompt"],
                 model_output=task["model_output"],
@@ -985,6 +985,8 @@ async def with_prompt_evaluation[T, **P](
     criteria: list[EvaluationCriterion],
     trace_id: str,
     job_manager: Any | None = None,
+    evaluator: Callable[[str, str | dict[str, Any], list[EvaluationCriterion], str], Awaitable[EvaluationToolResponse]]
+    | None = None,
     **kwargs: Any,
 ) -> T:
     current_prompt = str(prompt)
@@ -1005,12 +1007,18 @@ async def with_prompt_evaluation[T, **P](
         )
 
         model_output = await prompt_handler(current_prompt, trace_id=trace_id, **kwargs)  # type: ignore[arg-type]
-        evaluation_result = await evaluate_prompt_output(
-            prompt=current_prompt,
-            model_output=cast("dict[str, Any] | str", model_output),
-            criteria=criteria,
-            trace_id=trace_id,
-        )
+
+        if evaluator:
+            evaluation_result = await evaluator(
+                current_prompt, cast("dict[str, Any] | str", model_output), criteria, trace_id
+            )
+        else:
+            evaluation_result = await evaluate_prompt_output(
+                prompt=current_prompt,
+                model_output=cast("dict[str, Any] | str", model_output),
+                criteria=criteria,
+                trace_id=trace_id,
+            )
 
         failing_criteria = {
             k: v
@@ -1088,7 +1096,7 @@ async def quick_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
@@ -1103,7 +1111,7 @@ async def standard_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
@@ -1118,7 +1126,7 @@ async def thorough_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,

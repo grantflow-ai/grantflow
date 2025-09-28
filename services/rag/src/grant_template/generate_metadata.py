@@ -7,7 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -373,7 +373,7 @@ async def handle_generate_grant_template_metadata(
     )
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    result: TemplateSectionsResponse = await with_prompt_evaluation(
+    result: TemplateSectionsResponse = await with_evaluation(
         prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
         prompt=compressed_prompt,

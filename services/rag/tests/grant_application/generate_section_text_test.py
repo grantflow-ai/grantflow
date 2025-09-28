@@ -163,7 +163,7 @@ async def test_handle_generate_section_text_with_evaluation(
     )
 
     mock_with_evaluation = mocker.patch(
-        "services.rag.src.grant_application.generate_section_text.with_prompt_evaluation",
+        "services.rag.src.grant_application.generate_section_text.with_evaluation",
         return_value="Final evaluated section text",
     )
 
@@ -225,7 +225,7 @@ async def test_handle_generate_section_text_with_cfp_requirements(
     )
 
     mocker.patch(
-        "services.rag.src.grant_application.generate_section_text.with_prompt_evaluation",
+        "services.rag.src.grant_application.generate_section_text.with_evaluation",
         return_value="Result text",
     )
 
@@ -271,7 +271,7 @@ async def test_handle_generate_section_text_with_missing_information_warning(
     )
 
     mocker.patch(
-        "services.rag.src.grant_application.generate_section_text.with_prompt_evaluation",
+        "services.rag.src.grant_application.generate_section_text.with_evaluation",
         return_value="Generated with warnings",
     )
 

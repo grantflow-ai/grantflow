@@ -18,7 +18,7 @@ from sentence_transformers import util
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -587,7 +587,7 @@ async def handle_extract_sections(
         else ""
     )
 
-    result = await with_prompt_evaluation(
+    result = await with_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),

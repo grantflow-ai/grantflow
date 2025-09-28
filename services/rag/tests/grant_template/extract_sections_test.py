@@ -462,7 +462,7 @@ async def test_extract_sections_validation_error(mock_completions: AsyncMock, tr
         await extract_sections("Invalid CFP content", trace_id=trace_id)
 
 
-@patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.extract_sections.with_evaluation")
 @patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections")
 @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
 async def test_handle_extract_sections_success(
@@ -518,7 +518,7 @@ async def test_handle_extract_sections_success(
     mock_filter.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.extract_sections.with_evaluation")
 @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
 async def test_handle_extract_sections_no_organization(
     mock_retrieve: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock, trace_id: str
@@ -543,7 +543,7 @@ async def test_handle_extract_sections_no_organization(
 
 async def test_handle_extract_sections_empty_cfp_content(mock_job_manager: AsyncMock, trace_id: str) -> None:
     with (
-        patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation") as mock_evaluation,
+        patch("services.rag.src.grant_template.extract_sections.with_evaluation") as mock_evaluation,
         patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections") as mock_filter,
     ):
         mock_evaluation.return_value = {"sections": []}
@@ -560,7 +560,7 @@ async def test_handle_extract_sections_empty_cfp_content(mock_job_manager: Async
         assert result == []
 
 
-@patch("services.rag.src.grant_template.extract_sections.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.extract_sections.with_evaluation")
 @patch("services.rag.src.grant_template.extract_sections.get_exclude_embeddings")
 @patch("services.rag.src.grant_template.extract_sections.get_embedding_model")
 @patch("services.rag.src.grant_template.extract_sections.run_sync")
