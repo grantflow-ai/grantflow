@@ -970,17 +970,195 @@ describe.sequential("wizard store", () => {
 			expect(result).toBeNull();
 		});
 
-		it("should return GENERATE_AND_COMPLETE when application has text", () => {
+		it("should return APPLICATION_DETAILS when no grant template exists", () => {
 			const application = ApplicationWithTemplateFactory.build({
+				grant_template: null,
 				id: "app-123",
-				text: "Some existing application text",
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+		});
+
+		it("should return APPLICATION_DETAILS when grant sections are empty", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+				}),
+				id: "app-123",
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+		});
+
+		it("should return APPLICATION_STRUCTURE when no RAG sources exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [],
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
+		});
+
+		it("should return KNOWLEDGE_BASE when no research objectives exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [],
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
+		});
+
+		it("should return KNOWLEDGE_BASE when research objectives have no tasks", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [],
+						title: "Objective 1",
+					},
+				],
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
+		});
+
+		it("should return RESEARCH_PLAN when no form inputs exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: null,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_PLAN);
+		});
+
+		it("should return RESEARCH_PLAN when form inputs are empty", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "",
+					hypothesis: "",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_PLAN);
+		});
+
+		it("should return RESEARCH_DEEP_DIVE when form inputs exist but no application text", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Some content",
+					hypothesis: "",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "",
+					research_feasibility: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: null,
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
+		});
+
+		it("should return GENERATE_AND_COMPLETE when application text exists", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Some content",
+					hypothesis: "",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "",
+					research_feasibility: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: "Generated application text",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
 			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
-		it("should return RESEARCH_DEEP_DIVE when form inputs are populated", () => {
+		it("should return GENERATE_AND_COMPLETE when application has text", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: {
 					background_context: "Background context filled",
@@ -993,18 +1171,45 @@ describe.sequential("wizard store", () => {
 					scientific_infrastructure: "",
 					team_excellence: "",
 				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
 				id: "app-123",
-				text: undefined,
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: "Some existing application text",
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
+			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
-		it("should return RESEARCH_PLAN when research objectives have tasks", () => {
+		it("should return RESEARCH_DEEP_DIVE when form inputs are populated but no application text", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
+				form_inputs: {
+					background_context: "Background context filled",
+					hypothesis: "Hypothesis filled",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "Rationale filled",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
 				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
 				research_objectives: [
 					{
 						description: "Description 1",
@@ -1014,26 +1219,55 @@ describe.sequential("wizard store", () => {
 					},
 				],
 				text: undefined,
+				title: "A Valid Application Title With More Than 10 Chars",
+			});
+			useApplicationStore.setState({ application });
+			const result = determineAppropriateStep("app-123");
+			expect(result).toBe(WizardStep.RESEARCH_DEEP_DIVE);
+		});
+
+		it("should return RESEARCH_PLAN when research objectives have tasks but no form inputs", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
+				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
+				text: undefined,
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
 			expect(result).toBe(WizardStep.RESEARCH_PLAN);
 		});
 
-		it("should return KNOWLEDGE_BASE when application has rag sources", () => {
+		it("should return KNOWLEDGE_BASE when application has rag sources but no objectives", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
 				research_objectives: [],
 				text: undefined,
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
 			expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
 		});
 
-		it("should return APPLICATION_STRUCTURE when grant template has sections", () => {
+		it("should return APPLICATION_STRUCTURE when grant template has sections but no rag sources", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1043,13 +1277,14 @@ describe.sequential("wizard store", () => {
 				rag_sources: [],
 				research_objectives: [],
 				text: undefined,
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
 			expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
 		});
 
-		it("should return APPLICATION_DETAILS as fallback", () => {
+		it("should return APPLICATION_DETAILS when grant sections are empty with form inputs undefined", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1059,6 +1294,7 @@ describe.sequential("wizard store", () => {
 				rag_sources: [],
 				research_objectives: [],
 				text: undefined,
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
@@ -1095,7 +1331,7 @@ describe.sequential("wizard store", () => {
 			expect(result).toBe(WizardStep.GENERATE_AND_COMPLETE);
 		});
 
-		it("should handle empty research objectives array", () => {
+		it("should return APPLICATION_DETAILS when title is too short", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
@@ -1105,33 +1341,117 @@ describe.sequential("wizard store", () => {
 				rag_sources: [],
 				research_objectives: [],
 				text: undefined,
+				title: "Short",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
 			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 
-		it("should handle research objectives without tasks", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
-				}),
-				id: "app-123",
-				rag_sources: [],
-				research_objectives: [
-					{
-						description: "Description 1",
-						number: 1,
-						research_tasks: [],
-						title: "Objective 1",
+		describe("Edge case: User invalidates earlier steps", () => {
+			it("should return APPLICATION_STRUCTURE when user deletes RAG sources after reaching RESEARCH_DEEP_DIVE", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					form_inputs: {
+						background_context: "Some content",
+						hypothesis: "Some hypothesis",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "Some rationale",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
 					},
-				],
-				text: undefined,
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+					}),
+					id: "app-123",
+					rag_sources: [],
+					research_objectives: [
+						{
+							description: "Description 1",
+							number: 1,
+							research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+							title: "Objective 1",
+						},
+					],
+					title: "A Valid Application Title With More Than 10 Chars",
+				});
+				useApplicationStore.setState({ application });
+
+				const result = determineAppropriateStep("app-123");
+				expect(result).toBe(WizardStep.APPLICATION_STRUCTURE);
 			});
-			useApplicationStore.setState({ application });
-			const result = determineAppropriateStep("app-123");
-			expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+
+			it("should return KNOWLEDGE_BASE when user deletes research tasks after reaching GENERATE_AND_COMPLETE", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					form_inputs: {
+						background_context: "Some content",
+						hypothesis: "Some hypothesis",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "Some rationale",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
+					},
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+					}),
+					id: "app-123",
+					rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+					research_objectives: [
+						{
+							description: "Description 1",
+							number: 1,
+							research_tasks: [],
+							title: "Objective 1",
+						},
+					],
+					text: "Generated application text",
+					title: "A Valid Application Title With More Than 10 Chars",
+				});
+				useApplicationStore.setState({ application });
+
+				const result = determineAppropriateStep("app-123");
+				expect(result).toBe(WizardStep.KNOWLEDGE_BASE);
+			});
+
+			it("should return APPLICATION_DETAILS when user deletes grant sections after completing all steps", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					form_inputs: {
+						background_context: "Some content",
+						hypothesis: "Some hypothesis",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "Some rationale",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
+					},
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+					}),
+					id: "app-123",
+					rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+					research_objectives: [
+						{
+							description: "Description 1",
+							number: 1,
+							research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+							title: "Objective 1",
+						},
+					],
+					text: "Generated application text",
+					title: "",
+				});
+				useApplicationStore.setState({ application });
+
+				const result = determineAppropriateStep("app-123");
+				expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+			});
 		});
 	});
 });

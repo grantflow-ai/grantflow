@@ -173,7 +173,11 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 			event: T,
 			properties: Omit<EventProperties[T], "path" | "sessionId" | "timestamp">,
 		) => {
-			await trackEvent(event, properties);
+			try {
+				await trackEvent(event, properties);
+			} catch (error) {
+				log.error("Analytics tracking failed", { error, event, properties });
+			}
 		},
 		trackFileUpload,
 		trackLinkAdd,

@@ -94,8 +94,32 @@ describe("ApplicationWizardPageClient", () => {
 	describe("step determination", () => {
 		it("should determine appropriate step based on application state", async () => {
 			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Some content",
+					hypothesis: "Some hypothesis",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "Some rationale",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
 				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
 				text: "Application has text",
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 
 			useApplicationStore.setState({ application });
@@ -152,8 +176,32 @@ describe("ApplicationWizardPageClient", () => {
 
 		it("should not determine step when already set by user", async () => {
 			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: {
+					background_context: "Some content",
+					hypothesis: "Some hypothesis",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
+					rationale: "Some rationale",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
+				},
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+				}),
 				id: "app-123",
+				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				research_objectives: [
+					{
+						description: "Description 1",
+						number: 1,
+						research_tasks: [{ description: "Task description", number: 1, title: "Task 1" }],
+						title: "Objective 1",
+					},
+				],
 				text: "Application has text",
+				title: "A Valid Application Title With More Than 10 Chars",
 			});
 
 			useApplicationStore.setState({ application });
