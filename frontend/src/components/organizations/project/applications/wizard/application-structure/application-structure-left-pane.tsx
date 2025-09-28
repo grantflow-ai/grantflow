@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
 import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
+import { WizardBanner } from "@/components/organizations/project/applications/wizard/wizard-banner";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
@@ -182,11 +182,15 @@ export function ApplicationStructureLeftPane() {
 			<TitleHeader showDescription={true} />
 
 			{isInfoBannerVisible && (
-				<InfoBanner
+				<WizardBanner
 					onClose={() => {
 						setIsInfoBannerVisible(false);
 					}}
-				/>
+					variant="info"
+				>
+					Keep in mind that AI has limitations and may occasionally make mistakes. Always review and refine
+					the output.
+				</WizardBanner>
 			)}
 
 			<div className="mt-6">
@@ -337,27 +341,6 @@ function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templat
 				))}
 			</div>
 		</PreviewCard>
-	);
-}
-
-function InfoBanner({ onClose }: { onClose: () => void }) {
-	return (
-		<div className="self-stretch p-2 bg-slate-100 rounded outline-1 outline-offset-[-1px] outline-slate-400 inline-flex justify-start items-start gap-1">
-			<Image alt="Info" className="shrink-0" height={16} src="/icons/icon-toast-info.svg" width={16} />
-			<div className="flex-1 grow text-sm text-app-black font-normal leading-tight">
-				Keep in mind that AI has limitations and may occasionally make mistakes. Always review and refine the
-				output.
-			</div>
-			<button className="shrink-0 self-start" onClick={onClose} type="button">
-				<Image
-					alt="Close"
-					className="hover:opacity-60 transition-opacity cursor-pointer"
-					height={16}
-					src="/icons/close.svg"
-					width={16}
-				/>
-			</button>
-		</div>
 	);
 }
 
