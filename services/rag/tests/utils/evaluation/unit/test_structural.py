@@ -1,3 +1,5 @@
+import textwrap
+
 import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
@@ -128,7 +130,7 @@ class TestSectionOrganization:
         This has a subsection but limited organization overall.
         """
         score = check_section_organization(content)
-        assert score >= 0.0, f"Expected non-negative organization score, got {score}"
+        assert 0.1 <= score <= 0.4, f"Expected low organization score for poor content, got {score}"
 
     def test_check_section_organization_empty_content(self) -> None:
         score = check_section_organization("")
@@ -210,7 +212,7 @@ class TestHeaderStructure:
         ### Clinical Implications
         """
         score = evaluate_header_structure(content)
-        assert score >= 0.0, f"Expected non-negative header score, got {score}"
+        assert 0.2 <= score <= 0.6, f"Expected moderate header score for decent hierarchy, got {score}"
 
     def test_evaluate_header_structure_poor_hierarchy(self) -> None:
         content = """
@@ -247,13 +249,13 @@ class TestHeaderStructure:
         ## Discussion
         """
         score = evaluate_header_structure(content)
-        assert score >= 0.0, f"Expected non-negative header score, got {score}"
+        assert 0.3 <= score <= 0.7, f"Expected decent header score for simple but clean hierarchy, got {score}"
 
 
 class TestStructureAdvanced:
     @pytest.mark.asyncio
     async def test_evaluate_structure_advanced_high_quality(self) -> None:
-        content = """
+        content = textwrap.dedent("""
         # Research Methodology
 
         ## Data Collection Framework
@@ -289,7 +291,7 @@ class TestStructureAdvanced:
 
         Clinical significance is evaluated using established diagnostic criteria
         with emphasis on reproducibility and reliability metrics.
-        """
+        """).strip()
 
         section_config = GrantLongFormSection(
             id="methodology",
@@ -321,8 +323,8 @@ class TestStructureAdvanced:
         assert result["academic_formatting"] > 0.3, (
             f"Expected good academic formatting, got {result['academic_formatting']}"
         )
-        assert result["header_structure"] >= 0.0, (
-            f"Expected non-negative header structure, got {result['header_structure']}"
+        assert result["header_structure"] >= 0.3, (
+            f"Expected reasonable header structure for well-formatted content, got {result['header_structure']}"
         )
 
     @pytest.mark.asyncio

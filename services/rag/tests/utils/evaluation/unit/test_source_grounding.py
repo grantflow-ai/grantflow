@@ -274,7 +274,9 @@ class TestSourceGroundingAdvanced:
         assert result["rouge_2_score"] == 0.0
         assert result["rouge_3_score"] == 0.0
         assert result["context_citation_density"] == 0.0
-        assert result["overall"] >= 0.0
+        assert 0.0 <= result["overall"] <= 0.3, (
+            f"No context should result in low overall score, got {result['overall']}"
+        )
 
     @pytest.mark.asyncio
     async def test_evaluate_source_grounding_advanced_empty_content(self) -> None:

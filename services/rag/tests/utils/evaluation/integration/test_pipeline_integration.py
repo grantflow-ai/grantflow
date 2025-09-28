@@ -124,7 +124,9 @@ async def test_evaluate_scientific_content_clinical_trial_weighting() -> None:
 
     assert "scientific_quality_metrics" in result
     assert "overall_score" in result
-    assert result["overall_score"] >= 0.0
+    # This test validates pipeline functionality, not content quality - use basic threshold
+    assert result["overall_score"] >= 40.0, f"Expected basic functionality score, got {result['overall_score']}"
+    assert result["overall_score"] <= 100.0, "Score should not exceed maximum"
 
 
 @pytest.mark.asyncio

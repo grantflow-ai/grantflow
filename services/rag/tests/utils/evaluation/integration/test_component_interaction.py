@@ -6,6 +6,10 @@ from packages.db.src.json_objects import GrantLongFormSection
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.coherence import evaluate_coherence_advanced
 from services.rag.src.utils.evaluation.quality import evaluate_scientific_quality_advanced
+from services.rag.src.utils.evaluation.quality_standards import (
+    COMPONENT_REQUIREMENTS,
+    ContentType,
+)
 from services.rag.src.utils.evaluation.source_grounding import evaluate_source_grounding_advanced
 from services.rag.src.utils.evaluation.structural import evaluate_structure_advanced
 
@@ -139,7 +143,9 @@ async def test_structure_coherence_interaction() -> None:
     assert structure_result["overall"] > 0.4
     assert coherence_result["overall"] > 0.4
 
-    assert structure_result["header_structure"] >= 0.0
+    assert structure_result["header_structure"] >= 0.5, (
+        f"Expected good header structure for structured content, got {structure_result['header_structure']}"
+    )
     assert coherence_result["global_coherence"] > 0.3
 
     unstructured_content: str = """
@@ -216,7 +222,9 @@ async def test_source_grounding_quality_interaction() -> None:
     assert quality_result["overall"] > 0.4
 
     assert quality_result["evidence_based_claims_ratio"] >= 0.4
-    assert grounding_result["context_citation_density"] > 0.0
+    assert grounding_result["context_citation_density"] >= 0.1, (
+        f"Expected some citation density with citations present, got {grounding_result['context_citation_density']}"
+    )
 
     unsupported_content: str = """
     The weather today is sunny and warm with clear skies.
@@ -349,8 +357,16 @@ async def test_clinical_trial_weighting_consistency() -> None:
         clinical_content, rag_context, research_config
     )
 
-    assert quality_clinical["overall"] > 0.0
-    assert quality_research["overall"] > 0.0
+    # Use quality standards for clinical trial content
+    clinical_requirements = COMPONENT_REQUIREMENTS[ContentType.CLINICAL_TRIAL]
+    research_requirements = COMPONENT_REQUIREMENTS[ContentType.BIOMEDICAL_RESEARCH]
+
+    assert quality_clinical["overall"] >= clinical_requirements["scientific_quality"], (
+        f"Expected good clinical trial quality, got {quality_clinical['overall']}"
+    )
+    assert quality_research["overall"] >= research_requirements["scientific_quality"], (
+        f"Expected good research quality, got {quality_research['overall']}"
+    )
 
     assert "evidence_based_claims_ratio" in quality_clinical
     assert "evidence_based_claims_ratio" in quality_research

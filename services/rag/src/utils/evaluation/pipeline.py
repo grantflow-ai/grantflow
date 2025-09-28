@@ -206,6 +206,119 @@ async def evaluate_scientific_content(
     start_time = time.time()
     eval_thresholds = thresholds or DEFAULT_THRESHOLDS
 
+    # Input validation
+    if not content or not content.strip():
+        logger.warning("Empty content provided for evaluation", trace_id=trace_id)
+        execution_time = (time.time() - start_time) * 1000
+        return FastEvaluationResult(
+            overall_score=0.0,
+            structural_metrics=StructuralMetrics(
+                word_count_compliance=0.0,
+                paragraph_distribution=0.0,
+                section_organization=0.0,
+                academic_formatting=0.0,
+                header_structure=0.0,
+                overall=0.0,
+            ),
+            source_grounding_metrics=SourceGroundingMetrics(
+                rouge_l_score=0.0,
+                rouge_2_score=0.0,
+                rouge_3_score=0.0,
+                ngram_overlap_weighted=0.0,
+                keyword_coverage=0.0,
+                search_query_integration=0.0,
+                context_citation_density=0.0,
+                overall=0.0,
+            ),
+            scientific_quality_metrics=ScientificQualityMetrics(
+                scientific_term_density=0.0,
+                domain_vocabulary_accuracy=0.0,
+                methodology_language_score=0.0,
+                academic_register_score=0.0,
+                technical_precision=0.0,
+                evidence_based_claims_ratio=0.0,
+                hypothesis_methodology_alignment=0.0,
+                overall=0.0,
+            ),
+            coherence_metrics=CoherenceMetrics(
+                local_coherence=0.0,
+                global_coherence=0.0,
+                lexical_diversity=0.0,
+                sentence_transition_quality=0.0,
+                argument_flow_consistency=0.0,
+                paragraph_unity=0.0,
+                repetition_penalty=0.0,
+                overall=0.0,
+            ),
+            cpu_scientific_analysis=CPUScientificAnalysis(
+                domain_similarity=0.0,
+                methodology_completeness=0.0,
+                innovation_indicators=0.0,
+                field_alignment=0.0,
+                concept_sophistication=0.0,
+            ),
+            execution_time_ms=execution_time,
+            recommendation="reject",
+            confidence_score=0.0,
+            detailed_feedback=["Content is empty or contains only whitespace"],
+        )
+
+    if not section_config or not section_config.get("id"):
+        logger.warning("Invalid section config provided", trace_id=trace_id)
+        execution_time = (time.time() - start_time) * 1000
+        return FastEvaluationResult(
+            overall_score=0.0,
+            structural_metrics=StructuralMetrics(
+                word_count_compliance=0.0,
+                paragraph_distribution=0.0,
+                section_organization=0.0,
+                academic_formatting=0.0,
+                header_structure=0.0,
+                overall=0.0,
+            ),
+            source_grounding_metrics=SourceGroundingMetrics(
+                rouge_l_score=0.0,
+                rouge_2_score=0.0,
+                rouge_3_score=0.0,
+                ngram_overlap_weighted=0.0,
+                keyword_coverage=0.0,
+                search_query_integration=0.0,
+                context_citation_density=0.0,
+                overall=0.0,
+            ),
+            scientific_quality_metrics=ScientificQualityMetrics(
+                scientific_term_density=0.0,
+                domain_vocabulary_accuracy=0.0,
+                methodology_language_score=0.0,
+                academic_register_score=0.0,
+                technical_precision=0.0,
+                evidence_based_claims_ratio=0.0,
+                hypothesis_methodology_alignment=0.0,
+                overall=0.0,
+            ),
+            coherence_metrics=CoherenceMetrics(
+                local_coherence=0.0,
+                global_coherence=0.0,
+                lexical_diversity=0.0,
+                sentence_transition_quality=0.0,
+                argument_flow_consistency=0.0,
+                paragraph_unity=0.0,
+                repetition_penalty=0.0,
+                overall=0.0,
+            ),
+            cpu_scientific_analysis=CPUScientificAnalysis(
+                domain_similarity=0.0,
+                methodology_completeness=0.0,
+                innovation_indicators=0.0,
+                field_alignment=0.0,
+                concept_sophistication=0.0,
+            ),
+            execution_time_ms=execution_time,
+            recommendation="reject",
+            confidence_score=0.0,
+            detailed_feedback=["Invalid section configuration provided"],
+        )
+
     logger.info(
         "Starting fast scientific evaluation",
         content_length=len(content),
