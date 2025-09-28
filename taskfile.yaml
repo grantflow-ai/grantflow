@@ -32,6 +32,7 @@ tasks:
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
       - task: db:migrate
+      - task: db:seed
     cmds:
       - echo "📝 Service URLs:"
       - echo "  - Backend API{{":"}} http://localhost:8000"
@@ -193,23 +194,21 @@ tasks:
     desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
     deps:
       - task: db:proxy:start
+    vars:
+      REMOTE_CONNECTION:
+        sh: |
+          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+          if [ -z "$CONNECTION" ]; then
+            echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets" >&2
+            exit 1
+          fi
+          # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+          # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
+          echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
-      DB_CONNECTION_STRING:
-        sh: |
-          # Get the connection string and replace socket path with TCP connection
-          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
-          if [ -n "$CONNECTION" ]; then
-            # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
-            # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
-            echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
-          fi
+      DB_CONNECTION_STRING: "{{.REMOTE_CONNECTION}}"
     cmds:
-      - |
-        if [ -z "$DB_CONNECTION_STRING" ]; then
-          echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
-          exit 1
-        fi
       - 'echo "Running migrations on Cloud SQL..."'
       - uv run alembic --config ./packages/db/alembic.ini upgrade head
 
@@ -243,23 +242,21 @@ tasks:
     desc: Populate Cloud SQL database with initial seed data (requires Cloud SQL Proxy running)
     deps:
       - task: db:proxy:start
+    vars:
+      REMOTE_CONNECTION:
+        sh: |
+          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+          if [ -z "$CONNECTION" ]; then
+            echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets" >&2
+            exit 1
+          fi
+          # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+          # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
+          echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
-      DATABASE_CONNECTION_STRING:
-        sh: |
-          # Get the connection string and replace socket path with TCP connection
-          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
-          if [ -n "$CONNECTION" ]; then
-            # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
-            # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
-            echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
-          fi
+      DATABASE_CONNECTION_STRING: "{{.REMOTE_CONNECTION}}"
     cmds:
-      - |
-        if [ -z "$DATABASE_CONNECTION_STRING" ]; then
-          echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
-          exit 1
-        fi
       - echo "Running seed on Cloud SQL..."
       - uv run python scripts/seed_db.py
 
@@ -759,3 +756,4 @@ tasks:
             exit 1
           "
         platforms: [windows]
+

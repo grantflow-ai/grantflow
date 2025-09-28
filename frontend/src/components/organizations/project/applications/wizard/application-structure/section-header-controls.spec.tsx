@@ -80,10 +80,8 @@ describe("SectionHeaderControls", () => {
 	it("updates error banner visibility when sections change", () => {
 		const { rerender } = render(<SectionHeaderControls onAddNewSection={mockOnAddNewSection} />);
 
-		// Initially no sections, so no error banner
 		expect(screen.queryByTestId("wizard-banner-error")).not.toBeInTheDocument();
 
-		// Add sections without research plan
 		const applicationWithoutResearchPlan = ApplicationWithTemplateFactory.build();
 		applicationWithoutResearchPlan.grant_template!.grant_sections = [
 			{ id: "1", is_detailed_research_plan: false, order: 0, parent_id: null, title: "Section 1" },
@@ -94,7 +92,6 @@ describe("SectionHeaderControls", () => {
 
 		expect(screen.getByTestId("wizard-banner-error")).toBeInTheDocument();
 
-		// Add research plan
 		const applicationWithResearchPlan = ApplicationWithTemplateFactory.build();
 		applicationWithResearchPlan.grant_template!.grant_sections = [
 			{ id: "1", is_detailed_research_plan: true, order: 0, parent_id: null, title: "Section 1" },
@@ -113,7 +110,6 @@ describe("SectionHeaderControls", () => {
 		useApplicationStore.setState({ application: applicationWithoutTemplate });
 		render(<SectionHeaderControls onAddNewSection={mockOnAddNewSection} />);
 
-		// Should not show error banner when there's no template at all
 		expect(screen.queryByTestId("wizard-banner-error")).not.toBeInTheDocument();
 		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
@@ -121,7 +117,6 @@ describe("SectionHeaderControls", () => {
 	it("resets error banner visibility when research plan status changes after dismissal", async () => {
 		const user = userEvent.setup();
 
-		// Start with application that has no research plan
 		const applicationWithoutResearchPlan = ApplicationWithTemplateFactory.build();
 		applicationWithoutResearchPlan.grant_template!.grant_sections = [
 			{ id: "1", is_detailed_research_plan: false, order: 0, parent_id: null, title: "Section 1" },
@@ -130,15 +125,12 @@ describe("SectionHeaderControls", () => {
 		useApplicationStore.setState({ application: applicationWithoutResearchPlan });
 		const { rerender } = render(<SectionHeaderControls onAddNewSection={mockOnAddNewSection} />);
 
-		// Error banner should be visible
 		expect(screen.getByTestId("wizard-banner-error")).toBeInTheDocument();
 
-		// Dismiss the banner
 		const closeButton = screen.getByRole("button", { name: "Close" });
 		await user.click(closeButton);
 		expect(screen.queryByTestId("wizard-banner-error")).not.toBeInTheDocument();
 
-		// Add a research plan (should not show error anymore)
 		const applicationWithResearchPlan = ApplicationWithTemplateFactory.build();
 		applicationWithResearchPlan.grant_template!.grant_sections = [
 			{ id: "1", is_detailed_research_plan: true, order: 0, parent_id: null, title: "Research Plan" },
@@ -147,10 +139,8 @@ describe("SectionHeaderControls", () => {
 		useApplicationStore.setState({ application: applicationWithResearchPlan });
 		rerender(<SectionHeaderControls onAddNewSection={mockOnAddNewSection} />);
 
-		// Should not show error banner when research plan is present
 		expect(screen.queryByTestId("wizard-banner-error")).not.toBeInTheDocument();
 
-		// Remove research plan again
 		const applicationWithoutResearchPlanAgain = ApplicationWithTemplateFactory.build();
 		applicationWithoutResearchPlanAgain.grant_template!.grant_sections = [
 			{ id: "1", is_detailed_research_plan: false, order: 0, parent_id: null, title: "Section 1" },
@@ -159,7 +149,6 @@ describe("SectionHeaderControls", () => {
 		useApplicationStore.setState({ application: applicationWithoutResearchPlanAgain });
 		rerender(<SectionHeaderControls onAddNewSection={mockOnAddNewSection} />);
 
-		// Banner should reappear because research plan is missing again
 		expect(screen.getByTestId("wizard-banner-error")).toBeInTheDocument();
 	});
 });

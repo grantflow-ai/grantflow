@@ -98,7 +98,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         ValueError,
         FirebaseError,
     ) as e:
-        logger.warning("Error verifying token.", exc_info=e)
+        logger.warning("Error verifying token.", exc_info=True)
         raise NotAuthorizedException("Invalid ID token") from e
 
 
@@ -150,7 +150,7 @@ async def get_user_by_email(email: str) -> FirebaseUser | None:
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
-        logger.warning("Error getting user by email.", exc_info=e)
+        logger.warning("Error getting user by email.", exc_info=True)
         raise ExternalOperationError("Error getting user by email.") from e
 
 
@@ -202,7 +202,7 @@ async def get_user(uid: str) -> FirebaseUser | None:
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
-        logger.warning("Error getting user by uid.", uid=uid, exc_info=e)
+        logger.warning("Error getting user by uid.", uid=uid, exc_info=True)
         raise ExternalOperationError("Error getting user by uid.") from e
 
 
@@ -260,7 +260,7 @@ async def get_users(uids: list[str]) -> dict[str, FirebaseUser]:
             )
         return users_dict
     except FirebaseError as e:
-        logger.warning("Error getting users by uids.", exc_info=e)
+        logger.warning("Error getting users by uids.", exc_info=True)
         raise ExternalOperationError("Error getting users by uids.") from e
 
 

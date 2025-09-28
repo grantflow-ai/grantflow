@@ -78,53 +78,73 @@ async def handle_grant_application_notifications(
         application_id=str(application_id),
     )
 
-    while True:
-        poll_start = time.time()
-        logger.debug(
-            "Polling for undelivered notifications",
+    try:
+        while True:
+            poll_start = time.time()
+            logger.debug(
+                "Polling for undelivered notifications",
+                organization_id=str(organization_id),
+                project_id=str(project_id),
+                application_id=str(application_id),
+            )
+            try:
+                notifications_to_send = await pull_notifications(
+                    application_id=application_id,
+                    session_maker=session_maker,
+                )
+
+                poll_duration = time.time() - poll_start
+
+                if notifications_to_send:
+                    logger.info(
+                        "Found and marked undelivered notifications",
+                        num_notifications=len(notifications_to_send),
+                        application_id=str(application_id),
+                        poll_duration_ms=round(poll_duration * 1000, 2),
+                    )
+
+                    for message in notifications_to_send:
+                        logger.debug(
+                            "Sending notification to WebSocket client",
+                            notification_event=message.get("event"),
+                            application_id=str(application_id),
+                        )
+                        yield message
+                else:
+                    logger.debug(
+                        "No undelivered notifications found",
+                        application_id=str(application_id),
+                        poll_duration_ms=round(poll_duration * 1000, 2),
+                    )
+
+            except Exception as e:
+                logger.error(
+                    "Error polling notifications from database, continuing polling",
+                    organization_id=str(organization_id),
+                    project_id=str(project_id),
+                    application_id=str(application_id),
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    exc_info=e,
+                )
+
+            await asyncio.sleep(NOTIFICATION_POLL_INTERVAL)
+    except asyncio.CancelledError:
+        logger.info(
+            "WebSocket connection closed, cleaning up",
             organization_id=str(organization_id),
             project_id=str(project_id),
             application_id=str(application_id),
         )
-        try:
-            notifications_to_send = await pull_notifications(
-                application_id=application_id,
-                session_maker=session_maker,
-            )
-
-            poll_duration = time.time() - poll_start
-
-            if notifications_to_send:
-                logger.info(
-                    "Found and marked undelivered notifications",
-                    num_notifications=len(notifications_to_send),
-                    application_id=str(application_id),
-                    poll_duration_ms=round(poll_duration * 1000, 2),
-                )
-
-                for message in notifications_to_send:
-                    logger.debug(
-                        "Sending notification to WebSocket client",
-                        notification_event=message.get("event"),
-                        application_id=str(application_id),
-                    )
-                    yield message
-            else:
-                logger.debug(
-                    "No undelivered notifications found",
-                    application_id=str(application_id),
-                    poll_duration_ms=round(poll_duration * 1000, 2),
-                )
-
-        except Exception as e:
-            logger.error(
-                "Error polling notifications from database, continuing polling",
-                organization_id=str(organization_id),
-                project_id=str(project_id),
-                application_id=str(application_id),
-                error=str(e),
-                error_type=type(e).__name__,
-                exc_info=e,
-            )
-
-        await asyncio.sleep(NOTIFICATION_POLL_INTERVAL)
+        raise
+    except Exception as e:
+        logger.error(
+            "Unexpected error in WebSocket handler",
+            organization_id=str(organization_id),
+            project_id=str(project_id),
+            application_id=str(application_id),
+            error=str(e),
+            error_type=type(e).__name__,
+            exc_info=e,
+        )
+        raise
