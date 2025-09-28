@@ -1,18 +1,17 @@
 import hashlib
 import json
 import time
-from typing import Any, Final, TypedDict, cast
+from typing import Any, Final, cast
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSource, RagSource, TextVector
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
+from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, or_
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.post_processing import post_process_documents
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.search_queries import handle_create_search_queries
@@ -21,8 +20,6 @@ logger = get_logger(__name__)
 
 
 MAX_RESULTS: Final[int] = 10
-MAX_OPTIMIZATION_ATTEMPTS: Final[int] = 2
-MIN_QUALITY_SCORE: Final[float] = 7.0
 
 _document_cache: dict[str, tuple[list[str], float]] = {}
 CACHE_TTL_SECONDS: Final[int] = 1800
@@ -48,138 +45,6 @@ def _get_cached_documents(cache_key: str) -> list[str] | None:
 def _cache_documents(cache_key: str, documents: list[str]) -> None:
     _document_cache[cache_key] = (documents, time.time())
     logger.debug("Document cache set", cache_key=cache_key, count=len(documents))
-
-
-RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT: Final[str] = """
-You are an AI assistant specializing in evaluating and improving information retrieval quality for Retrieval Augmented Generation (RAG) systems.
-Your goal is to optimize the quality, relevance, depth, and diversity of information retrieved to maximize the performance of downstream generation tasks.
-"""
-
-RETRIEVAL_OPTIMIZATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="retrieval_optimization",
-    template="""
-    Your task is to analyze the retrieved information quality and provide detailed feedback to optimize retrieval for the generation task.
-
-    ## Generation Task Description
-    This is the task description:
-        <task_description>
-        ${task_description}
-        </task_description>
-
-    ## Search Queries
-    These queries were used to retrieve information relevant to the task:
-        <queries>
-        ${queries}
-        </queries>
-
-    ## RAG Results
-    These are the documents retrieved from the vector database based on the search queries:
-        <rag_results>
-        ${rag_results}
-        </rag_results>
-
-    ## Quality Assessment
-
-    Evaluate the retrieval quality on the following dimensions (score each from 0-10):
-
-    1. **Relevance:** How directly does the information address the task's specific needs?
-    2. **Comprehensiveness:** How complete is the coverage of key aspects needed for the task?
-    3. **Information Diversity:** How well does the retrieval cover different aspects and perspectives?
-    4. **Depth:** How detailed and substantive is the information for critical aspects?
-    5. **Freshness:** Are there any gaps in current information that might benefit from more recent sources?
-
-    ## Optimization Strategy
-
-    For any dimension scoring below 8, provide specific improvement suggestions:
-    - Identify specific information gaps
-    - Recommend new query strategies
-    - Suggest alternative phrasings or terminology
-
-    ## Task Completion
-
-    Provide your quality assessment and optimization recommendations based on the dimensions evaluated above. Include scores for each dimension, an overall assessment, and specific recommendations for improvement where needed.
-    """,
-)
-
-
-class RetrievalAssessment(TypedDict):
-    relevance_score: float
-    comprehensiveness_score: float
-    diversity_score: float
-    depth_score: float
-    freshness_score: float
-    overall_score: float
-    explanation: str
-
-
-class RetrievalOptimization(TypedDict):
-    information_gaps: list[str]
-    improved_queries: list[str]
-    query_strategies: str
-
-
-class RetrievalQualityResponse(TypedDict):
-    assessment: RetrievalAssessment
-    optimization: RetrievalOptimization
-
-
-def _make_kwargs_hashable(kwargs: dict[str, Any]) -> str:
-    if not kwargs:
-        return ""
-
-    items = []
-    for key, value in sorted(kwargs.items()):
-        if isinstance(value, (list, dict, set)):
-            value_str = str(
-                sorted(value.items())
-                if isinstance(value, dict)
-                else sorted(value)
-                if isinstance(value, (list, set))
-                else value
-            )
-        else:
-            value_str = str(value)
-        items.append(f"{key}={value_str}")
-
-    return "|".join(items)
-
-
-retrieval_quality_schema: Final[dict[str, Any]] = {
-    "type": "object",
-    "properties": {
-        "assessment": {
-            "type": "object",
-            "properties": {
-                "relevance_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "comprehensiveness_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "diversity_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "depth_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "freshness_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "overall_score": {"type": "number", "minimum": 0, "maximum": 10},
-                "explanation": {"type": "string"},
-            },
-            "required": [
-                "relevance_score",
-                "comprehensiveness_score",
-                "diversity_score",
-                "depth_score",
-                "freshness_score",
-                "overall_score",
-                "explanation",
-            ],
-        },
-        "optimization": {
-            "type": "object",
-            "properties": {
-                "information_gaps": {"type": "array", "items": {"type": "string"}},
-                "improved_queries": {"type": "array", "items": {"type": "string"}},
-                "query_strategies": {"type": "string"},
-            },
-            "required": ["information_gaps", "improved_queries", "query_strategies"],
-        },
-    },
-    "required": ["assessment", "optimization"],
-}
 
 
 async def retrieve_vectors_for_embedding(
@@ -331,19 +196,11 @@ async def _retrieve_documents_cached(
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
 
-    query_start = time.time()
     search_queries = list(search_queries_tuple) if search_queries_tuple else None
 
     search_queries = search_queries or await handle_create_search_queries(
         user_prompt=task_description, embedding_model=embedding_model, **kwargs
     )
-    time.time() - query_start
-
-    attempts = 0
-    previous_scores: list[float] = []
-    best_score = 0.0
-
-    retrieval_start = time.time()
     vectors = await handle_retrieval(
         application_id=application_id,
         organization_id=organization_id,
@@ -352,9 +209,7 @@ async def _retrieve_documents_cached(
         model_name=embedding_model,
         trace_id=trace_id,
     )
-    time.time() - retrieval_start
 
-    document_conversion_start = time.time()
     documents = [
         cast(
             "DocumentDTO",
@@ -362,9 +217,7 @@ async def _retrieve_documents_cached(
         )
         for vector in vectors
     ]
-    time.time() - document_conversion_start
 
-    processing_start = time.time()
     processed_contents = await post_process_documents(
         documents=documents,
         query=",".join(search_queries),
@@ -373,101 +226,16 @@ async def _retrieve_documents_cached(
         model=model,
         trace_id=trace_id,
     )
-    time.time() - processing_start
-
-    if not with_guided_retrieval or not processed_contents:
-        total_duration = time.time() - start_time
-        logger.info(
-            "Document retrieval completed",
-            entity_id=entity_id,
-            entity_type=entity_type,
-            result_count=len(processed_contents),
-            guided_retrieval=with_guided_retrieval,
-            total_duration_ms=round(total_duration * 1000, 2),
-            trace_id=trace_id,
-        )
-        _cache_documents(cache_key, processed_contents)
-        return processed_contents
-
-    best_processed_contents = processed_contents
-    while attempts < MAX_OPTIMIZATION_ATTEMPTS:
-        attempts += 1
-
-        quality_response = await handle_completions_request(
-            prompt_identifier="retrieval_optimization",
-            response_schema=retrieval_quality_schema,
-            response_type=RetrievalQualityResponse,
-            system_prompt=RETRIEVAL_OPTIMIZATION_SYSTEM_PROMPT,
-            model=ANTHROPIC_SONNET_MODEL,
-            messages=RETRIEVAL_OPTIMIZATION_USER_PROMPT.to_string(
-                task_description=task_description,
-                queries=search_queries,
-                rag_results=processed_contents,
-            ),
-            trace_id=trace_id,
-        )
-
-        assessment = quality_response["assessment"]
-        current_score = assessment["overall_score"]
-
-        if current_score > best_score:
-            best_score = current_score
-            best_processed_contents = processed_contents
-
-        if current_score >= MIN_QUALITY_SCORE:
-            return best_processed_contents
-
-        previous_scores.append(current_score)
-        if attempts > 1 and (current_score - previous_scores[-2]) < 0.5:
-            return best_processed_contents
-
-        optimization = quality_response["optimization"]
-        improved_queries = optimization["improved_queries"]
-
-        if not improved_queries:
-            return best_processed_contents
-
-        new_vectors = await handle_retrieval(
-            application_id=application_id,
-            organization_id=organization_id,
-            search_queries=improved_queries,
-            max_results=max_results,
-            model_name=embedding_model,
-            trace_id=trace_id,
-        )
-
-        new_documents = [
-            cast(
-                "DocumentDTO",
-                {k: v for k, v in vector.chunk.items() if k in DocumentDTO.__annotations__ and v is not None},
-            )
-            for vector in new_vectors
-        ]
-
-        combined_documents = documents + new_documents
-
-        processed_contents = await post_process_documents(
-            documents=combined_documents,
-            query=",".join(search_queries + improved_queries),
-            task_description=str(task_description),
-            max_tokens=max_tokens,
-            model=model,
-            trace_id=trace_id,
-        )
-
-        search_queries = improved_queries
 
     total_duration = time.time() - start_time
     logger.info(
-        "Retrieval completed",
+        "Document retrieval completed",
         entity_id=entity_id,
-        attempts=attempts,
-        final_score=best_score,
-        result_count=len(best_processed_contents),
+        entity_type=entity_type,
+        result_count=len(processed_contents),
+        guided_retrieval=with_guided_retrieval,
         total_duration_ms=round(total_duration * 1000, 2),
         trace_id=trace_id,
     )
-
-    _cache_documents(cache_key, best_processed_contents)
-
-    return best_processed_contents
+    _cache_documents(cache_key, processed_contents)
+    return processed_contents
