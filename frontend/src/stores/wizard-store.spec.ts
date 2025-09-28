@@ -305,9 +305,33 @@ describe.sequential("wizard store", () => {
 			useApplicationStore.setState({ application: applicationWithoutSections });
 			const result11 = useWizardStore.getState().validateStepNext();
 			expect(result11.isValid).toBe(false);
+			expect(result11.reason).toBe("There are no grant sections.");
+
+			const applicationWithSectionsNoResearchPlan = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [
+						{ id: "1", is_detailed_research_plan: false, order: 0, parent_id: null, title: "Test Section" },
+						{
+							id: "2",
+							is_detailed_research_plan: false,
+							order: 1,
+							parent_id: null,
+							title: "Another Section",
+						},
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWithSectionsNoResearchPlan });
+			const result13 = useWizardStore.getState().validateStepNext();
+			expect(result13.isValid).toBe(false);
+			expect(result13.reason).toBe("Research plan is missing.");
+
 			const applicationWithSections = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
+					grant_sections: [
+						{ id: "1", is_detailed_research_plan: true, order: 0, parent_id: null, title: "Test Section" },
+					],
 				}),
 			});
 

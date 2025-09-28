@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { AppTextarea } from "@/components/app/fields/app-textarea";
 import InputField from "@/components/app/fields/input-field";
+import { WizardBanner } from "@/components/organizations/project/applications/wizard/wizard-banner";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -209,6 +210,19 @@ export function SortableSection({
 }
 
 function SectionEditForm({ formData, isSubsection, onDelete, section, setFormData }: SectionEditFormProps) {
+	const [showResearchPlanWarning, setShowResearchPlanWarning] = useState(false);
+
+	const handleResearchPlanToggle = useCallback(() => {
+		const newValue = !(formData.isResearchPlan ?? false);
+
+		setShowResearchPlanWarning(newValue);
+
+		setFormData({
+			...formData,
+			isResearchPlan: newValue,
+		});
+	}, [formData, setFormData]);
+
 	return (
 		<div className="px-6 py-3">
 			<div className="space-y-5">
@@ -329,12 +343,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 						}`}
 						data-testid="research-plan-checkbox"
 						id={`research-plan-${section.id}`}
-						onClick={() => {
-							setFormData({
-								...formData,
-								isResearchPlan: !formData.isResearchPlan,
-							});
-						}}
+						onClick={handleResearchPlanToggle}
 						role="switch"
 						type="button"
 					>
@@ -348,16 +357,23 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 						className="text-sm font-normal text-gray-600 cursor-pointer"
 						data-testid="research-plan-label"
 						htmlFor={`research-plan-${section.id}`}
-						onClick={() => {
-							setFormData({
-								...formData,
-								isResearchPlan: !formData.isResearchPlan,
-							});
-						}}
+						onClick={handleResearchPlanToggle}
 					>
 						This section is the main Research Plan
 					</Label>
 				</div>
+
+				{showResearchPlanWarning && (
+					<WizardBanner
+						onClose={() => {
+							setShowResearchPlanWarning(false);
+						}}
+						variant="warning"
+					>
+						One section must be defined as the research plan for the application structure to be valid.
+						Please select another section before continuing.
+					</WizardBanner>
+				)}
 			</div>
 
 			<div className="flex justify-between items-center gap-2 pt-6">
