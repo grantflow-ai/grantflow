@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,15 @@ interface ObjectiveFormProps {
 }
 
 const scrollToBottom = () => {
-	window.scrollTo({ behavior: "smooth", top: document.body.scrollHeight });
+	const scrollContainer = document.querySelector('[data-testid="research-plan-left-pane"] .overflow-y-auto');
+	if (scrollContainer) {
+		scrollContainer.scrollTo({
+			behavior: "smooth",
+			top: scrollContainer.scrollHeight,
+		});
+	} else {
+		window.scrollTo({ behavior: "smooth", top: document.body.scrollHeight });
+	}
 };
 
 export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveAction }: ObjectiveFormProps) {
@@ -42,6 +50,44 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		tasks?: Record<string, string>;
 		title?: string;
 	}>({});
+
+	const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const prevTaskCountRef = useRef(0);
+	const prevVisibleDescriptionsRef = useRef(0);
+
+	useEffect(() => {
+		const currentTaskCount = formData.tasks.length;
+		const hasNewTask = currentTaskCount > prevTaskCountRef.current;
+
+		const visibleDescriptionCount = formData.tasks.filter((task) => task.title.trim()).length;
+		const hasNewVisibleDescription = visibleDescriptionCount > prevVisibleDescriptionsRef.current;
+
+		if (hasNewTask || hasNewVisibleDescription) {
+			if (scrollTimeoutRef.current) {
+				clearTimeout(scrollTimeoutRef.current);
+			}
+
+			scrollTimeoutRef.current = setTimeout(() => {
+				scrollToBottom();
+				scrollTimeoutRef.current = null;
+			}, 550);
+		}
+
+		prevTaskCountRef.current = currentTaskCount;
+		prevVisibleDescriptionsRef.current = visibleDescriptionCount;
+	}, [formData.tasks]);
+
+	useEffect(() => {
+		return () => {
+			if (scrollTimeoutRef.current) {
+				clearTimeout(scrollTimeoutRef.current);
+			}
+			if (cleanupTimeoutRef.current) {
+				clearTimeout(cleanupTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	const updateField = (field: keyof Omit<ObjectiveFormData, "number" | "tasks">, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -71,27 +117,11 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 	};
 
 	const prevTaskTitlesRef = useRef<Record<string, string>>({});
-	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const handleTaskFieldChange = (taskId: string, field: "description" | "title", value: string) => {
 		updateTask(taskId, field, value);
 
 		if (field === "title") {
-			const prevTitle = prevTaskTitlesRef.current[taskId] || "";
-			const wasEmpty = !prevTitle.trim();
-			const isNowFilled = value.trim();
-
-			if (scrollTimeoutRef.current) {
-				clearTimeout(scrollTimeoutRef.current);
-			}
-
-			if (wasEmpty && isNowFilled) {
-				scrollTimeoutRef.current = setTimeout(() => {
-					scrollToBottom();
-					scrollTimeoutRef.current = null;
-				}, 500);
-			}
-
 			prevTaskTitlesRef.current[taskId] = value;
 
 			if (!value.trim()) {
@@ -102,8 +132,13 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			}
 		}
 
-		setTimeout(() => {
+		if (cleanupTimeoutRef.current) {
+			clearTimeout(cleanupTimeoutRef.current);
+		}
+
+		cleanupTimeoutRef.current = setTimeout(() => {
 			cleanupEmptyTasks();
+			cleanupTimeoutRef.current = null;
 		}, 500);
 	};
 
@@ -115,14 +150,15 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			tasks: [...prev.tasks, { description: undefined, id: newTaskId, number: currentTaskCount + 1, title: "" }],
 		}));
 
-		setTimeout(() => {
-			scrollToBottom();
-			const newTaskElement = document.querySelector(`[data-testid="task-title-${currentTaskCount}"]`);
-			if (newTaskElement) {
-				const textarea = newTaskElement.querySelector("textarea");
-				textarea?.focus();
-			}
-		}, 100);
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				const newTaskElement = document.querySelector(`[data-testid="task-title-${currentTaskCount}"]`);
+				if (newTaskElement) {
+					const textarea = newTaskElement.querySelector("textarea");
+					textarea?.focus();
+				}
+			});
+		});
 	};
 
 	const cleanupEmptyTasks = () => {
