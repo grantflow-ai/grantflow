@@ -511,7 +511,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
-				validateStepNext: vi.fn(() => ({ isValid: false, reason: "test validation failed" })),
+				validateStepNext: vi.fn(() => ({ isValid: true, reason: "validation passed" })),
 			});
 
 			useApplicationStore.setState({
@@ -519,7 +519,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					...ApplicationFactory.build(),
 					grant_template: {
 						...ApplicationFactory.build().grant_template!,
-						grant_sections: [],
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
 					},
 				},
 				areAppOperationsInProgress: false,
@@ -1291,6 +1291,127 @@ describe("WizardFooter - Analytics Tracking", () => {
 			await waitFor(() => {
 				expectNoEventsTracked();
 			});
+		});
+	});
+
+	describe("Button disabling based on validation", () => {
+		it("keeps button enabled for step 1 even when validation fails", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: ApplicationDetailsValidationReason.TITLE_INVALID,
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+		});
+
+		it("disables button for step 2 when validation fails", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: "There are no grant sections.",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+		});
+
+		it("disables button for step 3 when validation fails", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: "There are no RAG sources.",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+		});
+
+		it("disables button for step 4 when validation fails", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: "Some Research objectives do not have tasks.",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_PLAN,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+		});
+
+		it("disables button for step 5 when validation fails", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: "Not all fields are populated properly.",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+		});
+
+		it("enables button for step 2 when validation passes", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: true,
+				reason: "Valid",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+		});
+
+		it("enables button for step 6 regardless of validation", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: true,
+				reason: "No validation needed",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
 		});
 	});
 });
