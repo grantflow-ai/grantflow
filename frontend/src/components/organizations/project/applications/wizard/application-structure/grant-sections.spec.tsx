@@ -260,6 +260,34 @@ describe("SortableSection", () => {
 		expect(textarea).toHaveValue("Custom AI prompt");
 	});
 
+	it("auto-saves AI prompt after debounce", async () => {
+		const section = GrantSectionDetailedFactory.build({
+			generation_instructions: "Original prompt",
+			is_detailed_research_plan: false,
+			max_words: 3000,
+			title: "Test Section",
+		});
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const textarea = screen.getByLabelText("AI Prompt");
+
+		await user.clear(textarea);
+		await user.type(textarea, "New custom AI prompt");
+
+		await vi.waitFor(
+			() => {
+				expect(mockOnUpdate).toHaveBeenLastCalledWith({
+					generation_instructions: "New custom AI prompt",
+					is_detailed_research_plan: false,
+					max_words: 3000,
+					title: "Test Section",
+				});
+			},
+			{ timeout: 4000 },
+		);
+	});
+
 	it("toggles research plan designation", async () => {
 		const section = GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
@@ -295,6 +323,7 @@ describe("SortableSection", () => {
 		await user.click(researchPlanToggle);
 
 		expect(mockOnUpdate).toHaveBeenCalledWith({
+			generation_instructions: section.generation_instructions,
 			is_detailed_research_plan: true,
 			max_words: 5000,
 			title: "Updated Title",

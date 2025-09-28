@@ -193,6 +193,7 @@ export function SortableSection({
 								setFormData={(data) => {
 									setFormData(data);
 									debouncedUpdate({
+										generation_instructions: data.aiPrompt,
 										max_words: data.max_words,
 										title: data.title,
 										...(data.isResearchPlan !== undefined && {
