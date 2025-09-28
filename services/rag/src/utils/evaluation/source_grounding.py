@@ -124,30 +124,24 @@ def assess_context_citation_density(content: str, rag_context: list[DocumentDTO]
     citation_indicators = 0.0
     verified_citations = 0.0
 
-    # Count citation patterns
     for pattern in CITATION_PATTERNS:
         matches = pattern.findall(content)
         citation_indicators += float(len(matches))
 
-    # Count context reference phrases
     for phrase in CONTEXT_REFERENCE_PHRASES:
         if phrase in content_lower:
             citation_indicators += 1.0
 
-    # Verify citations against RAG context if available
     if rag_context:
         context_text = " ".join(doc["content"] for doc in rag_context if doc.get("content")).lower()
 
-        # Check if citations/references can be verified in context
         for pattern in CITATION_PATTERNS:
             matches = pattern.findall(content)
             for match in matches:
-                # Simple heuristic: check if citation content appears in context
                 match_clean = match.strip("[]()").lower()
                 if any(word in context_text for word in match_clean.split() if len(word) > 3):
                     verified_citations += 1.0
 
-        # Bonus for verified citations
         if verified_citations > 0:
             citation_indicators += verified_citations * 0.5
 
