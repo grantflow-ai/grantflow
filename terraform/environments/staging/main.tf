@@ -40,15 +40,15 @@ module "iam" {
 }
 
 module "artifact_registry" {
-  source                  = "../../modules/artifact_registry"
-  project_id              = var.project_id
-  location                = "us-east1"
-  environment             = var.environment
-  repository_name         = "grantflow"
-  retention_days          = 7
-  keep_recent_count       = 20
-  keep_tag_prefixes       = ["v", "release-", "staging-latest", "latest"]
-  ci_service_account      = module.iam.github_actions_service_account_email
+  source             = "../../modules/artifact_registry"
+  project_id         = var.project_id
+  location           = "us-east1"
+  environment        = var.environment
+  repository_name    = "grantflow"
+  retention_days     = 7
+  keep_recent_count  = 20
+  keep_tag_prefixes  = ["v", "release-", "staging-latest", "latest"]
+  ci_service_account = module.iam.github_actions_service_account_email
   reader_service_accounts = [
     module.iam.backend_service_account_email,
     module.iam.scraper_service_account_email,
@@ -103,27 +103,27 @@ module "cloud_run" {
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
   rag_service_account_email     = module.iam.rag_service_account_email
-  min_instances                 = 1
-  max_instances                 = 5
+  min_instances                 = 0
+  max_instances                 = 2
   cpu_limit                     = "1"
   memory_limit                  = "1Gi"
 
   indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
   indexer_min_instances     = 0     # ~keep Scale to zero when idle
-  indexer_max_instances     = 100   # ~keep High ceiling for burst handling
+  indexer_max_instances     = 2     # ~keep Updated for staging environment
 
   crawler_memory_limit      = "2Gi" # ~keep Reduced memory since processing one URL at a time
   crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
   crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
   crawler_min_instances     = 0     # ~keep Scale to zero when idle
-  crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
+  crawler_max_instances     = 2     # ~keep Updated for staging environment
 
   rag_memory_limit      = "4Gi" # ~keep Increased memory for AI context windows
   rag_cpu_limit         = "1"   # ~keep Single CPU sufficient for async I/O operations
   rag_concurrency_limit = 1     # ~keep ONE message per instance for AI workloads
-  rag_min_instances     = 1     # ~keep Always keep one warm instance
-  rag_max_instances     = 10    # ~keep Scale up to 10 for burst traffic
+  rag_min_instances     = 0     # ~keep Updated to scale to zero for staging
+  rag_max_instances     = 2     # ~keep Updated for staging environment
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
 
@@ -165,6 +165,8 @@ module "pubsub" {
 
   backend_service_account_email    = module.iam.backend_service_account_email
   email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
+  fn_alerts_apphosting_staging_url = ""
+  fn_alerts_budget_staging_url     = ""
 }
 
 module "scheduler" {
@@ -178,20 +180,13 @@ module "scheduler" {
   timezone                                = "Europe/Berlin"
 }
 
-module "monitoring" {
-  source                 = "../../modules/monitoring"
-  project_id             = var.project_id
-  environment            = var.environment
-  discord_webhook_url    = var.discord_webhook_url
-  enable_uptime_checks   = false
-  enable_error_reporting = true
-  alert_thresholds = {
-    error_rate_threshold = 0.10
-    latency_threshold    = 10000
-    memory_threshold     = 0.95
-    cpu_threshold        = 0.90
-  }
+
+module "additional_resources" {
+  source      = "../../modules/additional_resources"
+  project_id  = var.project_id
+  environment = var.environment
 }
+
 
 
 resource "google_bigquery_dataset" "frontend" {

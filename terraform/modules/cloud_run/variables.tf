@@ -265,3 +265,51 @@ variable "debug" {
   type        = string
   default     = ""
 }
+
+variable "liveness_probe_initial_delay" {
+  description = "Initial delay for liveness probe in seconds"
+  type        = number
+  default     = 90
+}
+
+variable "liveness_probe_timeout" {
+  description = "Timeout for liveness probe in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "liveness_probe_period" {
+  description = "Period for liveness probe in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "liveness_probe_failure_threshold" {
+  description = "Failure threshold for liveness probe"
+  type        = number
+  default     = 3
+}
+
+variable "startup_probe_initial_delay" {
+  description = "Initial delay for startup probe in seconds"
+  type        = number
+  default     = 10
+}
+
+variable "startup_probe_timeout" {
+  description = "Timeout for startup probe in seconds"
+  type        = number
+  default     = 5
+}
+
+variable "startup_probe_period" {
+  description = "Period for startup probe in seconds"
+  type        = number
+  default     = 10
+}
+
+variable "startup_probe_failure_threshold" {
+  description = "Failure threshold for startup probe"
+  type        = number
+  default     = 18
+}

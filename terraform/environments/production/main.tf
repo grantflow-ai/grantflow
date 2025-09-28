@@ -40,15 +40,15 @@ module "iam" {
 }
 
 module "artifact_registry" {
-  source                  = "../../modules/artifact_registry"
-  project_id              = var.project_id
-  location                = "us-east1"
-  environment             = var.environment
-  repository_name         = "grantflow"
-  retention_days          = 30  # Keep production images longer
-  keep_recent_count       = 50  # Keep more recent images in production
-  keep_tag_prefixes       = ["v", "release-", "production-", "latest"]
-  ci_service_account      = module.iam.github_actions_service_account_email
+  source             = "../../modules/artifact_registry"
+  project_id         = var.project_id
+  location           = "us-east1"
+  environment        = var.environment
+  repository_name    = "grantflow"
+  retention_days     = 30
+  keep_recent_count  = 50
+  keep_tag_prefixes  = ["v", "release-", "production-", "latest"]
+  ci_service_account = module.iam.github_actions_service_account_email
   reader_service_accounts = [
     module.iam.backend_service_account_email,
     module.iam.scraper_service_account_email,
@@ -160,21 +160,6 @@ module "scheduler" {
   timezone                                = "Europe/Berlin"
 }
 
-module "monitoring" {
-  source              = "../../modules/monitoring"
-  project_id          = var.project_id
-  environment         = var.environment
-  discord_webhook_url = var.discord_webhook_url
-
-  enable_uptime_checks   = true
-  enable_error_reporting = true
-  alert_thresholds = {
-    error_rate_threshold = 0.01
-    latency_threshold    = 2000
-    memory_threshold     = 0.85
-    cpu_threshold        = 0.80
-  }
-}
 
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend_production"

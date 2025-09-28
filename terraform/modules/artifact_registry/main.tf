@@ -52,7 +52,6 @@ resource "google_artifact_registry_repository" "main" {
   }
 }
 
-# Grant read access to Cloud Run service accounts
 resource "google_artifact_registry_repository_iam_member" "cloud_run_reader" {
   for_each = toset(var.reader_service_accounts)
 
@@ -63,7 +62,6 @@ resource "google_artifact_registry_repository_iam_member" "cloud_run_reader" {
   member     = "serviceAccount:${each.value}"
 }
 
-# Grant write access to CI/CD service account
 resource "google_artifact_registry_repository_iam_member" "ci_writer" {
   project    = google_artifact_registry_repository.main.project
   location   = google_artifact_registry_repository.main.location

@@ -36,10 +36,21 @@ resource "google_cloud_run_v2_service" "backend" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 10
-        timeout_seconds       = 5
-        period_seconds        = 15
-        failure_threshold     = 3
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {
@@ -221,10 +232,21 @@ resource "google_cloud_run_v2_service" "crawler" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 10
-        timeout_seconds       = 5
-        period_seconds        = 15
-        failure_threshold     = 3
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {
@@ -332,10 +354,21 @@ resource "google_cloud_run_v2_service" "indexer" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 10
-        timeout_seconds       = 5
-        period_seconds        = 15
-        failure_threshold     = 3
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {
@@ -445,20 +478,21 @@ resource "google_cloud_run_v2_service" "rag" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 30
-        timeout_seconds       = 10
-        period_seconds        = 30
-        failure_threshold     = 3
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
       }
 
       startup_probe {
-        tcp_socket {
+        http_get {
+          path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 0
-        timeout_seconds       = 240
-        period_seconds        = 240
-        failure_threshold     = 1
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {
@@ -626,10 +660,21 @@ resource "google_cloud_run_v2_service" "scraper" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 30
-        timeout_seconds       = 15
-        period_seconds        = 60
-        failure_threshold     = 5
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {
@@ -752,10 +797,10 @@ resource "google_cloud_run_v2_service" "crdt" {
           path = "/health"
           port = 8080
         }
-        initial_delay_seconds = 10
-        timeout_seconds       = 5
-        period_seconds        = 15
-        failure_threshold     = 3
+        initial_delay_seconds = var.liveness_probe_initial_delay
+        timeout_seconds       = var.liveness_probe_timeout
+        period_seconds        = var.liveness_probe_period
+        failure_threshold     = var.liveness_probe_failure_threshold
       }
 
       startup_probe {
@@ -763,10 +808,10 @@ resource "google_cloud_run_v2_service" "crdt" {
           path = "/health"
           port = 8080
         }
-        initial_delay_seconds = 0
-        timeout_seconds       = 5
-        period_seconds        = 10
-        failure_threshold     = 10
+        initial_delay_seconds = var.startup_probe_initial_delay
+        timeout_seconds       = var.startup_probe_timeout
+        period_seconds        = var.startup_probe_period
+        failure_threshold     = var.startup_probe_failure_threshold
       }
 
       env {

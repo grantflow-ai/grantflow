@@ -208,14 +208,16 @@ resource "google_storage_bucket" "logos" {
   }
 }
 
+#trivy:ignore:AVD-GCP-0001
 resource "google_storage_bucket_iam_member" "logos_public_read" {
   bucket = google_storage_bucket.logos.name
   role   = "roles/storage.objectViewer"
-  member = "allUsers"
+  member = "allUsers" # Organization logos must be publicly accessible for display
 }
 
+#trivy:ignore:AVD-GCP-0007
 resource "google_storage_bucket_iam_member" "logos_backend_object_admin" {
   bucket = google_storage_bucket.logos.name
-  role   = "roles/storage.objectAdmin"
+  role   = "roles/storage.objectAdmin" # Backend service requires admin role to manage organization logos
   member = "serviceAccount:${var.backend_service_account_email}"
 }
