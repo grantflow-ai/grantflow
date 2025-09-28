@@ -399,7 +399,7 @@ async def test_generate_grant_template_insufficient_context_error(mock_google_co
         )
 
 
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 @patch("services.rag.src.utils.completion.make_google_completions_request")
 async def test_handle_generate_grant_template_metadata_success(
@@ -493,7 +493,7 @@ async def test_handle_generate_grant_template_metadata_success(
     mock_evaluation.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 async def test_handle_generate_grant_template_metadata_no_long_form_sections(
     mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
 ) -> None:
@@ -514,7 +514,7 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(
     mock_evaluation.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 async def test_handle_generate_grant_template_metadata_filters_long_form_sections(
     mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
@@ -580,7 +580,7 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
     mock_evaluation.assert_called_once()
 
 
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.utils.retrieval.handle_create_search_queries")
 async def test_handle_generate_grant_template_metadata_preserves_order(
     mock_create_search_queries: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
@@ -647,7 +647,7 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
 
 
 @pytest.mark.e2e_full
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
 async def test_integration_generate_metadata_workflow(
     mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
@@ -757,7 +757,7 @@ async def test_integration_generate_metadata_workflow(
 
 
 @pytest.mark.e2e_full
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
 async def test_integration_generate_metadata_with_dependencies(
     mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock
@@ -841,7 +841,7 @@ async def test_integration_generate_metadata_with_dependencies(
 
 
 @pytest.mark.e2e_full
-@patch("services.rag.src.grant_template.generate_metadata.with_prompt_evaluation")
+@patch("services.rag.src.grant_template.generate_metadata.with_evaluation")
 @patch("services.rag.src.grant_template.generate_metadata.retrieve_documents")
 async def test_integration_generate_metadata_empty_sections(
     mock_retrieve_docs: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock

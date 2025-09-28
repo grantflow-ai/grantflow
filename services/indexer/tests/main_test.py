@@ -16,7 +16,6 @@ from packages.db.src.tables import (
     GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
-    Project,
     RagFile,
     RagSource,
 )
@@ -43,7 +42,7 @@ def mock_process_source() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.process_source") as mock:
         embedding = [0.1] * 384
 
-        def side_effect(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
+        def side_effect(**kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
             source_id = kwargs.get("source_id", str(UUID("00000000-0000-0000-0000-000000000000")))
             vectors = [
                 {"chunk": {"content": "test", "metadata": {}}, "embedding": embedding, "rag_source_id": source_id}
@@ -125,7 +124,6 @@ async def test_handle_file_indexing_grant_application(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project: Project,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -277,7 +275,6 @@ async def test_handle_file_indexing_grant_template(
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
-    project: Project,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(

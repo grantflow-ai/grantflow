@@ -10,7 +10,10 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = [  ]
+dependencies = [
+  "scikit-learn>=1.7.2",
+  "textstat>=0.7.10",
+]
 
 [dependency-groups]
 dev = [
