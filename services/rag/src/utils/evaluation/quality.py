@@ -86,6 +86,84 @@ EVIDENCE_INDICATORS: Final[set[str]] = {
 }
 
 
+def enhance_vocabulary_with_section_terms(
+    vocabulary: ScientificVocabulary,
+    keywords: list[str],
+    topics: list[str],
+) -> ScientificVocabulary:
+    """Enhance scientific vocabulary with section-specific keywords and topics.
+
+    Args:
+        vocabulary: Base scientific vocabulary
+        keywords: Section-specific keywords to prioritize
+        topics: Section-specific topics to consider
+
+    Returns:
+        Enhanced vocabulary with section-specific terms added
+    """
+    # Create a copy to avoid modifying the original
+    enhanced = ScientificVocabulary(
+        biomedical_terms=vocabulary["biomedical_terms"].copy(),
+        methodology_terms=vocabulary["methodology_terms"].copy(),
+        academic_phrases=vocabulary["academic_phrases"].copy(),
+        innovation_keywords=vocabulary["innovation_keywords"].copy(),
+    )
+
+    # Add section keywords to appropriate categories
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+        # Determine the best category based on keyword content
+        if any(term in keyword_lower for term in ["method", "approach", "technique", "analysis", "design"]):
+            enhanced["methodology_terms"].add(keyword_lower)
+        elif any(term in keyword_lower for term in ["novel", "innovative", "breakthrough", "pioneering"]):
+            enhanced["innovation_keywords"].add(keyword_lower)
+        else:
+            # Default to biomedical terms for domain-specific keywords
+            enhanced["biomedical_terms"].add(keyword_lower)
+
+    # Add topics as domain-specific terms
+    for topic in topics:
+        enhanced["biomedical_terms"].add(topic.lower())
+
+    return enhanced
+
+
+def calculate_keyword_density(content: str, keywords: list[str]) -> float:
+    """Calculate the density of section-specific keywords in content.
+
+    Args:
+        content: Text content to analyze
+        keywords: Section-specific keywords to check
+
+    Returns:
+        Keyword density score (0.0 to 1.0)
+    """
+    if not keywords:
+        return 1.0  # No keywords specified, so consider it perfect
+
+    content_lower = content.lower()
+    words_in_content = content_lower.split()
+    total_words = len(words_in_content)
+
+    if total_words == 0:
+        return 0.0
+
+    keyword_count = 0
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+        # Check for exact matches and multi-word phrases
+        if " " in keyword_lower:
+            # Multi-word phrase
+            keyword_count += content_lower.count(keyword_lower)
+        else:
+            # Single word
+            keyword_count += words_in_content.count(keyword_lower)
+
+    # Calculate density with reasonable upper bound (3% is considered high)
+    density = keyword_count / total_words
+    return min(1.0, density / 0.03)  # Normalize to 0-1, capped at 3% density
+
+
 def calculate_scientific_term_density(content: str, vocabulary: ScientificVocabulary) -> float:
     if not content.strip():
         return 0.0
@@ -414,10 +492,20 @@ async def evaluate_scientific_quality_advanced(
             overall=0.0,
         )
 
-    vocabulary = create_scientific_vocabulary()
+    # Create base vocabulary and enhance it with section-specific terms
+    base_vocabulary = create_scientific_vocabulary()
+    vocabulary = enhance_vocabulary_with_section_terms(
+        base_vocabulary,
+        section_config.get("keywords", []),
+        section_config.get("topics", []),
+    )
+
+    # Calculate keyword density for section-specific terms
+    keyword_density = calculate_keyword_density(content, section_config.get("keywords", []))
 
     scientific_term_density = calculate_scientific_term_density(content, vocabulary)
-    domain_vocabulary_accuracy = scientific_term_density
+    # Domain vocabulary accuracy now factors in keyword density
+    domain_vocabulary_accuracy = (scientific_term_density * 0.7) + (keyword_density * 0.3)
     methodology_language_score = detect_methodology_language(content)
     academic_register_score = assess_academic_register(content)
     technical_precision = assess_technical_precision(content)
