@@ -5,6 +5,10 @@ from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
+from services.rag.src.utils.evaluation.quality_standards import (
+    ACCEPTANCE_THRESHOLDS,
+    ContentType,
+)
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import FastEvaluationResult
@@ -131,8 +135,10 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
         trace_id="test_biomedical_001",
     )
 
-    assert result["overall_score"] > 50.0, (
-        f"Expected reasonable score for quality biomedical content, got {result['overall_score']}"
+    # Use quality standards for biomedical research content
+    biomedical_threshold = ACCEPTANCE_THRESHOLDS[ContentType.BIOMEDICAL_RESEARCH] * 100  # Convert to percentage
+    assert result["overall_score"] >= biomedical_threshold, (
+        f"Expected biomedical content to meet quality standards ({biomedical_threshold}%), got {result['overall_score']}"
     )
 
     assert "structural_metrics" in result

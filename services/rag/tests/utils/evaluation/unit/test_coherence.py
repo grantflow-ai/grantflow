@@ -188,8 +188,8 @@ async def test_evaluate_coherence_advanced_high_quality() -> None:
     result: CoherenceMetrics = await evaluate_coherence_advanced(content)
 
     assert result["overall"] > 0.3, f"Expected reasonable overall coherence, got {result['overall']}"
-    assert result["local_coherence"] >= 0.0
-    assert result["global_coherence"] >= 0.0
+    assert result["local_coherence"] >= 0.2, f"Expected decent local coherence, got {result['local_coherence']}"
+    assert result["global_coherence"] >= 0.2, f"Expected decent global coherence, got {result['global_coherence']}"
     assert 0.0 <= result["lexical_diversity"] <= 1.0
     assert 0.0 <= result["sentence_transition_quality"] <= 1.0
     assert 0.0 <= result["argument_flow_consistency"] <= 1.0

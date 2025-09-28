@@ -255,9 +255,13 @@ class TestScientificQualityAdvanced:
 
         result = await evaluate_scientific_quality_advanced(content, rag_context, section_config)
 
-        assert result["evidence_based_claims_ratio"] >= 0.0
-        assert result["technical_precision"] >= 0.0
-        assert result["overall"] >= 0.0
+        assert result["evidence_based_claims_ratio"] >= 0.2, (
+            f"Expected some evidence-based claims, got {result['evidence_based_claims_ratio']}"
+        )
+        assert result["technical_precision"] >= 0.3, (
+            f"Expected decent technical precision, got {result['technical_precision']}"
+        )
+        assert result["overall"] >= 0.3, f"Expected reasonable overall quality, got {result['overall']}"
 
     @pytest.mark.asyncio
     async def test_evaluate_scientific_quality_advanced_empty_content(self) -> None:
