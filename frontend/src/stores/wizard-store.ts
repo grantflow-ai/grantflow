@@ -5,6 +5,7 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
+import { hasDetailedResearchPlan } from "@/types/grant-sections";
 import type { TemplateGenerationEvent } from "@/types/notification-events";
 
 type ApplicationType = NonNullable<ReturnType<typeof useApplicationStore.getState>["application"]>;
@@ -1148,9 +1149,28 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return validateApplicationDetails(application);
 				}
 				case WizardStep.APPLICATION_STRUCTURE: {
+					const grantSections = application.grant_template?.grant_sections;
+					if (!grantSections?.length) {
+						return {
+							isValid: false,
+							reason: "There are no grant sections.",
+						};
+					}
+
+					const hasResearchPlan = grantSections.some(
+						(section) => hasDetailedResearchPlan(section) && section.is_detailed_research_plan === true,
+					);
+
+					if (!hasResearchPlan) {
+						return {
+							isValid: false,
+							reason: "Research plan is missing.",
+						};
+					}
+
 					return {
-						isValid: !!application.grant_template?.grant_sections.length,
-						reason: "There are no grant sections.",
+						isValid: true,
+						reason: "All requirements met.",
 					};
 				}
 				case WizardStep.GENERATE_AND_COMPLETE: {
