@@ -14,18 +14,21 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import type { RefObject } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSubsectionsByParent, useApplicationStore } from "@/stores/application-store";
 import { useDragOverlayStore } from "@/stores/drag-overlay-store";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
+import {
+	type GrantSection,
+	hasDetailedResearchPlan,
+	hasDetailedResearchPlanUpdate,
+	type UpdateGrantSection,
+} from "@/types/grant-sections";
 import {
 	assignOrderAndParent,
 	determineNewParentId,
@@ -40,6 +43,7 @@ import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
 import { createDeleteDialogConfig, openConfirmationDialog, SECTION_MOVE_DIALOG_CONFIG } from "./confirmation-dialogs";
 import { DragDropContext, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
+import { SectionHeaderControls } from "./section-header-controls";
 import { SectionIconButton } from "./section-icon-button";
 
 interface SectionListProps {
@@ -722,17 +726,7 @@ export function DragDropSectionManager({
 
 	return (
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
-			<div className="mb-2 flex justify-end">
-				<AppButton
-					data-testid="add-new-section-button"
-					leftIcon={<Plus />}
-					onClick={() => handleAddNewSection()}
-					size="sm"
-					variant="secondary"
-				>
-					Add New Section
-				</AppButton>
-			</div>
+			<SectionHeaderControls onAddNewSection={() => handleAddNewSection()} />
 			<ScrollArea className="flex-1">
 				<DndContext
 					collisionDetection={zoneCollisionDetection}

@@ -238,7 +238,7 @@ function getValidationErrorMessage(
 			return "Please ensure all requirements are met";
 		}
 		case WizardStep.APPLICATION_STRUCTURE: {
-			return "Please ensure there are grant sections available";
+			return "Research plan is missing.";
 		}
 		case WizardStep.KNOWLEDGE_BASE: {
 			return "Please add at least one knowledge source";
