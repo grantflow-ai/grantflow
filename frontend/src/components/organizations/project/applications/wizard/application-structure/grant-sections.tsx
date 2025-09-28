@@ -215,7 +215,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 	const handleResearchPlanToggle = useCallback(() => {
 		const newValue = !(formData.isResearchPlan ?? false);
 
-		setShowResearchPlanWarning(newValue);
+		setShowResearchPlanWarning(!newValue);
 
 		setFormData({
 			...formData,
