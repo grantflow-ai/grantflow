@@ -244,12 +244,10 @@ def analyze_evidence_based_claims(content: str, rag_context: list[DocumentDTO]) 
     evidence_based_count = 0
     content_lower = content.lower()
 
-    # Count evidence indicators
     for indicator in EVIDENCE_INDICATORS:
         if indicator in content_lower:
             evidence_based_count += 1
 
-    # Count citation patterns
     citation_patterns = [
         r"\[[^\]]+\]",
         r"\([^)]*\d{4}[^)]*\)",
@@ -262,16 +260,14 @@ def analyze_evidence_based_claims(content: str, rag_context: list[DocumentDTO]) 
     for pattern in citation_patterns:
         evidence_based_count += len(re.findall(pattern, content_lower, re.IGNORECASE))
 
-    # Bonus for claims that can be verified against RAG context
     if rag_context:
         context_text = " ".join(doc["content"] for doc in rag_context if doc.get("content")).lower()
         content_words = set(content_lower.split())
         context_words = set(context_text.split())
 
-        # Check for substantial overlap with source material
         overlap_ratio = len(content_words.intersection(context_words)) / max(len(content_words), 1)
         if overlap_ratio > 0.3:
-            evidence_based_count += 2  # Bonus for source-grounded claims
+            evidence_based_count += 2
 
     evidence_ratio = evidence_based_count / len(sentences)
 
@@ -428,20 +424,17 @@ async def evaluate_scientific_quality_advanced(
     evidence_based_claims_ratio = analyze_evidence_based_claims(content, rag_context)
     hypothesis_methodology_alignment = assess_hypothesis_methodology_alignment(content)
 
-    # Adjust scoring based on section type
     section_weight_adjustments = {
         "methodology_language_score": 0.20,
         "technical_precision": 0.15,
         "evidence_based_claims_ratio": 0.10,
     }
 
-    # For methodology sections, weight methodology and precision higher
     if section_config["is_detailed_research_plan"]:
         section_weight_adjustments["methodology_language_score"] = 0.30
         section_weight_adjustments["technical_precision"] = 0.20
         section_weight_adjustments["evidence_based_claims_ratio"] = 0.05
 
-    # For clinical trial sections, weight evidence and precision higher
     if section_config["is_clinical_trial"]:
         section_weight_adjustments["evidence_based_claims_ratio"] = 0.20
         section_weight_adjustments["technical_precision"] = 0.25

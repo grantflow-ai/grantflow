@@ -81,7 +81,6 @@ def calculate_cpu_analysis_score(
 
 
 def assess_research_objective_alignment(content: str, research_objectives: list[ResearchObjective]) -> float:
-    """Assess how well content aligns with stated research objectives."""
     if not content.strip() or not research_objectives:
         return 0.5
 
@@ -91,12 +90,10 @@ def assess_research_objective_alignment(content: str, research_objectives: list[
     for objective in research_objectives:
         objective_alignment = 0.0
 
-        # Check for objective title/description keywords in content
         obj_title_words = set(objective["title"].lower().split())
         obj_desc_words = set(objective["description"].lower().split()) if objective.get("description") else set()
         content_words = set(content_lower.split())
 
-        # Calculate keyword overlap
         title_overlap = len(obj_title_words.intersection(content_words)) / max(len(obj_title_words), 1)
         desc_overlap = (
             len(obj_desc_words.intersection(content_words)) / max(len(obj_desc_words), 1) if obj_desc_words else 0
@@ -104,7 +101,6 @@ def assess_research_objective_alignment(content: str, research_objectives: list[
 
         objective_alignment += (title_overlap * 0.6 + desc_overlap * 0.4) * 0.7
 
-        # Check for research task alignment
         research_tasks = objective["research_tasks"]
         if research_tasks:
             task_alignment = 0.0
@@ -248,10 +244,8 @@ async def evaluate_scientific_content(
             cpu_analysis["concept_sophistication"],
         )
 
-        # Assess research objective alignment
         objective_alignment = assess_research_objective_alignment(content, research_objectives)
 
-        # Include objective alignment in overall scoring (small weight)
         base_overall_score = calculate_weighted_overall_score(
             structural_metrics["overall"],
             grounding_metrics["overall"],
@@ -261,8 +255,7 @@ async def evaluate_scientific_content(
             eval_thresholds,
         )
 
-        # Apply objective alignment as a modifier (±5% based on alignment)
-        alignment_modifier = (objective_alignment - 0.5) * 0.1  # -0.05 to +0.05
+        alignment_modifier = (objective_alignment - 0.5) * 0.1
         overall_score = base_overall_score * (1 + alignment_modifier)
 
         recommendation, confidence = determine_recommendation_with_confidence(

@@ -173,7 +173,7 @@ def evaluate_header_structure(content: str) -> float:
 
     header_levels = []
     for header_hash in headers:
-        level = len(header_hash)  # Now we capture just the hash marks
+        level = len(header_hash)
         header_levels.append(level)
 
     if not header_levels:

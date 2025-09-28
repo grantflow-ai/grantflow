@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 @pytest.mark.asyncio
 async def test_complete_evaluation_workflow_biomedical_research() -> None:
-    """End-to-end test of complete evaluation workflow for biomedical research content."""
     content: str = """
     # Biomarker Discovery and Validation in Cardiovascular Disease
 
@@ -132,12 +131,10 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
         trace_id="test_biomedical_001",
     )
 
-    # Comprehensive evaluation of high-quality biomedical research content
     assert result["overall_score"] > 50.0, (
         f"Expected reasonable score for quality biomedical content, got {result['overall_score']}"
     )
 
-    # Verify structure exists
     assert "structural_metrics" in result
     assert "source_grounding_metrics" in result
     assert "scientific_quality_metrics" in result
@@ -146,7 +143,6 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
 
 @pytest.mark.asyncio
 async def test_complete_evaluation_workflow_clinical_trial() -> None:
-    """End-to-end test for clinical trial evaluation workflow."""
     content: str = """
     # Phase III Randomized Controlled Trial Results: Novel Biomarker-Guided Therapy
 
@@ -217,7 +213,7 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
         parent_id=None,
         depends_on=[],
         generation_instructions="Present clinical trial results with statistical rigor and clinical interpretation",
-        is_clinical_trial=True,  # Clinical trial weighting
+        is_clinical_trial=True,
         is_detailed_research_plan=False,
         keywords=[
             "randomized controlled trial",
@@ -241,7 +237,6 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
         trace_id="test_clinical_trial_001",
     )
 
-    # Clinical trial content should score reasonably due to evidence strength
     assert result["overall_score"] > 40.0, (
         f"Expected reasonable score for clinical trial, got {result['overall_score']}"
     )
@@ -251,7 +246,6 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
 
 @pytest.mark.asyncio
 async def test_complete_evaluation_workflow_poor_content() -> None:
-    """End-to-end test with poor quality content to verify rejection workflow."""
     content: str = """
     stuff about biomarkers
 
@@ -302,10 +296,8 @@ async def test_complete_evaluation_workflow_poor_content() -> None:
         trace_id="test_poor_content_001",
     )
 
-    # Poor content should receive low scores
     assert result["overall_score"] < 45.0, f"Expected low score for poor content, got {result['overall_score']}"
 
-    # Verify structure exists
     assert "structural_metrics" in result
     assert "scientific_quality_metrics" in result
     assert "coherence_metrics" in result
@@ -313,16 +305,13 @@ async def test_complete_evaluation_workflow_poor_content() -> None:
 
 @pytest.mark.asyncio
 async def test_evaluation_workflow_with_word_limit_violation() -> None:
-    """Test evaluation workflow when content significantly exceeds word limits."""
-    # Generate content that exceeds limit
     base_content: str = """
     The systematic analysis of biomarker patterns in cardiovascular disease research employs
     advanced computational methodologies for comprehensive protein expression evaluation.
     Statistical significance is determined through rigorous protocols with confidence intervals.
     """
 
-    # Repeat to create content well over limit
-    content: str = base_content * 20  # Approximately 1000+ words
+    content: str = base_content * 20
 
     rag_context: list[DocumentDTO] = [
         DocumentDTO(content="Biomarker analysis requires concise presentation within specified word limits"),
@@ -339,7 +328,7 @@ async def test_evaluation_workflow_with_word_limit_violation() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "analysis", "research"],
-        max_words=200,  # Much less than actual content
+        max_words=200,
         search_queries=["biomarker research"],
         topics=["research methodology"],
     )
@@ -352,17 +341,14 @@ async def test_evaluation_workflow_with_word_limit_violation() -> None:
         trace_id="test_word_limit_001",
     )
 
-    # Word limit violation should significantly impact scores
     assert "structural_metrics" in result
     assert result["structural_metrics"]["word_count_compliance"] < 40.0
 
-    # Overall score should be penalized
     assert result["overall_score"] < 70.0
 
 
 @pytest.mark.asyncio
 async def test_evaluation_workflow_edge_case_empty_content() -> None:
-    """Test evaluation workflow with edge case of empty content."""
     content: str = ""
 
     rag_context: list[DocumentDTO] = [
@@ -392,9 +378,7 @@ async def test_evaluation_workflow_edge_case_empty_content() -> None:
         trace_id="test_empty_content_001",
     )
 
-    # Empty content should receive minimal scores
     assert result["overall_score"] <= 10.0, f"Expected very low score for empty content, got {result['overall_score']}"
 
-    # Verify structure exists
     assert "structural_metrics" in result
     assert "scientific_quality_metrics" in result
