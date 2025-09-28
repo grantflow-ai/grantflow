@@ -5,10 +5,11 @@ from uuid import UUID
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.tables import Grant, GrantingInstitution, RagUrl
+from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.url_utils import normalize_url
 from services.scraper.src.dtos import GrantInfo
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 
@@ -20,15 +21,15 @@ async def get_nih_institution_id() -> UUID:
 
     async with async_session_maker() as session:
         result = await session.scalar(
-            select(GrantingInstitution.id).where(GrantingInstitution.full_name == "National Institutes of Health")
+            select(GrantingInstitution.id).where(func.upper(GrantingInstitution.abbreviation) == "NIH")
         )
 
         if result is None:
-            raise ValueError("NIH granting institution not found in database")
+            raise DatabaseError("NIH granting institution not found in database (looking for abbreviation='NIH')")
 
         logger.debug("Retrieved NIH institution ID", nih_id=str(result))
         if not isinstance(result, UUID):
-            raise TypeError(f"Expected UUID from database, got {type(result)}")
+            raise DatabaseError(f"Expected UUID from database for NIH institution, got {type(result)}")
         return result
 
 

@@ -35,7 +35,12 @@ COPY --chown=appuser:appuser packages /app/packages
 
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
-    APP="services.backend.src.main:app"
+    APP="services.backend.src.main:app" \
+    FONTCONFIG_PATH="/app/.fontconfig" \
+    FONTCONFIG_FILE="/app/.fontconfig"
+
+# Create fontconfig cache directory writable by appuser
+RUN mkdir -p /app/.fontconfig && chown -R appuser:appuser /app/.fontconfig
 
 USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --port ${PORT:-8000} --log-level info --timeout-keep-alive 1800"]

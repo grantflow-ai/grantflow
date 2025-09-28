@@ -1,7 +1,4 @@
-import base64
-import json
 import os
-from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -9,14 +6,8 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def functions_env() -> None:
-    os.environ.setdefault("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
-    os.environ.setdefault("ENVIRONMENT", "test")
-    os.environ.setdefault("PROJECT_ID", "grantflow-test")
     os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow-test")
-    os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
-    os.environ.setdefault("RESEND_API_KEY", "test-resend-api-key")
-    os.environ.setdefault("DATABASE_CONNECTION_STRING", "postgresql+asyncpg://test:test@localhost:5432/test")
-    os.environ.setdefault("SITE_URL", "https://test.grantflow.ai")
+    os.environ.setdefault("PROJECT_ID", "grantflow-test")
 
 
 @pytest.fixture
@@ -24,61 +15,3 @@ def mock_request() -> Mock:
     request = Mock()
     request.data = {}
     return request
-
-
-@pytest.fixture
-def mock_pubsub_message() -> dict[str, Any]:
-    return {
-        "message": {
-            "data": base64.b64encode(b'{"test": "data"}').decode("utf-8"),
-            "attributes": {},
-            "messageId": "test-message-id",
-            "publishTime": "2025-01-01T00:00:00Z",
-        }
-    }
-
-
-@pytest.fixture
-def app_hosting_alert_data() -> dict[str, Any]:
-    return {
-        "incident": {
-            "policy_name": "App Hosting Error Rate",
-            "condition_name": "Error rate too high",
-            "state": "OPEN",
-            "summary": "Error rate exceeded 5% threshold",
-            "started_at": "2025-01-01T00:00:00Z",
-        },
-        "resource": {
-            "labels": {
-                "service_name": "grantflow-backend",
-                "project_id": "grantflow-test",
-            }
-        },
-    }
-
-
-@pytest.fixture
-def budget_alert_data() -> dict[str, Any]:
-    return {
-        "budgetDisplayName": "Monthly Budget",
-        "costAmount": 85.50,
-        "budgetAmount": 100.00,
-        "currencyCode": "USD",
-        "projectId": "grantflow-test",
-        "alertThresholdExceeded": {"spendUpdateTime": "2025-01-01T00:00:00Z"},
-        "forecastedAmount": 95.00,
-    }
-
-
-@pytest.fixture
-def encoded_pubsub_data() -> str:
-    data = {"test": "data"}
-    return base64.b64encode(json.dumps(data).encode()).decode("utf-8")
-
-
-@pytest.fixture
-def mock_discord_webhook_response() -> Mock:
-    response = Mock()
-    response.status_code = 204
-    response.text = ""
-    return response

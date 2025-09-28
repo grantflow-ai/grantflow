@@ -55,7 +55,7 @@ def verify_jwt_token(token: str) -> str:
         KeyError,
         InvalidTokenError,
     ) as e:
-        logger.warning("Error verifying jwt.", exec_info=e)
+        logger.warning("Error verifying jwt.", exc_info=True)
         raise NotAuthorizedException("Invalid jwt") from e
 
 
@@ -83,5 +83,5 @@ def decode_jwt_claims(token: str) -> JWTClaims:
         KeyError,
         InvalidTokenError,
     ) as e:
-        logger.warning("Error decoding JWT claims", exec_info=e)
+        logger.warning("Error decoding JWT claims", exc_info=True)
         raise NotAuthorizedException("Invalid jwt") from e

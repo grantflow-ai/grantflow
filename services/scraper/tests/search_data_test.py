@@ -2,7 +2,7 @@ from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from services.scraper.src.exceptions import ScraperError
+from packages.shared_utils.src.exceptions import ExternalOperationError
 from services.scraper.src.search_data import (
     DEFAULT_FROM_DATE,
     NIH_GRANT_BASE_URL,
@@ -114,7 +114,7 @@ async def test_download_search_data_no_advanced_search_link() -> None:
     with patch("services.scraper.src.search_data.async_playwright") as mock_async_playwright:
         mock_async_playwright.return_value.__aenter__.return_value = mock_playwright
 
-        with pytest.raises(ScraperError, match="Failed to find or click Advanced Search link"):
+        with pytest.raises(ExternalOperationError, match="Failed to find or click Advanced Search link"):
             await download_search_data()
 
 
@@ -175,5 +175,5 @@ async def test_download_search_data_export_fails() -> None:
     with patch("services.scraper.src.search_data.async_playwright") as mock_async_playwright:
         mock_async_playwright.return_value.__aenter__.return_value = mock_playwright
 
-        with pytest.raises(ScraperError, match="Unable to download grant data from NIH site"):
+        with pytest.raises(ExternalOperationError, match="Unable to download grant data from NIH site"):
             await download_search_data()

@@ -6,12 +6,12 @@ from typing import Final, cast
 
 from anyio import Path as AsyncPath
 from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.exceptions import ExternalOperationError
 from packages.shared_utils.src.logger import get_logger
 from pandas import read_csv
 from playwright.async_api import Download, Page, async_playwright
 from services.scraper.src.db_utils import batch_save_grants
 from services.scraper.src.dtos import GrantInfo
-from services.scraper.src.exceptions import ScraperError
 
 logger = get_logger(__name__)
 
@@ -61,13 +61,13 @@ async def _navigate_to_search_page(page: Page) -> None:
         logger.info("Page loaded", title=title, current_url=current_url)
 
         if "error" in title.lower() or "404" in title or "not found" in title.lower():
-            raise ScraperError(f"NIH page failed to load properly. Title: {title}, URL: {current_url}")
+            raise ExternalOperationError(f"NIH page failed to load properly. Title: {title}, URL: {current_url}")
 
     except Exception as e:
         logger.error("Failed to navigate to NIH grants page", url=url, error=str(e))
         debug_path = TEMP_DIR / "scraper_debug_navigation_failed.png"
         await page.screenshot(path=str(debug_path), full_page=True)
-        raise ScraperError(f"Failed to navigate to NIH grants page {url}: {e}") from e
+        raise ExternalOperationError(f"Failed to navigate to NIH grants page {url}: {e}") from e
 
     try:
         logger.info("Looking for Advanced Search link")
@@ -94,7 +94,7 @@ async def _navigate_to_search_page(page: Page) -> None:
             available_links = await page.evaluate(
                 "() => Array.from(document.querySelectorAll('a')).map(a => ({ text: a.textContent?.trim(), href: a.href })).slice(0, 10)"
             )
-            raise ScraperError(
+            raise ExternalOperationError(
                 f"Advanced Search link not found. Available links: {available_links[:5]}. "
                 f"Page content snippet: {page_content[:500]}"
             )
@@ -111,7 +111,7 @@ async def _navigate_to_search_page(page: Page) -> None:
         page_html = await page.content()
         logger.error("Page HTML snippet for debugging", html_snippet=page_html[:1000])
 
-        raise ScraperError(f"Failed to find or click Advanced Search link: {e}") from e
+        raise ExternalOperationError(f"Failed to find or click Advanced Search link: {e}") from e
 
     debug_path = TEMP_DIR / DEBUG_AFTER_SEARCH
     await page.screenshot(path=str(debug_path), full_page=True)
@@ -174,7 +174,7 @@ async def _submit_search_form(page: Page) -> None:
             available_buttons = await page.evaluate(
                 "() => Array.from(document.querySelectorAll('button, input[type=submit]')).map(b => ({ text: b.textContent?.trim() || b.value, type: b.type, disabled: b.disabled })).slice(0, 10)"
             )
-            raise ScraperError(f"Search button not found. Available buttons: {available_buttons}")
+            raise ExternalOperationError(f"Search button not found. Available buttons: {available_buttons}")
 
         await search_button.click()
         logger.info("Clicked Search button in dialog")
@@ -190,7 +190,7 @@ async def _submit_search_form(page: Page) -> None:
         )
         logger.error("Dialog content for debugging", dialog_content=dialog_content[:500])
 
-        raise ScraperError(f"Failed to find or click Search button: {e}") from e
+        raise ExternalOperationError(f"Failed to find or click Search button: {e}") from e
 
     debug_path = TEMP_DIR / DEBUG_AFTER_SUBMIT
     await page.screenshot(path=str(debug_path), full_page=True)
@@ -260,7 +260,7 @@ async def _export_and_download_results(page: Page) -> Download | None:
                 }"""
             )
 
-            raise ScraperError(
+            raise ExternalOperationError(
                 f"Export button not found. Available clickable elements: {clickable_elements}. "
                 f"Page content snippet: {page_content[:300]}"
             )
@@ -280,9 +280,11 @@ async def _export_and_download_results(page: Page) -> Download | None:
                 new_content = await new_page.content()
                 if "csv" in new_content.lower() or "export" in new_content.lower():
                     logger.warning("Export opened in new page instead of downloading")
-                    raise ScraperError("Export opened in new page - NIH site behavior may have changed") from None
+                    raise ExternalOperationError(
+                        "Export opened in new page - NIH site behavior may have changed"
+                    ) from None
 
-            raise ScraperError(
+            raise ExternalOperationError(
                 f"Download did not start after clicking export button: {download_error}"
             ) from download_error
 
@@ -295,7 +297,7 @@ async def _export_and_download_results(page: Page) -> Download | None:
         logger.error("Export failed - final page state", url=final_url, error=str(e))
 
         if not download:
-            raise ScraperError(
+            raise ExternalOperationError(
                 f"Unable to download grant data from NIH site. Final URL: {final_url}. Error: {e}"
             ) from e
 
@@ -319,12 +321,12 @@ async def _process_csv_download(download: Download) -> list[GrantInfo]:
 
         for record in records[:1]:
             if not isinstance(record, dict):
-                raise ScraperError("Invalid CSV structure: expected dictionary records")
+                raise ExternalOperationError("Invalid CSV structure: expected dictionary records")
 
         search_data = cast("list[GrantInfo]", records)
     except Exception as e:
         await tmp_path.unlink(missing_ok=True)
-        raise ScraperError(f"Failed to process downloaded CSV: {e!s}") from e
+        raise ExternalOperationError(f"Failed to process downloaded CSV: {e!s}") from e
 
     return search_data
 
@@ -388,6 +390,6 @@ async def download_search_data(*, to_date: date = TODAY_DATE, from_date: date = 
             from_date=from_date.isoformat(),
             to_date=to_date.isoformat(),
         )
-        raise ScraperError(
+        raise ExternalOperationError(
             f"Scraper operation timed out after {timeout_seconds} seconds. This likely indicates that the NIH website structure has changed and the scraper needs to be updated."
         ) from None

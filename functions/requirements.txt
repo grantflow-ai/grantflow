@@ -23,7 +23,6 @@ click==8.3.0
     #   functions-framework
 cloudevents==1.12.0
     # via
-    #   grantflow-cloud-functions (functions/pyproject.toml)
     #   firebase-functions
     #   functions-framework
 cryptography==46.0.1
@@ -44,9 +43,7 @@ flask==3.1.2
 flask-cors==6.0.1
     # via firebase-functions
 functions-framework==3.8.3
-    # via
-    #   grantflow-cloud-functions (functions/pyproject.toml)
-    #   firebase-functions
+    # via firebase-functions
 google-api-core==2.25.1
     # via
     #   firebase-admin
@@ -98,9 +95,7 @@ hpack==4.1.0
 httpcore==1.0.9
     # via httpx
 httpx==0.28.1
-    # via
-    #   grantflow-cloud-functions (functions/pyproject.toml)
-    #   firebase-admin
+    # via firebase-admin
 hyperframe==6.1.0
     # via h2
 idna==3.10
