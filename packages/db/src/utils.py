@@ -121,12 +121,18 @@ async def update_source_indexing_status(
     indexing_status: SourceIndexingStatusEnum,
     trace_id: str,
     document_metadata: DocumentMetadata | None = None,
+    error_type: str | None = None,
+    error_message: str | None = None,
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
             update_values: dict[str, Any] = {"indexing_status": indexing_status, "text_content": text_content}
             if document_metadata is not None:
                 update_values["document_metadata"] = document_metadata
+            if error_type is not None:
+                update_values["error_type"] = error_type
+            if error_message is not None:
+                update_values["error_message"] = error_message
 
             await session.execute(
                 update(RagSource)
