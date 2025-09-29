@@ -11,7 +11,7 @@ from services.rag.src.utils.evaluation.quality_standards import (
 )
 
 if TYPE_CHECKING:
-    from services.rag.src.utils.evaluation.dto import FastEvaluationResult
+    from services.rag.src.utils.evaluation.dto import EvaluationResult
 
 
 @pytest.mark.asyncio
@@ -127,7 +127,7 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
         topics=["biomedical research", "cardiovascular disease", "biomarker validation"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result: EvaluationResult = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -235,7 +235,7 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
         topics=["clinical trials", "cardiovascular intervention", "precision medicine"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result: EvaluationResult = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -294,7 +294,7 @@ async def test_complete_evaluation_workflow_poor_content() -> None:
         topics=["research quality"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result: EvaluationResult = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -339,7 +339,7 @@ async def test_evaluation_workflow_with_word_limit_violation() -> None:
         topics=["research methodology"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result: EvaluationResult = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -376,7 +376,7 @@ async def test_evaluation_workflow_edge_case_empty_content() -> None:
         topics=["research"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result: EvaluationResult = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,

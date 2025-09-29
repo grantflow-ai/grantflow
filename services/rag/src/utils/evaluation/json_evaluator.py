@@ -66,17 +66,23 @@ def _detect_json_content_type(parsed_content: Any) -> str | None:
 
 def _evaluate_content_by_type(
     content_type: str, parsed_content: Any, context: EvaluationContext
-) -> tuple[Any | None, str]:
+) -> tuple[dict[str, Any] | None, str]:
     """Evaluate content based on detected type and return metrics and feedback."""
+    metrics: dict[str, Any] | None = None
+    feedback: str = ""
+
     if content_type == "objectives":
-        metrics = evaluate_objectives_quality(
-            objectives=parsed_content,
-            keywords=context.get("keywords", []),
-            topics=context.get("topics", []),
+        metrics = cast(
+            "dict[str, Any]",
+            evaluate_objectives_quality(
+                objectives=parsed_content,
+                keywords=context.get("keywords", []),
+                topics=context.get("topics", []),
+            ),
         )
         feedback = "JSON evaluation: Research objectives structure validated"
     elif content_type == "relationships":
-        metrics = evaluate_relationships_quality(relationships=parsed_content)
+        metrics = cast("dict[str, Any]", evaluate_relationships_quality(relationships=parsed_content))
         feedback = "JSON evaluation: Relationships structure validated"
     elif content_type == "enrichment":
         # Handle both single enrichment and objective with tasks
@@ -85,16 +91,19 @@ def _evaluate_content_by_type(
         else:
             enrichment_data = parsed_content
 
-        metrics = evaluate_enrichment_quality(
-            enrichment_data=enrichment_data,
-            keywords=context.get("keywords", []),
-            topics=context.get("topics", []),
+        metrics = cast(
+            "dict[str, Any]",
+            evaluate_enrichment_quality(
+                enrichment_data=enrichment_data,
+                keywords=context.get("keywords", []),
+                topics=context.get("topics", []),
+            ),
         )
         feedback = "JSON evaluation: Enrichment data structure validated"
     elif content_type == "cfp_analysis":
         # Cast to CFPAnalysisData type for evaluation
         cfp_data = parsed_content
-        metrics = evaluate_cfp_analysis_quality(cfp_data=cfp_data)
+        metrics = cast("dict[str, Any]", evaluate_cfp_analysis_quality(cfp_data=cfp_data))
         feedback = "JSON evaluation: CFP analysis structure validated"
     else:
         return None, ""
@@ -128,7 +137,7 @@ def _calculate_confidence(metrics: Any, settings: EvaluationSettings, overall_sc
         if semantic_avg >= semantic_threshold:
             return 0.85  # Medium-high confidence for good semantics
         calculated_avg = (structural_avg + semantic_avg) / 2
-        return max(0.7, calculated_avg)
+        return float(max(0.7, calculated_avg))
 
     return min(0.95, overall_score / 100 + 0.15)  # JSON gets confidence boost
 

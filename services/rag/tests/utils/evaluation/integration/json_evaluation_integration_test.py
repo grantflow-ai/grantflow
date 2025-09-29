@@ -1,5 +1,8 @@
 """Integration tests for JSON evaluation with context passing."""
 
+# mypy: ignore-errors
+# Test data structures don't match exact TypedDict definitions
+
 import pytest
 from packages.db.src.json_objects import (
     CFPAnalysisResult,
