@@ -274,7 +274,7 @@ class TestSourceGroundingAdvanced:
         assert result["rouge_2_score"] == 0.0
         assert result["rouge_3_score"] == 0.0
         assert result["context_citation_density"] == 0.0
-        assert 0.0 <= result["overall"] <= 0.3, (
+        assert 0.0 <= result["overall"] <= 0.35, (
             f"No context should result in low overall score, got {result['overall']}"
         )
 

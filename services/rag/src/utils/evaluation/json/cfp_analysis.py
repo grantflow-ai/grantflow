@@ -117,20 +117,28 @@ def _evaluate_completeness(cfp_data: CFPAnalysisData) -> float:
     clarity_score = 0.0
 
     for criterion in criteria:
-        # Check criterion completeness
-        if criterion.get("criterion_name"):
-            clarity_score += 0.2
+        # Handle both string and object formats
+        if isinstance(criterion, str):
+            # Simple string format - evaluate based on length and content
+            if len(criterion) > 20:
+                clarity_score += 0.5
+            if any(indicator in criterion.lower() for indicator in ["(%)", "percent", "weight"]):
+                clarity_score += 0.3
+        else:
+            # Object format - use original logic
+            if criterion.get("criterion_name"):
+                clarity_score += 0.2
 
-        if criterion.get("description") and len(criterion.get("description", "")) > 20:
-            clarity_score += 0.3
+            if criterion.get("description") and len(criterion.get("description", "")) > 20:
+                clarity_score += 0.3
 
-        # Weight percentage adds specificity
-        if criterion.get("weight_percentage") is not None:
-            clarity_score += 0.3
+            # Weight percentage adds specificity
+            if criterion.get("weight_percentage") is not None:
+                clarity_score += 0.3
 
-        # Source quote adds credibility
-        if criterion.get("quote_from_source"):
-            clarity_score += 0.2
+            # Source quote adds credibility
+            if criterion.get("quote_from_source"):
+                clarity_score += 0.2
 
     return min(1.0, clarity_score / len(criteria)) if criteria else 0.0
 

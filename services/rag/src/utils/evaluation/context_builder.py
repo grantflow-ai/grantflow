@@ -44,9 +44,7 @@ def build_evaluation_context(
     if rag_context:
         if isinstance(rag_context, str):
             # Convert string context to DocumentDTO list
-            context["rag_context"] = [
-                DocumentDTO(content=rag_context)
-            ]
+            context["rag_context"] = [DocumentDTO(content=rag_context)]
         elif isinstance(rag_context, list):
             context["rag_context"] = rag_context
 
@@ -58,14 +56,17 @@ def build_evaluation_context(
     if reference_corpus:
         context["reference_corpus"] = reference_corpus
 
-    # Add CFP analysis as additional context
+    # Add CFP analysis
     if cfp_analysis:
-        # Store in additional context for now
-        # Could extend EvaluationContext to include cfp_analysis field
-        context.update({"cfp_analysis": cfp_analysis})
+        context["cfp_analysis"] = cfp_analysis
 
-    # Add any additional context
-    context.update(additional_context)
+    # Add any additional context (only for compatible keys)
+    if "content_type" in additional_context:
+        context["content_type"] = additional_context["content_type"]
+    if "keywords" in additional_context:
+        context["keywords"] = additional_context["keywords"]
+    if "topics" in additional_context:
+        context["topics"] = additional_context["topics"]
 
     return context
 
@@ -97,14 +98,17 @@ def build_evaluation_settings(
         force_llm_evaluation=force_llm_evaluation,
     )
 
-    # Adjust thresholds based on content type
-    if is_clinical_trial:
-        # Higher standards for clinical trials
+    # Adjust thresholds based on content type - clinical trial has precedence
+    if is_clinical_trial and is_detailed_research_plan:
+        # Both flags - use clinical trial settings (higher standards)
         settings["fast_confidence_threshold"] = 0.85
         settings["fast_accept_threshold"] = 90.0
-
-    if is_detailed_research_plan:
-        # Higher standards for research plans
+    elif is_clinical_trial:
+        # Clinical trial only
+        settings["fast_confidence_threshold"] = 0.85
+        settings["fast_accept_threshold"] = 90.0
+    elif is_detailed_research_plan:
+        # Research plan only
         settings["fast_confidence_threshold"] = 0.8
         settings["fast_accept_threshold"] = 85.0
 
@@ -116,7 +120,27 @@ def build_evaluation_settings(
         settings["fast_weight"] = 0.5
         settings["llm_weight"] = 0.5
 
-    # Add any additional settings
-    settings.update(additional_settings)
+    # Add any additional settings (only for compatible keys)
+    for key, value in additional_settings.items():
+        if key == "enable_fast_evaluation" and isinstance(value, bool):
+            settings["enable_fast_evaluation"] = value
+        elif key == "fast_confidence_threshold" and isinstance(value, (int, float)):
+            settings["fast_confidence_threshold"] = float(value)
+        elif key == "fast_accept_threshold" and isinstance(value, (int, float)):
+            settings["fast_accept_threshold"] = float(value)
+        elif key == "fast_review_threshold" and isinstance(value, (int, float)):
+            settings["fast_review_threshold"] = float(value)
+        elif key == "force_llm_evaluation" and isinstance(value, bool):
+            settings["force_llm_evaluation"] = value
+        elif key == "llm_timeout" and isinstance(value, (int, float)):
+            settings["llm_timeout"] = float(value)
+        elif key == "fast_weight" and isinstance(value, (int, float)):
+            settings["fast_weight"] = float(value)
+        elif key == "llm_weight" and isinstance(value, (int, float)):
+            settings["llm_weight"] = float(value)
+        elif key == "json_confidence_threshold" and isinstance(value, (int, float)):
+            settings["json_confidence_threshold"] = float(value)
+        elif key == "json_semantic_threshold" and isinstance(value, (int, float)):
+            settings["json_semantic_threshold"] = float(value)
 
     return settings

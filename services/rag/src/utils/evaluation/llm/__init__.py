@@ -8,7 +8,7 @@ from services.rag.src.utils.evaluation.dto import (
 from services.rag.src.utils.evaluation.llm.evaluation import (
     EvaluationToolResponse,
     evaluate_output,
-    with_prompt_evaluation,
+    with_evaluation,
 )
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     "EvaluationToolResponse",
     "LLMEvaluationResponse",
     "evaluate_output",
-    "with_prompt_evaluation",
+    "with_evaluation",
 ]

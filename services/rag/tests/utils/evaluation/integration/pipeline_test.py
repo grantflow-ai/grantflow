@@ -133,8 +133,8 @@ async def test_fast_evaluate_high_quality_content(
     assert result["execution_time_ms"] < 10000, f"Execution too slow: {result['execution_time_ms']}ms"
 
     assert result["structural_metrics"]["overall"] > 0.3, "Structural score too low"
-    assert result["source_grounding_metrics"]["overall"] > 0.25, "Source grounding score too low"
-    assert result["scientific_quality_metrics"]["overall"] > 0.3, "Scientific quality score too low"
+    assert result["grounding_metrics"]["overall"] > 0.25, "Source grounding score too low"
+    assert result["quality_metrics"]["overall"] > 0.3, "Scientific quality score too low"
     assert result["coherence_metrics"]["overall"] > 0.3, "Coherence score too low"
 
 
@@ -197,7 +197,7 @@ async def test_fast_evaluate_no_rag_context(
     )
 
     assert result["overall_score"] > 20.0, "Should have some score even without RAG context"
-    assert result["source_grounding_metrics"]["overall"] <= 0.25, "Should have low source grounding without context"
+    assert result["grounding_metrics"]["overall"] <= 0.25, "Should have low source grounding without context"
     assert result["structural_metrics"]["overall"] > 0.3, "Structural analysis should still work"
 
 
@@ -258,12 +258,10 @@ async def test_evaluation_components_functional() -> None:
 
 
 def test_fast_pipeline_imports() -> None:
-    from services.rag.src.utils.evaluation import (
-        FastEvaluationResult,
-        evaluate_scientific_content,
-    )
+    from services.rag.src.utils.evaluation import evaluate_scientific_content
+    from services.rag.src.utils.evaluation.dto import EvaluationResult
 
-    assert FastEvaluationResult is not None
+    assert EvaluationResult is not None
     assert evaluate_scientific_content is not None
 
     assert callable(evaluate_scientific_content)
