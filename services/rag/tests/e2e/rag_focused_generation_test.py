@@ -139,8 +139,33 @@ async def test_rag_focused_prompts_generation(
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
     ):
+        # Create a mock dto for the sections stage
+        from services.rag.src.grant_application.dto import GenerateResearchPlanStageDTO
+
+        mock_dto = GenerateResearchPlanStageDTO(
+            work_plan_section={
+                "id": "research_plan",
+                "title": "Research Plan",
+                "order": 1,
+                "parent_id": None,
+                "keywords": [],
+                "topics": [],
+                "generation_instructions": "Test",
+                "depends_on": [],
+                "max_words": 1000,
+                "search_queries": [],
+                "is_detailed_research_plan": True,
+                "is_clinical_trial": None,
+            },
+            relationships={},
+            enrichment_responses=[],
+            wikidata_enrichments=[],
+            research_plan_text="Mock research plan for E2E test",
+        )
+
         result = await handle_generate_sections_stage(
             grant_application=application,
+            dto=mock_dto,
             job_manager=mock_job_manager,
             trace_id="test-trace-id",
         )
