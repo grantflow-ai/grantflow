@@ -219,6 +219,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Python and UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Prepare Cloud Functions for deployment
+        run: |
+          echo "📦 Preparing Cloud Functions for deployment..."
+          echo "Copying workspace packages to functions directory..."
+          cp -r packages functions/
+          echo "Generating requirements.txt from workspace dependencies..."
+          uv export \
+            --format requirements-txt \
+            --output-file functions/dlq_manager/requirements.txt \
+            --no-hashes \
+            --no-editable \
+            --group functions
+          echo "🔧 Removing workspace package references (packages will be copied directly)..."
+          grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp
+          mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
+          echo "✅ Cloud Functions prepared for deployment"
+
       - name: Setup GCP Auth
         uses: google-github-actions/auth@v3
         with:
@@ -355,6 +378,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Setup Python and UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Prepare Cloud Functions for deployment
+        run: |
+          echo "📦 Preparing Cloud Functions for deployment..."
+          echo "Copying workspace packages to functions directory..."
+          cp -r packages functions/
+          echo "Generating requirements.txt from workspace dependencies..."
+          uv export \
+            --format requirements-txt \
+            --output-file functions/dlq_manager/requirements.txt \
+            --no-hashes \
+            --no-editable \
+            --group functions
+          echo "🔧 Removing workspace package references (packages will be copied directly)..."
+          grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp
+          mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
+          echo "✅ Cloud Functions prepared for deployment"
 
       - name: Setup GCP Auth
         uses: google-github-actions/auth@v3

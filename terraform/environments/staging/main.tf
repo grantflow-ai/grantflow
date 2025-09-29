@@ -169,6 +169,16 @@ module "pubsub" {
   fn_alerts_budget_staging_url     = ""
 }
 
+module "cloud_functions" {
+  source                                  = "../../modules/cloud_functions"
+  project_id                              = var.project_id
+  region                                  = var.region
+  environment                             = var.environment
+  database_url                            = module.secrets.database_url
+  vpc_connector_name                      = module.network.vpc_connector_name
+  scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+}
+
 module "scheduler" {
   source                                  = "../../modules/scheduler"
   project_id                              = var.project_id
@@ -177,6 +187,7 @@ module "scheduler" {
   scraper_url                             = module.cloud_run.scraper_url
   backend_url                             = module.cloud_run.backend_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+  dlq_manager_function_uri                = module.cloud_functions.dlq_manager_function_uri
   timezone                                = "Europe/Berlin"
 }
 

@@ -1,0 +1,21 @@
+# Exclude everything by default
+**
+
+# Include only what's needed
+!main.py
+!requirements.txt
+
+# Include shared packages
+!../../packages/db/**
+!../../packages/shared_utils/**
+
+# Exclude Python cache and build artifacts from packages
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.egg-info/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/tests/
+**/*_test.py
