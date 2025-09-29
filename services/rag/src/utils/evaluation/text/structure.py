@@ -211,7 +211,7 @@ def evaluate_header_structure(content: str) -> float:
     return min(1.0, structure_score)
 
 
-async def evaluate_structure_advanced(content: str, section_config: GrantLongFormSection) -> StructuralMetrics:
+async def evaluate_structure(content: str, section_config: GrantLongFormSection) -> StructuralMetrics:
     word_count_compliance = evaluate_word_count_compliance(content, section_config["max_words"])
     paragraph_distribution = analyze_paragraph_structure(content)
     section_organization = check_section_organization(content)

@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from services.rag.src.utils.evaluation.coherence import (
+from services.rag.src.utils.evaluation.text.coherence import (
     analyze_paragraph_unity,
     analyze_sentence_transitions,
     assess_argument_flow_consistency,
     calculate_lexical_diversity,
     calculate_repetition_penalty,
-    evaluate_coherence_advanced,
+    evaluate_coherence,
 )
 
 if TYPE_CHECKING:
@@ -164,7 +164,7 @@ async def test_calculate_repetition_penalty_empty_content() -> None:
 
 
 @pytest.mark.asyncio
-async def test_evaluate_coherence_advanced_high_quality() -> None:
+async def test_evaluate_coherence_high_quality() -> None:
     content: str = """
     # Research Methodology
 
@@ -185,7 +185,7 @@ async def test_evaluate_coherence_advanced_high_quality() -> None:
     Clinical trials confirm the effectiveness of our methodology in diverse patient populations.
     """
 
-    result: CoherenceMetrics = await evaluate_coherence_advanced(content)
+    result: CoherenceMetrics = await evaluate_coherence(content)
 
     assert result["overall"] > 0.3, f"Expected reasonable overall coherence, got {result['overall']}"
     assert result["local_coherence"] >= 0.2, f"Expected decent local coherence, got {result['local_coherence']}"
@@ -198,7 +198,7 @@ async def test_evaluate_coherence_advanced_high_quality() -> None:
 
 
 @pytest.mark.asyncio
-async def test_evaluate_coherence_advanced_poor_quality() -> None:
+async def test_evaluate_coherence_poor_quality() -> None:
     content: str = """
     Bad writing here. No connections. Random sentences.
     The biomarker is good. Also bad. Maybe works.
@@ -206,7 +206,7 @@ async def test_evaluate_coherence_advanced_poor_quality() -> None:
     Repetitive text here. Repetitive text here. Repetitive text here.
     """
 
-    result: CoherenceMetrics = await evaluate_coherence_advanced(content)
+    result: CoherenceMetrics = await evaluate_coherence(content)
 
     assert result["overall"] <= 0.6, f"Expected low overall coherence, got {result['overall']}"
     assert 0.0 <= result["local_coherence"] <= 1.0
@@ -219,8 +219,8 @@ async def test_evaluate_coherence_advanced_poor_quality() -> None:
 
 
 @pytest.mark.asyncio
-async def test_evaluate_coherence_advanced_empty_content() -> None:
-    result: CoherenceMetrics = await evaluate_coherence_advanced("")
+async def test_evaluate_coherence_empty_content() -> None:
+    result: CoherenceMetrics = await evaluate_coherence("")
 
     assert result["overall"] == 0.0, f"Expected zero score for empty content, got {result['overall']}"
     assert result["local_coherence"] == 0.0

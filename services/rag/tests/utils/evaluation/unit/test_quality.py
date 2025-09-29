@@ -2,16 +2,16 @@ import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.quality import (
+from services.rag.src.utils.evaluation.text.quality import (
     analyze_evidence_based_claims,
     assess_academic_register,
     assess_hypothesis_methodology_alignment,
     assess_technical_precision,
     calculate_scientific_term_density,
     detect_methodology_language,
-    evaluate_scientific_quality_advanced,
+    evaluate_scientific_quality,
 )
-from services.rag.src.utils.evaluation.scientific_analysis import create_scientific_vocabulary
+from services.rag.src.utils.evaluation.text.scientific import create_scientific_vocabulary
 
 
 class TestScientificTermDensity:
@@ -181,7 +181,7 @@ class TestHypothesisMethodologyAlignment:
 
 class TestScientificQualityAdvanced:
     @pytest.mark.asyncio
-    async def test_evaluate_scientific_quality_advanced_high_quality(self) -> None:
+    async def test_evaluate_scientific_quality_high_quality(self) -> None:
         content = """
         # Biomarker Analysis Methodology
 
@@ -217,10 +217,10 @@ class TestScientificQualityAdvanced:
             topics=["research methods"],
         )
 
-        result = await evaluate_scientific_quality_advanced(content, rag_context, section_config)
+        result = await evaluate_scientific_quality(content, rag_context, section_config)
 
         assert result["overall"] > 0.5, f"Expected good overall quality, got {result['overall']}"
-        assert result["scientific_term_density"] > 0.5
+        assert result["term_density"] > 0.5
         assert result["methodology_language_score"] > 0.5
         assert result["academic_register_score"] >= 0.3
         assert result["technical_precision"] > 0.4
@@ -228,7 +228,7 @@ class TestScientificQualityAdvanced:
         assert 0.0 <= result["hypothesis_methodology_alignment"] <= 1.0
 
     @pytest.mark.asyncio
-    async def test_evaluate_scientific_quality_advanced_clinical_trial_weighting(self) -> None:
+    async def test_evaluate_scientific_quality_clinical_trial_weighting(self) -> None:
         content = """
         The clinical trial demonstrates significant efficacy of the biomarker panel.
         Evidence shows [1] correlation with patient outcomes according to published studies.
@@ -253,7 +253,7 @@ class TestScientificQualityAdvanced:
             topics=["clinical outcomes"],
         )
 
-        result = await evaluate_scientific_quality_advanced(content, rag_context, section_config)
+        result = await evaluate_scientific_quality(content, rag_context, section_config)
 
         assert result["evidence_based_claims_ratio"] >= 0.2, (
             f"Expected some evidence-based claims, got {result['evidence_based_claims_ratio']}"
@@ -264,7 +264,7 @@ class TestScientificQualityAdvanced:
         assert result["overall"] >= 0.3, f"Expected reasonable overall quality, got {result['overall']}"
 
     @pytest.mark.asyncio
-    async def test_evaluate_scientific_quality_advanced_empty_content(self) -> None:
+    async def test_evaluate_scientific_quality_empty_content(self) -> None:
         rag_context: list[DocumentDTO] = []
 
         section_config = GrantLongFormSection(
@@ -282,7 +282,7 @@ class TestScientificQualityAdvanced:
             topics=[],
         )
 
-        result = await evaluate_scientific_quality_advanced("", rag_context, section_config)
+        result = await evaluate_scientific_quality("", rag_context, section_config)
 
         assert result["overall"] == 0.0, f"Empty content should score 0.0, got {result['overall']}"
         assert all(score == 0.0 for score in result.values()), "All scores should be 0.0 for empty content"

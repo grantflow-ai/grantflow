@@ -4,20 +4,20 @@ import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.coherence import evaluate_coherence_advanced
-from services.rag.src.utils.evaluation.quality import evaluate_scientific_quality_advanced
 from services.rag.src.utils.evaluation.quality_standards import (
     COMPONENT_REQUIREMENTS,
     ContentType,
 )
-from services.rag.src.utils.evaluation.source_grounding import evaluate_source_grounding_advanced
-from services.rag.src.utils.evaluation.structural import evaluate_structure_advanced
+from services.rag.src.utils.evaluation.text.coherence import evaluate_coherence
+from services.rag.src.utils.evaluation.text.grounding import evaluate_source_grounding
+from services.rag.src.utils.evaluation.text.quality import evaluate_scientific_quality
+from services.rag.src.utils.evaluation.text.structure import evaluate_structure
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import (
         CoherenceMetrics,
-        ScientificQualityMetrics,
-        SourceGroundingMetrics,
+        GroundingMetrics,
+        QualityMetrics,
         StructuralMetrics,
     )
 
@@ -60,8 +60,8 @@ async def test_coherence_quality_correlation() -> None:
         topics=["methodology"],
     )
 
-    coherence_result: CoherenceMetrics = await evaluate_coherence_advanced(high_quality_content)
-    quality_result: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
+    coherence_result: CoherenceMetrics = await evaluate_coherence(high_quality_content)
+    quality_result: QualityMetrics = await evaluate_scientific_quality(
         high_quality_content, rag_context, section_config
     )
 
@@ -75,10 +75,8 @@ async def test_coherence_quality_correlation() -> None:
     more random text without transitions or logic.
     """
 
-    coherence_poor: CoherenceMetrics = await evaluate_coherence_advanced(poor_content)
-    quality_poor: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
-        poor_content, [], section_config
-    )
+    coherence_poor: CoherenceMetrics = await evaluate_coherence(poor_content)
+    quality_poor: QualityMetrics = await evaluate_scientific_quality(poor_content, [], section_config)
 
     assert coherence_poor["overall"] < 0.4
     assert quality_poor["overall"] < 0.4
@@ -137,8 +135,8 @@ async def test_structure_coherence_interaction() -> None:
         topics=["methods"],
     )
 
-    structure_result: StructuralMetrics = await evaluate_structure_advanced(structured_content, section_config)
-    coherence_result: CoherenceMetrics = await evaluate_coherence_advanced(structured_content)
+    structure_result: StructuralMetrics = await evaluate_structure(structured_content, section_config)
+    coherence_result: CoherenceMetrics = await evaluate_coherence(structured_content)
 
     assert structure_result["overall"] > 0.4
     assert coherence_result["overall"] > 0.4
@@ -156,8 +154,8 @@ async def test_structure_coherence_interaction() -> None:
     quality control procedures described poorly
     """
 
-    structure_poor: StructuralMetrics = await evaluate_structure_advanced(unstructured_content, section_config)
-    coherence_poor: CoherenceMetrics = await evaluate_coherence_advanced(unstructured_content)
+    structure_poor: StructuralMetrics = await evaluate_structure(unstructured_content, section_config)
+    coherence_poor: CoherenceMetrics = await evaluate_coherence(unstructured_content)
 
     assert structure_poor["overall"] < 0.4
     assert coherence_poor["overall"] < 0.8
@@ -211,12 +209,8 @@ async def test_source_grounding_quality_interaction() -> None:
         topics=["research evidence"],
     )
 
-    grounding_result: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
-        content, rag_context, section_config
-    )
-    quality_result: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
-        content, rag_context, section_config
-    )
+    grounding_result: GroundingMetrics = await evaluate_source_grounding(content, rag_context, section_config)
+    quality_result: QualityMetrics = await evaluate_scientific_quality(content, rag_context, section_config)
 
     assert grounding_result["overall"] > 0.3
     assert quality_result["overall"] > 0.4
@@ -233,12 +227,8 @@ async def test_source_grounding_quality_interaction() -> None:
     Just general statements without scientific backing.
     """
 
-    grounding_poor: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
-        unsupported_content, rag_context, section_config
-    )
-    quality_poor: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
-        unsupported_content, rag_context, section_config
-    )
+    grounding_poor: GroundingMetrics = await evaluate_source_grounding(unsupported_content, rag_context, section_config)
+    quality_poor: QualityMetrics = await evaluate_scientific_quality(unsupported_content, rag_context, section_config)
 
     assert grounding_poor["overall"] < 0.3
     assert quality_poor["overall"] < 0.4
@@ -275,10 +265,10 @@ async def test_keyword_coverage_across_components() -> None:
         DocumentDTO(content="Statistical analysis of protein biomarkers provides clinical research insights"),
     ]
 
-    grounding_high: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
+    grounding_high: GroundingMetrics = await evaluate_source_grounding(
         high_keyword_content, rag_context, section_config
     )
-    await evaluate_scientific_quality_advanced(high_keyword_content, rag_context, section_config)
+    await evaluate_scientific_quality(high_keyword_content, rag_context, section_config)
 
     assert grounding_high["keyword_coverage"] > 0.6
     assert grounding_high["search_query_integration"] > 0.5
@@ -292,10 +282,8 @@ async def test_keyword_coverage_across_components() -> None:
     Computational examination of indicator levels provides research findings.
     """
 
-    grounding_low: SourceGroundingMetrics = await evaluate_source_grounding_advanced(
-        low_keyword_content, rag_context, section_config
-    )
-    await evaluate_scientific_quality_advanced(low_keyword_content, rag_context, section_config)
+    grounding_low: GroundingMetrics = await evaluate_source_grounding(low_keyword_content, rag_context, section_config)
+    await evaluate_scientific_quality(low_keyword_content, rag_context, section_config)
 
     assert grounding_low["keyword_coverage"] < grounding_high["keyword_coverage"]
     assert grounding_low["search_query_integration"] < grounding_high["search_query_integration"]
@@ -350,12 +338,8 @@ async def test_clinical_trial_weighting_consistency() -> None:
         topics=["clinical outcomes"],
     )
 
-    quality_clinical: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
-        clinical_content, rag_context, clinical_config
-    )
-    quality_research: ScientificQualityMetrics = await evaluate_scientific_quality_advanced(
-        clinical_content, rag_context, research_config
-    )
+    quality_clinical: QualityMetrics = await evaluate_scientific_quality(clinical_content, rag_context, clinical_config)
+    quality_research: QualityMetrics = await evaluate_scientific_quality(clinical_content, rag_context, research_config)
 
     # Use quality standards for clinical trial content
     clinical_requirements = COMPONENT_REQUIREMENTS[ContentType.CLINICAL_TRIAL]

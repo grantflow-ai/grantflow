@@ -29,6 +29,10 @@ class ContentType(Enum):
 
     RESEARCH_PLAN = "research_plan"  # Core research methodology - highest standards
     CLINICAL_TRIAL = "clinical_trial"
+    BIOMEDICAL_RESEARCH = "biomedical_research"  # Biomedical/translational research
+    METHODOLOGY = "methodology"  # Methods and experimental design sections
+    LITERATURE_REVIEW = "literature_review"  # Literature synthesis and reviews
+    PRELIMINARY_DATA = "preliminary_data"  # Pilot studies and preliminary results
     GENERAL_SCIENTIFIC = "general_scientific"  # Generic STEM/translational sections
     ADMINISTRATIVE = "administrative"  # Letters, team, resources, etc.
 
@@ -56,6 +60,30 @@ COMPONENT_REQUIREMENTS: Final[dict[ContentType, dict[str, float]]] = {
         "coherence": 0.70,  # Clear methodology essential
         "structural": 0.65,  # Well-organized
     },
+    ContentType.BIOMEDICAL_RESEARCH: {
+        "scientific_quality": 0.65,  # Strong scientific quality needed
+        "source_grounding": 0.60,  # Good evidence base
+        "coherence": 0.60,  # Clear presentation
+        "structural": 0.55,  # Well-organized
+    },
+    ContentType.METHODOLOGY: {
+        "scientific_quality": 0.65,  # Methods need precision
+        "source_grounding": 0.55,  # Some grounding needed
+        "coherence": 0.65,  # Very clear methods essential
+        "structural": 0.60,  # Well-structured methodology
+    },
+    ContentType.LITERATURE_REVIEW: {
+        "scientific_quality": 0.60,  # Good synthesis required
+        "source_grounding": 0.70,  # Heavy citation needed
+        "coherence": 0.60,  # Clear narrative
+        "structural": 0.55,  # Organized review
+    },
+    ContentType.PRELIMINARY_DATA: {
+        "scientific_quality": 0.55,  # Preliminary, so lower bar
+        "source_grounding": 0.50,  # Some evidence
+        "coherence": 0.55,  # Clear presentation
+        "structural": 0.50,  # Basic organization
+    },
     ContentType.GENERAL_SCIENTIFIC: {
         "scientific_quality": 0.60,
         "source_grounding": 0.55,
@@ -75,6 +103,10 @@ COMPONENT_REQUIREMENTS: Final[dict[ContentType, dict[str, float]]] = {
 TARGET_THRESHOLDS: Final[dict[ContentType, float]] = {
     ContentType.RESEARCH_PLAN: 0.80,  # Research plans need high quality
     ContentType.CLINICAL_TRIAL: 0.70,  # Clinical content needs rigor
+    ContentType.BIOMEDICAL_RESEARCH: 0.65,  # Biomedical research standards
+    ContentType.METHODOLOGY: 0.65,  # Methodology sections need clarity
+    ContentType.LITERATURE_REVIEW: 0.60,  # Literature reviews moderate bar
+    ContentType.PRELIMINARY_DATA: 0.55,  # Preliminary data lower threshold
     ContentType.GENERAL_SCIENTIFIC: 0.65,  # Standard scientific sections
     ContentType.ADMINISTRATIVE: 0.60,  # Admin sections more lenient
 }

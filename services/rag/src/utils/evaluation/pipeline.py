@@ -6,24 +6,24 @@ from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.coherence import evaluate_coherence_advanced
 from services.rag.src.utils.evaluation.dto import (
     CoherenceMetrics,
-    CPUScientificAnalysis,
+    EvaluationResult,
     EvaluationThresholds,
-    FastEvaluationResult,
-    ScientificQualityMetrics,
-    SourceGroundingMetrics,
+    GroundingMetrics,
+    QualityMetrics,
+    RecommendationType,
+    ScientificAnalysis,
     StructuralMetrics,
 )
-from services.rag.src.utils.evaluation.quality import evaluate_scientific_quality_advanced
 from services.rag.src.utils.evaluation.quality_standards import (
     evaluate_missing_information,
 )
-from services.rag.src.utils.evaluation.scientific_analysis import analyze_scientific_content_cpu
-from services.rag.src.utils.evaluation.source_grounding import evaluate_source_grounding_advanced
-from services.rag.src.utils.evaluation.structural import evaluate_structure_advanced
-from services.rag.src.utils.evaluation.types import RecommendationType
+from services.rag.src.utils.evaluation.text.coherence import evaluate_coherence
+from services.rag.src.utils.evaluation.text.grounding import evaluate_source_grounding
+from services.rag.src.utils.evaluation.text.quality import evaluate_scientific_quality
+from services.rag.src.utils.evaluation.text.scientific import analyze_scientific_content
+from services.rag.src.utils.evaluation.text.structure import evaluate_structure
 
 logger = get_logger(__name__)
 
@@ -205,7 +205,7 @@ async def evaluate_scientific_content(
     trace_id: str,
     reference_corpus: list[str] | None = None,
     thresholds: EvaluationThresholds | None = None,
-) -> FastEvaluationResult:
+) -> EvaluationResult:
     start_time = time.time()
     eval_thresholds = thresholds or DEFAULT_THRESHOLDS
 
@@ -213,8 +213,10 @@ async def evaluate_scientific_content(
     if not content or not content.strip():
         logger.warning("Empty content provided for evaluation", trace_id=trace_id)
         execution_time = (time.time() - start_time) * 1000
-        return FastEvaluationResult(
+        return EvaluationResult(
+            success=False,
             overall_score=0.0,
+            evaluation_path="error",
             structural_metrics=StructuralMetrics(
                 word_count_compliance=0.0,
                 paragraph_distribution=0.0,
@@ -223,7 +225,7 @@ async def evaluate_scientific_content(
                 header_structure=0.0,
                 overall=0.0,
             ),
-            source_grounding_metrics=SourceGroundingMetrics(
+            grounding_metrics=GroundingMetrics(
                 rouge_l_score=0.0,
                 rouge_2_score=0.0,
                 rouge_3_score=0.0,
@@ -233,8 +235,8 @@ async def evaluate_scientific_content(
                 context_citation_density=0.0,
                 overall=0.0,
             ),
-            scientific_quality_metrics=ScientificQualityMetrics(
-                scientific_term_density=0.0,
+            quality_metrics=QualityMetrics(
+                term_density=0.0,
                 domain_vocabulary_accuracy=0.0,
                 methodology_language_score=0.0,
                 academic_register_score=0.0,
@@ -253,7 +255,7 @@ async def evaluate_scientific_content(
                 repetition_penalty=0.0,
                 overall=0.0,
             ),
-            cpu_scientific_analysis=CPUScientificAnalysis(
+            scientific_analysis=ScientificAnalysis(
                 domain_similarity=0.0,
                 methodology_completeness=0.0,
                 innovation_indicators=0.0,
@@ -269,8 +271,10 @@ async def evaluate_scientific_content(
     if not section_config or not section_config.get("id"):
         logger.warning("Invalid section config provided", trace_id=trace_id)
         execution_time = (time.time() - start_time) * 1000
-        return FastEvaluationResult(
+        return EvaluationResult(
+            success=False,
             overall_score=0.0,
+            evaluation_path="error",
             structural_metrics=StructuralMetrics(
                 word_count_compliance=0.0,
                 paragraph_distribution=0.0,
@@ -279,7 +283,7 @@ async def evaluate_scientific_content(
                 header_structure=0.0,
                 overall=0.0,
             ),
-            source_grounding_metrics=SourceGroundingMetrics(
+            grounding_metrics=GroundingMetrics(
                 rouge_l_score=0.0,
                 rouge_2_score=0.0,
                 rouge_3_score=0.0,
@@ -289,8 +293,8 @@ async def evaluate_scientific_content(
                 context_citation_density=0.0,
                 overall=0.0,
             ),
-            scientific_quality_metrics=ScientificQualityMetrics(
-                scientific_term_density=0.0,
+            quality_metrics=QualityMetrics(
+                term_density=0.0,
                 domain_vocabulary_accuracy=0.0,
                 methodology_language_score=0.0,
                 academic_register_score=0.0,
@@ -309,7 +313,7 @@ async def evaluate_scientific_content(
                 repetition_penalty=0.0,
                 overall=0.0,
             ),
-            cpu_scientific_analysis=CPUScientificAnalysis(
+            scientific_analysis=ScientificAnalysis(
                 domain_similarity=0.0,
                 methodology_completeness=0.0,
                 innovation_indicators=0.0,
@@ -332,11 +336,11 @@ async def evaluate_scientific_content(
 
     try:
         evaluation_tasks = [
-            evaluate_structure_advanced(content, section_config),
-            evaluate_source_grounding_advanced(content, rag_context, section_config),
-            evaluate_scientific_quality_advanced(content, rag_context, section_config),
-            evaluate_coherence_advanced(content),
-            analyze_scientific_content_cpu(content, reference_corpus or []),
+            evaluate_structure(content, section_config),
+            evaluate_source_grounding(content, rag_context, section_config),
+            evaluate_scientific_quality(content, rag_context, section_config),
+            evaluate_coherence(content),
+            analyze_scientific_content(content, reference_corpus or []),
         ]
 
         results = await asyncio.gather(*evaluation_tasks)
@@ -348,7 +352,7 @@ async def evaluate_scientific_content(
             coherence_metrics,
             cpu_analysis,
         ) = cast(
-            "tuple[StructuralMetrics, SourceGroundingMetrics, ScientificQualityMetrics, CoherenceMetrics, CPUScientificAnalysis]",
+            "tuple[StructuralMetrics, GroundingMetrics, QualityMetrics, CoherenceMetrics, ScientificAnalysis]",
             results,
         )
 
@@ -416,13 +420,15 @@ async def evaluate_scientific_content(
             trace_id=trace_id,
         )
 
-        return FastEvaluationResult(
+        return EvaluationResult(
+            success=True,
             overall_score=overall_score,
+            evaluation_path="fast_only",
             structural_metrics=structural_metrics,
-            source_grounding_metrics=grounding_metrics,
-            scientific_quality_metrics=quality_metrics,
+            grounding_metrics=grounding_metrics,
+            quality_metrics=quality_metrics,
             coherence_metrics=coherence_metrics,
-            cpu_scientific_analysis=cpu_analysis,
+            scientific_analysis=cpu_analysis,
             execution_time_ms=execution_time,
             recommendation=recommendation,
             confidence_score=confidence,
@@ -436,8 +442,10 @@ async def evaluate_scientific_content(
             "Fast scientific evaluation failed", error=str(e), execution_time_ms=execution_time, trace_id=trace_id
         )
 
-        return FastEvaluationResult(
+        return EvaluationResult(
+            success=False,
             overall_score=0.0,
+            evaluation_path="error",
             structural_metrics=StructuralMetrics(
                 word_count_compliance=0.0,
                 paragraph_distribution=0.0,
@@ -446,7 +454,7 @@ async def evaluate_scientific_content(
                 header_structure=0.0,
                 overall=0.0,
             ),
-            source_grounding_metrics=SourceGroundingMetrics(
+            grounding_metrics=GroundingMetrics(
                 rouge_l_score=0.0,
                 rouge_2_score=0.0,
                 rouge_3_score=0.0,
@@ -456,8 +464,8 @@ async def evaluate_scientific_content(
                 context_citation_density=0.0,
                 overall=0.0,
             ),
-            scientific_quality_metrics=ScientificQualityMetrics(
-                scientific_term_density=0.0,
+            quality_metrics=QualityMetrics(
+                term_density=0.0,
                 domain_vocabulary_accuracy=0.0,
                 methodology_language_score=0.0,
                 academic_register_score=0.0,
@@ -476,7 +484,7 @@ async def evaluate_scientific_content(
                 repetition_penalty=0.0,
                 overall=0.0,
             ),
-            cpu_scientific_analysis=CPUScientificAnalysis(
+            scientific_analysis=ScientificAnalysis(
                 domain_similarity=0.0,
                 methodology_completeness=0.0,
                 innovation_indicators=0.0,
