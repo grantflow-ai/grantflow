@@ -571,28 +571,34 @@ async def handle_extract_sections(
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
-    organization_guidelines = (
-        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=await retrieve_documents(
-                organization_id=str(organization["organization_id"]),
-                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
-                search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
-                model=ANTHROPIC_SONNET_MODEL,
-                trace_id=trace_id,
-            ),
+    rag_results = []
+    if organization:
+        rag_results = await retrieve_documents(
+            organization_id=str(organization["organization_id"]),
+            task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+            search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+            model=ANTHROPIC_SONNET_MODEL,
+            trace_id=trace_id,
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=rag_results,
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
         )
-        if organization
-        else ""
-    )
+    else:
+        organization_guidelines = ""
 
     result = await with_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         trace_id=trace_id,
-        **get_evaluation_kwargs("extract_sections", job_manager),
+        **get_evaluation_kwargs(
+            "extract_sections",
+            job_manager,
+            rag_context=rag_results if rag_results else content_list,
+            is_json_content=True,  # Returns ExtractedSections JSON
+        ),
     )
 
     return await filter_extracted_sections(result["sections"], trace_id)

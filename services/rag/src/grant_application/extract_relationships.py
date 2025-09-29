@@ -286,7 +286,14 @@ async def handle_extract_relationships(
         prompt_handler=extract_relationships_generation,
         research_objectives=research_objectives,
         trace_id=trace_id,
-        **get_evaluation_kwargs("extract_relationships", job_manager),
+        **get_evaluation_kwargs(
+            "extract_relationships",
+            job_manager,
+            section_config=grant_section,
+            rag_context=rag_results,
+            research_objectives=research_objectives,
+            is_json_content=True,  # This returns JSON relationships data
+        ),
     )
     ret: ResearchRelationships = defaultdict(list)
     for dependent_id, target_id, description in result["relationships"]:

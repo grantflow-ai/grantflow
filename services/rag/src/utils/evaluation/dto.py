@@ -162,6 +162,9 @@ class EvaluationContext(TypedDict, total=False):
     research_objectives: list[ResearchObjective]
     reference_corpus: list[str]
     content_type: ContentType
+    cfp_analysis: CFPAnalysisResult
+    keywords: list[str]
+    topics: list[str]
 
 
 class JsonEvaluationContext(EvaluationContext):

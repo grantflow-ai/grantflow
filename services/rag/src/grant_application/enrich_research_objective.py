@@ -386,5 +386,14 @@ async def handle_enrich_objective(
         prompt=compressed_prompt,
         input_objective=dto["research_objective"],
         trace_id=dto["trace_id"],
-        **get_evaluation_kwargs("enrich_objectives", job_manager),
+        **get_evaluation_kwargs(
+            "enrich_objectives",
+            job_manager,
+            section_config=dto.get("grant_section"),
+            rag_context=dto.get("retrieval_context"),
+            research_objectives=[dto["research_objective"]],
+            keywords=dto.get("keywords"),
+            topics=dto.get("topics"),
+            is_json_content=True,  # This returns JSON enrichment data
+        ),
     )

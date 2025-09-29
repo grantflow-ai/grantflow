@@ -20,6 +20,10 @@ from services.rag.src.utils.evaluation.dto import (
     ScientificAnalysis,
     StructuralMetrics,
 )
+from services.rag.src.utils.evaluation.json.cfp_analysis import evaluate_cfp_analysis_quality
+from services.rag.src.utils.evaluation.json.enrichment import evaluate_enrichment_quality
+from services.rag.src.utils.evaluation.json.objectives import evaluate_objectives_quality
+from services.rag.src.utils.evaluation.json.relationships import evaluate_relationships_quality
 from services.rag.src.utils.evaluation.llm.evaluation import (
     EvaluationCriterion,
     EvaluationToolResponse,
@@ -98,15 +102,230 @@ def _has_fast_evaluation_context(context: EvaluationContext) -> bool:
     )
 
 
+async def _evaluate_json_content(
+    content: str,
+    parsed_content: Any,
+    context: EvaluationContext,
+    settings: EvaluationSettings,
+    trace_id: str,
+) -> EvaluationResult | None:
+    """Evaluate JSON content using specialized JSON evaluators.
+
+    Routes to appropriate JSON evaluation based on content type detection.
+    """
+    try:
+        # If we couldn't parse the content, try again
+        if parsed_content is None and content:
+            try:
+                # Try as list first (for objectives), then as dict
+                try:
+                    parsed_content = deserialize(content.encode(), list)
+                except Exception:
+                    parsed_content = deserialize(content.encode(), dict)
+            except Exception:
+                logger.debug("Could not parse JSON for evaluation", trace_id=trace_id)
+                return None
+
+        if not parsed_content:
+            return None
+
+        # Detect content type and route to appropriate evaluator
+        overall_score = 0.0
+        confidence = 0.0
+        feedback = []
+        metrics: Any = None  # Will be typed metrics from specific evaluators
+
+        # Check for research objectives
+        if isinstance(parsed_content, list) and all(
+            isinstance(obj, dict) and "research_tasks" in obj
+            for obj in parsed_content[:3]  # Check first few
+        ):
+            logger.debug("Evaluating as research objectives", trace_id=trace_id)
+            metrics = evaluate_objectives_quality(
+                objectives=parsed_content,
+                keywords=context.get("keywords", []),
+                topics=context.get("topics", []),
+            )
+            feedback.append("JSON evaluation: Research objectives structure validated")
+
+        # Check for relationships
+        elif isinstance(parsed_content, dict) and all(
+            isinstance(v, list) and all(
+                isinstance(item, (list, tuple)) and len(item) >= 2
+                for item in v[:2]  # Sample check
+            )
+            for k, v in list(parsed_content.items())[:3]  # Sample keys
+        ):
+            logger.debug("Evaluating as relationships", trace_id=trace_id)
+            metrics = evaluate_relationships_quality(relationships=parsed_content)
+            feedback.append("JSON evaluation: Relationships structure validated")
+
+        # Check for enrichment data
+        elif isinstance(parsed_content, dict) and (
+            "enriched_objective" in parsed_content
+            or "core_scientific_terms" in parsed_content
+            or "research_objective" in parsed_content
+        ):
+            logger.debug("Evaluating as enrichment data", trace_id=trace_id)
+            # Handle both single enrichment and objective with tasks
+            if "research_objective" in parsed_content:
+                # This is ObjectiveEnrichmentDTO format
+                enrichment_data = parsed_content.get("research_objective", {})
+            else:
+                enrichment_data = parsed_content
+
+            metrics = evaluate_enrichment_quality(
+                enrichment_data=enrichment_data,
+                keywords=context.get("keywords", []),
+                topics=context.get("topics", []),
+            )
+            feedback.append("JSON evaluation: Enrichment data structure validated")
+
+        # Check for CFP analysis
+        elif isinstance(parsed_content, dict) and (
+            "cfp_analysis" in parsed_content
+            or "required_sections" in parsed_content
+            or "evaluation_criteria" in parsed_content
+        ):
+            logger.debug("Evaluating as CFP analysis", trace_id=trace_id)
+            metrics = evaluate_cfp_analysis_quality(cfp_data=parsed_content)
+            feedback.append("JSON evaluation: CFP analysis structure validated")
+        else:
+            logger.debug("Could not determine JSON content type", trace_id=trace_id)
+            return None
+
+        # Process metrics if we got them
+        if metrics:
+            overall_score = metrics["overall"] * 100  # Convert to percentage
+
+            # Use JSON-specific thresholds
+            confidence_threshold = settings.get("json_confidence_threshold", 0.95)
+            semantic_threshold = settings.get("json_semantic_threshold", 0.6)
+
+            # Calculate confidence based on structural vs semantic scores
+            if hasattr(metrics, "get"):
+                structural_scores = [
+                    metrics.get("completeness", 0),
+                    metrics.get("validity", 0),
+                    metrics.get("structure", 0),
+                ]
+                semantic_scores = [
+                    metrics.get("scientific_rigor", 0),
+                    metrics.get("innovation_score", 0),
+                    metrics.get("coherence", 0),
+                ]
+
+                # Weight structural higher for JSON
+                structural_avg = sum(s for s in structural_scores if s) / max(len([s for s in structural_scores if s]), 1)
+                semantic_avg = sum(s for s in semantic_scores if s) / max(len([s for s in semantic_scores if s]), 1)
+
+                if structural_avg >= confidence_threshold:
+                    confidence = 0.95  # High confidence for good structure
+                elif semantic_avg >= semantic_threshold:
+                    confidence = 0.85  # Medium-high confidence for good semantics
+                else:
+                    confidence = max(0.7, (structural_avg + semantic_avg) / 2)
+            else:
+                confidence = min(0.95, overall_score / 100 + 0.15)  # JSON gets confidence boost
+
+            # Add detailed feedback from metrics
+            for key, value in metrics.items():
+                if key != "overall" and isinstance(value, (int, float)):
+                    quality = "excellent" if value >= 0.9 else "good" if value >= 0.7 else "needs improvement"
+                    feedback.append(f"JSON {key.replace('_', ' ')}: {quality} ({value:.2f})")
+
+            # Determine recommendation based on JSON-specific thresholds
+            if overall_score >= 85 and confidence >= 0.85:
+                recommendation: RecommendationType = "accept"
+            elif overall_score >= 70:
+                recommendation = "llm_review"
+            else:
+                recommendation = "reject"
+
+            logger.info(
+                "JSON evaluation completed",
+                content_type=context.get("content_type", "unknown"),
+                overall_score=overall_score,
+                confidence=confidence,
+                recommendation=recommendation,
+                trace_id=trace_id,
+            )
+
+            result = EvaluationResult(
+                success=True,
+                overall_score=overall_score,
+                confidence_score=confidence,
+                recommendation=recommendation,
+                detailed_feedback=feedback,
+                evaluation_path="fast_only",
+                execution_time_ms=0,  # Will be set by caller
+            )
+
+            # Add type-specific metrics based on what was evaluated
+            if "scientific_rigor" in (metrics or {}):
+                result["objective_metrics"] = metrics  # type: ignore
+            elif "validity" in (metrics or {}):
+                result["relationship_metrics"] = metrics  # type: ignore
+            elif "value_added" in (metrics or {}):
+                result["enrichment_metrics"] = metrics  # type: ignore
+            elif "requirement_clarity" in (metrics or {}):
+                result["cfp_metrics"] = metrics  # type: ignore
+
+            # Store fast result for reference
+            result["fast_result"] = {
+                "overall_score": overall_score,
+                "confidence_score": confidence,
+                "recommendation": recommendation,
+                "detailed_feedback": feedback,
+            }
+
+            return result
+
+    except Exception as e:
+        logger.warning(
+            "JSON evaluation failed",
+            error=str(e),
+            trace_id=trace_id,
+        )
+
+    return None
+
+
 async def _try_fast_evaluation(
     content: str, context: EvaluationContext, settings: EvaluationSettings, trace_id: str
 ) -> EvaluationResult | None:
+    """Try fast evaluation with JSON detection and appropriate routing."""
     try:
+        # Check if this is JSON content that should use JSON evaluation
+        is_json, parsed_content = _detect_json_content(content)
+
+        # Check if context indicates JSON evaluation
+        if is_json or _is_json_context(context) or settings.get("is_json_content"):
+            # Use JSON evaluation if available
+            result = await _evaluate_json_content(
+                content=content,
+                parsed_content=parsed_content,
+                context=context,
+                settings=settings,
+                trace_id=trace_id,
+            )
+            if result:
+                return result
+
+        # Fall back to text evaluation if we have required context
+        section_config = context.get("section_config")
+        rag_context = context.get("rag_context")
+        research_objectives = context.get("research_objectives")
+
+        # Check if we have the required fields for text evaluation
+        if not section_config or not rag_context or not research_objectives:
+            return None
+
         return await evaluate_scientific_content(
             content=content,
-            section_config=context["section_config"],
-            rag_context=context["rag_context"],
-            research_objectives=context["research_objectives"],
+            section_config=section_config,
+            rag_context=rag_context,
+            research_objectives=research_objectives,
             trace_id=trace_id,
             reference_corpus=context.get("reference_corpus"),
             thresholds=EvaluationThresholds(
@@ -167,15 +386,22 @@ def _detect_json_content(content: str) -> tuple[bool, Any]:
     """
     # First try to parse as JSON using our serialization utils
     try:
-        parsed = deserialize(content.encode(), dict)
-        if isinstance(parsed, (dict, list)):
-            return True, parsed
+        # Try as list first (for objectives), then as dict
+        try:
+            parsed = deserialize(content.encode(), list)
+            if isinstance(parsed, list):
+                return True, parsed
+        except Exception:
+            parsed = deserialize(content.encode(), dict)
+            if isinstance(parsed, dict):
+                return True, parsed
     except Exception as e:
         logger.debug("JSON parsing failed", content_preview=content[:50], error=str(e))
 
-    # Check for structured content patterns
+    # Check for structured content patterns but couldn't parse
     content_stripped = content.strip()
     if content_stripped.startswith(("{", "[")):
+        # Looks like JSON but couldn't parse - not valid JSON
         return False, None
 
     return False, None

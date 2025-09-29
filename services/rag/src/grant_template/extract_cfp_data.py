@@ -355,7 +355,12 @@ async def handle_extract_cfp_data(
             rag_sources=formatted_sources, organization_mapping=organization_mapping
         ),
         trace_id=trace_id,
-        **get_evaluation_kwargs("extract_cfp_data", job_manager),
+        **get_evaluation_kwargs(
+            "extract_cfp_data",
+            job_manager,
+            rag_context=formatted_sources,  # Pass the RAG sources as context
+            is_json_content=True,  # Returns CFPExtractionResult JSON
+        ),
     )
 
     _cache_cfp_result(cache_key, result)

@@ -316,12 +316,20 @@ async def handle_generate_section_text(
         trace_id=trace_id,
     )
 
+    # Pass all available context to evaluation
     result = await with_evaluation(
         prompt_identifier="section_generation",
         prompt_handler=partial(generate_section_text, section=section),
         prompt=compressed_prompt,
         trace_id=trace_id,
-        **get_evaluation_kwargs("generate_section_text", job_manager),
+        **get_evaluation_kwargs(
+            "generate_section_text",
+            job_manager,
+            section_config=section,
+            rag_context=shared_context,
+            research_objectives=research_deep_dives,
+            cfp_analysis=cfp_analysis,
+        ),
     )
 
     if result:

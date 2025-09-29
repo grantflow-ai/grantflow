@@ -354,19 +354,20 @@ async def handle_generate_grant_template_metadata(
         ),
     )
 
-    organization_guidelines = (
-        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=await retrieve_documents(
-                organization_id=str(organization["organization_id"]),
-                task_description=str(prompt),
-                trace_id=trace_id,
-            ),
+    rag_results = []
+    if organization:
+        rag_results = await retrieve_documents(
+            organization_id=str(organization["organization_id"]),
+            task_description=str(prompt),
+            trace_id=trace_id,
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=rag_results,
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
         )
-        if organization
-        else ""
-    )
+    else:
+        organization_guidelines = ""
 
     full_prompt = prompt.to_string(
         organization_guidelines=organization_guidelines,
@@ -378,6 +379,11 @@ async def handle_generate_grant_template_metadata(
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
         prompt=compressed_prompt,
         trace_id=trace_id,
-        **get_evaluation_kwargs("generate_metadata", job_manager),
+        **get_evaluation_kwargs(
+            "generate_metadata",
+            job_manager,
+            rag_context=rag_results if rag_results else None,
+            is_json_content=True,  # Returns TemplateSectionsResponse JSON
+        ),
     )
     return result["sections"]
