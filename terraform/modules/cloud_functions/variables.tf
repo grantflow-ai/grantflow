@@ -13,14 +13,13 @@ variable "region" {
   type        = string
 }
 
-variable "database_url" {
-  description = "PostgreSQL database connection URL"
+variable "database_connection_name" {
+  description = "Cloud SQL instance connection name"
   type        = string
-  sensitive   = true
 }
 
-variable "vpc_connector_name" {
-  description = "VPC connector name for Cloud Functions"
+variable "database_connection_string_secret_id" {
+  description = "Secret Manager secret ID for DATABASE_CONNECTION_STRING"
   type        = string
 }
 
