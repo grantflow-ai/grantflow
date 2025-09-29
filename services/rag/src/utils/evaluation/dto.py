@@ -150,6 +150,8 @@ class EvaluationSettings(TypedDict, total=False):
     llm_timeout: float
     fast_weight: float
     llm_weight: float
+    json_confidence_threshold: float  # Higher threshold for JSON structural evaluation
+    json_semantic_threshold: float  # Lower threshold for JSON semantic content
 
 
 class EvaluationContext(TypedDict, total=False):
