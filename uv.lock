@@ -95,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.68.1"
+version = "0.69.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -107,9 +107,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/43/b9/5e736a924dabe0473b212597ae83a124e09818fac672998bb5960a64e9b1/anthropic-0.68.1.tar.gz", hash = "sha256:5fc01019dfffbc39e87a24f4d7cfe34e83dda4fff7b5371f33639f982f0c8dba", size = 471965, upload-time = "2025-09-26T16:27:30.547Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/9d/9ad1778b95f15c5b04e7d328c1b5f558f1e893857b7c33cd288c19c0057a/anthropic-0.69.0.tar.gz", hash = "sha256:c604d287f4d73640f40bd2c0f3265a2eb6ce034217ead0608f6b07a8bc5ae5f2", size = 480622, upload-time = "2025-09-29T16:53:45.282Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/5c/e871e40ba11338502569a3f5cb176650f99f7b4ecf915f4d38fe2b8cff37/anthropic-0.68.1-py3-none-any.whl", hash = "sha256:40fc545c4781ebc45d8e7849240c4001f40d61d18a17e5363c0acb10afefc33b", size = 325214, upload-time = "2025-09-26T16:27:29.049Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/38/75129688de5637eb5b383e5f2b1570a5cc3aecafa4de422da8eea4b90a6c/anthropic-0.69.0-py3-none-any.whl", hash = "sha256:1f73193040f33f11e27c2cd6ec25f24fe7c3f193dc1c5cde6b7a08b18a16bcc5", size = 337265, upload-time = "2025-09-29T16:53:43.686Z" },
 ]
 
 [[package]]
@@ -1548,7 +1548,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.35.2"
+version = "0.35.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1560,9 +1560,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/53/7c546f1a1034edaf17c54de94a1c36e481124c27e5190a85dcc1be43ffe1/huggingface_hub-0.35.2.tar.gz", hash = "sha256:3a5c03aa272f267a6892e701e5ef1bb2d0d46a487550fda978b5255bcd52f376", size = 461678, upload-time = "2025-09-29T09:50:30.883Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/10/7e/a0a97de7c73671863ca6b3f61fa12518caf35db37825e43d63a70956738c/huggingface_hub-0.35.3.tar.gz", hash = "sha256:350932eaa5cc6a4747efae85126ee220e4ef1b54e29d31c3b45c5612ddf0b32a", size = 461798, upload-time = "2025-09-29T14:29:58.625Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/ca/b1b845d49171aaa12c94614f1b075b1f665f89a617f9f22892af4e59aeec/huggingface_hub-0.35.2-py3-none-any.whl", hash = "sha256:dc6106e45b7744048d3bb315baa48f7b94b66167b2a5bb3175920038da2d5ca7", size = 564080, upload-time = "2025-09-29T09:50:27.876Z" },
+    { url = "https://files.pythonhosted.org/packages/31/a0/651f93d154cb72323358bf2bbae3e642bdb5d2f1bfc874d096f7cb159fa0/huggingface_hub-0.35.3-py3-none-any.whl", hash = "sha256:0e3a01829c19d86d03793e4577816fe3bdfc1602ac62c7fb220d593d351224ba", size = 564262, upload-time = "2025-09-29T14:29:55.813Z" },
 ]
 
 [[package]]
@@ -1740,7 +1740,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.18.0"
+version = "3.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1756,10 +1756,10 @@ dependencies = [
     { name = "pypdfium2" },
     { name = "python-calamine" },
     { name = "python-pptx" },
+    { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/2c/7b1baccf3ce1b5106cbf023348e508efd913e9b233d8300c5d25887ca96e/kreuzberg-3.18.0.tar.gz", hash = "sha256:3aa921492c454106f6b8098e8aef6d0485307fa6462a5f70b048a3dc45de3088", size = 16493280, upload-time = "2025-09-27T09:40:04.16Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/92/174a44526005d72c66c5b4acc47068917c9d12b2c12200481ba10318f0f3/kreuzberg-3.18.0-py3-none-any.whl", hash = "sha256:85e3ae2e68fa6873658ea7d1208418545f5c0a9b4e532a0299f869c74061f71f", size = 220260, upload-time = "2025-09-27T09:40:01.638Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/4e/4d1581ac1e9e76b95ea1aa7ffefe75c8f260f2ed9bbe3eaaf9ace0d2283e/kreuzberg-3.19.0-py3-none-any.whl", hash = "sha256:5a835f8bb28b69b1bd1d358ac799b0ee4a2c19841108b563de2b7591909aab0b", size = 223343, upload-time = "2025-09-29T17:49:59.058Z" },
 ]
 
 [package.optional-dependencies]
