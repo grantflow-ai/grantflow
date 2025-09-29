@@ -5,7 +5,7 @@ import textstat
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from services.rag.src.utils.evaluation.dto import CPUScientificAnalysis, ScientificVocabulary
+from services.rag.src.utils.evaluation.dto import ScientificAnalysis, ScientificVocabulary
 
 BIOMEDICAL_TERMS: Final[set[str]] = {
     "protein",
@@ -295,11 +295,9 @@ def analyze_concept_sophistication(content: str) -> float:
         return 0.5
 
 
-async def analyze_scientific_content_cpu(
-    content: str, reference_corpus: list[str] | None = None
-) -> CPUScientificAnalysis:
+async def analyze_scientific_content(content: str, reference_corpus: list[str] | None = None) -> ScientificAnalysis:
     if not content.strip():
-        return CPUScientificAnalysis(
+        return ScientificAnalysis(
             domain_similarity=0.0,
             methodology_completeness=0.0,
             innovation_indicators=0.0,
@@ -325,7 +323,7 @@ async def analyze_scientific_content_cpu(
         similarities = calculate_tfidf_similarity(content, reference_corpus)
         domain_similarity = float(max(similarities)) if similarities else 0.5
 
-    return CPUScientificAnalysis(
+    return ScientificAnalysis(
         domain_similarity=domain_similarity,
         methodology_completeness=methodology_completeness,
         innovation_indicators=innovation_indicators,

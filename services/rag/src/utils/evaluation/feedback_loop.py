@@ -17,7 +17,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.rag.src.constants import MISSING_INFO_FORMAT, MISSING_INFO_PREFIX, MISSING_INFO_SUFFIX
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.completion import make_google_completions_request
-from services.rag.src.utils.evaluation.dto import FastEvaluationResult
+from services.rag.src.utils.evaluation.dto import EvaluationResult
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
 from services.rag.src.utils.evaluation.quality_standards import (
     COMPONENT_REQUIREMENTS,
@@ -138,7 +138,7 @@ class ImprovementResult(TypedDict):
     """Result of content improvement attempt."""
 
     improved_content: str
-    evaluation_result: FastEvaluationResult
+    evaluation_result: EvaluationResult
     quality_assessment: QualityAssessment
     iteration: int
     improvement_applied: bool
@@ -165,7 +165,7 @@ DEFAULT_FEEDBACK_SETTINGS: FeedbackLoopSettings = {
 
 
 def _generate_improvement_instructions(
-    evaluation_result: FastEvaluationResult,
+    evaluation_result: EvaluationResult,
     content_type: ContentType,
 ) -> list[str]:
     """Generate specific improvement instructions based on evaluation results."""
@@ -191,9 +191,9 @@ def _generate_improvement_instructions(
             instructions.append("Add clear hierarchical headers to improve content structure")
 
     # Check scientific quality issues
-    quality = evaluation_result["scientific_quality_metrics"]
+    quality = evaluation_result["quality_metrics"]
     if quality["overall"] < requirements.get("scientific_quality", 0.6):
-        if quality["scientific_term_density"] < 0.5:
+        if quality["term_density"] < 0.5:
             instructions.append("Increase use of precise scientific terminology appropriate for the field")
         if quality["methodology_language_score"] < 0.5:
             instructions.append("Strengthen methodology descriptions with more technical precision")
@@ -205,7 +205,7 @@ def _generate_improvement_instructions(
             instructions.append("Support more claims with evidence, data, or citations to strengthen credibility")
 
     # Check source grounding issues
-    grounding = evaluation_result["source_grounding_metrics"]
+    grounding = evaluation_result["grounding_metrics"]
     if grounding["overall"] < requirements.get("source_grounding", 0.5):
         if grounding["keyword_coverage"] < 0.5:
             instructions.append("Better incorporate key terms and concepts from the source materials")
@@ -393,7 +393,7 @@ async def evaluate_with_feedback_loop(
     current_content = content
     best_score = 0.0
     best_content = content
-    best_evaluation: FastEvaluationResult | None = None
+    best_evaluation: EvaluationResult | None = None
     iteration = 1
 
     logger.info(
@@ -424,8 +424,8 @@ async def evaluate_with_feedback_loop(
             overall_score=evaluation_result["overall_score"] / 100.0,
             component_scores={
                 "structural": evaluation_result["structural_metrics"]["overall"],
-                "scientific_quality": evaluation_result["scientific_quality_metrics"]["overall"],
-                "source_grounding": evaluation_result["source_grounding_metrics"]["overall"],
+                "scientific_quality": evaluation_result["quality_metrics"]["overall"],
+                "source_grounding": evaluation_result["grounding_metrics"]["overall"],
                 "coherence": evaluation_result["coherence_metrics"]["overall"],
             },
             content_type=content_type,
@@ -544,8 +544,8 @@ async def evaluate_with_feedback_loop(
             overall_score=best_score,
             component_scores={
                 "structural": best_evaluation["structural_metrics"]["overall"],
-                "scientific_quality": best_evaluation["scientific_quality_metrics"]["overall"],
-                "source_grounding": best_evaluation["source_grounding_metrics"]["overall"],
+                "scientific_quality": best_evaluation["quality_metrics"]["overall"],
+                "source_grounding": best_evaluation["grounding_metrics"]["overall"],
                 "coherence": best_evaluation["coherence_metrics"]["overall"],
             },
             content_type=content_type,
@@ -621,8 +621,8 @@ async def evaluate_with_feedback_loop(
         overall_score=best_score,
         component_scores={
             "structural": best_evaluation["structural_metrics"]["overall"],
-            "scientific_quality": best_evaluation["scientific_quality_metrics"]["overall"],
-            "source_grounding": best_evaluation["source_grounding_metrics"]["overall"],
+            "scientific_quality": best_evaluation["quality_metrics"]["overall"],
+            "source_grounding": best_evaluation["grounding_metrics"]["overall"],
             "coherence": best_evaluation["coherence_metrics"]["overall"],
         },
         content_type=content_type,

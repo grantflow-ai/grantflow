@@ -1,6 +1,6 @@
 import time
 from collections.abc import Awaitable, Callable
-from typing import Any, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.exceptions import EvaluationError
@@ -9,26 +9,26 @@ from packages.shared_utils.src.logger import get_logger
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.dto import (
     CoherenceMetrics,
-    CPUScientificAnalysis,
+    EvaluationPathType,
+    EvaluationResult,
     EvaluationThresholds,
-    FastEvaluationResult,
-    ScientificQualityMetrics,
-    SourceGroundingMetrics,
+    GroundingMetrics,
+    QualityMetrics,
+    RecommendationType,
+    ScientificAnalysis,
     StructuralMetrics,
 )
-from services.rag.src.utils.evaluation.llm_evaluation import (
+from services.rag.src.utils.evaluation.llm.evaluation import (
     EvaluationCriterion,
     EvaluationToolResponse,
     evaluate_output,
     with_prompt_evaluation,
 )
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
-from services.rag.src.utils.evaluation.types import EvaluationPathType, RecommendationType
 
 logger = get_logger(__name__)
 
 __all__ = [
-    "CPUScientificAnalysis",
     "CoherenceMetrics",
     "EvaluationContext",
     "EvaluationCriterion",
@@ -36,9 +36,9 @@ __all__ = [
     "EvaluationSettings",
     "EvaluationThresholds",
     "EvaluationToolResponse",
-    "FastEvaluationResult",
-    "ScientificQualityMetrics",
-    "SourceGroundingMetrics",
+    "GroundingMetrics",
+    "QualityMetrics",
+    "ScientificAnalysis",
     "StructuralMetrics",
     "evaluate_content",
     "evaluate_scientific_content",
@@ -64,18 +64,6 @@ class EvaluationContext(TypedDict, total=False):
     rag_context: list[DocumentDTO]
     research_objectives: list[ResearchObjective]
     reference_corpus: list[str]
-
-
-class EvaluationResult(TypedDict):
-    success: bool
-    score: float
-    confidence: float
-    recommendation: RecommendationType
-    feedback: list[str]
-    evaluation_path: EvaluationPathType
-    execution_time_ms: float
-    llm_result: NotRequired[EvaluationToolResponse]
-    fast_result: NotRequired[FastEvaluationResult]
 
 
 DEFAULT_SETTINGS: EvaluationSettings = {
@@ -121,7 +109,7 @@ def _has_fast_evaluation_context(context: EvaluationContext) -> bool:
 
 async def _try_fast_evaluation(
     content: str, context: EvaluationContext, settings: EvaluationSettings, trace_id: str
-) -> FastEvaluationResult | None:
+) -> EvaluationResult | None:
     try:
         return await evaluate_scientific_content(
             content=content,
@@ -153,7 +141,7 @@ async def _try_fast_evaluation(
         return None
 
 
-def _extract_llm_feedback(llm_result: EvaluationToolResponse, fast_result: FastEvaluationResult | None) -> list[str]:
+def _extract_llm_feedback(llm_result: EvaluationToolResponse, fast_result: EvaluationResult | None) -> list[str]:
     feedback = []
 
     if fast_result:
@@ -218,10 +206,10 @@ async def evaluate_content(
 
                 return EvaluationResult(
                     success=True,
-                    score=fast_result["overall_score"],
-                    confidence=fast_result["confidence_score"],
+                    overall_score=fast_result["overall_score"],
+                    confidence_score=fast_result["confidence_score"],
                     recommendation=fast_result["recommendation"],
-                    feedback=fast_result["detailed_feedback"],
+                    detailed_feedback=fast_result["detailed_feedback"],
                     evaluation_path="fast_only",
                     execution_time_ms=execution_time,
                     fast_result=fast_result,
@@ -282,10 +270,10 @@ async def evaluate_content(
 
         result = EvaluationResult(
             success=True,
-            score=combined_score,
-            confidence=combined_confidence,
+            overall_score=combined_score,
+            confidence_score=combined_confidence,
             recommendation=recommendation,
-            feedback=_extract_llm_feedback(llm_result, fast_result),
+            detailed_feedback=_extract_llm_feedback(llm_result, fast_result),
             evaluation_path=evaluation_path,
             execution_time_ms=execution_time,
             llm_result=llm_result,
@@ -303,10 +291,10 @@ async def evaluate_content(
 
         return EvaluationResult(
             success=False,
-            score=0.0,
-            confidence=0.0,
+            overall_score=0.0,
+            confidence_score=0.0,
             recommendation="reject",
-            feedback=[f"Evaluation failed: {e!s}"],
+            detailed_feedback=[f"Evaluation failed: {e!s}"],
             evaluation_path="error",
             execution_time_ms=execution_time,
         )
@@ -363,8 +351,8 @@ async def with_evaluation[T, **P](
         return {
             "criteria": {
                 criterion.name: {
-                    "score": max(50, int(result["score"] * criterion.weight)),
-                    "instructions": f"Score: {result['score']:.1f}, Confidence: {result['confidence']:.2f}, Path: {result['evaluation_path']}",
+                    "score": max(50, int(result["overall_score"] * criterion.weight)),
+                    "instructions": f"Score: {result['overall_score']:.1f}, Confidence: {result['confidence_score']:.2f}, Path: {result['evaluation_path']}",
                 }
                 for criterion in eval_criteria
             }

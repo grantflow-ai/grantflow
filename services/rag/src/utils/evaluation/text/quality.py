@@ -5,8 +5,8 @@ from packages.db.src.json_objects import GrantLongFormSection
 from packages.shared_utils.src.nlp import get_spacy_model
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.dto import ScientificQualityMetrics, ScientificVocabulary
-from services.rag.src.utils.evaluation.scientific_analysis import create_scientific_vocabulary
+from services.rag.src.utils.evaluation.dto import QualityMetrics, ScientificVocabulary
+from services.rag.src.utils.evaluation.text.scientific import create_scientific_vocabulary
 
 PASSIVE_VOICE_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\b(was|were|is|are|been)\s+\w+ed\b", re.IGNORECASE),
@@ -86,7 +86,7 @@ EVIDENCE_INDICATORS: Final[set[str]] = {
 }
 
 
-def enhance_vocabulary_with_section_terms(
+def augment_vocabulary(
     vocabulary: ScientificVocabulary,
     keywords: list[str],
     topics: list[str],
@@ -477,12 +477,12 @@ def assess_hypothesis_methodology_alignment(content: str) -> float:
     return 0.3
 
 
-async def evaluate_scientific_quality_advanced(
+async def evaluate_scientific_quality(
     content: str, rag_context: list[DocumentDTO], section_config: GrantLongFormSection
-) -> ScientificQualityMetrics:
+) -> QualityMetrics:
     if not content.strip():
-        return ScientificQualityMetrics(
-            scientific_term_density=0.0,
+        return QualityMetrics(
+            term_density=0.0,
             domain_vocabulary_accuracy=0.0,
             methodology_language_score=0.0,
             academic_register_score=0.0,
@@ -494,7 +494,7 @@ async def evaluate_scientific_quality_advanced(
 
     # Create base vocabulary and enhance it with section-specific terms
     base_vocabulary = create_scientific_vocabulary()
-    vocabulary = enhance_vocabulary_with_section_terms(
+    vocabulary = augment_vocabulary(
         base_vocabulary,
         section_config.get("keywords", []),
         section_config.get("topics", []),
@@ -503,9 +503,9 @@ async def evaluate_scientific_quality_advanced(
     # Calculate keyword density for section-specific terms
     keyword_density = calculate_keyword_density(content, section_config.get("keywords", []))
 
-    scientific_term_density = calculate_scientific_term_density(content, vocabulary)
+    term_density = calculate_scientific_term_density(content, vocabulary)
     # Domain vocabulary accuracy now factors in keyword density
-    domain_vocabulary_accuracy = (scientific_term_density * 0.7) + (keyword_density * 0.3)
+    domain_vocabulary_accuracy = (term_density * 0.7) + (keyword_density * 0.3)
     methodology_language_score = detect_methodology_language(content)
     academic_register_score = assess_academic_register(content)
     technical_precision = assess_technical_precision(content)
@@ -529,7 +529,7 @@ async def evaluate_scientific_quality_advanced(
         section_weight_adjustments["methodology_language_score"] = 0.15
 
     overall = (
-        scientific_term_density * 0.15
+        term_density * 0.15
         + domain_vocabulary_accuracy * 0.15
         + methodology_language_score * section_weight_adjustments["methodology_language_score"]
         + academic_register_score * 0.20
@@ -538,8 +538,8 @@ async def evaluate_scientific_quality_advanced(
         + hypothesis_methodology_alignment * 0.05
     )
 
-    return ScientificQualityMetrics(
-        scientific_term_density=scientific_term_density,
+    return QualityMetrics(
+        term_density=term_density,
         domain_vocabulary_accuracy=domain_vocabulary_accuracy,
         methodology_language_score=methodology_language_score,
         academic_register_score=academic_register_score,

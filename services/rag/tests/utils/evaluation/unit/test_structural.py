@@ -3,12 +3,12 @@ import textwrap
 import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
-from services.rag.src.utils.evaluation.structural import (
+from services.rag.src.utils.evaluation.text.structure import (
     analyze_paragraph_structure,
     assess_academic_formatting,
     check_section_organization,
     evaluate_header_structure,
-    evaluate_structure_advanced,
+    evaluate_structure,
     evaluate_word_count_compliance,
 )
 
@@ -254,7 +254,7 @@ class TestHeaderStructure:
 
 class TestStructureAdvanced:
     @pytest.mark.asyncio
-    async def test_evaluate_structure_advanced_high_quality(self) -> None:
+    async def test_evaluate_structure_high_quality(self) -> None:
         content = textwrap.dedent("""
         # Research Methodology
 
@@ -308,7 +308,7 @@ class TestStructureAdvanced:
             topics=["research methods"],
         )
 
-        result = await evaluate_structure_advanced(content, section_config)
+        result = await evaluate_structure(content, section_config)
 
         assert result["overall"] > 0.4, f"Expected good overall structure, got {result['overall']}"
         assert result["word_count_compliance"] > 0.2, (
@@ -328,7 +328,7 @@ class TestStructureAdvanced:
         )
 
     @pytest.mark.asyncio
-    async def test_evaluate_structure_advanced_poor_quality(self) -> None:
+    async def test_evaluate_structure_poor_quality(self) -> None:
         content = """
         bad writing here
         no structure at all just random text
@@ -352,7 +352,7 @@ class TestStructureAdvanced:
             topics=[],
         )
 
-        result = await evaluate_structure_advanced(content, section_config)
+        result = await evaluate_structure(content, section_config)
 
         assert result["overall"] < 0.4, f"Expected low overall structure, got {result['overall']}"
         assert result["section_organization"] < 0.3, f"Expected low organization, got {result['section_organization']}"
@@ -360,7 +360,7 @@ class TestStructureAdvanced:
         assert result["header_structure"] == 0.0, f"Expected no header structure, got {result['header_structure']}"
 
     @pytest.mark.asyncio
-    async def test_evaluate_structure_advanced_word_count_exceeded(self) -> None:
+    async def test_evaluate_structure_word_count_exceeded(self) -> None:
         content = "This is a test sentence with ten words exactly. " * 20
 
         section_config = GrantLongFormSection(
@@ -378,14 +378,14 @@ class TestStructureAdvanced:
             topics=[],
         )
 
-        result = await evaluate_structure_advanced(content, section_config)
+        result = await evaluate_structure(content, section_config)
 
         assert result["word_count_compliance"] < 0.6, (
             f"Expected low word count compliance, got {result['word_count_compliance']}"
         )
 
     @pytest.mark.asyncio
-    async def test_evaluate_structure_advanced_empty_content(self) -> None:
+    async def test_evaluate_structure_empty_content(self) -> None:
         section_config = GrantLongFormSection(
             id="test",
             title="Test Section",
@@ -401,7 +401,7 @@ class TestStructureAdvanced:
             topics=[],
         )
 
-        result = await evaluate_structure_advanced("", section_config)
+        result = await evaluate_structure("", section_config)
 
         assert result["overall"] == 0.0, f"Empty content should score 0.0, got {result['overall']}"
         assert all(score == 0.0 for score in result.values()), "All scores should be 0.0 for empty content"

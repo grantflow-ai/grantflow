@@ -343,7 +343,7 @@ def _calculate_lexical_overlap(text1: str, text2: str) -> float:
     return len(intersection) / len(union) if union else 0.0
 
 
-async def evaluate_coherence_advanced(content: str) -> CoherenceMetrics:
+async def evaluate_coherence(content: str) -> CoherenceMetrics:
     if not content.strip():
         return CoherenceMetrics(
             local_coherence=0.0,

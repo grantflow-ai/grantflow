@@ -4,7 +4,7 @@ from typing import Final
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.dto import SourceGroundingMetrics
+from services.rag.src.utils.evaluation.dto import GroundingMetrics
 from services.rag.tests.utils.rouge_utils import calculate_rouge_l, calculate_rouge_n
 
 CITATION_PATTERNS: Final[list[re.Pattern[str]]] = [
@@ -242,11 +242,11 @@ def _extract_phrases(text: str, min_length: int = 3, max_length: int = 5) -> set
     return phrases
 
 
-async def evaluate_source_grounding_advanced(
+async def evaluate_source_grounding(
     content: str, rag_context: list[DocumentDTO], section_config: GrantLongFormSection
-) -> SourceGroundingMetrics:
+) -> GroundingMetrics:
     if not content.strip():
-        return SourceGroundingMetrics(
+        return GroundingMetrics(
             rouge_l_score=0.0,
             rouge_2_score=0.0,
             rouge_3_score=0.0,
@@ -285,7 +285,7 @@ async def evaluate_source_grounding_advanced(
         + context_citation_density * 0.05
     )
 
-    return SourceGroundingMetrics(
+    return GroundingMetrics(
         rouge_l_score=rouge_metrics["rouge_l_score"],
         rouge_2_score=rouge_metrics["rouge_2_score"],
         rouge_3_score=rouge_metrics["rouge_3_score"],

@@ -230,8 +230,8 @@ async def evaluate_performance_baseline(
             overall_score=evaluation_result["overall_score"] / 100.0,
             component_scores={
                 "structural": evaluation_result["structural_metrics"]["overall"],
-                "scientific_quality": evaluation_result["scientific_quality_metrics"]["overall"],
-                "source_grounding": evaluation_result["source_grounding_metrics"]["overall"],
+                "scientific_quality": evaluation_result["quality_metrics"]["overall"],
+                "source_grounding": evaluation_result["grounding_metrics"]["overall"],
                 "coherence": evaluation_result["coherence_metrics"]["overall"],
             },
             content_type=content_type,

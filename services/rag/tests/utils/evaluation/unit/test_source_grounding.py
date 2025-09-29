@@ -2,13 +2,13 @@ import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
-from services.rag.src.utils.evaluation.source_grounding import (
+from services.rag.src.utils.evaluation.text.grounding import (
     analyze_content_source_overlap,
     assess_context_citation_density,
     calculate_keyword_coverage,
     calculate_rouge_based_grounding,
     calculate_search_query_integration,
-    evaluate_source_grounding_advanced,
+    evaluate_source_grounding,
 )
 
 
@@ -199,7 +199,7 @@ class TestContentSourceOverlap:
 
 class TestSourceGroundingAdvanced:
     @pytest.mark.asyncio
-    async def test_evaluate_source_grounding_advanced_high_grounding(self) -> None:
+    async def test_evaluate_source_grounding_high_grounding(self) -> None:
         content = """
         # Biomarker Analysis Methodology
 
@@ -238,7 +238,7 @@ class TestSourceGroundingAdvanced:
             topics=["research methods"],
         )
 
-        result = await evaluate_source_grounding_advanced(content, rag_context, section_config)
+        result = await evaluate_source_grounding(content, rag_context, section_config)
 
         assert result["overall"] > 0.3, f"Expected good overall grounding, got {result['overall']}"
         assert result["rouge_l_score"] > 0.1, f"Expected decent ROUGE-L score, got {result['rouge_l_score']}"
@@ -249,7 +249,7 @@ class TestSourceGroundingAdvanced:
         assert 0.0 <= result["context_citation_density"] <= 1.0
 
     @pytest.mark.asyncio
-    async def test_evaluate_source_grounding_advanced_no_context(self) -> None:
+    async def test_evaluate_source_grounding_no_context(self) -> None:
         content = "Biomarker analysis methodology for research applications."
         rag_context: list[DocumentDTO] = []
 
@@ -268,7 +268,7 @@ class TestSourceGroundingAdvanced:
             topics=["research"],
         )
 
-        result = await evaluate_source_grounding_advanced(content, rag_context, section_config)
+        result = await evaluate_source_grounding(content, rag_context, section_config)
 
         assert result["rouge_l_score"] == 0.0, f"No context should give 0 ROUGE-L, got {result['rouge_l_score']}"
         assert result["rouge_2_score"] == 0.0
@@ -279,7 +279,7 @@ class TestSourceGroundingAdvanced:
         )
 
     @pytest.mark.asyncio
-    async def test_evaluate_source_grounding_advanced_empty_content(self) -> None:
+    async def test_evaluate_source_grounding_empty_content(self) -> None:
         rag_context = [DocumentDTO(content="Biomarker research demonstrates clinical efficacy")]
 
         section_config = GrantLongFormSection(
@@ -297,7 +297,7 @@ class TestSourceGroundingAdvanced:
             topics=[],
         )
 
-        result = await evaluate_source_grounding_advanced("", rag_context, section_config)
+        result = await evaluate_source_grounding("", rag_context, section_config)
 
         assert result["overall"] == 0.0, f"Empty content should score 0.0, got {result['overall']}"
         assert all(score == 0.0 for score in result.values()), "All scores should be 0.0 for empty content"
