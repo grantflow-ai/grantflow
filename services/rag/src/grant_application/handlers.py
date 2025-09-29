@@ -45,7 +45,6 @@ async def handle_generate_sections_stage(
     await job_manager.ensure_not_cancelled()
 
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
-    # Now we have the research plan from the previous stage in dto["research_plan_text"]
     long_form_sections: list[GrantLongFormSection] = []
     work_plan_section: GrantLongFormSection = dto["work_plan_section"]
     research_plan_text = dto["research_plan_text"]
@@ -160,7 +159,6 @@ async def handle_generate_sections_stage(
         },
     )
 
-    # Include all data from previous stages in the return
     return GenerateSectionsStageDTO(
         work_plan_section=work_plan_section,
         relationships=relationships,
@@ -179,7 +177,6 @@ async def handle_extract_relationships_stage(
 ) -> ExtractRelationshipsStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    # Extract work_plan_section from grant_template as this is now the first stage
     work_plan_section: GrantLongFormSection | None = None
     if not grant_application.grant_template:
         raise ValidationError("Grant template not found")

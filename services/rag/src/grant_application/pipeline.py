@@ -393,7 +393,6 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
-                # EXTRACT_RELATIONSHIPS is now the first stage, no checkpoint data needed
                 logger.debug(
                     "Starting EXTRACT_RELATIONSHIPS as first stage",
                     application_id=str(application_id),

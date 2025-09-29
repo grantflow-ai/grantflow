@@ -139,7 +139,6 @@ async def test_rag_focused_prompts_generation(
     with (
         patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock),
     ):
-        # Create a mock dto for the sections stage
         from services.rag.src.grant_application.dto import GenerateResearchPlanStageDTO
 
         mock_dto = GenerateResearchPlanStageDTO(

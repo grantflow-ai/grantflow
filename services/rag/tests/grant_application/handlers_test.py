@@ -116,7 +116,6 @@ async def test_generate_sections_stage_success(
     mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
     mock_batched_gather.return_value = ["Generated abstract text", "Generated significance text"]
 
-    # Create a mock dto that includes all the previous stage data
     input_dto = GenerateResearchPlanStageDTO(
         work_plan_section=sample_work_plan_section,
         relationships={"1": [("2", "test relationship")]},
@@ -162,7 +161,6 @@ async def test_extract_relationships_stage_success(
     }
     mock_handle_extract_relationships.return_value = mock_relationships
 
-    # Mock the grant template with work plan section
     mock_grant_template = AsyncMock()
     mock_grant_template.grant_sections = [sample_work_plan_section]
     grant_application.grant_template = mock_grant_template
