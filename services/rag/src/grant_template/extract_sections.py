@@ -1,3 +1,5 @@
+import json
+import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
 
@@ -193,14 +195,18 @@ COMPREHENSIVE LIMIT DETECTION AND CONVERSION RULES:
 - OTHER CONSTRAINTS: Capture non-length limits → cfp_other_limits array (reference counts, file formats, etc.)
 
 CONVERSION EXAMPLES:
-- "2 pages maximum" → cfp_length_limit: 830, cfp_length_source: "Converted from 2 pages (2 × 415 = 830 words)"
-- "1000 characters" → cfp_length_limit: 200, cfp_length_source: "Converted from 1000 characters (1000 ÷ 5 = 200 words)"
+- "2 pages maximum" → cfp_length_limit: 830, cfp_length_source: "Converted from 2 pages (2 x 415 = 830 words)"
+- "1000 characters" → cfp_length_limit: 200, cfp_length_source: "Converted from 1000 characters (1000 / 5 = 200 words)"
 - "500 words" → cfp_length_limit: 500, cfp_length_source: "Original: 500 words"
 - "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
 
 APPLICANT WRITING CLASSIFICATION:
-- needs_applicant_writing = TRUE: Sections where applicants write original content (abstracts, project descriptions, research plans, narrative sections, statements)
-- needs_applicant_writing = FALSE: External documents (CVs, letters of recommendation, letters of support, bibliography/references, biosketches)
+- needs_applicant_writing = TRUE: Sections where applicants write original content (abstracts, project descriptions, research plans, narrative sections, statements, budget justifications)
+- needs_applicant_writing = FALSE: External documents (CVs, letters of recommendation, letters of support, bibliography/references, biosketches, budget forms/spreadsheets)
+
+BUDGET SECTION CLASSIFICATION (CRITICAL):
+- needs_applicant_writing = TRUE: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description" (requires written content)
+- needs_applicant_writing = FALSE: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary" (just forms/numbers)
 
 CRITICAL: You must transfer ALL CFP analysis data accurately - this is essential for application success. The CFP analysis report is your authoritative source. Do not generate new requirements - only use what the analysis provides.
 """
@@ -208,7 +214,7 @@ CRITICAL: You must transfer ALL CFP analysis data accurately - this is essential
 EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_grant_application_sections",
     template="""
-    # Enhanced Grant Application Section Extraction with CFP Analysis Integration
+    # Grant Application Section Extraction with CFP Analysis Integration
 
     You are tasked with creating a grant application template using detailed CFP analysis results.
 
@@ -266,7 +272,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - If generating section "PROJECT SUMMARY/ABSTRACT", find CFP object with `section_name`: "PROJECT SUMMARY/ABSTRACT"
     - Copy its `requirements` array (e.g., 4 requirement objects) to `cfp_requirements`
     - Copy its `definition` string to `cfp_definition`
-    - Process constraints: "1 page maximum" → cfp_length_limit: 415, cfp_length_source: "Converted from 1 page (1 × 415 = 415 words)"
+    - Process constraints: "1 page maximum" → cfp_length_limit: 415, cfp_length_source: "Converted from 1 page (1 x 415 = 415 words)"
     - Process non-length constraints: "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
 
     **SECTION CREATION DETAILS:**
@@ -292,6 +298,13 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - **INCLUDE**: All sections where applicants write original research content
     - **EXCLUDE**: Administrative forms, budget spreadsheets, CVs, recommendation letters
     - **INCLUDE**: Budget justification narratives, biographical sketches with written content
+
+    ### 3.1 CRITICAL: Budget Section Classification Rules
+    **IMPORTANT**: Distinguish between budget forms and budget narratives:
+    - ❌ **EXCLUDE sections named**: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary"
+    - ✅ **INCLUDE sections named**: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description"
+    - **Decision Rule**: Only include budget sections that explicitly require written justification/narrative content
+    - **Keyword Test**: If section name contains "Budget" but lacks "Justification|Narrative|Explanation|Description", likely exclude it
 
     ### 4. Section Properties
     For each section, determine:
@@ -338,7 +351,19 @@ section_extraction_json_schema = {
             "description": "Array of section objects representing the grant application structure",
             "items": {
                 "type": "object",
-                "required": ["title", "id", "parent_id", "is_long_form", "cfp_source_reference", "cfp_requirements", "cfp_length_limit", "cfp_length_source", "cfp_other_limits", "cfp_definition", "needs_applicant_writing"],
+                "required": [
+                    "title",
+                    "id",
+                    "parent_id",
+                    "is_long_form",
+                    "cfp_source_reference",
+                    "cfp_requirements",
+                    "cfp_length_limit",
+                    "cfp_length_source",
+                    "cfp_other_limits",
+                    "cfp_definition",
+                    "needs_applicant_writing",
+                ],
                 "properties": {
                     "title": {
                         "type": "string",
@@ -375,19 +400,19 @@ section_extraction_json_schema = {
                             "properties": {
                                 "requirement": {"type": "string"},
                                 "quote_from_source": {"type": "string"},
-                                "category": {"type": "string"}
-                            }
-                        }
+                                "category": {"type": "string"},
+                            },
+                        },
                     },
                     "cfp_length_limit": {
                         "type": "integer",
                         "nullable": True,
-                        "description": "CRITICAL DATA TRANSFER: Standardized word count for all length constraints. Convert ALL length limits to words using these CONVERSION RULES: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters). Examples: '2 pages' → 830, '1000 characters' → 200, '5 pages' → 2075. If no length limit exists, use null."
+                        "description": "CRITICAL DATA TRANSFER: Standardized word count for all length constraints. Convert ALL length limits to words using these CONVERSION RULES: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters). Examples: '2 pages' → 830, '1000 characters' → 200, '5 pages' → 2075. If no length limit exists, use null.",
                     },
                     "cfp_length_source": {
                         "type": "string",
                         "nullable": True,
-                        "description": "CONVERSION TRACKING: Explain the original constraint and conversion applied. Examples: 'Converted from 2 pages (2 × 415 = 830 words)', 'Converted from 1000 characters (1000 ÷ 5 = 200 words)', 'Original: 500 words'. Use null if no length limit."
+                        "description": "CONVERSION TRACKING: Explain the original constraint and conversion applied. Examples: 'Converted from 2 pages (2 x 415 = 830 words)', 'Converted from 1000 characters (1000 / 5 = 200 words)', 'Original: 500 words'. Use null if no length limit.",
                     },
                     "cfp_other_limits": {
                         "type": "array",
@@ -398,27 +423,27 @@ section_extraction_json_schema = {
                             "properties": {
                                 "constraint_type": {
                                     "type": "string",
-                                    "description": "Type of constraint (e.g., 'reference_count', 'file_format', 'deadline', 'font_requirements')"
+                                    "description": "Type of constraint (e.g., 'reference_count', 'file_format', 'deadline', 'font_requirements')",
                                 },
                                 "constraint_value": {
                                     "type": "string",
-                                    "description": "The specific constraint value (e.g., '30 references maximum', 'PDF format required')"
+                                    "description": "The specific constraint value (e.g., '30 references maximum', 'PDF format required')",
                                 },
                                 "source_quote": {
                                     "type": "string",
-                                    "description": "Direct quote from CFP that specifies this constraint"
-                                }
-                            }
-                        }
+                                    "description": "Direct quote from CFP that specifies this constraint",
+                                },
+                            },
+                        },
                     },
                     "cfp_definition": {
                         "type": "string",
                         "nullable": True,
-                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null."
+                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
                     },
                     "needs_applicant_writing": {
                         "type": "boolean",
-                        "description": "CLASSIFICATION: Determine if this section requires the applicant to write original content. TRUE for narrative sections, abstracts, project descriptions, research plans, etc. that applicants write themselves. FALSE for external documents like CVs, letters of recommendation, letters of support, bibliography/references that others provide or are pre-existing documents."
+                        "description": "CLASSIFICATION: Determine if this section requires the applicant to write original content. TRUE for narrative sections, abstracts, project descriptions, research plans, budget justifications, etc. that applicants write themselves. FALSE for external documents like CVs, letters of recommendation, letters of support, bibliography/references, budget forms/spreadsheets that others provide or are pre-existing documents. BUDGET RULE: Only budget sections with 'Justification', 'Narrative', 'Explanation', or 'Description' in the title should be TRUE.",
                     },
                     "is_detailed_research_plan": {
                         "type": "boolean",
@@ -651,7 +676,7 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
-        # Ensure CFP source reference for enhanced functionality (backwards compatible)
+        # Ensure CFP source reference is present
         if not section.get("cfp_source_reference"):
             # Extract from title if it has CFP reference format, otherwise generate default
             title = section["title"]
@@ -684,9 +709,16 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
         # Ensure needs_applicant_writing is set (backwards compatible)
         if "needs_applicant_writing" not in section:
-            section["needs_applicant_writing"] = True  # Default to True for most sections
+            # Smart default: check if it's a budget-only section (without justification)
+            title_lower = section.get("title", "").lower()
+            if "budget" in title_lower and not any(
+                keyword in title_lower for keyword in ["justification", "narrative", "explanation", "description"]
+            ):
+                section["needs_applicant_writing"] = False
+            else:
+                section["needs_applicant_writing"] = True
 
-    # Ensure all sections have an order field (add if missing for thinking budget responses)
+    # Ensure all sections have an order field
     for i, section in enumerate(sections):
         if "order" not in section:
             section["order"] = i + 1
@@ -699,30 +731,14 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
 
 async def extract_sections(task_description: str, trace_id: str, **_: Any) -> ExtractedSections:
-    import json
-    import re
-
-    # Parse the task_description to extract CFP analysis data and CFP content
-    # The task_description contains both CFP analysis JSON and original CFP content
-
-    # Extract CFP Analysis JSON from task_description
-    cfp_analysis_match = re.search(r'CFP Analysis Data.*?:\s*(\{.*\})', task_description, re.DOTALL)
+    cfp_analysis_match = re.search(r"CFP Analysis Data.*?:\s*(\{.*\})", task_description, re.DOTALL)
     cfp_analysis_json = "{}" if not cfp_analysis_match else cfp_analysis_match.group(1)
 
-    # Extract original CFP content
-    cfp_content_match = re.search(r'Original CFP Content:\s*(.*)', task_description, re.DOTALL)
+    cfp_content_match = re.search(r"Original CFP Content:\s*(.*)", task_description, re.DOTALL)
     cfp_content = "" if not cfp_content_match else cfp_content_match.group(1).strip()
 
-    # Default values for template substitution
     organization_guidelines = "Follow standard grant application best practices."
     cfp_subject = "Grant Application Requirements"
-
-    print(f"🔧 API CALL: Using Gemini Flash model with proper template substitution")
-    print(f"   Model: gemini-2.5-flash")
-    print(f"   Temperature: 0.1")
-    print(f"   Timeout: 300s (5 minutes)")
-    print(f"   CFP Analysis Size: {len(cfp_analysis_json)} chars")
-    print(f"   CFP Content Size: {len(cfp_content)} chars")
 
     # Create the full prompt using template substitution
     full_prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
@@ -732,19 +748,18 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
         cfp_content=cfp_content,
     )
 
-    # Use Gemini Flash model for CFP data processing (no thinking budget)
-    # Force Gemini Flash usage as requested by user
-    if True:  # Always use Gemini Flash per user requirement
+    # Use Gemini Flash model for CFP data processing
+    if True:
         return await handle_completions_request(
             prompt_identifier="section_extraction",
-            model="gemini-2.5-flash",  # Use Gemini Flash only
+            model="gemini-2.5-flash",
             messages=full_prompt.to_string(),
             system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
             response_schema=section_extraction_json_schema,
             response_type=ExtractedSections,
             validator=validate_section_extraction,
-            temperature=0.1,  # Low temperature for consistent CFP data transfer
-            timeout=300,  # 5-minute timeout
+            temperature=0.1,
+            timeout=300,
             trace_id=trace_id,
         )
 
@@ -773,12 +788,10 @@ async def handle_extract_sections(
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
     # Include CFP analysis if available, otherwise use fallback prompt
-    import json
     cfp_analysis_text = ""
     if cfp_analysis:
         cfp_analysis_text = json.dumps(cfp_analysis, indent=2, default=str)
     else:
-        # Use empty analysis for backwards compatibility
         cfp_analysis_text = "No structured CFP analysis available. Use standard grant application structure."
 
     # Get organization guidelines with RAG results
