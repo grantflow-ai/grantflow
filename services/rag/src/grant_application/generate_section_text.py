@@ -1,5 +1,5 @@
 from functools import partial
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
@@ -98,57 +98,74 @@ def _get_section_length_requirements(section_title: str) -> str:
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_generation",
     template="""
-    Write the ${section_title} section for a grant application.
+Write the ${section_title} section for a grant application.
 
-    ## Length Requirements
-    ${length_requirements}
+## Length Requirements
+${length_requirements}
 
-    ## Instructions
-    ${instructions}
+## Section-Specific Instructions
+${instructions}
 
-    ${cfp_requirements}
+## Section Focus Areas
+Keywords: ${keywords}
+Topics: ${topics}
 
-    ## Research Context (Scientific Papers Data)
-    ${context}
+These keywords and topics should guide the focus and scope of this section, but ALL scientific content must be grounded in the research context and research plan below.
 
-    ## CRITICAL: RAG Data Usage Requirements
-    **You are writing based on scientific papers and research data provided above. The scientists have given us this specific data to use.**
+${cfp_requirements}
 
-    MANDATORY STEPS BEFORE WRITING:
-    1. **Extract and quote extensively** from the research context - this is real scientific data that MUST be incorporated
-    2. **Pre-identify specific n-grams** from the RAG context to use:
-       - Find at least 5 scientific 1-grams (single technical terms)
-       - Find 5-10 relevant 2-grams (compound terms like "tumor microenvironment")
-       - Find 5-10 relevant 3-grams (technical phrases like "single-cell RNA sequencing")
-       - Find 5-10 relevant 4-grams (complex expressions like "tumor-associated macrophage polarization states")
-    3. **Plan integration** of these identified terms throughout your writing
+## Research Context (Scientific Papers Data)
+${context}
 
-    ## Content Requirements
-        - **QUOTE AND USE RAG DATA EXTENSIVELY** - this is provided scientific research that must be incorporated
-        - Write substantive, detailed content with specific examples and evidence FROM THE RAG CONTEXT
-        - Include clear objectives, methodological approaches, and expected outcomes BASED ON PROVIDED DATA
-        - Structure content with clear headings, subheadings, and logical flow
-        - Incorporate timeline information, milestones, and work plan elements where relevant
-        - Use professional academic language with precise scientific terminology FROM THE RAG
-        - Ensure content directly addresses all section requirements comprehensively USING RAG DATA
-        - Provide sufficient detail to demonstrate expertise and feasibility WITH RAG EVIDENCE
-        - Include specific research questions, hypotheses, and experimental designs FROM RAG CONTEXT
-        - Address potential challenges and mitigation strategies MENTIONED IN RAG DATA
-        - Connect to broader research context and clinical significance AS PROVIDED IN RAG
+## CRITICAL: RAG Data Usage Requirements
+**You are writing based on scientific papers and research data provided above. The scientists have given us this specific data to use.**
 
-    ## Scientific Writing with RAG Integration
-        - **Primary Goal**: Maximize use of provided RAG research context - quote, paraphrase, and reference extensively
-        - **Secondary Goal**: Use the pre-identified n-grams naturally throughout the text for scientific style
-        - Weave the identified 1-grams, 2-grams, 3-grams, and 4-grams into the narrative seamlessly
-        - Maintain scientific rigor by grounding ALL claims in the provided research context
-        - Treat the RAG context as your primary source material - you are synthesizing scientific papers
+MANDATORY STEPS BEFORE WRITING:
+1. **Extract and quote extensively** from the research context - this is real scientific data that MUST be incorporated
+2. **Pre-identify specific n-grams** from the RAG context to use:
+   - Find at least 5 scientific 1-grams (single technical terms like "apoptosis", "CRISPR")
+   - Find 5-10 relevant 2-grams (compound terms like "tumor microenvironment", "immune checkpoint")
+   - Find 5-10 relevant 3-grams (technical phrases like "single-cell RNA sequencing", "patient-derived xenograft models")
+   - Find 5-10 relevant 4-grams (complex expressions like "tumor-associated macrophage polarization states")
+3. **Plan integration** of these identified terms throughout your writing
 
-    ## Format Guidelines
-        - Use markdown formatting with proper headers (## for main sections, ### for subsections)
-        - Include bullet points or numbered lists for clarity where appropriate
-        - Aim for comprehensive coverage within specified word count targets
-        - Include specific metrics, timelines, and measurable outcomes FROM RAG DATA
-        - Quote or reference specific findings, methodologies, and results from the research context
+## Research Plan Grounding (MANDATORY)
+${research_plan_context}
+
+ALL scientific content and methodology descriptions MUST be grounded in and consistent with the Research Plan above:
+- If describing methods, timelines, or resources: Reference specific objectives and tasks by number (e.g., "as outlined in Objective 2, Task 2.3")
+- If describing aims or significance: Connect to the high-level objectives from the Research Plan
+- If describing team or administrative details: Ensure alignment with research requirements
+- NEVER contradict the Research Plan - only expand, elaborate, and support it with evidence from the scientific literature
+
+## Content Requirements
+- **QUOTE AND USE RAG DATA EXTENSIVELY** - this is provided scientific research that must be incorporated
+- Write substantive, detailed content with specific examples and evidence FROM THE RAG CONTEXT
+- Ground all scientific claims and methodologies in BOTH the research context AND the Research Plan
+- Include clear objectives, methodological approaches, and expected outcomes BASED ON PROVIDED DATA
+- Structure content with clear headings, subheadings, and logical flow
+- Incorporate timeline information, milestones, and work plan elements where relevant
+- Use professional academic language with precise scientific terminology FROM THE RAG
+- Ensure content directly addresses all section requirements comprehensively USING RAG DATA
+- Provide sufficient detail to demonstrate expertise and feasibility WITH RAG EVIDENCE
+- Include specific research questions, hypotheses, and experimental designs FROM RAG CONTEXT
+- Address potential challenges and mitigation strategies MENTIONED IN RAG DATA
+- Connect to broader research context and clinical significance AS PROVIDED IN RAG
+
+## Scientific Writing with RAG Integration
+- **Primary Goal**: Maximize use of provided RAG research context - quote, paraphrase, and reference extensively
+- **Secondary Goal**: Use the pre-identified n-grams naturally throughout the text for scientific style
+- Weave the identified 1-grams, 2-grams, 3-grams, and 4-grams into the narrative seamlessly
+- Maintain scientific rigor by grounding ALL claims in the provided research context
+- Treat the RAG context as your primary source material - you are synthesizing scientific papers
+- Ensure all scientific content relates to and supports the Research Plan objectives
+
+## Format Guidelines
+- Use markdown formatting with proper headers (## for main sections, ### for subsections)
+- Include bullet points or numbered lists for clarity where appropriate
+- Aim for comprehensive coverage within specified word count targets
+- Include specific metrics, timelines, and measurable outcomes FROM RAG DATA
+- Quote or reference specific findings, methodologies, and results from the research context
 """,
 )
 
@@ -168,6 +185,9 @@ async def handle_generate_section_text(
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
     cfp_analysis: CFPAnalysisResult,
+    research_plan_text: str,
+    enrichment_responses: list[Any],
+    relationships: dict[str, list[tuple[str, str]]],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -203,24 +223,38 @@ async def handle_generate_section_text(
 
     research_context = "\n\n".join(research_context_parts)
 
+    relevant_enrichments = []
+    for enrichment in enrichment_responses:
+        if "research_objective" in enrichment:
+            relevant_enrichments.append(enrichment["research_objective"])
+        if "research_tasks" in enrichment:
+            relevant_enrichments.extend(enrichment["research_tasks"])
+
+    relationships_context = ""
+    if relationships:
+        rel_parts = []
+        for source, targets in relationships.items():
+            for target, description in targets:
+                rel_parts.append(f"- {source} → {target}: {description}")
+        if rel_parts:
+            relationships_context = "\n## Key Relationships Between Research Components\n" + "\n".join(rel_parts[:10])
+
     combined_context = f"""
-    # Grant Application Context
+# Scientific Research Papers Context
 
-    {shared_context}
+{shared_context}
 
-    # Detailed Research Objectives
+# Research Objectives (Detailed)
 
-    {research_context}
+{research_context}
+"""
 
-    # Section Generation Guidelines
-    This section should integrate the above context to create comprehensive, detailed content that demonstrates:
-    1. Deep understanding of the research domain
-    2. Clear connection to stated objectives
-    3. Specific methodological approaches
-    4. Realistic timelines and milestones
-    5. Innovation and feasibility
-    6. Professional academic writing quality
-    """
+    research_plan_context_parts = [f"# Approved Research Plan\n\n{research_plan_text}"]
+
+    if relationships_context:
+        research_plan_context_parts.append(relationships_context)
+
+    formatted_research_plan_context = "\n\n".join(research_plan_context_parts)
 
     task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
@@ -244,13 +278,19 @@ async def handle_generate_section_text(
     cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis["cfp_analysis"])
     length_requirements = _get_section_length_requirements(section_title)
 
+    keywords_str = ", ".join(section.get("keywords", []))
+    topics_str = ", ".join(section.get("topics", []))
+
     logger.debug(
         "Prepared context and requirements for section generation",
         section_id=section["id"],
         section_title=section_title,
         combined_context_chars=len(validated_context),
+        research_plan_chars=len(formatted_research_plan_context),
         cfp_requirements_chars=len(cfp_requirements_text),
         has_cfp_requirements=bool(cfp_requirements_text),
+        keywords=keywords_str,
+        topics=topics_str,
         trace_id=trace_id,
     )
 
@@ -258,8 +298,11 @@ async def handle_generate_section_text(
         section_title=section_title,
         length_requirements=length_requirements,
         instructions=section["generation_instructions"],
+        keywords=keywords_str,
+        topics=topics_str,
         cfp_requirements=cfp_requirements_text,
         context=validated_context,
+        research_plan_context=formatted_research_plan_context,
     )
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
