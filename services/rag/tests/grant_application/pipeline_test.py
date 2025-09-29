@@ -66,26 +66,48 @@ def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
             "is_detailed_research_plan": True,
             "is_clinical_trial": None,
         },
+        relationships={},
+        enrichment_responses=[],
+        wikidata_enrichments=[],
+        research_plan_text="Sample research plan text",
     )
 
 
-async def test_generate_sections_stage(
+async def test_extract_relationships_stage_first(
     mocker: MockerFixture,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     sample_rag_sources: list[RagSource],
     async_session_maker: async_sessionmaker[Any],
-    sample_generate_sections_dto: GenerateSectionsStageDTO,
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
 ) -> None:
+    from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
+
     mock_verify_sources = mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    mock_handle_generate_sections = mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-        return_value=sample_generate_sections_dto,
+    mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
+        work_plan_section={
+            "id": "test_plan",
+            "title": "Test Plan",
+            "order": 1,
+            "parent_id": None,
+            "keywords": [],
+            "topics": [],
+            "generation_instructions": "Test instructions",
+            "depends_on": [],
+            "max_words": 1000,
+            "search_queries": [],
+            "is_detailed_research_plan": True,
+            "is_clinical_trial": None,
+        },
+        relationships={"1": [("2", "test relationship")]},
+    )
+    mock_handle_extract_relationships = mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
+        return_value=mock_extract_relationships_dto,
     )
 
     async with async_session_maker() as session:
@@ -105,11 +127,11 @@ async def test_generate_sections_stage(
             trace_id=trace_id,
         )
 
-    mock_handle_generate_sections.assert_called_once()
+    mock_handle_extract_relationships.assert_called_once()
     mock_verify_sources.assert_called_once()
 
 
-async def test_extract_relationships_stage_requires_checkpoint(
+async def test_generate_sections_stage_requires_checkpoint(
     mocker: MockerFixture,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
@@ -119,16 +141,35 @@ async def test_extract_relationships_stage_requires_checkpoint(
     mock_pubsub_for_pipeline_testing: Any,
     sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
+    from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
+
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-        return_value=sample_generate_sections_dto,
+    mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
+        work_plan_section={
+            "id": "test_plan",
+            "title": "Test Plan",
+            "order": 1,
+            "parent_id": None,
+            "keywords": [],
+            "topics": [],
+            "generation_instructions": "Test instructions",
+            "depends_on": [],
+            "max_words": 1000,
+            "search_queries": [],
+            "is_detailed_research_plan": True,
+            "is_clinical_trial": None,
+        },
+        relationships={"1": [("2", "test relationship")]},
     )
-    mock_handle_extract_relationships = mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage"
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
+        return_value=mock_extract_relationships_dto,
+    )
+    mock_handle_generate_sections = mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage"
     )
 
     async with async_session_maker() as session:
@@ -148,7 +189,7 @@ async def test_extract_relationships_stage_requires_checkpoint(
             trace_id=trace_id,
         )
 
-    mock_handle_extract_relationships.assert_not_called()
+    mock_handle_generate_sections.assert_not_called()
 
 
 async def test_enrich_objectives_stage_requires_checkpoint(
@@ -159,15 +200,33 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
-    sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
+    from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
+
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
+    mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
+        work_plan_section={
+            "id": "test_plan",
+            "title": "Test Plan",
+            "order": 1,
+            "parent_id": None,
+            "keywords": [],
+            "topics": [],
+            "generation_instructions": "Test instructions",
+            "depends_on": [],
+            "max_words": 1000,
+            "search_queries": [],
+            "is_detailed_research_plan": True,
+            "is_clinical_trial": None,
+        },
+        relationships={"1": [("2", "test relationship")]},
+    )
     mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-        return_value=sample_generate_sections_dto,
+        "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
+        return_value=mock_extract_relationships_dto,
     )
     mock_handle_enrich_objectives = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"

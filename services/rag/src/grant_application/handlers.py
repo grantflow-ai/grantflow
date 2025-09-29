@@ -38,6 +38,7 @@ WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
 async def handle_generate_sections_stage(
     *,
     grant_application: "GrantApplication",
+    dto: GenerateResearchPlanStageDTO,
     job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> GenerateSectionsStageDTO:
@@ -45,7 +46,10 @@ async def handle_generate_sections_stage(
 
     # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
-    work_plan_section: GrantLongFormSection | None = None
+    work_plan_section: GrantLongFormSection = dto["work_plan_section"]
+    research_plan_text = dto["research_plan_text"]
+    enrichment_responses = dto.get("enrichment_responses", [])
+    relationships = dto.get("relationships", {})
 
     if not grant_application.grant_template:
         raise ValidationError("Grant template not found")
@@ -53,9 +57,7 @@ async def handle_generate_sections_stage(
     for section in grant_application.grant_template.grant_sections:
         if "max_words" in section and "generation_instructions" in section:
             long_form_section = cast("GrantLongFormSection", section)
-            if long_form_section.get("is_detailed_research_plan"):
-                work_plan_section = long_form_section
-            else:
+            if not long_form_section.get("is_detailed_research_plan"):
                 long_form_sections.append(long_form_section)
 
     all_search_queries = []
@@ -93,6 +95,9 @@ async def handle_generate_sections_stage(
             research_deep_dives=grant_application.research_objectives or [],
             shared_context=shared_context,
             cfp_analysis=cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
+            research_plan_text=research_plan_text,
+            enrichment_responses=enrichment_responses,
+            relationships=relationships,
             trace_id=trace_id,
             job_manager=job_manager,
         )
@@ -154,28 +159,42 @@ async def handle_generate_sections_stage(
         },
     )
 
-    if work_plan_section is None:
-        raise ValidationError("Work plan section not found in grant template")
-
     return GenerateSectionsStageDTO(
-        section_texts=section_text_list,
         work_plan_section=work_plan_section,
+        relationships=relationships,
+        enrichment_responses=enrichment_responses,
+        wikidata_enrichments=dto.get("wikidata_enrichments", []),
+        research_plan_text=research_plan_text,
+        section_texts=section_text_list,
     )
 
 
 async def handle_extract_relationships_stage(
     *,
     grant_application: "GrantApplication",
-    dto: GenerateSectionsStageDTO,
     job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> ExtractRelationshipsStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    work_plan_section: GrantLongFormSection | None = None
+    if not grant_application.grant_template:
+        raise ValidationError("Grant template not found")
+
+    for section in grant_application.grant_template.grant_sections:
+        if "max_words" in section and "generation_instructions" in section:
+            long_form_section = cast("GrantLongFormSection", section)
+            if long_form_section.get("is_detailed_research_plan"):
+                work_plan_section = long_form_section
+                break
+
+    if not work_plan_section:
+        raise ValidationError("Work plan section not found in grant template")
+
     relationships = await handle_extract_relationships(
         application_id=str(grant_application.id),
         research_objectives=grant_application.research_objectives or [],
-        grant_section=dto["work_plan_section"],
+        grant_section=work_plan_section,
         form_inputs=grant_application.form_inputs or {},
         trace_id=trace_id,
         job_manager=job_manager,
@@ -191,8 +210,7 @@ async def handle_extract_relationships_stage(
     )
 
     return ExtractRelationshipsStageDTO(
-        section_texts=dto["section_texts"],
-        work_plan_section=dto["work_plan_section"],
+        work_plan_section=work_plan_section,
         relationships=relationships,
     )
 
@@ -226,7 +244,6 @@ async def handle_enrich_objectives_stage(
     )
 
     return EnrichObjectivesStageDTO(
-        section_texts=dto["section_texts"],
         work_plan_section=dto["work_plan_section"],
         relationships=dto["relationships"],
         enrichment_responses=enrichment_responses,
@@ -286,7 +303,6 @@ async def handle_enrich_terminology_stage(
     )
 
     return EnrichTerminologyStageDTO(
-        section_texts=dto["section_texts"],
         work_plan_section=dto["work_plan_section"],
         relationships=dto["relationships"],
         enrichment_responses=dto["enrichment_responses"],
@@ -370,7 +386,6 @@ async def handle_generate_research_plan_stage(
     research_plan_text = normalize_markdown(work_plan_text)
 
     return GenerateResearchPlanStageDTO(
-        section_texts=dto["section_texts"],
         work_plan_section=dto["work_plan_section"],
         relationships=dto["relationships"],
         enrichment_responses=dto["enrichment_responses"],

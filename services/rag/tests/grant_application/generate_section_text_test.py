@@ -175,6 +175,9 @@ async def test_handle_generate_section_text_with_evaluation(
         research_deep_dives=sample_research_objectives,
         shared_context=shared_context,
         cfp_analysis=sample_cfp_analysis,
+        research_plan_text="Sample research plan text for testing",
+        enrichment_responses=[],
+        relationships={},
         trace_id=trace_id,
         job_manager=mock_job_manager,
     )
@@ -234,6 +237,9 @@ async def test_handle_generate_section_text_with_cfp_requirements(
         research_deep_dives=sample_research_objectives,
         shared_context=shared_context,
         cfp_analysis=sample_cfp_analysis,
+        research_plan_text="Sample research plan text for testing",
+        enrichment_responses=[],
+        relationships={},
         trace_id=trace_id,
         job_manager=mock_job_manager,
     )
@@ -278,6 +284,9 @@ async def test_handle_generate_section_text_with_missing_information_warning(
         research_deep_dives=sample_research_objectives,
         shared_context="Context",
         cfp_analysis=sample_cfp_analysis,
+        research_plan_text="Sample research plan text for testing",
+        enrichment_responses=[],
+        relationships={},
         trace_id=trace_id,
         job_manager=mock_job_manager,
     )
