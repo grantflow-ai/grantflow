@@ -404,11 +404,15 @@ async def handle_url_crawling(
         )
 
     except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+
         logger.exception(
             "Error during URL crawling",
             url=crawling_request["url"],
             source_id=str(crawling_request["source_id"]),
-            error_type=type(e).__name__,
+            error_type=error_type,
+            error_category=getattr(e, "category", "unknown"),
             trace_id=trace_id,
             error_duration_ms=round((time.time() - start_time) * 1000, 2),
         )
@@ -424,6 +428,8 @@ async def handle_url_crawling(
                 vectors=None,
                 indexing_status=SourceIndexingStatusEnum.FAILED,
                 trace_id=trace_id,
+                error_type=error_type,
+                error_message=error_message,
             )
         else:
             async with session_maker() as session, session.begin():
@@ -431,7 +437,10 @@ async def handle_url_crawling(
                     update(RagSource)
                     .where(RagSource.id == crawling_request["source_id"])
                     .values(
-                        indexing_status=SourceIndexingStatusEnum.FAILED, text_content=""
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        text_content="",
+                        error_type=error_type,
+                        error_message=error_message,
                     )
                 )
     finally:

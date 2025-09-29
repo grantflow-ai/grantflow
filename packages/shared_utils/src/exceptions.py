@@ -1,8 +1,19 @@
 from typing import Any
 
 
+class ErrorCategory:
+    """Error categories for DLQ manager decision making."""
+
+    USER_ERROR = "user_error"  # Not retriable, already communicated to user
+    RETRIABLE = "retriable"  # Temporary failure, should retry
+    INFRASTRUCTURE = "infrastructure"  # Needs alert and manual intervention
+
+
 class BackendError(Exception):
+    """Base exception for all backend errors."""
+
     context: Any
+    category: str = ErrorCategory.RETRIABLE  # Default to retriable for safety
 
     def __init__(self, message: str, context: Any = None) -> None:
         self.context = context
@@ -20,48 +31,72 @@ class BackendError(Exception):
 
 
 class FileParsingError(BackendError):
-    pass
+    """File parsing errors - user uploaded invalid/corrupted file."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class UrlParsingError(BackendError):
-    pass
+    """URL parsing errors - user provided invalid URL."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class ExternalOperationError(BackendError):
-    pass
+    """External service failures - GCS, embeddings API, etc."""
+
+    category = ErrorCategory.RETRIABLE
 
 
 class ValidationError(BackendError):
-    pass
+    """Validation errors - missing data, invalid state."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class InsufficientContextError(BackendError):
-    pass
+    """Insufficient context for RAG - user needs to upload more documents."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class EvaluationError(BackendError):
-    pass
+    """Quality evaluation errors - potentially infrastructure."""
+
+    category = ErrorCategory.INFRASTRUCTURE
 
 
 class SerializationError(BackendError):
-    pass
+    """Serialization errors - code bug."""
+
+    category = ErrorCategory.INFRASTRUCTURE
 
 
 class DeserializationError(BackendError):
-    pass
+    """Deserialization errors - invalid message format."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class DatabaseError(BackendError):
-    pass
+    """Database errors - connection issues, constraints."""
+
+    category = ErrorCategory.RETRIABLE
 
 
 class RagError(BackendError):
-    pass
+    """Generic RAG processing errors."""
+
+    category = ErrorCategory.RETRIABLE
 
 
 class RagJobCancelledError(BackendError):
-    pass
+    """User cancelled RAG job."""
+
+    category = ErrorCategory.USER_ERROR
 
 
 class LLMTimeoutError(BackendError):
-    pass
+    """LLM API timeout - OpenAI, Anthropic, Vertex."""
+
+    category = ErrorCategory.RETRIABLE

@@ -11,8 +11,6 @@ from packages.db.src.tables import (
 )
 from packages.db.src.utils import update_source_indexing_status
 from packages.shared_utils.src.exceptions import (
-    ExternalOperationError,
-    FileParsingError,
     ValidationError,
 )
 from packages.shared_utils.src.gcs import (
@@ -266,11 +264,14 @@ async def handle_file_indexing(
         )
 
     except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+
         logger.exception(
             "Error processing file",
             filename=parse_result["blob_name"],
             source_id=parse_result["source_id"],
-            error_type=type(e).__name__,
+            error_type=error_type,
             file_size=len(content),
             mime_type=rag_file.mime_type,
             trace_id=trace_id,
@@ -289,20 +290,31 @@ async def handle_file_indexing(
                 indexing_status=SourceIndexingStatusEnum.FAILED,
                 trace_id=trace_id,
                 document_metadata=None,
+                error_type=error_type,
+                error_message=error_message,
             )
         else:
             async with session_maker() as session, session.begin():
                 await session.execute(
                     update(RagSource)
                     .where(RagSource.id == parse_result["source_id"])
-                    .values(indexing_status=SourceIndexingStatusEnum.FAILED, text_content="")
+                    .values(
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        text_content="",
+                        error_type=error_type,
+                        error_message=error_message,
+                    )
                 )
         failure_update_duration = time.time() - failure_update_start
+
+        # Check if error is retriable based on category
+        is_retriable = getattr(e, "category", None) == "retriable" if hasattr(e, "category") else False
 
         logger.debug(
             "Updated status to failed",
             failure_update_duration_ms=round(failure_update_duration * 1000, 2),
-            is_retryable_error=isinstance(e, (FileParsingError, ExternalOperationError, ValidationError)),
+            is_retriable_error=is_retriable,
+            error_category=getattr(e, "category", "unknown"),
             trace_id=trace_id,
         )
 
