@@ -1,0 +1,125 @@
+name: Sync All Services
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to sync (staging or production)'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      services:
+        description: 'Services to deploy (all, or comma-separated list)'
+        required: false
+        default: 'all'
+        type: string
+
+jobs:
+  trigger-deploy:
+    name: Trigger Deployment for All Services
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "services=all" >> $GITHUB_OUTPUT
+          else
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "services=${{ inputs.services }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for running workflows
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ steps.env.outputs.environment }}';
+            const ref = environment === 'production' ? 'main' : 'development';
+
+            console.log(`Checking for running workflows on ${ref}...`);
+
+            // Get all workflow runs for this repo on the target branch
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: ref,
+              status: 'in_progress',
+              per_page: 100
+            });
+
+            // Filter for deploy-terraform and build workflows
+            const activeWorkflows = runs.workflow_runs.filter(run => {
+              const name = run.name.toLowerCase();
+              return name.includes('deploy') || name.includes('build');
+            });
+
+            if (activeWorkflows.length > 0) {
+              console.log(`⏭️  Skipping: ${activeWorkflows.length} workflow(s) already running on ${ref}`);
+              activeWorkflows.forEach(run => {
+                console.log(`  - ${run.name} (${run.status})`);
+              });
+              core.setOutput('should_deploy', 'false');
+              return;
+            }
+
+            console.log('✅ No active workflows found, proceeding with deployment');
+            core.setOutput('should_deploy', 'true');
+
+      - name: Trigger Deploy Workflow
+        if: steps.check.outputs.should_deploy == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ steps.env.outputs.environment }}';
+            const services = '${{ steps.env.outputs.services }}';
+            const ref = environment === 'production' ? 'main' : 'development';
+
+            console.log(`Triggering deployment for ${services} services in ${environment}`);
+
+            try {
+              const result = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'deploy-terraform.yaml',
+                ref: ref,
+                inputs: {
+                  environment: environment,
+                  services_to_deploy: services
+                }
+              });
+
+              console.log('✅ Successfully triggered deploy workflow');
+              console.log(`Environment: ${environment}`);
+              console.log(`Services: ${services}`);
+              console.log(`Branch: ${ref}`);
+            } catch (error) {
+              console.error('❌ Failed to trigger deploy workflow:', error.message);
+              throw error;
+            }
+
+      - name: Create summary
+        run: |
+          echo "### Sync Services Workflow 🔄" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** \`${{ steps.env.outputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Services:** \`${{ steps.env.outputs.services }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.check.outputs.should_deploy }}" == "true" ]]; then
+            echo "**Status:** ✅ Deployment triggered" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the [Actions tab](https://github.com/${{ github.repository }}/actions/workflows/deploy-terraform.yaml) for progress." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ⏭️  Skipped (workflows already running)" >> $GITHUB_STEP_SUMMARY
+          fi
