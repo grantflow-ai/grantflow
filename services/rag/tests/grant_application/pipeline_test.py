@@ -88,7 +88,6 @@ async def test_extract_relationships_stage_first(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # Mock the first stage handler
     mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
         work_plan_section={
             "id": "test_plan",
@@ -142,14 +141,12 @@ async def test_generate_sections_stage_requires_checkpoint(
     mock_pubsub_for_pipeline_testing: Any,
     sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
-    # GENERATE_SECTIONS is now the final stage and requires checkpoint data
     from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
 
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # Mock first stage to complete
     mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
         work_plan_section={
             "id": "test_plan",
@@ -171,7 +168,6 @@ async def test_generate_sections_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         return_value=mock_extract_relationships_dto,
     )
-    # GENERATE_SECTIONS should not be called on first run
     mock_handle_generate_sections = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage"
     )
@@ -211,7 +207,6 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
         return_value=None,
     )
-    # Mock first stage to complete
     mock_extract_relationships_dto = ExtractRelationshipsStageDTO(
         work_plan_section={
             "id": "test_plan",

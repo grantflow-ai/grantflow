@@ -223,7 +223,6 @@ async def handle_generate_section_text(
 
     research_context = "\n\n".join(research_context_parts)
 
-    # Extract relevant enrichments for this section
     relevant_enrichments = []
     for enrichment in enrichment_responses:
         if "research_objective" in enrichment:
@@ -231,7 +230,6 @@ async def handle_generate_section_text(
         if "research_tasks" in enrichment:
             relevant_enrichments.extend(enrichment["research_tasks"])
 
-    # Format relationships for context
     relationships_context = ""
     if relationships:
         rel_parts = []
@@ -251,7 +249,6 @@ async def handle_generate_section_text(
 {research_context}
 """
 
-    # Format research plan context with relationships
     research_plan_context_parts = [f"# Approved Research Plan\n\n{research_plan_text}"]
 
     if relationships_context:
@@ -281,7 +278,6 @@ async def handle_generate_section_text(
     cfp_requirements_text = _format_cfp_requirements_for_section(section_title, cfp_analysis["cfp_analysis"])
     length_requirements = _get_section_length_requirements(section_title)
 
-    # Format keywords and topics
     keywords_str = ", ".join(section.get("keywords", []))
     topics_str = ", ".join(section.get("topics", []))
 
