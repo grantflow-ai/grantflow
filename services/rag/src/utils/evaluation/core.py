@@ -74,19 +74,21 @@ async def evaluate_content[T](
                 trace_id=trace_id,
             )
             if result is not None:
-                return cast("T", result)
+                return result
 
         # Handle scientific content evaluation for EvaluationResult type
         if response_type is EvaluationResult:
-            result = await evaluate_scientific_content(
-                content=content,
-                section_config=context.get("section_config") if context else None,
-                rag_context=context.get("rag_context", []) if context else [],
-                research_objectives=context.get("research_objectives", []) if context else [],
-                trace_id=trace_id,
-            )
-            # Cast to T since we know response_type is EvaluationResult
-            return cast("T", result)
+            section_config = context.get("section_config") if context else None
+            if section_config:
+                eval_result = await evaluate_scientific_content(
+                    content=content,
+                    section_config=section_config,
+                    rag_context=context.get("rag_context", []) if context else [],
+                    research_objectives=context.get("research_objectives", []) if context else [],
+                    trace_id=trace_id,
+                )
+                # Cast to T since we know response_type is EvaluationResult
+                return cast("T", eval_result)
 
         # Fallback: try to deserialize as the requested type
         return deserialize(content.encode(), response_type)
