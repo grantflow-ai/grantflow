@@ -8,11 +8,17 @@ if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import EnrichmentQualityMetrics
 
 
-def evaluate_enrichment_quality(enrichment_data: EnrichmentData) -> "EnrichmentQualityMetrics":
+def evaluate_enrichment_quality(
+    enrichment_data: EnrichmentData,
+    keywords: list[str] | None = None,
+    topics: list[str] | None = None,
+) -> "EnrichmentQualityMetrics":
     """Evaluate the quality of objective enrichment data.
 
     Args:
         enrichment_data: Enrichment data containing terms, questions, context, etc.
+        keywords: Optional keywords for alignment scoring
+        topics: Optional topics for thematic relevance
 
     Returns:
         Quality metrics for the enrichment
@@ -30,8 +36,8 @@ def evaluate_enrichment_quality(enrichment_data: EnrichmentData) -> "EnrichmentQ
     # Evaluate value added by enrichment
     value_added = _evaluate_value_added(enrichment_data)
 
-    # Evaluate term relevance
-    term_relevance = _evaluate_term_relevance(enrichment_data)
+    # Evaluate term relevance (with keywords if provided)
+    term_relevance = _evaluate_term_relevance(enrichment_data, keywords, topics)
 
     # Evaluate question utility
     question_utility = _evaluate_question_utility(enrichment_data)
@@ -39,8 +45,8 @@ def evaluate_enrichment_quality(enrichment_data: EnrichmentData) -> "EnrichmentQ
     # Evaluate context depth
     context_depth = _evaluate_context_depth(enrichment_data)
 
-    # Evaluate search query quality
-    search_query_quality = _evaluate_search_query_quality(enrichment_data)
+    # Evaluate search query quality (with keywords/topics alignment)
+    search_query_quality = _evaluate_search_query_quality(enrichment_data, keywords, topics)
 
     # Calculate overall score
     overall = (
@@ -90,8 +96,12 @@ def _evaluate_value_added(enrichment_data: EnrichmentData) -> float:
     return min(1.0, value_score)
 
 
-def _evaluate_term_relevance(enrichment_data: EnrichmentData) -> float:
-    """Evaluate relevance of technical terms."""
+def _evaluate_term_relevance(
+    enrichment_data: EnrichmentData,
+    keywords: list[str] | None,
+    topics: list[str] | None,
+) -> float:
+    """Evaluate relevance of technical terms with keyword alignment."""
     terms = enrichment_data.get("technical_terms", [])
 
     if not terms:
@@ -128,6 +138,26 @@ def _evaluate_term_relevance(enrichment_data: EnrichmentData) -> float:
     if terms:
         validity_ratio = valid_terms / len(terms)
         relevance_score += validity_ratio * 0.5
+
+    # Check keyword alignment if provided
+    if keywords or topics:
+        all_reference_terms = []
+        if keywords:
+            all_reference_terms.extend(keywords)
+        if topics:
+            all_reference_terms.extend(topics)
+
+        # Check how many terms align with keywords/topics
+        aligned_terms = 0
+        for term in terms:
+            for ref_term in all_reference_terms:
+                if ref_term.lower() in str(term).lower() or str(term).lower() in ref_term.lower():
+                    aligned_terms += 1
+                    break
+
+        if aligned_terms > 0:
+            alignment_bonus = min(0.25, aligned_terms / max(len(terms), 1) * 0.5)
+            relevance_score = min(1.0, relevance_score + alignment_bonus)
 
     return min(1.0, relevance_score)
 
@@ -218,8 +248,12 @@ def _evaluate_context_depth(enrichment_data: EnrichmentData) -> float:
     return min(1.0, depth_score)
 
 
-def _evaluate_search_query_quality(enrichment_data: EnrichmentData) -> float:
-    """Evaluate quality of search queries."""
+def _evaluate_search_query_quality(
+    enrichment_data: EnrichmentData,
+    keywords: list[str] | None,
+    topics: list[str] | None,
+) -> float:
+    """Evaluate quality of search queries with keyword alignment."""
     queries = enrichment_data.get("search_queries", [])
 
     if not queries:
@@ -246,6 +280,26 @@ def _evaluate_search_query_quality(enrichment_data: EnrichmentData) -> float:
         unique_queries = len(set(queries))
         diversity_ratio = unique_queries / len(queries)
         quality_score += diversity_ratio * 0.3
+
+    # Check keyword alignment if provided
+    if keywords or topics:
+        all_reference_terms = []
+        if keywords:
+            all_reference_terms.extend(keywords)
+        if topics:
+            all_reference_terms.extend(topics)
+
+        # Check how many queries contain keywords/topics
+        aligned_queries = 0
+        for query in queries:
+            for ref_term in all_reference_terms:
+                if ref_term.lower() in query.lower():
+                    aligned_queries += 1
+                    break
+
+        if aligned_queries > 0:
+            alignment_bonus = min(0.2, aligned_queries / max(len(queries), 1) * 0.4)
+            quality_score += alignment_bonus
 
     return min(1.0, quality_score / len(queries)) if queries else 0.0
 

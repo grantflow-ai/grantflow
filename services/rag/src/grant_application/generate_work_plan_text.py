@@ -204,7 +204,13 @@ async def generate_work_plan_component_text(
             rag_results=rag_results,
             user_input=form_inputs,
             trace_id=trace_id,
-            **get_evaluation_kwargs("generate_work_plan", job_manager),
+            **get_evaluation_kwargs(
+                "generate_work_plan",
+                job_manager,
+                section_config={"title": component["title"], "type": component["type"]},
+                rag_context=rag_results,
+                research_objectives=form_inputs.get("research_objectives"),
+            ),
         )
     except EvaluationError as e:
         logger.warning(

@@ -8,11 +8,17 @@ if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import ObjectiveQualityMetrics
 
 
-def evaluate_objectives_quality(objectives: list[ResearchObjective]) -> "ObjectiveQualityMetrics":
+def evaluate_objectives_quality(
+    objectives: list[ResearchObjective],
+    keywords: list[str] | None = None,
+    topics: list[str] | None = None,
+) -> "ObjectiveQualityMetrics":
     """Evaluate the quality of research objectives.
 
     Args:
         objectives: List of research objectives to evaluate
+        keywords: Optional keywords for alignment scoring
+        topics: Optional topics for thematic relevance
 
     Returns:
         Quality metrics for the objectives
@@ -39,8 +45,8 @@ def evaluate_objectives_quality(objectives: list[ResearchObjective]) -> "Objecti
     # Evaluate comprehensiveness
     comprehensiveness = _evaluate_comprehensiveness(objectives)
 
-    # For now, keyword alignment would need keywords to compare against
-    keyword_alignment = 0.7  # Placeholder - would need section keywords
+    # Calculate keyword alignment
+    keyword_alignment = _evaluate_keyword_alignment(objectives, keywords, topics)
 
     # Calculate overall score
     overall = (
@@ -154,6 +160,48 @@ def _evaluate_objectives_coherence(objectives: list[ResearchObjective]) -> float
         coherence_score += 0.3
 
     return min(1.0, coherence_score)
+
+
+def _evaluate_keyword_alignment(
+    objectives: list[ResearchObjective],
+    keywords: list[str] | None,
+    topics: list[str] | None,
+) -> float:
+    """Evaluate keyword and topic alignment in objectives."""
+    if not keywords and not topics:
+        return 0.75  # Default moderate alignment when no keywords provided
+
+    alignment_score = 0.0
+    all_terms = []
+    if keywords:
+        all_terms.extend(keywords)
+    if topics:
+        all_terms.extend(topics)
+
+    if not all_terms:
+        return 0.75
+
+    # Count how many keywords/topics appear in objectives
+    matched_terms = set()
+
+    for obj in objectives:
+        obj_text = (
+            f"{obj.get('title', '')} {obj.get('description', '')} "
+            f"{' '.join(task.get('title', '') + ' ' + task.get('description', '') for task in obj.get('research_tasks', []))}"
+        ).lower()
+
+        for term in all_terms:
+            if term.lower() in obj_text:
+                matched_terms.add(term.lower())
+
+    # Calculate alignment score
+    alignment_score = len(matched_terms) / len(all_terms) if all_terms else 0.75
+
+    # Boost score if objectives use domain-specific terminology
+    if keywords and len(matched_terms) >= len(keywords) * 0.5:
+        alignment_score = min(1.0, alignment_score + 0.15)
+
+    return min(1.0, alignment_score)
 
 
 def _evaluate_comprehensiveness(objectives: list[ResearchObjective]) -> float:
