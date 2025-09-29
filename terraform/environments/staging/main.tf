@@ -174,8 +174,8 @@ module "cloud_functions" {
   project_id                              = var.project_id
   region                                  = var.region
   environment                             = var.environment
-  database_url                            = module.secrets.database_url
-  vpc_connector_name                      = module.network.vpc_connector_name
+  database_connection_name                = module.database.instance_connection_name
+  database_connection_string_secret_id    = module.secrets.database_connection_string_id
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
 }
 

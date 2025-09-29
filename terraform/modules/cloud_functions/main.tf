@@ -75,6 +75,13 @@ resource "google_project_iam_member" "dlq_manager_sql_client" {
   member  = "serviceAccount:${google_service_account.dlq_manager.email}"
 }
 
+# Grant Secret Manager access for reading DATABASE_URL
+resource "google_project_iam_member" "dlq_manager_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.dlq_manager.email}"
+}
+
 # DLQ Manager Cloud Function (Gen2)
 resource "google_cloudfunctions2_function" "dlq_manager" {
   name        = "dlq-manager-${var.environment}"
@@ -104,13 +111,16 @@ resource "google_cloudfunctions2_function" "dlq_manager" {
     service_account_email            = google_service_account.dlq_manager.email
 
     environment_variables = {
-      DATABASE_URL   = var.database_url
       GCP_PROJECT_ID = var.project_id
       ENVIRONMENT    = var.environment
     }
 
-    vpc_connector                 = var.vpc_connector_name
-    vpc_connector_egress_settings = "ALL_TRAFFIC"
+    secret_environment_variables {
+      key        = "DATABASE_URL"
+      project_id = var.project_id
+      secret     = var.database_connection_string_secret_id
+      version    = "latest"
+    }
   }
 
   depends_on = [
