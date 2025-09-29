@@ -55,7 +55,7 @@ rules:
       content: 'Use Pub/Sub topics (url-crawling, file-indexing, rag-processing) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only.'
     - name: CI/CD Patterns
       priority: high
-      content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint:all and task test locally before pushing. Docker builds require --build-arg for frontend env vars.
+      content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint:all and task test locally before pushing. Docker builds require --build-arg for frontend env vars. sync-services.yaml runs every 5 minutes to ensure all services deploy within 5 minutes of being built, skipping if workflows are already running. Never add AI signatures to commit messages.
     - name: SQLAlchemy Async Session Management
       priority: critical
       content: 'Always use async session context managers with explicit transaction boundaries. Pattern: `async with session_maker() as session, session.begin():`. Never reuse sessions across requests. Use `select_active()` from packages.db.src.query_helpers for soft-delete filtering.'
