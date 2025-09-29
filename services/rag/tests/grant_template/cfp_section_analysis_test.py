@@ -1,11 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from packages.db.src.json_objects import (
+    CategorizationAnalysisResult,
     CFPAnalysisResult,
     CFPSectionAnalysis,
-    CategorizationAnalysisResult,
-    CFPAnalysisMetadata,
 )
 from packages.shared_utils.src.exceptions import ValidationError
 
@@ -34,7 +33,7 @@ def sample_nlp_analysis() -> CategorizationAnalysisResult:
 @pytest.fixture
 def sample_cfp_analysis() -> CFPSectionAnalysis:
     return {
-        "sections_count": 3,
+        "sections_count": 2,
         "length_constraints_found": 2,
         "evaluation_criteria_count": 2,
         "required_sections": [
@@ -45,15 +44,15 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
                     {
                         "requirement": "Must include project objectives",
                         "quote_from_source": "The project summary must clearly state the project objectives and expected outcomes",
-                        "category": "content"
+                        "category": "content",
                     },
                     {
                         "requirement": "Must be self-contained",
                         "quote_from_source": "Project summary should be self-contained and understandable without additional context",
-                        "category": "content"
-                    }
+                        "category": "content",
+                    },
                 ],
-                "dependencies": []
+                "dependencies": [],
             },
             {
                 "section_name": "Research Plan",
@@ -62,11 +61,11 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
                     {
                         "requirement": "Must include detailed methodology",
                         "quote_from_source": "Research plan must provide detailed methodology and experimental design",
-                        "category": "content"
+                        "category": "content",
                     }
                 ],
-                "dependencies": ["Project Summary"]
-            }
+                "dependencies": ["Project Summary"],
+            },
         ],
         "length_constraints": [
             {
@@ -74,40 +73,40 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
                 "measurement_type": "pages",
                 "limit_description": "1 page maximum",
                 "quote_from_source": "Project summary is limited to one page including figures and tables",
-                "exclusions": []
+                "exclusions": [],
             },
             {
                 "section_name": "Research Plan",
                 "measurement_type": "pages",
                 "limit_description": "15 pages maximum",
                 "quote_from_source": "Research plan cannot exceed 15 pages excluding references and appendices",
-                "exclusions": ["References", "Appendices"]
-            }
+                "exclusions": ["References", "Appendices"],
+            },
         ],
         "evaluation_criteria": [
             {
                 "criterion_name": "Scientific Merit",
                 "description": "Quality and significance of the scientific approach",
                 "quote_from_source": "Applications will be evaluated based on scientific merit and innovation",
-                "weight_percentage": 40
+                "weight_percentage": 40,
             },
             {
                 "criterion_name": "Feasibility",
                 "description": "Likelihood of successful project completion",
-                "quote_from_source": "Feasibility of the proposed research will be a key evaluation factor"
-            }
+                "quote_from_source": "Feasibility of the proposed research will be a key evaluation factor",
+            },
         ],
         "additional_requirements": [
             {
                 "requirement": "Must use 12-point font",
                 "quote_from_source": "All text must be in 12-point Times New Roman font",
-                "category": "formatting"
+                "category": "formatting",
             },
             {
                 "requirement": "Must include budget justification",
                 "quote_from_source": "A detailed budget justification is required for all proposed expenses",
-                "category": "budget"
-            }
+                "category": "budget",
+            },
         ],
     }
 
@@ -127,7 +126,7 @@ def test_validate_cfp_analysis_with_error_field() -> None:
         "length_constraints": [],
         "evaluation_criteria": [],
         "additional_requirements": [],
-        "error": "Failed to analyze CFP content"
+        "error": "Failed to analyze CFP content",
     }
 
     with pytest.raises(ValidationError, match="CFP analysis failed"):
@@ -157,12 +156,7 @@ def test_validate_cfp_analysis_count_mismatch() -> None:
         "length_constraints_found": 0,
         "evaluation_criteria_count": 0,
         "required_sections": [
-            {
-                "section_name": "Test Section",
-                "definition": "Test definition",
-                "requirements": [],
-                "dependencies": []
-            }
+            {"section_name": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
         ],  # Only 1 section but count says 2
         "length_constraints": [],
         "evaluation_criteria": [],
@@ -183,7 +177,9 @@ def test_validate_cfp_analysis_auto_fixes_missing_cfp_source_reference(sample_cf
 
     # Should have auto-generated cfp_source_reference
     assert "cfp_source_reference" in response["required_sections"][0]
-    assert response["required_sections"][0]["cfp_source_reference"].startswith("CFP defines")
+    cfp_ref = response["required_sections"][0]["cfp_source_reference"]
+    assert cfp_ref is not None
+    assert cfp_ref.startswith("CFP defines")
 
 
 def test_validate_cfp_analysis_fixes_short_quotes(sample_cfp_analysis: CFPSectionAnalysis) -> None:
@@ -212,7 +208,7 @@ async def test_analyze_cfp_sections_success(
     result = await analyze_cfp_sections(
         cfp_content="Sample CFP content for testing analysis",
         nlp_analysis=sample_nlp_analysis,
-        trace_id="test-trace-id"
+        trace_id="test-trace-id",
     )
 
     assert result == sample_cfp_analysis
@@ -238,10 +234,7 @@ async def test_handle_analyze_cfp_success(
     mock_categorize.return_value = sample_nlp_analysis
     mock_analyze_sections.return_value = sample_cfp_analysis
 
-    result = await handle_analyze_cfp(
-        full_cfp_text="Sample CFP content for testing",
-        trace_id="test-trace-id"
-    )
+    result = await handle_analyze_cfp(full_cfp_text="Sample CFP content for testing", trace_id="test-trace-id")
 
     expected_result: CFPAnalysisResult = {
         "cfp_analysis": sample_cfp_analysis,
@@ -250,16 +243,14 @@ async def test_handle_analyze_cfp_success(
             "content_length": len("Sample CFP content for testing"),
             "categories_found": 9,  # All categories in sample_nlp_analysis have content
             "total_sentences": 18,  # Total sentences across all categories
-        }
+        },
     }
 
     assert result == expected_result
 
     mock_categorize.assert_called_once_with("Sample CFP content for testing")
     mock_analyze_sections.assert_called_once_with(
-        "Sample CFP content for testing",
-        sample_nlp_analysis,
-        trace_id="test-trace-id"
+        "Sample CFP content for testing", sample_nlp_analysis, trace_id="test-trace-id"
     )
 
 
@@ -295,10 +286,7 @@ async def test_handle_analyze_cfp_calculates_metadata_correctly(
         }
 
         cfp_text = "Test CFP content"
-        result = await handle_analyze_cfp(
-            full_cfp_text=cfp_text,
-            trace_id="test-trace"
-        )
+        result = await handle_analyze_cfp(full_cfp_text=cfp_text, trace_id="test-trace")
 
     metadata = result["analysis_metadata"]
     assert metadata["content_length"] == len(cfp_text)
@@ -313,9 +301,8 @@ async def test_handle_analyze_cfp_propagates_analysis_errors(
     """Test that analysis errors are properly propagated."""
     mock_analyze_sections.side_effect = ValidationError("Analysis failed due to insufficient content")
 
-    with patch("services.rag.src.grant_template.cfp_section_analysis.categorize_text"):
-        with pytest.raises(ValidationError, match="Analysis failed due to insufficient content"):
-            await handle_analyze_cfp(
-                full_cfp_text="Insufficient CFP content",
-                trace_id="test-trace"
-            )
+    with (
+        patch("services.rag.src.grant_template.cfp_section_analysis.categorize_text"),
+        pytest.raises(ValidationError, match="Analysis failed due to insufficient content"),
+    ):
+        await handle_analyze_cfp(full_cfp_text="Insufficient CFP content", trace_id="test-trace")

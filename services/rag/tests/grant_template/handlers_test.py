@@ -86,10 +86,10 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                             {
                                 "requirement": "Must include project objectives",
                                 "quote_from_source": "The project summary must clearly state the objectives",
-                                "category": "content"
+                                "category": "content",
                             }
                         ],
-                        "dependencies": []
+                        "dependencies": [],
                     }
                 ],
                 "length_constraints": [
@@ -98,21 +98,21 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                         "measurement_type": "pages",
                         "limit_description": "1 page maximum",
                         "quote_from_source": "Project summary is limited to one page",
-                        "exclusions": []
+                        "exclusions": [],
                     }
                 ],
                 "evaluation_criteria": [
                     {
                         "criterion_name": "Scientific Merit",
                         "description": "Quality of the scientific approach",
-                        "quote_from_source": "Applications will be evaluated on scientific merit"
+                        "quote_from_source": "Applications will be evaluated on scientific merit",
                     }
                 ],
                 "additional_requirements": [
                     {
                         "requirement": "Must use 12-point font",
                         "quote_from_source": "All text must be in 12-point font",
-                        "category": "formatting"
+                        "category": "formatting",
                     }
                 ],
             },
@@ -362,10 +362,10 @@ async def test_cfp_analysis_stage_success(
                         {
                             "requirement": "Must include hypothesis",
                             "quote_from_source": "Research plan must clearly state the hypothesis",
-                            "category": "content"
+                            "category": "content",
                         }
                     ],
-                    "dependencies": ["Project Summary"]
+                    "dependencies": ["Project Summary"],
                 }
             ],
             "length_constraints": [
@@ -374,7 +374,7 @@ async def test_cfp_analysis_stage_success(
                     "measurement_type": "pages",
                     "limit_description": "15 pages maximum",
                     "quote_from_source": "Research plan cannot exceed 15 pages",
-                    "exclusions": ["References", "Figures"]
+                    "exclusions": ["References", "Figures"],
                 }
             ],
             "evaluation_criteria": [
@@ -382,14 +382,14 @@ async def test_cfp_analysis_stage_success(
                     "criterion_name": "Innovation",
                     "description": "Degree of innovation in the approach",
                     "quote_from_source": "Applications will be evaluated for innovation",
-                    "weight_percentage": 30
+                    "weight_percentage": 30,
                 }
             ],
             "additional_requirements": [
                 {
                     "requirement": "Must include budget justification",
                     "quote_from_source": "A detailed budget justification is required",
-                    "category": "budget"
+                    "category": "budget",
                 }
             ],
         },
@@ -466,10 +466,10 @@ async def test_cfp_analysis_stage_limited_disciplines(
                         {
                             "requirement": "Must be self-contained",
                             "quote_from_source": "Abstract must be self-contained and comprehensive",
-                            "category": "content"
+                            "category": "content",
                         }
                     ],
-                    "dependencies": []
+                    "dependencies": [],
                 }
             ],
             "length_constraints": [
@@ -478,26 +478,26 @@ async def test_cfp_analysis_stage_limited_disciplines(
                     "measurement_type": "words",
                     "limit_description": "300 words maximum",
                     "quote_from_source": "Abstract is limited to 300 words",
-                    "exclusions": []
+                    "exclusions": [],
                 }
             ],
             "evaluation_criteria": [
                 {
                     "criterion_name": "Feasibility",
                     "description": "Likelihood of successful completion",
-                    "quote_from_source": "Feasibility will be a key evaluation factor"
+                    "quote_from_source": "Feasibility will be a key evaluation factor",
                 },
                 {
                     "criterion_name": "Impact",
                     "description": "Potential impact of the research",
-                    "quote_from_source": "Expected impact will be evaluated"
-                }
+                    "quote_from_source": "Expected impact will be evaluated",
+                },
             ],
             "additional_requirements": [
                 {
                     "requirement": "Must include ethics approval",
                     "quote_from_source": "Ethics approval is required for all studies",
-                    "category": "eligibility"
+                    "category": "eligibility",
                 }
             ],
         },
@@ -557,10 +557,10 @@ async def test_cfp_analysis_stage_no_disciplines(
                         {
                             "requirement": "Must describe objectives",
                             "quote_from_source": "Project description must outline objectives",
-                            "category": "content"
+                            "category": "content",
                         }
                     ],
-                    "dependencies": []
+                    "dependencies": [],
                 }
             ],
             "length_constraints": [],
@@ -568,7 +568,7 @@ async def test_cfp_analysis_stage_no_disciplines(
                 {
                     "criterion_name": "Clarity",
                     "description": "Clarity of presentation",
-                    "quote_from_source": "Clarity of presentation will be evaluated"
+                    "quote_from_source": "Clarity of presentation will be evaluated",
                 }
             ],
             "additional_requirements": [],
@@ -1017,10 +1017,10 @@ async def test_handlers_preserve_data_flow(
                             {
                                 "requirement": "Must include timeline",
                                 "quote_from_source": "Research strategy must include detailed timeline",
-                                "category": "content"
+                                "category": "content",
                             }
                         ],
-                        "dependencies": []
+                        "dependencies": [],
                     }
                 ],
                 "length_constraints": [
@@ -1029,21 +1029,21 @@ async def test_handlers_preserve_data_flow(
                         "measurement_type": "pages",
                         "limit_description": "12 pages maximum",
                         "quote_from_source": "Research strategy limited to 12 pages",
-                        "exclusions": ["References"]
+                        "exclusions": ["References"],
                     }
                 ],
                 "evaluation_criteria": [
                     {
                         "criterion_name": "Approach",
                         "description": "Quality of research approach",
-                        "quote_from_source": "Research approach will be evaluated"
+                        "quote_from_source": "Research approach will be evaluated",
                     }
                 ],
                 "additional_requirements": [
                     {
                         "requirement": "Must include team qualifications",
                         "quote_from_source": "Team qualifications must be provided",
-                        "category": "eligibility"
+                        "category": "eligibility",
                     }
                 ],
             },
