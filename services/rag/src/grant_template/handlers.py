@@ -178,6 +178,7 @@ async def handle_section_extraction_stage(
         trace_id=trace_id,
         job_manager=job_manager,
         organization=analysis_result["organization"],
+        cfp_analysis=analysis_result.get("analysis_results"),  # Optional - for enhanced functionality
     )
 
     await job_manager.add_notification(

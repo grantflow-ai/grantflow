@@ -77,6 +77,7 @@ class CFPSectionRequirement(TypedDict):
     definition: str
     requirements: list[CFPAnalysisRequirementWithQuote]
     dependencies: list[str]
+    cfp_source_reference: NotRequired[str | None]
 
 
 class CFPSectionLengthConstraint(TypedDict):
