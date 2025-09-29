@@ -188,3 +188,19 @@ resource "google_cloud_run_v2_service" "before_sign_in" {
     ignore_changes = all
   }
 }
+
+resource "google_cloud_run_v2_service_iam_member" "before_create_public" {
+  name     = google_cloud_run_v2_service.before_create.name
+  location = google_cloud_run_v2_service.before_create.location
+  project  = var.project_id
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "before_sign_in_public" {
+  name     = google_cloud_run_v2_service.before_sign_in.name
+  location = google_cloud_run_v2_service.before_sign_in.location
+  project  = var.project_id
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

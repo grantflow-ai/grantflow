@@ -213,15 +213,15 @@ dev = [{ name = "shared-utils", extras = ["server", "gcs", "pubsub", "ai", "embe
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.14.0"
+version = "4.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "soupsieve" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/bb/3387a5bf72121e1e2cd9223d20598c2fb599ef63517ff3e6ec526d8c4928/beautifulsoup4-4.14.0.tar.gz", hash = "sha256:e6150e53c8a52fd4f3b9b28839f8f0fb7c7f029d3c953a50b1762b0947c3cf85", size = 625697, upload-time = "2025-09-27T17:22:17.532Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/e9/df2358efd7659577435e2177bfa69cba6c33216681af51a707193dec162a/beautifulsoup4-4.14.2.tar.gz", hash = "sha256:2a98ab9f944a11acee9cc848508ec28d9228abfd522ef0fad6a02a72e0ded69e", size = 625822, upload-time = "2025-09-29T10:05:42.613Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/28/4f/3e23dfc8b4951103028d30f29e17aa703a87564abd71bc405964c36326dc/beautifulsoup4-4.14.0-py3-none-any.whl", hash = "sha256:aee96fbccdf2d2a8d1288b2afa51fc76bb60823b7881a50fb1ed5f711d1a7d73", size = 106466, upload-time = "2025-09-27T17:22:16.13Z" },
+    { url = "https://files.pythonhosted.org/packages/94/fe/3aed5d0be4d404d12d36ab97e2f1791424d9ca39c2f754a6285d59a3b01d/beautifulsoup4-4.14.2-py3-none-any.whl", hash = "sha256:5ef6fa3a8cbece8488d66985560f97ed091e22bbc4e9c2338508a9d5de6d4515", size = 106392, upload-time = "2025-09-29T10:05:43.771Z" },
 ]
 
 [package.optional-dependencies]
@@ -1548,7 +1548,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.35.1"
+version = "0.35.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1560,9 +1560,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f6/42/0e7be334a6851cd7d51cc11717cb95e89333ebf0064431c0255c56957526/huggingface_hub-0.35.1.tar.gz", hash = "sha256:3585b88c5169c64b7e4214d0e88163d4a709de6d1a502e0cd0459e9ee2c9c572", size = 461374, upload-time = "2025-09-23T13:43:47.074Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/53/7c546f1a1034edaf17c54de94a1c36e481124c27e5190a85dcc1be43ffe1/huggingface_hub-0.35.2.tar.gz", hash = "sha256:3a5c03aa272f267a6892e701e5ef1bb2d0d46a487550fda978b5255bcd52f376", size = 461678, upload-time = "2025-09-29T09:50:30.883Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/60/4acf0c8a3925d9ff491dc08fe84d37e09cfca9c3b885e0db3d4dedb98cea/huggingface_hub-0.35.1-py3-none-any.whl", hash = "sha256:2f0e2709c711e3040e31d3e0418341f7092910f1462dd00350c4e97af47280a8", size = 563340, upload-time = "2025-09-23T13:43:45.343Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/ca/b1b845d49171aaa12c94614f1b075b1f665f89a617f9f22892af4e59aeec/huggingface_hub-0.35.2-py3-none-any.whl", hash = "sha256:dc6106e45b7744048d3bb315baa48f7b94b66167b2a5bb3175920038da2d5ca7", size = 564080, upload-time = "2025-09-29T09:50:27.876Z" },
 ]
 
 [[package]]
@@ -1803,11 +1803,11 @@ wheels = [
 
 [[package]]
 name = "lefthook"
-version = "1.13.4"
+version = "1.13.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c2/05/dbd4c60170ac000fad7f07cb98d6671fbd57b675fac86db7b207404bb5e5/lefthook-1.13.4.tar.gz", hash = "sha256:9340e9b7abf1061c40beab3633fc8cc6d519e6642ecae8a46e1fd0a0d5f81e8f", size = 55396559, upload-time = "2025-09-23T14:50:38.973Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/22/db6bf25abc5dc85ff936196cc9976fd02f2e28c34db0ed8e4ac87f754e10/lefthook-1.13.5.tar.gz", hash = "sha256:551578a58c73f97630a10e3c97f1006ff392ad4df95bf696877324da54c8e593", size = 55390563, upload-time = "2025-09-29T11:35:18.185Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/92/c213ab4ad215410b0331e7d81cb47abcc52a54e843ee46b298deb74bea90/lefthook-1.13.4-py3-none-any.whl", hash = "sha256:4c38e117e834c4ddc3c0af5f24393f3e8fd9021137343cfbc2c51e2f84753e6c", size = 55661055, upload-time = "2025-09-23T14:50:35.169Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/f6/0d8d755e653949506bc1c9792a4c7f6b560fd438080c4399c2854c59bb81/lefthook-1.13.5-py3-none-any.whl", hash = "sha256:ffc1f9911ca8fc73709eca1fc6b1948994ebdf193e5e0b2a6e179ea2002cce22", size = 55655807, upload-time = "2025-09-29T11:35:15.177Z" },
 ]
 
 [[package]]

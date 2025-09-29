@@ -103,26 +103,26 @@ module "cloud_run" {
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
   rag_service_account_email     = module.iam.rag_service_account_email
-  min_instances                 = 0
+  min_instances                 = 1
   max_instances                 = 2
   cpu_limit                     = "1"
   memory_limit                  = "1Gi"
 
   indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
-  indexer_min_instances     = 0     # ~keep Scale to zero when idle
+  indexer_min_instances     = 1     # ~keep Always have at least 1 instance for availability
   indexer_max_instances     = 2     # ~keep Updated for staging environment
 
   crawler_memory_limit      = "2Gi" # ~keep Reduced memory since processing one URL at a time
   crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
   crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
-  crawler_min_instances     = 0     # ~keep Scale to zero when idle
+  crawler_min_instances     = 1     # ~keep Always have at least 1 instance for availability
   crawler_max_instances     = 2     # ~keep Updated for staging environment
 
   rag_memory_limit      = "4Gi" # ~keep Increased memory for AI context windows
   rag_cpu_limit         = "1"   # ~keep Single CPU sufficient for async I/O operations
   rag_concurrency_limit = 1     # ~keep ONE message per instance for AI workloads
-  rag_min_instances     = 0     # ~keep Updated to scale to zero for staging
+  rag_min_instances     = 1     # ~keep Always have at least 1 instance for availability
   rag_max_instances     = 2     # ~keep Updated for staging environment
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
