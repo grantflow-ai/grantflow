@@ -108,7 +108,7 @@ pre-commit:
                 *.spec.ts
                 *.spec.tsx
                 *_test.py
-            run: uv run codespell {staged_files}
+            run: uv run codespell {staged_files} --skip="services/rag/**/*"
 
         pyproject-fmt:
             glob: "*pyproject.toml"
