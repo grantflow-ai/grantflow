@@ -143,7 +143,7 @@ data "archive_file" "dlq_manager_source" {
   type        = "zip"
   output_path = "${path.module}/.terraform/dlq-manager-source.zip"
 
-  source_dir = "${path.root}/../../functions/dlq_manager"
+  source_dir = "${path.root}/../../../functions/dlq_manager"
 
   excludes = [
     "__pycache__",
