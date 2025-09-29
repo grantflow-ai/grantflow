@@ -39,5 +39,4 @@ variable "backend_url" {
 variable "dlq_manager_function_uri" {
   description = "The URI of the DLQ Manager Cloud Function"
   type        = string
-  default     = ""
 }

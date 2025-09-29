@@ -133,8 +133,6 @@ resource "google_cloud_scheduler_job" "entity_cleanup" {
 }
 
 resource "google_cloud_scheduler_job" "dlq_reconciliation" {
-  count = var.dlq_manager_function_uri != "" ? 1 : 0
-
   name      = "dlq-reconciliation-${var.environment}"
   region    = var.region
   schedule  = "*/5 * * * *"
