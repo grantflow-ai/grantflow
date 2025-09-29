@@ -12,5 +12,5 @@
 		"testing/**"
 	],
 	"ignoreBinaries": ["biome", "vitest"],
-	"ignoreDependencies": ["pino-pretty", "biome"]
+	"ignoreDependencies": ["pino-pretty"]
 }
