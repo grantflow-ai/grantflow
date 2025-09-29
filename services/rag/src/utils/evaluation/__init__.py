@@ -1,16 +1,18 @@
 import time
 from collections.abc import Awaitable, Callable
-from typing import Any, TypedDict
+from typing import Any
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import deserialize
 
-from services.rag.src.dto import DocumentDTO
+# DocumentDTO imported in dto module
 from services.rag.src.utils.evaluation.dto import (
     CoherenceMetrics,
+    EvaluationContext,
     EvaluationPathType,
     EvaluationResult,
+    EvaluationSettings,
     EvaluationThresholds,
     GroundingMetrics,
     QualityMetrics,
@@ -46,24 +48,7 @@ __all__ = [
 ]
 
 
-class EvaluationSettings(TypedDict, total=False):
-    enable_fast_evaluation: bool
-    fast_confidence_threshold: float
-    fast_accept_threshold: float
-    fast_review_threshold: float
-
-    force_llm_evaluation: bool
-    llm_timeout: float
-
-    fast_weight: float
-    llm_weight: float
-
-
-class EvaluationContext(TypedDict, total=False):
-    section_config: GrantLongFormSection
-    rag_context: list[DocumentDTO]
-    research_objectives: list[ResearchObjective]
-    reference_corpus: list[str]
+# Types imported from dto.py
 
 
 DEFAULT_SETTINGS: EvaluationSettings = {
@@ -75,6 +60,8 @@ DEFAULT_SETTINGS: EvaluationSettings = {
     "llm_timeout": 60.0,
     "fast_weight": 0.3,
     "llm_weight": 0.7,
+    "json_confidence_threshold": 0.95,  # Higher for structural JSON
+    "json_semantic_threshold": 0.6,  # Lower for semantic content
 }
 
 
@@ -104,7 +91,11 @@ def _validate_trace_id(trace_id: str) -> None:
 
 
 def _has_fast_evaluation_context(context: EvaluationContext) -> bool:
-    return "section_config" in context and "rag_context" in context and "research_objectives" in context
+    """Check if context has required fields for fast evaluation."""
+    return bool(
+        ("section_config" in context and "rag_context" in context and "research_objectives" in context)
+        or _is_json_context(context)
+    )
 
 
 async def _try_fast_evaluation(
@@ -153,6 +144,41 @@ def _extract_llm_feedback(llm_result: EvaluationToolResponse, fast_result: Evalu
             feedback.append(f"🔍 {criterion_name}: {result['instructions']}")
 
     return feedback
+
+
+def _is_json_context(context: EvaluationContext) -> bool:
+    """Check if this is a JSON evaluation context."""
+    if isinstance(context, dict) and "json_content" in context:
+        return True
+    # Also check for JSON-like structures in the content itself
+    return bool(
+        context.get("research_objectives")
+        or context.get("relationships")
+        or context.get("enrichment_data")
+        or context.get("cfp_analysis")
+    )
+
+
+def _detect_json_content(content: str) -> tuple[bool, Any]:
+    """Detect if content is JSON and parse it.
+
+    Returns:
+        Tuple of (is_json, parsed_content or None)
+    """
+    # First try to parse as JSON using our serialization utils
+    try:
+        parsed = deserialize(content.encode(), dict)
+        if isinstance(parsed, (dict, list)):
+            return True, parsed
+    except Exception as e:
+        logger.debug("JSON parsing failed", content_preview=content[:50], error=str(e))
+
+    # Check for structured content patterns
+    content_stripped = content.strip()
+    if content_stripped.startswith(("{", "[")):
+        return False, None
+
+    return False, None
 
 
 async def evaluate_content(
