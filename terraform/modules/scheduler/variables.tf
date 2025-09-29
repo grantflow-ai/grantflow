@@ -35,3 +35,9 @@ variable "backend_url" {
   description = "The URL of the backend Cloud Run service"
   type        = string
 }
+
+variable "dlq_manager_function_uri" {
+  description = "The URI of the DLQ Manager Cloud Function"
+  type        = string
+  default     = ""
+}

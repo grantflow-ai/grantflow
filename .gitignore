@@ -68,6 +68,7 @@ frontend/functions/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/
+functions/**/requirements.txt
 GEMINI.md
 htmlcov/
 models/

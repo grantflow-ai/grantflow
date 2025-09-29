@@ -131,3 +131,40 @@ resource "google_cloud_scheduler_job" "entity_cleanup" {
 
   depends_on = [google_project_service.scheduler]
 }
+
+resource "google_cloud_scheduler_job" "dlq_reconciliation" {
+  count = var.dlq_manager_function_uri != "" ? 1 : 0
+
+  name      = "dlq-reconciliation-${var.environment}"
+  region    = var.region
+  schedule  = "*/5 * * * *"
+  time_zone = "UTC"
+
+  description = "DLQ reconciliation - runs every 5 minutes to check stuck jobs"
+
+  http_target {
+    uri         = var.dlq_manager_function_uri
+    http_method = "POST"
+
+    headers = {
+      "Content-Type" = "application/json"
+    }
+
+    oidc_token {
+      service_account_email = var.scheduler_invoker_service_account_email
+      audience              = var.dlq_manager_function_uri
+    }
+  }
+
+  retry_config {
+    retry_count          = 2
+    max_retry_duration   = "120s"
+    min_backoff_duration = "10s"
+    max_backoff_duration = "60s"
+    max_doublings        = 2
+  }
+
+  attempt_deadline = "540s"
+
+  depends_on = [google_project_service.scheduler]
+}

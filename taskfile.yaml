@@ -102,7 +102,7 @@ tasks:
       - task: frontend:update
       - task: backend:update
       - echo "Ensuring functions requirements.txt is up to date..."
-      - uv pip compile functions/pyproject.toml -o functions/requirements.txt
+      - task: cloud-functions:generate-requirements
 
   generate:api-types:
     desc: Generate TypeScript from backend API
@@ -581,13 +581,21 @@ tasks:
 
 
   cloud-functions:generate-requirements:
-    desc: Generate requirements.txt files from pyproject.toml for cloud functions
+    desc: Generate requirements.txt files from pyproject.toml for cloud functions deployment
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
-      - echo "📦 Generating requirements.txt for root cloud functions..."
-      - cd functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
-      - echo "🔧 Removing local file references from requirements.txt..."
-      - cd functions && sed -i.bak -e '/-e file:\/\//d' -e '/^\.\/packages\//d' requirements.txt && rm requirements.txt.bak
-      - echo "✅ All requirements.txt files generated successfully!"
+      - echo "📦 Generating requirements.txt for Cloud Functions from workspace dependencies..."
+      - |
+        uv export \
+          --format requirements-txt \
+          --output-file functions/dlq_manager/requirements.txt \
+          --no-hashes \
+          --no-editable \
+          --group functions
+      - echo "🔧 Removing workspace package references (packages will be copied directly)..."
+      - grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp && mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
+      - echo "✅ Requirements.txt generated successfully for Cloud Functions deployment!"
 
 
   _dev:check:
