@@ -10,6 +10,7 @@ from services.rag.src.grant_application.dto import (
     EnrichObjectivesStageDTO,
     EnrichTerminologyStageDTO,
     ExtractRelationshipsStageDTO,
+    GenerateResearchPlanStageDTO,
     GenerateSectionsStageDTO,
     SectionText,
 )
@@ -115,8 +116,18 @@ async def test_generate_sections_stage_success(
     mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
     mock_batched_gather.return_value = ["Generated abstract text", "Generated significance text"]
 
+    # Create a mock dto that includes all the previous stage data
+    input_dto = GenerateResearchPlanStageDTO(
+        work_plan_section=sample_work_plan_section,
+        relationships={"1": [("2", "test relationship")]},
+        enrichment_responses=[],
+        wikidata_enrichments=[],
+        research_plan_text="Test research plan text",
+    )
+
     result = await handle_generate_sections_stage(
         grant_application=grant_application,
+        dto=input_dto,
         job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
@@ -145,23 +156,19 @@ async def test_extract_relationships_stage_success(
 ) -> None:
     grant_application.research_objectives = research_objectives
 
-    input_dto = GenerateSectionsStageDTO(
-        section_texts=[
-            SectionText(section_id="abstract", text="Abstract text"),
-            SectionText(section_id="significance", text="Significance text"),
-        ],
-        work_plan_section=sample_work_plan_section,
-    )
-
     mock_relationships = {
         "1": [("2", "provides_data_for")],
         "2": [("1", "depends_on")],
     }
     mock_handle_extract_relationships.return_value = mock_relationships
 
+    # Mock the grant template with work plan section
+    mock_grant_template = AsyncMock()
+    mock_grant_template.grant_sections = [sample_work_plan_section]
+    grant_application.grant_template = mock_grant_template
+
     result = await handle_extract_relationships_stage(
         grant_application=grant_application,
-        dto=input_dto,
         job_manager=mock_grant_application_job_manager,
         trace_id=str(uuid4()),
     )
@@ -185,7 +192,6 @@ async def test_enrich_objectives_stage_success(
     grant_application.research_objectives = research_objectives
 
     input_dto = ExtractRelationshipsStageDTO(
-        section_texts=[SectionText(section_id="abstract", text="Abstract text")],
         work_plan_section=sample_work_plan_section,
         relationships={
             "1": [("2", "provides_data_for")],
@@ -265,7 +271,6 @@ async def test_enrich_terminology_stage_success(
     sample_work_plan_section: GrantLongFormSection,
 ) -> None:
     input_dto = EnrichObjectivesStageDTO(
-        section_texts=[SectionText(section_id="abstract", text="Abstract text")],
         work_plan_section=sample_work_plan_section,
         relationships={},
         enrichment_responses=[
@@ -366,7 +371,6 @@ async def test_generate_research_plan_stage_success(
     ]
 
     input_dto = EnrichTerminologyStageDTO(
-        section_texts=[SectionText(section_id="abstract", text="Abstract text")],
         work_plan_section=sample_work_plan_section,
         relationships={},
         enrichment_responses=[
@@ -457,6 +461,10 @@ async def test_handlers_preserve_data_flow(
             SectionText(section_id="abstract", text="Test abstract"),
         ],
         work_plan_section=sample_work_plan_section,
+        relationships={},
+        enrichment_responses=[],
+        wikidata_enrichments=[],
+        research_plan_text="Test research plan",
     )
 
     assert "section_texts" in test_dto
