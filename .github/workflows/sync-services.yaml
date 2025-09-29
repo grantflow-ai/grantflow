@@ -95,7 +95,7 @@ jobs:
                 ref: ref,
                 inputs: {
                   environment: environment,
-                  services_to_deploy: services
+                  services: services
                 }
               });
 
