@@ -169,101 +169,158 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """
-You are a specialized system designed to analyze STEM grant application requirements and generate structured specifications.
-You excel at identifying section hierarchies and distinguishing between different section types, especially research_plan sections which contain the actual research methodology and experimental approach.
-You understand the nuances of different funding organizations' requirements and can correctly identify mandatory sections even when they use different terminology.
+You are an expert grant application writer with 20+ years of experience helping researchers create winning proposals. You have received a very reliable CFP analysis report that contains detailed section requirements, word limits, and definitions extracted by advanced NLP analysis.
+
+CHAIN OF THOUGHT PROCESS:
+1. First, carefully read the CFP analysis report to understand all section requirements
+2. Verify each section has proper title matching the CFP analyzer findings exactly
+3. Extract and preserve ALL requirements arrays exactly as provided in the report - do not modify or summarize
+4. Map word limits and page constraints accurately using STANDARD CONVERSION: 1 page = 415 words
+5. Include complete definitions from the CFP analysis without paraphrasing
+6. Classify each section for applicant writing requirements
+7. Ensure sections follow the proper weight and structure for excellent applications
+
+YOUR TASK: Create template sections for excellent grant applications where:
+- Titles are EXACTLY like the CFP analyzer determined (no deviations allowed)
+- Requirements are clear and according to the data (report + CFP itself) - copy arrays completely
+- Weight of each section and length is correct per CFP specifications
+- All rich CFP data is preserved for applicant guidance
+
+COMPREHENSIVE LIMIT DETECTION AND CONVERSION RULES:
+- CONVERSION STANDARDS: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters)
+- LENGTH LIMITS: Convert ALL length constraints to words → cfp_length_limit field (numeric only)
+- CONVERSION TRACKING: Document the conversion process → cfp_length_source field (explanatory text)
+- OTHER CONSTRAINTS: Capture non-length limits → cfp_other_limits array (reference counts, file formats, etc.)
+
+CONVERSION EXAMPLES:
+- "2 pages maximum" → cfp_length_limit: 830, cfp_length_source: "Converted from 2 pages (2 × 415 = 830 words)"
+- "1000 characters" → cfp_length_limit: 200, cfp_length_source: "Converted from 1000 characters (1000 ÷ 5 = 200 words)"
+- "500 words" → cfp_length_limit: 500, cfp_length_source: "Original: 500 words"
+- "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
+
+APPLICANT WRITING CLASSIFICATION:
+- needs_applicant_writing = TRUE: Sections where applicants write original content (abstracts, project descriptions, research plans, narrative sections, statements)
+- needs_applicant_writing = FALSE: External documents (CVs, letters of recommendation, letters of support, bibliography/references, biosketches)
+
+CRITICAL: You must transfer ALL CFP analysis data accurately - this is essential for application success. The CFP analysis report is your authoritative source. Do not generate new requirements - only use what the analysis provides.
 """
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_grant_application_sections",
     template="""
-    # Grant Application Section Extraction
+    # Enhanced Grant Application Section Extraction with CFP Analysis Integration
 
-    You are tasked with determining the correct format for a grant application given the provided sources.
+    You are tasked with creating a grant application template using detailed CFP analysis results.
 
-    ## Sources
+    ## CFP Analysis Results
+    The CFP has been thoroughly analyzed and the following structured requirements have been identified:
 
+    <cfp_analysis>
+    ${cfp_analysis}
+    </cfp_analysis>
+
+    ## Organization Guidelines
     ${organization_guidelines}
 
-    This is the text extracted from the funding opportunity announcement:
-
-    ### Announcement Content:
-
-    #### The announcement subject is:
-
-    <cfp_subject>
-    ${cfp_subject}
-    </cfp_subject>
-
-    #### And these are the requirements and guidelines extracted from the announcement:
-
-    <cfp_content>
-    ${cfp_content}
-    </cfp_content>
+    ## CFP Content Summary
+    <cfp_subject>${cfp_subject}</cfp_subject>
+    <cfp_content>${cfp_content}</cfp_content>
 
     ## Instructions
 
-    1. Identify the sections the grant application should have from the provided sources:
-        - When organization guidelines are available, they take precedence over CFP requirements.
-        - Base yourself on the available sources.
-        - If the sources don't explicitly list required sections, use common grant application structure as a reasonable default:
-            • Project Summary/Abstract
-            • Project Narrative (including Background, Objectives, Methods/Approach, Expected Outcomes)
-            • References
-            • Budget Justification
-            • Biographical Sketches
-        - Only return an error if you cannot determine ANY reasonable structure at all.
+    ### 1. MANDATORY: CFP Analyzer Report Processing
+    **🚨 CRITICAL COMMAND: YOU RECEIVE CFP ANALYZER REPORT - READ IT FIRST AND RELY ON IT 🚨**
 
-    2. Model the structure as a tree:
-        - Maximum nesting depth is 5 levels
-        - Sections can have a 'parent_id'. Top level sections have null parent_id.
-        - Top-level sections correlate with H2 headings, child sections with H3 to H6 headers.
-        - Be detailed in identifying all sections and subsections within nesting limit.
+    **YOUR TASK**:
+    1. **READ THE CFP ANALYZER REPORT FIRST** - It contains the analyzed section structure from Gemini NLP
+    2. **RELY COMPLETELY ON CFP ANALYZER RESULTS** - All section names come from this analysis
+    3. **USE EXACT NAMES**: Only use `section_name` values from CFP analyzer - NO OTHER NAMES ALLOWED
+    4. **NO SYSTEM DEFAULTS**: The system has no predetermined section names
+    5. **CFP ANALYZER (GEMINI NLP) DETERMINES ALL NAMES** based on actual CFP content
 
-    3. Identify and flag the research_plan details section:
-        - Identify all the sections that are potential candidates to be the detailed research_plan:
-            - The detailed research_plan is a section that includes the specific detailed planned experimental and analytical steps of the project.
-            - It contains the actual methodologies, techniques, procedures, and protocols that will be used to conduct the research.
-            - It does not include in itself or as subsections: significance, innovation, impact, background, etc.
-            - It could be a top-level or child section depending on the grant structure.
-            - It does not have child sections.
-            - It is typically one of the longest and most detailed sections in the grant application.
-            - Common names for this section include: Work Plan, Research Plan, Research Strategy, Research Design, Research Details, Project Details, Experimental Design, Methods, Approach, Methodology, Technical Approach, Experimental Plan, etc.
-            - Some organizations may split the research_plan across multiple sections (e.g., "Methods" and "Approach") - in this case, identify the section that contains the most detailed experimental procedures.
-        - Select the most fitting candidate and flag exactly one section as the detailed research_plan.
-        - Pay special attention to distinguishing between "Specific Aims" (which lists objectives) and the actual research_plan (which details how those aims will be achieved).
-        - The research_plan must contain specific experimental procedures, not just goals or outcomes.
-        - The research_plan section MUST ALWAYS be marked as a long-form section.
-        - If no clear research_plan section is identified in the sources, use "Methods/Approach" or "Project Narrative" as the research_plan section.
+    **SECTION CREATION PROCESS**:
+    - For each section in the CFP analysis `required_sections`, create a corresponding template section
+    - Use the exact `section_name` from CFP analyzer - ANY DEVIATION IS FAILURE
+    - Include the original CFP source reference in parentheses in the section title
+    - Format: "Section Name (from: [key phrase from cfp_source_reference])"
 
-    4. Identify and flag all sections that belong to the research long form sections:
-      - Research long form sections are sections that the applicants write (i.e. not external materials, letters of support, etc.).
-      - Include any section that has a specific length limit
-      - Exclude sections that do not fit into the previous steps, if they belong to any of the following categories:
-            <exclude_categories>
-            ${exclude_categories}
-            </exclude_categories>
+    **⚠️ SYSTEM REQUIREMENT**: If CFP analyzer report is not provided, the system should RED FLAG this - the LLM cannot proceed without it.
 
-    5. Identify and flag all sections that are titles only.
-        - Titles only sections are sections that contain only a title and subsections, e.g. "Part 1", etc.
+    ### 2. CRITICAL: Extract Rich Section Data from CFP Analysis
 
-    6. Identify and flag all sections that are clinical trial sections:
-        - Clinical trial sections are sections that describe the clinical trial aspects of the project.
-        - These sections do not appear in all grant applications, only those that may potentially involve clinical trials.
+    **STEP-BY-STEP DATA TRANSFER PROCESS:**
+    For EACH section you generate, you MUST perform this exact matching and copying process:
 
-    7. Assign an order to each section:
-        - Order starts at 1 and increments by 1 for each section.
-        - The order should reflect the order of the section in the application.
+    1. **FIND MATCHING CFP SECTION**: Look at the section title you're creating. Find the object in the CFP Analysis `required_sections` array whose `section_name` field matches or closely corresponds to your section title.
 
-    8. Review and validate results:
-      - If your confidence is below 50% about the overall structure or if you cannot identify ANY reasonable sections:
-        - Return a detailed error message explaining the issue
-        - Include empty sections array
-      - Otherwise, proceed with your best interpretation of the requirements, using standard grant structures when specific guidance is lacking
+    2. **COPY REQUIREMENTS ARRAY**: Once you find the matching CFP section, copy its ENTIRE `requirements` array to the `cfp_requirements` field. DO NOT modify, summarize, or generate new requirements. Copy exactly as-is.
 
-    ## Task Completion
+    3. **COPY DEFINITION**: Copy the exact `definition` string from the matching CFP section to the `cfp_definition` field. DO NOT paraphrase.
 
-    Analyze the sources and determine the grant application structure following the instructions above. If confidence is below 50% or no reasonable sections can be identified, provide a detailed error message explaining the issue.
+    4. **PROCESS ALL CONSTRAINTS**: Look in the CFP Analysis for ALL constraints for this section:
+       - LENGTH CONSTRAINTS: Convert pages/characters to words → `cfp_length_limit` (numeric) + `cfp_length_source` (explanation)
+       - OTHER CONSTRAINTS: Extract reference counts, file formats, deadlines → `cfp_other_limits` array
+       - Use CONVERSION RULES: 1 page = 415 words, 1 character = 0.2 words (1 word = 5 characters)
+
+    **EXAMPLE MATCHING PROCESS:**
+    - If generating section "PROJECT SUMMARY/ABSTRACT", find CFP object with `section_name`: "PROJECT SUMMARY/ABSTRACT"
+    - Copy its `requirements` array (e.g., 4 requirement objects) to `cfp_requirements`
+    - Copy its `definition` string to `cfp_definition`
+    - Process constraints: "1 page maximum" → cfp_length_limit: 415, cfp_length_source: "Converted from 1 page (1 × 415 = 415 words)"
+    - Process non-length constraints: "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
+
+    **SECTION CREATION DETAILS:**
+    **🚨 CRITICAL: SECTION TITLES MUST COME FROM CFP ANALYZER (GEMINI NLP) 🚨**
+    **❌ ANY OTHER NAMING IS A SYSTEM FAILURE ❌**
+
+    **Section Title Rules (MANDATORY):**
+    - **ONLY USE** the exact `section_name` from CFP analysis required_sections array
+    - **NO PREDETERMINED NAMES** - the system has no fixed section names
+    - **CFP ANALYZER (Gemini NLP) DETERMINES ALL NAMES** based on actual CFP content
+    - **ANY DEVIATION FROM CFP ANALYZER NAMES = FAILURE**
+    - Include CFP source reference: "Section Name (from: [key phrase from cfp_source_reference])"
+
+    **EXAMPLES OF CORRECT APPROACH:**
+    - ✅ IF CFP analyzer found "PROJECT SUMMARY" → Use "PROJECT SUMMARY"
+    - ✅ IF CFP analyzer found "RESEARCH PROPOSAL" → Use "RESEARCH PROPOSAL"
+    - ✅ IF CFP analyzer found "STUDY DESIGN" → Use "STUDY DESIGN"
+    - ❌ NEVER use generic names like "Specific Aims" if CFP analyzer didn't find it
+    - ❌ NEVER use system defaults - ONLY use CFP analyzer results
+
+    ### 3. Mandatory Section Rules
+    Based on the CFP analysis, include ALL sections that require written content:
+    - **INCLUDE**: All sections where applicants write original research content
+    - **EXCLUDE**: Administrative forms, budget spreadsheets, CVs, recommendation letters
+    - **INCLUDE**: Budget justification narratives, biographical sketches with written content
+
+    ### 4. Section Properties
+    For each section, determine:
+    - `is_detailed_research_plan`: Mark the main methodology/approach section as true
+    - `is_long_form`: True for all sections requiring substantial written content
+    - `is_clinical_trial`: True for clinical trial-specific sections
+    - `is_title_only`: True for organizational sections with only subsections
+
+    ### 5. Length Constraints Integration
+    - Use `length_constraints` from CFP analysis to set realistic word limits
+    - Convert page limits using: 415 words/page (TNR 11pt) or 500 words/page (Arial 11pt)
+    - Account for figures by reducing total by 12.5%
+
+    ### 6. Hierarchy and Dependencies
+    - Respect the structure suggested by the CFP analysis
+    - Create parent-child relationships when CFP indicates subsections
+    - Maximum nesting depth of 5 levels
+
+    ### 7. Quality Requirements
+    - Ensure exactly one section is marked as `is_detailed_research_plan`
+    - All sections must have unique IDs in snake_case format
+    - Order sections logically based on CFP structure and standard grant conventions
+
+    ### 8. CFP Source Correlation
+    - Each section must include `cfp_source_reference` field
+    - Section titles should indicate CFP source with "(from: [reference])" format
+    - Maintain clear traceability from CFP requirements to template sections
+
+    Return the complete section structure with CFP source correlations clearly indicated.
     """,
 )
 
@@ -281,13 +338,13 @@ section_extraction_json_schema = {
             "description": "Array of section objects representing the grant application structure",
             "items": {
                 "type": "object",
-                "required": ["title", "id", "parent_id", "is_long_form"],
+                "required": ["title", "id", "parent_id", "is_long_form", "cfp_source_reference", "cfp_requirements", "cfp_length_limit", "cfp_length_source", "cfp_other_limits", "cfp_definition", "needs_applicant_writing"],
                 "properties": {
                     "title": {
                         "type": "string",
                         "minLength": 1,
-                        "maxLength": 255,
-                        "description": "Section title as it appears in the source",
+                        "maxLength": 300,
+                        "description": "Section title including CFP source reference in parentheses",
                     },
                     "id": {
                         "type": "string",
@@ -304,6 +361,64 @@ section_extraction_json_schema = {
                         "type": "string",
                         "nullable": True,
                         "description": "ID of parent section if nested, null for top-level sections",
+                    },
+                    "cfp_source_reference": {
+                        "type": "string",
+                        "minLength": 10,
+                        "description": "Key phrase from original CFP text that defines this section",
+                    },
+                    "cfp_requirements": {
+                        "type": "array",
+                        "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'section_name' matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "requirement": {"type": "string"},
+                                "quote_from_source": {"type": "string"},
+                                "category": {"type": "string"}
+                            }
+                        }
+                    },
+                    "cfp_length_limit": {
+                        "type": "integer",
+                        "nullable": True,
+                        "description": "CRITICAL DATA TRANSFER: Standardized word count for all length constraints. Convert ALL length limits to words using these CONVERSION RULES: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters). Examples: '2 pages' → 830, '1000 characters' → 200, '5 pages' → 2075. If no length limit exists, use null."
+                    },
+                    "cfp_length_source": {
+                        "type": "string",
+                        "nullable": True,
+                        "description": "CONVERSION TRACKING: Explain the original constraint and conversion applied. Examples: 'Converted from 2 pages (2 × 415 = 830 words)', 'Converted from 1000 characters (1000 ÷ 5 = 200 words)', 'Original: 500 words'. Use null if no length limit."
+                    },
+                    "cfp_other_limits": {
+                        "type": "array",
+                        "description": "NON-LENGTH CONSTRAINTS: Array of all other constraints that aren't word/page/character limits. Examples: reference count limits ('30 references maximum'), file format requirements ('PDF only'), submission deadlines, etc. Use empty array [] if none exist.",
+                        "items": {
+                            "type": "object",
+                            "required": ["constraint_type", "constraint_value", "source_quote"],
+                            "properties": {
+                                "constraint_type": {
+                                    "type": "string",
+                                    "description": "Type of constraint (e.g., 'reference_count', 'file_format', 'deadline', 'font_requirements')"
+                                },
+                                "constraint_value": {
+                                    "type": "string",
+                                    "description": "The specific constraint value (e.g., '30 references maximum', 'PDF format required')"
+                                },
+                                "source_quote": {
+                                    "type": "string",
+                                    "description": "Direct quote from CFP that specifies this constraint"
+                                }
+                            }
+                        }
+                    },
+                    "cfp_definition": {
+                        "type": "string",
+                        "nullable": True,
+                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null."
+                    },
+                    "needs_applicant_writing": {
+                        "type": "boolean",
+                        "description": "CLASSIFICATION: Determine if this section requires the applicant to write original content. TRUE for narrative sections, abstracts, project descriptions, research plans, etc. that applicants write themselves. FALSE for external documents like CVs, letters of recommendation, letters of support, bibliography/references that others provide or are pre-existing documents."
                     },
                     "is_detailed_research_plan": {
                         "type": "boolean",
@@ -536,6 +651,46 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
+        # Ensure CFP source reference for enhanced functionality (backwards compatible)
+        if not section.get("cfp_source_reference"):
+            # Extract from title if it has CFP reference format, otherwise generate default
+            title = section["title"]
+            if "(from:" in title and ")" in title:
+                # Extract the reference from the title
+                start = title.find("(from:") + 6
+                end = title.find(")", start)
+                if end > start:
+                    section["cfp_source_reference"] = title[start:end].strip()
+                else:
+                    section["cfp_source_reference"] = f"CFP section: {title}"
+            else:
+                section["cfp_source_reference"] = f"CFP section: {title}"
+
+        # Ensure CFP requirements array exists (backwards compatible)
+        if not section.get("cfp_requirements"):
+            section["cfp_requirements"] = []
+
+        # Ensure CFP length fields are set (backwards compatible)
+        if not section.get("cfp_length_limit"):
+            section["cfp_length_limit"] = None
+        if not section.get("cfp_length_source"):
+            section["cfp_length_source"] = None
+        if not section.get("cfp_other_limits"):
+            section["cfp_other_limits"] = []
+
+        # Ensure CFP definition is set (backwards compatible)
+        if not section.get("cfp_definition"):
+            section["cfp_definition"] = None
+
+        # Ensure needs_applicant_writing is set (backwards compatible)
+        if "needs_applicant_writing" not in section:
+            section["needs_applicant_writing"] = True  # Default to True for most sections
+
+    # Ensure all sections have an order field (add if missing for thinking budget responses)
+    for i, section in enumerate(sections):
+        if "order" not in section:
+            section["order"] = i + 1
+
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
         section["order"] = i
@@ -544,10 +699,60 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
 
 
 async def extract_sections(task_description: str, trace_id: str, **_: Any) -> ExtractedSections:
+    import json
+    import re
+
+    # Parse the task_description to extract CFP analysis data and CFP content
+    # The task_description contains both CFP analysis JSON and original CFP content
+
+    # Extract CFP Analysis JSON from task_description
+    cfp_analysis_match = re.search(r'CFP Analysis Data.*?:\s*(\{.*\})', task_description, re.DOTALL)
+    cfp_analysis_json = "{}" if not cfp_analysis_match else cfp_analysis_match.group(1)
+
+    # Extract original CFP content
+    cfp_content_match = re.search(r'Original CFP Content:\s*(.*)', task_description, re.DOTALL)
+    cfp_content = "" if not cfp_content_match else cfp_content_match.group(1).strip()
+
+    # Default values for template substitution
+    organization_guidelines = "Follow standard grant application best practices."
+    cfp_subject = "Grant Application Requirements"
+
+    print(f"🔧 API CALL: Using Gemini Flash model with proper template substitution")
+    print(f"   Model: gemini-2.5-flash")
+    print(f"   Temperature: 0.1")
+    print(f"   Timeout: 300s (5 minutes)")
+    print(f"   CFP Analysis Size: {len(cfp_analysis_json)} chars")
+    print(f"   CFP Content Size: {len(cfp_content)} chars")
+
+    # Create the full prompt using template substitution
+    full_prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
+        cfp_analysis=cfp_analysis_json,
+        organization_guidelines=organization_guidelines,
+        cfp_subject=cfp_subject,
+        cfp_content=cfp_content,
+    )
+
+    # Use Gemini Flash model for CFP data processing (no thinking budget)
+    # Force Gemini Flash usage as requested by user
+    if True:  # Always use Gemini Flash per user requirement
+        return await handle_completions_request(
+            prompt_identifier="section_extraction",
+            model="gemini-2.5-flash",  # Use Gemini Flash only
+            messages=full_prompt.to_string(),
+            system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
+            response_schema=section_extraction_json_schema,
+            response_type=ExtractedSections,
+            validator=validate_section_extraction,
+            temperature=0.1,  # Low temperature for consistent CFP data transfer
+            timeout=300,  # 5-minute timeout
+            trace_id=trace_id,
+        )
+
+    # Standard completion for Claude fallback
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
-        messages=task_description,
+        messages=full_prompt.to_string(),
         system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
@@ -563,19 +768,25 @@ async def handle_extract_sections(
     *,
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
     organization: OrganizationNamespace | None = None,
+    cfp_analysis: Any | None = None,
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
-    prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
-        cfp_subject=cfp_subject,
-        cfp_content="\n".join(content_list),
-        exclude_categories=",".join(EXCLUDE_CATEGORIES),
-    )
 
+    # Include CFP analysis if available, otherwise use fallback prompt
+    import json
+    cfp_analysis_text = ""
+    if cfp_analysis:
+        cfp_analysis_text = json.dumps(cfp_analysis, indent=2, default=str)
+    else:
+        # Use empty analysis for backwards compatibility
+        cfp_analysis_text = "No structured CFP analysis available. Use standard grant application structure."
+
+    # Get organization guidelines with RAG results
     rag_results = []
     if organization:
         rag_results = await retrieve_documents(
             organization_id=str(organization["organization_id"]),
-            task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+            task_description="Grant application section extraction with CFP analysis",
             search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
             model=ANTHROPIC_SONNET_MODEL,
             trace_id=trace_id,
@@ -588,10 +799,17 @@ async def handle_extract_sections(
     else:
         organization_guidelines = ""
 
+    prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
+        cfp_analysis=cfp_analysis_text,
+        cfp_subject=cfp_subject,
+        cfp_content="\n".join(content_list),
+        organization_guidelines=organization_guidelines,
+    )
+
     result = await with_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
-        prompt=prompt.to_string(organization_guidelines=organization_guidelines),
+        prompt=prompt.to_string(),
         trace_id=trace_id,
         **get_evaluation_kwargs(
             "extract_sections",
