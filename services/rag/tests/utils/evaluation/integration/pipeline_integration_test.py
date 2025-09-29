@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING
-
 import pytest
-from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.json_objects import (
+    CFPAnalysisResult,
+    GrantLongFormSection,
+    ResearchObjective,
+)
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
-
-if TYPE_CHECKING:
-    from services.rag.src.utils.evaluation.dto import FastEvaluationResult
 
 
 @pytest.mark.asyncio
@@ -55,7 +54,7 @@ async def test_evaluate_scientific_content_complete_workflow() -> None:
         topics=["research methods", "biomarker analysis"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -66,8 +65,8 @@ async def test_evaluate_scientific_content_complete_workflow() -> None:
     assert isinstance(result, dict)
     assert "overall_score" in result
     assert "structural_metrics" in result
-    assert "source_grounding_metrics" in result
-    assert "scientific_quality_metrics" in result
+    assert "grounding_metrics" in result
+    assert "quality_metrics" in result
     assert "coherence_metrics" in result
 
     assert 0.0 <= result["overall_score"] <= 100.0
@@ -114,7 +113,7 @@ async def test_evaluate_scientific_content_clinical_trial_weighting() -> None:
         topics=["clinical outcomes"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -156,7 +155,7 @@ async def test_evaluate_scientific_content_poor_quality_handling() -> None:
         topics=[],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -195,9 +194,9 @@ async def test_evaluation_performance_consistency() -> None:
         topics=["methodology"],
     )
 
-    results: list[FastEvaluationResult] = []
+    results = []
     for i in range(2):
-        result: FastEvaluationResult = await evaluate_scientific_content(
+        result = await evaluate_scientific_content(
             content=content,
             section_config=section_config,
             rag_context=rag_context,
@@ -213,7 +212,7 @@ async def test_evaluation_performance_consistency() -> None:
         assert "scientific_quality_metrics" in result
         assert "coherence_metrics" in result
 
-    first_result: FastEvaluationResult = results[0]
+    first_result = results[0]
     for result in results[1:]:
         assert abs(first_result["overall_score"] - result["overall_score"]) < 5.0, "Overall scores should be consistent"
 
@@ -245,7 +244,7 @@ async def test_evaluation_with_empty_context() -> None:
         topics=["research"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -281,7 +280,7 @@ async def test_evaluation_with_word_limit_exceeded() -> None:
         topics=["testing"],
     )
 
-    result: FastEvaluationResult = await evaluate_scientific_content(
+    result = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
@@ -293,3 +292,171 @@ async def test_evaluation_with_word_limit_exceeded() -> None:
     assert result["structural_metrics"]["word_count_compliance"] < 70.0
 
     assert result["overall_score"] < 90.0
+
+
+@pytest.mark.asyncio
+async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
+    """Test that all context types are properly passed through the evaluation pipeline."""
+    content: str = """
+    # Biomarker Discovery and Clinical Validation
+
+    ## Research Objectives and Methodology
+
+    This research aims to identify and validate protein biomarkers for early cancer detection
+    using mass spectrometry analysis combined with clinical validation studies. The methodology
+    employs rigorous statistical analysis with p-values < 0.01 significance threshold.
+
+    Primary objective: Discover biomarkers with >90% diagnostic accuracy for early-stage cancer.
+    Secondary objective: Develop clinical-grade diagnostic assay for rapid patient screening.
+
+    ## Statistical Analysis Framework
+
+    The analysis employs multivariate regression modeling with confidence intervals and effect sizes.
+    Statistical significance is determined using appropriate parametric tests with Bonferroni correction.
+    Sample size calculations ensure 80% power for detecting clinically meaningful differences.
+
+    According to previous studies [1], this systematic approach demonstrates reproducible results.
+    Evidence indicates strong correlation between biomarker expression and disease progression.
+    Clinical validation confirms diagnostic utility across diverse patient populations.
+    """
+
+    rag_context: list[DocumentDTO] = [
+        DocumentDTO(content="Mass spectrometry analysis enables precise biomarker identification in clinical samples"),
+        DocumentDTO(content="Statistical validation with appropriate p-value thresholds ensures clinical reliability"),
+        DocumentDTO(
+            content="Biomarker discovery requires systematic analysis and clinical validation for patient impact"
+        ),
+    ]
+
+    research_objectives = [
+        ResearchObjective(
+            number=1,
+            title="Biomarker discovery for early cancer detection",
+            description="Systematic identification of protein biomarkers using mass spectrometry with >90% accuracy",
+            feasibility_analysis="Feasible with established mass spectrometry protocols and clinical partnerships",
+            innovation_score=8.5,
+            research_questions=[
+                "Which biomarkers show strongest correlation with early cancer?",
+                "How do expression patterns differ across cancer subtypes?",
+            ],
+            methodology="Mass spectrometry analysis with statistical validation",
+            expected_outcomes="3-5 biomarkers with >90% diagnostic accuracy",
+            timeline="24 months",
+            resources_required="Mass spectrometry facility, clinical samples",
+        ),
+        ResearchObjective(
+            number=2,
+            title="Clinical diagnostic assay development",
+            description="Development of clinical-grade assay for rapid cancer screening",
+            feasibility_analysis="Well-established assay development capabilities with regulatory pathway",
+            innovation_score=7.2,
+            research_questions=["What is optimal assay format for clinical use?"],
+            methodology="ELISA development with clinical validation",
+            expected_outcomes="FDA-approved diagnostic assay",
+            timeline="36 months",
+            resources_required="Assay development laboratory, clinical validation samples",
+        ),
+    ]
+
+    CFPAnalysisResult(
+        funding_agency="National Institutes of Health",
+        program_name="Cancer Biomarker Research Excellence Program",
+        award_amount="$750,000",
+        project_duration="4 years",
+        application_deadline="2024-04-15",
+        eligibility_requirements=[
+            "Principal investigator must hold PhD or MD in biomedical field",
+            "Institution must be accredited US research university",
+            "Project must focus on cancer biomarker discovery and validation",
+        ],
+        evaluation_criteria=[
+            "Scientific significance and innovation (35%)",
+            "Technical approach and methodology (30%)",
+            "Principal investigator qualifications (20%)",
+            "Institutional resources (15%)",
+        ],
+        required_documents=[
+            "Project narrative with research plan (20 pages maximum)",
+            "Detailed budget and justification",
+            "Biographical sketches for key personnel",
+        ],
+        submission_requirements=[
+            "Electronic submission through NIH grants.gov portal",
+            "All documents in PDF format with embedded fonts",
+            "Font minimum 11 points, single-spaced formatting",
+        ],
+        research_focus=[
+            "Cancer biomarker discovery using proteomics approaches",
+            "Clinical validation studies in patient populations",
+            "Development of diagnostic assays for clinical implementation",
+        ],
+        quotes=[
+            "Applications must demonstrate clear clinical relevance and translational potential",
+            "Priority given to projects with strong preliminary data and clinical collaborations",
+        ],
+    )
+
+    section_config: GrantLongFormSection = GrantLongFormSection(
+        id="comprehensive_context",
+        title="Biomarker Research with Full Context",
+        order=1,
+        parent_id=None,
+        depends_on=[],
+        generation_instructions="Describe biomarker research with clinical focus",
+        is_clinical_trial=False,
+        is_detailed_research_plan=True,
+        keywords=["biomarker", "cancer", "clinical", "validation", "mass spectrometry"],
+        max_words=600,
+        search_queries=["biomarker cancer discovery", "clinical validation studies"],
+        topics=["cancer research", "biomarker discovery", "clinical diagnostics"],
+    )
+
+    result = await evaluate_scientific_content(
+        content=content,
+        section_config=section_config,
+        rag_context=rag_context,
+        research_objectives=research_objectives,
+        trace_id="test_trace_comprehensive_context",
+    )
+
+    # Verify all evaluation components are present
+    assert isinstance(result, dict)
+    assert "overall_score" in result
+    assert "structural_metrics" in result
+    assert "grounding_metrics" in result
+    assert "quality_metrics" in result
+    assert "coherence_metrics" in result
+
+    # Verify reasonable scores with comprehensive context
+    assert result["overall_score"] > 20.0, (
+        f"Expected reasonable score with comprehensive context, got {result['overall_score']}"
+    )
+    assert result["overall_score"] <= 100.0
+
+    # Verify grounding metrics benefit from context
+    grounding_metrics = result["grounding_metrics"]
+    assert "keyword_coverage" in grounding_metrics
+    assert "search_query_integration" in grounding_metrics
+    assert grounding_metrics["keyword_coverage"] > 0.2, (
+        f"Expected some keyword coverage with rich context, got {grounding_metrics['keyword_coverage']}"
+    )
+
+    # Verify scientific quality metrics
+    quality_metrics = result["quality_metrics"]
+    assert "overall" in quality_metrics
+    assert "evidence_based_claims_ratio" in quality_metrics
+    assert quality_metrics["overall"] > 0.2, (
+        f"Expected reasonable scientific quality with context, got {quality_metrics['overall']}"
+    )
+
+    # Test comparison without research objectives to show context impact
+    result_minimal = await evaluate_scientific_content(
+        content=content,
+        section_config=section_config,
+        rag_context=rag_context,
+        research_objectives=[],  # No objectives
+        trace_id="test_trace_minimal_context",
+    )
+
+    # Full context should generally produce equal or better grounding
+    assert result["grounding_metrics"]["overall"] >= result_minimal["grounding_metrics"]["overall"] - 0.1

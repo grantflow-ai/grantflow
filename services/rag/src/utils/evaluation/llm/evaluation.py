@@ -976,7 +976,7 @@ async def batch_evaluate_outputs(
     return results
 
 
-async def with_prompt_evaluation[T, **P](
+async def with_evaluation[T, **P](
     *,
     prompt_identifier: str,
     passing_score: int = 100,
