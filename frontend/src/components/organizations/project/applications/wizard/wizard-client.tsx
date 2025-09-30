@@ -212,6 +212,7 @@ export function WizardClientComponent({
 
 		if (event === "pipeline_error") {
 			setGeneratingTemplate(false);
+			useWizardStore.getState().setTemplateGenerationFailed(true);
 		}
 	}, [latestRagNotification, setGeneratingTemplate, getApplication, organizationId, projectId, initialApplicationId]);
 
