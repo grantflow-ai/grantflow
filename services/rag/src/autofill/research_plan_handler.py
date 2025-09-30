@@ -185,7 +185,9 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
     prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
 
-    search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
+    search_queries = await handle_create_search_queries(
+        user_prompt=str(prompt_with_title), research_objectives=application.research_objectives or None
+    )
 
     retrieval_results = await retrieve_documents(
         application_id=str(application.id),

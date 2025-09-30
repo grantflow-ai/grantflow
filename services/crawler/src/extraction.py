@@ -2,7 +2,7 @@ import re
 import time
 from asyncio import gather
 from itertools import chain
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 
@@ -13,7 +13,7 @@ else:
 
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
-from kreuzberg import KreuzbergError
+from kreuzberg import KreuzbergError, extract_bytes
 from litestar.stores.base import Store
 from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
@@ -22,7 +22,10 @@ from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
 )
-from packages.shared_utils.src.extraction import extract_file_content
+from packages.shared_utils.src.extraction import (
+    enrich_metadata_with_entities_keywords,
+    get_scientific_extraction_config,
+)
 from packages.shared_utils.src.html import sanitize_html
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import deserialize, serialize
@@ -160,17 +163,35 @@ async def extract_and_process_content(
         raw_html, output_format="html", include_comments=False, include_formatting=True
     )
 
-    metadata = None
+    metadata: dict[str, Any] = {}
     if clean_html:
-        md_out, _, _, metadata = await extract_file_content(
-            content=clean_html.encode("utf-8"),
-            mime_type="text/html",
-            enable_chunking=False,
+        config = get_scientific_extraction_config(
+            chunk_content=False,
             enable_token_reduction=True,
             enable_entity_extraction=True,
             enable_keyword_extraction=True,
             enable_document_classification=True,
             language_hint="en",
+        )
+        extraction_result = await extract_bytes(
+            content=clean_html.encode("utf-8"), mime_type="text/html", config=config
+        )
+        md_out = (
+            extraction_result.content
+            if isinstance(extraction_result.content, str)
+            else str(extraction_result.content)
+        )
+
+        metadata = (
+            dict(extraction_result.metadata)
+            if hasattr(extraction_result, "metadata") and extraction_result.metadata
+            else {}
+        )
+
+        enrich_metadata_with_entities_keywords(
+            extraction_result=extraction_result,
+            metadata=metadata,
+            context=f"crawler:page:{url}",
         )
     else:
         logger.warning(
@@ -189,11 +210,13 @@ async def extract_and_process_content(
         text_length=len(page_text),
         markdown_duration_ms=round(markdown_duration * 1000, 2),
         total_duration_ms=round(total_duration * 1000, 2),
-        has_metadata=metadata is not None,
-        metadata_fields=len(metadata) if metadata else 0,
+        has_metadata=bool(metadata),
+        metadata_fields=len(metadata),
+        entities_extracted=len(metadata.get("entities", [])),
+        keywords_extracted=len(metadata.get("keywords", [])),
     )
 
-    return md_out, page_text, main_embeddings, metadata
+    return md_out, page_text, main_embeddings, cast("DocumentMetadata", metadata)
 
 
 async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> Path:
@@ -636,17 +659,35 @@ async def crawl_url(
     )
 
     chunking_start = time.time()
-    combined_metadata = None
+    combined_metadata: dict[str, Any] = {}
     try:
-        _, _, chunks_content, combined_metadata = await extract_file_content(
-            content=content.encode("utf-8"),
-            mime_type="text/markdown",
-            enable_chunking=True,
+        config = get_scientific_extraction_config(
+            chunk_content=True,
             enable_token_reduction=True,
             enable_entity_extraction=True,
             enable_keyword_extraction=True,
             enable_document_classification=True,
             language_hint="en",
+        )
+        extraction_result = await extract_bytes(
+            content=content.encode("utf-8"), mime_type="text/markdown", config=config
+        )
+        chunks_content = (
+            extraction_result.chunks
+            if hasattr(extraction_result, "chunks") and extraction_result.chunks
+            else None
+        )
+
+        combined_metadata = (
+            dict(extraction_result.metadata)
+            if hasattr(extraction_result, "metadata") and extraction_result.metadata
+            else {}
+        )
+
+        enrich_metadata_with_entities_keywords(
+            extraction_result=extraction_result,
+            metadata=combined_metadata,
+            context=f"crawler:file:{url}",
         )
 
         if chunks_content:
@@ -668,7 +709,10 @@ async def crawl_url(
     logger.debug(
         "Text chunking completed",
         chunk_count=len(chunks),
-        has_metadata=combined_metadata is not None,
+        has_metadata=bool(combined_metadata),
+        metadata_fields=len(combined_metadata),
+        entities_extracted=len(combined_metadata.get("entities", [])),
+        keywords_extracted=len(combined_metadata.get("keywords", [])),
         chunking_duration_ms=round(chunking_duration * 1000, 2),
     )
 
@@ -690,4 +734,4 @@ async def crawl_url(
         total_duration_ms=round(total_duration * 1000, 2),
     )
 
-    return vectors, content, files, combined_metadata
+    return vectors, content, files, cast("DocumentMetadata", combined_metadata)

@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING, Any
+import re
+from typing import TYPE_CHECKING, Any, Final, TypedDict
 
 from kreuzberg import (
     KreuzbergError,
     extract_bytes,
     ExtractionConfig,
+    ExtractionResult,
     TokenReductionConfig,
     TesseractConfig,
     PSMMode,
@@ -19,6 +21,96 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
 
 logger = get_logger(__name__)
+
+
+class Entity(TypedDict):
+    type: str
+    text: str
+
+
+class Keyword(TypedDict):
+    keyword: str
+    score: float
+
+
+_TITLE_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"\b(Dr|Prof|Mr|Mrs|Ms|PhD)\b\.?\s*", flags=re.IGNORECASE
+)
+
+
+def normalize_entity_text(text: str) -> str:
+    text = _TITLE_PATTERN.sub("", text)
+    text = " ".join(text.split())
+    return text.lower().strip()
+
+
+def deduplicate_entities(entities: list[Entity]) -> list[Entity]:
+    if not entities:
+        return []
+
+    seen: dict[tuple[str, str], Entity] = {}
+
+    for entity in entities:
+        entity_type = entity["type"]
+        normalized = normalize_entity_text(entity["text"])
+        key = (entity_type, normalized)
+
+        if key not in seen or len(entity["text"]) > len(seen[key]["text"]):
+            seen[key] = entity
+
+    return list(seen.values())
+
+
+def filter_keywords_by_score(
+    keywords: list[Keyword], min_score: float = 0.35
+) -> list[Keyword]:
+    return [kw for kw in keywords if kw["score"] >= min_score]
+
+
+def enrich_metadata_with_entities_keywords(
+    *,
+    extraction_result: ExtractionResult,
+    metadata: dict[str, Any],
+    context: str,
+) -> tuple[int, int]:
+    entities_count = 0
+    try:
+        entities = extraction_result.entities if extraction_result.entities else []
+        raw_entities: list[Entity] = [
+            Entity(type=entity.type, text=entity.text) for entity in entities
+        ]
+        deduplicated_entities = deduplicate_entities(raw_entities)
+        metadata["entities"] = deduplicated_entities
+        entities_count = len(deduplicated_entities)
+    except (AttributeError, KeyError, TypeError, ValueError) as e:
+        logger.warning(
+            "Entity extraction failed, using empty list",
+            context=context,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        metadata["entities"] = []
+
+    keywords_count = 0
+    try:
+        keywords = extraction_result.keywords if extraction_result.keywords else []
+        raw_keywords: list[Keyword] = [
+            Keyword(keyword=kw, score=float(score)) for kw, score in keywords
+        ]
+        filtered_keywords = filter_keywords_by_score(raw_keywords, min_score=0.35)
+        metadata["keywords"] = filtered_keywords
+        keywords_count = len(filtered_keywords)
+    except (AttributeError, KeyError, TypeError, ValueError) as e:
+        logger.warning(
+            "Keyword extraction failed, using empty list",
+            context=context,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        metadata["keywords"] = []
+
+    return entities_count, keywords_count
+
 
 SCIENTIFIC_STOPWORDS = {
     "en": list(ACADEMIC_STOP_WORDS)
@@ -135,8 +227,8 @@ def _get_extraction_config(
     return None
 
 
-def _extract_chunks_from_result(result: Any) -> list[str] | None:
-    return result.chunks if hasattr(result, "chunks") and result.chunks else None
+def _extract_chunks_from_result(result: ExtractionResult) -> list[str] | None:
+    return result.chunks if result.chunks else None
 
 
 async def extract_file_content(

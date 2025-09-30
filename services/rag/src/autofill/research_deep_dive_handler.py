@@ -137,7 +137,9 @@ async def _generate_field_answer(
         objectives_text=objectives_text,
         question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
     )
-    search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
+    search_queries = await handle_create_search_queries(
+        user_prompt=str(prompt_with_title), research_objectives=application.research_objectives or None
+    )
 
     retrieval_results = await retrieve_documents(
         application_id=str(application.id),
@@ -209,7 +211,9 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
     """
 
     logger.info("Generating shared search queries for all research deep dive fields", trace_id=trace_id)
-    search_queries = await handle_create_search_queries(user_prompt=comprehensive_prompt)
+    search_queries = await handle_create_search_queries(
+        user_prompt=comprehensive_prompt, research_objectives=application.research_objectives or None
+    )
 
     logger.info("Retrieving documents with shared context", trace_id=trace_id)
     shared_context = await retrieve_documents(
