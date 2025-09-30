@@ -19,7 +19,7 @@ from services.rag.src.dto import DocumentDTO
 
 # Type aliases for clarity
 RecommendationType = Literal["accept", "llm_review", "reject"]
-EvaluationPathType = Literal["fast_only", "llm_only", "fast_with_llm_fallback", "error"]
+EvaluationPathType = Literal["nlp_only", "llm_only", "nlp_with_llm_fallback", "error"]
 ContentType = Literal["text", "objectives", "relationships", "enrichment", "cfp_analysis"]
 ComplexityLevel = Literal["simple", "moderate", "complex", "very_complex"]
 QualityLevel = Literal["excellent", "good", "acceptable", "poor", "unacceptable"]
@@ -142,13 +142,13 @@ class EvaluationThresholds(TypedDict):
 class EvaluationSettings(TypedDict, total=False):
     """Settings for controlling evaluation behavior."""
 
-    enable_fast_evaluation: bool
-    fast_confidence_threshold: float
-    fast_accept_threshold: float
-    fast_review_threshold: float
+    enable_nlp_evaluation: bool
+    nlp_confidence_threshold: float
+    nlp_accept_threshold: float
+    nlp_review_threshold: float
     force_llm_evaluation: bool
     llm_timeout: float
-    fast_weight: float
+    nlp_weight: float
     llm_weight: float
     json_confidence_threshold: float  # Higher threshold for JSON structural evaluation
     json_semantic_threshold: float  # Lower threshold for JSON semantic content
