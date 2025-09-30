@@ -168,13 +168,17 @@ async def test_extract_and_process_content() -> None:
             None,
         )
 
-        md_content, text_content, embeddings = await extract_and_process_content(
-            url, html
-        )
+        (
+            md_content,
+            text_content,
+            embeddings,
+            metadata,
+        ) = await extract_and_process_content(url, html)
 
         assert md_content == "# Test\n\nContent"
         assert text_content == "Test\nContent"
         assert embeddings == [[0.1, 0.2, 0.3]]
+        assert metadata is None
 
 
 async def test_extract_and_process_content_with_existing_data() -> None:
@@ -200,13 +204,19 @@ async def test_extract_and_process_content_with_existing_data() -> None:
             None,
         )
 
-        md_content, text_content, embeddings = await extract_and_process_content(
+        (
+            md_content,
+            text_content,
+            embeddings,
+            metadata,
+        ) = await extract_and_process_content(
             url, html, existing_text, existing_embeddings
         )
 
         assert md_content == "# Test\n\nContent"
         assert text_content == existing_text
         assert embeddings == existing_embeddings
+        assert metadata is None
 
 
 async def test_save_page_content(temp_dir: Path) -> None:
@@ -400,11 +410,12 @@ async def test_crawl_url_integration(
             session_key=session_key,
         )
 
-        assert len(result) == 3
-        vectors, content, files = result
+        assert len(result) == 4
+        vectors, content, files, metadata = result
         assert len(vectors) == 1
         assert content == "\n\n# Page 1\n\nContent"
         assert len(files) == 2
+        assert metadata is not None
 
         filenames = sorted([f["filename"] for f in files])
         assert filenames == ["test1.pdf", "test2.docx"]

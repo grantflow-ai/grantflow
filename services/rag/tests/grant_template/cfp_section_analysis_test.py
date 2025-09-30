@@ -112,12 +112,10 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
 
 
 def test_validate_cfp_analysis_valid_response(sample_cfp_analysis: CFPSectionAnalysis) -> None:
-    """Test validation passes for valid CFP analysis response."""
     validate_cfp_analysis(sample_cfp_analysis)
 
 
 def test_validate_cfp_analysis_with_error_field() -> None:
-    """Test validation raises error when error field is present."""
     response: CFPSectionAnalysis = {
         "sections_count": 0,
         "length_constraints_found": 0,
@@ -134,7 +132,6 @@ def test_validate_cfp_analysis_with_error_field() -> None:
 
 
 def test_validate_cfp_analysis_no_sections() -> None:
-    """Test validation raises error when no sections found."""
     response: CFPSectionAnalysis = {
         "sections_count": 0,
         "length_constraints_found": 0,
@@ -150,14 +147,13 @@ def test_validate_cfp_analysis_no_sections() -> None:
 
 
 def test_validate_cfp_analysis_count_mismatch() -> None:
-    """Test validation raises error when section count doesn't match."""
     response: CFPSectionAnalysis = {
         "sections_count": 2,
         "length_constraints_found": 0,
         "evaluation_criteria_count": 0,
         "required_sections": [
             {"section_name": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
-        ],  # Only 1 section but count says 2
+        ],
         "length_constraints": [],
         "evaluation_criteria": [],
         "additional_requirements": [],
@@ -168,14 +164,10 @@ def test_validate_cfp_analysis_count_mismatch() -> None:
 
 
 def test_validate_cfp_analysis_auto_fixes_missing_cfp_source_reference(sample_cfp_analysis: CFPSectionAnalysis) -> None:
-    """Test validation handles missing CFP source references gracefully."""
-    # Test that validation doesn't break when cfp_source_reference is not required
     response = sample_cfp_analysis.copy()
 
-    # This should pass validation without issues
     validate_cfp_analysis(response)
 
-    # Verify the response structure is still valid
     assert "required_sections" in response
     assert len(response["required_sections"]) == 2
     cfp_ref = response["required_sections"][0]["cfp_source_reference"]
@@ -184,14 +176,11 @@ def test_validate_cfp_analysis_auto_fixes_missing_cfp_source_reference(sample_cf
 
 
 def test_validate_cfp_analysis_fixes_short_quotes(sample_cfp_analysis: CFPSectionAnalysis) -> None:
-    """Test validation handles short quotes appropriately."""
     response = sample_cfp_analysis.copy()
-    # Make a quote short but valid
     response["required_sections"][0]["requirements"][0]["quote_from_source"] = "Short quote from CFP"
 
     validate_cfp_analysis(response)
 
-    # Should preserve the quote as-is if it's already valid
     quote = response["required_sections"][0]["requirements"][0]["quote_from_source"]
     assert quote == "Short quote from CFP"
 
@@ -202,7 +191,6 @@ async def test_analyze_cfp_sections_success(
     sample_nlp_analysis: CategorizationAnalysisResult,
     sample_cfp_analysis: CFPSectionAnalysis,
 ) -> None:
-    """Test successful CFP section analysis."""
     mock_completions.return_value = sample_cfp_analysis
 
     result = await analyze_cfp_sections(
@@ -214,7 +202,6 @@ async def test_analyze_cfp_sections_success(
     assert result == sample_cfp_analysis
     mock_completions.assert_called_once()
 
-    # Verify the call was made with correct parameters
     call_kwargs = mock_completions.call_args.kwargs
     assert call_kwargs["prompt_identifier"] == "cfp_section_analyzer"
     assert call_kwargs["model"] == "gemini-2.5-flash"
@@ -230,7 +217,6 @@ async def test_handle_analyze_cfp_success(
     sample_nlp_analysis: CategorizationAnalysisResult,
     sample_cfp_analysis: CFPSectionAnalysis,
 ) -> None:
-    """Test successful full CFP analysis pipeline."""
     mock_categorize.return_value = sample_nlp_analysis
     mock_analyze_sections.return_value = sample_cfp_analysis
 
@@ -241,8 +227,8 @@ async def test_handle_analyze_cfp_success(
         "nlp_analysis": sample_nlp_analysis,
         "analysis_metadata": {
             "content_length": len("Sample CFP content for testing"),
-            "categories_found": 9,  # All categories in sample_nlp_analysis have content
-            "total_sentences": 18,  # Total sentences across all categories
+            "categories_found": 9,
+            "total_sentences": 18,
         },
     }
 
@@ -258,18 +244,16 @@ async def test_handle_analyze_cfp_success(
 async def test_handle_analyze_cfp_calculates_metadata_correctly(
     mock_categorize: AsyncMock,
 ) -> None:
-    """Test that metadata is calculated correctly."""
-    # Mock NLP analysis with specific content
     mock_nlp_analysis: CategorizationAnalysisResult = {
-        "money": ["$50,000"],  # 1 sentence
-        "date_time": ["Due March 31"],  # 1 sentence
-        "writing_related": [],  # 0 sentences - empty category
-        "other_numbers": ["3 years", "5 pages"],  # 2 sentences
-        "recommendations": [],  # 0 sentences - empty category
-        "orders": ["Follow guidelines"],  # 1 sentence
-        "positive_instructions": [],  # 0 sentences - empty category
-        "negative_instructions": [],  # 0 sentences - empty category
-        "evaluation_criteria": ["Merit assessed"],  # 1 sentence
+        "money": ["$50,000"],
+        "date_time": ["Due March 31"],
+        "writing_related": [],
+        "other_numbers": ["3 years", "5 pages"],
+        "recommendations": [],
+        "orders": ["Follow guidelines"],
+        "positive_instructions": [],
+        "negative_instructions": [],
+        "evaluation_criteria": ["Merit assessed"],
     }
 
     mock_categorize.return_value = mock_nlp_analysis
@@ -290,15 +274,14 @@ async def test_handle_analyze_cfp_calculates_metadata_correctly(
 
     metadata = result["analysis_metadata"]
     assert metadata["content_length"] == len(cfp_text)
-    assert metadata["categories_found"] == 5  # 5 non-empty categories
-    assert metadata["total_sentences"] == 6  # Total sentences: 1+1+0+2+0+1+0+0+1 = 6
+    assert metadata["categories_found"] == 5
+    assert metadata["total_sentences"] == 6
 
 
 @patch("services.rag.src.grant_template.cfp_section_analysis.analyze_cfp_sections")
 async def test_handle_analyze_cfp_propagates_analysis_errors(
     mock_analyze_sections: AsyncMock,
 ) -> None:
-    """Test that analysis errors are properly propagated."""
     mock_analyze_sections.side_effect = ValidationError("Analysis failed due to insufficient content")
 
     with (

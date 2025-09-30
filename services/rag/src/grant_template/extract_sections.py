@@ -719,12 +719,9 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
-        # Ensure CFP source reference is present
         if not section.get("cfp_source_reference"):
-            # Extract from title if it has CFP reference format, otherwise generate default
             title = section["title"]
             if "(from:" in title and ")" in title:
-                # Extract the reference from the title
                 start = title.find("(from:") + 6
                 end = title.find(")", start)
                 if end > start:
@@ -734,11 +731,9 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
             else:
                 section["cfp_source_reference"] = f"CFP section: {title}"
 
-        # Ensure CFP requirements array exists (backwards compatible)
         if not section.get("cfp_requirements"):
             section["cfp_requirements"] = []
 
-        # Ensure CFP length fields are set (backwards compatible)
         if not section.get("cfp_length_limit"):
             section["cfp_length_limit"] = None
         if not section.get("cfp_length_source"):
@@ -746,13 +741,10 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if not section.get("cfp_other_limits"):
             section["cfp_other_limits"] = []
 
-        # Ensure CFP definition is set (backwards compatible)
         if not section.get("cfp_definition"):
             section["cfp_definition"] = None
 
-        # Ensure needs_applicant_writing is set (backwards compatible)
         if "needs_applicant_writing" not in section:
-            # Smart default: check if it's a budget-only section (without justification)
             title_lower = section.get("title", "").lower()
             if "budget" in title_lower and not any(
                 keyword in title_lower for keyword in ["justification", "narrative", "explanation", "description"]
@@ -761,7 +753,6 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
             else:
                 section["needs_applicant_writing"] = True
 
-    # Ensure all sections have an order field
     for i, section in enumerate(sections):
         if "order" not in section:
             section["order"] = i + 1
@@ -783,7 +774,6 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
     organization_guidelines = "Follow standard grant application best practices."
     cfp_subject = "Grant Application Requirements"
 
-    # Create the full prompt using template substitution
     full_prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
         cfp_analysis=cfp_analysis_json,
         organization_guidelines=organization_guidelines,
@@ -791,7 +781,6 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
         cfp_content=cfp_content,
     )
 
-    # Use Gemini Flash model for CFP data processing
     if True:
         return await handle_completions_request(
             prompt_identifier="section_extraction",
@@ -806,7 +795,6 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
             trace_id=trace_id,
         )
 
-    # Standard completion for Claude fallback
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
@@ -830,14 +818,12 @@ async def handle_extract_sections(
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
-    # Include CFP analysis if available, otherwise use fallback prompt
     cfp_analysis_text = ""
     if cfp_analysis:
         cfp_analysis_text = serialize(cfp_analysis).decode("utf-8")
     else:
         cfp_analysis_text = "No structured CFP analysis available. Use standard grant application structure."
 
-    # Get organization guidelines with RAG results
     rag_results = []
     if organization:
         rag_results = await retrieve_documents(

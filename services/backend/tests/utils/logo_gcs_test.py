@@ -258,7 +258,6 @@ async def test_create_signed_logo_upload_url_success() -> None:
         def mock_run_sync_side_effect(func: object) -> object:
             if func == mock_get_bucket:
                 return mock_bucket
-            # This handles the lambda function that calls generate_signed_url
             return "https://signed-url.com"
 
         mock_run_sync.side_effect = mock_run_sync_side_effect

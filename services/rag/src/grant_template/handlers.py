@@ -204,7 +204,6 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
-    # Filter sections requiring applicant writing
     sections_requiring_writing = [
         s for s in section_extraction_result["extracted_sections"] if s.get("needs_applicant_writing", True)
     ]

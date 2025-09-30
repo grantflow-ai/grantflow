@@ -327,7 +327,7 @@ async def analyze_cfp_sections(
         system_prompt=CFP_SECTION_ANALYZER_SYSTEM_PROMPT,
         temperature=0.1,
         top_p=0.9,
-        timeout=300,  # 5-minute timeout
+        timeout=300,
         trace_id=trace_id,
     )
 
