@@ -182,14 +182,12 @@ async def extract_and_process_content(
             else str(extraction_result.content)
         )
 
-        # Serialize entities and keywords into metadata
         metadata = (
             dict(extraction_result.metadata)
             if hasattr(extraction_result, "metadata") and extraction_result.metadata
             else {}
         )
 
-        # Enrich metadata with entities and keywords
         enrich_metadata_with_entities_keywords(
             extraction_result=extraction_result,
             metadata=metadata,
@@ -680,14 +678,12 @@ async def crawl_url(
             else None
         )
 
-        # Serialize entities and keywords into metadata
         combined_metadata = (
             dict(extraction_result.metadata)
             if hasattr(extraction_result, "metadata") and extraction_result.metadata
             else {}
         )
 
-        # Enrich metadata with entities and keywords
         enrich_metadata_with_entities_keywords(
             extraction_result=extraction_result,
             metadata=combined_metadata,

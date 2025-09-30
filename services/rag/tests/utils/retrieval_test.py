@@ -17,7 +17,6 @@ from services.rag.src.utils.retrieval import (
 
 
 def _create_enriched_metadata(**kwargs: object) -> "Metadata":
-    """Create enriched metadata that satisfies type checker while testing runtime behavior."""
     return kwargs  # type: ignore[return-value]
 
 
@@ -38,21 +37,18 @@ def mock_text_vectors() -> list[TextVector]:
 
 
 def test_calculate_document_metadata_score_none_metadata() -> None:
-    """Test metadata scoring with None metadata returns penalty score."""
     score = calculate_document_metadata_score(None, ["cancer research", "immunotherapy"])
     assert score == 0.7
 
 
 def test_calculate_document_metadata_score_empty_metadata() -> None:
-    """Test metadata scoring with empty metadata."""
     metadata = _create_enriched_metadata(keywords=[], entities=[], document_type="")
     score = calculate_document_metadata_score(metadata, ["cancer research"])
     assert 0.5 <= score <= 1.0
-    assert score == 0.5  # No matches, base score
+    assert score == 0.5
 
 
 def test_calculate_document_metadata_score_keyword_match() -> None:
-    """Test metadata scoring with keyword overlap."""
     metadata = _create_enriched_metadata(
         keywords=[Keyword(keyword="cancer", score=0.9), Keyword(keyword="immunotherapy", score=0.85)],
         entities=[],
@@ -60,12 +56,10 @@ def test_calculate_document_metadata_score_keyword_match() -> None:
     )
     score = calculate_document_metadata_score(metadata, ["cancer research", "treatment"])
     assert 0.5 <= score <= 1.0
-    # Should have keyword match for "cancer"
     assert score > 0.5
 
 
 def test_calculate_document_metadata_score_entity_match() -> None:
-    """Test metadata scoring with entity overlap."""
     metadata = _create_enriched_metadata(
         keywords=[],
         entities=[Entity(type="ORG", text="NIH"), Entity(type="PERSON", text="Dr. Smith")],
@@ -73,12 +67,10 @@ def test_calculate_document_metadata_score_entity_match() -> None:
     )
     score = calculate_document_metadata_score(metadata, ["NIH funding", "Smith"])
     assert 0.5 <= score <= 1.0
-    # Should have entity matches
     assert score > 0.5
 
 
 def test_calculate_document_metadata_score_scientific_boost() -> None:
-    """Test metadata scoring with scientific document type boost."""
     metadata = _create_enriched_metadata(
         keywords=[],
         entities=[],
@@ -86,13 +78,11 @@ def test_calculate_document_metadata_score_scientific_boost() -> None:
     )
     score = calculate_document_metadata_score(metadata, ["test query"])
     assert 0.5 <= score <= 1.0
-    # Should get boost from research document type
-    expected_score = 0.5 + (0.3 * 0.5)  # Base + (doc_type_weight * 0.5)
+    expected_score = 0.5 + (0.3 * 0.5)
     assert abs(score - expected_score) < 0.01
 
 
 def test_calculate_document_metadata_score_all_factors() -> None:
-    """Test metadata scoring with keyword, entity, and doc type matches."""
     metadata = _create_enriched_metadata(
         keywords=[
             Keyword(keyword="cancer", score=0.9),
@@ -104,13 +94,10 @@ def test_calculate_document_metadata_score_all_factors() -> None:
     )
     score = calculate_document_metadata_score(metadata, ["cancer immunotherapy", "NIH", "glioblastoma treatment"])
     assert 0.5 <= score <= 1.0
-    # Should score high with multiple matches across all categories
     assert score > 0.8
 
 
 def test_calculate_document_metadata_score_string_keywords() -> None:
-    """Test metadata scoring handles string keywords (legacy format)."""
-    # Legacy format uses plain strings instead of TypedDict
     metadata = {"keywords": ["cancer", "research", "treatment"], "entities": [], "document_type": "article"}
     score = calculate_document_metadata_score(metadata, ["cancer treatment"])  # type: ignore[arg-type]
     assert 0.5 <= score <= 1.0
@@ -118,8 +105,6 @@ def test_calculate_document_metadata_score_string_keywords() -> None:
 
 
 def test_calculate_document_metadata_score_string_entities() -> None:
-    """Test metadata scoring handles string entities (legacy format)."""
-    # Legacy format uses plain strings instead of TypedDict
     metadata = {"keywords": [], "entities": ["NIH", "Dr. Smith"], "document_type": "article"}
     score = calculate_document_metadata_score(metadata, ["NIH funding"])  # type: ignore[arg-type]
     assert 0.5 <= score <= 1.0
@@ -127,7 +112,6 @@ def test_calculate_document_metadata_score_string_entities() -> None:
 
 
 def test_calculate_document_metadata_score_case_insensitive() -> None:
-    """Test metadata scoring is case insensitive."""
     metadata = _create_enriched_metadata(
         keywords=[Keyword(keyword="Cancer", score=0.9), Keyword(keyword="IMMUNOTHERAPY", score=0.85)],
         entities=[Entity(type="ORG", text="NIH")],
@@ -139,7 +123,6 @@ def test_calculate_document_metadata_score_case_insensitive() -> None:
 
 
 def test_calculate_document_metadata_score_no_query_terms() -> None:
-    """Test metadata scoring with empty search queries."""
     metadata = _create_enriched_metadata(
         keywords=[Keyword(keyword="cancer", score=0.9)],
         entities=[Entity(type="ORG", text="NIH")],
@@ -147,41 +130,34 @@ def test_calculate_document_metadata_score_no_query_terms() -> None:
     )
     score = calculate_document_metadata_score(metadata, [])
     assert 0.5 <= score <= 1.0
-    # Should only get doc_type boost
     expected_score = 0.5 + (0.3 * 0.5)
     assert abs(score - expected_score) < 0.01
 
 
 def test_calculate_document_metadata_score_punctuation_handling() -> None:
-    """Test metadata scoring handles punctuation in queries properly."""
     metadata = _create_enriched_metadata(
         keywords=[Keyword(keyword="cancer", score=0.9), Keyword(keyword="immunotherapy", score=0.85)],
         entities=[],
         document_type="article",
     )
-    # Query with punctuation should still match
     score = calculate_document_metadata_score(metadata, ["cancer, immunotherapy", "cancer-related"])
     assert 0.5 <= score <= 1.0
-    assert score > 0.5  # Should match both "cancer" and "immunotherapy"
+    assert score > 0.5
 
 
 def test_calculate_document_metadata_score_custom_weights() -> None:
-    """Test metadata scoring with custom weights."""
     metadata = _create_enriched_metadata(
         keywords=[Keyword(keyword="cancer", score=0.9)],
         entities=[Entity(type="ORG", text="NIH")],
         document_type="research",
     )
-    # Custom weights: emphasize keywords more
     custom_weights = {"keywords": 0.7, "entities": 0.2, "doc_type": 0.1}
     score_custom = calculate_document_metadata_score(metadata, ["cancer"], weights=custom_weights)
 
-    # Default weights for comparison
     score_default = calculate_document_metadata_score(metadata, ["cancer"])
 
     assert 0.5 <= score_custom <= 1.0
     assert 0.5 <= score_default <= 1.0
-    # Custom should differ from default (verifies weights are used)
     assert score_custom != score_default
 
 

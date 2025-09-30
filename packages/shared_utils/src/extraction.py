@@ -33,29 +33,15 @@ class Keyword(TypedDict):
 
 
 def normalize_entity_text(text: str) -> str:
-    """Normalize entity text for deduplication.
-
-    - Remove titles (Dr., Prof., Mr., Mrs., Ms.)
-    - Normalize whitespace
-    - Convert to lowercase for comparison
-    """
-    # Remove common titles
     text = re.sub(r"\b(Dr|Prof|Mr|Mrs|Ms|PhD)\b\.?\s*", "", text, flags=re.IGNORECASE)
-    # Normalize whitespace
     text = " ".join(text.split())
     return text.lower().strip()
 
 
 def deduplicate_entities(entities: list[Entity]) -> list[Entity]:
-    """Deduplicate entities by normalized text within same type.
-
-    Keeps the longest variant of each unique entity.
-    Example: "Dr. John Smith", "John Smith", "Smith" -> "Dr. John Smith"
-    """
     if not entities:
         return []
 
-    # Group by type and normalized text, keeping longest variant
     seen: dict[tuple[str, str], Entity] = {}
 
     for entity in entities:
@@ -72,15 +58,6 @@ def deduplicate_entities(entities: list[Entity]) -> list[Entity]:
 def filter_keywords_by_score(
     keywords: list[Keyword], min_score: float = 0.35
 ) -> list[Keyword]:
-    """Filter keywords by minimum confidence score.
-
-    Args:
-        keywords: List of keyword TypedDicts
-        min_score: Minimum score threshold (default 0.35)
-
-    Returns:
-        Filtered list of keywords meeting minimum score threshold
-    """
     return [kw for kw in keywords if kw["score"] >= min_score]
 
 
@@ -90,17 +67,6 @@ def enrich_metadata_with_entities_keywords(
     metadata: dict[str, Any],
     context: str,
 ) -> tuple[int, int]:
-    """Enrich metadata dict with entities and keywords from extraction result.
-
-    Args:
-        extraction_result: Kreuzberg extraction result with entities/keywords attributes
-        metadata: Metadata dict to enrich (modified in place)
-        context: Context string for logging (e.g., "indexer", "crawler:page")
-
-    Returns:
-        Tuple of (entities_count, keywords_count) for logging
-    """
-    # Add entities with error handling
     entities_count = 0
     try:
         entities = (
@@ -123,7 +89,6 @@ def enrich_metadata_with_entities_keywords(
         )
         metadata["entities"] = []
 
-    # Add keywords with error handling
     keywords_count = 0
     try:
         keywords = (

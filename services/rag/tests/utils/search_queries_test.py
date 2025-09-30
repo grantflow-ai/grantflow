@@ -86,13 +86,11 @@ async def test_handle_create_search_queries_retries_until_minimum(mocker: Mocker
 
 
 def test_build_objective_context_empty() -> None:
-    """Test build_objective_context with empty list."""
     result = build_objective_context([])
     assert result == ""
 
 
 def test_build_objective_context_single_objective() -> None:
-    """Test build_objective_context with single objective."""
     objectives: list[ResearchObjective] = [
         ResearchObjective(
             number=1,
@@ -112,7 +110,6 @@ def test_build_objective_context_single_objective() -> None:
 
 
 def test_build_objective_context_multiple_objectives() -> None:
-    """Test build_objective_context with multiple objectives."""
     objectives: list[ResearchObjective] = [
         ResearchObjective(
             number=1,
@@ -128,25 +125,22 @@ def test_build_objective_context_multiple_objectives() -> None:
     assert "Objective 1: Study immune response" in result
     assert "Investigate T-cell activation" in result
     assert "Objective 2: Develop biomarker assay" in result
-    # Check both objectives are in the list (count includes "Objective" in CONSTRAINTS text too)
     assert "- Objective 1:" in result
     assert "- Objective 2:" in result
 
 
 def test_build_objective_context_no_description() -> None:
-    """Test build_objective_context with objective lacking description."""
     objectives: list[ResearchObjective] = [ResearchObjective(number=1, title="Test objective", research_tasks=[])]
 
     result = build_objective_context(objectives)
 
     assert "Objective 1: Test objective" in result
-    assert " - " not in result.split("\n")[2]  # No dash when no description
+    assert " - " not in result.split("\n")[2]
 
 
 async def test_handle_create_search_queries_with_objectives(
     mock_handle_completions_request: Mock,
 ) -> None:
-    """Test handle_create_search_queries with research objectives."""
     objectives: list[ResearchObjective] = [
         ResearchObjective(
             number=1,
@@ -161,7 +155,6 @@ async def test_handle_create_search_queries_with_objectives(
     assert len(result) == 3
     assert mock_handle_completions_request.call_count == 1
 
-    # Verify objective context was injected into messages
     call_args = mock_handle_completions_request.call_args
     messages = call_args.kwargs["messages"]
     assert len(messages) >= 2
@@ -172,13 +165,11 @@ async def test_handle_create_search_queries_with_objectives(
 async def test_handle_create_search_queries_with_none_objectives(
     mock_handle_completions_request: Mock,
 ) -> None:
-    """Test handle_create_search_queries gracefully handles None objectives."""
     result = await handle_create_search_queries(user_prompt="test prompt", research_objectives=None)
 
     assert len(result) == 3
     assert mock_handle_completions_request.call_count == 1
 
-    # Verify no objective context was injected
     call_args = mock_handle_completions_request.call_args
     messages = call_args.kwargs["messages"]
     assert not any("CRITICAL CONTEXT" in msg for msg in messages)

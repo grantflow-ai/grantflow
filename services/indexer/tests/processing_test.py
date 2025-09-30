@@ -62,7 +62,7 @@ async def test_process_source_text_file(
         mime_type="text/plain",
     )
 
-    metadata_dict: Any = metadata  # Cast for runtime enrichment tests
+    metadata_dict: Any = metadata
 
     assert len(vectors) == 1
     assert vectors[0] == mock_vector_dto

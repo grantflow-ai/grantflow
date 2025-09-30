@@ -38,7 +38,6 @@ async def process_source(
 
     extraction_start = time.time()
 
-    # Use Kreuzberg directly to access entities and keywords
     config = get_scientific_extraction_config(
         chunk_content=True,
         enable_token_reduction=enable_token_reduction,
@@ -54,10 +53,8 @@ async def process_source(
     processed_mime_type = result.mime_type
     chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
 
-    # Serialize entities and keywords into metadata
     metadata: dict[str, Any] = dict(result.metadata) if hasattr(result, "metadata") and result.metadata else {}
 
-    # Enrich metadata with entities and keywords
     entities_count, keywords_count = enrich_metadata_with_entities_keywords(
         extraction_result=result,
         metadata=metadata,
