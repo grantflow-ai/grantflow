@@ -207,7 +207,7 @@ async def generate_work_plan_component_text(
             **get_evaluation_kwargs(
                 "generate_work_plan",
                 job_manager,
-                section_config=None,  # No GrantLongFormSection available for work plan components
+                section_config=None,
                 rag_context=rag_results,
                 research_objectives=form_inputs.get("research_objectives"),
             ),

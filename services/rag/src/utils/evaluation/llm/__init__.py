@@ -1,5 +1,3 @@
-"""LLM-based evaluation modules."""
-
 from services.rag.src.utils.evaluation.dto import (
     EvaluationCriterion,
     EvaluationScore,

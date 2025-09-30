@@ -316,7 +316,6 @@ async def handle_generate_section_text(
         trace_id=trace_id,
     )
 
-    # Pass all available context to evaluation
     result = await with_evaluation(
         prompt_identifier="section_generation",
         prompt_handler=partial(generate_section_text, section=section),

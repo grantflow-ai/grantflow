@@ -597,7 +597,7 @@ async def handle_extract_sections(
             "extract_sections",
             job_manager,
             rag_context=rag_results if rag_results else content_list,
-            is_json_content=True,  # Returns ExtractedSections JSON
+            is_json_content=True,
         ),
     )
 

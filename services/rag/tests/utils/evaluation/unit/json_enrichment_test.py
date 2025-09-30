@@ -1,5 +1,3 @@
-"""Tests for JSON enrichment evaluation."""
-
 from typing import TYPE_CHECKING
 
 from services.rag.src.utils.evaluation.json.enrichment import (
@@ -13,7 +11,6 @@ if TYPE_CHECKING:
 
 class TestEnrichmentQualityEvaluation:
     def test_evaluate_enrichment_quality_high_quality(self) -> None:
-        """Test evaluation with high-quality enrichment data."""
         enrichment_data: EnrichmentData = {
             "technical_terms": [
                 "liquid chromatography-tandem mass spectrometry (LC-MS/MS)",
@@ -76,12 +73,11 @@ class TestEnrichmentQualityEvaluation:
         assert result["search_query_quality"] > 0.6
 
     def test_evaluate_enrichment_quality_with_keyword_alignment(self) -> None:
-        """Test that keyword alignment improves term relevance scores."""
         enrichment_data: EnrichmentData = {
             "technical_terms": [
-                "biomarker analysis",  # Matches "biomarker" keyword
-                "cancer progression",  # Matches "cancer" keyword
-                "clinical validation",  # Matches "clinical" keyword
+                "biomarker analysis",
+                "cancer progression",
+                "clinical validation",
             ],
             "research_questions": [
                 "How do biomarkers relate to cancer outcomes?",
@@ -97,19 +93,17 @@ class TestEnrichmentQualityEvaluation:
         keywords = ["biomarker", "cancer", "clinical"]
         result_with_keywords = evaluate_enrichment_quality(enrichment_data, keywords, None)
 
-        # Test without keywords for comparison
         result_without_keywords = evaluate_enrichment_quality(enrichment_data, None, None)
 
         assert result_with_keywords["term_relevance"] > result_without_keywords["term_relevance"]
         assert result_with_keywords["overall"] >= result_without_keywords["overall"]
 
     def test_evaluate_enrichment_quality_poor_quality(self) -> None:
-        """Test evaluation with poor-quality enrichment data."""
         enrichment_data: EnrichmentData = {
-            "technical_terms": ["x", "y"],  # Extremely vague single letters
-            "research_questions": ["zzz", "aaa"],  # Not real questions
-            "context": "Research.",  # Extremely minimal context
-            "search_queries": ["a", "b"],  # Single letter queries (too short)
+            "technical_terms": ["x", "y"],
+            "research_questions": ["zzz", "aaa"],
+            "context": "Research.",
+            "search_queries": ["a", "b"],
         }
 
         result = evaluate_enrichment_quality(enrichment_data, None, None)
@@ -121,7 +115,6 @@ class TestEnrichmentQualityEvaluation:
         assert result["context_depth"] < 0.3
 
     def test_evaluate_enrichment_quality_empty_data(self) -> None:
-        """Test evaluation with empty enrichment data."""
         result = evaluate_enrichment_quality({}, None, None)
 
         assert result["overall"] == 0.0
@@ -132,13 +125,12 @@ class TestEnrichmentQualityEvaluation:
         assert result["search_query_quality"] == 0.0
 
     def test_evaluate_enrichment_quality_scientific_terms(self) -> None:
-        """Test that scientific terminology increases term relevance."""
         enrichment_data: EnrichmentData = {
             "technical_terms": [
-                "protein-protein interactions",  # Contains scientific indicators
-                "enzymatic pathway analysis",  # Contains scientific indicators
-                "receptor-mediated signaling",  # Contains scientific indicators
-                "gene expression profiling",  # Contains scientific indicators
+                "protein-protein interactions",
+                "enzymatic pathway analysis",
+                "receptor-mediated signaling",
+                "gene expression profiling",
             ],
             "research_questions": [
                 "How do protein interactions affect cellular pathways?",
@@ -157,13 +149,12 @@ class TestEnrichmentQualityEvaluation:
         assert result["overall"] > 0.5
 
     def test_evaluate_enrichment_quality_good_questions(self) -> None:
-        """Test evaluation of well-formed research questions."""
         enrichment_data: EnrichmentData = {
             "technical_terms": ["biomarker", "analysis"],
             "research_questions": [
-                "How do biomarker levels correlate with disease severity in patients?",  # Good question
-                "What factors influence biomarker expression patterns?",  # Good question
-                "Which analytical methods provide the most reliable results?",  # Good question
+                "How do biomarker levels correlate with disease severity in patients?",
+                "What factors influence biomarker expression patterns?",
+                "Which analytical methods provide the most reliable results?",
             ],
             "context": "Research on biomarker analysis methodology.",
             "search_queries": ["biomarker correlation analysis"],
@@ -174,7 +165,6 @@ class TestEnrichmentQualityEvaluation:
         assert result["question_utility"] > 0.6, "Should recognize well-formed questions"
 
     def test_evaluate_enrichment_quality_rich_context(self) -> None:
-        """Test evaluation of rich contextual information."""
         enrichment_data: EnrichmentData = {
             "technical_terms": ["biomarker", "analysis"],
             "research_questions": ["How do biomarkers work?"],
@@ -201,17 +191,16 @@ class TestEnrichmentQualityEvaluation:
         assert result["context_depth"] > 0.7, "Should recognize rich contextual content"
 
     def test_evaluate_enrichment_quality_diverse_queries(self) -> None:
-        """Test evaluation of diverse and well-formed search queries."""
         enrichment_data: EnrichmentData = {
             "technical_terms": ["biomarker"],
             "research_questions": ["How do biomarkers work?"],
             "context": "Research on biomarkers.",
             "search_queries": [
-                '"biomarker expression" AND "cancer progression" OR metastasis',  # Complex boolean operators
-                '"protein biomarkers" AND diagnostic AND "clinical applications"',  # Multiple quoted terms
-                '"mass spectrometry" AND "biomarker quantification" AND validation',  # Technical terms with AND
-                '"clinical validation" OR "biomarker assays" AND FDA AND approval',  # Mixed operators
-                '"targeted proteomics" AND "analytical performance" AND "reproducibility"',  # Additional query
+                '"biomarker expression" AND "cancer progression" OR metastasis',
+                '"protein biomarkers" AND diagnostic AND "clinical applications"',
+                '"mass spectrometry" AND "biomarker quantification" AND validation',
+                '"clinical validation" OR "biomarker assays" AND FDA AND approval',
+                '"targeted proteomics" AND "analytical performance" AND "reproducibility"',
             ],
         }
 
@@ -222,10 +211,9 @@ class TestEnrichmentQualityEvaluation:
 
 class TestEnrichmentCompleteness:
     def test_check_enrichment_completeness_complete(self) -> None:
-        """Test completeness check with complete enrichment data."""
         enrichment_data: EnrichmentData = {
-            "technical_terms": ["term1", "term2", "term3", "term4"],  # 4 terms (>= 3)
-            "research_questions": ["Question 1?", "Question 2?", "Question 3?"],  # 3 questions (>= 2)
+            "technical_terms": ["term1", "term2", "term3", "term4"],
+            "research_questions": ["Question 1?", "Question 2?", "Question 3?"],
             "context": "Detailed context with sufficient information about the research methodology and background.",
             "search_queries": ["query1", "query2", "query3"],
         }
@@ -241,26 +229,23 @@ class TestEnrichmentCompleteness:
         assert result["minimum_questions"] is True
 
     def test_check_enrichment_completeness_incomplete(self) -> None:
-        """Test completeness check with incomplete enrichment data."""
         enrichment_data: EnrichmentData = {
-            "technical_terms": ["term1", "term2"],  # Only 2 terms (< 3)
-            "research_questions": ["Question 1?"],  # Only 1 question (< 2)
-            "context": "",  # Empty context
+            "technical_terms": ["term1", "term2"],
+            "research_questions": ["Question 1?"],
+            "context": "",
         }
-        # Missing search_queries field
 
         result = check_enrichment_completeness(enrichment_data)
 
         assert result["has_enrichment"] is True
         assert result["has_technical_terms"] is True
         assert result["has_research_questions"] is True
-        assert result["has_context"] is False  # Empty context
-        assert result["has_search_queries"] is False  # Missing field
-        assert result["minimum_terms"] is False  # Only 2 terms
-        assert result["minimum_questions"] is False  # Only 1 question
+        assert result["has_context"] is False
+        assert result["has_search_queries"] is False
+        assert result["minimum_terms"] is False
+        assert result["minimum_questions"] is False
 
     def test_check_enrichment_completeness_empty(self) -> None:
-        """Test completeness check with empty enrichment data."""
         result = check_enrichment_completeness({})
 
         assert result["has_enrichment"] is False
@@ -272,12 +257,10 @@ class TestEnrichmentCompleteness:
         assert result["minimum_questions"] is False
 
     def test_check_enrichment_completeness_partial_fields(self) -> None:
-        """Test completeness check with some fields present."""
         enrichment_data: EnrichmentData = {
-            "technical_terms": ["term1", "term2", "term3"],  # Meets minimum
+            "technical_terms": ["term1", "term2", "term3"],
             "context": "Some context information",
         }
-        # Missing research_questions and search_queries
 
         result = check_enrichment_completeness(enrichment_data)
 

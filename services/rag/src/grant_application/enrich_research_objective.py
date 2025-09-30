@@ -394,6 +394,6 @@ async def handle_enrich_objective(
             research_objectives=[dto["research_objective"]],
             keywords=dto.get("keywords"),
             topics=dto.get("topics"),
-            is_json_content=True,  # This returns JSON enrichment data
+            is_json_content=True,
         ),
     )

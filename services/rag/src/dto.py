@@ -37,23 +37,16 @@ class ResearchComponentGenerationDTO(TypedDict):
     type: Literal["task", "objective"]
 
 
-# JSON Evaluation TypedDicts
 class RelationshipPair(TypedDict):
-    """Single relationship between entities."""
-
     relation_type: str
     target_entity: str
 
 
 class RelationshipsData(TypedDict):
-    """Relationships extracted from content."""
-
     relationships: dict[str, list[RelationshipPair]]
 
 
 class EnrichmentData(TypedDict):
-    """Enrichment data for objectives."""
-
     technical_terms: NotRequired[list[str]]
     research_questions: NotRequired[list[str]]
     context: NotRequired[str]
@@ -61,8 +54,6 @@ class EnrichmentData(TypedDict):
 
 
 class CFPAnalysisData(TypedDict):
-    """CFP analysis structured data."""
-
     requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
     sections: NotRequired[list[CFPSectionRequirement]]
     evaluation_criteria: NotRequired[list[CFPAnalysisEvaluationCriterion]]

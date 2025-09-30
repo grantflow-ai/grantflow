@@ -1,5 +1,3 @@
-"""Evaluation functions for research objectives quality."""
-
 from typing import TYPE_CHECKING
 
 from packages.db.src.json_objects import ResearchObjective
@@ -13,16 +11,6 @@ def evaluate_objectives_quality(
     keywords: list[str] | None = None,
     topics: list[str] | None = None,
 ) -> "ObjectiveQualityMetrics":
-    """Evaluate the quality of research objectives.
-
-    Args:
-        objectives: List of research objectives to evaluate
-        keywords: Optional keywords for alignment scoring
-        topics: Optional topics for thematic relevance
-
-    Returns:
-        Quality metrics for the objectives
-    """
     if not objectives:
         return {
             "overall": 0.0,
@@ -33,22 +21,16 @@ def evaluate_objectives_quality(
             "keyword_alignment": 0.0,
         }
 
-    # Evaluate scientific rigor
     scientific_rigor = _evaluate_scientific_rigor(objectives)
 
-    # Evaluate innovation
     innovation_score = _evaluate_innovation(objectives)
 
-    # Evaluate coherence between objectives
     coherence = _evaluate_objectives_coherence(objectives)
 
-    # Evaluate comprehensiveness
     comprehensiveness = _evaluate_comprehensiveness(objectives)
 
-    # Calculate keyword alignment
     keyword_alignment = _evaluate_keyword_alignment(objectives, keywords, topics)
 
-    # Calculate overall score
     overall = (
         scientific_rigor * 0.25
         + innovation_score * 0.20
@@ -68,22 +50,17 @@ def evaluate_objectives_quality(
 
 
 def _evaluate_scientific_rigor(objectives: list[ResearchObjective]) -> float:
-    """Evaluate scientific rigor of objectives."""
     rigor_score = 0.0
 
     for obj in objectives:
-        # Check if objective has clear title
         if obj.get("title") and len(obj["title"]) > 10:
             rigor_score += 0.2
 
-        # Check if objective has description
         if obj.get("description") and len(obj.get("description", "")) > 50:
             rigor_score += 0.3
 
-        # Check research tasks
         tasks = obj.get("research_tasks", [])
         if tasks:
-            # Tasks should be well-defined
             valid_tasks = sum(1 for task in tasks if task.get("title") and len(task.get("title", "")) > 10)
             task_score = valid_tasks / len(tasks) if tasks else 0
             rigor_score += task_score * 0.5
@@ -92,7 +69,6 @@ def _evaluate_scientific_rigor(objectives: list[ResearchObjective]) -> float:
 
 
 def _evaluate_innovation(objectives: list[ResearchObjective]) -> float:
-    """Evaluate innovation in objectives."""
     innovation_keywords = {
         "novel",
         "innovative",
@@ -114,12 +90,10 @@ def _evaluate_innovation(objectives: list[ResearchObjective]) -> float:
     for obj in objectives:
         text = f"{obj.get('title', '')} {obj.get('description', '')}".lower()
 
-        # Check for innovation keywords
         keyword_count = sum(1 for keyword in innovation_keywords if keyword in text)
         if keyword_count > 0:
             innovation_score += min(0.5, keyword_count * 0.1)
 
-        # Check for methodological innovation in tasks
         for task in obj.get("research_tasks", []):
             task_text = f"{task.get('title', '')} {task.get('description', '')}".lower()
             if any(keyword in task_text for keyword in innovation_keywords):
@@ -129,33 +103,27 @@ def _evaluate_innovation(objectives: list[ResearchObjective]) -> float:
 
 
 def _evaluate_objectives_coherence(objectives: list[ResearchObjective]) -> float:
-    """Evaluate coherence between objectives."""
     if len(objectives) < 2:
-        return 1.0  # Single objective is inherently coherent
+        return 1.0
 
     coherence_score = 0.0
 
-    # Check if objectives are numbered sequentially
     expected_numbers = list(range(1, len(objectives) + 1))
     actual_numbers = [obj.get("number", 0) for obj in objectives]
     if actual_numbers == expected_numbers:
         coherence_score += 0.3
 
-    # Check for logical progression (each objective builds on previous)
     for i in range(1, len(objectives)):
         prev_obj = objectives[i - 1]
         curr_obj = objectives[i]
 
-        # Simple check: later objectives should have more tasks or complexity
         prev_tasks = len(prev_obj.get("research_tasks", []))
         curr_tasks = len(curr_obj.get("research_tasks", []))
 
         if curr_tasks >= prev_tasks or curr_tasks > 0:
             coherence_score += 0.2
 
-    # Check for thematic consistency
     all_titles = " ".join(obj.get("title", "") for obj in objectives).lower()
-    # If there are common themes across objectives
     if len(set(all_titles.split())) < len(all_titles.split()) * 0.7:
         coherence_score += 0.3
 
@@ -167,9 +135,8 @@ def _evaluate_keyword_alignment(
     keywords: list[str] | None,
     topics: list[str] | None,
 ) -> float:
-    """Evaluate keyword and topic alignment in objectives."""
     if not keywords and not topics:
-        return 0.75  # Default moderate alignment when no keywords provided
+        return 0.75
 
     alignment_score = 0.0
     all_terms = []
@@ -181,7 +148,6 @@ def _evaluate_keyword_alignment(
     if not all_terms:
         return 0.75
 
-    # Count how many keywords/topics appear in objectives
     matched_terms = set()
 
     for obj in objectives:
@@ -194,10 +160,8 @@ def _evaluate_keyword_alignment(
             if term.lower() in obj_text:
                 matched_terms.add(term.lower())
 
-    # Calculate alignment score
     alignment_score = len(matched_terms) / len(all_terms) if all_terms else 0.75
 
-    # Boost score if objectives use domain-specific terminology
     if keywords and len(matched_terms) >= len(keywords) * 0.5:
         alignment_score = min(1.0, alignment_score + 0.15)
 
@@ -205,31 +169,26 @@ def _evaluate_keyword_alignment(
 
 
 def _evaluate_comprehensiveness(objectives: list[ResearchObjective]) -> float:
-    """Evaluate comprehensiveness of objectives."""
     if not objectives:
         return 0.0
 
     comp_score = 0.0
 
-    # Check number of objectives (3-5 is typically good)
     if 3 <= len(objectives) <= 5:
         comp_score += 0.3
     elif 2 <= len(objectives) <= 6:
         comp_score += 0.2
 
-    # Check total number of research tasks
     total_tasks = sum(len(obj.get("research_tasks", [])) for obj in objectives)
     if total_tasks >= 10:
         comp_score += 0.3
     elif total_tasks >= 5:
         comp_score += 0.2
 
-    # Check if all objectives have descriptions
     with_descriptions = sum(1 for obj in objectives if obj.get("description"))
     if with_descriptions == len(objectives):
         comp_score += 0.2
 
-    # Check task distribution (should be relatively balanced)
     task_counts = [len(obj.get("research_tasks", [])) for obj in objectives]
     if task_counts and max(task_counts) <= min(task_counts) * 3:
         comp_score += 0.2
@@ -238,11 +197,6 @@ def _evaluate_comprehensiveness(objectives: list[ResearchObjective]) -> float:
 
 
 def check_objectives_completeness(objectives: list[ResearchObjective]) -> dict[str, bool]:
-    """Check completeness of research objectives.
-
-    Returns:
-        Dictionary of completeness checks
-    """
     return {
         "has_objectives": bool(objectives),
         "all_have_titles": all(obj.get("title") for obj in objectives),
@@ -254,7 +208,6 @@ def check_objectives_completeness(objectives: list[ResearchObjective]) -> dict[s
 
 
 def _check_sequential_numbering(objectives: list[ResearchObjective]) -> bool:
-    """Check if objectives are numbered sequentially."""
     if not objectives:
         return True
     expected = list(range(1, len(objectives) + 1))

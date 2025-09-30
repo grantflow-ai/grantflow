@@ -1,5 +1,3 @@
-"""Text content evaluation modules."""
-
 from services.rag.src.utils.evaluation.text.coherence import evaluate_coherence
 from services.rag.src.utils.evaluation.text.grounding import evaluate_source_grounding
 from services.rag.src.utils.evaluation.text.quality import evaluate_scientific_quality

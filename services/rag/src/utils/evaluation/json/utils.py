@@ -1,5 +1,3 @@
-"""Shared utilities for JSON content evaluation."""
-
 import contextlib
 from typing import Any
 
@@ -10,45 +8,30 @@ def check_semantic_alignment(
     data: dict[str, Any],
     section_config: GrantLongFormSection | None = None,
 ) -> float:
-    """Check semantic alignment between JSON data and section configuration.
-
-    Args:
-        data: JSON data to evaluate
-        section_config: Section configuration with keywords and topics
-
-    Returns:
-        Alignment score between 0.0 and 1.0
-    """
     if not section_config or not data:
-        return 0.5  # Neutral score when no config provided
+        return 0.5
 
     alignment_score = 0.0
 
-    # Extract text content from data for analysis
     text_content = _extract_text_from_json(data).lower()
 
-    # Check keyword alignment
     keywords = section_config.get("keywords", [])
     if keywords:
         keyword_matches = sum(1 for kw in keywords if kw.lower() in text_content)
         keyword_ratio = keyword_matches / len(keywords)
         alignment_score += keyword_ratio * 0.4
 
-    # Check topic alignment
     topics = section_config.get("topics", [])
     if topics:
         topic_matches = sum(1 for topic in topics if topic.lower() in text_content)
         topic_ratio = topic_matches / len(topics)
         alignment_score += topic_ratio * 0.3
 
-    # Check search query relevance
     search_queries = section_config.get("search_queries", [])
     if search_queries:
-        # Check if key terms from search queries appear in content
         query_terms = set()
         for query in search_queries:
             query_terms.update(query.lower().split())
-        # Remove common words
         common_words = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"}
         query_terms = query_terms - common_words
 
@@ -65,16 +48,6 @@ def check_completeness(
     required_fields: list[str] | None = None,
     min_field_count: int = 3,
 ) -> dict[str, Any]:
-    """Check completeness of JSON data.
-
-    Args:
-        data: JSON data to evaluate
-        required_fields: List of required field names
-        min_field_count: Minimum number of non-empty fields expected
-
-    Returns:
-        Dictionary with completeness metrics
-    """
     if not data:
         return {
             "is_complete": False,
@@ -83,14 +56,12 @@ def check_completeness(
             "field_coverage": 0.0,
         }
 
-    # Count non-empty fields
     non_empty_fields = 0
     total_fields = 0
 
     for value in data.values():
         total_fields += 1
         if value:
-            # Check if value is meaningful (not just empty list/dict/string)
             if isinstance(value, (list, dict)):
                 if len(value) > 0:
                     non_empty_fields += 1
@@ -102,7 +73,6 @@ def check_completeness(
 
     field_coverage = non_empty_fields / total_fields if total_fields > 0 else 0.0
 
-    # Check required fields if specified
     has_required_fields = True
     if required_fields:
         for field in required_fields:
@@ -110,7 +80,6 @@ def check_completeness(
                 has_required_fields = False
                 break
 
-    # Calculate completeness score
     completeness_score = 0.0
     if non_empty_fields >= min_field_count:
         completeness_score += 0.5
@@ -128,15 +97,6 @@ def check_completeness(
 
 
 def calculate_structure_depth(data: dict[str, Any] | list[Any], current_depth: int = 0) -> int:
-    """Calculate the maximum depth of nested structure.
-
-    Args:
-        data: JSON data to analyze
-        current_depth: Current recursion depth
-
-    Returns:
-        Maximum depth of the structure
-    """
     if not isinstance(data, (dict, list)):
         return current_depth
 
@@ -160,15 +120,6 @@ def validate_field_types(
     data: dict[str, Any],
     expected_types: dict[str, type] | None = None,
 ) -> dict[str, Any]:
-    """Validate field types in JSON data.
-
-    Args:
-        data: JSON data to validate
-        expected_types: Dictionary mapping field names to expected types
-
-    Returns:
-        Dictionary with type validation results
-    """
     if not data:
         return {
             "all_types_valid": False,
@@ -177,7 +128,6 @@ def validate_field_types(
         }
 
     if not expected_types:
-        # If no expected types provided, just check that fields have consistent types
         return {
             "all_types_valid": True,
             "type_validity_score": 1.0,
@@ -207,15 +157,6 @@ def validate_field_types(
 
 
 def _extract_text_from_json(data: Any, max_depth: int = 5) -> str:
-    """Recursively extract text content from JSON structure.
-
-    Args:
-        data: JSON data to extract text from
-        max_depth: Maximum recursion depth
-
-    Returns:
-        Concatenated text content
-    """
     if max_depth <= 0:
         return ""
 
@@ -236,30 +177,18 @@ def _extract_text_from_json(data: Any, max_depth: int = 5) -> str:
 
 
 def count_unique_values(data: dict[str, Any], field_path: str) -> int:
-    """Count unique values at a specific field path in JSON data.
-
-    Args:
-        data: JSON data to analyze
-        field_path: Dot-separated path to field (e.g., "sections.requirements")
-
-    Returns:
-        Count of unique values
-    """
     values = _get_values_at_path(data, field_path)
     if not values:
         return 0
 
-    # Convert to hashable types for uniqueness check
     unique_values: set[Any] = set()
     for value in values:
         if isinstance(value, (str, int, float, bool, type(None))):
             unique_values.add(value)
         elif isinstance(value, (list, tuple)):
-            # Convert list to tuple for hashing
             with contextlib.suppress(TypeError):
                 unique_values.add(tuple(value) if isinstance(value, list) else value)
         elif isinstance(value, dict):
-            # Use sorted items tuple as hashable representation
             with contextlib.suppress(TypeError):
                 unique_values.add(tuple(sorted(value.items())))
 
@@ -267,15 +196,6 @@ def count_unique_values(data: dict[str, Any], field_path: str) -> int:
 
 
 def _get_values_at_path(data: Any, field_path: str) -> list[Any]:
-    """Get all values at a specific field path.
-
-    Args:
-        data: JSON data to traverse
-        field_path: Dot-separated path
-
-    Returns:
-        List of values found at path
-    """
     if not field_path:
         return [data]
 

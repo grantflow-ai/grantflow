@@ -209,7 +209,6 @@ async def evaluate_scientific_content(
     start_time = time.time()
     eval_thresholds = thresholds or DEFAULT_THRESHOLDS
 
-    # Input validation
     if not content or not content.strip():
         logger.warning("Empty content provided for evaluation", trace_id=trace_id)
         execution_time = (time.time() - start_time) * 1000
@@ -378,7 +377,6 @@ async def evaluate_scientific_content(
         alignment_modifier = (objective_alignment - 0.5) * 0.1
         overall_score = base_overall_score * (1 + alignment_modifier)
 
-        # Apply quality bonus for proper MISSING INFORMATION usage
         missing_info_metrics = evaluate_missing_information(content)
         if missing_info_metrics["quality_bonus"] > 0:
             overall_score = min(100.0, overall_score + missing_info_metrics["quality_bonus"] * 100)

@@ -158,13 +158,10 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
         trace_id="test_biomedical_001",
     )
 
-    # Debug output
     if result.get("detailed_feedback"):
         pass
 
-    # Use relaxed threshold for E2E test (content is 366 words vs 800 target, causing lower structural score)
-    # In production, content would be generated to meet word counts
-    e2e_threshold = 55.0  # Relaxed from 65.0 to account for word count mismatch
+    e2e_threshold = 55.0
     assert result["overall_score"] >= e2e_threshold, (
         f"Expected biomedical content to meet E2E quality standards ({e2e_threshold}%), got {result['overall_score']}"
     )

@@ -999,38 +999,9 @@ async def with_evaluation[T, **P](
     | None = None,
     **kwargs: Any,
 ) -> T:
-    """Unified evaluation entry point with NLP-based evaluation + optional LLM fallback.
-
-    This function implements a two-phase evaluation strategy:
-    1. NLP Evaluation: Uses deterministic NLP metrics for quick assessment
-    2. LLM Evaluation (fallback): Criteria-based scoring with iterative improvement
-
-    Args:
-        prompt_identifier: Identifier for tracking and logging
-        passing_score: Initial LLM passing score (decreases by increment each retry)
-        prompt: Initial prompt for content generation
-        prompt_handler: Async function that generates content
-        retries: Maximum number of LLM evaluation retries
-        increment: Amount to decrease passing_score each retry
-        criteria: List of evaluation criteria for LLM evaluation
-        trace_id: Unique trace ID for logging
-        job_manager: Optional job manager for retry tracking
-        context: Evaluation context (section config, RAG context, objectives, etc.)
-        settings: Evaluation settings controlling fast/LLM routing
-        evaluator: Optional custom evaluator function
-        **kwargs: Additional arguments passed to prompt_handler
-
-    Returns:
-        Generated content of type T (passes evaluation or exhausts retries)
-
-    Raises:
-        EvaluationError: If evaluation fails critically
-    """
-
     eval_context = context or {}
     eval_settings = settings or {}
 
-    # Check if NLP evaluation is enabled
     enable_nlp = eval_settings.get("enable_nlp_evaluation", True)
     force_llm = eval_settings.get("force_llm_evaluation", False)
 
@@ -1059,11 +1030,9 @@ async def with_evaluation[T, **P](
             trace_id=trace_id,
         )
 
-        # Generate content
         model_output = await prompt_handler(current_prompt, trace_id=trace_id, **kwargs)  # type: ignore[arg-type]
         output_str = str(model_output)
 
-        # Phase 1: NLP Evaluation (if enabled and not forced to use LLM)
         if enable_nlp and not force_llm and iteration == 1:
             section_config = eval_context.get("section_config")
             if section_config and isinstance(section_config, dict):
@@ -1079,7 +1048,6 @@ async def with_evaluation[T, **P](
                     if not isinstance(rag_context, list):
                         rag_context = []
 
-                    # Ensure all items are DocumentDTO
                     valid_rag_context: list[DocumentDTO] = [
                         item for item in rag_context if isinstance(item, dict) and "content" in item
                     ]
@@ -1113,10 +1081,8 @@ async def with_evaluation[T, **P](
                         trace_id=trace_id,
                     )
 
-                    # Store feedback for later use in LLM improvement
                     nlp_eval_feedback = nlp_result.get("detailed_feedback", [])
 
-                    # Accept if high confidence and good score
                     if nlp_confidence >= confidence_threshold and nlp_score >= accept_threshold:
                         logger.info(
                             "NLP evaluation accepted content - skipping LLM evaluation",
@@ -1126,7 +1092,6 @@ async def with_evaluation[T, **P](
                         )
                         return model_output
 
-                    # Reject immediately if score is too low (don't waste LLM calls)
                     if nlp_score < MINIMAL_THRESHOLD:
                         logger.warning(
                             "NLP evaluation rejected content - below minimal threshold",
@@ -1134,7 +1099,6 @@ async def with_evaluation[T, **P](
                             minimal_threshold=MINIMAL_THRESHOLD,
                             trace_id=trace_id,
                         )
-                        # Use NLP evaluation feedback to improve
                         content_type = detect_content_type(section_config)
                         improvement_instructions = _generate_improvement_instructions(
                             nlp_result,
@@ -1151,7 +1115,6 @@ async def with_evaluation[T, **P](
                             iteration += 1
                             continue
 
-                    # Falls through to LLM evaluation for borderline cases
                     logger.info(
                         "NLP evaluation uncertain - proceeding to LLM evaluation",
                         nlp_score=nlp_score,
@@ -1166,7 +1129,6 @@ async def with_evaluation[T, **P](
                         trace_id=trace_id,
                     )
 
-        # Phase 2: LLM Evaluation
         if evaluator:
             evaluation_result = await evaluator(
                 current_prompt, cast("dict[str, Any] | str", model_output), criteria, trace_id
@@ -1229,13 +1191,11 @@ async def with_evaluation[T, **P](
             )
             return model_output
 
-        # Build improvement prompt combining LLM criteria feedback + NLP evaluation feedback
         llm_instructions = [
             f"  - {criterion.name}: {result['instructions']}"
             for criterion, result in [(mapped_criteria[k], v) for k, v in failing_criteria.items()]
         ]
 
-        # Include NLP evaluation feedback if available
         all_instructions = llm_instructions
         if nlp_eval_feedback:
             all_instructions.append("\n  Additional Context from NLP Evaluation:")
