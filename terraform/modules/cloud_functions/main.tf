@@ -118,7 +118,7 @@ resource "google_cloudfunctions2_function" "dlq_manager" {
     secret_environment_variables {
       key        = "DATABASE_URL"
       project_id = var.project_id
-      secret     = var.database_connection_string_secret_id
+      secret     = "DATABASE_CONNECTION_STRING"
       version    = "latest"
     }
   }
