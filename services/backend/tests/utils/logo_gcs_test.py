@@ -91,15 +91,19 @@ async def test_upload_organization_logo_success() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
         patch("services.backend.src.utils.logo_gcs.cleanup_old_logo_formats") as mock_cleanup,
         patch("services.backend.src.utils.logo_gcs.get_logo_url") as mock_get_url,
     ):
         mock_get_url.return_value = "https://storage.googleapis.com/bucket/path/logo.png"
-        mock_run_sync.return_value = None
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            return None
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         result = await upload_organization_logo(org_id, file_content, content_type)
 
@@ -119,14 +123,20 @@ async def test_cleanup_old_logo_formats() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
     ):
         from google.cloud.exceptions import NotFound
 
-        mock_run_sync.side_effect = [NotFound("not found")] * (len(LOGO_MIME_TYPES) - 1)
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            if hasattr(func, "delete"):
+                raise NotFound("not found")
+            return None
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         await cleanup_old_logo_formats(org_id, current_extension)
 
@@ -144,14 +154,20 @@ async def test_delete_organization_logo_success() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
     ):
         from google.cloud.exceptions import NotFound
 
-        mock_run_sync.side_effect = [NotFound("not found")] * len(LOGO_MIME_TYPES)
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            if hasattr(func, "delete"):
+                raise NotFound("not found")
+            return None
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         await delete_organization_logo(org_id)
 
@@ -171,17 +187,22 @@ async def test_get_organization_logo_info_exists() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
         patch("services.backend.src.utils.logo_gcs.get_logo_url") as mock_get_url,
     ):
         mock_get_url.return_value = "https://storage.googleapis.com/bucket/path/logo.png"
-        mock_run_sync.side_effect = [
-            True,
-            None,
-        ]
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            if hasattr(func, "exists"):
+                return True
+            if hasattr(func, "reload"):
+                return None
+            return None
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         result = await get_organization_logo_info(org_id)
 
@@ -201,12 +222,18 @@ async def test_get_organization_logo_info_not_exists() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
     ):
-        mock_run_sync.return_value = False
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            if hasattr(func, "exists"):
+                return False
+            return None
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         result = await get_organization_logo_info(org_id)
 
@@ -224,12 +251,17 @@ async def test_create_signed_logo_upload_url_success() -> None:
 
     with (
         patch("services.backend.src.utils.logo_gcs.run_sync") as mock_run_sync,
-        patch(
-            "services.backend.src.utils.logo_gcs.get_logo_bucket",
-            return_value=mock_bucket,
-        ),
+        patch("services.backend.src.utils.logo_gcs.get_logo_bucket") as mock_get_bucket,
     ):
-        mock_run_sync.return_value = "https://signed-url.com"
+        mock_get_bucket.return_value = mock_bucket
+
+        def mock_run_sync_side_effect(func: object) -> object:
+            if func == mock_get_bucket:
+                return mock_bucket
+            # This handles the lambda function that calls generate_signed_url
+            return "https://signed-url.com"
+
+        mock_run_sync.side_effect = mock_run_sync_side_effect
 
         result = await create_signed_logo_upload_url(org_id, content_type)
 

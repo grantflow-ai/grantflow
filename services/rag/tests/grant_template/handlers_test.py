@@ -695,6 +695,24 @@ async def test_generate_metadata_stage_success(
             "max_words": 2000,
             "search_queries": ["research methodology", "experimental design"],
         },
+        {
+            "id": "research_objectives",
+            "keywords": ["objectives", "aims", "goals"],
+            "topics": ["research goals", "specific aims"],
+            "generation_instructions": "Detail the research objectives and specific aims",
+            "depends_on": ["research_plan"],
+            "max_words": 600,
+            "search_queries": ["research objectives", "specific aims"],
+        },
+        {
+            "id": "methodology_approach",
+            "keywords": ["methodology", "methods", "approach"],
+            "topics": ["experimental methods", "data collection"],
+            "generation_instructions": "Describe the experimental methodology and approach",
+            "depends_on": ["research_plan"],
+            "max_words": 800,
+            "search_queries": ["research methods", "experimental design"],
+        },
     ]
     mock_handle_generate_metadata.return_value = mock_section_metadata
 
@@ -758,7 +776,35 @@ async def test_save_grant_template_success(
             topics=[],
             generation_instructions="",
             depends_on=[],
-            max_words=100,
+            max_words=2000,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=True,
+        ),
+        GrantLongFormSection(
+            id="research_objectives",
+            title="Research Objectives",
+            order=3,
+            parent_id="section2",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=600,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
+        GrantLongFormSection(
+            id="methodology",
+            title="Methodology",
+            order=4,
+            parent_id="section2",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=["research_objectives"],
+            max_words=800,
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
@@ -796,7 +842,7 @@ async def test_save_grant_template_success(
         notification_type="success",
         data={
             "template_id": str(grant_template.id),
-            "sections": 2,
+            "sections": 4,
             "organization": "National Institutes of Health",
         },
     )
@@ -825,7 +871,21 @@ async def test_save_grant_template_no_organization(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_overview",
+            title="Project Overview",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -848,7 +908,7 @@ async def test_save_grant_template_no_organization(
         notification_type="success",
         data={
             "template_id": str(grant_template.id),
-            "sections": 1,
+            "sections": 2,
             "organization": "Unknown",
         },
     )
@@ -882,7 +942,21 @@ async def test_save_grant_template_no_submission_date(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_objectives",
+            title="Project Objectives",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -925,7 +999,21 @@ async def test_save_grant_template_date_parsing(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_background",
+            title="Background",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -963,7 +1051,21 @@ async def test_save_grant_template_database_error(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_aims",
+            title="Specific Aims",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     with patch("services.rag.src.grant_template.handlers.update") as mock_update:

@@ -250,6 +250,13 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - Include the original CFP source reference in parentheses in the section title
     - Format: "Section Name (from: [key phrase from cfp_source_reference])"
 
+    **SUBSECTION CREATION FROM CFP REQUIREMENTS:**
+    - **Examine `cfp_requirements` array** for each section to identify subsection opportunities
+    - **Multi-part requirements** (e.g., "must include a) X, b) Y, c) Z") indicate natural subsections
+    - **Create subsections for sections ≥3 pages** using requirement categories as guides
+    - **Parent section becomes title-only** (`is_title_only=true`), children have `parent_id=parent_section_id`
+    - **Distribute word limits** among subsections proportionally
+
     **⚠️ SYSTEM REQUIREMENT**: If CFP analyzer report is not provided, the system should RED FLAG this - the LLM cannot proceed without it.
 
     ### 2. CRITICAL: Extract Rich Section Data from CFP Analysis
@@ -306,22 +313,58 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - **Decision Rule**: Only include budget sections that explicitly require written justification/narrative content
     - **Keyword Test**: If section name contains "Budget" but lacks "Justification|Narrative|Explanation|Description", likely exclude it
 
-    ### 4. Section Properties
+    ### 4. Section Properties and Subsection Logic
     For each section, determine:
     - `is_detailed_research_plan`: Mark the main methodology/approach section as true
     - `is_long_form`: True for all sections requiring substantial written content
     - `is_clinical_trial`: True for clinical trial-specific sections
-    - `is_title_only`: True for organizational sections with only subsections
+    - `is_title_only`: True for parent sections that only contain subsections (no direct content)
+
+    **SUBSECTION CREATION PROCESS:**
+    1. **Identify Parent Sections**: Sections with ≥3 pages or complex CFP requirements
+    2. **Extract Subsection Topics**: Use `cfp_requirements` array to identify natural breakdowns
+    3. **Create Child Sections**: Generate subsections with `parent_id` pointing to parent
+    4. **Set Parent as Title-Only**: Parent gets `is_title_only=true`, children get `is_title_only=false`
+    5. **Distribute Lengths**: Split parent's word limit among children based on importance
 
     ### 5. Length Constraints Integration
     - Use `length_constraints` from CFP analysis to set realistic word limits
     - Convert page limits using: 415 words/page (TNR 11pt) or 500 words/page (Arial 11pt)
     - Account for figures by reducing total by 12.5%
 
-    ### 6. Hierarchy and Dependencies
-    - Respect the structure suggested by the CFP analysis
-    - Create parent-child relationships when CFP indicates subsections
-    - Maximum nesting depth of 5 levels
+    ### 6. Hierarchy and Dependencies - MANDATORY SUBSECTION RULES
+
+    **CRITICAL SUBSECTION REQUIREMENTS:**
+    - **Most sections MUST have at least 2 subsections** to provide proper structure
+    - **Sections ≥3 pages MUST have subsections equal to number of pages** (e.g., 5-page section = 5 subsections)
+    - **Use CFP analyzer requirements to determine subsection topics and content**
+    - **Distribute length proportionally among subsections** based on importance and CFP requirements
+
+    **Subsection Creation Rules:**
+    1. **Automatic Subsections**: Any section >2 pages gets automatic subsection breakdown
+    2. **CFP-Driven Structure**: Use `cfp_requirements` array to identify natural subsection topics
+    3. **Parent-Child Setup**: Parent section has `is_title_only=true`, children have `parent_id=parent_section_id`
+    4. **Length Distribution**: Split parent length among children (e.g., 2000 words → 600+800+600)
+    5. **Logical Ordering**: Order subsections logically (background→methods→results→discussion)
+
+    **Length Distribution Examples:**
+    - "Research Plan" (5 pages/2075 words) →
+      * "Background" (415 words, 20%)
+      * "Methods" (830 words, 40% - most important)
+      * "Analysis" (415 words, 20%)
+      * "Expected Outcomes" (415 words, 20%)
+    - "Project Description" (3 pages/1245 words) →
+      * "Objectives" (415 words, 33%)
+      * "Approach" (415 words, 33%)
+      * "Impact" (415 words, 33%)
+
+    **Distribution Rules:**
+    1. **Equal Distribution**: Default for similar importance subsections
+    2. **Methods-Heavy**: Give 40-50% to methodology subsections
+    3. **Background-Light**: Give 15-25% to background/overview subsections
+    4. **Results-Moderate**: Give 20-30% to results/outcomes subsections
+
+    **Maximum nesting depth**: 2 levels (parent→child only, no grandchildren)
 
     ### 7. Quality Requirements
     - Ensure exactly one section is marked as `is_detailed_research_plan`
