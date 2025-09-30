@@ -106,14 +106,6 @@ SIMILARITY_THRESHOLD: Final[float] = 0.85
 
 
 def build_objective_context(research_objectives: list[ResearchObjective]) -> str:
-    """Build context string from research objectives to inject into query generation.
-
-    Args:
-        research_objectives: List of research objectives with number, title, description
-
-    Returns:
-        Formatted context string describing research objectives
-    """
     if not research_objectives:
         return ""
 
@@ -188,7 +180,6 @@ async def handle_create_search_queries(
     trace_id = kwargs.get("trace_id", "")
     messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
 
-    # Inject objective context if provided
     if research_objectives and (objective_context := build_objective_context(research_objectives)):
         messages.append(objective_context)
         logger.debug(
