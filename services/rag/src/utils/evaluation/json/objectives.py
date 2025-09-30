@@ -1,9 +1,27 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from packages.db.src.json_objects import ResearchObjective
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import ObjectiveQualityMetrics
+
+INNOVATION_KEYWORDS: Final = frozenset(
+    {
+        "novel",
+        "innovative",
+        "breakthrough",
+        "pioneering",
+        "cutting-edge",
+        "transformative",
+        "paradigm",
+        "first",
+        "unique",
+        "unprecedented",
+        "advanced",
+        "state-of-the-art",
+        "next-generation",
+    }
+)
 
 
 def evaluate_objectives_quality(
@@ -69,34 +87,18 @@ def _evaluate_scientific_rigor(objectives: list[ResearchObjective]) -> float:
 
 
 def _evaluate_innovation(objectives: list[ResearchObjective]) -> float:
-    innovation_keywords = {
-        "novel",
-        "innovative",
-        "breakthrough",
-        "pioneering",
-        "cutting-edge",
-        "transformative",
-        "paradigm",
-        "first",
-        "unique",
-        "unprecedented",
-        "advanced",
-        "state-of-the-art",
-        "next-generation",
-    }
-
     innovation_score = 0.0
 
     for obj in objectives:
         text = f"{obj.get('title', '')} {obj.get('description', '')}".lower()
 
-        keyword_count = sum(1 for keyword in innovation_keywords if keyword in text)
+        keyword_count = sum(1 for keyword in INNOVATION_KEYWORDS if keyword in text)
         if keyword_count > 0:
             innovation_score += min(0.5, keyword_count * 0.1)
 
         for task in obj.get("research_tasks", []):
             task_text = f"{task.get('title', '')} {task.get('description', '')}".lower()
-            if any(keyword in task_text for keyword in innovation_keywords):
+            if any(keyword in task_text for keyword in INNOVATION_KEYWORDS):
                 innovation_score += 0.1
 
     return min(1.0, innovation_score / len(objectives)) if objectives else 0.0

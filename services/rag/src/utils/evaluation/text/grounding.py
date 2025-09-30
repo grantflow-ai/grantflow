@@ -109,14 +109,17 @@ def calculate_topic_coverage(content: str, topics: list[str]) -> float:
         topic_lower = topic.lower()
         if topic_lower in content_lower:
             covered_topics += 1.0
-        else:
-            topic_words = topic_lower.split()
-            if len(topic_words) > 1:
-                words_found = sum(1 for word in topic_words if word in words_in_content)
-                if words_found >= len(topic_words) * 0.7:
-                    covered_topics += 0.7
-                elif words_found >= len(topic_words) * 0.5:
-                    covered_topics += 0.5
+            continue
+
+        topic_words = topic_lower.split()
+        if len(topic_words) <= 1:
+            continue
+
+        words_found = sum(1 for word in topic_words if word in words_in_content)
+        if words_found >= len(topic_words) * 0.7:
+            covered_topics += 0.7
+        elif words_found >= len(topic_words) * 0.5:
+            covered_topics += 0.5
 
     return covered_topics / len(topics)
 
@@ -159,12 +162,12 @@ def assess_context_citation_density(content: str, rag_context: list[DocumentDTO]
     if rag_context:
         context_text = " ".join(doc["content"] for doc in rag_context if doc.get("content")).lower()
 
-        for pattern in CITATION_PATTERNS:
-            matches = pattern.findall(content)
-            for match in matches:
-                match_clean = match.strip("[]()").lower()
-                if any(word in context_text for word in match_clean.split() if len(word) > 3):
-                    verified_citations += 1.0
+        all_matches = (match for pattern in CITATION_PATTERNS for match in pattern.findall(content))
+
+        for match in all_matches:
+            match_clean = match.strip("[]()").lower()
+            if any(word in context_text for word in match_clean.split() if len(word) > 3):
+                verified_citations += 1.0
 
         if verified_citations > 0:
             citation_indicators += verified_citations * 0.5
