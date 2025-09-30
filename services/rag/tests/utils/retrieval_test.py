@@ -151,7 +151,9 @@ def test_calculate_document_metadata_score_custom_weights() -> None:
         entities=[Entity(type="ORG", text="NIH")],
         document_type="research",
     )
-    custom_weights = {"keywords": 0.7, "entities": 0.2, "doc_type": 0.1}
+    from services.rag.src.utils.retrieval import MetadataWeights
+
+    custom_weights = MetadataWeights(keywords=0.7, entities=0.2, doc_type=0.1)
     score_custom = calculate_document_metadata_score(metadata, ["cancer"], weights=custom_weights)
 
     score_default = calculate_document_metadata_score(metadata, ["cancer"])
