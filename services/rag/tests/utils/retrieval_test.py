@@ -1,13 +1,23 @@
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 from packages.db.src.tables import GrantingInstitutionSource, TextVector
+from packages.shared_utils.src.extraction import Entity, Keyword
 from pytest_mock import MockFixture
 
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata
+
 from services.rag.src.utils.retrieval import (
+    calculate_document_metadata_score,
     handle_retrieval,
     retrieve_documents,
 )
+
+
+def _create_enriched_metadata(**kwargs: object) -> "Metadata":
+    return kwargs  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -24,6 +34,133 @@ def mock_text_vectors() -> list[TextVector]:
     vector2.chunk = {"content": "Test content 2", "page_number": 2}
 
     return [vector1, vector2]
+
+
+def test_calculate_document_metadata_score_none_metadata() -> None:
+    score = calculate_document_metadata_score(None, ["cancer research", "immunotherapy"])
+    assert score == 0.7
+
+
+def test_calculate_document_metadata_score_empty_metadata() -> None:
+    metadata = _create_enriched_metadata(keywords=[], entities=[], document_type="")
+    score = calculate_document_metadata_score(metadata, ["cancer research"])
+    assert 0.5 <= score <= 1.0
+    assert score == 0.5
+
+
+def test_calculate_document_metadata_score_keyword_match() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[Keyword(keyword="cancer", score=0.9), Keyword(keyword="immunotherapy", score=0.85)],
+        entities=[],
+        document_type="article",
+    )
+    score = calculate_document_metadata_score(metadata, ["cancer research", "treatment"])
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_entity_match() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[],
+        entities=[Entity(type="ORG", text="NIH"), Entity(type="PERSON", text="Dr. Smith")],
+        document_type="article",
+    )
+    score = calculate_document_metadata_score(metadata, ["NIH funding", "Smith"])
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_scientific_boost() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[],
+        entities=[],
+        document_type="research paper",
+    )
+    score = calculate_document_metadata_score(metadata, ["test query"])
+    assert 0.5 <= score <= 1.0
+    expected_score = 0.5 + (0.3 * 0.5)
+    assert abs(score - expected_score) < 0.01
+
+
+def test_calculate_document_metadata_score_all_factors() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[
+            Keyword(keyword="cancer", score=0.9),
+            Keyword(keyword="immunotherapy", score=0.85),
+            Keyword(keyword="treatment", score=0.8),
+        ],
+        entities=[Entity(type="ORG", text="NIH"), Entity(type="DISEASE", text="glioblastoma")],
+        document_type="scientific article",
+    )
+    score = calculate_document_metadata_score(metadata, ["cancer immunotherapy", "NIH", "glioblastoma treatment"])
+    assert 0.5 <= score <= 1.0
+    assert score > 0.8
+
+
+def test_calculate_document_metadata_score_string_keywords() -> None:
+    metadata = {"keywords": ["cancer", "research", "treatment"], "entities": [], "document_type": "article"}
+    score = calculate_document_metadata_score(metadata, ["cancer treatment"])  # type: ignore[arg-type]
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_string_entities() -> None:
+    metadata = {"keywords": [], "entities": ["NIH", "Dr. Smith"], "document_type": "article"}
+    score = calculate_document_metadata_score(metadata, ["NIH funding"])  # type: ignore[arg-type]
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_case_insensitive() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[Keyword(keyword="Cancer", score=0.9), Keyword(keyword="IMMUNOTHERAPY", score=0.85)],
+        entities=[Entity(type="ORG", text="NIH")],
+        document_type="article",
+    )
+    score = calculate_document_metadata_score(metadata, ["cancer RESEARCH", "nih funding"])
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_no_query_terms() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[Keyword(keyword="cancer", score=0.9)],
+        entities=[Entity(type="ORG", text="NIH")],
+        document_type="research",
+    )
+    score = calculate_document_metadata_score(metadata, [])
+    assert 0.5 <= score <= 1.0
+    expected_score = 0.5 + (0.3 * 0.5)
+    assert abs(score - expected_score) < 0.01
+
+
+def test_calculate_document_metadata_score_punctuation_handling() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[Keyword(keyword="cancer", score=0.9), Keyword(keyword="immunotherapy", score=0.85)],
+        entities=[],
+        document_type="article",
+    )
+    score = calculate_document_metadata_score(metadata, ["cancer, immunotherapy", "cancer-related"])
+    assert 0.5 <= score <= 1.0
+    assert score > 0.5
+
+
+def test_calculate_document_metadata_score_custom_weights() -> None:
+    metadata = _create_enriched_metadata(
+        keywords=[Keyword(keyword="cancer", score=0.9)],
+        entities=[Entity(type="ORG", text="NIH")],
+        document_type="research",
+    )
+    from services.rag.src.utils.retrieval import MetadataWeights
+
+    custom_weights = MetadataWeights(keywords=0.7, entities=0.2, doc_type=0.1)
+    score_custom = calculate_document_metadata_score(metadata, ["cancer"], weights=custom_weights)
+
+    score_default = calculate_document_metadata_score(metadata, ["cancer"])
+
+    assert 0.5 <= score_custom <= 1.0
+    assert 0.5 <= score_default <= 1.0
+    assert score_custom != score_default
 
 
 async def test_handle_retrieval(

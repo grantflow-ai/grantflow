@@ -1,6 +1,7 @@
 from textwrap import dedent
 from typing import Any, Final, NotRequired, TypedDict
 
+from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.logger import get_logger
@@ -104,6 +105,36 @@ response_schema = {
 SIMILARITY_THRESHOLD: Final[float] = 0.85
 
 
+def build_objective_context(research_objectives: list[ResearchObjective]) -> str:
+    if not research_objectives:
+        return ""
+
+    objective_lines = []
+    for obj in research_objectives:
+        title = obj["title"]
+        number = obj["number"]
+        description = obj.get("description", "")
+
+        if description:
+            objective_lines.append(f"- Objective {number}: {title} - {description}")
+        else:
+            objective_lines.append(f"- Objective {number}: {title}")
+
+    context = "\n".join(objective_lines)
+    return dedent(f"""
+    CRITICAL CONTEXT: The search queries MUST retrieve content aligned with these specific research objectives:
+
+    {context}
+
+    CONSTRAINTS:
+    - Queries should target content relevant to the specified objectives above
+    - EXCLUDE content about different numbered objectives (e.g., if working on Objective 1, exclude Objective 2/3/etc.)
+    - EXCLUDE budget sections, cost information, or administrative boilerplate
+    - EXCLUDE generic grant writing advice unless directly relevant to the objectives
+    - Focus on scientific/technical content that supports the specific objectives listed
+    """).strip()
+
+
 async def deduplicate_queries(queries: list[str], model_name: str | None = None) -> list[str]:
     if len(queries) <= 1:
         return queries
@@ -140,10 +171,23 @@ async def deduplicate_queries(queries: list[str], model_name: str | None = None)
 
 
 async def handle_create_search_queries(
-    *, user_prompt: str | PromptTemplate, embedding_model: str | None = None, **kwargs: Any
+    *,
+    user_prompt: str | PromptTemplate,
+    embedding_model: str | None = None,
+    research_objectives: list[ResearchObjective] | None = None,
+    **kwargs: Any,
 ) -> list[str]:
     trace_id = kwargs.get("trace_id", "")
     messages = [DIVERSE_SEARCH_QUERIES_USER_PROMPT.to_string(user_prompt=str(user_prompt))]
+
+    if research_objectives and (objective_context := build_objective_context(research_objectives)):
+        messages.append(objective_context)
+        logger.debug(
+            "Injected objective context into query generation",
+            objective_count=len(research_objectives),
+            objective_numbers=[obj["number"] for obj in research_objectives],
+        )
+
     if kwargs:
         messages.append(
             dedent(f"""

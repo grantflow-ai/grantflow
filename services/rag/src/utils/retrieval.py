@@ -1,7 +1,8 @@
 import hashlib
 import json
+import re
 import time
-from typing import Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.query_helpers import select_active
@@ -10,6 +11,9 @@ from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, or_
+
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.post_processing import post_process_documents
@@ -23,6 +27,61 @@ MAX_RESULTS: Final[int] = 10
 
 _document_cache: dict[str, tuple[list[str], float]] = {}
 CACHE_TTL_SECONDS: Final[int] = 1800
+
+
+class MetadataWeights(TypedDict):
+    keywords: float
+    entities: float
+    doc_type: float
+
+
+DEFAULT_METADATA_WEIGHTS: Final[MetadataWeights] = MetadataWeights(
+    keywords=0.4,
+    entities=0.3,
+    doc_type=0.3,
+)
+
+
+def calculate_document_metadata_score(
+    document_metadata: "DocumentMetadata | None",
+    search_queries: list[str],
+    weights: MetadataWeights | None = None,
+) -> float:
+    if not document_metadata:
+        return 0.7
+
+    if weights is None:
+        weights = DEFAULT_METADATA_WEIGHTS
+
+    query_terms = set()
+    for query in search_queries:
+        tokens = re.findall(r"\b\w+\b", query.lower())
+        query_terms.update(tokens)
+
+    score = 0.0
+
+    doc_keywords = {
+        kw["keyword"].lower() if isinstance(kw, dict) else str(kw).lower()
+        for kw in document_metadata.get("keywords", [])
+    }
+    if doc_keywords and query_terms:
+        overlap = len(doc_keywords & query_terms)
+        score += weights["keywords"] * min(overlap / max(len(doc_keywords), 5), 1.0)
+
+    entities_raw = document_metadata.get("entities", [])
+    doc_entities = {
+        ent["text"].lower() if isinstance(ent, dict) else str(ent).lower()
+        for ent in (entities_raw if isinstance(entities_raw, list) else [])
+    }
+    if doc_entities and query_terms:
+        entity_overlap = len(doc_entities & query_terms)
+        score += weights["entities"] * min(entity_overlap / max(len(doc_entities), 3), 1.0)
+
+    doc_type = str(document_metadata.get("document_type", "")).lower()
+    if any(t in doc_type for t in ["research", "scientific", "academic", "paper"]):
+        score += weights["doc_type"]
+
+    return 0.5 + (score * 0.5)
 
 
 def _create_cache_key(**kwargs: Any) -> str:
@@ -55,6 +114,7 @@ async def retrieve_vectors_for_embedding(
     iteration: int = 1,
     limit: int = MAX_RESULTS,
     organization_id: str | None = None,
+    search_queries: list[str] | None = None,
     trace_id: str,
 ) -> list[TextVector]:
     session_maker = get_session_maker()
@@ -64,7 +124,7 @@ async def retrieve_vectors_for_embedding(
     similarity_conditions = [TextVector.embedding.cosine_distance(embedding) <= threshold for embedding in embeddings]
 
     async with session_maker() as session:
-        result = list(
+        vectors = list(
             await session.scalars(
                 select_active(TextVector)
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
@@ -76,9 +136,35 @@ async def retrieve_vectors_for_embedding(
                 )
                 .where(or_(*similarity_conditions))
                 .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
-                .limit(limit)
+                .limit(limit * 2)
             )
         )
+
+    if search_queries and vectors:
+        scored_vectors = []
+        for vector in vectors:
+            cosine_distances = [vector.embedding.cosine_distance(embedding) for embedding in embeddings]
+            min_cosine_distance = min(cosine_distances) if cosine_distances else 1.0
+
+            metadata_score = calculate_document_metadata_score(vector.rag_source.document_metadata, search_queries)
+
+            cosine_similarity = 1.0 - min_cosine_distance
+            combined_score = (0.7 * cosine_similarity) + (0.3 * metadata_score)
+
+            scored_vectors.append((vector, combined_score, metadata_score))
+
+        scored_vectors.sort(key=lambda x: x[1], reverse=True)
+
+        logger.debug(
+            "Re-ranked vectors by metadata",
+            trace_id=trace_id,
+            original_count=len(vectors),
+            metadata_scores=[round(x[2], 2) for x in scored_vectors[:5]],
+        )
+
+        result = [v[0] for v in scored_vectors[:limit]]
+    else:
+        result = vectors[:limit]
 
     if len(result) < limit and threshold < 1.0:
         return await retrieve_vectors_for_embedding(
@@ -86,6 +172,7 @@ async def retrieve_vectors_for_embedding(
             application_id=application_id,
             organization_id=organization_id,
             embeddings=embeddings,
+            search_queries=search_queries,
             limit=limit,
             iteration=iteration + 1,
             trace_id=trace_id,
@@ -119,6 +206,7 @@ async def handle_retrieval(
             application_id=application_id,
             organization_id=organization_id,
             embeddings=query_embeddings,
+            search_queries=search_queries,
             limit=max_results,
             trace_id=trace_id,
         )
