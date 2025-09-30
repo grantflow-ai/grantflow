@@ -9,7 +9,7 @@ from packages.shared_utils.src.sync import batched_gather
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -195,7 +195,7 @@ async def generate_work_plan_component_text(
         return source_validation_error
 
     try:
-        return await with_prompt_evaluation(
+        return await with_evaluation(
             max_words=component["max_words"],
             min_words=int(component["max_words"] * MIN_WORDS_RATIO),
             prompt=prompt,
@@ -204,7 +204,13 @@ async def generate_work_plan_component_text(
             rag_results=rag_results,
             user_input=form_inputs,
             trace_id=trace_id,
-            **get_evaluation_kwargs("generate_work_plan", job_manager),
+            **get_evaluation_kwargs(
+                "generate_work_plan",
+                job_manager,
+                section_config=None,
+                rag_context=rag_results,
+                research_objectives=form_inputs.get("research_objectives"),
+            ),
         )
     except EvaluationError as e:
         logger.warning(

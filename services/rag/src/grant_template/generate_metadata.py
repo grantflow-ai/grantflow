@@ -7,7 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -354,30 +354,36 @@ async def handle_generate_grant_template_metadata(
         ),
     )
 
-    organization_guidelines = (
-        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=await retrieve_documents(
-                organization_id=str(organization["organization_id"]),
-                task_description=str(prompt),
-                trace_id=trace_id,
-            ),
+    rag_results = []
+    if organization:
+        rag_results = await retrieve_documents(
+            organization_id=str(organization["organization_id"]),
+            task_description=str(prompt),
+            trace_id=trace_id,
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=rag_results,
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
         )
-        if organization
-        else ""
-    )
+    else:
+        organization_guidelines = ""
 
     full_prompt = prompt.to_string(
         organization_guidelines=organization_guidelines,
     )
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    result: TemplateSectionsResponse = await with_prompt_evaluation(
+    result: TemplateSectionsResponse = await with_evaluation(
         prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
         prompt=compressed_prompt,
         trace_id=trace_id,
-        **get_evaluation_kwargs("generate_metadata", job_manager),
+        **get_evaluation_kwargs(
+            "generate_metadata",
+            job_manager,
+            rag_context=rag_results if rag_results else None,
+            is_json_content=True,
+        ),
     )
     return result["sections"]

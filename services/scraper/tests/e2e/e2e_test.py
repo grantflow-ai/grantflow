@@ -10,7 +10,7 @@ from services.scraper.src.main import run_scraper
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 
-def _setup_test_environment(project_suffix: str = "test") -> None:
+def _setup_test_environment() -> None:
     os.environ["ENVIRONMENT"] = "test"
 
 
@@ -78,7 +78,7 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
             "Scraper E2E tests disabled by default due to external dependency on NIH website. Set RUN_SCRAPER_E2E_TESTS=1 to enable."
         )
 
-    _setup_test_environment("smoke-test")
+    _setup_test_environment()
 
     os.environ["SCRAPER_E2E_TIMEOUT"] = "45"
 
@@ -137,7 +137,7 @@ async def test_scraper_full_e2e(logger: logging.Logger) -> None:
             "Scraper E2E tests disabled by default due to external dependency on NIH website. Set RUN_SCRAPER_E2E_TESTS=1 to enable."
         )
 
-    _setup_test_environment("full-e2e-test")
+    _setup_test_environment()
 
     logger.info("Getting initial grant count for full e2e test")
     initial_grants = await get_existing_grant_identifiers()

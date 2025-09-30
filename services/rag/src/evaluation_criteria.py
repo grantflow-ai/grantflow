@@ -1,8 +1,15 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
 
-from services.rag.src.constants import INITIAL_PASSING_SCORE, MAX_RETRIES, SCORE_INCREMENT
+from packages.db.src.json_objects import GrantLongFormSection
+
+from services.rag.src.constants import INITIAL_PASSING_SCORE, MAX_RETRIES, MISSING_INFO_INSTRUCTION, SCORE_INCREMENT
 from services.rag.src.utils.evaluation import EvaluationCriterion
+from services.rag.src.utils.evaluation.context_builder import (
+    build_evaluation_context,
+    build_evaluation_settings,
+)
+from services.rag.src.utils.evaluation.dto import EvaluationContext, EvaluationSettings
 
 if TYPE_CHECKING:
     from services.rag.src.utils.job_manager import JobManager
@@ -14,11 +21,11 @@ GENERATE_WORK_PLAN_TIMEOUT: Final[float] = 480.0
 def get_completeness_criterion(weight: float = 0.9) -> EvaluationCriterion:
     return EvaluationCriterion(
         name="Completeness",
-        evaluation_instructions="""
+        evaluation_instructions=f"""
         - Verify all required components and sections are present
         - Ensure content addresses all aspects within word/scope limits
         - Check that no critical information is missing or omitted
-        - If information is unavailable, **MISSING INFORMATION** markers are acceptable
+        - {MISSING_INFO_INSTRUCTION}
         """,
         weight=weight,
     )
@@ -408,9 +415,21 @@ class EvaluationKwargs[T](TypedDict):
     retries: int
     job_manager: "JobManager[T]"
     timeout: NotRequired[float]
+    context: NotRequired[EvaluationContext]
+    settings: NotRequired[EvaluationSettings]
 
 
-def get_evaluation_kwargs[T](stage_name: str, job_manager: "JobManager[T]") -> EvaluationKwargs[T]:
+def get_evaluation_kwargs[T](
+    stage_name: str,
+    job_manager: "JobManager[T]",
+    *,
+    section_config: GrantLongFormSection | None = None,
+    rag_context: Any | None = None,
+    research_objectives: Any | None = None,
+    cfp_analysis: Any | None = None,
+    is_json_content: bool = False,
+    **additional_context: Any,
+) -> EvaluationKwargs[T]:
     config = get_stage_config(stage_name)
 
     kwargs = EvaluationKwargs[T](
@@ -423,5 +442,23 @@ def get_evaluation_kwargs[T](stage_name: str, job_manager: "JobManager[T]") -> E
 
     if config.timeout_override:
         kwargs["timeout"] = config.timeout_override
+
+    if section_config or rag_context or research_objectives or cfp_analysis:
+        context = build_evaluation_context(
+            section_config=section_config,
+            rag_context=rag_context,
+            research_objectives=research_objectives,
+            cfp_analysis=cfp_analysis,
+            **additional_context,
+        )
+        kwargs["context"] = context
+
+    if section_config:
+        settings = build_evaluation_settings(
+            is_clinical_trial=bool(section_config.get("is_clinical_trial")),
+            is_detailed_research_plan=bool(section_config.get("is_detailed_research_plan")),
+            is_json_content=is_json_content,
+        )
+        kwargs["settings"] = settings
 
     return kwargs

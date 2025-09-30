@@ -13,7 +13,7 @@ class MockQueryResponse(TypedDict):
 
 @pytest.fixture
 def mock_handle_completions_request(mocker: MockerFixture) -> Mock:
-    async def mock_response(*args: Any, **kwargs: Any) -> MockQueryResponse:
+    async def mock_response(**kwargs: Any) -> MockQueryResponse:
         return {
             "queries": [
                 {"text": "query1", "type": "factual", "aspect": "aspect1"},
@@ -49,7 +49,7 @@ async def test_handle_create_search_queries_with_kwargs(
 
 
 async def test_handle_create_search_queries_max_queries(mocker: MockerFixture) -> None:
-    async def mock_response(*args: Any, **kwargs: Any) -> MockQueryResponse:
+    async def mock_response(**kwargs: Any) -> MockQueryResponse:
         return {"queries": [{"text": f"query{i}", "type": "factual", "aspect": f"aspect{i}"} for i in range(15)]}
 
     mocker.patch("services.rag.src.utils.search_queries.handle_completions_request", side_effect=mock_response)

@@ -1,6 +1,12 @@
 from typing import Literal, NotRequired, TypedDict
 
-from packages.db.src.json_objects import TableContext
+from packages.db.src.json_objects import (
+    CFPAnalysisEvaluationCriterion,
+    CFPAnalysisRequirementWithQuote,
+    CFPSectionLengthConstraint,
+    CFPSectionRequirement,
+    TableContext,
+)
 
 
 class DocumentDTO(TypedDict):
@@ -29,3 +35,26 @@ class ResearchComponentGenerationDTO(TypedDict):
     relationships: list[tuple[str, str]]
     max_words: NotRequired[int]
     type: Literal["task", "objective"]
+
+
+class RelationshipPair(TypedDict):
+    relation_type: str
+    target_entity: str
+
+
+class RelationshipsData(TypedDict):
+    relationships: dict[str, list[RelationshipPair]]
+
+
+class EnrichmentData(TypedDict):
+    technical_terms: NotRequired[list[str]]
+    research_questions: NotRequired[list[str]]
+    context: NotRequired[str]
+    search_queries: NotRequired[list[str]]
+
+
+class CFPAnalysisData(TypedDict):
+    requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
+    sections: NotRequired[list[CFPSectionRequirement]]
+    evaluation_criteria: NotRequired[list[CFPAnalysisEvaluationCriterion]]
+    length_constraints: NotRequired[list[CFPSectionLengthConstraint]]
