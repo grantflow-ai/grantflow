@@ -104,6 +104,7 @@ export function useApplicationNotifications({
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 	const reconnectAttemptRef = useRef(0);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: notifications.length is intentionally excluded to prevent infinite loops
 	useEffect(() => {
 		log.info("[useApplicationNotifications] Application ID changed, clearing notifications", {
 			applicationId,
@@ -113,7 +114,7 @@ export function useApplicationNotifications({
 		});
 		setNotifications([]);
 		reconnectAttemptRef.current = 0;
-	}, [applicationId, organizationId, projectId, notifications.length]);
+	}, [applicationId, organizationId, projectId]);
 
 	const getSocketUrl = useCallback(async () => {
 		log.info("[useApplicationNotifications] Generating WebSocket URL", {

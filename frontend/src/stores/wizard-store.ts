@@ -571,9 +571,14 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		checkTemplateGeneration: async () => {
 			const { application, getApplication } = useApplicationStore.getState();
-			const { polling } = get();
+			const { polling, templateGenerationFailed } = get();
 
 			if (!application) {
+				return;
+			}
+
+			if (templateGenerationFailed) {
+				polling.stop();
 				return;
 			}
 
@@ -981,6 +986,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: false,
+					templateGenerationFailed: false,
 				}));
 			}
 

@@ -28,7 +28,6 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const templateGenerationFailed = useWizardStore((state) => state.templateGenerationFailed);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
-	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
 
 	const templateRagSources = grantTemplate?.rag_sources ?? [];
 	const dialogDismissedRef = useRef(false);
@@ -45,7 +44,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 
 		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
 		if (allFinished && canStartTemplateGeneration()) {
-			startTemplateGeneration();
+			useWizardStore.getState().startTemplateGeneration();
 			return;
 		}
 
@@ -57,7 +56,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
 
 		if (!hasFailedSources && canStartTemplateGeneration()) {
-			startTemplateGeneration();
+			useWizardStore.getState().startTemplateGeneration();
 			return;
 		}
 
@@ -72,7 +71,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 					dialogDismissedRef.current = true;
 					dialogRef.current?.close();
 					if (canStartTemplateGeneration()) {
-						startTemplateGeneration();
+						useWizardStore.getState().startTemplateGeneration();
 					}
 				},
 			});
@@ -91,7 +90,6 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		canStartTemplateGeneration,
 		templateRagSources,
 		dialogRef,
-		startTemplateGeneration,
 		toPreviousStep,
 		grantTemplate?.grant_sections.length,
 	]);
