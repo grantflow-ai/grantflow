@@ -2,9 +2,14 @@ import re
 import time
 from asyncio import gather
 from itertools import chain
-from typing import TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
+
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
+else:
+    DocumentMetadata = dict
 
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
@@ -80,7 +85,7 @@ async def extract_and_process_content(
     raw_html: str,
     page_text: str | None = None,
     main_embeddings: list[list[float]] | None = None,
-) -> tuple[str, str, list[list[float]]]:
+) -> tuple[str, str, list[list[float]], DocumentMetadata | None]:
     start_time = time.time()
     logger.debug(
         "Starting content extraction and processing",
@@ -155,12 +160,16 @@ async def extract_and_process_content(
         raw_html, output_format="html", include_comments=False, include_formatting=True
     )
 
+    metadata = None
     if clean_html:
-        md_out, _, _, _ = await extract_file_content(
+        md_out, _, _, metadata = await extract_file_content(
             content=clean_html.encode("utf-8"),
             mime_type="text/html",
             enable_chunking=False,
             enable_token_reduction=True,
+            enable_entity_extraction=True,
+            enable_keyword_extraction=True,
+            enable_document_classification=True,
             language_hint="en",
         )
     else:
@@ -180,9 +189,11 @@ async def extract_and_process_content(
         text_length=len(page_text),
         markdown_duration_ms=round(markdown_duration * 1000, 2),
         total_duration_ms=round(total_duration * 1000, 2),
+        has_metadata=metadata is not None,
+        metadata_fields=len(metadata) if metadata else 0,
     )
 
-    return md_out, page_text, main_embeddings
+    return md_out, page_text, main_embeddings, metadata
 
 
 async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> Path:
@@ -423,9 +434,12 @@ async def crawl(
         )
 
         process_start = time.time()
-        md_out, page_text, main_embeddings = await extract_and_process_content(
-            url, raw_html, page_text, main_embeddings
-        )
+        (
+            md_out,
+            page_text,
+            main_embeddings,
+            page_metadata,
+        ) = await extract_and_process_content(url, raw_html, page_text, main_embeddings)
         process_duration = time.time() - process_start
 
         logger.debug(
@@ -433,6 +447,7 @@ async def crawl(
             url=url,
             markdown_length=len(md_out),
             text_length=len(page_text),
+            has_metadata=page_metadata is not None,
             process_duration_ms=round(process_duration * 1000, 2),
         )
 
@@ -569,7 +584,7 @@ async def crawl_url(
     source_id: str,
     memory_store: Store,
     session_key: str,
-) -> tuple[list[VectorDTO], str, list[FileContent]]:
+) -> tuple[list[VectorDTO], str, list[FileContent], DocumentMetadata | None]:
     start_time = time.time()
     logger.debug("Starting URL crawl", url=url, source_id=source_id)
 
@@ -621,12 +636,16 @@ async def crawl_url(
     )
 
     chunking_start = time.time()
+    combined_metadata = None
     try:
-        _, _, chunks_content, _ = await extract_file_content(
+        _, _, chunks_content, combined_metadata = await extract_file_content(
             content=content.encode("utf-8"),
             mime_type="text/markdown",
             enable_chunking=True,
             enable_token_reduction=True,
+            enable_entity_extraction=True,
+            enable_keyword_extraction=True,
+            enable_document_classification=True,
             language_hint="en",
         )
 
@@ -649,6 +668,7 @@ async def crawl_url(
     logger.debug(
         "Text chunking completed",
         chunk_count=len(chunks),
+        has_metadata=combined_metadata is not None,
         chunking_duration_ms=round(chunking_duration * 1000, 2),
     )
 
@@ -665,8 +685,9 @@ async def crawl_url(
         chunk_count=len(chunks),
         content_length=len(content),
         file_count=len(files),
+        has_metadata=combined_metadata is not None,
         indexing_duration_ms=round(indexing_duration * 1000, 2),
         total_duration_ms=round(total_duration * 1000, 2),
     )
 
-    return vectors, content, files
+    return vectors, content, files, combined_metadata

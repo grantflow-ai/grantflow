@@ -140,7 +140,12 @@ async def test_content_processing_smoke(
     """
 
     try:
-        markdown_content, text_content, embeddings = await extract_and_process_content(
+        (
+            markdown_content,
+            text_content,
+            embeddings,
+            metadata,
+        ) = await extract_and_process_content(
             url="https://example.com/test-page", raw_html=test_html
         )
 
@@ -155,9 +160,10 @@ async def test_content_processing_smoke(
         assert embeddings is not None, "No embeddings generated"
 
         logger.info(
-            "✓ Content processing smoke test passed: %d chars text, %d chars markdown",
+            "✓ Content processing smoke test passed: %d chars text, %d chars markdown, metadata=%s",
             len(text_content),
             len(markdown_content),
+            "present" if metadata else "absent",
         )
     except (ValidationError, ExternalOperationError) as e:
         pytest.fail(f"Content processing failed: {e}")
@@ -186,7 +192,7 @@ async def test_crawling_quality_assessment(
         session_key = f"test_session_{grant_application_file.rag_source_id}"
         await memory_store.set(session_key, serialize([]), expires_in=3600)
 
-        vectors, text_content, files = await crawl_url(
+        vectors, text_content, files, metadata = await crawl_url(
             url=test_url,
             source_id=str(grant_application_file.rag_source_id),
             memory_store=memory_store,
@@ -382,7 +388,7 @@ async def test_comprehensive_crawling_pipeline(
         session_key = f"test_session_{grant_application_file.rag_source_id}"
         await memory_store.set(session_key, serialize([]), expires_in=3600)
 
-        vectors, text_content, files = await crawl_url(
+        vectors, text_content, files, metadata = await crawl_url(
             url=test_url,
             source_id=str(grant_application_file.rag_source_id),
             memory_store=memory_store,
@@ -485,7 +491,12 @@ async def test_content_semantic_quality(
     """
 
     try:
-        markdown_content, text_content, embeddings = await extract_and_process_content(
+        (
+            markdown_content,
+            text_content,
+            embeddings,
+            metadata,
+        ) = await extract_and_process_content(
             url="https://example.com/grant-guidelines", raw_html=test_html
         )
 

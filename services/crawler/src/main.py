@@ -305,7 +305,7 @@ async def handle_url_crawling(
             trace_id=trace_id,
         )
 
-        vectors, content, files = await crawl_url(
+        vectors, content, files, document_metadata = await crawl_url(
             url=crawling_request["url"],
             source_id=str(crawling_request["source_id"]),
             memory_store=memory_store,
@@ -318,6 +318,7 @@ async def handle_url_crawling(
             vector_count=len(vectors),
             content_length=len(content),
             file_count=len(files),
+            has_metadata=document_metadata is not None,
             trace_id=trace_id,
             crawl_duration_ms=round((time.time() - crawl_start) * 1000, 2),
         )
@@ -378,16 +379,21 @@ async def handle_url_crawling(
                 vectors=vectors,
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 trace_id=trace_id,
+                document_metadata=document_metadata,
             )
         else:
             async with session_maker() as session, session.begin():
+                update_values: dict[str, Any] = {
+                    "indexing_status": SourceIndexingStatusEnum.FINISHED,
+                    "text_content": content,
+                }
+                if document_metadata is not None:
+                    update_values["document_metadata"] = dict(document_metadata)
+
                 await session.execute(
                     update(RagSource)
                     .where(RagSource.id == crawling_request["source_id"])
-                    .values(
-                        indexing_status=SourceIndexingStatusEnum.FINISHED,
-                        text_content=content,
-                    )
+                    .values(update_values)
                 )
                 if vectors:
                     await session.execute(insert(TextVector).values(vectors))
