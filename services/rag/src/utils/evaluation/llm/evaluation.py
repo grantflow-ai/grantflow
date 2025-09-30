@@ -15,12 +15,12 @@ from services.rag.src.constants import MIN_PASSING_SCORE, MISSING_INFO_FORMAT
 from services.rag.src.utils.completion import make_google_completions_request
 from services.rag.src.utils.evaluation.feedback_loop import _generate_improvement_instructions
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
-from services.rag.src.utils.evaluation.quality_standards import MINIMAL_THRESHOLD, detect_content_type
+from services.rag.src.utils.evaluation.quality_standards import MINIMAL_THRESHOLD, ContentType, detect_content_type
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 if TYPE_CHECKING:
     from services.rag.src.dto import DocumentDTO
-    from services.rag.src.utils.evaluation.dto import EvaluationContext, EvaluationSettings
+    from services.rag.src.utils.evaluation.dto import EvaluationContext, EvaluationResult, EvaluationSettings
 
 logger = get_logger(__name__)
 
@@ -982,6 +982,79 @@ async def batch_evaluate_outputs(
     return results
 
 
+def _extract_rag_context(eval_context: "EvaluationContext") -> list["DocumentDTO"]:
+    rag_context = eval_context.get("rag_context", [])
+    if not isinstance(rag_context, list):
+        return []
+    return [item for item in rag_context if isinstance(item, dict) and "content" in item]
+
+
+def _extract_research_objectives(eval_context: "EvaluationContext") -> list[Any]:
+    research_objectives = eval_context.get("research_objectives", [])
+    return research_objectives if isinstance(research_objectives, list) else []
+
+
+async def _run_nlp_evaluation(
+    output_str: str,
+    section_config: Any,
+    eval_context: "EvaluationContext",
+    trace_id: str,
+) -> "EvaluationResult":
+    logger.info(
+        "Running NLP evaluation",
+        content_length=len(output_str),
+        section_id=section_config.get("id") if isinstance(section_config, dict) else section_config.id,
+        trace_id=trace_id,
+    )
+
+    valid_rag_context = _extract_rag_context(eval_context)
+    research_objectives = _extract_research_objectives(eval_context)
+
+    return await evaluate_scientific_content(
+        content=output_str,
+        section_config=section_config,
+        rag_context=valid_rag_context,
+        research_objectives=research_objectives,
+        trace_id=f"{trace_id}_nlp",
+        reference_corpus=eval_context.get("reference_corpus"),
+    )
+
+
+def _should_accept_nlp_result(
+    nlp_score: float,
+    nlp_confidence: float,
+    eval_settings: "EvaluationSettings",
+) -> bool:
+    confidence_threshold = eval_settings.get("nlp_confidence_threshold", 0.8)
+    accept_threshold = eval_settings.get("nlp_accept_threshold", 85.0) / 100.0
+    return nlp_confidence >= confidence_threshold and nlp_score >= accept_threshold
+
+
+def _build_improvement_instructions(
+    nlp_result: "EvaluationResult",
+    content_type: ContentType,
+) -> list[str]:
+    return _generate_improvement_instructions(nlp_result, content_type)
+
+
+def _build_all_instructions(
+    failing_criteria: dict[str, Any],
+    mapped_criteria: dict[str, EvaluationCriterion],
+    nlp_eval_feedback: list[str],
+) -> str:
+    llm_instructions = [
+        f"  - {criterion.name}: {result['instructions']}"
+        for criterion, result in [(mapped_criteria[k], v) for k, v in failing_criteria.items()]
+    ]
+
+    all_instructions = llm_instructions
+    if nlp_eval_feedback:
+        all_instructions.append("\n  Additional Context from NLP Evaluation:")
+        all_instructions.extend([f"    - {feedback}" for feedback in nlp_eval_feedback[:5]])
+
+    return "\n".join(all_instructions)
+
+
 async def with_evaluation[T, **P](
     *,
     prompt_identifier: str,
@@ -1033,101 +1106,70 @@ async def with_evaluation[T, **P](
         model_output = await prompt_handler(current_prompt, trace_id=trace_id, **kwargs)  # type: ignore[arg-type]
         output_str = str(model_output)
 
-        if enable_nlp and not force_llm and iteration == 1:
-            section_config = eval_context.get("section_config")
-            if section_config and isinstance(section_config, dict):
-                try:
+        if (
+            enable_nlp
+            and not force_llm
+            and iteration == 1
+            and (section_config := eval_context.get("section_config"))
+            and isinstance(section_config, dict)
+        ):
+            try:
+                nlp_result = await _run_nlp_evaluation(output_str, section_config, eval_context, trace_id)
+
+                nlp_score = nlp_result["overall_score"] / 100.0
+                nlp_confidence = nlp_result["confidence_score"]
+                nlp_recommendation = nlp_result["recommendation"]
+
+                logger.info(
+                    "NLP evaluation completed",
+                    score=nlp_score,
+                    confidence=nlp_confidence,
+                    recommendation=nlp_recommendation,
+                    trace_id=trace_id,
+                )
+
+                nlp_eval_feedback = nlp_result.get("detailed_feedback", [])
+
+                if _should_accept_nlp_result(nlp_score, nlp_confidence, eval_settings):
                     logger.info(
-                        "Running NLP evaluation",
-                        content_length=len(output_str),
-                        section_id=section_config.get("id"),
-                        trace_id=trace_id,
-                    )
-
-                    rag_context = eval_context.get("rag_context", [])
-                    if not isinstance(rag_context, list):
-                        rag_context = []
-
-                    valid_rag_context: list[DocumentDTO] = [
-                        item for item in rag_context if isinstance(item, dict) and "content" in item
-                    ]
-
-                    research_objectives = eval_context.get("research_objectives", [])
-                    if not isinstance(research_objectives, list):
-                        research_objectives = []
-
-                    nlp_result = await evaluate_scientific_content(
-                        content=output_str,
-                        section_config=section_config,
-                        rag_context=valid_rag_context,
-                        research_objectives=research_objectives,
-                        trace_id=f"{trace_id}_nlp",
-                        reference_corpus=eval_context.get("reference_corpus"),
-                    )
-
-                    nlp_score = nlp_result["overall_score"] / 100.0
-                    nlp_confidence = nlp_result["confidence_score"]
-                    nlp_recommendation = nlp_result["recommendation"]
-
-                    confidence_threshold = eval_settings.get("nlp_confidence_threshold", 0.8)
-                    accept_threshold = eval_settings.get("nlp_accept_threshold", 85.0) / 100.0
-
-                    logger.info(
-                        "NLP evaluation completed",
-                        score=nlp_score,
-                        confidence=nlp_confidence,
-                        recommendation=nlp_recommendation,
-                        confidence_threshold=confidence_threshold,
-                        trace_id=trace_id,
-                    )
-
-                    nlp_eval_feedback = nlp_result.get("detailed_feedback", [])
-
-                    if nlp_confidence >= confidence_threshold and nlp_score >= accept_threshold:
-                        logger.info(
-                            "NLP evaluation accepted content - skipping LLM evaluation",
-                            nlp_score=nlp_score,
-                            nlp_confidence=nlp_confidence,
-                            trace_id=trace_id,
-                        )
-                        return model_output
-
-                    if nlp_score < MINIMAL_THRESHOLD:
-                        logger.warning(
-                            "NLP evaluation rejected content - below minimal threshold",
-                            nlp_score=nlp_score,
-                            minimal_threshold=MINIMAL_THRESHOLD,
-                            trace_id=trace_id,
-                        )
-                        content_type = detect_content_type(section_config)
-                        improvement_instructions = _generate_improvement_instructions(
-                            nlp_result,
-                            content_type,
-                        )
-
-                        if improvement_instructions:
-                            current_prompt = FIX_OUTPUT_PROMPT.to_string(
-                                instructions="\n".join([f"  - {instr}" for instr in improvement_instructions]),
-                                model_output=model_output,
-                                prompt=prompt,
-                                missing_info_format=MISSING_INFO_FORMAT,
-                            )
-                            iteration += 1
-                            continue
-
-                    logger.info(
-                        "NLP evaluation uncertain - proceeding to LLM evaluation",
+                        "NLP evaluation accepted content - skipping LLM evaluation",
                         nlp_score=nlp_score,
                         nlp_confidence=nlp_confidence,
                         trace_id=trace_id,
                     )
+                    return model_output
 
-                except Exception as e:
+                if nlp_score < MINIMAL_THRESHOLD:
                     logger.warning(
-                        "NLP evaluation failed, falling back to LLM",
-                        error=str(e),
+                        "NLP evaluation rejected content - below minimal threshold",
+                        nlp_score=nlp_score,
+                        minimal_threshold=MINIMAL_THRESHOLD,
                         trace_id=trace_id,
                     )
+                    content_type = detect_content_type(section_config)
+                    if improvement_instructions := _build_improvement_instructions(nlp_result, content_type):
+                        current_prompt = FIX_OUTPUT_PROMPT.to_string(
+                            instructions="\n".join([f"  - {instr}" for instr in improvement_instructions]),
+                            model_output=model_output,
+                            prompt=prompt,
+                            missing_info_format=MISSING_INFO_FORMAT,
+                        )
+                        iteration += 1
+                        continue
+
+                logger.info(
+                    "NLP evaluation uncertain - proceeding to LLM evaluation",
+                    nlp_score=nlp_score,
+                    nlp_confidence=nlp_confidence,
+                    trace_id=trace_id,
+                )
+
+            except Exception as e:
+                logger.warning(
+                    "NLP evaluation failed, falling back to LLM",
+                    error=str(e),
+                    trace_id=trace_id,
+                )
 
         if evaluator:
             evaluation_result = await evaluator(
@@ -1191,18 +1233,10 @@ async def with_evaluation[T, **P](
             )
             return model_output
 
-        llm_instructions = [
-            f"  - {criterion.name}: {result['instructions']}"
-            for criterion, result in [(mapped_criteria[k], v) for k, v in failing_criteria.items()]
-        ]
-
-        all_instructions = llm_instructions
-        if nlp_eval_feedback:
-            all_instructions.append("\n  Additional Context from NLP Evaluation:")
-            all_instructions.extend([f"    - {feedback}" for feedback in nlp_eval_feedback[:5]])
+        all_instructions = _build_all_instructions(failing_criteria, mapped_criteria, nlp_eval_feedback)
 
         current_prompt = FIX_OUTPUT_PROMPT.to_string(
-            instructions="\n".join(all_instructions),
+            instructions=all_instructions,
             model_output=model_output,
             prompt=prompt,
             missing_info_format=MISSING_INFO_FORMAT,

@@ -77,25 +77,26 @@ def build_evaluation_settings(
         settings["llm_weight"] = 0.5
 
     for key, value in additional_settings.items():
-        if key == "enable_nlp_evaluation" and isinstance(value, bool):
-            settings["enable_nlp_evaluation"] = value
-        elif key == "nlp_confidence_threshold" and isinstance(value, (int, float)):
-            settings["nlp_confidence_threshold"] = float(value)
-        elif key == "nlp_accept_threshold" and isinstance(value, (int, float)):
-            settings["nlp_accept_threshold"] = float(value)
-        elif key == "nlp_review_threshold" and isinstance(value, (int, float)):
-            settings["nlp_review_threshold"] = float(value)
-        elif key == "force_llm_evaluation" and isinstance(value, bool):
-            settings["force_llm_evaluation"] = value
-        elif key == "llm_timeout" and isinstance(value, (int, float)):
-            settings["llm_timeout"] = float(value)
-        elif key == "nlp_weight" and isinstance(value, (int, float)):
-            settings["nlp_weight"] = float(value)
-        elif key == "llm_weight" and isinstance(value, (int, float)):
-            settings["llm_weight"] = float(value)
-        elif key == "json_confidence_threshold" and isinstance(value, (int, float)):
-            settings["json_confidence_threshold"] = float(value)
-        elif key == "json_semantic_threshold" and isinstance(value, (int, float)):
-            settings["json_semantic_threshold"] = float(value)
+        match key:
+            case "enable_nlp_evaluation" if isinstance(value, bool):
+                settings["enable_nlp_evaluation"] = value
+            case "nlp_confidence_threshold" if isinstance(value, (int, float)):
+                settings["nlp_confidence_threshold"] = float(value)
+            case "nlp_accept_threshold" if isinstance(value, (int, float)):
+                settings["nlp_accept_threshold"] = float(value)
+            case "nlp_review_threshold" if isinstance(value, (int, float)):
+                settings["nlp_review_threshold"] = float(value)
+            case "force_llm_evaluation" if isinstance(value, bool):
+                settings["force_llm_evaluation"] = value
+            case "llm_timeout" if isinstance(value, (int, float)):
+                settings["llm_timeout"] = float(value)
+            case "nlp_weight" if isinstance(value, (int, float)):
+                settings["nlp_weight"] = float(value)
+            case "llm_weight" if isinstance(value, (int, float)):
+                settings["llm_weight"] = float(value)
+            case "json_confidence_threshold" if isinstance(value, (int, float)):
+                settings["json_confidence_threshold"] = float(value)
+            case "json_semantic_threshold" if isinstance(value, (int, float)):
+                settings["json_semantic_threshold"] = float(value)
 
     return settings

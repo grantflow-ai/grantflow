@@ -1,9 +1,42 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from services.rag.src.dto import EnrichmentData
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import EnrichmentQualityMetrics
+
+TECHNICAL_TERM_INDICATORS: Final = frozenset(
+    {
+        "-",
+        "protein",
+        "gene",
+        "cell",
+        "acid",
+        "enzyme",
+        "receptor",
+        "pathway",
+        "analysis",
+        "method",
+        "system",
+    }
+)
+
+RESEARCH_DEPTH_TERMS: Final = frozenset(
+    {
+        "research",
+        "study",
+        "analysis",
+        "method",
+        "results",
+        "hypothesis",
+        "experiment",
+        "data",
+        "evidence",
+        "findings",
+    }
+)
+
+CITATION_INDICATORS: Final = ("et al", "2019", "2020", "2021", "2022", "2023", "2024")
 
 
 def evaluate_enrichment_quality(
@@ -90,25 +123,14 @@ def _evaluate_term_relevance(
 
     valid_terms = 0
     for term in terms:
-        if isinstance(term, str):
-            if 3 <= len(term) <= 50:
-                valid_terms += 1
+        if not isinstance(term, str):
+            continue
 
-            technical_indicators = [
-                "-",
-                "protein",
-                "gene",
-                "cell",
-                "acid",
-                "enzyme",
-                "receptor",
-                "pathway",
-                "analysis",
-                "method",
-                "system",
-            ]
-            if any(indicator in term.lower() for indicator in technical_indicators):
-                relevance_score += 0.1
+        if 3 <= len(term) <= 50:
+            valid_terms += 1
+
+        if any(indicator in term.lower() for indicator in TECHNICAL_TERM_INDICATORS):
+            relevance_score += 0.1
 
     if terms:
         validity_ratio = valid_terms / len(terms)
@@ -186,25 +208,13 @@ def _evaluate_context_depth(enrichment_data: EnrichmentData) -> float:
     if len(paragraphs) >= 3:
         depth_score += 0.2
 
-    technical_terms = [
-        "research",
-        "study",
-        "analysis",
-        "method",
-        "results",
-        "hypothesis",
-        "experiment",
-        "data",
-        "evidence",
-        "findings",
-    ]
-    term_count = sum(1 for term in technical_terms if term in context_str.lower())
+    term_count = sum(1 for term in RESEARCH_DEPTH_TERMS if term in context_str.lower())
     if term_count >= 5:
         depth_score += 0.3
     elif term_count >= 3:
         depth_score += 0.2
 
-    if any(indicator in context_str for indicator in ["et al", "2019", "2020", "2021", "2022", "2023", "2024"]):
+    if any(indicator in context_str for indicator in CITATION_INDICATORS):
         depth_score += 0.2
 
     return min(1.0, depth_score)

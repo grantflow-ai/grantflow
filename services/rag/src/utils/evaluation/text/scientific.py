@@ -7,6 +7,33 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from services.rag.src.utils.evaluation.dto import ScientificAnalysis, ScientificVocabulary
 
+METHODOLOGY_HEADERS: Final = frozenset(
+    {
+        "method",
+        "approach",
+        "procedure",
+        "protocol",
+        "design",
+        "analysis",
+        "statistical",
+        "experimental",
+        "study design",
+    }
+)
+
+ADDITIONAL_INNOVATION_INDICATORS: Final = frozenset(
+    {
+        "breakthrough",
+        "cutting edge",
+        "state of the art",
+        "unprecedented",
+        "first of its kind",
+        "paradigm shift",
+        "transformative",
+        "revolutionary",
+    }
+)
+
 BIOMEDICAL_TERMS: Final[set[str]] = {
     "protein",
     "enzyme",
@@ -212,19 +239,7 @@ def assess_methodology_completeness(content: str, vocabulary: ScientificVocabula
     found_terms = sum(1 for term in methodology_terms if term in content_lower)
     base_completeness = found_terms / len(methodology_terms)
 
-    methodology_headers = [
-        "method",
-        "approach",
-        "procedure",
-        "protocol",
-        "design",
-        "analysis",
-        "statistical",
-        "experimental",
-        "study design",
-    ]
-
-    header_bonus = 0.2 if any(header in content_lower for header in methodology_headers) else 0.0
+    header_bonus = 0.2 if any(header in content_lower for header in METHODOLOGY_HEADERS) else 0.0
 
     return min(1.0, base_completeness + header_bonus)
 
@@ -235,18 +250,7 @@ def calculate_innovation_indicators(content: str, vocabulary: ScientificVocabula
 
     innovation_score = sum(1 for keyword in innovation_keywords if keyword in content_lower)
 
-    additional_indicators = [
-        "breakthrough",
-        "cutting edge",
-        "state of the art",
-        "unprecedented",
-        "first of its kind",
-        "paradigm shift",
-        "transformative",
-        "revolutionary",
-    ]
-
-    additional_score = sum(1 for indicator in additional_indicators if indicator in content_lower)
+    additional_score = sum(1 for indicator in ADDITIONAL_INNOVATION_INDICATORS if indicator in content_lower)
 
     total_score = innovation_score + additional_score
     return min(1.0, total_score / 8.0)

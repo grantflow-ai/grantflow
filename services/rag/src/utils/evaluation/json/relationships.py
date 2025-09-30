@@ -1,9 +1,31 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from services.rag.src.dto import RelationshipPair
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import RelationshipQualityMetrics
+
+MEANINGFUL_RELATIONSHIP_TYPES: Final = frozenset(
+    {
+        "causes",
+        "enables",
+        "requires",
+        "inhibits",
+        "produces",
+        "regulates",
+        "correlates with",
+        "depends on",
+        "affects",
+        "interacts with",
+        "modulates",
+        "triggers",
+        "prevents",
+        "enhances",
+        "reduces",
+        "associated with",
+        "leads to",
+    }
+)
 
 
 def evaluate_relationships_quality(relationships: dict[str, list[RelationshipPair]]) -> "RelationshipQualityMetrics":
@@ -138,40 +160,21 @@ def _evaluate_description_quality(relationships: dict[str, list[RelationshipPair
     quality_score = 0.0
     total_relations = 0
 
-    meaningful_types = {
-        "causes",
-        "enables",
-        "requires",
-        "inhibits",
-        "produces",
-        "regulates",
-        "correlates with",
-        "depends on",
-        "affects",
-        "interacts with",
-        "modulates",
-        "triggers",
-        "prevents",
-        "enhances",
-        "reduces",
-        "associated with",
-        "leads to",
-    }
-
     for relations in relationships.values():
         for relation in relations:
-            relation_type = relation.get("relation_type", "").lower()
-            if relation_type:
-                total_relations += 1
+            if not (relation_type := relation.get("relation_type", "").lower()):
+                continue
 
-                if any(meaningful in relation_type for meaningful in meaningful_types):
-                    quality_score += 0.5
+            total_relations += 1
 
-                if 5 <= len(relation_type) <= 30:
-                    quality_score += 0.3
+            if any(meaningful in relation_type for meaningful in MEANINGFUL_RELATIONSHIP_TYPES):
+                quality_score += 0.5
 
-                if " " in relation_type:
-                    quality_score += 0.2
+            if 5 <= len(relation_type) <= 30:
+                quality_score += 0.3
+
+            if " " in relation_type:
+                quality_score += 0.2
 
     return quality_score / total_relations if total_relations > 0 else 0.0
 

@@ -13,6 +13,75 @@ PASSIVE_VOICE_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\b(was|were|is|are|been)\s+\w+en\b", re.IGNORECASE),
 ]
 
+MEASUREMENT_PATTERNS: Final[list[re.Pattern[str]]] = [
+    re.compile(r"\d+\s*(?:mg|kg|ml|cm|mm|nm|μm|°C|°F|Hz|kHz|MHz|GHz)"),
+    re.compile(r"\d+\.\d+\s*(?:mg|kg|ml|cm|mm|nm|μm|°C|°F|Hz|kHz|MHz|GHz)"),
+    re.compile(r"\d+\s*(?:hours?|days?|weeks?|months?|years?)"),
+    re.compile(r"\d+\s*(?:subjects?|patients?|participants?|samples?)"),
+]
+
+TECHNICAL_PRECISION_TERMS: Final = frozenset(
+    {
+        "protocol",
+        "methodology",
+        "algorithm",
+        "framework",
+        "parameter",
+        "coefficient",
+        "variable",
+        "threshold",
+        "baseline",
+        "endpoint",
+    }
+)
+
+VAGUE_TERMS: Final = frozenset(
+    {
+        "very",
+        "really",
+        "quite",
+        "rather",
+        "somewhat",
+        "many",
+        "several",
+        "various",
+        "different",
+        "some",
+        "thing",
+        "stuff",
+        "good",
+        "bad",
+    }
+)
+
+HYPOTHESIS_INDICATORS: Final = frozenset(
+    {
+        "hypothesis",
+        "hypothesize",
+        "predict",
+        "expect",
+        "anticipate",
+        "propose",
+        "suggest that",
+        "we predict",
+        "we hypothesize",
+    }
+)
+
+TESTING_METHODOLOGY_TERMS: Final = frozenset(
+    {
+        "test",
+        "measure",
+        "analyze",
+        "assess",
+        "evaluate",
+        "examine",
+        "statistical analysis",
+        "experimental design",
+        "data collection",
+    }
+)
+
 HEDGING_LANGUAGE: Final[set[str]] = {
     "appears",
     "seems",
@@ -336,16 +405,7 @@ def assess_technical_precision(content: str) -> float:
 
     precision_score = 0.0
 
-    measurement_patterns = [
-        r"\d+\s*(?:mg|kg|ml|cm|mm|nm|μm|°C|°F|Hz|kHz|MHz|GHz)",
-        r"\d+\.\d+\s*(?:mg|kg|ml|cm|mm|nm|μm|°C|°F|Hz|kHz|MHz|GHz)",
-        r"\d+\s*(?:hours?|days?|weeks?|months?|years?)",
-        r"\d+\s*(?:subjects?|patients?|participants?|samples?)",
-    ]
-
-    measurement_count = 0
-    for pattern in measurement_patterns:
-        measurement_count += len(re.findall(pattern, content, re.IGNORECASE))
+    measurement_count = sum(len(pattern.findall(content)) for pattern in MEASUREMENT_PATTERNS)
 
     if measurement_count >= 5:
         precision_score += 0.3
@@ -354,20 +414,8 @@ def assess_technical_precision(content: str) -> float:
     elif measurement_count >= 1:
         precision_score += 0.1
 
-    technical_terms = [
-        "protocol",
-        "methodology",
-        "algorithm",
-        "framework",
-        "parameter",
-        "coefficient",
-        "variable",
-        "threshold",
-        "baseline",
-        "endpoint",
-    ]
-
-    technical_count = sum(1 for term in technical_terms if term in content.lower())
+    content_lower = content.lower()
+    technical_count = sum(1 for term in TECHNICAL_PRECISION_TERMS if term in content_lower)
     if technical_count >= 5:
         precision_score += 0.3
     elif technical_count >= 3:
@@ -375,25 +423,8 @@ def assess_technical_precision(content: str) -> float:
     elif technical_count >= 1:
         precision_score += 0.1
 
-    vague_terms = [
-        "very",
-        "really",
-        "quite",
-        "rather",
-        "somewhat",
-        "many",
-        "several",
-        "various",
-        "different",
-        "some",
-        "thing",
-        "stuff",
-        "good",
-        "bad",
-    ]
-
-    content_words = content.lower().split()
-    vague_count = sum(1 for word in content_words if word in vague_terms)
+    content_words = content_lower.split()
+    vague_count = sum(1 for word in content_words if word in VAGUE_TERMS)
     vague_ratio = vague_count / max(len(content_words), 1)
 
     if vague_ratio <= 0.02:
@@ -409,36 +440,12 @@ def assess_technical_precision(content: str) -> float:
 def assess_hypothesis_methodology_alignment(content: str) -> float:
     content_lower = content.lower()
 
-    hypothesis_indicators = [
-        "hypothesis",
-        "hypothesize",
-        "predict",
-        "expect",
-        "anticipate",
-        "propose",
-        "suggest that",
-        "we predict",
-        "we hypothesize",
-    ]
-
-    has_hypothesis = any(indicator in content_lower for indicator in hypothesis_indicators)
+    has_hypothesis = any(indicator in content_lower for indicator in HYPOTHESIS_INDICATORS)
 
     if not has_hypothesis:
         return 0.5
 
-    testing_methodology = [
-        "test",
-        "measure",
-        "analyze",
-        "assess",
-        "evaluate",
-        "examine",
-        "statistical analysis",
-        "experimental design",
-        "data collection",
-    ]
-
-    methodology_count = sum(1 for method in testing_methodology if method in content_lower)
+    methodology_count = sum(1 for method in TESTING_METHODOLOGY_TERMS if method in content_lower)
 
     if methodology_count >= 5:
         return 1.0
