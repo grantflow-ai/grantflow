@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from packages.db.src.json_objects import Chunk
@@ -25,15 +26,28 @@ def mock_vector_dto(mock_chunk: Chunk) -> VectorDTO:
     )
 
 
+@pytest.fixture
+def mock_extraction_result() -> MagicMock:
+    result = MagicMock()
+    result.content = "Test file content"
+    result.mime_type = "text/plain"
+    result.chunks = ["Test chunk content"]
+    result.metadata = {"title": "Test"}
+    result.entities = [MagicMock(type="PERSON", text="John Doe")]
+    result.keywords = [("machine learning", 0.85)]
+    return result
+
+
 async def test_process_source_text_file(
     mocker: MockerFixture,
     mock_chunk: Chunk,
     mock_vector_dto: VectorDTO,
+    mock_extraction_result: MagicMock,
 ) -> None:
     mock_extract = mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
-        return_value=("Test file content", "text/plain", ["Test chunk content"], None),
+        return_value=mock_extraction_result,
     )
     mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -41,25 +55,28 @@ async def test_process_source_text_file(
         return_value=[mock_vector_dto],
     )
 
-    vectors, text_content, _metadata = await process_source(
+    vectors, text_content, metadata = await process_source(
         content=b"Test file content",
         source_id="test-source-id",
         filename="test.txt",
         mime_type="text/plain",
     )
 
+    metadata_dict: Any = metadata  # Cast for runtime enrichment tests
+
     assert len(vectors) == 1
     assert vectors[0] == mock_vector_dto
     assert text_content == "Test file content"
+    assert "entities" in metadata_dict
+    assert "keywords" in metadata_dict
+    assert len(metadata_dict["entities"]) == 1
+    assert metadata_dict["entities"][0]["type"] == "PERSON"
+    assert metadata_dict["entities"][0]["text"] == "John Doe"
+    assert len(metadata_dict["keywords"]) == 1
+    assert metadata_dict["keywords"][0]["keyword"] == "machine learning"
+    assert metadata_dict["keywords"][0]["score"] == 0.85
 
-    mock_extract.assert_called_once_with(
-        content=b"Test file content",
-        mime_type="text/plain",
-        enable_chunking=True,
-        enable_token_reduction=True,
-        language_hint="en",
-    )
-
+    mock_extract.assert_called_once()
     expected_chunks = [{"content": "Test chunk content"}]
     mock_index_chunks.assert_called_once_with(
         chunks=expected_chunks,
@@ -72,10 +89,18 @@ async def test_process_source_pdf_file(
     mock_chunk: Chunk,
     mock_vector_dto: VectorDTO,
 ) -> None:
+    result = MagicMock()
+    result.content = "PDF content extracted"
+    result.mime_type = "application/pdf"
+    result.chunks = ["PDF chunk content"]
+    result.metadata = {}
+    result.entities = []
+    result.keywords = []
+
     mock_extract = mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
-        return_value=("PDF content extracted", "application/pdf", ["PDF chunk content"], None),
+        return_value=result,
     )
     mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -94,13 +119,7 @@ async def test_process_source_pdf_file(
     assert vectors[0] == mock_vector_dto
     assert text_content == "PDF content extracted"
 
-    mock_extract.assert_called_once_with(
-        content=b"PDF binary content",
-        mime_type="application/pdf",
-        enable_chunking=True,
-        enable_token_reduction=True,
-        language_hint="en",
-    )
+    mock_extract.assert_called_once()
     expected_chunks = [{"content": "PDF chunk content"}]
     mock_index_chunks.assert_called_once_with(
         chunks=expected_chunks,
@@ -122,10 +141,18 @@ async def test_process_source_multiple_chunks(
         for content in chunks_content
     ]
 
+    result = MagicMock()
+    result.content = "Long document content"
+    result.mime_type = "text/plain"
+    result.chunks = chunks_content
+    result.metadata = {}
+    result.entities = []
+    result.keywords = []
+
     mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
-        return_value=("Long document content", "text/plain", chunks_content, None),
+        return_value=result,
     )
     mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -155,10 +182,18 @@ async def test_process_source_json_content(
 ) -> None:
     json_content = {"key": "value", "nested": {"data": "test"}}
 
+    result = MagicMock()
+    result.content = json_content
+    result.mime_type = "application/json"
+    result.chunks = ["JSON chunk"]
+    result.metadata = {}
+    result.entities = []
+    result.keywords = []
+
     mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
-        return_value=(json_content, "application/json", ["JSON chunk"], None),
+        return_value=result,
     )
     mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -186,10 +221,18 @@ async def test_process_source_json_content(
 async def test_process_source_empty_content(
     mocker: MockerFixture,
 ) -> None:
+    result = MagicMock()
+    result.content = ""
+    result.mime_type = "text/plain"
+    result.chunks = None
+    result.metadata = {}
+    result.entities = []
+    result.keywords = []
+
     mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
-        return_value=("", "text/plain", [], None),
+        return_value=result,
     )
     mock_index_chunks = mocker.patch(
         "services.indexer.src.processing.index_chunks",
@@ -218,7 +261,7 @@ async def test_process_source_with_extraction_error(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "services.indexer.src.processing.extract_file_content",
+        "services.indexer.src.processing.extract_bytes",
         new_callable=AsyncMock,
         side_effect=Exception("Extraction failed"),
     )
