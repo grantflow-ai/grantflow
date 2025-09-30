@@ -5,16 +5,22 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
-from textwrap import dedent
-from typing import Any, Final, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Final, TypedDict, cast
 
 from packages.shared_utils.src.ai import EVALUATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.constants import MIN_PASSING_SCORE
+from services.rag.src.constants import MIN_PASSING_SCORE, MISSING_INFO_FORMAT
 from services.rag.src.utils.completion import make_google_completions_request
+from services.rag.src.utils.evaluation.feedback_loop import _generate_improvement_instructions
+from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
+from services.rag.src.utils.evaluation.quality_standards import MINIMAL_THRESHOLD, ContentType, detect_content_type
 from services.rag.src.utils.prompt_template import PromptTemplate
+
+if TYPE_CHECKING:
+    from services.rag.src.dto import DocumentDTO
+    from services.rag.src.utils.evaluation.dto import EvaluationContext, EvaluationResult, EvaluationSettings
 
 logger = get_logger(__name__)
 
@@ -47,8 +53,8 @@ EVALUATION_PROMPT = PromptTemplate(
         5. Provide concrete instructions for improvement, if the sources provided in the prompt are insufficient or the output is inaccurate.
 
     **IMPORTANT**:
-        - If information is missing the model should signify this with `**[MISSING INFORMATION: specific description]**` rather than invent facts.
-        - If `**[MISSING INFORMATION: specific description]**` is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.
+        - If information is missing the model should signify this with `${missing_info_format}` rather than invent facts.
+        - If `${missing_info_format}` is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.
     """,
 )
 
@@ -76,7 +82,7 @@ FIX_OUTPUT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     2. Apply the necessary changes, and ensure that the output meets the requirements and validation criteria.
     3. Respond with the updated model output adhering with the output instruction in the prompt.
 
-    **IMPORTANT**: If information is insufficient, write `**[MISSING INFORMATION: specific description]**`
+    **IMPORTANT**: If information is insufficient, write `${missing_info_format}`
     """,
 )
 
@@ -407,7 +413,9 @@ async def evaluate_prompt_output(
         response_schema=json_schema,
         system_prompt=EVALUATION_SYSTEM_PROMPT,
         model=EVALUATION_MODEL,
-        messages=EVALUATION_PROMPT.to_string(prompt=prompt, model_output=model_output),
+        messages=EVALUATION_PROMPT.to_string(
+            prompt=prompt, model_output=model_output, missing_info_format=MISSING_INFO_FORMAT
+        ),
         temperature=0.2,
         top_p=0.7,
         trace_id=trace_id,
@@ -637,7 +645,7 @@ async def smart_evaluate_output(
         elif evaluation_mode == "thorough_evaluation":
             result = await thorough_evaluation(criteria, prompt, model_output, trace_id)
         elif evaluation_mode == "prompt_evaluation":
-            result = await fast_evaluate_output(
+            result = await evaluate_output(
                 criteria=criteria,
                 prompt=prompt,
                 model_output=model_output,
@@ -677,7 +685,7 @@ async def smart_evaluate_output(
     return result, complexity_analysis
 
 
-async def fast_evaluate_output(
+async def evaluate_output(
     *,
     criteria: list[EvaluationCriterion],
     prompt: str,
@@ -780,7 +788,7 @@ async def prompt_evaluation[T](
         try:
             model_output = await prompt_handler(current_prompt, **kwargs)
 
-            evaluation_result = await fast_evaluate_output(
+            evaluation_result = await evaluate_output(
                 criteria=criteria,
                 prompt=current_prompt,
                 model_output=model_output,
@@ -927,7 +935,7 @@ async def batch_evaluate_outputs(
 
     async def evaluate_single_task(task: dict[str, Any]) -> EvaluationToolResponse | Exception:
         try:
-            return await fast_evaluate_output(
+            return await evaluate_output(
                 criteria=task["criteria"],
                 prompt=task["prompt"],
                 model_output=task["model_output"],
@@ -974,7 +982,80 @@ async def batch_evaluate_outputs(
     return results
 
 
-async def with_prompt_evaluation[T, **P](
+def _extract_rag_context(eval_context: "EvaluationContext") -> list["DocumentDTO"]:
+    rag_context = eval_context.get("rag_context", [])
+    if not isinstance(rag_context, list):
+        return []
+    return [item for item in rag_context if isinstance(item, dict) and "content" in item]
+
+
+def _extract_research_objectives(eval_context: "EvaluationContext") -> list[Any]:
+    research_objectives = eval_context.get("research_objectives", [])
+    return research_objectives if isinstance(research_objectives, list) else []
+
+
+async def _run_nlp_evaluation(
+    output_str: str,
+    section_config: Any,
+    eval_context: "EvaluationContext",
+    trace_id: str,
+) -> "EvaluationResult":
+    logger.info(
+        "Running NLP evaluation",
+        content_length=len(output_str),
+        section_id=section_config.get("id") if isinstance(section_config, dict) else section_config.id,
+        trace_id=trace_id,
+    )
+
+    valid_rag_context = _extract_rag_context(eval_context)
+    research_objectives = _extract_research_objectives(eval_context)
+
+    return await evaluate_scientific_content(
+        content=output_str,
+        section_config=section_config,
+        rag_context=valid_rag_context,
+        research_objectives=research_objectives,
+        trace_id=f"{trace_id}_nlp",
+        reference_corpus=eval_context.get("reference_corpus"),
+    )
+
+
+def _should_accept_nlp_result(
+    nlp_score: float,
+    nlp_confidence: float,
+    eval_settings: "EvaluationSettings",
+) -> bool:
+    confidence_threshold = eval_settings.get("nlp_confidence_threshold", 0.8)
+    accept_threshold = eval_settings.get("nlp_accept_threshold", 85.0) / 100.0
+    return nlp_confidence >= confidence_threshold and nlp_score >= accept_threshold
+
+
+def _build_improvement_instructions(
+    nlp_result: "EvaluationResult",
+    content_type: ContentType,
+) -> list[str]:
+    return _generate_improvement_instructions(nlp_result, content_type)
+
+
+def _build_all_instructions(
+    failing_criteria: dict[str, Any],
+    mapped_criteria: dict[str, EvaluationCriterion],
+    nlp_eval_feedback: list[str],
+) -> str:
+    llm_instructions = [
+        f"  - {criterion.name}: {result['instructions']}"
+        for criterion, result in [(mapped_criteria[k], v) for k, v in failing_criteria.items()]
+    ]
+
+    all_instructions = llm_instructions
+    if nlp_eval_feedback:
+        all_instructions.append("\n  Additional Context from NLP Evaluation:")
+        all_instructions.extend([f"    - {feedback}" for feedback in nlp_eval_feedback[:5]])
+
+    return "\n".join(all_instructions)
+
+
+async def with_evaluation[T, **P](
     *,
     prompt_identifier: str,
     passing_score: int = 100,
@@ -985,18 +1066,36 @@ async def with_prompt_evaluation[T, **P](
     criteria: list[EvaluationCriterion],
     trace_id: str,
     job_manager: Any | None = None,
+    context: "EvaluationContext | None" = None,
+    settings: "EvaluationSettings | None" = None,
+    evaluator: Callable[[str, str | dict[str, Any], list[EvaluationCriterion], str], Awaitable[EvaluationToolResponse]]
+    | None = None,
     **kwargs: Any,
 ) -> T:
+    eval_context = context or {}
+    eval_settings = settings or {}
+
+    enable_nlp = eval_settings.get("enable_nlp_evaluation", True)
+    force_llm = eval_settings.get("force_llm_evaluation", False)
+
     current_prompt = str(prompt)
     iteration = 1
     min_passing_score: float = passing_score
-
     mapped_criteria = {criterion.name: criterion for criterion in criteria}
-    failures: list[dict[str, EvaluationScore]] = []
+    nlp_eval_feedback: list[str] = []
+
+    logger.info(
+        "Starting unified evaluation",
+        prompt_identifier=prompt_identifier,
+        enable_nlp_evaluation=enable_nlp,
+        force_llm_evaluation=force_llm,
+        has_context=bool(eval_context),
+        trace_id=trace_id,
+    )
 
     while iteration <= retries:
         logger.info(
-            "Evaluation attempt",
+            "Evaluation iteration",
             prompt_identifier=prompt_identifier,
             iteration=iteration,
             max_retries=retries,
@@ -1005,12 +1104,84 @@ async def with_prompt_evaluation[T, **P](
         )
 
         model_output = await prompt_handler(current_prompt, trace_id=trace_id, **kwargs)  # type: ignore[arg-type]
-        evaluation_result = await evaluate_prompt_output(
-            prompt=current_prompt,
-            model_output=cast("dict[str, Any] | str", model_output),
-            criteria=criteria,
-            trace_id=trace_id,
-        )
+        output_str = str(model_output)
+
+        if (
+            enable_nlp
+            and not force_llm
+            and iteration == 1
+            and (section_config := eval_context.get("section_config"))
+            and isinstance(section_config, dict)
+        ):
+            try:
+                nlp_result = await _run_nlp_evaluation(output_str, section_config, eval_context, trace_id)
+
+                nlp_score = nlp_result["overall_score"] / 100.0
+                nlp_confidence = nlp_result["confidence_score"]
+                nlp_recommendation = nlp_result["recommendation"]
+
+                logger.info(
+                    "NLP evaluation completed",
+                    score=nlp_score,
+                    confidence=nlp_confidence,
+                    recommendation=nlp_recommendation,
+                    trace_id=trace_id,
+                )
+
+                nlp_eval_feedback = nlp_result.get("detailed_feedback", [])
+
+                if _should_accept_nlp_result(nlp_score, nlp_confidence, eval_settings):
+                    logger.info(
+                        "NLP evaluation accepted content - skipping LLM evaluation",
+                        nlp_score=nlp_score,
+                        nlp_confidence=nlp_confidence,
+                        trace_id=trace_id,
+                    )
+                    return model_output
+
+                if nlp_score < MINIMAL_THRESHOLD:
+                    logger.warning(
+                        "NLP evaluation rejected content - below minimal threshold",
+                        nlp_score=nlp_score,
+                        minimal_threshold=MINIMAL_THRESHOLD,
+                        trace_id=trace_id,
+                    )
+                    content_type = detect_content_type(section_config)
+                    if improvement_instructions := _build_improvement_instructions(nlp_result, content_type):
+                        current_prompt = FIX_OUTPUT_PROMPT.to_string(
+                            instructions="\n".join([f"  - {instr}" for instr in improvement_instructions]),
+                            model_output=model_output,
+                            prompt=prompt,
+                            missing_info_format=MISSING_INFO_FORMAT,
+                        )
+                        iteration += 1
+                        continue
+
+                logger.info(
+                    "NLP evaluation uncertain - proceeding to LLM evaluation",
+                    nlp_score=nlp_score,
+                    nlp_confidence=nlp_confidence,
+                    trace_id=trace_id,
+                )
+
+            except Exception as e:
+                logger.warning(
+                    "NLP evaluation failed, falling back to LLM",
+                    error=str(e),
+                    trace_id=trace_id,
+                )
+
+        if evaluator:
+            evaluation_result = await evaluator(
+                current_prompt, cast("dict[str, Any] | str", model_output), criteria, trace_id
+            )
+        else:
+            evaluation_result = await evaluate_prompt_output(
+                prompt=current_prompt,
+                model_output=cast("dict[str, Any] | str", model_output),
+                criteria=criteria,
+                trace_id=trace_id,
+            )
 
         failing_criteria = {
             k: v
@@ -1020,7 +1191,7 @@ async def with_prompt_evaluation[T, **P](
 
         if not failing_criteria:
             logger.info(
-                "Evaluation passed",
+                "LLM evaluation passed",
                 prompt_identifier=prompt_identifier,
                 iteration=iteration,
                 all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
@@ -1029,7 +1200,7 @@ async def with_prompt_evaluation[T, **P](
             return model_output
 
         logger.warning(
-            "Evaluation failed",
+            "LLM evaluation failed",
             prompt_identifier=prompt_identifier,
             iteration=iteration,
             failing_criteria={k: v["score"] for k, v in failing_criteria.items()},
@@ -1037,12 +1208,10 @@ async def with_prompt_evaluation[T, **P](
             trace_id=trace_id,
         )
 
-        failures.append(failing_criteria)
-
         if job_manager and hasattr(job_manager, "increment_retry_count"):
             retry_count = await job_manager.increment_retry_count()
             logger.debug(
-                "Job retry count incremented via evaluation",
+                "Job retry count incremented",
                 prompt_identifier=prompt_identifier,
                 iteration=iteration,
                 job_retry_count=retry_count,
@@ -1064,12 +1233,13 @@ async def with_prompt_evaluation[T, **P](
             )
             return model_output
 
+        all_instructions = _build_all_instructions(failing_criteria, mapped_criteria, nlp_eval_feedback)
+
         current_prompt = FIX_OUTPUT_PROMPT.to_string(
-            instructions="\n".join(
-                [f"  - {dedent(score_object['instructions'])}" for score_object in failing_criteria.values()]
-            ),
+            instructions=all_instructions,
             model_output=model_output,
             prompt=prompt,
+            missing_info_format=MISSING_INFO_FORMAT,
         )
 
     logger.warning(
@@ -1088,7 +1258,7 @@ async def quick_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
@@ -1103,7 +1273,7 @@ async def standard_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,
@@ -1118,7 +1288,7 @@ async def thorough_evaluation(
     model_output: str | dict[str, Any],
     trace_id: str,
 ) -> EvaluationToolResponse:
-    return await fast_evaluate_output(
+    return await evaluate_output(
         criteria=criteria,
         prompt=prompt,
         model_output=model_output,

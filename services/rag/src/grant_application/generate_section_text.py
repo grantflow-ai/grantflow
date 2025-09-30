@@ -6,7 +6,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -316,12 +316,19 @@ async def handle_generate_section_text(
         trace_id=trace_id,
     )
 
-    result = await with_prompt_evaluation(
+    result = await with_evaluation(
         prompt_identifier="section_generation",
         prompt_handler=partial(generate_section_text, section=section),
         prompt=compressed_prompt,
         trace_id=trace_id,
-        **get_evaluation_kwargs("generate_section_text", job_manager),
+        **get_evaluation_kwargs(
+            "generate_section_text",
+            job_manager,
+            section_config=section,
+            rag_context=shared_context,
+            research_objectives=research_deep_dives,
+            cfp_analysis=cfp_analysis,
+        ),
     )
 
     if result:

@@ -11,6 +11,7 @@ from packages.shared_utils.src.ai import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
+from services.rag.src.constants import MISSING_INFO_FORMAT
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -105,7 +106,7 @@ LONG_FORM_GENERATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     5. Information Integrity:
        - NEVER invent or fabricate facts, data, or methodologies not present in the sources
-       - When critical information is missing, use this exact format: `**[MISSING INFORMATION: specific description]**`
+       - When critical information is missing, use this exact format: `${missing_info_format}`
        - Cite sources accurately if citation formats are provided in source materials
 
     ## Task Completion
@@ -195,6 +196,7 @@ async def handle_long_form_text_generation(
             max_words=max_words,
             sources=sources,
             already_generated_text=result,
+            missing_info_format=MISSING_INFO_FORMAT,
         )
         prompt = compress_prompt_text(full_prompt, aggressive=True)
 

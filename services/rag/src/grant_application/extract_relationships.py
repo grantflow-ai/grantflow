@@ -8,7 +8,7 @@ from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -280,13 +280,20 @@ async def handle_extract_relationships(
     full_prompt = prompt.to_string(rag_results=rag_results)
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    result = await with_prompt_evaluation(
+    result = await with_evaluation(
         prompt_identifier="extract_relationships",
         prompt=compressed_prompt,
         prompt_handler=extract_relationships_generation,
         research_objectives=research_objectives,
         trace_id=trace_id,
-        **get_evaluation_kwargs("extract_relationships", job_manager),
+        **get_evaluation_kwargs(
+            "extract_relationships",
+            job_manager,
+            section_config=grant_section,
+            rag_context=rag_results,
+            research_objectives=research_objectives,
+            is_json_content=True,
+        ),
     )
     ret: ResearchRelationships = defaultdict(list)
     for dependent_id, target_id, description in result["relationships"]:

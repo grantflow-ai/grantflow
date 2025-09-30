@@ -18,7 +18,7 @@ from sentence_transformers import util
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -571,28 +571,34 @@ async def handle_extract_sections(
         exclude_categories=",".join(EXCLUDE_CATEGORIES),
     )
 
-    organization_guidelines = (
-        ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=await retrieve_documents(
-                organization_id=str(organization["organization_id"]),
-                task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
-                search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
-                model=ANTHROPIC_SONNET_MODEL,
-                trace_id=trace_id,
-            ),
+    rag_results = []
+    if organization:
+        rag_results = await retrieve_documents(
+            organization_id=str(organization["organization_id"]),
+            task_description=EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT,
+            search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+            model=ANTHROPIC_SONNET_MODEL,
+            trace_id=trace_id,
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results=rag_results,
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
         )
-        if organization
-        else ""
-    )
+    else:
+        organization_guidelines = ""
 
-    result = await with_prompt_evaluation(
+    result = await with_evaluation(
         prompt_identifier="extract_sections",
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         trace_id=trace_id,
-        **get_evaluation_kwargs("extract_sections", job_manager),
+        **get_evaluation_kwargs(
+            "extract_sections",
+            job_manager,
+            rag_context=rag_results if rag_results else content_list,
+            is_json_content=True,
+        ),
     )
 
     return await filter_extracted_sections(result["sections"], trace_id)

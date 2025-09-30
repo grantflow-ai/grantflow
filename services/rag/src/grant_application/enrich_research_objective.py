@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_prompt_evaluation
+from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -380,11 +380,20 @@ async def handle_enrich_objective(
     full_prompt = enrichment_prompt.to_string(rag_results=dto["retrieval_context"])
     compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
-    return await with_prompt_evaluation(
+    return await with_evaluation(
         prompt_identifier="enrich_objective",
         prompt_handler=enrich_objective_generation,
         prompt=compressed_prompt,
         input_objective=dto["research_objective"],
         trace_id=dto["trace_id"],
-        **get_evaluation_kwargs("enrich_objectives", job_manager),
+        **get_evaluation_kwargs(
+            "enrich_objectives",
+            job_manager,
+            section_config=dto.get("grant_section"),
+            rag_context=dto.get("retrieval_context"),
+            research_objectives=[dto["research_objective"]],
+            keywords=dto.get("keywords"),
+            topics=dto.get("topics"),
+            is_json_content=True,
+        ),
     )
