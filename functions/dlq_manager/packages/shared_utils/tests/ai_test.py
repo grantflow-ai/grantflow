@@ -1,0 +1,174 @@
+import math
+import os
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from packages.shared_utils.src.ai import (
+    ANTHROPIC_SONNET_MODEL,
+    CHARS_PER_TOKEN,
+    EVALUATION_MODEL,
+    GENERATION_MODEL,
+    REASONING_MODEL,
+    anthropic_client,
+    count_tokens,
+    estimate_token_count,
+    get_anthropic_client,
+    get_google_ai_client,
+    init_llm_connection,
+    init_ref,
+)
+
+
+async def test_model_constants() -> None:
+    assert os.environ.get("EVALUATION_MODEL", "gemini-2.5-flash") == EVALUATION_MODEL
+    assert os.environ.get("GENERATION_MODEL", "gemini-2.5-flash") == GENERATION_MODEL
+    assert (
+        os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-sonnet-4-20250514")
+        == ANTHROPIC_SONNET_MODEL
+    )
+    assert os.environ.get("REASONING_MODEL", "gemini-2.5-flash") == REASONING_MODEL
+
+
+async def test_init_llm_connection_first_call() -> None:
+    init_ref.value = False
+
+    with (
+        patch("packages.shared_utils.src.ai.genai") as mock_genai,
+        patch("packages.shared_utils.src.ai.get_env", return_value="test-api-key"),
+        patch("packages.shared_utils.src.ai.google_client") as mock_client_ref,
+    ):
+        mock_client = Mock()
+        mock_genai.Client.return_value = mock_client
+
+        init_llm_connection()
+
+        mock_genai.Client.assert_called_once_with(api_key="test-api-key")
+        assert mock_client_ref.value == mock_client
+        assert init_ref.value is True
+
+
+async def test_init_llm_connection_already_initialized() -> None:
+    init_ref.value = True
+
+    with patch("packages.shared_utils.src.ai.genai") as mock_genai:
+        init_llm_connection()
+        mock_genai.Client.assert_not_called()
+
+
+async def test_get_google_ai_client_new() -> None:
+    with (
+        patch("packages.shared_utils.src.ai.init_llm_connection"),
+        patch("packages.shared_utils.src.ai.google_client") as mock_client_ref,
+    ):
+        mock_client = Mock()
+        mock_client_ref.value = mock_client
+
+        client = get_google_ai_client()
+
+        assert client == mock_client
+
+
+async def test_get_google_ai_client_existing() -> None:
+    with patch("packages.shared_utils.src.ai.google_client") as mock_client_ref:
+        mock_client = Mock()
+        mock_client_ref.value = mock_client
+
+        client = get_google_ai_client()
+
+        assert client == mock_client
+
+
+async def test_get_anthropic_client_new() -> None:
+    anthropic_client.value = None
+
+    with (
+        patch("packages.shared_utils.src.ai.AsyncAnthropic") as mock_anthropic,
+        patch("packages.shared_utils.src.ai.get_env", return_value="test_api_key"),
+    ):
+        mock_client = AsyncMock()
+        mock_anthropic.return_value = mock_client
+
+        client = get_anthropic_client()
+
+        mock_anthropic.assert_called_once_with(api_key="test_api_key")
+        assert client == mock_client
+
+
+async def test_get_anthropic_client_existing() -> None:
+    mock_client = AsyncMock()
+    anthropic_client.value = mock_client
+
+    client = get_anthropic_client()
+    assert client == mock_client
+
+
+async def test_estimate_token_count_empty_text() -> None:
+    assert estimate_token_count("") == 0
+
+
+async def test_estimate_token_count_short_text() -> None:
+    text = "Short text"
+    expected = math.ceil(len(text) / CHARS_PER_TOKEN)
+    assert estimate_token_count(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text,word_count,expected",
+    [
+        (
+            "This is a long text that should be more than 100 characters to test the complex estimation logic with multiple words and sentences",
+            20,
+            29,
+        ),
+    ],
+)
+async def test_estimate_token_count_long_text(
+    text: str, word_count: int, expected: int
+) -> None:
+    with patch("packages.shared_utils.src.nlp.get_word_count", return_value=word_count):
+        assert estimate_token_count(text) == 30
+
+
+async def test_count_tokens_empty_text() -> None:
+    assert await count_tokens("") == 0
+
+
+async def test_count_tokens_anthropic_model() -> None:
+    with patch(
+        "packages.shared_utils.src.ai.estimate_token_count", return_value=42
+    ) as mock_estimate:
+        result = await count_tokens("Some text", model=ANTHROPIC_SONNET_MODEL)
+        assert result == 42
+        mock_estimate.assert_called_once_with("Some text")
+
+
+async def test_count_tokens_google_model_success() -> None:
+    mock_client = Mock()
+    mock_aio_client = AsyncMock()
+    mock_response = Mock(total_tokens=10)
+    mock_aio_client.models.count_tokens.return_value = mock_response
+    mock_client._aio = mock_aio_client
+
+    with patch(
+        "packages.shared_utils.src.ai.get_google_ai_client", return_value=mock_client
+    ):
+        result = await count_tokens("Some text", model="gemini-model")
+        assert result == 10
+
+
+async def test_count_tokens_google_model_fallback() -> None:
+    mock_client = Mock()
+    mock_aio_client = AsyncMock()
+    mock_aio_client.models.count_tokens.side_effect = ValueError("API error")
+    mock_client._aio = mock_aio_client
+
+    with (
+        patch(
+            "packages.shared_utils.src.ai.get_google_ai_client",
+            return_value=mock_client,
+        ),
+        patch("packages.shared_utils.src.ai.estimate_token_count", return_value=15),
+    ):
+        result = await count_tokens("Some text", model="gemini-model")
+        assert result == 15
