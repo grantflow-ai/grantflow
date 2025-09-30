@@ -2,7 +2,7 @@ import hashlib
 import json
 import re
 import time
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
 from packages.db.src.query_helpers import select_active
@@ -28,17 +28,24 @@ MAX_RESULTS: Final[int] = 10
 _document_cache: dict[str, tuple[list[str], float]] = {}
 CACHE_TTL_SECONDS: Final[int] = 1800
 
-DEFAULT_METADATA_WEIGHTS: Final[dict[str, float]] = {
-    "keywords": 0.4,
-    "entities": 0.3,
-    "doc_type": 0.3,
-}
+
+class MetadataWeights(TypedDict):
+    keywords: float
+    entities: float
+    doc_type: float
+
+
+DEFAULT_METADATA_WEIGHTS: Final[MetadataWeights] = MetadataWeights(
+    keywords=0.4,
+    entities=0.3,
+    doc_type=0.3,
+)
 
 
 def calculate_document_metadata_score(
     document_metadata: "DocumentMetadata | None",
     search_queries: list[str],
-    weights: dict[str, float] | None = None,
+    weights: MetadataWeights | None = None,
 ) -> float:
     if not document_metadata:
         return 0.7

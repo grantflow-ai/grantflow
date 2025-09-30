@@ -1,10 +1,11 @@
 import re
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, Final, TypedDict
 
 from kreuzberg import (
     KreuzbergError,
     extract_bytes,
     ExtractionConfig,
+    ExtractionResult,
     TokenReductionConfig,
     TesseractConfig,
     PSMMode,
@@ -32,8 +33,13 @@ class Keyword(TypedDict):
     score: float
 
 
+_TITLE_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"\b(Dr|Prof|Mr|Mrs|Ms|PhD)\b\.?\s*", flags=re.IGNORECASE
+)
+
+
 def normalize_entity_text(text: str) -> str:
-    text = re.sub(r"\b(Dr|Prof|Mr|Mrs|Ms|PhD)\b\.?\s*", "", text, flags=re.IGNORECASE)
+    text = _TITLE_PATTERN.sub("", text)
     text = " ".join(text.split())
     return text.lower().strip()
 
@@ -63,24 +69,20 @@ def filter_keywords_by_score(
 
 def enrich_metadata_with_entities_keywords(
     *,
-    extraction_result: Any,
+    extraction_result: ExtractionResult,
     metadata: dict[str, Any],
     context: str,
 ) -> tuple[int, int]:
     entities_count = 0
     try:
-        entities = (
-            extraction_result.entities
-            if hasattr(extraction_result, "entities") and extraction_result.entities
-            else []
-        )
+        entities = extraction_result.entities if extraction_result.entities else []
         raw_entities: list[Entity] = [
             Entity(type=entity.type, text=entity.text) for entity in entities
         ]
         deduplicated_entities = deduplicate_entities(raw_entities)
         metadata["entities"] = deduplicated_entities
         entities_count = len(deduplicated_entities)
-    except Exception as e:
+    except (AttributeError, KeyError, TypeError, ValueError) as e:
         logger.warning(
             "Entity extraction failed, using empty list",
             context=context,
@@ -91,18 +93,14 @@ def enrich_metadata_with_entities_keywords(
 
     keywords_count = 0
     try:
-        keywords = (
-            extraction_result.keywords
-            if hasattr(extraction_result, "keywords") and extraction_result.keywords
-            else []
-        )
+        keywords = extraction_result.keywords if extraction_result.keywords else []
         raw_keywords: list[Keyword] = [
             Keyword(keyword=kw, score=float(score)) for kw, score in keywords
         ]
         filtered_keywords = filter_keywords_by_score(raw_keywords, min_score=0.35)
         metadata["keywords"] = filtered_keywords
         keywords_count = len(filtered_keywords)
-    except Exception as e:
+    except (AttributeError, KeyError, TypeError, ValueError) as e:
         logger.warning(
             "Keyword extraction failed, using empty list",
             context=context,
@@ -229,8 +227,8 @@ def _get_extraction_config(
     return None
 
 
-def _extract_chunks_from_result(result: Any) -> list[str] | None:
-    return result.chunks if hasattr(result, "chunks") and result.chunks else None
+def _extract_chunks_from_result(result: ExtractionResult) -> list[str] | None:
+    return result.chunks if result.chunks else None
 
 
 async def extract_file_content(
