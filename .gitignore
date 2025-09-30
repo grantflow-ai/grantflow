@@ -54,6 +54,7 @@
 .vercel/
 .windsurf/
 .windsurfrules
+AGENTS.md
 AI_EVALUATION_BENCHMARK_REPORT.md
 build/
 CLAUDE.md

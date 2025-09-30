@@ -1,10 +1,10 @@
-import json
 import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
 
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
+from packages.shared_utils.src.serialization import serialize
 
 if TYPE_CHECKING:
     from services.rag.src.grant_template.dto import ExtractionSectionsStageDTO
@@ -833,7 +833,7 @@ async def handle_extract_sections(
     # Include CFP analysis if available, otherwise use fallback prompt
     cfp_analysis_text = ""
     if cfp_analysis:
-        cfp_analysis_text = json.dumps(cfp_analysis, indent=2, default=str)
+        cfp_analysis_text = serialize(cfp_analysis).decode("utf-8")
     else:
         cfp_analysis_text = "No structured CFP analysis available. Use standard grant application structure."
 
