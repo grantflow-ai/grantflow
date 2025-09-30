@@ -9,7 +9,6 @@ terraform {
   }
 }
 
-# Enable Cloud Functions API
 resource "google_project_service" "cloudfunctions" {
   project = var.project_id
   service = "cloudfunctions.googleapis.com"
@@ -18,7 +17,6 @@ resource "google_project_service" "cloudfunctions" {
   disable_on_destroy         = false
 }
 
-# Enable Cloud Build API (required for Cloud Functions Gen2)
 resource "google_project_service" "cloudbuild" {
   project = var.project_id
   service = "cloudbuild.googleapis.com"
@@ -27,7 +25,6 @@ resource "google_project_service" "cloudbuild" {
   disable_on_destroy         = false
 }
 
-# Storage bucket for Cloud Function source code
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-functions-source-${var.environment}"
   location = var.region
@@ -46,7 +43,6 @@ resource "google_storage_bucket" "function_source" {
   }
 }
 
-# Service account for DLQ Manager function
 resource "google_service_account" "dlq_manager" {
   project      = var.project_id
   account_id   = "dlq-manager-${var.environment}"
@@ -54,35 +50,30 @@ resource "google_service_account" "dlq_manager" {
   description  = "Service account for DLQ Manager Cloud Function"
 }
 
-# Grant Pub/Sub Publisher role for republishing messages
 resource "google_project_iam_member" "dlq_manager_pubsub_publisher" {
   project = var.project_id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.dlq_manager.email}"
 }
 
-# Grant Pub/Sub Subscriber role for checking DLQ
 resource "google_project_iam_member" "dlq_manager_pubsub_subscriber" {
   project = var.project_id
   role    = "roles/pubsub.subscriber"
   member  = "serviceAccount:${google_service_account.dlq_manager.email}"
 }
 
-# Grant Cloud SQL Client role for database access
 resource "google_project_iam_member" "dlq_manager_sql_client" {
   project = var.project_id
   role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.dlq_manager.email}"
 }
 
-# Grant Secret Manager access for reading DATABASE_URL
 resource "google_project_iam_member" "dlq_manager_secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.dlq_manager.email}"
 }
 
-# DLQ Manager Cloud Function (Gen2)
 resource "google_cloudfunctions2_function" "dlq_manager" {
   name        = "dlq-manager-${var.environment}"
   location    = var.region
@@ -130,15 +121,12 @@ resource "google_cloudfunctions2_function" "dlq_manager" {
   ]
 }
 
-# Upload source code to GCS (placeholder - actual upload happens via CI/CD)
 resource "google_storage_bucket_object" "dlq_manager_source" {
   name   = "dlq-manager-${var.environment}-${data.archive_file.dlq_manager_source.output_md5}.zip"
   bucket = google_storage_bucket.function_source.name
   source = data.archive_file.dlq_manager_source.output_path
 }
 
-# Archive the source code
-# Note: CI copies workspace packages to functions/ and generates requirements.txt before terraform runs
 data "archive_file" "dlq_manager_source" {
   type        = "zip"
   output_path = "${path.module}/.terraform/dlq-manager-source.zip"
@@ -156,7 +144,6 @@ data "archive_file" "dlq_manager_source" {
   ]
 }
 
-# Allow Cloud Scheduler to invoke the function
 resource "google_cloudfunctions2_function_iam_member" "dlq_manager_invoker" {
   project        = var.project_id
   location       = var.region

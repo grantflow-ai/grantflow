@@ -232,7 +232,6 @@ class RagSource(BaseWithUUIDPK):
     document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
     indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    # Error tracking fields
     error_type: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     retry_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)

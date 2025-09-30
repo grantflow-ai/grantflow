@@ -307,7 +307,6 @@ async def handle_file_indexing(
                 )
         failure_update_duration = time.time() - failure_update_start
 
-        # Check if error is retriable based on category
         is_retriable = getattr(e, "category", None) == "retriable" if hasattr(e, "category") else False
 
         logger.debug(
