@@ -32,6 +32,7 @@ class GrantElement(TypedDict):
     order: int
     title: str
     parent_id: str | None
+    needs_applicant_writing: NotRequired[bool]
 
 
 class GrantLongFormSection(GrantElement):
