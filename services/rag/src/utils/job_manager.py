@@ -402,4 +402,16 @@ class JobManager[DTOType]:
         if not self.current_job:
             return None
 
-        return self.current_job.checkpoint_data
+        # If current job has checkpoint data, return it
+        if self.current_job.checkpoint_data is not None:
+            return self.current_job.checkpoint_data
+
+        # If current job has no checkpoint data, try to get it from parent job
+        if self.current_job.parent_job_id:
+            async with self.session_maker() as session:
+                parent_job = await session.get(RagGenerationJob, self.current_job.parent_job_id)
+                if parent_job and parent_job.checkpoint_data is not None:
+                    # SQLAlchemy's mapped column returns Any, but we know it's dict[str, Any] | None
+                    return parent_job.checkpoint_data  # type: ignore[no-any-return]
+
+        return None
