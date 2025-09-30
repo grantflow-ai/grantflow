@@ -178,6 +178,7 @@ async def handle_section_extraction_stage(
         trace_id=trace_id,
         job_manager=job_manager,
         organization=analysis_result["organization"],
+        cfp_analysis=analysis_result.get("analysis_results"),
     )
 
     await job_manager.add_notification(
@@ -203,6 +204,11 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
+    # Filter sections requiring applicant writing
+    sections_requiring_writing = [
+        s for s in section_extraction_result["extracted_sections"] if s.get("needs_applicant_writing", True)
+    ]
+
     section_metadata = await handle_generate_grant_template_metadata(
         cfp_content="\n".join(
             [
@@ -212,7 +218,7 @@ async def handle_generate_metadata_stage(
         ),
         cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
         organization=section_extraction_result["organization"],
-        long_form_sections=[s for s in section_extraction_result["extracted_sections"] if not s.get("is_title_only")],
+        long_form_sections=[s for s in sections_requiring_writing if not s.get("is_title_only")],
         trace_id=trace_id,
         job_manager=job_manager,
     )
@@ -220,34 +226,38 @@ async def handle_generate_metadata_stage(
     mapped_metadata = {metadata["id"]: metadata for metadata in section_metadata}
 
     ret: list[GrantElement | GrantLongFormSection] = []
-    for section in section_extraction_result["extracted_sections"]:
+    for section in sections_requiring_writing:
         if section.get("is_title_only"):
-            ret.append(
-                GrantElement(
-                    id=section["id"],
-                    order=section["order"],
-                    parent_id=section.get("parent_id"),
-                    title=section["title"],
-                )
-            )
+            element: GrantElement = {
+                "id": section["id"],
+                "order": section["order"],
+                "parent_id": section.get("parent_id"),
+                "title": section["title"],
+            }
+            needs_writing = section.get("needs_applicant_writing")
+            if needs_writing is not None:
+                element["needs_applicant_writing"] = needs_writing
+            ret.append(element)
         else:
             metadata = mapped_metadata[section["id"]]
-            ret.append(
-                GrantLongFormSection(
-                    depends_on=metadata["depends_on"],
-                    generation_instructions=metadata["generation_instructions"],
-                    id=section["id"],
-                    is_clinical_trial=section.get("is_clinical_trial"),
-                    is_detailed_research_plan=section.get("is_detailed_research_plan"),
-                    keywords=metadata["keywords"],
-                    max_words=metadata["max_words"],
-                    order=section["order"],
-                    parent_id=section.get("parent_id"),
-                    search_queries=metadata["search_queries"],
-                    title=section["title"],
-                    topics=metadata["topics"],
-                )
-            )
+            long_form: GrantLongFormSection = {
+                "depends_on": metadata["depends_on"],
+                "generation_instructions": metadata["generation_instructions"],
+                "id": section["id"],
+                "is_clinical_trial": section.get("is_clinical_trial"),
+                "is_detailed_research_plan": section.get("is_detailed_research_plan"),
+                "keywords": metadata["keywords"],
+                "max_words": metadata["max_words"],
+                "order": section["order"],
+                "parent_id": section.get("parent_id"),
+                "search_queries": metadata["search_queries"],
+                "title": section["title"],
+                "topics": metadata["topics"],
+            }
+            needs_writing = section.get("needs_applicant_writing")
+            if needs_writing is not None:
+                long_form["needs_applicant_writing"] = needs_writing
+            ret.append(long_form)
 
     return ret
 

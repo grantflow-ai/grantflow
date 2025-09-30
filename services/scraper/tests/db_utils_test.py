@@ -3,6 +3,7 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.tables import Grant, GrantingInstitution
+from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.url_utils import normalize_url
 from services.scraper.src.db_utils import (
     batch_save_grants,
@@ -34,7 +35,7 @@ async def test_get_nih_institution_id_not_found(async_session_maker: async_sessi
             await session.delete(inst)
         await session.commit()
 
-    with pytest.raises(ValueError, match="NIH granting institution not found"):
+    with pytest.raises(DatabaseError, match="NIH granting institution not found"):
         await get_nih_institution_id()
 
 
