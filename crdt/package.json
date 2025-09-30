@@ -3,7 +3,7 @@
 		"@google-cloud/pino-logging-gcp-config": "^1.2.0",
 		"@hocuspocus/extension-database": "^3.2.3",
 		"@hocuspocus/server": "^3.2.3",
-		"dotenv": "^17.2.2",
+		"dotenv": "^17.2.3",
 		"drizzle-orm": "^0.44.5",
 		"pg": "^8.16.3",
 		"pino": "^9.12.0",
