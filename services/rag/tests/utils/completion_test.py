@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from anthropic import BadRequestError, RateLimitError
 from anthropic.types import ToolUseBlock
-from google.cloud.exceptions import TooManyRequests
+from google.genai import errors as genai_errors
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import BackendError, RagError, ValidationError
 from pytest_mock import MockerFixture
@@ -229,8 +229,8 @@ async def test_handle_completions_request_with_retry(
     response.text = '{"key": "value"}'
 
     aio_client.models.generate_content.side_effect = [
-        TooManyRequests("error"),
-        TooManyRequests("error"),
+        genai_errors.ClientError(429, {"error": {"message": "error"}}, Mock()),
+        genai_errors.ClientError(429, {"error": {"message": "error"}}, Mock()),
         response,
     ]
     client._aio = aio_client

@@ -18,9 +18,7 @@ from anthropic import (
 from anthropic import InternalServerError as AnthropicInternalServerError
 from anthropic.types import ToolParam, ToolUseBlock
 from google import genai
-from google.api_core.exceptions import InternalServerError as GoogleInternalServerError
-from google.api_core.exceptions import ServiceUnavailable
-from google.cloud.exceptions import TooManyRequests
+from google.genai import errors as genai_errors
 from packages.shared_utils.src.ai import (
     ANTHROPIC_SONNET_MODEL,
     GENERATION_MODEL,
@@ -116,7 +114,7 @@ async def select_best_response[T](
     return candidates[response["best_response"]]
 
 
-@with_exponential_backoff_retry(TooManyRequests, ServiceUnavailable)
+@with_exponential_backoff_retry(genai_errors.ServerError, genai_errors.ClientError)
 async def make_google_completions_request[T](
     *,
     model: str = GENERATION_MODEL,
@@ -596,9 +594,9 @@ async def handle_completions_request[T](  # noqa: PLR0912
             else:
                 errors.append(e)
                 attempts += 1
-        except GoogleInternalServerError as e:
+        except genai_errors.ServerError as e:
             logger.warning(
-                "Internal server error received from Google in completion request. Switching to Anthropic.",
+                "Server error received from Google in completion request. Switching to Anthropic.",
                 prompt_identifier=prompt_identifier,
                 attempt=attempts,
                 max_attempts=max_attempts,
@@ -612,9 +610,9 @@ async def handle_completions_request[T](  # noqa: PLR0912
             else:
                 errors.append(e)
                 attempts += 1
-        except (ServiceUnavailable, TooManyRequests) as e:
+        except genai_errors.ClientError as e:
             logger.warning(
-                "Google API temporarily unavailable, switching to Anthropic",
+                "Google API client error (rate limit or bad request), switching to Anthropic",
                 prompt_identifier=prompt_identifier,
                 attempt=attempts,
                 max_attempts=max_attempts,
