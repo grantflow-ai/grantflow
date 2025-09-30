@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any
+import re
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from kreuzberg import (
     KreuzbergError,
@@ -19,6 +20,134 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
 
 logger = get_logger(__name__)
+
+
+class Entity(TypedDict):
+    type: str
+    text: str
+
+
+class Keyword(TypedDict):
+    keyword: str
+    score: float
+
+
+def normalize_entity_text(text: str) -> str:
+    """Normalize entity text for deduplication.
+
+    - Remove titles (Dr., Prof., Mr., Mrs., Ms.)
+    - Normalize whitespace
+    - Convert to lowercase for comparison
+    """
+    # Remove common titles
+    text = re.sub(r"\b(Dr|Prof|Mr|Mrs|Ms|PhD)\b\.?\s*", "", text, flags=re.IGNORECASE)
+    # Normalize whitespace
+    text = " ".join(text.split())
+    return text.lower().strip()
+
+
+def deduplicate_entities(entities: list[Entity]) -> list[Entity]:
+    """Deduplicate entities by normalized text within same type.
+
+    Keeps the longest variant of each unique entity.
+    Example: "Dr. John Smith", "John Smith", "Smith" -> "Dr. John Smith"
+    """
+    if not entities:
+        return []
+
+    # Group by type and normalized text, keeping longest variant
+    seen: dict[tuple[str, str], Entity] = {}
+
+    for entity in entities:
+        entity_type = entity["type"]
+        normalized = normalize_entity_text(entity["text"])
+        key = (entity_type, normalized)
+
+        if key not in seen or len(entity["text"]) > len(seen[key]["text"]):
+            seen[key] = entity
+
+    return list(seen.values())
+
+
+def filter_keywords_by_score(
+    keywords: list[Keyword], min_score: float = 0.35
+) -> list[Keyword]:
+    """Filter keywords by minimum confidence score.
+
+    Args:
+        keywords: List of keyword TypedDicts
+        min_score: Minimum score threshold (default 0.35)
+
+    Returns:
+        Filtered list of keywords meeting minimum score threshold
+    """
+    return [kw for kw in keywords if kw["score"] >= min_score]
+
+
+def enrich_metadata_with_entities_keywords(
+    *,
+    extraction_result: Any,
+    metadata: dict[str, Any],
+    context: str,
+) -> tuple[int, int]:
+    """Enrich metadata dict with entities and keywords from extraction result.
+
+    Args:
+        extraction_result: Kreuzberg extraction result with entities/keywords attributes
+        metadata: Metadata dict to enrich (modified in place)
+        context: Context string for logging (e.g., "indexer", "crawler:page")
+
+    Returns:
+        Tuple of (entities_count, keywords_count) for logging
+    """
+    # Add entities with error handling
+    entities_count = 0
+    try:
+        entities = (
+            extraction_result.entities
+            if hasattr(extraction_result, "entities") and extraction_result.entities
+            else []
+        )
+        raw_entities: list[Entity] = [
+            Entity(type=entity.type, text=entity.text) for entity in entities
+        ]
+        deduplicated_entities = deduplicate_entities(raw_entities)
+        metadata["entities"] = deduplicated_entities
+        entities_count = len(deduplicated_entities)
+    except Exception as e:
+        logger.warning(
+            "Entity extraction failed, using empty list",
+            context=context,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        metadata["entities"] = []
+
+    # Add keywords with error handling
+    keywords_count = 0
+    try:
+        keywords = (
+            extraction_result.keywords
+            if hasattr(extraction_result, "keywords") and extraction_result.keywords
+            else []
+        )
+        raw_keywords: list[Keyword] = [
+            Keyword(keyword=kw, score=float(score)) for kw, score in keywords
+        ]
+        filtered_keywords = filter_keywords_by_score(raw_keywords, min_score=0.35)
+        metadata["keywords"] = filtered_keywords
+        keywords_count = len(filtered_keywords)
+    except Exception as e:
+        logger.warning(
+            "Keyword extraction failed, using empty list",
+            context=context,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        metadata["keywords"] = []
+
+    return entities_count, keywords_count
+
 
 SCIENTIFIC_STOPWORDS = {
     "en": list(ACADEMIC_STOP_WORDS)

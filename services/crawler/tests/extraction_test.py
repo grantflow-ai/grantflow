@@ -92,14 +92,16 @@ def mock_trafilatura_extract() -> Generator[Mock]:
 
 
 @pytest.fixture
-def mock_extract_file_content() -> Generator[AsyncMock]:
-    with patch("services.crawler.src.extraction.extract_file_content") as mock:
-        mock.return_value = (
-            "# Test Content\n\nThis is a test paragraph with some content.",
-            "text/html",
-            None,
-            None,
-        )
+def mock_extract_bytes() -> Generator[AsyncMock]:
+    with patch("services.crawler.src.extraction.extract_bytes") as mock:
+        result = Mock()
+        result.content = "# Test Content\n\nThis is a test paragraph with some content."
+        result.mime_type = "text/html"
+        result.chunks = ["Chunk 1", "Chunk 2"]
+        result.metadata = {}
+        result.entities = []
+        result.keywords = []
+        mock.return_value = result
         yield mock
 
 
@@ -152,21 +154,23 @@ async def test_extract_and_process_content() -> None:
             new_callable=AsyncMock,
         ) as mock_embeddings,
         patch(
-            "services.crawler.src.extraction.extract_file_content",
+            "services.crawler.src.extraction.extract_bytes",
             new_callable=AsyncMock,
-        ) as mock_extract_file,
+        ) as mock_extract_bytes,
     ):
         mock_extract.side_effect = [
             "Test\nContent",
             "<html><body><h1>Test</h1><p>Content</p></body></html>",
         ]
         mock_embeddings.return_value = [[0.1, 0.2, 0.3]]
-        mock_extract_file.return_value = (
-            "# Test\n\nContent",
-            "text/html",
-            None,
-            None,
-        )
+
+        result = Mock()
+        result.content = "# Test\n\nContent"
+        result.mime_type = "text/html"
+        result.metadata = {}
+        result.entities = []
+        result.keywords = []
+        mock_extract_bytes.return_value = result
 
         (
             md_content,
@@ -178,7 +182,7 @@ async def test_extract_and_process_content() -> None:
         assert md_content == "# Test\n\nContent"
         assert text_content == "Test\nContent"
         assert embeddings == [[0.1, 0.2, 0.3]]
-        assert metadata is None
+        assert isinstance(metadata, dict)
 
 
 async def test_extract_and_process_content_with_existing_data() -> None:
@@ -190,19 +194,21 @@ async def test_extract_and_process_content_with_existing_data() -> None:
     with (
         patch("services.crawler.src.extraction.extract") as mock_extract,
         patch(
-            "services.crawler.src.extraction.extract_file_content",
+            "services.crawler.src.extraction.extract_bytes",
             new_callable=AsyncMock,
-        ) as mock_extract_file,
+        ) as mock_extract_bytes,
     ):
         mock_extract.return_value = (
             "<html><body><h1>Test</h1><p>Content</p></body></html>"
         )
-        mock_extract_file.return_value = (
-            "# Test\n\nContent",
-            "text/html",
-            None,
-            None,
-        )
+
+        result = Mock()
+        result.content = "# Test\n\nContent"
+        result.mime_type = "text/html"
+        result.metadata = {}
+        result.entities = []
+        result.keywords = []
+        mock_extract_bytes.return_value = result
 
         (
             md_content,
@@ -216,7 +222,7 @@ async def test_extract_and_process_content_with_existing_data() -> None:
         assert md_content == "# Test\n\nContent"
         assert text_content == existing_text
         assert embeddings == existing_embeddings
-        assert metadata is None
+        assert isinstance(metadata, dict)
 
 
 async def test_save_page_content(temp_dir: Path) -> None:
@@ -335,7 +341,7 @@ async def test_crawl_basic(
     mock_url: str,
     mock_download_page_html: AsyncMock,
     mock_trafilatura_extract: Mock,
-    mock_extract_file_content: AsyncMock,
+    mock_extract_bytes: AsyncMock,
     mock_generate_embeddings: AsyncMock,
     mock_download_file: AsyncMock,
     memory_store: AsyncMock,

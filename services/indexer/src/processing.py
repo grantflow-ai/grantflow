@@ -1,12 +1,19 @@
 import time
+from typing import TYPE_CHECKING, Any, cast
 
-from kreuzberg._types import Metadata as DocumentMetadata
+from kreuzberg import extract_bytes
 from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import index_chunks
-from packages.shared_utils.src.extraction import extract_file_content
+from packages.shared_utils.src.extraction import (
+    enrich_metadata_with_entities_keywords,
+    get_scientific_extraction_config,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import serialize
+
+if TYPE_CHECKING:
+    from kreuzberg._types import Metadata as DocumentMetadata
 
 logger = get_logger(__name__)
 
@@ -20,7 +27,7 @@ async def process_source(
     model_name: str | None = None,
     enable_token_reduction: bool = True,
     language_hint: str = "en",
-) -> tuple[list[VectorDTO], str, DocumentMetadata | None]:
+) -> tuple[list[VectorDTO], str, "DocumentMetadata"]:
     logger.debug(
         "Starting optimized scientific document processing",
         filename=filename,
@@ -31,19 +38,37 @@ async def process_source(
 
     extraction_start = time.time()
 
-    extracted_text, processed_mime_type, chunks, metadata = await extract_file_content(
-        content=content,
-        mime_type=mime_type,
-        enable_chunking=True,
+    # Use Kreuzberg directly to access entities and keywords
+    config = get_scientific_extraction_config(
+        chunk_content=True,
         enable_token_reduction=enable_token_reduction,
+        enable_entity_extraction=True,
+        enable_keyword_extraction=True,
+        enable_document_classification=True,
         language_hint=language_hint,
+    )
+
+    result = await extract_bytes(content=content, mime_type=mime_type, config=config)
+
+    extracted_text = result.content
+    processed_mime_type = result.mime_type
+    chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
+
+    # Serialize entities and keywords into metadata
+    metadata: dict[str, Any] = dict(result.metadata) if hasattr(result, "metadata") and result.metadata else {}
+
+    # Enrich metadata with entities and keywords
+    entities_count, keywords_count = enrich_metadata_with_entities_keywords(
+        extraction_result=result,
+        metadata=metadata,
+        context=f"indexer:{filename}",
     )
 
     extraction_duration = time.time() - extraction_start
 
     text_length = len(extracted_text) if isinstance(extracted_text, str) else len(str(extracted_text))
     logger.debug(
-        "Optimized text extraction completed",
+        "Optimized text extraction completed with entity/keyword extraction",
         filename=filename,
         extraction_duration_ms=round(extraction_duration * 1000, 2),
         text_length=text_length,
@@ -51,6 +76,8 @@ async def process_source(
         processed_mime_type=processed_mime_type,
         chunk_count=len(chunks) if chunks else 0,
         metadata_fields=len(metadata) if metadata else 0,
+        entities_extracted=entities_count,
+        keywords_extracted=keywords_count,
         token_reduction_enabled=enable_token_reduction,
     )
 
@@ -91,4 +118,4 @@ async def process_source(
         token_reduction_savings="~35%" if enable_token_reduction else "0%",
     )
 
-    return vectors, text_content, metadata
+    return vectors, text_content, cast("DocumentMetadata", metadata)
