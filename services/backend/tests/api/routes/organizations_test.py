@@ -779,8 +779,12 @@ async def test_organization_deletion_removes_logo(
     otp_code: str,
 ) -> None:
     with (
-        patch("services.backend.src.api.routes.organizations.delete_organization_logo") as mock_delete_logo,
-        patch("services.backend.src.utils.firebase.schedule_organization_deletion") as mock_schedule,
+        patch(
+            "services.backend.src.api.routes.organizations.delete_organization_logo", new_callable=AsyncMock
+        ) as mock_delete_logo,
+        patch(
+            "services.backend.src.api.routes.organizations.schedule_organization_deletion", new_callable=AsyncMock
+        ) as mock_schedule,
     ):
         mock_schedule.return_value = {"scheduled_hard_delete_at": datetime.now(UTC), "grace_period_days": 30}
 

@@ -78,21 +78,54 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                 "sections_count": 3,
                 "length_constraints_found": 2,
                 "evaluation_criteria_count": 2,
-                "required_sections": [],
-                "length_constraints": [],
-                "evaluation_criteria": [],
-                "additional_requirements": [],
+                "required_sections": [
+                    {
+                        "section_name": "Project Summary",
+                        "definition": "Brief overview of the project",
+                        "requirements": [
+                            {
+                                "requirement": "Must include project objectives",
+                                "quote_from_source": "The project summary must clearly state the objectives",
+                                "category": "content",
+                            }
+                        ],
+                        "dependencies": [],
+                    }
+                ],
+                "length_constraints": [
+                    {
+                        "section_name": "Project Summary",
+                        "measurement_type": "pages",
+                        "limit_description": "1 page maximum",
+                        "quote_from_source": "Project summary is limited to one page",
+                        "exclusions": [],
+                    }
+                ],
+                "evaluation_criteria": [
+                    {
+                        "criterion_name": "Scientific Merit",
+                        "description": "Quality of the scientific approach",
+                        "quote_from_source": "Applications will be evaluated on scientific merit",
+                    }
+                ],
+                "additional_requirements": [
+                    {
+                        "requirement": "Must use 12-point font",
+                        "quote_from_source": "All text must be in 12-point font",
+                        "category": "formatting",
+                    }
+                ],
             },
             "nlp_analysis": {
-                "money": [],
-                "date_time": [],
-                "writing_related": [],
-                "other_numbers": [],
-                "recommendations": [],
-                "orders": [],
-                "positive_instructions": [],
-                "negative_instructions": [],
-                "evaluation_criteria": [],
+                "money": ["$50,000 maximum award"],
+                "date_time": ["Applications due March 31, 2025"],
+                "writing_related": ["Submit a research proposal"],
+                "other_numbers": ["3 years maximum project duration"],
+                "recommendations": ["Collaboration is encouraged"],
+                "orders": ["Submit documents in the following order"],
+                "positive_instructions": ["Include preliminary data"],
+                "negative_instructions": ["Do not exceed page limits"],
+                "evaluation_criteria": ["Scientific merit will be evaluated"],
             },
             "analysis_metadata": {
                 "content_length": 1000,
@@ -321,21 +354,55 @@ async def test_cfp_analysis_stage_success(
             "sections_count": 5,
             "length_constraints_found": 2,
             "evaluation_criteria_count": 3,
-            "required_sections": [],
-            "length_constraints": [],
-            "evaluation_criteria": [],
-            "additional_requirements": [],
+            "required_sections": [
+                {
+                    "section_name": "Research Plan",
+                    "definition": "Detailed description of the research methodology",
+                    "requirements": [
+                        {
+                            "requirement": "Must include hypothesis",
+                            "quote_from_source": "Research plan must clearly state the hypothesis",
+                            "category": "content",
+                        }
+                    ],
+                    "dependencies": ["Project Summary"],
+                }
+            ],
+            "length_constraints": [
+                {
+                    "section_name": "Research Plan",
+                    "measurement_type": "pages",
+                    "limit_description": "15 pages maximum",
+                    "quote_from_source": "Research plan cannot exceed 15 pages",
+                    "exclusions": ["References", "Figures"],
+                }
+            ],
+            "evaluation_criteria": [
+                {
+                    "criterion_name": "Innovation",
+                    "description": "Degree of innovation in the approach",
+                    "quote_from_source": "Applications will be evaluated for innovation",
+                    "weight_percentage": 30,
+                }
+            ],
+            "additional_requirements": [
+                {
+                    "requirement": "Must include budget justification",
+                    "quote_from_source": "A detailed budget justification is required",
+                    "category": "budget",
+                }
+            ],
         },
         "nlp_analysis": {
-            "money": [],
-            "date_time": [],
-            "writing_related": [],
-            "other_numbers": [],
-            "recommendations": [],
-            "orders": [],
-            "positive_instructions": [],
-            "negative_instructions": [],
-            "evaluation_criteria": [],
+            "money": ["$250,000 maximum total award"],
+            "date_time": ["Submit by December 15, 2025"],
+            "writing_related": ["Prepare a comprehensive research proposal"],
+            "other_numbers": ["5 years maximum project duration"],
+            "recommendations": ["International collaboration is encouraged"],
+            "orders": ["Submit sections in the specified order"],
+            "positive_instructions": ["Include detailed methodology"],
+            "negative_instructions": ["Do not include proprietary information"],
+            "evaluation_criteria": ["Innovation and feasibility will be assessed"],
         },
         "analysis_metadata": {
             "categories_found": 5,
@@ -388,21 +455,62 @@ async def test_cfp_analysis_stage_limited_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "required_sections": [],
-            "length_constraints": [],
-            "evaluation_criteria": [],
-            "additional_requirements": [],
+            "sections_count": 3,
+            "length_constraints_found": 1,
+            "evaluation_criteria_count": 2,
+            "required_sections": [
+                {
+                    "section_name": "Abstract",
+                    "definition": "Summary of the proposed research",
+                    "requirements": [
+                        {
+                            "requirement": "Must be self-contained",
+                            "quote_from_source": "Abstract must be self-contained and comprehensive",
+                            "category": "content",
+                        }
+                    ],
+                    "dependencies": [],
+                }
+            ],
+            "length_constraints": [
+                {
+                    "section_name": "Abstract",
+                    "measurement_type": "words",
+                    "limit_description": "300 words maximum",
+                    "quote_from_source": "Abstract is limited to 300 words",
+                    "exclusions": [],
+                }
+            ],
+            "evaluation_criteria": [
+                {
+                    "criterion_name": "Feasibility",
+                    "description": "Likelihood of successful completion",
+                    "quote_from_source": "Feasibility will be a key evaluation factor",
+                },
+                {
+                    "criterion_name": "Impact",
+                    "description": "Potential impact of the research",
+                    "quote_from_source": "Expected impact will be evaluated",
+                },
+            ],
+            "additional_requirements": [
+                {
+                    "requirement": "Must include ethics approval",
+                    "quote_from_source": "Ethics approval is required for all studies",
+                    "category": "eligibility",
+                }
+            ],
         },
         "nlp_analysis": {
-            "money": [],
-            "date_time": [],
-            "writing_related": [],
-            "other_numbers": [],
-            "recommendations": [],
-            "orders": [],
-            "positive_instructions": [],
-            "negative_instructions": [],
-            "evaluation_criteria": [],
+            "money": ["$100,000 budget limit"],
+            "date_time": ["Submit by June 30, 2025"],
+            "writing_related": ["Submit detailed research proposal"],
+            "other_numbers": ["2 years project duration"],
+            "recommendations": ["Multidisciplinary teams preferred"],
+            "orders": ["Follow application guidelines"],
+            "positive_instructions": ["Include pilot data if available"],
+            "negative_instructions": ["Avoid overlapping with existing work"],
+            "evaluation_criteria": ["Scientific rigor will be evaluated"],
         },
         "analysis_metadata": {
             "content_length": 1500,
@@ -438,9 +546,31 @@ async def test_cfp_analysis_stage_no_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "required_sections": [],
+            "sections_count": 1,
+            "length_constraints_found": 0,
+            "evaluation_criteria_count": 1,
+            "required_sections": [
+                {
+                    "section_name": "Project Description",
+                    "definition": "Basic description of the project",
+                    "requirements": [
+                        {
+                            "requirement": "Must describe objectives",
+                            "quote_from_source": "Project description must outline objectives",
+                            "category": "content",
+                        }
+                    ],
+                    "dependencies": [],
+                }
+            ],
             "length_constraints": [],
-            "evaluation_criteria": [],
+            "evaluation_criteria": [
+                {
+                    "criterion_name": "Clarity",
+                    "description": "Clarity of presentation",
+                    "quote_from_source": "Clarity of presentation will be evaluated",
+                }
+            ],
             "additional_requirements": [],
         },
         "nlp_analysis": {
@@ -452,7 +582,7 @@ async def test_cfp_analysis_stage_no_disciplines(
             "orders": [],
             "positive_instructions": [],
             "negative_instructions": [],
-            "evaluation_criteria": [],
+            "evaluation_criteria": ["Clarity will be assessed"],
         },
         "analysis_metadata": {
             "content_length": 800,
@@ -565,6 +695,24 @@ async def test_generate_metadata_stage_success(
             "max_words": 2000,
             "search_queries": ["research methodology", "experimental design"],
         },
+        {
+            "id": "research_objectives",
+            "keywords": ["objectives", "aims", "goals"],
+            "topics": ["research goals", "specific aims"],
+            "generation_instructions": "Detail the research objectives and specific aims",
+            "depends_on": ["research_plan"],
+            "max_words": 600,
+            "search_queries": ["research objectives", "specific aims"],
+        },
+        {
+            "id": "methodology_approach",
+            "keywords": ["methodology", "methods", "approach"],
+            "topics": ["experimental methods", "data collection"],
+            "generation_instructions": "Describe the experimental methodology and approach",
+            "depends_on": ["research_plan"],
+            "max_words": 800,
+            "search_queries": ["research methods", "experimental design"],
+        },
     ]
     mock_handle_generate_metadata.return_value = mock_section_metadata
 
@@ -628,7 +776,35 @@ async def test_save_grant_template_success(
             topics=[],
             generation_instructions="",
             depends_on=[],
-            max_words=100,
+            max_words=2000,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=True,
+        ),
+        GrantLongFormSection(
+            id="research_objectives",
+            title="Research Objectives",
+            order=3,
+            parent_id="section2",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=600,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
+        GrantLongFormSection(
+            id="methodology",
+            title="Methodology",
+            order=4,
+            parent_id="section2",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=["research_objectives"],
+            max_words=800,
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
@@ -666,7 +842,7 @@ async def test_save_grant_template_success(
         notification_type="success",
         data={
             "template_id": str(grant_template.id),
-            "sections": 2,
+            "sections": 4,
             "organization": "National Institutes of Health",
         },
     )
@@ -695,7 +871,21 @@ async def test_save_grant_template_no_organization(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_overview",
+            title="Project Overview",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -718,7 +908,7 @@ async def test_save_grant_template_no_organization(
         notification_type="success",
         data={
             "template_id": str(grant_template.id),
-            "sections": 1,
+            "sections": 2,
             "organization": "Unknown",
         },
     )
@@ -752,7 +942,21 @@ async def test_save_grant_template_no_submission_date(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_objectives",
+            title="Project Objectives",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -795,7 +999,21 @@ async def test_save_grant_template_date_parsing(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_background",
+            title="Background",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     await handle_save_grant_template(
@@ -833,7 +1051,21 @@ async def test_save_grant_template_database_error(
             search_queries=[],
             is_clinical_trial=None,
             is_detailed_research_plan=False,
-        )
+        ),
+        GrantLongFormSection(
+            id="summary_aims",
+            title="Specific Aims",
+            order=2,
+            parent_id="section1",
+            keywords=[],
+            topics=[],
+            generation_instructions="",
+            depends_on=[],
+            max_words=50,
+            search_queries=[],
+            is_clinical_trial=None,
+            is_detailed_research_plan=False,
+        ),
     ]
 
     with patch("services.rag.src.grant_template.handlers.update") as mock_update:
@@ -876,21 +1108,57 @@ async def test_handlers_preserve_data_flow(
 
         mock_analyze.return_value = {
             "cfp_analysis": {
-                "required_sections": [],
-                "length_constraints": [],
-                "evaluation_criteria": [],
-                "additional_requirements": [],
+                "sections_count": 2,
+                "length_constraints_found": 1,
+                "evaluation_criteria_count": 1,
+                "required_sections": [
+                    {
+                        "section_name": "Research Strategy",
+                        "definition": "Comprehensive research approach",
+                        "requirements": [
+                            {
+                                "requirement": "Must include timeline",
+                                "quote_from_source": "Research strategy must include detailed timeline",
+                                "category": "content",
+                            }
+                        ],
+                        "dependencies": [],
+                    }
+                ],
+                "length_constraints": [
+                    {
+                        "section_name": "Research Strategy",
+                        "measurement_type": "pages",
+                        "limit_description": "12 pages maximum",
+                        "quote_from_source": "Research strategy limited to 12 pages",
+                        "exclusions": ["References"],
+                    }
+                ],
+                "evaluation_criteria": [
+                    {
+                        "criterion_name": "Approach",
+                        "description": "Quality of research approach",
+                        "quote_from_source": "Research approach will be evaluated",
+                    }
+                ],
+                "additional_requirements": [
+                    {
+                        "requirement": "Must include team qualifications",
+                        "quote_from_source": "Team qualifications must be provided",
+                        "category": "eligibility",
+                    }
+                ],
             },
             "nlp_analysis": {
-                "money": [],
-                "date_time": [],
-                "writing_related": [],
-                "other_numbers": [],
-                "recommendations": [],
-                "orders": [],
-                "positive_instructions": [],
-                "negative_instructions": [],
-                "evaluation_criteria": [],
+                "money": ["$75,000 funding available"],
+                "date_time": ["3-year project duration"],
+                "writing_related": ["Submit comprehensive proposal"],
+                "other_numbers": ["Maximum 3 collaborators"],
+                "recommendations": ["Preliminary data recommended"],
+                "orders": ["Submit in specified format"],
+                "positive_instructions": ["Include detailed methodology"],
+                "negative_instructions": ["Do not exceed length limits"],
+                "evaluation_criteria": ["Methodology will be assessed"],
             },
             "analysis_metadata": {
                 "content_length": 800,
