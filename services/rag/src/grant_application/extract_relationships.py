@@ -292,7 +292,7 @@ async def handle_extract_relationships(
             section_config=grant_section,
             rag_context=rag_results,
             research_objectives=research_objectives,
-            is_json_content=True,  # This returns JSON relationships data
+            is_json_content=True,
         ),
     )
     ret: ResearchRelationships = defaultdict(list)

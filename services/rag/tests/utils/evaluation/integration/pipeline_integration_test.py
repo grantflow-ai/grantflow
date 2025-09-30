@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-# Test data structures don't match exact TypedDict definitions
 
 import pytest
 from packages.db.src.json_objects import (
@@ -126,7 +125,6 @@ async def test_evaluate_scientific_content_clinical_trial_weighting() -> None:
 
     assert "scientific_quality_metrics" in result
     assert "overall_score" in result
-    # This test validates pipeline functionality, not content quality - use basic threshold
     assert result["overall_score"] >= 40.0, f"Expected basic functionality score, got {result['overall_score']}"
     assert result["overall_score"] <= 100.0, "Score should not exceed maximum"
 
@@ -299,7 +297,6 @@ async def test_evaluation_with_word_limit_exceeded() -> None:
 
 @pytest.mark.asyncio
 async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
-    """Test that all context types are properly passed through the evaluation pipeline."""
     content: str = """
     # Biomarker Discovery and Clinical Validation
 
@@ -422,7 +419,6 @@ async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
         trace_id="test_trace_comprehensive_context",
     )
 
-    # Verify all evaluation components are present
     assert isinstance(result, dict)
     assert "overall_score" in result
     assert "structural_metrics" in result
@@ -430,13 +426,11 @@ async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
     assert "quality_metrics" in result
     assert "coherence_metrics" in result
 
-    # Verify reasonable scores with comprehensive context
     assert result["overall_score"] > 20.0, (
         f"Expected reasonable score with comprehensive context, got {result['overall_score']}"
     )
     assert result["overall_score"] <= 100.0
 
-    # Verify grounding metrics benefit from context
     grounding_metrics = result["grounding_metrics"]
     assert "keyword_coverage" in grounding_metrics
     assert "search_query_integration" in grounding_metrics
@@ -444,7 +438,6 @@ async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
         f"Expected some keyword coverage with rich context, got {grounding_metrics['keyword_coverage']}"
     )
 
-    # Verify scientific quality metrics
     quality_metrics = result["quality_metrics"]
     assert "overall" in quality_metrics
     assert "evidence_based_claims_ratio" in quality_metrics
@@ -452,14 +445,12 @@ async def test_evaluate_scientific_content_with_comprehensive_context() -> None:
         f"Expected reasonable scientific quality with context, got {quality_metrics['overall']}"
     )
 
-    # Test comparison without research objectives to show context impact
     result_minimal = await evaluate_scientific_content(
         content=content,
         section_config=section_config,
         rag_context=rag_context,
-        research_objectives=[],  # No objectives
+        research_objectives=[],
         trace_id="test_trace_minimal_context",
     )
 
-    # Full context should generally produce equal or better grounding
     assert result["grounding_metrics"]["overall"] >= result_minimal["grounding_metrics"]["overall"] - 0.1

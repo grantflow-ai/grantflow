@@ -1,9 +1,3 @@
-"""Unified type definitions for the evaluation system.
-
-This module contains all TypedDict definitions used across the evaluation system.
-No "Fast", "Advanced", or "Enhanced" prefixes - just clean, descriptive names.
-"""
-
 from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 
 if TYPE_CHECKING:
@@ -17,7 +11,6 @@ from packages.db.src.json_objects import (
 
 from services.rag.src.dto import DocumentDTO
 
-# Type aliases for clarity
 RecommendationType = Literal["accept", "llm_review", "reject"]
 EvaluationPathType = Literal["nlp_only", "llm_only", "nlp_with_llm_fallback", "error"]
 ContentType = Literal["text", "objectives", "relationships", "enrichment", "cfp_analysis"]
@@ -25,17 +18,11 @@ ComplexityLevel = Literal["simple", "moderate", "complex", "very_complex"]
 QualityLevel = Literal["excellent", "good", "acceptable", "poor", "unacceptable"]
 
 
-# Base metrics that all evaluation metrics inherit from
 class BaseMetrics(TypedDict):
-    """Base class for all evaluation metrics."""
-
-    overall: float  # 0.0 to 1.0
+    overall: float
 
 
-# Text evaluation metrics
 class StructuralMetrics(BaseMetrics):
-    """Metrics for structural quality of text content."""
-
     word_count_compliance: float
     paragraph_distribution: float
     section_organization: float
@@ -44,8 +31,6 @@ class StructuralMetrics(BaseMetrics):
 
 
 class GroundingMetrics(BaseMetrics):
-    """Metrics for source grounding quality."""
-
     rouge_l_score: float
     rouge_2_score: float
     rouge_3_score: float
@@ -56,8 +41,6 @@ class GroundingMetrics(BaseMetrics):
 
 
 class QualityMetrics(BaseMetrics):
-    """Metrics for scientific quality."""
-
     term_density: float
     domain_vocabulary_accuracy: float
     methodology_language_score: float
@@ -68,8 +51,6 @@ class QualityMetrics(BaseMetrics):
 
 
 class CoherenceMetrics(BaseMetrics):
-    """Metrics for text coherence."""
-
     local_coherence: float
     global_coherence: float
     lexical_diversity: float
@@ -80,8 +61,6 @@ class CoherenceMetrics(BaseMetrics):
 
 
 class ScientificAnalysis(TypedDict):
-    """CPU-based scientific analysis metrics."""
-
     domain_similarity: float
     methodology_completeness: float
     innovation_indicators: float
@@ -89,10 +68,7 @@ class ScientificAnalysis(TypedDict):
     concept_sophistication: float
 
 
-# JSON evaluation metrics
 class ObjectiveQualityMetrics(BaseMetrics):
-    """Quality metrics for research objectives."""
-
     scientific_rigor: float
     innovation_score: float
     coherence: float
@@ -101,8 +77,6 @@ class ObjectiveQualityMetrics(BaseMetrics):
 
 
 class RelationshipQualityMetrics(BaseMetrics):
-    """Quality metrics for extracted relationships."""
-
     validity: float
     coverage: float
     diversity: float
@@ -111,8 +85,6 @@ class RelationshipQualityMetrics(BaseMetrics):
 
 
 class EnrichmentQualityMetrics(BaseMetrics):
-    """Quality metrics for objective enrichment."""
-
     value_added: float
     term_relevance: float
     question_utility: float
@@ -121,18 +93,13 @@ class EnrichmentQualityMetrics(BaseMetrics):
 
 
 class CFPAnalysisQualityMetrics(BaseMetrics):
-    """Quality metrics for CFP analysis extraction."""
-
     requirement_clarity: float
     quote_accuracy: float
     completeness: float
     categorization: float
 
 
-# Evaluation configuration
 class EvaluationThresholds(TypedDict):
-    """Configurable thresholds for evaluation."""
-
     accept_threshold: float
     llm_review_threshold: float
     component_weights: dict[str, float]
@@ -140,8 +107,6 @@ class EvaluationThresholds(TypedDict):
 
 
 class EvaluationSettings(TypedDict, total=False):
-    """Settings for controlling evaluation behavior."""
-
     enable_nlp_evaluation: bool
     nlp_confidence_threshold: float
     nlp_accept_threshold: float
@@ -150,13 +115,11 @@ class EvaluationSettings(TypedDict, total=False):
     llm_timeout: float
     nlp_weight: float
     llm_weight: float
-    json_confidence_threshold: float  # Higher threshold for JSON structural evaluation
-    json_semantic_threshold: float  # Lower threshold for JSON semantic content
+    json_confidence_threshold: float
+    json_semantic_threshold: float
 
 
 class EvaluationContext(TypedDict, total=False):
-    """Context provided to evaluation functions."""
-
     section_config: GrantLongFormSection
     rag_context: list[DocumentDTO]
     research_objectives: list[ResearchObjective]
@@ -168,67 +131,49 @@ class EvaluationContext(TypedDict, total=False):
 
 
 class JsonEvaluationContext(EvaluationContext):
-    """Extended context for JSON evaluation."""
-
     json_content: ResearchObjective | CFPAnalysisResult | dict[str, list[list[str]]]
 
 
-# Unified evaluation result
 class EvaluationResult(TypedDict):
-    """Unified result from any evaluation path."""
-
     success: bool
-    overall_score: float  # 0-100
-    confidence_score: float  # 0.0-1.0
+    overall_score: float
+    confidence_score: float
     recommendation: RecommendationType
     detailed_feedback: list[str]
     evaluation_path: EvaluationPathType
     execution_time_ms: float
 
-    # Detailed metrics (present based on content type)
     structural_metrics: NotRequired[StructuralMetrics]
     grounding_metrics: NotRequired[GroundingMetrics]
     quality_metrics: NotRequired[QualityMetrics]
     coherence_metrics: NotRequired[CoherenceMetrics]
     scientific_analysis: NotRequired[ScientificAnalysis]
 
-    # JSON-specific metrics
     objective_metrics: NotRequired[ObjectiveQualityMetrics]
     relationship_metrics: NotRequired[RelationshipQualityMetrics]
     enrichment_metrics: NotRequired[EnrichmentQualityMetrics]
     cfp_analysis_metrics: NotRequired[CFPAnalysisQualityMetrics]
 
-    # Additional evaluation data
     llm_result: NotRequired["EvaluationToolResponse"]
     fast_result: NotRequired["EvaluationResult"]
 
 
-# LLM evaluation types
 class EvaluationCriterion(TypedDict):
-    """Definition of an evaluation criterion for LLM evaluation."""
-
     name: str
     evaluation_instructions: str
     weight: float
 
 
 class EvaluationScore(TypedDict):
-    """Score result for a single criterion."""
-
     score: float
     instructions: str
 
 
 class LLMEvaluationResponse(TypedDict):
-    """Response from LLM evaluation."""
-
     criteria: dict[str, EvaluationScore]
 
 
-# Feedback loop types
 class FeedbackLoopSettings(TypedDict, total=False):
-    """Settings for the feedback loop system."""
-
     max_iterations: int
     min_improvement_threshold: float
     target_quality_level: float
@@ -237,8 +182,6 @@ class FeedbackLoopSettings(TypedDict, total=False):
 
 
 class ImprovementResult(TypedDict):
-    """Result from the improvement feedback loop."""
-
     improved_content: str
     evaluation_result: EvaluationResult
     quality_level: QualityLevel
@@ -247,10 +190,7 @@ class ImprovementResult(TypedDict):
     execution_time_ms: float
 
 
-# Scientific vocabulary type (used across multiple modules)
 class ScientificVocabulary(TypedDict):
-    """Collection of scientific terms and phrases."""
-
     biomedical_terms: set[str]
     methodology_terms: set[str]
     academic_phrases: set[str]

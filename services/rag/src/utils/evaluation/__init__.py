@@ -1,9 +1,4 @@
-"""Scientific content evaluation system with proper generics."""
-
-# Core evaluation functions
 from services.rag.src.utils.evaluation.core import evaluate_content
-
-# DTO types
 from services.rag.src.utils.evaluation.dto import (
     CoherenceMetrics,
     EvaluationContext,
@@ -17,16 +12,12 @@ from services.rag.src.utils.evaluation.dto import (
     ScientificAnalysis,
     StructuralMetrics,
 )
-
-# LLM evaluation components
 from services.rag.src.utils.evaluation.llm.evaluation import (
     EvaluationCriterion,
     EvaluationToolResponse,
     evaluate_output,
     with_evaluation,
 )
-
-# Main pipeline function
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
 
 __all__ = [

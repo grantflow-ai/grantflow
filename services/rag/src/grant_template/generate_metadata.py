@@ -383,7 +383,7 @@ async def handle_generate_grant_template_metadata(
             "generate_metadata",
             job_manager,
             rag_context=rag_results if rag_results else None,
-            is_json_content=True,  # Returns TemplateSectionsResponse JSON
+            is_json_content=True,
         ),
     )
     return result["sections"]

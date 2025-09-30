@@ -10,7 +10,6 @@ MIN_PASSING_SCORE: Final[int] = 40
 SCORE_INCREMENT: Final[int] = 10
 MAX_RETRIES: Final[int] = 2
 
-# Missing Information Format Constants
 MISSING_INFO_PREFIX: Final[str] = "**[MISSING INFORMATION:"
 MISSING_INFO_SUFFIX: Final[str] = "]**"
 MISSING_INFO_FORMAT: Final[str] = "**[MISSING INFORMATION: {description}]**"

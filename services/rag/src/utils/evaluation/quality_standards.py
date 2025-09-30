@@ -1,9 +1,3 @@
-"""Quality standards and thresholds for scientific content evaluation.
-
-This module defines high-quality standards for scientific content evaluation,
-ensuring that only content meeting rigorous academic standards is accepted.
-"""
-
 import re
 from enum import Enum
 from typing import TYPE_CHECKING, Final, TypedDict
@@ -15,29 +9,24 @@ if TYPE_CHECKING:
 
 
 class QualityLevel(Enum):
-    """Quality levels for scientific content evaluation."""
-
-    EXCELLENT = "excellent"  # 80%+ - Publication ready, high academic rigor
-    GOOD = "good"  # 65-80% - Strong quality, minor improvements needed
-    ACCEPTABLE = "acceptable"  # 50-65% - Meets minimum standards, requires review
-    POOR = "poor"  # 35-50% - Below standards, major improvements needed
-    UNACCEPTABLE = "unacceptable"  # <35% - Reject, fundamental issues
+    EXCELLENT = "excellent"
+    GOOD = "good"
+    ACCEPTABLE = "acceptable"
+    POOR = "poor"
+    UNACCEPTABLE = "unacceptable"
 
 
 class ContentType(Enum):
-    """Types of scientific content with different quality expectations."""
-
-    RESEARCH_PLAN = "research_plan"  # Core research methodology - highest standards
+    RESEARCH_PLAN = "research_plan"
     CLINICAL_TRIAL = "clinical_trial"
-    BIOMEDICAL_RESEARCH = "biomedical_research"  # Biomedical/translational research
-    METHODOLOGY = "methodology"  # Methods and experimental design sections
-    LITERATURE_REVIEW = "literature_review"  # Literature synthesis and reviews
-    PRELIMINARY_DATA = "preliminary_data"  # Pilot studies and preliminary results
-    GENERAL_SCIENTIFIC = "general_scientific"  # Generic STEM/translational sections
-    ADMINISTRATIVE = "administrative"  # Letters, team, resources, etc.
+    BIOMEDICAL_RESEARCH = "biomedical_research"
+    METHODOLOGY = "methodology"
+    LITERATURE_REVIEW = "literature_review"
+    PRELIMINARY_DATA = "preliminary_data"
+    GENERAL_SCIENTIFIC = "general_scientific"
+    ADMINISTRATIVE = "administrative"
 
 
-# Quality score thresholds (0.0 to 1.0 scale)
 QUALITY_THRESHOLDS: Final[dict[QualityLevel, float]] = {
     QualityLevel.EXCELLENT: 0.80,
     QualityLevel.GOOD: 0.65,
@@ -46,43 +35,42 @@ QUALITY_THRESHOLDS: Final[dict[QualityLevel, float]] = {
     QualityLevel.UNACCEPTABLE: 0.0,
 }
 
-# Component-specific minimum requirements for different content types
 COMPONENT_REQUIREMENTS: Final[dict[ContentType, dict[str, float]]] = {
     ContentType.CLINICAL_TRIAL: {
-        "scientific_quality": 0.70,  # High bar for clinical content
-        "source_grounding": 0.65,  # Must cite evidence
-        "coherence": 0.60,  # Clear communication essential
-        "structural": 0.55,  # Well-organized
+        "scientific_quality": 0.70,
+        "source_grounding": 0.65,
+        "coherence": 0.60,
+        "structural": 0.55,
     },
     ContentType.RESEARCH_PLAN: {
-        "scientific_quality": 0.75,  # High bar for research plans
-        "source_grounding": 0.70,  # Must be well-grounded
-        "coherence": 0.70,  # Clear methodology essential
-        "structural": 0.65,  # Well-organized
+        "scientific_quality": 0.75,
+        "source_grounding": 0.70,
+        "coherence": 0.70,
+        "structural": 0.65,
     },
     ContentType.BIOMEDICAL_RESEARCH: {
-        "scientific_quality": 0.65,  # Strong scientific quality needed
-        "source_grounding": 0.60,  # Good evidence base
-        "coherence": 0.60,  # Clear presentation
-        "structural": 0.55,  # Well-organized
+        "scientific_quality": 0.65,
+        "source_grounding": 0.60,
+        "coherence": 0.60,
+        "structural": 0.55,
     },
     ContentType.METHODOLOGY: {
-        "scientific_quality": 0.65,  # Methods need precision
-        "source_grounding": 0.55,  # Some grounding needed
-        "coherence": 0.65,  # Very clear methods essential
-        "structural": 0.60,  # Well-structured methodology
+        "scientific_quality": 0.65,
+        "source_grounding": 0.55,
+        "coherence": 0.65,
+        "structural": 0.60,
     },
     ContentType.LITERATURE_REVIEW: {
-        "scientific_quality": 0.60,  # Good synthesis required
-        "source_grounding": 0.70,  # Heavy citation needed
-        "coherence": 0.60,  # Clear narrative
-        "structural": 0.55,  # Organized review
+        "scientific_quality": 0.60,
+        "source_grounding": 0.70,
+        "coherence": 0.60,
+        "structural": 0.55,
     },
     ContentType.PRELIMINARY_DATA: {
-        "scientific_quality": 0.55,  # Preliminary, so lower bar
-        "source_grounding": 0.50,  # Some evidence
-        "coherence": 0.55,  # Clear presentation
-        "structural": 0.50,  # Basic organization
+        "scientific_quality": 0.55,
+        "source_grounding": 0.50,
+        "coherence": 0.55,
+        "structural": 0.50,
     },
     ContentType.GENERAL_SCIENTIFIC: {
         "scientific_quality": 0.60,
@@ -91,36 +79,30 @@ COMPONENT_REQUIREMENTS: Final[dict[ContentType, dict[str, float]]] = {
         "structural": 0.50,
     },
     ContentType.ADMINISTRATIVE: {
-        "scientific_quality": 0.45,  # Lower bar for admin sections
+        "scientific_quality": 0.45,
         "source_grounding": 0.40,
-        "coherence": 0.50,  # Still needs to be coherent
+        "coherence": 0.50,
         "structural": 0.45,
     },
 }
 
-# Overall score requirements for acceptance
-# Target thresholds we aim for (but allow fallback to MINIMAL_THRESHOLD)
 TARGET_THRESHOLDS: Final[dict[ContentType, float]] = {
-    ContentType.RESEARCH_PLAN: 0.80,  # Research plans need high quality
-    ContentType.CLINICAL_TRIAL: 0.70,  # Clinical content needs rigor
-    ContentType.BIOMEDICAL_RESEARCH: 0.65,  # Biomedical research standards
-    ContentType.METHODOLOGY: 0.65,  # Methodology sections need clarity
-    ContentType.LITERATURE_REVIEW: 0.60,  # Literature reviews moderate bar
-    ContentType.PRELIMINARY_DATA: 0.55,  # Preliminary data lower threshold
-    ContentType.GENERAL_SCIENTIFIC: 0.65,  # Standard scientific sections
-    ContentType.ADMINISTRATIVE: 0.60,  # Admin sections more lenient
+    ContentType.RESEARCH_PLAN: 0.80,
+    ContentType.CLINICAL_TRIAL: 0.70,
+    ContentType.BIOMEDICAL_RESEARCH: 0.65,
+    ContentType.METHODOLOGY: 0.65,
+    ContentType.LITERATURE_REVIEW: 0.60,
+    ContentType.PRELIMINARY_DATA: 0.55,
+    ContentType.GENERAL_SCIENTIFIC: 0.65,
+    ContentType.ADMINISTRATIVE: 0.60,
 }
 
-# Absolute minimum threshold - if we can't reach this, generate MISSING INFO error
-MINIMAL_THRESHOLD: Final[float] = 0.60  # Universal fallback threshold
+MINIMAL_THRESHOLD: Final[float] = 0.60
 
-# Legacy name for compatibility
 ACCEPTANCE_THRESHOLDS = TARGET_THRESHOLDS
 
 
 class QualityAssessment(TypedDict):
-    """Result of quality assessment."""
-
     quality_level: QualityLevel
     overall_score: float
     meets_requirements: bool
@@ -135,24 +117,12 @@ def assess_content_quality(
     component_scores: dict[str, float],
     content_type: ContentType = ContentType.GENERAL_SCIENTIFIC,
 ) -> QualityAssessment:
-    """Assess content quality against rigorous academic standards.
-
-    Args:
-        overall_score: Overall evaluation score (0.0 to 1.0)
-        component_scores: Individual component scores
-        content_type: Type of content being evaluated
-
-    Returns:
-        Quality assessment with detailed feedback
-    """
-    # Determine quality level
     quality_level = QualityLevel.UNACCEPTABLE
     for level in [QualityLevel.EXCELLENT, QualityLevel.GOOD, QualityLevel.ACCEPTABLE, QualityLevel.POOR]:
         if overall_score >= QUALITY_THRESHOLDS[level]:
             quality_level = level
             break
 
-    # Check component requirements
     requirements = COMPONENT_REQUIREMENTS[content_type]
     failing_components = []
 
@@ -160,14 +130,11 @@ def assess_content_quality(
         if component in component_scores and component_scores[component] < min_score:
             failing_components.append(component)
 
-    # Check against target threshold (what we aim for)
     target_threshold = TARGET_THRESHOLDS.get(content_type, 0.65)
     meets_target = overall_score >= target_threshold and not failing_components
 
-    # Check against minimal threshold (absolute minimum for acceptance)
     meets_minimal = overall_score >= MINIMAL_THRESHOLD
 
-    # Generate recommendation based on thresholds
     if meets_target:
         recommendation = "Accept - Meets target quality standards"
     elif meets_minimal:
@@ -175,10 +142,8 @@ def assess_content_quality(
     else:
         recommendation = "Reject - Below minimal acceptable threshold"
 
-    # Keep old meets_requirements for backwards compatibility
     meets_requirements = meets_target
 
-    # Generate improvement areas
     improvement_areas = []
 
     if overall_score < QUALITY_THRESHOLDS[QualityLevel.GOOD]:
@@ -206,41 +171,21 @@ def assess_content_quality(
 
 
 def detect_content_type(section_config: "GrantLongFormSection") -> ContentType:
-    """Detect content type from section configuration.
-
-    Args:
-        section_config: Grant section configuration
-
-    Returns:
-        Detected content type
-    """
-    # Check explicit flags first
     if section_config.get("is_detailed_research_plan"):
         return ContentType.RESEARCH_PLAN
 
     if section_config.get("is_clinical_trial"):
         return ContentType.CLINICAL_TRIAL
 
-    # Check title/keywords for section type
     title = section_config.get("title", "").lower()
 
-    # Administrative sections
     if any(term in title for term in ["letter", "team", "personnel", "resources", "facilities", "budget"]):
         return ContentType.ADMINISTRATIVE
 
-    # Default to general scientific
     return ContentType.GENERAL_SCIENTIFIC
 
 
 def evaluate_missing_information(content: str) -> dict[str, float]:
-    """Evaluate proper use of MISSING INFORMATION markers.
-
-    Args:
-        content: Text content to evaluate
-
-    Returns:
-        Dictionary with missing info metrics
-    """
     markers = re.findall(MISSING_INFO_PATTERN, content)
 
     if not markers:
@@ -250,40 +195,31 @@ def evaluate_missing_information(content: str) -> dict[str, float]:
             "content_ratio": 0.0,
         }
 
-    # Calculate ratio of content that is MISSING INFO
     marker_chars = sum(len(MISSING_INFO_FORMAT.format(description=m)) for m in markers)
     content_ratio = marker_chars / max(len(content), 1)
 
-    # Quality factors:
-    # - Specific descriptions (not generic)
-    # - Appropriate placement (not overused)
     quality_bonus = 0.0
 
     if markers:
-        # Check specificity (longer = more specific)
         avg_length = sum(len(m) for m in markers) / len(markers)
-        if avg_length > 20:  # Specific descriptions
+        if avg_length > 20:
             quality_bonus += 0.05
 
-        # Check not overused (< 30% of content)
         if content_ratio < 0.3:
             quality_bonus += 0.03
 
-        # Base bonus for following guidelines
         quality_bonus += 0.02
 
     return {
         "count": len(markers),
-        "quality_bonus": min(0.10, quality_bonus),  # Cap at 10% bonus
+        "quality_bonus": min(0.10, quality_bonus),
         "content_ratio": content_ratio,
     }
 
 
 def get_target_threshold(content_type: ContentType) -> float:
-    """Get target threshold we aim for."""
     return TARGET_THRESHOLDS.get(content_type, 0.65)
 
 
 def get_component_requirements(content_type: ContentType) -> dict[str, float]:
-    """Get component-specific requirements for content type."""
     return COMPONENT_REQUIREMENTS.get(content_type, COMPONENT_REQUIREMENTS[ContentType.GENERAL_SCIENTIFIC]).copy()

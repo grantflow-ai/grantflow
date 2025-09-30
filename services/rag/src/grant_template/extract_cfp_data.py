@@ -358,8 +358,8 @@ async def handle_extract_cfp_data(
         **get_evaluation_kwargs(
             "extract_cfp_data",
             job_manager,
-            rag_context=formatted_sources,  # Pass the RAG sources as context
-            is_json_content=True,  # Returns CFPExtractionResult JSON
+            rag_context=formatted_sources,
+            is_json_content=True,
         ),
     )
 

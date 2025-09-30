@@ -1,7 +1,4 @@
-"""Integration tests for JSON evaluation with context passing."""
-
 # mypy: ignore-errors
-# Test data structures don't match exact TypedDict definitions
 
 import pytest
 from packages.db.src.json_objects import (
@@ -29,7 +26,6 @@ from services.rag.src.utils.evaluation.json.relationships import evaluate_relati
 class TestJSONEvaluationIntegration:
     @pytest.mark.asyncio
     async def test_objectives_evaluation_with_context(self) -> None:
-        """Test objectives evaluation with full context integration."""
         research_objectives = [
             ResearchObjective(
                 number=1,
@@ -84,7 +80,6 @@ class TestJSONEvaluationIntegration:
             research_objectives=research_objectives,
         )
 
-        # Extract keywords and topics from context
         keywords = context["section_config"].keywords if "section_config" in context else None
         topics = context["section_config"].topics if "section_config" in context else None
 
@@ -97,7 +92,6 @@ class TestJSONEvaluationIntegration:
 
     @pytest.mark.asyncio
     async def test_enrichment_evaluation_with_rag_context(self) -> None:
-        """Test enrichment evaluation with RAG context integration."""
         enrichment_data: EnrichmentData = {
             "technical_terms": [
                 "proteomics biomarker discovery",
@@ -158,7 +152,6 @@ class TestJSONEvaluationIntegration:
             rag_context=rag_context,
         )
 
-        # Extract keywords and topics from context
         keywords = context["section_config"].keywords if "section_config" in context else None
         topics = context["section_config"].topics if "section_config" in context else None
 
@@ -171,7 +164,6 @@ class TestJSONEvaluationIntegration:
 
     @pytest.mark.asyncio
     async def test_relationships_evaluation_quality(self) -> None:
-        """Test relationships evaluation with scientific content."""
         relationships = {
             "proteins": [
                 RelationshipPair(relation_type="interacts_with", target_entity="tumor_suppressor_p53"),
@@ -206,7 +198,6 @@ class TestJSONEvaluationIntegration:
 
     @pytest.mark.asyncio
     async def test_cfp_analysis_evaluation_comprehensive(self) -> None:
-        """Test CFP analysis evaluation with comprehensive data."""
         cfp_data: CFPAnalysisData = {
             "funding_agency": "National Institutes of Health",
             "program_name": "Cancer Biomarker Research Excellence Program",
@@ -284,8 +275,6 @@ class TestJSONEvaluationIntegration:
 
     @pytest.mark.asyncio
     async def test_evaluation_settings_json_content(self) -> None:
-        """Test evaluation settings for JSON content with different content types."""
-        # Test clinical trial JSON settings
         clinical_settings = build_evaluation_settings(
             is_clinical_trial=True,
             is_json_content=True,
@@ -296,7 +285,6 @@ class TestJSONEvaluationIntegration:
         assert clinical_settings["fast_weight"] == 0.5
         assert clinical_settings["llm_weight"] == 0.5
 
-        # Test research plan JSON settings
         research_settings = build_evaluation_settings(
             is_detailed_research_plan=True,
             is_json_content=True,
@@ -306,7 +294,6 @@ class TestJSONEvaluationIntegration:
         assert research_settings["json_confidence_threshold"] == 0.95
         assert research_settings["json_semantic_threshold"] == 0.6
 
-        # Test basic JSON settings
         json_settings = build_evaluation_settings(is_json_content=True)
 
         assert json_settings["json_confidence_threshold"] == 0.95
@@ -316,7 +303,6 @@ class TestJSONEvaluationIntegration:
 
     @pytest.mark.asyncio
     async def test_context_integration_completeness(self) -> None:
-        """Test that all context types are properly integrated."""
         section_config = GrantLongFormSection(
             id="integration_test",
             title="Integration Test",
@@ -379,29 +365,24 @@ class TestJSONEvaluationIntegration:
             reference_corpus=reference_corpus,
         )
 
-        # Verify all context types are present
         assert "section_config" in context
         assert "rag_context" in context
         assert "research_objectives" in context
         assert "cfp_analysis" in context
         assert "reference_corpus" in context
 
-        # Verify context structure and content
         assert context["section_config"] == section_config
         assert context["rag_context"] == rag_context
         assert context["research_objectives"] == research_objectives
         assert context["cfp_analysis"] == cfp_analysis
         assert context["reference_corpus"] == reference_corpus
 
-        # Test that context improves evaluation quality
         keywords = context["section_config"].keywords
         topics = context["section_config"].topics
 
-        # Test objectives evaluation with context
         objectives_result = evaluate_objectives_quality(research_objectives, keywords, topics)
         assert objectives_result["keyword_alignment"] > 0.5, "Should benefit from keyword alignment"
 
-        # Test enrichment evaluation with context
         enrichment_data: EnrichmentData = {
             "technical_terms": ["clinical validation", "biomarker analysis"],
             "research_questions": ["How do biomarkers perform clinically?"],

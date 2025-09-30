@@ -1,5 +1,3 @@
-"""Tests for evaluation context builder."""
-
 from packages.db.src.json_objects import (
     CategorizationAnalysisResult,
     CFPAnalysisMetadata,
@@ -19,7 +17,6 @@ from services.rag.src.utils.evaluation.context_builder import (
 
 class TestBuildEvaluationContext:
     def test_build_evaluation_context_complete(self) -> None:
-        """Test building context with all available data sources."""
         section_config = GrantLongFormSection(
             id="methodology",
             title="Research Methodology",
@@ -96,7 +93,6 @@ class TestBuildEvaluationContext:
         assert context["cfp_analysis"] == cfp_analysis
 
     def test_build_evaluation_context_string_rag_context(self) -> None:
-        """Test building context with string RAG context (gets converted to DocumentDTO)."""
         rag_string = "This is a string context that should be converted to DocumentDTO"
 
         context = build_evaluation_context(rag_context=rag_string)
@@ -104,21 +100,17 @@ class TestBuildEvaluationContext:
         assert "rag_context" in context
         assert isinstance(context["rag_context"], list)
         assert len(context["rag_context"]) == 1
-        # DocumentDTO access - check the dict structure
         rag_doc = context["rag_context"][0]
         assert "content" in rag_doc
         assert rag_doc["content"] == rag_string
 
     def test_build_evaluation_context_minimal(self) -> None:
-        """Test building context with minimal data."""
         context = build_evaluation_context()
 
-        # Should return empty context but still be valid EvaluationContext
         assert isinstance(context, dict)
         assert len(context) == 0
 
     def test_build_evaluation_context_partial_data(self) -> None:
-        """Test building context with some data sources."""
         section_config = GrantLongFormSection(
             id="intro",
             title="Introduction",
@@ -143,14 +135,12 @@ class TestBuildEvaluationContext:
         assert "research_objectives" not in context
 
     def test_build_evaluation_context_empty_lists(self) -> None:
-        """Test building context with empty lists."""
         context = build_evaluation_context(
             rag_context=[],
             research_objectives=[],
             reference_corpus=[],
         )
 
-        # Empty lists should either be included as empty or not included
         assert context.get("rag_context", []) == []
         assert context.get("research_objectives", []) == []
         assert context.get("reference_corpus", []) == []
@@ -158,14 +148,12 @@ class TestBuildEvaluationContext:
 
 class TestBuildEvaluationSettings:
     def test_build_evaluation_settings_default(self) -> None:
-        """Test building settings with default values."""
         settings = build_evaluation_settings()
 
         assert settings["enable_nlp_evaluation"] is True
         assert settings["force_llm_evaluation"] is False
 
     def test_build_evaluation_settings_clinical_trial(self) -> None:
-        """Test building settings for clinical trial content."""
         settings = build_evaluation_settings(is_clinical_trial=True)
 
         assert settings["enable_nlp_evaluation"] is True
@@ -174,7 +162,6 @@ class TestBuildEvaluationSettings:
         assert settings["nlp_accept_threshold"] == 90.0
 
     def test_build_evaluation_settings_detailed_research_plan(self) -> None:
-        """Test building settings for detailed research plan."""
         settings = build_evaluation_settings(is_detailed_research_plan=True)
 
         assert settings["enable_nlp_evaluation"] is True
@@ -183,7 +170,6 @@ class TestBuildEvaluationSettings:
         assert settings["nlp_accept_threshold"] == 85.0
 
     def test_build_evaluation_settings_json_content(self) -> None:
-        """Test building settings for JSON content evaluation."""
         settings = build_evaluation_settings(is_json_content=True)
 
         assert settings["enable_nlp_evaluation"] is True
@@ -194,7 +180,6 @@ class TestBuildEvaluationSettings:
         assert settings["llm_weight"] == 0.5
 
     def test_build_evaluation_settings_force_llm(self) -> None:
-        """Test building settings with forced LLM evaluation."""
         settings = build_evaluation_settings(
             enable_nlp_evaluation=False,
             force_llm_evaluation=True,
@@ -204,25 +189,21 @@ class TestBuildEvaluationSettings:
         assert settings["force_llm_evaluation"] is True
 
     def test_build_evaluation_settings_combined_flags(self) -> None:
-        """Test building settings with multiple content type flags."""
         settings = build_evaluation_settings(
             is_clinical_trial=True,
             is_detailed_research_plan=True,
             is_json_content=True,
         )
 
-        # Clinical trial and research plan settings should be applied - clinical trial has precedence
-        assert settings["nlp_confidence_threshold"] == 0.85  # Clinical trial setting
+        assert settings["nlp_confidence_threshold"] == 0.85
         assert settings["nlp_accept_threshold"] == 90.0
 
-        # JSON settings should also be applied
         assert settings["json_confidence_threshold"] == 0.95
         assert settings["json_semantic_threshold"] == 0.6
         assert settings["nlp_weight"] == 0.5
         assert settings["llm_weight"] == 0.5
 
     def test_build_evaluation_settings_additional_settings(self) -> None:
-        """Test building settings with additional custom settings."""
         settings = build_evaluation_settings(
             enable_nlp_evaluation=True,
         )
@@ -230,12 +211,10 @@ class TestBuildEvaluationSettings:
         assert settings["enable_nlp_evaluation"] is True
 
     def test_build_evaluation_settings_override_defaults(self) -> None:
-        """Test that additional settings can override defaults."""
         settings = build_evaluation_settings(
             is_clinical_trial=True,
-            nlp_confidence_threshold=0.95,  # Override the clinical trial default
+            nlp_confidence_threshold=0.95,
         )
 
-        # Should use the explicitly provided value, not the clinical trial default
         assert settings["nlp_confidence_threshold"] == 0.95
-        assert settings["nlp_accept_threshold"] == 90.0  # Should still use clinical trial default
+        assert settings["nlp_accept_threshold"] == 90.0

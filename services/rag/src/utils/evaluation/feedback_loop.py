@@ -1,13 +1,3 @@
-"""Feedback loop system for scientific content evaluation and improvement.
-
-This module implements an iterative feedback system that:
-1. Evaluates content using fast CPU-based metrics
-2. Identifies specific quality issues
-3. Generates targeted improvement instructions
-4. Uses LLM to improve content based on feedback
-5. Re-evaluates until quality standards are met
-"""
-
 import time
 from typing import TypedDict, cast
 
@@ -135,8 +125,6 @@ CONTENT_IMPROVEMENT_PROMPT = PromptTemplate(
 
 
 class ImprovementResult(TypedDict):
-    """Result of content improvement attempt."""
-
     improved_content: str
     evaluation_result: EvaluationResult
     quality_assessment: QualityAssessment
@@ -146,20 +134,18 @@ class ImprovementResult(TypedDict):
 
 
 class FeedbackLoopSettings(TypedDict, total=False):
-    """Settings for feedback loop behavior."""
-
-    max_iterations: int  # Maximum improvement attempts
-    min_improvement_threshold: float  # Minimum score improvement to continue
-    target_quality_level: float  # Target overall score to achieve
-    enable_adaptive_thresholds: bool  # Lower thresholds if no improvement
-    llm_timeout: float  # Timeout for LLM improvement calls
+    max_iterations: int
+    min_improvement_threshold: float
+    target_quality_level: float
+    enable_adaptive_thresholds: bool
+    llm_timeout: float
 
 
 DEFAULT_FEEDBACK_SETTINGS: FeedbackLoopSettings = {
-    "max_iterations": 2,  # Only 2 improvement attempts
-    "min_improvement_threshold": 0.05,  # 5% minimum improvement
-    "target_quality_level": 0.80,  # 80% target for research plans
-    "enable_adaptive_thresholds": False,  # Strict thresholds
+    "max_iterations": 2,
+    "min_improvement_threshold": 0.05,
+    "target_quality_level": 0.80,
+    "enable_adaptive_thresholds": False,
     "llm_timeout": 45.0,
 }
 
@@ -168,13 +154,10 @@ def _generate_improvement_instructions(
     evaluation_result: EvaluationResult,
     content_type: ContentType,
 ) -> list[str]:
-    """Generate specific improvement instructions based on evaluation results."""
     instructions = []
 
-    # Get component requirements for this content type
     requirements = COMPONENT_REQUIREMENTS[content_type]
 
-    # Check structural issues
     structural = evaluation_result["structural_metrics"]
     if structural["overall"] < requirements.get("structural", 0.5):
         if structural["word_count_compliance"] < 0.8:
@@ -190,7 +173,6 @@ def _generate_improvement_instructions(
         if structural["header_structure"] < 0.4:
             instructions.append("Add clear hierarchical headers to improve content structure")
 
-    # Check scientific quality issues
     quality = evaluation_result["quality_metrics"]
     if quality["overall"] < requirements.get("scientific_quality", 0.6):
         if quality["term_density"] < 0.5:
@@ -204,7 +186,6 @@ def _generate_improvement_instructions(
         if quality["evidence_based_claims_ratio"] < 0.4:
             instructions.append("Support more claims with evidence, data, or citations to strengthen credibility")
 
-    # Check source grounding issues
     grounding = evaluation_result["grounding_metrics"]
     if grounding["overall"] < requirements.get("source_grounding", 0.5):
         if grounding["keyword_coverage"] < 0.5:
@@ -214,7 +195,6 @@ def _generate_improvement_instructions(
         if grounding["search_query_integration"] < 0.4:
             instructions.append("Better address the core research questions and search objectives")
 
-    # Check coherence issues
     coherence = evaluation_result["coherence_metrics"]
     if coherence["overall"] < requirements.get("coherence", 0.5):
         if coherence["sentence_transition_quality"] < 0.5:
@@ -226,7 +206,6 @@ def _generate_improvement_instructions(
         if coherence["lexical_diversity"] < 0.4:
             instructions.append("Improve vocabulary variety while maintaining scientific precision")
 
-    # Overall quality guidance
     overall_score = evaluation_result["overall_score"]
     if overall_score < 50:
         instructions.append("Fundamental revision needed - focus on scientific accuracy and clarity")
@@ -247,15 +226,10 @@ async def _generate_missing_info_error(
     trace_id: str,
     timeout: float = 45.0,
 ) -> str:
-    """Generate MISSING INFORMATION error message explaining what's needed."""
-
-    # Format quality issues
     formatted_issues = "\n".join([f"• {issue}" for issue in quality_issues])
 
-    # Format RAG context
     rag_text = "\n".join([f"Source {i + 1}: {doc['content'][:300]}..." for i, doc in enumerate(rag_context[:3])])
 
-    # Format keywords
     keywords_text = ", ".join(section_config.get("keywords", []))
 
     prompt_text = MISSING_INFO_GENERATION_PROMPT.to_string(
@@ -287,7 +261,6 @@ async def _generate_missing_info_error(
 
     except Exception as e:
         logger.error("Failed to generate missing information report", error=str(e), trace_id=trace_id)
-        # Return a basic error message
         return f"""{MISSING_INFO_PREFIX} Critical Information Gaps{MISSING_INFO_SUFFIX}
 
 Unable to generate content meeting quality standards (minimum {MINIMAL_THRESHOLD * 100:.0f}%).
@@ -309,15 +282,10 @@ async def _improve_content_with_llm(
     trace_id: str,
     timeout: float = 45.0,
 ) -> str:
-    """Use LLM to improve content based on feedback."""
-
-    # Format improvement instructions
     formatted_instructions = "\n".join([f"• {instruction}" for instruction in improvement_instructions])
 
-    # Format RAG context
     rag_text = "\n".join([f"Source {i + 1}: {doc['content'][:500]}..." for i, doc in enumerate(rag_context[:3])])
 
-    # Format research objectives
     objectives_text = "\n".join([f"- {obj['title']}: {obj.get('description', '')}" for obj in research_objectives[:3]])
 
     prompt_text = CONTENT_IMPROVEMENT_PROMPT.to_string(
@@ -347,7 +315,6 @@ async def _improve_content_with_llm(
 
     except Exception as e:
         logger.warning("Content improvement failed", error=str(e), trace_id=trace_id)
-        # Return original content if improvement fails
         return content
 
 
@@ -360,34 +327,12 @@ async def evaluate_with_feedback_loop(
     content_type: ContentType | None = None,
     settings: FeedbackLoopSettings | None = None,
 ) -> ImprovementResult:
-    """Evaluate content with iterative improvement feedback loop.
-
-    This function implements a sophisticated feedback system that:
-    1. Evaluates content quality using fast metrics
-    2. Identifies specific improvement areas
-    3. Uses LLM to improve content based on targeted feedback
-    4. Re-evaluates until quality standards are met or max iterations reached
-
-    Args:
-        content: Scientific content to evaluate and improve
-        section_config: Configuration for the content section
-        rag_context: Relevant source documents for context
-        research_objectives: Research objectives to align with
-        trace_id: Unique identifier for tracking
-        content_type: Type of scientific content for appropriate standards
-        settings: Configuration for feedback loop behavior
-
-    Returns:
-        Result containing improved content and evaluation metrics
-    """
     start_time = time.time()
     eval_settings = {**DEFAULT_FEEDBACK_SETTINGS, **(settings or {})}
 
-    # Auto-detect content type if not provided
     if content_type is None:
         content_type = detect_content_type(section_config)
 
-    # Get target threshold for this content type
     target_threshold = get_target_threshold(content_type)
 
     current_content = content
@@ -408,9 +353,7 @@ async def evaluate_with_feedback_loop(
     max_iterations_val = eval_settings.get("max_iterations")
     max_iterations: int = 2 if max_iterations_val is None else cast("int", max_iterations_val)
 
-    # Main improvement loop - try to reach target threshold
     while iteration <= max_iterations:
-        # Evaluate current content
         evaluation_result = await evaluate_scientific_content(
             content=current_content,
             section_config=section_config,
@@ -419,7 +362,6 @@ async def evaluate_with_feedback_loop(
             trace_id=f"{trace_id}_iter_{iteration}",
         )
 
-        # Assess quality against standards
         quality_assessment = assess_content_quality(
             overall_score=evaluation_result["overall_score"] / 100.0,
             component_scores={
@@ -431,14 +373,11 @@ async def evaluate_with_feedback_loop(
             content_type=content_type,
         )
 
-        # Check for MISSING INFORMATION markers and apply quality bonus
         missing_info_metrics = evaluate_missing_information(current_content)
         current_score = evaluation_result["overall_score"] / 100.0
 
-        # Apply quality bonus for proper MISSING INFO usage
         adjusted_score = min(1.0, current_score + missing_info_metrics["quality_bonus"])
 
-        # Track best result (content + evaluation)
         if adjusted_score > best_score:
             best_score = adjusted_score
             best_content = current_content
@@ -454,7 +393,6 @@ async def evaluate_with_feedback_loop(
             trace_id=trace_id,
         )
 
-        # Check if we've achieved target threshold
         if adjusted_score >= target_threshold:
             execution_time = (time.time() - start_time) * 1000
             logger.info(
@@ -475,11 +413,9 @@ async def evaluate_with_feedback_loop(
                 execution_time_ms=execution_time,
             )
 
-        # Check if we've hit max iterations
         if iteration >= max_iterations:
             break
 
-        # Generate improvement instructions
         improvement_instructions = _generate_improvement_instructions(evaluation_result, content_type)
 
         if not improvement_instructions:
@@ -491,7 +427,6 @@ async def evaluate_with_feedback_loop(
             )
             break
 
-        # Improve content using LLM
         logger.info(
             "Applying content improvements",
             iteration=iteration,
@@ -513,7 +448,6 @@ async def evaluate_with_feedback_loop(
                 else 45.0,
             )
 
-            # Only use improved content if it's actually different
             if improved_content != current_content and len(improved_content.strip()) > 50:
                 current_content = improved_content
             else:
@@ -535,9 +469,7 @@ async def evaluate_with_feedback_loop(
 
         iteration += 1
 
-    # After improvement attempts, check if best score meets minimal threshold
     if best_score >= MINIMAL_THRESHOLD and best_evaluation is not None:
-        # Return best result even if below target
         execution_time = (time.time() - start_time) * 1000
 
         final_quality = assess_content_quality(
@@ -570,7 +502,6 @@ async def evaluate_with_feedback_loop(
             execution_time_ms=execution_time,
         )
 
-    # Best score is below minimal threshold - generate MISSING INFO error
     logger.warning(
         "Content below minimal threshold, generating missing information report",
         best_score=best_score,
@@ -578,7 +509,6 @@ async def evaluate_with_feedback_loop(
         trace_id=trace_id,
     )
 
-    # If we never got any evaluation, do a quick one for error reporting
     if best_evaluation is None:
         best_evaluation = await evaluate_scientific_content(
             content=best_content,
@@ -588,7 +518,6 @@ async def evaluate_with_feedback_loop(
             trace_id=f"{trace_id}_error_eval",
         )
 
-    # Generate detailed missing information report
     quality_issues = _generate_improvement_instructions(best_evaluation, content_type)
     missing_info_report = await _generate_missing_info_error(
         content=best_content,
@@ -602,19 +531,15 @@ async def evaluate_with_feedback_loop(
         else 45.0,
     )
 
-    # Determine if we should replace content entirely or insert localized markers
     missing_info_metrics = evaluate_missing_information(missing_info_report)
 
     if missing_info_metrics["content_ratio"] > 0.60:
-        # More than 60% would be MISSING INFO - replace entirely
         final_content = missing_info_report
     else:
-        # Less than 60% - try to preserve some content with localized markers
         final_content = f"{best_content}\n\n{missing_info_report}"
 
     execution_time = (time.time() - start_time) * 1000
 
-    # Use the best evaluation we have (it was ensured to exist above)
     final_evaluation_result = best_evaluation
 
     final_quality = assess_content_quality(

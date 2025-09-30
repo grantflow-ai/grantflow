@@ -430,21 +430,6 @@ def get_evaluation_kwargs[T](
     is_json_content: bool = False,
     **additional_context: Any,
 ) -> EvaluationKwargs[T]:
-    """Get evaluation kwargs with proper context.
-
-    Args:
-        stage_name: Name of the evaluation stage
-        job_manager: Job manager instance
-        section_config: Section configuration with keywords, topics
-        rag_context: RAG retrieval context
-        research_objectives: Research objectives
-        cfp_analysis: CFP analysis data
-        is_json_content: Whether evaluating JSON content
-        **additional_context: Additional context to pass
-
-    Returns:
-        Complete evaluation kwargs including context
-    """
     config = get_stage_config(stage_name)
 
     kwargs = EvaluationKwargs[T](
@@ -458,7 +443,6 @@ def get_evaluation_kwargs[T](
     if config.timeout_override:
         kwargs["timeout"] = config.timeout_override
 
-    # Build evaluation context from available data
     if section_config or rag_context or research_objectives or cfp_analysis:
         context = build_evaluation_context(
             section_config=section_config,
@@ -469,7 +453,6 @@ def get_evaluation_kwargs[T](
         )
         kwargs["context"] = context
 
-    # Build evaluation settings based on content type
     if section_config:
         settings = build_evaluation_settings(
             is_clinical_trial=bool(section_config.get("is_clinical_trial")),

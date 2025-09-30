@@ -341,7 +341,6 @@ async def test_clinical_trial_weighting_consistency() -> None:
     quality_clinical: QualityMetrics = await evaluate_scientific_quality(clinical_content, rag_context, clinical_config)
     quality_research: QualityMetrics = await evaluate_scientific_quality(clinical_content, rag_context, research_config)
 
-    # Use quality standards for clinical trial content
     clinical_requirements = COMPONENT_REQUIREMENTS[ContentType.CLINICAL_TRIAL]
     research_requirements = COMPONENT_REQUIREMENTS[ContentType.BIOMEDICAL_RESEARCH]
 

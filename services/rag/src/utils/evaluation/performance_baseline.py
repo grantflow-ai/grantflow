@@ -1,9 +1,3 @@
-"""Performance baseline monitoring for evaluation system.
-
-This module provides tools to track evaluation system performance over time
-and detect regressions in quality scores or execution times.
-"""
-
 import statistics
 import time
 from typing import Any, TypedDict
@@ -19,8 +13,6 @@ logger = get_logger(__name__)
 
 
 class PerformanceBaseline(TypedDict):
-    """Baseline performance metrics for evaluation system."""
-
     content_type: str
     avg_score: float
     min_score: float
@@ -34,15 +26,12 @@ class PerformanceBaseline(TypedDict):
 
 
 class PerformanceResult(TypedDict):
-    """Result of performance evaluation run."""
-
     overall_score: float
     execution_time_ms: float
     content_type: ContentType
     meets_quality_standards: bool
 
 
-# Standard test content for different types
 BASELINE_CONTENT: dict[ContentType, str] = {
     ContentType.CLINICAL_TRIAL: """# Clinical Trial Results
 
@@ -189,19 +178,9 @@ async def evaluate_performance_baseline(
     content_type: ContentType,
     runs: int = 5,
 ) -> PerformanceBaseline:
-    """Establish performance baseline for a content type.
-
-    Args:
-        content_type: Type of content to baseline
-        runs: Number of evaluation runs for statistical reliability
-
-    Returns:
-        Performance baseline metrics
-    """
     content = BASELINE_CONTENT[content_type]
     section_config = BASELINE_CONFIGS[content_type]
 
-    # Minimal RAG context for consistency
     rag_context = [DocumentDTO(content="Baseline context for evaluation consistency testing")]
 
     results: list[PerformanceResult] = []
@@ -225,7 +204,6 @@ async def evaluate_performance_baseline(
 
         execution_time = (time.time() - start_time) * 1000
 
-        # Assess against quality standards
         quality_assessment = assess_content_quality(
             overall_score=evaluation_result["overall_score"] / 100.0,
             component_scores={
@@ -254,7 +232,6 @@ async def evaluate_performance_baseline(
             meets_standards=quality_assessment["meets_requirements"],
         )
 
-    # Calculate statistics
     scores = [r["overall_score"] for r in results]
     times = [r["execution_time_ms"] for r in results]
 
@@ -287,11 +264,6 @@ async def evaluate_performance_baseline(
 
 
 async def run_all_baselines() -> dict[ContentType, PerformanceBaseline]:
-    """Run performance baselines for all content types.
-
-    Returns:
-        Dictionary mapping content types to their baselines
-    """
     baselines = {}
 
     for content_type in ContentType:
@@ -304,18 +276,8 @@ async def run_all_baselines() -> dict[ContentType, PerformanceBaseline]:
 async def detect_performance_regression(
     content_type: ContentType,
     baseline: PerformanceBaseline,
-    tolerance_factor: float = 0.1,  # 10% tolerance
+    tolerance_factor: float = 0.1,
 ) -> dict[str, Any]:
-    """Detect performance regression against baseline.
-
-    Args:
-        content_type: Content type to test
-        baseline: Established baseline metrics
-        tolerance_factor: Acceptable degradation as fraction (0.1 = 10%)
-
-    Returns:
-        Regression analysis results
-    """
     current_result = await evaluate_performance_baseline(content_type, runs=1)
 
     score_degradation = (baseline["avg_score"] - current_result["avg_score"]) / baseline["avg_score"]

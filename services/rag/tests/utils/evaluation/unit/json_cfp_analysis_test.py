@@ -1,5 +1,3 @@
-"""Tests for JSON CFP analysis evaluation."""
-
 from typing import TYPE_CHECKING
 
 from packages.db.src.json_objects import (
@@ -20,7 +18,6 @@ if TYPE_CHECKING:
 
 class TestCFPAnalysisQualityEvaluation:
     def test_evaluate_cfp_analysis_quality_high_quality(self) -> None:
-        """Test evaluation with high-quality CFP analysis data."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -82,7 +79,6 @@ class TestCFPAnalysisQualityEvaluation:
         assert result["categorization"] > 0.4
 
     def test_evaluate_cfp_analysis_quality_good_structure(self) -> None:
-        """Test evaluation with well-structured but moderate content."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -104,11 +100,10 @@ class TestCFPAnalysisQualityEvaluation:
         result = evaluate_cfp_analysis_quality(cfp_data)
 
         assert 0.1 <= result["overall"] <= 0.7, f"Expected moderate overall quality, got {result['overall']}"
-        assert result["completeness"] > 0.2  # Some fields present
-        assert result["categorization"] > 0.2  # Some categorization
+        assert result["completeness"] > 0.2
+        assert result["categorization"] > 0.2
 
     def test_evaluate_cfp_analysis_quality_poor_quality(self) -> None:
-        """Test evaluation with poor-quality CFP analysis data."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -129,7 +124,6 @@ class TestCFPAnalysisQualityEvaluation:
         assert result["quote_accuracy"] < 0.3
 
     def test_evaluate_cfp_analysis_quality_missing_fields(self) -> None:
-        """Test evaluation with missing optional fields."""
         cfp_data: CFPAnalysisData = {}
 
         result = evaluate_cfp_analysis_quality(cfp_data)
@@ -139,7 +133,6 @@ class TestCFPAnalysisQualityEvaluation:
         assert result["completeness"] == 0.0
 
     def test_evaluate_cfp_analysis_quality_detailed_requirements(self) -> None:
-        """Test evaluation with detailed requirements and criteria."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -169,7 +162,6 @@ class TestCFPAnalysisQualityEvaluation:
         assert result["requirement_clarity"] > 0.3, "Should have good requirement clarity with detailed requirements"
 
     def test_evaluate_cfp_analysis_quality_accurate_quotes(self) -> None:
-        """Test evaluation with accurate source quotes."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -195,7 +187,6 @@ class TestCFPAnalysisQualityEvaluation:
 
 class TestCFPAnalysisCompleteness:
     def test_check_cfp_analysis_completeness_complete(self) -> None:
-        """Test completeness check with complete CFP analysis."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -236,7 +227,6 @@ class TestCFPAnalysisCompleteness:
         assert result["has_length_constraints"] is True
 
     def test_check_cfp_analysis_completeness_basic_only(self) -> None:
-        """Test completeness check with only basic fields."""
         cfp_data: CFPAnalysisData = {
             "requirements": [
                 CFPAnalysisRequirementWithQuote(
@@ -253,7 +243,6 @@ class TestCFPAnalysisCompleteness:
         assert result["has_length_constraints"] is False
 
     def test_check_cfp_analysis_completeness_empty_data(self) -> None:
-        """Test completeness check with empty CFP analysis."""
         cfp_data: CFPAnalysisData = {}
 
         result = check_cfp_analysis_completeness(cfp_data)
@@ -264,7 +253,6 @@ class TestCFPAnalysisCompleteness:
         assert result["has_length_constraints"] is False
 
     def test_check_cfp_analysis_completeness_empty_lists(self) -> None:
-        """Test completeness check with empty lists."""
         cfp_data: CFPAnalysisData = {
             "requirements": [],
             "sections": [],
@@ -280,7 +268,6 @@ class TestCFPAnalysisCompleteness:
         assert result["has_length_constraints"] is False
 
     def test_check_cfp_analysis_completeness_partial_basic_info(self) -> None:
-        """Test completeness check with partial information."""
         cfp_data: CFPAnalysisData = {
             "evaluation_criteria": [
                 CFPAnalysisEvaluationCriterion(

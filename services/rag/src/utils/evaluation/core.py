@@ -1,5 +1,3 @@
-"""Core evaluation functions with proper generics."""
-
 import time
 from typing import cast
 
@@ -41,30 +39,15 @@ async def evaluate_content[T](
     settings: EvaluationSettings | None = None,
     trace_id: str,
 ) -> T:
-    """
-    Evaluate content with proper generic typing.
-
-    Args:
-        content: Content to evaluate
-        response_type: Target type for deserialization
-        context: Evaluation context (optional)
-        settings: Evaluation settings (optional)
-        trace_id: Trace ID for logging
-
-    Returns:
-        Typed evaluation result
-    """
     _validate_content(content)
     _validate_trace_id(trace_id)
 
     start_time = time.time()
 
     try:
-        # Check if content is JSON and parse accordingly
         is_json, parsed_content = parse_json_content(content, response_type)
 
         if is_json and parsed_content is not None:
-            # Handle JSON content evaluation
             result = await evaluate_json_content(
                 content=content,
                 parsed_content=parsed_content,
@@ -76,7 +59,6 @@ async def evaluate_content[T](
             if result is not None:
                 return result
 
-        # Handle scientific content evaluation for EvaluationResult type
         if response_type is EvaluationResult:
             section_config = context.get("section_config") if context else None
             if section_config:
@@ -87,10 +69,8 @@ async def evaluate_content[T](
                     research_objectives=context.get("research_objectives", []) if context else [],
                     trace_id=trace_id,
                 )
-                # Cast to T since we know response_type is EvaluationResult
                 return cast("T", eval_result)
 
-        # Fallback: try to deserialize as the requested type
         return deserialize(content.encode(), response_type)
 
     except Exception as e:
@@ -102,6 +82,3 @@ async def evaluate_content[T](
             trace_id=trace_id,
         )
         raise EvaluationError(f"Evaluation failed: {e}") from e
-
-
-# with_evaluation is now directly imported above - no alias needed

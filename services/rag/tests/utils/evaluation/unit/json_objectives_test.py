@@ -1,5 +1,3 @@
-"""Tests for JSON objectives evaluation."""
-
 from packages.db.src.json_objects import ResearchObjective, ResearchTask
 
 from services.rag.src.utils.evaluation.json.objectives import (
@@ -10,7 +8,6 @@ from services.rag.src.utils.evaluation.json.objectives import (
 
 class TestObjectivesQualityEvaluation:
     def test_evaluate_objectives_quality_high_quality(self) -> None:
-        """Test evaluation with high-quality research objectives."""
         objectives = [
             ResearchObjective(
                 number=1,
@@ -61,7 +58,6 @@ class TestObjectivesQualityEvaluation:
         assert result["keyword_alignment"] > 0.3
 
     def test_evaluate_objectives_quality_with_keyword_alignment(self) -> None:
-        """Test that keyword alignment improves scores."""
         objectives = [
             ResearchObjective(
                 number=1,
@@ -77,18 +73,15 @@ class TestObjectivesQualityEvaluation:
             )
         ]
 
-        # Test with matching keywords
         keywords_matching = ["biomarker", "cancer", "mass spectrometry"]
         result_with_keywords = evaluate_objectives_quality(objectives, keywords_matching, None)
 
-        # Test without keywords
         result_without_keywords = evaluate_objectives_quality(objectives, None, None)
 
         assert result_with_keywords["keyword_alignment"] > result_without_keywords["keyword_alignment"]
         assert result_with_keywords["overall"] >= result_without_keywords["overall"]
 
     def test_evaluate_objectives_quality_poor_quality(self) -> None:
-        """Test evaluation with poor-quality objectives."""
         objectives = [
             ResearchObjective(
                 number=1,
@@ -102,11 +95,10 @@ class TestObjectivesQualityEvaluation:
 
         assert result["overall"] < 0.7, f"Expected low overall quality, got {result['overall']}"
         assert result["scientific_rigor"] <= 0.7
-        assert result["coherence"] <= 1.0  # Single objective is always coherent
+        assert result["coherence"] <= 1.0
         assert result["comprehensiveness"] <= 1.0
 
     def test_evaluate_objectives_quality_empty_list(self) -> None:
-        """Test evaluation with empty objectives list."""
         result = evaluate_objectives_quality([], None, None)
 
         assert result["overall"] == 0.0
@@ -117,7 +109,6 @@ class TestObjectivesQualityEvaluation:
         assert result["keyword_alignment"] == 0.0
 
     def test_evaluate_objectives_quality_topic_alignment(self) -> None:
-        """Test that topic alignment affects scores."""
         objectives = [
             ResearchObjective(
                 number=1,
@@ -141,7 +132,6 @@ class TestObjectivesQualityEvaluation:
 
 class TestObjectivesCompleteness:
     def test_check_objectives_completeness_complete(self) -> None:
-        """Test completeness check with complete objectives."""
         objectives = [
             ResearchObjective(
                 number=1,
@@ -182,31 +172,29 @@ class TestObjectivesCompleteness:
         assert result["sequential_numbering"] is True
 
     def test_check_objectives_completeness_incomplete(self) -> None:
-        """Test completeness check with incomplete objectives."""
         objectives = [
             ResearchObjective(
                 number=1,
                 title="Incomplete objective",
-                research_tasks=[],  # Empty research tasks
+                research_tasks=[],
             )
         ]
 
         result = check_objectives_completeness(objectives)
 
         assert result["has_objectives"] is True
-        assert result["minimum_objectives"] is False  # Only 1 objective, need 2+
+        assert result["minimum_objectives"] is False
         assert result["all_have_descriptions"] is False
         assert result["all_have_titles"] is True
-        assert result["all_have_tasks"] is False  # Empty research tasks
+        assert result["all_have_tasks"] is False
         assert result["sequential_numbering"] is True
 
     def test_check_objectives_completeness_empty(self) -> None:
-        """Test completeness check with empty objectives list."""
         result = check_objectives_completeness([])
 
         assert result["has_objectives"] is False
         assert result["minimum_objectives"] is False
-        assert result["all_have_descriptions"] is True  # Empty list passes vacuous truth
-        assert result["all_have_titles"] is True  # Empty list passes vacuous truth
-        assert result["all_have_tasks"] is True  # Empty list passes vacuous truth
-        assert result["sequential_numbering"] is True  # Empty list passes
+        assert result["all_have_descriptions"] is True
+        assert result["all_have_titles"] is True
+        assert result["all_have_tasks"] is True
+        assert result["sequential_numbering"] is True

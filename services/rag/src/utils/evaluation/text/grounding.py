@@ -98,15 +98,6 @@ def calculate_keyword_coverage(content: str, keywords: list[str]) -> float:
 
 
 def calculate_topic_coverage(content: str, topics: list[str]) -> float:
-    """Calculate how well the content covers the specified topics.
-
-    Args:
-        content: Text content to analyze
-        topics: List of topics that should be covered
-
-    Returns:
-        Topic coverage score (0.0 to 1.0)
-    """
     if not topics:
         return 1.0
 
@@ -116,18 +107,15 @@ def calculate_topic_coverage(content: str, topics: list[str]) -> float:
 
     for topic in topics:
         topic_lower = topic.lower()
-        # Check for exact topic mention
         if topic_lower in content_lower:
             covered_topics += 1.0
         else:
-            # Check for partial matches (individual words from multi-word topics)
             topic_words = topic_lower.split()
             if len(topic_words) > 1:
-                # For multi-word topics, check if most words are present
                 words_found = sum(1 for word in topic_words if word in words_in_content)
-                if words_found >= len(topic_words) * 0.7:  # 70% of words present
+                if words_found >= len(topic_words) * 0.7:
                     covered_topics += 0.7
-                elif words_found >= len(topic_words) * 0.5:  # 50% of words present
+                elif words_found >= len(topic_words) * 0.5:
                     covered_topics += 0.5
 
     return covered_topics / len(topics)
@@ -273,7 +261,6 @@ async def evaluate_source_grounding(
         + overlap_analysis["semantic_concept_overlap"] * 0.2
     )
 
-    # Adjust weights to include topic coverage
     overall = (
         rouge_metrics["rouge_l_score"] * 0.18
         + rouge_metrics["rouge_2_score"] * 0.14
