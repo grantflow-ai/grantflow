@@ -161,46 +161,46 @@ class TestBuildEvaluationSettings:
         """Test building settings with default values."""
         settings = build_evaluation_settings()
 
-        assert settings["enable_fast_evaluation"] is True
+        assert settings["enable_nlp_evaluation"] is True
         assert settings["force_llm_evaluation"] is False
 
     def test_build_evaluation_settings_clinical_trial(self) -> None:
         """Test building settings for clinical trial content."""
         settings = build_evaluation_settings(is_clinical_trial=True)
 
-        assert settings["enable_fast_evaluation"] is True
+        assert settings["enable_nlp_evaluation"] is True
         assert settings["force_llm_evaluation"] is False
-        assert settings["fast_confidence_threshold"] == 0.85
-        assert settings["fast_accept_threshold"] == 90.0
+        assert settings["nlp_confidence_threshold"] == 0.85
+        assert settings["nlp_accept_threshold"] == 90.0
 
     def test_build_evaluation_settings_detailed_research_plan(self) -> None:
         """Test building settings for detailed research plan."""
         settings = build_evaluation_settings(is_detailed_research_plan=True)
 
-        assert settings["enable_fast_evaluation"] is True
+        assert settings["enable_nlp_evaluation"] is True
         assert settings["force_llm_evaluation"] is False
-        assert settings["fast_confidence_threshold"] == 0.8
-        assert settings["fast_accept_threshold"] == 85.0
+        assert settings["nlp_confidence_threshold"] == 0.8
+        assert settings["nlp_accept_threshold"] == 85.0
 
     def test_build_evaluation_settings_json_content(self) -> None:
         """Test building settings for JSON content evaluation."""
         settings = build_evaluation_settings(is_json_content=True)
 
-        assert settings["enable_fast_evaluation"] is True
+        assert settings["enable_nlp_evaluation"] is True
         assert settings["force_llm_evaluation"] is False
         assert settings["json_confidence_threshold"] == 0.95
         assert settings["json_semantic_threshold"] == 0.6
-        assert settings["fast_weight"] == 0.5
+        assert settings["nlp_weight"] == 0.5
         assert settings["llm_weight"] == 0.5
 
     def test_build_evaluation_settings_force_llm(self) -> None:
         """Test building settings with forced LLM evaluation."""
         settings = build_evaluation_settings(
-            enable_fast_evaluation=False,
+            enable_nlp_evaluation=False,
             force_llm_evaluation=True,
         )
 
-        assert settings["enable_fast_evaluation"] is False
+        assert settings["enable_nlp_evaluation"] is False
         assert settings["force_llm_evaluation"] is True
 
     def test_build_evaluation_settings_combined_flags(self) -> None:
@@ -212,30 +212,30 @@ class TestBuildEvaluationSettings:
         )
 
         # Clinical trial and research plan settings should be applied - clinical trial has precedence
-        assert settings["fast_confidence_threshold"] == 0.85  # Clinical trial setting
-        assert settings["fast_accept_threshold"] == 90.0
+        assert settings["nlp_confidence_threshold"] == 0.85  # Clinical trial setting
+        assert settings["nlp_accept_threshold"] == 90.0
 
         # JSON settings should also be applied
         assert settings["json_confidence_threshold"] == 0.95
         assert settings["json_semantic_threshold"] == 0.6
-        assert settings["fast_weight"] == 0.5
+        assert settings["nlp_weight"] == 0.5
         assert settings["llm_weight"] == 0.5
 
     def test_build_evaluation_settings_additional_settings(self) -> None:
         """Test building settings with additional custom settings."""
         settings = build_evaluation_settings(
-            enable_fast_evaluation=True,
+            enable_nlp_evaluation=True,
         )
 
-        assert settings["enable_fast_evaluation"] is True
+        assert settings["enable_nlp_evaluation"] is True
 
     def test_build_evaluation_settings_override_defaults(self) -> None:
         """Test that additional settings can override defaults."""
         settings = build_evaluation_settings(
             is_clinical_trial=True,
-            fast_confidence_threshold=0.95,  # Override the clinical trial default
+            nlp_confidence_threshold=0.95,  # Override the clinical trial default
         )
 
         # Should use the explicitly provided value, not the clinical trial default
-        assert settings["fast_confidence_threshold"] == 0.95
-        assert settings["fast_accept_threshold"] == 90.0  # Should still use clinical trial default
+        assert settings["nlp_confidence_threshold"] == 0.95
+        assert settings["nlp_accept_threshold"] == 90.0  # Should still use clinical trial default

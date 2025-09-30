@@ -25,25 +25,25 @@ DEFAULT_THRESHOLDS: Final[EvaluationThresholds] = EvaluationThresholds(
 
 # Default settings for evaluation behavior
 DEFAULT_SETTINGS: Final[EvaluationSettings] = EvaluationSettings(
-    enable_fast_evaluation=True,
-    fast_confidence_threshold=0.8,
-    fast_accept_threshold=85.0,
-    fast_review_threshold=70.0,
+    enable_nlp_evaluation=True,
+    nlp_confidence_threshold=0.8,
+    nlp_accept_threshold=85.0,
+    nlp_review_threshold=70.0,
     force_llm_evaluation=False,
     llm_timeout=60.0,
-    fast_weight=0.3,
+    nlp_weight=0.3,
     llm_weight=0.7,
 )
 
 # JSON-specific settings (higher confidence for structural checks)
 JSON_SETTINGS: Final[EvaluationSettings] = EvaluationSettings(
-    enable_fast_evaluation=True,
-    fast_confidence_threshold=0.85,  # Higher for JSON
-    fast_accept_threshold=80.0,
-    fast_review_threshold=65.0,
+    enable_nlp_evaluation=True,
+    nlp_confidence_threshold=0.85,  # Higher for JSON
+    nlp_accept_threshold=80.0,
+    nlp_review_threshold=65.0,
     force_llm_evaluation=False,
     llm_timeout=45.0,
-    fast_weight=0.5,  # More trust in deterministic checks
+    nlp_weight=0.5,  # More trust in deterministic checks
     llm_weight=0.5,
 )
 

@@ -73,7 +73,7 @@ def build_evaluation_context(
 
 def build_evaluation_settings(
     *,
-    enable_fast_evaluation: bool = True,
+    enable_nlp_evaluation: bool = True,
     force_llm_evaluation: bool = False,
     is_clinical_trial: bool = False,
     is_detailed_research_plan: bool = False,
@@ -83,7 +83,7 @@ def build_evaluation_settings(
     """Build evaluation settings based on content type.
 
     Args:
-        enable_fast_evaluation: Whether to use fast evaluation
+        enable_nlp_evaluation: Whether to use NLP evaluation
         force_llm_evaluation: Whether to force LLM evaluation
         is_clinical_trial: Whether this is clinical trial content
         is_detailed_research_plan: Whether this is a research plan
@@ -94,48 +94,48 @@ def build_evaluation_settings(
         Properly configured EvaluationSettings
     """
     settings = EvaluationSettings(
-        enable_fast_evaluation=enable_fast_evaluation,
+        enable_nlp_evaluation=enable_nlp_evaluation,
         force_llm_evaluation=force_llm_evaluation,
     )
 
     # Adjust thresholds based on content type - clinical trial has precedence
     if is_clinical_trial and is_detailed_research_plan:
         # Both flags - use clinical trial settings (higher standards)
-        settings["fast_confidence_threshold"] = 0.85
-        settings["fast_accept_threshold"] = 90.0
+        settings["nlp_confidence_threshold"] = 0.85
+        settings["nlp_accept_threshold"] = 90.0
     elif is_clinical_trial:
         # Clinical trial only
-        settings["fast_confidence_threshold"] = 0.85
-        settings["fast_accept_threshold"] = 90.0
+        settings["nlp_confidence_threshold"] = 0.85
+        settings["nlp_accept_threshold"] = 90.0
     elif is_detailed_research_plan:
         # Research plan only
-        settings["fast_confidence_threshold"] = 0.8
-        settings["fast_accept_threshold"] = 85.0
+        settings["nlp_confidence_threshold"] = 0.8
+        settings["nlp_accept_threshold"] = 85.0
 
     if is_json_content:
         # Use JSON-specific thresholds
         settings["json_confidence_threshold"] = 0.95
         settings["json_semantic_threshold"] = 0.6
         # Adjust weights for JSON evaluation
-        settings["fast_weight"] = 0.5
+        settings["nlp_weight"] = 0.5
         settings["llm_weight"] = 0.5
 
     # Add any additional settings (only for compatible keys)
     for key, value in additional_settings.items():
-        if key == "enable_fast_evaluation" and isinstance(value, bool):
-            settings["enable_fast_evaluation"] = value
-        elif key == "fast_confidence_threshold" and isinstance(value, (int, float)):
-            settings["fast_confidence_threshold"] = float(value)
-        elif key == "fast_accept_threshold" and isinstance(value, (int, float)):
-            settings["fast_accept_threshold"] = float(value)
-        elif key == "fast_review_threshold" and isinstance(value, (int, float)):
-            settings["fast_review_threshold"] = float(value)
+        if key == "enable_nlp_evaluation" and isinstance(value, bool):
+            settings["enable_nlp_evaluation"] = value
+        elif key == "nlp_confidence_threshold" and isinstance(value, (int, float)):
+            settings["nlp_confidence_threshold"] = float(value)
+        elif key == "nlp_accept_threshold" and isinstance(value, (int, float)):
+            settings["nlp_accept_threshold"] = float(value)
+        elif key == "nlp_review_threshold" and isinstance(value, (int, float)):
+            settings["nlp_review_threshold"] = float(value)
         elif key == "force_llm_evaluation" and isinstance(value, bool):
             settings["force_llm_evaluation"] = value
         elif key == "llm_timeout" and isinstance(value, (int, float)):
             settings["llm_timeout"] = float(value)
-        elif key == "fast_weight" and isinstance(value, (int, float)):
-            settings["fast_weight"] = float(value)
+        elif key == "nlp_weight" and isinstance(value, (int, float)):
+            settings["nlp_weight"] = float(value)
         elif key == "llm_weight" and isinstance(value, (int, float)):
             settings["llm_weight"] = float(value)
         elif key == "json_confidence_threshold" and isinstance(value, (int, float)):

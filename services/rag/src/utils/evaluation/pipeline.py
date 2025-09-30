@@ -423,7 +423,7 @@ async def evaluate_scientific_content(
         return EvaluationResult(
             success=True,
             overall_score=overall_score,
-            evaluation_path="fast_only",
+            evaluation_path="nlp_only",
             structural_metrics=structural_metrics,
             grounding_metrics=grounding_metrics,
             quality_metrics=quality_metrics,

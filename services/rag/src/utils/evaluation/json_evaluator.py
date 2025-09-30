@@ -242,7 +242,7 @@ async def evaluate_json_content[T](
             confidence_score=confidence,
             recommendation=recommendation,
             detailed_feedback=feedback,
-            evaluation_path="fast_only",
+            evaluation_path="nlp_only",
             execution_time_ms=0,  # Will be set by caller
         )
 
