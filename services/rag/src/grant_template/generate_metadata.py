@@ -1,5 +1,5 @@
 from functools import partial
-from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Final, NotRequired, TypedDict, cast
 
 from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -28,46 +28,75 @@ Be concise and specific.
 GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="grant_template_generation",
     template=r"""
-    Generate metadata for these grant application sections:
+Generate metadata for grant application sections.
 
-    ${organization_guidelines}
+${organization_guidelines}
 
-    <cfp_subject>${cfp_subject}</cfp_subject>
-    <cfp_content>${cfp_content}</cfp_content>
-    <sections>${long_form_sections}</sections>
+<cfp_subject>${cfp_subject}</cfp_subject>
+<cfp_content>${cfp_content}</cfp_content>
+<sections>${long_form_sections}</sections>
 
-    For each section, provide:
+## Required Fields
 
-    1. **Word Count**:
-       - If page limits are provided in CFP content: Use 415 words/page TNR 11pt or 500/page Arial 11pt
-       - If page limits are NOT provided: Use these defaults:
-         * Project Summary: 300 words
-         * Background/Significance: 800 words
-         * Specific Aims: 500 words
-         * Research Plan: 2000 words (50-66% of total)
-         * Expected Outcomes: 400 words
-         * Timeline/Milestones: 600 words
-         * Other sections: 500-800 words based on importance
-       - Reduce total by 12.5% for figures
+For each section provide:
 
-    2. **Keywords**: 5-15 specific domain terms
+1. **Word Count**: Use 415 words/page (TNR 11pt) or defaults (Project Summary: 300, Research Plan: 2000). Reduce by 12.5% for figures.
+2. **Keywords**: 5-15 specific domain terms
+3. **Topics**: 3-8 key areas to address
+4. **Generation Instructions**: 100-500 words (purpose, content, style, pitfalls)
+5. **Search Queries**: 3-10 queries for evidence retrieval
+6. **Dependencies**: Section IDs this depends on
 
-    3. **Topics**: 3-8 key areas to address
+## Requirements
 
-    4. **Generation Instructions**: 100-500 words explaining:
-       - Section purpose
-       - Required content
-       - Writing style
-       - Common pitfalls
+- Match all input section IDs exactly
+- Word counts sum to total minus figure allocation
+- Instructions must be actionable and specific
 
-    5. **Search Queries**: 3-10 specific queries for evidence retrieval
+## Example
 
-    6. **Dependencies**: List section IDs this depends on
+Input sections:
+```
+- project_summary: Project Summary
+- research_plan_background: Background and Significance (subsection of Research Plan)
+```
 
-    Requirements:
-    - Match all input section IDs exactly
-    - Word counts must sum to total minus figure allocation
-    - Instructions must be actionable and specific
+Output:
+```json
+{
+  "sections": [
+    {
+      "id": "project_summary",
+      "keywords": ["research objectives", "innovation", "broader impacts", "methodology overview", "significance"],
+      "topics": ["Research goals and hypotheses", "Scientific approach", "Expected outcomes", "Broader impacts on field"],
+      "generation_instructions": "Write a concise overview that captures the essence of the research. Begin with the problem statement, followed by research objectives, approach, and expected impact. Emphasize innovation and broader impacts. Use accessible language for interdisciplinary reviewers. Avoid technical jargon in this summary section.",
+      "depends_on": [],
+      "max_words": 300,
+      "search_queries": [
+        "research proposal project summary best practices",
+        "grant application overview writing guidelines",
+        "broader impacts statement examples"
+      ]
+    },
+    {
+      "id": "research_plan_background",
+      "keywords": ["literature review", "knowledge gap", "preliminary work", "theoretical framework", "state of the art"],
+      "topics": ["Current state of knowledge", "Identified gaps", "Preliminary findings", "Theoretical foundation"],
+      "generation_instructions": "Provide comprehensive background establishing the scientific foundation. Review current state of knowledge, identify gaps your research will fill, and reference preliminary work. Build logical argument for why this research is needed. Include key citations and demonstrate familiarity with field. Connect background directly to proposed research objectives.",
+      "depends_on": ["project_summary"],
+      "max_words": 600,
+      "search_queries": [
+        "literature review research background",
+        "preliminary data research proposal",
+        "theoretical framework scientific writing",
+        "knowledge gaps identification methodology"
+      ]
+    }
+  ]
+}
+```
+
+Return metadata for all input sections following this pattern.
     """,
 )
 
@@ -318,16 +347,19 @@ def validate_template_sections(
 async def generate_grant_template(
     task_description: str, *, trace_id: str, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
-    return await handle_completions_request(
-        prompt_identifier="grant_template_extraction",
-        messages=task_description,
-        response_schema=grant_template_generation_json_schema,
-        response_type=TemplateSectionsResponse,
-        validator=partial(validate_template_sections, input_sections=input_sections),
-        system_prompt=GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT,
-        temperature=0.1,
-        top_p=0.9,
-        trace_id=trace_id,
+    return cast(
+        "TemplateSectionsResponse",
+        await handle_completions_request(
+            prompt_identifier="grant_template_extraction",
+            messages=task_description,
+            response_schema=grant_template_generation_json_schema,
+            response_type=TemplateSectionsResponse,
+            validator=partial(validate_template_sections, input_sections=input_sections),
+            system_prompt=GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT,
+            temperature=0.1,
+            top_p=0.9,
+            trace_id=trace_id,
+        ),
     )
 
 
@@ -361,8 +393,19 @@ async def handle_generate_grant_template_metadata(
             task_description=str(prompt),
             trace_id=trace_id,
         )
+
+        # Compress only the RAG results before template substitution
+        compressed_rag_results = compress_prompt_text("\n".join(rag_results), aggressive=True)
+
+        logger.debug(
+            "Prepared and compressed RAG results for organization guidelines",
+            original_rag_chars=len("\n".join(rag_results)),
+            compressed_rag_chars=len(compressed_rag_results),
+            trace_id=trace_id,
+        )
+
         organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results=rag_results,
+            rag_results=compressed_rag_results,
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
         )
@@ -372,12 +415,11 @@ async def handle_generate_grant_template_metadata(
     full_prompt = prompt.to_string(
         organization_guidelines=organization_guidelines,
     )
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
 
     result: TemplateSectionsResponse = await with_evaluation(
         prompt_identifier="grant_template_generation",
         prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
-        prompt=compressed_prompt,
+        prompt=full_prompt,
         trace_id=trace_id,
         **get_evaluation_kwargs(
             "generate_metadata",

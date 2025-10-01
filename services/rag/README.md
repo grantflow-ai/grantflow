@@ -102,6 +102,59 @@ WIKIDATA_MAX_RETRIES = 3
 - **Context Relevance**: 100% relevant scientific context
 - **Field Organization**: Organized by scientific field for better LLM consumption
 
+## Prompt Engineering Guidelines
+
+All RAG prompts target **Gemini 2.5 Flash** (1M context, thinking mode) and follow official best practices:
+
+### Core Principles
+1. **Concise & Clear**: State instructions once, no repetition or shouting (ALL CAPS)
+2. **Few-Shot Examples**: Include 2-3 concrete examples for complex JSON outputs
+3. **Hierarchical Structure**: Use `## headers` and numbered lists for organization
+4. **Professional Tone**: Avoid emoji warnings (🚨❌✅) and excessive emphasis
+
+### JSON Output Prompts
+- Provide JSON schema separately (see `*_json_schema` constants)
+- Include 2-3 concrete input/output examples in prompt
+- Use prefixes like `JSON:` to signal format expectations
+- Structure: Task → Requirements → Examples → Schema reference
+
+**Example files:**
+- `extract_sections.py` - Grant section extraction (complex nested structure)
+- `cfp_section_analysis.py` - CFP requirement analysis
+- `generate_metadata.py` - Section metadata generation
+- `extract_cfp_data.py` - CFP content extraction
+
+### Text Output Prompts
+- Structure: Requirements → Materials → Guidelines → Format
+- Keep under 50 lines for simple tasks, under 100 for complex
+- Use model's thinking mode (don't prescribe chain-of-thought)
+
+**Example files:**
+- `generate_section_text.py` - Grant section text generation
+
+### Token Budget Guidelines
+- **System prompts**: < 30 lines (state role and key constraints)
+- **User prompts**: < 100 lines for complex tasks, < 50 for simple
+- **Examples**: 2-3 for JSON, 1-2 for text (balance clarity vs tokens)
+- **Total prompt tokens**: Target < 500 tokens per prompt (excluding input data)
+
+### Anti-Patterns to Avoid
+❌ Massive verbose prompts (>400 lines)
+❌ Repetitive instructions ("CFP analyzer" mentioned 30+ times)
+❌ Emoji warnings and excessive ALL CAPS
+❌ Contradictory or overlapping instructions
+❌ Missing examples for complex JSON structures
+❌ Prescriptive chain-of-thought (model has thinking mode)
+
+### Refactoring Checklist
+When updating prompts:
+1. Remove all repetition (say things once)
+2. Add 2-3 concrete examples for JSON outputs
+3. Consolidate overlapping sections
+4. Remove emoji warnings and excessive caps
+5. Verify JSON schema matches examples
+6. Test with validation logic to ensure compatibility
+
 ## Development
 
 ### Testing

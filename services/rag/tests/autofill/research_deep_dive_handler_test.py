@@ -186,10 +186,10 @@ def test_validate_answer_response(mock_logger: MagicMock) -> None:
     _validate_answer_response(valid_response)
 
     with pytest.raises(KeyError):
-        _validate_answer_response({"something_else": "value"})  # type: ignore[typeddict-unknown-key,typeddict-item]
+        _validate_answer_response({"something_else": "value"})
 
     with pytest.raises(AttributeError):
-        _validate_answer_response({"answer": 123})  # type: ignore[typeddict-item]
+        _validate_answer_response({"answer": 123})
 
     with pytest.raises(ValidationError, match="Answer too short"):
         _validate_answer_response(AnswerResponse(answer="x" * 49))

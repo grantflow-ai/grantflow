@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import cast
 
 import pytest
 from packages.db.src.tables import GrantApplication, TextVector
@@ -119,11 +120,14 @@ async def test_retrieval_optimization_memory_efficiency(
     application_id = str(test_application_with_template.id)
 
     async def single_retrieval(task_id: int) -> list[str]:
-        return await retrieve_documents(
-            application_id=application_id,
-            search_queries=["test query", f"task {task_id}"],
-            task_description=f"Memory test task {task_id}",
-            trace_id=f"memory_test_{task_id}",
+        return cast(
+            list[str],
+            await retrieve_documents(
+                application_id=application_id,
+                search_queries=["test query", f"task {task_id}"],
+                task_description=f"Memory test task {task_id}",
+                trace_id=f"memory_test_{task_id}",
+            ),
         )
 
     results = await asyncio.gather(*[single_retrieval(i) for i in range(3)])

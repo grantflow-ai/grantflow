@@ -42,12 +42,14 @@ def test_valid_template_sections() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
     ]
 
@@ -92,6 +94,7 @@ def test_error_field_raises_insufficient_context() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -111,6 +114,7 @@ def test_empty_sections_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -127,6 +131,7 @@ def test_section_id_mismatch_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -158,6 +163,7 @@ def test_missing_keywords_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -189,6 +195,7 @@ def test_missing_topics_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -220,6 +227,7 @@ def test_missing_generation_instructions_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -251,6 +259,7 @@ def test_invalid_max_words_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -282,6 +291,7 @@ def test_missing_search_queries_raises_validation_error() -> None:
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -343,12 +353,14 @@ async def test_generate_grant_template_success(mock_google_completions: AsyncMoc
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
     ]
 
@@ -388,6 +400,7 @@ async def test_generate_grant_template_insufficient_context_error(mock_google_co
             "id": "complex_section",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Complex Section",
         }
     ]
 
@@ -454,12 +467,14 @@ async def test_handle_generate_grant_template_metadata_success(
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
     ]
 
@@ -550,18 +565,21 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
             "id": "short_title",
             "order": 1,
             "is_long_form": False,
+            "evidence": "CFP evidence for Short Title",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Brief Summary",
             "id": "brief_summary",
             "order": 3,
             "is_long_form": False,
+            "evidence": "CFP evidence for Brief Summary",
         },
     ]
 
@@ -621,12 +639,14 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         },
     ]
 
@@ -706,18 +726,21 @@ async def test_integration_generate_metadata_workflow(
             "id": "project_summary",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Budget Justification",
             "id": "budget_justification",
             "order": 3,
             "is_long_form": True,
+            "evidence": "CFP evidence for Budget Justification",
         },
     ]
 
@@ -801,18 +824,21 @@ async def test_integration_generate_metadata_with_dependencies(
             "id": "abstract",
             "order": 1,
             "is_long_form": True,
+            "evidence": "CFP evidence for Abstract",
         },
         {
             "title": "Background",
             "id": "background",
             "order": 2,
             "is_long_form": True,
+            "evidence": "CFP evidence for Background",
         },
         {
             "title": "Methodology",
             "id": "methodology",
             "order": 3,
             "is_long_form": True,
+            "evidence": "CFP evidence for Methodology",
         },
     ]
 

@@ -146,13 +146,13 @@ def rag_quality_configurations() -> dict[str, dict[str, Any]]:
 def rag_quality_results_dir() -> Path:
     results_dir = RESULTS_FOLDER / "configurable_rag_quality_benchmarks"
     results_dir.mkdir(parents=True, exist_ok=True)
-    return results_dir
+    return cast(Path, results_dir)
 
 
 @pytest.fixture
 def cfp_content() -> str:
     cfp_file_path = FIXTURES_FOLDER / "cfps" / "melanoma_alliance.md"
-    return cfp_file_path.read_text()
+    return cast(str, cfp_file_path.read_text())
 
 
 @pytest.fixture
