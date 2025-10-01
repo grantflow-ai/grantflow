@@ -248,8 +248,8 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     **SECTION CREATION PROCESS**:
     - For each section in the CFP analysis `required_sections`, create a corresponding template section
     - Use the exact `section_name` from CFP analyzer - ANY DEVIATION IS FAILURE
-    - Include the original CFP source reference in parentheses in the section title
-    - Format: "Section Name (from: [key phrase from cfp_source_reference])"
+    - Use ONLY the section name as the title (do NOT include source reference in title)
+    - The source reference quote belongs in the separate `evidence` field
 
     **SUBSECTION CREATION FROM CFP REQUIREMENTS:**
     - **Examine `cfp_requirements` array** for each section to identify subsection opportunities
@@ -292,7 +292,7 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - **NO PREDETERMINED NAMES** - the system has no fixed section names
     - **CFP ANALYZER (Gemini NLP) DETERMINES ALL NAMES** based on actual CFP content
     - **ANY DEVIATION FROM CFP ANALYZER NAMES = FAILURE**
-    - Include CFP source reference: "Section Name (from: [key phrase from cfp_source_reference])"
+    - **TITLE ONLY** - do NOT include source reference in title, it goes in `cfp_source_reference` field
 
     **EXAMPLES OF CORRECT APPROACH:**
     - ✅ IF CFP analyzer found "PROJECT SUMMARY" → Use "PROJECT SUMMARY"
@@ -372,10 +372,10 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTe
     - All sections must have unique IDs in snake_case format
     - Order sections logically based on CFP structure and standard grant conventions
 
-    ### 8. CFP Source Correlation
-    - Each section must include `cfp_source_reference` field
-    - Section titles should indicate CFP source with "(from: [reference])" format
-    - Maintain clear traceability from CFP requirements to template sections
+    ### 8. CFP Source Evidence
+    - Each section must include `evidence` field with the key phrase/quote from CFP that defines this section
+    - Section titles should be CLEAN - no source reference in title
+    - The `evidence` field provides traceability from CFP to template sections
 
     Return the complete section structure with CFP source correlations clearly indicated.
     """,
@@ -400,7 +400,7 @@ section_extraction_json_schema = {
                     "id",
                     "parent_id",
                     "is_long_form",
-                    "cfp_source_reference",
+                    "evidence",
                     "cfp_requirements",
                     "cfp_length_limit",
                     "cfp_length_source",
@@ -413,7 +413,7 @@ section_extraction_json_schema = {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 300,
-                        "description": "Section title including CFP source reference in parentheses",
+                        "description": "Clean section title from CFP analyzer (do NOT include source reference)",
                     },
                     "id": {
                         "type": "string",
@@ -431,10 +431,10 @@ section_extraction_json_schema = {
                         "nullable": True,
                         "description": "ID of parent section if nested, null for top-level sections",
                     },
-                    "cfp_source_reference": {
+                    "evidence": {
                         "type": "string",
                         "minLength": 10,
-                        "description": "Key phrase from original CFP text that defines this section",
+                        "description": "Direct quote or key phrase from CFP that defines this section and provides traceability",
                     },
                     "cfp_requirements": {
                         "type": "array",
@@ -720,17 +720,15 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
-        if not section.get("cfp_source_reference"):
-            title = section["title"]
-            if "(from:" in title and ")" in title:
-                start = title.find("(from:") + 6
-                end = title.find(")", start)
-                if end > start:
-                    section["cfp_source_reference"] = title[start:end].strip()
-                else:
-                    section["cfp_source_reference"] = f"CFP section: {title}"
-            else:
-                section["cfp_source_reference"] = f"CFP section: {title}"
+        # Clean title if it has (from:...) embedded (legacy cleanup)
+        title = section["title"]
+        if "(from:" in title and ")" in title:
+            from_start = title.find("(from:")
+            section["title"] = title[:from_start].strip()
+
+        # Ensure evidence field is populated
+        if not section.get("evidence"):
+            section["evidence"] = f"CFP section: {section['title']}"
 
         if not section.get("cfp_requirements"):
             section["cfp_requirements"] = []

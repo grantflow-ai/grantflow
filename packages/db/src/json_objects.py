@@ -31,6 +31,7 @@ class GrantElement(TypedDict):
     id: str
     order: int
     title: str
+    evidence: str
     parent_id: str | None
     needs_applicant_writing: NotRequired[bool]
 
