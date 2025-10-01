@@ -14,12 +14,12 @@ class ExtractedSectionDTO(TypedDict):
     title: str
     id: str
     order: int
+    evidence: str
     parent_id: NotRequired[str | None]
     is_detailed_research_plan: NotRequired[bool | None]
     is_title_only: NotRequired[bool | None]
     is_clinical_trial: NotRequired[bool | None]
     is_long_form: bool
-    cfp_source_reference: NotRequired[str | None]
     cfp_requirements: NotRequired[list[dict[str, str]] | None]
     cfp_length_limit: NotRequired[int | None]
     cfp_length_source: NotRequired[str | None]

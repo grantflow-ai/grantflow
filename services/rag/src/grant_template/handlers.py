@@ -232,6 +232,7 @@ async def handle_generate_metadata_stage(
                 "order": section["order"],
                 "parent_id": section.get("parent_id"),
                 "title": section["title"],
+                "evidence": section["evidence"],
             }
             needs_writing = section.get("needs_applicant_writing")
             if needs_writing is not None:
@@ -251,6 +252,7 @@ async def handle_generate_metadata_stage(
                 "parent_id": section.get("parent_id"),
                 "search_queries": metadata["search_queries"],
                 "title": section["title"],
+                "evidence": section["evidence"],
                 "topics": metadata["topics"],
             }
             needs_writing = section.get("needs_applicant_writing")
