@@ -20,11 +20,11 @@ class ExtractedSectionDTO(TypedDict):
     is_title_only: NotRequired[bool | None]
     is_clinical_trial: NotRequired[bool | None]
     is_long_form: bool
-    cfp_requirements: NotRequired[list[dict[str, str]] | None]
-    cfp_length_limit: NotRequired[int | None]
-    cfp_length_source: NotRequired[str | None]
-    cfp_other_limits: NotRequired[list[dict[str, str]] | None]
-    cfp_definition: NotRequired[str | None]
+    requirements: NotRequired[list[dict[str, str]] | None]
+    length_limit: NotRequired[int | None]
+    length_source: NotRequired[str | None]
+    other_limits: NotRequired[list[dict[str, str]] | None]
+    definition: NotRequired[str | None]
     needs_applicant_writing: NotRequired[bool | None]
 
 
