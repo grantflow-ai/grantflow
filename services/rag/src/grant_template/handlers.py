@@ -226,39 +226,58 @@ async def handle_generate_metadata_stage(
 
     ret: list[GrantElement | GrantLongFormSection] = []
     for section in sections_requiring_writing:
-        if section.get("is_title_only"):
-            element: GrantElement = {
-                "id": section["id"],
-                "order": section["order"],
-                "parent_id": section.get("parent_id"),
-                "title": section["title"],
-                "evidence": section["evidence"],
-            }
-            needs_writing = section.get("needs_applicant_writing")
-            if needs_writing is not None:
-                element["needs_applicant_writing"] = needs_writing
-            ret.append(element)
-        else:
-            metadata = mapped_metadata[section["id"]]
-            long_form: GrantLongFormSection = {
-                "depends_on": metadata["depends_on"],
-                "generation_instructions": metadata["generation_instructions"],
-                "id": section["id"],
-                "is_clinical_trial": section.get("is_clinical_trial"),
-                "is_detailed_research_plan": section.get("is_detailed_research_plan"),
-                "keywords": metadata["keywords"],
-                "max_words": metadata["max_words"],
-                "order": section["order"],
-                "parent_id": section.get("parent_id"),
-                "search_queries": metadata["search_queries"],
-                "title": section["title"],
-                "evidence": section["evidence"],
-                "topics": metadata["topics"],
-            }
-            needs_writing = section.get("needs_applicant_writing")
-            if needs_writing is not None:
-                long_form["needs_applicant_writing"] = needs_writing
-            ret.append(long_form)
+        match section.get("is_title_only"):
+            case True:
+                # Title-only sections become simple GrantElement entries
+                element: GrantElement = {
+                    "id": section["id"],
+                    "order": section["order"],
+                    "parent_id": section.get("parent_id"),
+                    "title": section["title"],
+                    "evidence": section["evidence"],
+                }
+                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                    element["needs_applicant_writing"] = needs_writing
+                ret.append(element)
+
+            case _:
+                # Full sections with metadata become GrantLongFormSection entries
+                metadata = mapped_metadata[section["id"]]
+
+                # Base GrantLongFormSection with core fields
+                long_form: GrantLongFormSection = {
+                    "id": section["id"],
+                    "order": section["order"],
+                    "title": section["title"],
+                    "evidence": section["evidence"],
+                    "parent_id": section.get("parent_id"),
+                    "depends_on": metadata["depends_on"],
+                    "generation_instructions": metadata["generation_instructions"],
+                    "is_clinical_trial": section.get("is_clinical_trial"),
+                    "is_detailed_research_plan": section.get("is_detailed_research_plan"),
+                    "keywords": metadata["keywords"],
+                    "max_words": metadata["max_words"],
+                    "search_queries": metadata["search_queries"],
+                    "topics": metadata["topics"],
+                }
+
+                # Add CFP constraint data (TypedDict-compatible explicit assignments)
+                if "requirements" in section:
+                    long_form["requirements"] = section["requirements"]
+                if "length_limit" in section:
+                    long_form["length_limit"] = section["length_limit"]
+                if "length_source" in section:
+                    long_form["length_source"] = section["length_source"]
+                if "other_limits" in section:
+                    long_form["other_limits"] = section["other_limits"]
+                if "definition" in section:
+                    long_form["definition"] = section["definition"]
+
+                # Add optional needs_applicant_writing field
+                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                    long_form["needs_applicant_writing"] = needs_writing
+
+                ret.append(long_form)
 
     return ret
 

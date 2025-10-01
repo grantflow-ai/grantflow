@@ -14,50 +14,72 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 SEARCH_QUERIES_SYSTEM_PROMPT: Final[str] = """
-You are a specialized query generation component within a Retrieval-Augmented Generation (RAG) pipeline designed to assist in writing grant application sections.
-Your primary function is to generate search queries that will retrieve relevant content from a vector store using cosine similarity.
+Generate diverse search queries for vector store retrieval using cosine similarity.
+Optimize queries to retrieve relevant grant application content.
 """
 
 DIVERSE_SEARCH_QUERIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="search_queries_generation",
     template="""
-    Here is the user prompt for the next stage of the RAG pipeline:
+Generate 3-10 diverse search queries for vector store retrieval.
 
-    <user_prompt>
-    ${user_prompt}
-    </user_prompt>
+## Input
 
-    Your task is to generate between 3 and 10 highly diverse search queries based on this user prompt.
-    These queries will be executed against the vector store to retrieve relevant information for the grant application section.
+<user_prompt>${user_prompt}</user_prompt>
 
-    Instructions:
-    1. Analyze the user prompt carefully to understand the context and requirements of the grant application section.
-    2. Generate search queries that balance specificity with breadth to capture a range of relevant materials.
-    3. Ensure that the queries are optimized for the next task in the RAG pipeline, which involves retrieving and processing the relevant information.
-    4. Ensure maximum diversity by creating queries that cover different:
-       - Aspects of the topic (methodological, theoretical, practical, etc.)
-       - Semantic angles (using different terminology for similar concepts)
-       - Levels of specificity (broad concepts and specific details)
-       - Query types (factual, conceptual, procedural, comparative)
+## Requirements
 
-    Before providing your final output, wrap your thought process in <query_generation_process> tags. Follow these steps:
-    1. List the key concepts or themes in the user prompt.
-    2. Identify specific terminology that might be relevant to the grant application.
-    3. Brainstorm different aspects of the topic that could be covered in separate queries.
-    4. Consider potential synonyms or related terms that could broaden the search.
-    5. Generate initial queries based on steps 1-4.
-    6. Evaluate each generated query for relevance, effectiveness, and DIVERSITY from other queries.
-    7. Ensure queries are not semantically similar to each other and cover distinct aspects.
+Queries must cover different:
+- Aspects: methodological, theoretical, practical
+- Semantic angles: varying terminology for similar concepts
+- Specificity levels: broad concepts and specific details
+- Types: factual, conceptual, procedural, comparative
 
-    It's OK for this section to be quite long, as thorough consideration will lead to better queries.
+Balance specificity with breadth for optimal retrieval.
 
-    After your thought process, provide your final output as a structured response.
+## Example
 
-    Requirements:
-    - Generate between 3 and 10 queries
-    - Each query should target distinct, relevant information
-    - Queries must cover different semantic angles and aspects
-    - Optimize query text for cosine similarity matching in vector stores""",
+Input:
+```
+Generate text for Research Plan Background section describing preliminary work on CRISPR gene editing in cancer cells.
+Target: 800 words covering molecular mechanisms and clinical applications.
+```
+
+Output:
+```json
+{
+  "queries": [
+    {
+      "text": "CRISPR gene editing molecular mechanisms cancer therapy",
+      "type": "factual",
+      "aspect": "molecular biology"
+    },
+    {
+      "text": "preliminary results genome editing oncology clinical trials",
+      "type": "procedural",
+      "aspect": "methodology"
+    },
+    {
+      "text": "off-target effects DNA repair pathways tumor cells",
+      "type": "conceptual",
+      "aspect": "challenges"
+    },
+    {
+      "text": "Cas9 protein targeting specificity malignant transformation",
+      "type": "factual",
+      "aspect": "technical details"
+    },
+    {
+      "text": "therapeutic applications genetic engineering solid tumors",
+      "type": "comparative",
+      "aspect": "clinical applications"
+    }
+  ]
+}
+```
+
+Return 3-10 queries optimized for cosine similarity matching.
+""",
 )
 
 

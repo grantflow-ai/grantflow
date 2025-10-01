@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import UUID
 
@@ -64,12 +64,12 @@ def preload_models() -> None:
 
 @pytest.fixture
 def available_scenarios() -> list[str]:
-    return list_available_scenarios()
+    return cast("list[str]", list_available_scenarios())
 
 
 @pytest.fixture
 def scenario_loader() -> Callable[[str], BaseScenario]:
-    return load_scenario
+    return cast("Callable[[str], BaseScenario]", load_scenario)
 
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
@@ -382,14 +382,14 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
 async def nih_organization(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantingInstitution:
-    return await process_granting_institution(async_session_maker, "NIH")
+    return cast(GrantingInstitution, await process_granting_institution(async_session_maker, "NIH"))
 
 
 @pytest.fixture
 async def erc_organization(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantingInstitution:
-    return await process_granting_institution(async_session_maker, "ERC")
+    return cast(GrantingInstitution, await process_granting_institution(async_session_maker, "ERC"))
 
 
 @pytest.fixture
@@ -542,7 +542,7 @@ async def grant_template_with_sections(
         await session.commit()
 
         await session.refresh(template)
-        return template
+        return cast(GrantTemplate, template)
 
 
 @pytest.fixture
@@ -567,7 +567,7 @@ async def template_rag_source(
 
         await session.commit()
         await session.refresh(source)
-        return source
+        return cast(RagSource, source)
 
 
 @pytest.fixture
@@ -592,7 +592,7 @@ async def application_rag_source(
 
         await session.commit()
         await session.refresh(source)
-        return source
+        return cast(RagSource, source)
 
 
 @pytest.fixture

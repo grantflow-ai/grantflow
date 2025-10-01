@@ -55,7 +55,7 @@ def test_extract_scientific_terms_from_context_empty() -> None:
 
 
 def test_extract_scientific_terms_from_context_none() -> None:
-    result = extract_scientific_terms_from_context(None)  # type: ignore
+    result = extract_scientific_terms_from_context(None)  # type: ignore[arg-type]
     assert result == []
 
 

@@ -197,12 +197,22 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+    # Compress only the retrieval context before template substitution
+    raw_context = "\n".join(retrieval_results)
+    compressed_context = compress_prompt_text(raw_context, aggressive=True)
+
+    logger.debug(
+        "Prepared and compressed context for research plan generation",
+        original_context_chars=len(raw_context),
+        compressed_context_chars=len(compressed_context),
+        trace_id=trace_id,
+    )
+
+    full_prompt = prompt_with_title.to_string(context=compressed_context)
 
     response: ResearchPlanResponse = await handle_completions_request(
         prompt_identifier="research_plan_generation",
-        messages=compressed_prompt,
+        messages=full_prompt,
         system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
         response_schema=research_plan_schema,
         response_type=ResearchPlanResponse,

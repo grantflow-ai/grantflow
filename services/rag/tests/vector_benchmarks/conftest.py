@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from packages.db.src.tables import RagFile
@@ -53,7 +53,7 @@ async def benchmark_rag_source(
         session.add(app_rag_source)
         await session.commit()
 
-    return rag_file
+    return cast(RagFile, rag_file)
 
 
 @pytest.fixture

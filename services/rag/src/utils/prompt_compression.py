@@ -1,13 +1,6 @@
 import re
-from functools import lru_cache
-from typing import TYPE_CHECKING
 
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.nlp import get_spacy_model
-from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
-
-if TYPE_CHECKING:
-    from spacy.tokens import Token
 
 logger = get_logger(__name__)
 
@@ -24,50 +17,6 @@ def compress_whitespace(text: str) -> str:
     text = re.sub(r"\s*,\s*,", ",", text)
 
     return text.strip()
-
-
-def _should_keep_token(token: "Token", academic_stop_words: set[str]) -> bool:
-    if token.is_stop or token.is_punct or token.is_space:
-        return False
-
-    if token.text.lower() in academic_stop_words:
-        return False
-
-    if token.ent_type_:
-        return True
-
-    if not token.is_alpha or ("-" in token.text and len(token.text) > 3):
-        return True
-
-    return len(token.text) > 2 and token.pos_ in {"NOUN", "VERB", "ADJ", "PROPN", "NUM"}
-
-
-@lru_cache(maxsize=1000)
-def remove_stop_words(text: str) -> str:
-    if not text.strip():
-        return ""
-
-    nlp = get_spacy_model()
-    doc = nlp(text)
-
-    filtered_tokens = []
-    tokens = list(doc)
-    i = 0
-
-    while i < len(tokens):
-        token = tokens[i]
-
-        if token.pos_ == "NUM" and i + 1 < len(tokens) and tokens[i + 1].text == "%" and not tokens[i + 1].is_space:
-            filtered_tokens.append(token.text + "%")
-            i += 2
-            continue
-
-        if _should_keep_token(token, ACADEMIC_STOP_WORDS):
-            filtered_tokens.append(token.text)
-
-        i += 1
-
-    return " ".join(filtered_tokens)
 
 
 def _split_into_sentences(text: str) -> list[str]:
@@ -125,20 +74,14 @@ def compress_repetitive_phrases(text: str) -> str:
     return deduplicated or text
 
 
-def compress_prompt_text(text: str, aggressive: bool = False) -> str:
+def compress_prompt_text(text: str, aggressive: bool = False) -> str:  # noqa: ARG001
     if not text.strip():
         return ""
 
     original_length = len(text)
 
     compressed = compress_whitespace(text)
-
-    if aggressive and len(compressed.split()) > 30:
-        compressed = remove_stop_words(compressed)
-
-        compressed = compress_repetitive_phrases(compressed)
-    else:
-        compressed = compress_repetitive_phrases(compressed)
+    compressed = compress_repetitive_phrases(compressed)
 
     if original_length > 0:
         reduction_percent = round((1 - len(compressed) / original_length) * 100, 1)

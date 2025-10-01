@@ -21,99 +21,121 @@ logger = get_logger(__name__)
 
 
 CFP_SECTION_ANALYZER_SYSTEM_PROMPT: Final[str] = """
-You are a CFP analyzer that extracts section requirements from grant application documents.
-Extract required sections, length constraints, evaluation criteria, and format requirements.
-Provide accurate, structured analysis that researchers can use to understand section requirements.
+CFP analyzer. Extract section requirements from grant application documents with exact source quotes.
+Include all writing sections, exclude administrative forms.
+Budget rule: Include only "Justification/Narrative/Explanation", exclude "Budget/Budget Form/Budget Table".
 """
 
 CFP_SECTION_ANALYZER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_section_analyzer",
     template="""
-# CFP Section Requirements Extraction with Source Correlation
+Extract comprehensive section requirements from CFP with source correlation.
 
-EXTRACT comprehensive section requirements from the provided CFP content and create clear correlations between CFP text and required application sections.
+## Input
 
-## CFP Content
-<cfp_content>
-${cfp_content}
-</cfp_content>
+<cfp_content>${cfp_content}</cfp_content>
 
-## NLP Analysis Context
-USE NLP ANALYSIS AS SUPPLEMENTAL GUIDANCE:
-The following semantic categorization identifies key information categories with actual quotes from the CFP:
+<nlp_analysis>${nlp_analysis}</nlp_analysis>
 
-<nlp_analysis>
-${nlp_analysis}
-</nlp_analysis>
+Note: NLP analysis provides categorized sentences to help locate information. Read all CFP content comprehensively.
 
-IMPORTANT: You must still read and analyze ALL CFP content comprehensively. The NLP analysis provides categorized sentences that help identify where to find specific information types.
+## Task
 
-## Analysis Instructions
+Identify ALL sections applicants must write. For each:
+- Extract exact section name from CFP
+- Provide definition and source reference
+- List all requirements with verbatim quotes
+- Include length constraints and evaluation criteria
 
-You must identify ALL sections that applicants need to write for this grant application. Follow these rules:
+**Include:** Writing sections (narratives, research plans, budget justifications)
+**Exclude:** Forms, CVs, letters, budget spreadsheets (see budget rule in system prompt)
 
-### Section Identification Rules:
-1. **Include ALL content sections** - Any section where applicants write original content
-2. **EXCLUDE administrative items**:
-   - Budget spreadsheets/forms (but INCLUDE budget justification narratives)
-   - CV/biographical forms (but INCLUDE biographical sketch narratives)
-   - Recommendation letters
-   - Submission forms
-   - Cover pages
-3. **Required sections must be actual writing sections** where researchers compose text
+## JSON Structure
 
-### CRITICAL: Budget Section Classification
-**IMPORTANT DISTINCTION**: Only include budget sections that require written narratives:
-- ❌ **EXCLUDE**: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table" - these are just forms/numbers
-- ✅ **INCLUDE**: "Budget Justification", "Budget Narrative", "Budget Explanation" - these require written content
-- **Rule**: If a budget section doesn't explicitly mention "justification", "narrative", or "explanation", it's likely just a form and should be EXCLUDED
+Output format with 4 arrays:
 
-### Section Correlation Requirements:
-For each required section, you MUST provide:
-- `cfp_source_reference`: The exact text from the CFP that defines this section
-- Clear mapping between CFP requirements and application structure
+1. **required_sections**: Section objects with name, definition, source reference, requirements array, dependencies
+2. **length_constraints**: Page/word/character limits with exact quotes
+3. **evaluation_criteria**: Assessment factors with weights and quotes
+4. **additional_requirements**: Other requirements (formatting, submission, eligibility)
 
-## JSON Output Format
+## Example
 
-You must return a structured JSON object that pairs every requirement with its exact quote from the source CFP text.
+CFP excerpt:
+```
+II. APPLICATION COMPONENTS
 
-### JSON Structure:
+A. Project Summary (1 page)
+The project summary must provide a clear overview of the proposed research.
+Applicants should describe the research objectives and broader impacts.
 
-**1. required_sections** - Array of section objects, each containing:
-- `section_name`: Exact name as written in CFP
-- `definition`: Brief description of section purpose
-- `cfp_source_reference`: The exact text from the CFP that defines this section
-- `requirements`: Array of requirement objects with quote pairs
-- `dependencies`: Array of section interdependencies
+B. Research Plan (15 pages maximum, excluding references)
+Describe the research methodology and expected outcomes.
+```
 
-**2. length_constraints** - Array of length limit objects:
-- `section_name`: Which section this applies to
-- `measurement_type`: "pages", "words", "characters", or "other"
-- `limit_description`: Human readable limit (e.g. "15 pages maximum")
-- `quote_from_source`: Exact text from CFP stating the limit
-- `exclusions`: Array of items not counted toward limit
+Output:
+```json
+{
+  "required_sections": [
+    {
+      "section_name": "PROJECT SUMMARY",
+      "definition": "One-page overview of proposed research including objectives and impacts",
+      "cfp_source_reference": "II.A. Project Summary (1 page) - The project summary must provide a clear overview of the proposed research.",
+      "requirements": [
+        {
+          "requirement": "Describe research objectives",
+          "quote_from_source": "Applicants should describe the research objectives",
+          "category": "content"
+        },
+        {
+          "requirement": "Describe broader impacts",
+          "quote_from_source": "Applicants should describe the research objectives and broader impacts",
+          "category": "impact"
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "section_name": "RESEARCH PLAN",
+      "definition": "Detailed description of research methodology and expected outcomes",
+      "cfp_source_reference": "II.B. Research Plan (15 pages maximum, excluding references)",
+      "requirements": [
+        {
+          "requirement": "Describe research methodology",
+          "quote_from_source": "Describe the research methodology",
+          "category": "methodology"
+        },
+        {
+          "requirement": "Describe expected outcomes",
+          "quote_from_source": "Describe the research methodology and expected outcomes",
+          "category": "outcomes"
+        }
+      ],
+      "dependencies": ["PROJECT SUMMARY"]
+    }
+  ],
+  "length_constraints": [
+    {
+      "section_name": "PROJECT SUMMARY",
+      "measurement_type": "pages",
+      "limit_description": "1 page maximum",
+      "quote_from_source": "Project Summary (1 page)",
+      "exclusions": []
+    },
+    {
+      "section_name": "RESEARCH PLAN",
+      "measurement_type": "pages",
+      "limit_description": "15 pages maximum",
+      "quote_from_source": "15 pages maximum, excluding references",
+      "exclusions": ["references"]
+    }
+  ],
+  "evaluation_criteria": [],
+  "additional_requirements": []
+}
+```
 
-**3. evaluation_criteria** - Array of assessment criteria:
-- `criterion_name`: Name of evaluation factor
-- `description`: What this criterion evaluates
-- `weight_percentage`: Numeric percentage if specified (optional)
-- `quote_from_source`: Exact CFP text mentioning this criterion
-
-**4. additional_requirements** - Array of other important requirements:
-- `requirement`: Brief description of what's required
-- `quote_from_source`: Exact CFP text stating this requirement
-- `category`: Type - "formatting", "submission", "eligibility", "budget", "other"
-
-## Critical Instructions:
-
-1. **EXACT QUOTES REQUIRED**: Every "quote_from_source" and "cfp_source_reference" field MUST contain verbatim text from the CFP content
-2. **NO PARAPHRASING**: Use exact wording from source
-3. **COMPLETE COVERAGE**: Extract ALL writing sections mentioned in the CFP
-4. **PROPER CATEGORIZATION**: Distinguish between content sections vs. administrative requirements
-5. **SOURCE CORRELATION**: Each section must reference its defining text from the CFP
-6. **COUNT ACCURACY**: Ensure the count fields match the actual array lengths
-
-The goal is to create a comprehensive mapping of CFP requirements to actual application sections that researchers must write.
+Return complete analysis following this pattern with exact quotes from CFP.
 """,
 )
 

@@ -38,6 +38,7 @@ def sample_work_plan_section() -> GrantLongFormSection:
         id="research_plan",
         title="Research Plan",
         order=3,
+        evidence="CFP evidence for Research Plan",
         parent_id=None,
         keywords=["methodology"],
         topics=["methods"],
@@ -57,6 +58,7 @@ def sample_grant_sections() -> list[GrantLongFormSection]:
             id="abstract",
             title="Abstract",
             order=1,
+            evidence="CFP evidence for Abstract",
             parent_id=None,
             keywords=["summary"],
             topics=["overview"],
@@ -71,6 +73,7 @@ def sample_grant_sections() -> list[GrantLongFormSection]:
             id="significance",
             title="Significance",
             order=2,
+            evidence="CFP evidence for Significance",
             parent_id=None,
             keywords=["impact"],
             topics=["importance"],
@@ -139,8 +142,8 @@ async def test_generate_sections_stage_success(
     assert result["section_texts"][1]["section_id"] == "significance"
     assert result["work_plan_section"]["id"] == "research_plan"
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
-    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
     mock_retrieve_documents.assert_called_once()
 
@@ -175,8 +178,8 @@ async def test_extract_relationships_stage_success(
     assert "relationships" in result
     assert result["relationships"] == mock_relationships
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
-    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.handle_batch_enrich_objectives")
@@ -256,8 +259,8 @@ async def test_enrich_objectives_stage_success(
     assert "enrichment_responses" in result
     assert len(result["enrichment_responses"]) == 2
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
-    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.enrich_objective_with_wikidata")
@@ -346,8 +349,8 @@ async def test_enrich_terminology_stage_success(
     assert "wikidata_enrichments" in result
     assert len(result["wikidata_enrichments"]) == 2
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
-    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 @patch("services.rag.src.grant_application.handlers.generate_workplan_section")
@@ -437,8 +440,8 @@ Generated task 2 text""".strip()
     assert "Generated objective text" in result["research_plan_text"]
     assert "Generated task 1 text" in result["research_plan_text"]
 
-    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()  # type: ignore[attr-defined]
-    mock_grant_application_job_manager.add_notification.assert_called()  # type: ignore[attr-defined]
+    mock_grant_application_job_manager.ensure_not_cancelled.assert_called()
+    mock_grant_application_job_manager.add_notification.assert_called()
 
 
 async def test_handlers_preserve_data_flow(

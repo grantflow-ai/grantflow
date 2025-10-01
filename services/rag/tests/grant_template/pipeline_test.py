@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import pytest
@@ -10,6 +10,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from pytest_mock import MockerFixture
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_template.dto import (
@@ -18,6 +19,14 @@ from services.rag.src.grant_template.dto import (
     ExtractionSectionsStageDTO,
 )
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import (
+        CFPAnalysisRequirementWithQuote,
+        CFPConstraint,
+        GrantElement,
+        GrantLongFormSection,
+    )
 
 pytest_plugins = ["testing.pubsub_test_plugin"]
 
@@ -178,6 +187,7 @@ def sample_sections_dto(sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO) -> Ex
                 "is_detailed_research_plan": False,
                 "is_long_form": True,
                 "order": 1,
+                "evidence": "CFP evidence for Project Summary",
             }
         ],
     )
@@ -480,3 +490,84 @@ async def test_pipeline_data_flow_checkpoint_data_casting_sections_stage(
 
     assert result is None
     mock_handle_section_extraction.assert_called_once()
+
+
+async def test_cfp_constraint_fields_persisted_to_db(
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    """Test that CFP constraint fields are saved and retrieved from DB."""
+    # Create sections with CFP constraint data using proper TypedDicts
+    requirement: CFPAnalysisRequirementWithQuote = {
+        "requirement": "Must include statistical analysis plan",
+        "quote_from_source": "Applications must provide detailed statistical methods",
+        "category": "methodology",
+    }
+
+    constraint: CFPConstraint = {
+        "constraint_type": "reference_count",
+        "constraint_value": "30 references maximum",
+        "source_quote": "up to 30 references",
+    }
+
+    section: GrantLongFormSection = {
+        "id": "research_plan",
+        "title": "Research Plan",
+        "order": 1,
+        "parent_id": None,
+        "evidence": "From CFP page 5: detailed research methodology",
+        "keywords": ["methodology"],
+        "topics": ["methods"],
+        "generation_instructions": "Describe methodology",
+        "depends_on": [],
+        "max_words": 2000,
+        "search_queries": ["methodology"],
+        "is_detailed_research_plan": True,
+        "is_clinical_trial": None,
+        "requirements": [requirement],
+        "length_limit": 2000,
+        "length_source": "Converted from 5 pages (5 x 415 = 2075 words, reduced to 2000)",
+        "other_limits": [constraint],
+        "definition": "The research plan section describes your proposed methodology",
+    }
+
+    grant_sections: list[GrantLongFormSection | GrantElement] = [section]
+
+    # Save to DB
+    async with async_session_maker() as session, session.begin():
+        grant_template.grant_sections = grant_sections
+        session.add(grant_template)
+
+    # Retrieve from DB
+    async with async_session_maker() as session:
+        result = await session.execute(select(GrantTemplate).where(GrantTemplate.id == grant_template.id))
+        retrieved_template = result.scalar_one()
+
+        assert retrieved_template.grant_sections is not None
+        assert len(retrieved_template.grant_sections) == 1
+
+        section = retrieved_template.grant_sections[0]
+
+        # Verify core fields
+        assert section["id"] == "research_plan"
+        assert section["evidence"] == "From CFP page 5: detailed research methodology"
+
+        # Verify CFP constraint fields are persisted
+        assert section.get("requirements") == [
+            {
+                "requirement": "Must include statistical analysis plan",
+                "quote_from_source": "Applications must provide detailed statistical methods",
+                "category": "methodology",
+            }
+        ]
+        assert section.get("length_limit") == 2000
+        assert section.get("length_source") == "Converted from 5 pages (5 x 415 = 2075 words, reduced to 2000)"
+        assert section.get("other_limits") == [
+            {
+                "constraint_type": "reference_count",
+                "constraint_value": "30 references maximum",
+                "source_quote": "up to 30 references",
+            }
+        ]
+        assert section.get("definition") == "The research plan section describes your proposed methodology"

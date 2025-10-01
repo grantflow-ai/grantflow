@@ -27,6 +27,12 @@ class ResearchObjective(TypedDict):
     research_tasks: list[ResearchTask]
 
 
+class CFPConstraint(TypedDict):
+    constraint_type: str
+    constraint_value: str
+    source_quote: str
+
+
 class GrantElement(TypedDict):
     id: str
     order: int
@@ -45,6 +51,11 @@ class GrantLongFormSection(GrantElement):
     max_words: int
     search_queries: list[str]
     topics: list[str]
+    requirements: NotRequired[list["CFPAnalysisRequirementWithQuote"]]
+    length_limit: NotRequired[int | None]
+    length_source: NotRequired[str | None]
+    other_limits: NotRequired[list[CFPConstraint]]
+    definition: NotRequired[str | None]
 
 
 class ResearchDeepDive(TypedDict):
