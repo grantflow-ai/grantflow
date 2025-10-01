@@ -401,11 +401,11 @@ section_extraction_json_schema = {
                     "parent_id",
                     "is_long_form",
                     "evidence",
-                    "cfp_requirements",
-                    "cfp_length_limit",
-                    "cfp_length_source",
-                    "cfp_other_limits",
-                    "cfp_definition",
+                    "requirements",
+                    "length_limit",
+                    "length_source",
+                    "other_limits",
+                    "definition",
                     "needs_applicant_writing",
                 ],
                 "properties": {
@@ -436,7 +436,7 @@ section_extraction_json_schema = {
                         "minLength": 10,
                         "description": "Direct quote or key phrase from CFP that defines this section and provides traceability",
                     },
-                    "cfp_requirements": {
+                    "requirements": {
                         "type": "array",
                         "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'section_name' matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
                         "items": {
@@ -448,17 +448,17 @@ section_extraction_json_schema = {
                             },
                         },
                     },
-                    "cfp_length_limit": {
+                    "length_limit": {
                         "type": "integer",
                         "nullable": True,
                         "description": "CRITICAL DATA TRANSFER: Standardized word count for all length constraints. Convert ALL length limits to words using these CONVERSION RULES: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters). Examples: '2 pages' → 830, '1000 characters' → 200, '5 pages' → 2075. If no length limit exists, use null.",
                     },
-                    "cfp_length_source": {
+                    "length_source": {
                         "type": "string",
                         "nullable": True,
                         "description": "CONVERSION TRACKING: Explain the original constraint and conversion applied. Examples: 'Converted from 2 pages (2 x 415 = 830 words)', 'Converted from 1000 characters (1000 / 5 = 200 words)', 'Original: 500 words'. Use null if no length limit.",
                     },
-                    "cfp_other_limits": {
+                    "other_limits": {
                         "type": "array",
                         "description": "NON-LENGTH CONSTRAINTS: Array of all other constraints that aren't word/page/character limits. Examples: reference count limits ('30 references maximum'), file format requirements ('PDF only'), submission deadlines, etc. Use empty array [] if none exist.",
                         "items": {
@@ -480,7 +480,7 @@ section_extraction_json_schema = {
                             },
                         },
                     },
-                    "cfp_definition": {
+                    "definition": {
                         "type": "string",
                         "nullable": True,
                         "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
@@ -730,18 +730,18 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if not section.get("evidence"):
             section["evidence"] = f"CFP section: {section['title']}"
 
-        if not section.get("cfp_requirements"):
-            section["cfp_requirements"] = []
+        if not section.get("requirements"):
+            section["requirements"] = []
 
-        if not section.get("cfp_length_limit"):
-            section["cfp_length_limit"] = None
-        if not section.get("cfp_length_source"):
-            section["cfp_length_source"] = None
-        if not section.get("cfp_other_limits"):
-            section["cfp_other_limits"] = []
+        if not section.get("length_limit"):
+            section["length_limit"] = None
+        if not section.get("length_source"):
+            section["length_source"] = None
+        if not section.get("other_limits"):
+            section["other_limits"] = []
 
-        if not section.get("cfp_definition"):
-            section["cfp_definition"] = None
+        if not section.get("definition"):
+            section["definition"] = None
 
         if "needs_applicant_writing" not in section:
             title_lower = section.get("title", "").lower()
