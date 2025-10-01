@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from packages.db.src.json_objects import CFPAnalysisResult
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
 from services.rag.src.grant_template.extract_sections import (
@@ -20,6 +21,38 @@ from services.rag.src.grant_template.extract_sections import (
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.dto import CFPContentSection
+
+
+@pytest.fixture
+def mock_cfp_analysis() -> CFPAnalysisResult:
+    """Create a mock CFP analysis result for testing."""
+    return {
+        "cfp_analysis": {
+            "required_sections": [],
+            "length_constraints": [],
+            "evaluation_criteria": [],
+            "additional_requirements": [],
+            "sections_count": 0,
+            "length_constraints_found": 0,
+            "evaluation_criteria_count": 0,
+        },
+        "nlp_analysis": {
+            "money": [],
+            "date_time": [],
+            "writing_related": [],
+            "other_numbers": [],
+            "recommendations": [],
+            "orders": [],
+            "positive_instructions": [],
+            "negative_instructions": [],
+            "evaluation_criteria": [],
+        },
+        "analysis_metadata": {
+            "content_length": 1000,
+            "categories_found": 5,
+            "total_sentences": 50,
+        },
+    }
 
 
 def test_extracted_section_dto_required_fields() -> None:
@@ -425,7 +458,9 @@ async def test_filter_extracted_sections_success(
 
 
 @patch("services.rag.src.grant_template.extract_sections.handle_completions_request")
-async def test_extract_sections_success(mock_completions: AsyncMock, trace_id: str) -> None:
+async def test_extract_sections_success(
+    mock_completions: AsyncMock, trace_id: str, mock_cfp_analysis: CFPAnalysisResult
+) -> None:
     mock_response = {
         "sections": [
             {
@@ -446,7 +481,11 @@ async def test_extract_sections_success(mock_completions: AsyncMock, trace_id: s
     }
     mock_completions.return_value = mock_response
 
-    result = await extract_sections("Test CFP content", trace_id=trace_id)
+    result = await extract_sections(
+        "Test CFP content for Test Subject",
+        trace_id=trace_id,
+        cfp_analysis=mock_cfp_analysis,
+    )
 
     assert "sections" in result
     assert len(result["sections"]) == 2
@@ -455,11 +494,17 @@ async def test_extract_sections_success(mock_completions: AsyncMock, trace_id: s
 
 
 @patch("services.rag.src.grant_template.extract_sections.handle_completions_request")
-async def test_extract_sections_validation_error(mock_completions: AsyncMock, trace_id: str) -> None:
+async def test_extract_sections_validation_error(
+    mock_completions: AsyncMock, trace_id: str, mock_cfp_analysis: CFPAnalysisResult
+) -> None:
     mock_completions.side_effect = ValidationError("No sections extracted. Please provide an error message.")
 
     with pytest.raises(ValidationError, match="No sections extracted"):
-        await extract_sections("Invalid CFP content", trace_id=trace_id)
+        await extract_sections(
+            "Invalid CFP content for Test Subject",
+            trace_id=trace_id,
+            cfp_analysis=mock_cfp_analysis,
+        )
 
 
 @patch("services.rag.src.grant_template.extract_sections.with_evaluation")
@@ -471,6 +516,7 @@ async def test_handle_extract_sections_success(
     mock_evaluation: AsyncMock,
     mock_job_manager: AsyncMock,
     trace_id: str,
+    mock_cfp_analysis: CFPAnalysisResult,
 ) -> None:
     mock_retrieve.return_value = "Organization guidelines content"
     mock_evaluation.return_value = {
@@ -504,6 +550,7 @@ async def test_handle_extract_sections_success(
         cfp_content=cfp_content,
         cfp_subject="Test Grant Program",
         trace_id=trace_id,
+        cfp_analysis=mock_cfp_analysis,
         organization={
             "organization_id": uuid4(),
             "full_name": "Test Organization",
@@ -521,7 +568,11 @@ async def test_handle_extract_sections_success(
 @patch("services.rag.src.grant_template.extract_sections.with_evaluation")
 @patch("services.rag.src.grant_template.extract_sections.retrieve_documents")
 async def test_handle_extract_sections_no_organization(
-    mock_retrieve: AsyncMock, mock_evaluation: AsyncMock, mock_job_manager: AsyncMock, trace_id: str
+    mock_retrieve: AsyncMock,
+    mock_evaluation: AsyncMock,
+    mock_job_manager: AsyncMock,
+    trace_id: str,
+    mock_cfp_analysis: CFPAnalysisResult,
 ) -> None:
     mock_retrieve.return_value = ""
     mock_evaluation.return_value = {"sections": []}
@@ -534,6 +585,7 @@ async def test_handle_extract_sections_no_organization(
             cfp_content=[],
             cfp_subject="Test Grant",
             trace_id=trace_id,
+            cfp_analysis=mock_cfp_analysis,
             organization=None,
         )
 
@@ -541,7 +593,9 @@ async def test_handle_extract_sections_no_organization(
         mock_retrieve.assert_not_called()
 
 
-async def test_handle_extract_sections_empty_cfp_content(mock_job_manager: AsyncMock, trace_id: str) -> None:
+async def test_handle_extract_sections_empty_cfp_content(
+    mock_job_manager: AsyncMock, trace_id: str, mock_cfp_analysis: CFPAnalysisResult
+) -> None:
     with (
         patch("services.rag.src.grant_template.extract_sections.with_evaluation") as mock_evaluation,
         patch("services.rag.src.grant_template.extract_sections.filter_extracted_sections") as mock_filter,
@@ -554,6 +608,7 @@ async def test_handle_extract_sections_empty_cfp_content(mock_job_manager: Async
             cfp_content=[],
             cfp_subject="",
             trace_id=trace_id,
+            cfp_analysis=mock_cfp_analysis,
             organization=None,
         )
 
@@ -571,6 +626,7 @@ async def test_end_to_end_section_extraction(
     mock_evaluation: AsyncMock,
     mock_job_manager: AsyncMock,
     trace_id: str,
+    mock_cfp_analysis: CFPAnalysisResult,
 ) -> None:
     mock_get_exclude.return_value = [0.1, 0.2, 0.3]
     mock_model = MagicMock()
@@ -616,6 +672,7 @@ async def test_end_to_end_section_extraction(
             cfp_content=cfp_content_list,
             cfp_subject="Advanced Research Grant",
             trace_id=trace_id,
+            cfp_analysis=mock_cfp_analysis,
             organization=None,
         )
 

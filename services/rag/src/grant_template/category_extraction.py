@@ -333,7 +333,7 @@ def _format_category_section(category: str, sentences: list[str]) -> list[str]:
 
 
 def format_nlp_analysis_for_prompt(analysis: CategorizationAnalysisResult) -> str:
-    if not analysis or not any(sentences for sentences in analysis.values()):
+    if not any(sentences for sentences in analysis.values()):
         return NO_ANALYSIS_MESSAGE
 
     total_sentences = sum(len(sentences) for sentences in analysis.values())  # type: ignore[misc, arg-type]
