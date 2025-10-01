@@ -190,6 +190,87 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
     return source_response
 
 
+def build_application_response(grant_application: GrantApplication) -> ApplicationResponse:
+    response: ApplicationResponse = {
+        "id": str(grant_application.id),
+        "project_id": str(grant_application.project_id),
+        "title": grant_application.title,
+        "status": grant_application.status,
+        "rag_sources": [],
+        "created_at": grant_application.created_at.isoformat(),
+        "updated_at": grant_application.updated_at.isoformat(),
+        "editor_document_id": str(grant_application.editor_documents[0].id)
+        if grant_application.editor_documents
+        else None,
+        "editor_document_init": grant_application.editor_documents[0].crdt is not None
+        if grant_application.editor_documents
+        else False,
+    }
+
+    if grant_application.description:
+        response["description"] = grant_application.description
+
+    if grant_application.completed_at:
+        response["completed_at"] = grant_application.completed_at.isoformat()
+
+    if grant_application.form_inputs:
+        response["form_inputs"] = grant_application.form_inputs
+
+    if grant_application.research_objectives:
+        response["research_objectives"] = grant_application.research_objectives
+
+    if grant_application.text:
+        response["text"] = grant_application.text
+
+    if grant_application.parent_id:
+        response["parent_id"] = str(grant_application.parent_id)
+
+    if grant_application.grant_template:
+        template = grant_application.grant_template
+        template_response: GrantTemplateResponse = {
+            "id": str(template.id),
+            "grant_application_id": str(template.grant_application_id),
+            "grant_sections": template.grant_sections,
+            "rag_sources": [],
+            "created_at": template.created_at.isoformat(),
+            "updated_at": template.updated_at.isoformat(),
+        }
+
+        if template.granting_institution_id:
+            template_response["granting_institution_id"] = str(template.granting_institution_id)
+
+        if template.submission_date:
+            template_response["submission_date"] = template.submission_date.isoformat()
+
+            response["deadline"] = template.submission_date.isoformat()
+
+        if template.granting_institution:
+            org = template.granting_institution
+            granting_institution_response: GrantingInstitutionResponse = {
+                "id": str(org.id),
+                "full_name": org.full_name,
+                "created_at": org.created_at.isoformat(),
+                "updated_at": org.updated_at.isoformat(),
+            }
+            if org.abbreviation:
+                granting_institution_response["abbreviation"] = org.abbreviation
+            template_response["granting_institution"] = granting_institution_response
+
+        if hasattr(template, "rag_sources") and template.rag_sources:
+            for template_rag_source in template.rag_sources:
+                source_response = _build_source_response(template_rag_source.rag_source)
+                template_response["rag_sources"].append(source_response)
+
+        response["grant_template"] = template_response
+
+    if grant_application.rag_sources:
+        for app_rag_source in grant_application.rag_sources:
+            source_response = _build_source_response(app_rag_source.rag_source)
+            response["rag_sources"].append(source_response)
+
+    return response
+
+
 async def _handle_retrieve_application(
     application_id: UUID, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
@@ -202,84 +283,7 @@ async def _handle_retrieve_application(
         if grant_application.project_id != project_id:
             raise NotFoundException("Application not found")
 
-        response: ApplicationResponse = {
-            "id": str(grant_application.id),
-            "project_id": str(grant_application.project_id),
-            "title": grant_application.title,
-            "status": grant_application.status,
-            "rag_sources": [],
-            "created_at": grant_application.created_at.isoformat(),
-            "updated_at": grant_application.updated_at.isoformat(),
-            "editor_document_id": str(grant_application.editor_documents[0].id)
-            if grant_application.editor_documents
-            else None,
-            "editor_document_init": grant_application.editor_documents[0].crdt is not None
-            if grant_application.editor_documents
-            else False,
-        }
-
-        if grant_application.description:
-            response["description"] = grant_application.description
-
-        if grant_application.completed_at:
-            response["completed_at"] = grant_application.completed_at.isoformat()
-
-        if grant_application.form_inputs:
-            response["form_inputs"] = grant_application.form_inputs
-
-        if grant_application.research_objectives:
-            response["research_objectives"] = grant_application.research_objectives
-
-        if grant_application.text:
-            response["text"] = grant_application.text
-
-        if grant_application.parent_id:
-            response["parent_id"] = str(grant_application.parent_id)
-
-        if grant_application.grant_template:
-            template = grant_application.grant_template
-            template_response: GrantTemplateResponse = {
-                "id": str(template.id),
-                "grant_application_id": str(template.grant_application_id),
-                "grant_sections": template.grant_sections,
-                "rag_sources": [],
-                "created_at": template.created_at.isoformat(),
-                "updated_at": template.updated_at.isoformat(),
-            }
-
-            if template.granting_institution_id:
-                template_response["granting_institution_id"] = str(template.granting_institution_id)
-
-            if template.submission_date:
-                template_response["submission_date"] = template.submission_date.isoformat()
-
-                response["deadline"] = template.submission_date.isoformat()
-
-            if template.granting_institution:
-                org = template.granting_institution
-                granting_institution_response: GrantingInstitutionResponse = {
-                    "id": str(org.id),
-                    "full_name": org.full_name,
-                    "created_at": org.created_at.isoformat(),
-                    "updated_at": org.updated_at.isoformat(),
-                }
-                if org.abbreviation:
-                    granting_institution_response["abbreviation"] = org.abbreviation
-                template_response["granting_institution"] = granting_institution_response
-
-            if hasattr(template, "rag_sources") and template.rag_sources:
-                for template_rag_source in template.rag_sources:
-                    source_response = _build_source_response(template_rag_source.rag_source)
-                    template_response["rag_sources"].append(source_response)
-
-            response["grant_template"] = template_response
-
-        if grant_application.rag_sources:
-            for app_rag_source in grant_application.rag_sources:
-                source_response = _build_source_response(app_rag_source.rag_source)
-                response["rag_sources"].append(source_response)
-
-    return response
+    return build_application_response(grant_application)
 
 
 @post(
