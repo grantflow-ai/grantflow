@@ -242,7 +242,22 @@ class JobManager[DTOType]:
 
             job.status = RagGenerationStatusEnum.COMPLETED
             job.completed_at = datetime.now(UTC)
-            job.checkpoint_data = _serialize_checkpoint_data(dto)
+            serialized_data = _serialize_checkpoint_data(dto)
+
+            logger.info(
+                "Saving checkpoint data",
+                entity_type=self.entity_type,
+                entity_id=str(self.entity_id),
+                job_id=str(job.id),
+                stage=self.current_stage,
+                checkpoint_keys=list(serialized_data.keys()) if isinstance(serialized_data, dict) else "not a dict",
+                has_analysis_results="analysis_results" in serialized_data
+                if isinstance(serialized_data, dict)
+                else False,
+                trace_id=self.trace_id,
+            )
+
+            job.checkpoint_data = serialized_data
 
             logger.info(
                 "Stage completed",
@@ -403,12 +418,47 @@ class JobManager[DTOType]:
             return None
 
         if self.current_job.checkpoint_data is not None:
+            logger.info(
+                "Retrieved checkpoint data from current job",
+                entity_type=self.entity_type,
+                entity_id=str(self.entity_id),
+                job_id=str(self.current_job.id),
+                checkpoint_keys=list(self.current_job.checkpoint_data.keys())
+                if isinstance(self.current_job.checkpoint_data, dict)
+                else "not a dict",
+                has_analysis_results="analysis_results" in self.current_job.checkpoint_data
+                if isinstance(self.current_job.checkpoint_data, dict)
+                else False,
+                trace_id=self.trace_id,
+            )
             return self.current_job.checkpoint_data
 
         if self.current_job.parent_job_id:
             async with self.session_maker() as session:
                 parent_job = await session.get(RagGenerationJob, self.current_job.parent_job_id)
                 if parent_job and parent_job.checkpoint_data is not None:
+                    logger.info(
+                        "Retrieved checkpoint data from parent job",
+                        entity_type=self.entity_type,
+                        entity_id=str(self.entity_id),
+                        current_job_id=str(self.current_job.id),
+                        parent_job_id=str(parent_job.id),
+                        checkpoint_keys=list(parent_job.checkpoint_data.keys())
+                        if isinstance(parent_job.checkpoint_data, dict)
+                        else "not a dict",
+                        has_analysis_results="analysis_results" in parent_job.checkpoint_data
+                        if isinstance(parent_job.checkpoint_data, dict)
+                        else False,
+                        trace_id=self.trace_id,
+                    )
                     return parent_job.checkpoint_data  # type: ignore[no-any-return]
 
+        logger.info(
+            "No checkpoint data found",
+            entity_type=self.entity_type,
+            entity_id=str(self.entity_id),
+            job_id=str(self.current_job.id),
+            parent_job_id=str(self.current_job.parent_job_id) if self.current_job.parent_job_id else None,
+            trace_id=self.trace_id,
+        )
         return None

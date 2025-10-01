@@ -1,7 +1,8 @@
-import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
+from functools import partial
+from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
+from packages.db.src.json_objects import CFPAnalysisResult
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
 from packages.shared_utils.src.serialization import serialize
@@ -764,28 +765,21 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     return sorted_sections
 
 
-async def extract_sections(task_description: str, trace_id: str, **_: Any) -> ExtractedSections:
-    cfp_analysis_match = re.search(r"CFP Analysis Data.*?:\s*(\{.*\})", task_description, re.DOTALL)
-    cfp_analysis_json = "{}" if not cfp_analysis_match else cfp_analysis_match.group(1)
-
-    cfp_content_match = re.search(r"Original CFP Content:\s*(.*)", task_description, re.DOTALL)
-    cfp_content = "" if not cfp_content_match else cfp_content_match.group(1).strip()
-
-    organization_guidelines = "Follow standard grant application best practices."
-    cfp_subject = "Grant Application Requirements"
-
-    full_prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.substitute(
-        cfp_analysis=cfp_analysis_json,
-        organization_guidelines=organization_guidelines,
-        cfp_subject=cfp_subject,
-        cfp_content=cfp_content,
+async def extract_sections(
+    task_description: str, *, trace_id: str, cfp_analysis: CFPAnalysisResult
+) -> ExtractedSections:
+    logger.info(
+        "Extracted CFP analysis from task_description",
+        task_description_length=len(task_description),
+        cfp_analysis=cfp_analysis,
+        trace_id=trace_id,
     )
 
     if True:
         return await handle_completions_request(
             prompt_identifier="section_extraction",
             model="gemini-2.5-flash",
-            messages=full_prompt.to_string(),
+            messages=task_description,
             system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
             response_schema=section_extraction_json_schema,
             response_type=ExtractedSections,
@@ -798,7 +792,7 @@ async def extract_sections(task_description: str, trace_id: str, **_: Any) -> Ex
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=ANTHROPIC_SONNET_MODEL,
-        messages=full_prompt.to_string(),
+        messages=task_description,
         system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
@@ -813,16 +807,30 @@ async def handle_extract_sections(
     trace_id: str,
     *,
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
+    cfp_analysis: CFPAnalysisResult,
     organization: OrganizationNamespace | None = None,
-    cfp_analysis: Any | None = None,
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
-    cfp_analysis_text = ""
-    if cfp_analysis:
-        cfp_analysis_text = serialize(cfp_analysis).decode("utf-8")
-    else:
-        cfp_analysis_text = "No structured CFP analysis available. Use standard grant application structure."
+    # Log CFP analysis details for debugging
+    logger.info(
+        "Received CFP analysis for section extraction",
+        cfp_analysis_type=type(cfp_analysis).__name__,
+        cfp_analysis_keys=list(cfp_analysis.keys()) if isinstance(cfp_analysis, dict) else "not a dict",
+        has_cfp_analysis_key="cfp_analysis" in cfp_analysis if isinstance(cfp_analysis, dict) else False,
+        has_nlp_analysis_key="nlp_analysis" in cfp_analysis if isinstance(cfp_analysis, dict) else False,
+        has_analysis_metadata_key="analysis_metadata" in cfp_analysis if isinstance(cfp_analysis, dict) else False,
+        trace_id=trace_id,
+    )
+
+    cfp_analysis_text = serialize(cfp_analysis).decode("utf-8")
+
+    logger.info(
+        "Serialized CFP analysis for LLM",
+        serialized_length=len(cfp_analysis_text),
+        serialized_preview=cfp_analysis_text[:200] if len(cfp_analysis_text) > 0 else "EMPTY",
+        trace_id=trace_id,
+    )
 
     rag_results = []
     if organization:
@@ -848,11 +856,25 @@ async def handle_extract_sections(
         organization_guidelines=organization_guidelines,
     )
 
+    prompt_string = prompt.to_string()
+    logger.info(
+        "Final prompt for LLM",
+        prompt_length=len(prompt_string),
+        has_cfp_analysis_tag="<cfp_analysis>" in prompt_string,
+        cfp_analysis_section_preview=prompt_string[
+            prompt_string.find("<cfp_analysis>") : prompt_string.find("</cfp_analysis>") + 15
+        ]
+        if "<cfp_analysis>" in prompt_string
+        else "NOT FOUND",
+        trace_id=trace_id,
+    )
+
     result = await with_evaluation(
         prompt_identifier="extract_sections",
-        prompt_handler=extract_sections,
-        prompt=prompt.to_string(),
+        prompt_handler=partial(extract_sections, cfp_analysis=cfp_analysis),
+        prompt=prompt_string,
         trace_id=trace_id,
+        cfp_analysis=cfp_analysis,
         **get_evaluation_kwargs(
             "extract_sections",
             job_manager,

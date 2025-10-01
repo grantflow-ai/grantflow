@@ -205,25 +205,9 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
-        nlp_analysis = source.get(
-            "nlp_analysis",
-            CategorizationAnalysisResult(
-                money=[],
-                date_time=[],
-                writing_related=[],
-                other_numbers=[],
-                recommendations=[],
-                orders=[],
-                positive_instructions=[],
-                negative_instructions=[],
-                evaluation_criteria=[],
-            ),
-        )
-        if nlp_analysis:
-            formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
-            source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
-        else:
-            source_section += "#### NLP Analysis:\nNo semantic analysis available for this source.\n\n"
+        nlp_analysis = source["nlp_analysis"]
+        formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
+        source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
 
         sanitized_content = sanitize_text_content(source["text_content"])
         source_section += "#### Full Content:\n"

@@ -103,7 +103,7 @@ async def handle_grant_template_pipeline(
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     try:
-        checkpoint_data = await job_manager.get_checkpoint_data() or {}
+        checkpoint_data = await job_manager.get_checkpoint_data()
 
         match current_stage:
             case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
