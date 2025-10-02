@@ -6,7 +6,6 @@ import { LinkPreviewItem } from "@/components/organizations/project/applications
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
 import { WizardBanner } from "@/components/organizations/project/applications/wizard/wizard-banner";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
-import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
@@ -161,8 +160,6 @@ export function ApplicationStructureLeftPane() {
 				})),
 		[grantTemplate?.rag_sources],
 	);
-
-	usePollingCleanup();
 
 	if (!hasGrantSections) {
 		return (

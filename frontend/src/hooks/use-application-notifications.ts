@@ -4,6 +4,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
 import type { SourceIndexingStatus } from "@/enums";
+import type { API } from "@/types/api-types";
 import type { NotificationEvent } from "@/types/notification-events";
 import { isApplicationEvent, isTemplateEvent } from "@/types/notification-events";
 import { getEnv } from "@/utils/env";
@@ -31,6 +32,7 @@ export interface SourceProcessingNotification {
 export type SourceProcessingNotificationMessage = WebsocketMessage<SourceProcessingNotification>;
 
 export interface WebsocketMessage<T> {
+	application_data?: API.RetrieveApplication.Http200.ResponseBody;
 	data: T;
 	event: string;
 	parent_id: string;
@@ -61,6 +63,12 @@ export const isAutofillProgressMessage = createTypeGuard<AutofillProgressMessage
 	(value: unknown) =>
 		isWebsocketMessage(value) && isRecord(value.data) && "autofill_type" in value.data && "message" in value.data,
 );
+
+export const hasApplicationData = (
+	message: WebsocketMessage<unknown>,
+): message is { application_data: API.RetrieveApplication.Http200.ResponseBody } & WebsocketMessage<unknown> => {
+	return !!message.application_data;
+};
 
 export const CONNECTION_STATUS_MAP = {
 	[ReadyState.CLOSED]: "Closed",

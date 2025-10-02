@@ -7,6 +7,7 @@ import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,
+	hasApplicationData,
 	isAutofillProgressMessage,
 	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
@@ -42,7 +43,7 @@ export function WizardClientComponent({
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
-	const getApplication = useApplicationStore((state) => state.getApplication);
+	const setApplication = useApplicationStore((state) => state.setApplication);
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
@@ -96,43 +97,39 @@ export function WizardClientComponent({
 		}
 	}, []);
 
-	const handleAutofillProgress = useCallback(
-		(notification: AutofillProgressMessage) => {
-			const { event } = notification;
-			const { autofill_type, data, message } = notification.data;
+	const handleAutofillProgress = useCallback((notification: AutofillProgressMessage) => {
+		const { event } = notification;
+		const { autofill_type, data, message } = notification.data;
 
-			switch (event) {
-				case "autofill_completed": {
-					toast.success("Autofill completed successfully!");
-					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-					void getApplication(organizationId, projectId, initialApplicationId);
+		switch (event) {
+			case "autofill_completed": {
+				toast.success("Autofill completed successfully!");
+				useWizardStore.getState().setAutofillLoading(autofill_type, false);
 
-					break;
-				}
-				case "autofill_error": {
-					toast.error(`Autofill failed: ${message}`);
-					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-
-					break;
-				}
-				case "autofill_progress": {
-					if (data?.field_name && typeof data.field_name === "string") {
-						toast.info(`Generating content for ${data.field_name}...`);
-					}
-
-					break;
-				}
-				case "autofill_started": {
-					toast.info(
-						`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
-					);
-
-					break;
-				}
+				break;
 			}
-		},
-		[organizationId, projectId, initialApplicationId, getApplication],
-	);
+			case "autofill_error": {
+				toast.error(`Autofill failed: ${message}`);
+				useWizardStore.getState().setAutofillLoading(autofill_type, false);
+
+				break;
+			}
+			case "autofill_progress": {
+				if (data?.field_name && typeof data.field_name === "string") {
+					toast.info(`Generating content for ${data.field_name}...`);
+				}
+
+				break;
+			}
+			case "autofill_started": {
+				toast.info(
+					`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
+				);
+
+				break;
+			}
+		}
+	}, []);
 
 	useEffect(() => {
 		if (notifications.length === 0) {
@@ -140,22 +137,25 @@ export function WizardClientComponent({
 		}
 
 		const latestNotification = notifications.at(-1);
+		if (!latestNotification) {
+			return;
+		}
+
+		if (hasApplicationData(latestNotification)) {
+			setApplication(latestNotification.application_data);
+			log.info("[WebSocket] Updated application state from notification", {
+				event: latestNotification.event,
+				hasTemplate: !!latestNotification.application_data.grant_template,
+				templateRagSources: latestNotification.application_data.grant_template?.rag_sources.length ?? 0,
+			});
+		}
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
 			handleSourceProcessingNotification(latestNotification);
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
 		}
-		void getApplication(organizationId, projectId, initialApplicationId);
-	}, [
-		notifications,
-		handleSourceProcessingNotification,
-		handleAutofillProgress,
-		getApplication,
-		organizationId,
-		projectId,
-		initialApplicationId,
-	]);
+	}, [notifications, setApplication, handleSourceProcessingNotification, handleAutofillProgress]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
@@ -208,14 +208,18 @@ export function WizardClientComponent({
 
 		if (event === "grant_template_created") {
 			setGeneratingTemplate(false);
-			void getApplication(organizationId, projectId, initialApplicationId);
 		}
 
 		if (event === "pipeline_error") {
 			setGeneratingTemplate(false);
 			useWizardStore.getState().setTemplateGenerationFailed(true);
 		}
-	}, [latestRagNotification, setGeneratingTemplate, getApplication, organizationId, projectId, initialApplicationId]);
+
+		if (event === "grant_application_generation_completed") {
+			useWizardStore.getState().setGeneratingApplication(false);
+			useWizardStore.getState().resetApplicationGenerationComplete();
+		}
+	}, [latestRagNotification, setGeneratingTemplate]);
 
 	useEffect(() => {
 		if (isGeneratingTemplate && currentStep === WizardStep.APPLICATION_DETAILS) {

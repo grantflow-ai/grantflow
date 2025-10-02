@@ -52,12 +52,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		useWizardStore.setState({
 			currentStep: WizardStep.KNOWLEDGE_BASE,
-			polling: {
-				intervalId: null,
-				isActive: false,
-				start: vi.fn(),
-				stop: vi.fn(),
-			},
 		});
 
 		useApplicationStore.setState({
