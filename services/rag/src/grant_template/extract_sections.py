@@ -416,7 +416,7 @@ MAX_NESTING_DEPTH: Final[int] = 5
 def _get_children_map(sections: list[ExtractedSectionDTO]) -> dict[str, list[ExtractedSectionDTO]]:
     children_map: dict[str, list[ExtractedSectionDTO]] = {}
     for section in sections:
-        parent_id = section.get("parent_id")
+        parent_id = section.get("parent")
         if parent_id:
             if parent_id not in children_map:
                 children_map[parent_id] = []
@@ -431,35 +431,35 @@ def _validate_parent_child_structure(
         section_id = section["id"]
         children = children_map.get(section_id, [])
 
-        if children and not section.get("is_title_only"):
+        if children and not section.get("title_only"):
             raise ValidationError(
                 "Parent sections with children must be title-only (is_title_only=true)",
                 context={
-                    "parent_id": section_id,
+                    "parent": section_id,
                     "parent_title": section["title"],
-                    "is_title_only": section.get("is_title_only"),
+                    "title_only": section.get("title_only"),
                     "children_count": len(children),
                     "children_ids": [c["id"] for c in children],
                 },
             )
 
-        if section.get("is_title_only") and not children:
+        if section.get("title_only") and not children:
             raise ValidationError(
                 "Title-only sections must have at least one child section",
                 context={
                     "section_id": section_id,
                     "section_title": section["title"],
-                    "is_title_only": section.get("is_title_only"),
+                    "title_only": section.get("title_only"),
                 },
             )
 
 
 def _validate_word_limit_distribution(section: ExtractedSectionDTO, children: list[ExtractedSectionDTO]) -> None:
-    parent_limit = section.get("length_limit")
+    parent_limit = section.get("max_words")
     if parent_limit is None:
         return
 
-    children_total = sum(c.get("length_limit") or 0 for c in children)
+    children_total = sum(c.get("max_words") or 0 for c in children)
     tolerance = parent_limit * WORD_LIMIT_TOLERANCE
     difference = abs(children_total - parent_limit)
 
@@ -481,12 +481,12 @@ def _validate_word_limit_distribution(section: ExtractedSectionDTO, children: li
 def _validate_section_depth(section: ExtractedSectionDTO, mapped_sections: dict[str, ExtractedSectionDTO]) -> None:
     depth = 1
     current_id = section["id"]
-    parent_id = mapped_sections[current_id].get("parent_id")
+    parent_id = mapped_sections[current_id].get("parent")
 
     while parent_id:
         depth += 1
         current_id = parent_id
-        parent_id = mapped_sections[current_id].get("parent_id")
+        parent_id = mapped_sections[current_id].get("parent")
 
     if depth > MAX_NESTING_DEPTH:
         raise ValidationError(
