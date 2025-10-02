@@ -193,29 +193,29 @@ async def enrich_objective_with_wikidata(
 ) -> EnrichmentDataDTO:
     try:
         all_terms = []
-        all_terms.extend(enrichment_response["research_objective"]["core_scientific_terms"])
+        all_terms.extend(enrichment_response["research_objective"]["terms"])
 
         for task in enrichment_response["research_tasks"]:
-            all_terms.extend(task["core_scientific_terms"])
+            all_terms.extend(task["terms"])
 
         unique_terms = sorted(set(all_terms))
 
         if not unique_terms:
             return {
-                "enriched_objective": "",
-                "search_queries": [],
-                "core_scientific_terms": [],
-                "scientific_context": "",
+                "enriched": "",
+                "queries": [],
+                "terms": [],
+                "context": "",
             }
 
         scientific_context = await _get_scientific_context(unique_terms, trace_id)
         formatted_context = SCIENTIFIC_CONTEXT_TEMPLATE.to_string(scientific_context=scientific_context)
 
         return {
-            "enriched_objective": "",
-            "search_queries": [],
-            "core_scientific_terms": unique_terms,
-            "scientific_context": formatted_context,
+            "enriched": "",
+            "queries": [],
+            "terms": unique_terms,
+            "context": formatted_context,
         }
 
     except (httpx.HTTPError, httpx.TimeoutException) as e:
@@ -225,8 +225,8 @@ async def enrich_objective_with_wikidata(
             trace_id=trace_id,
         )
         return EnrichmentDataDTO(
-            enriched_objective="",
-            search_queries=[],
-            core_scientific_terms=[],
-            scientific_context="",
+            enriched="",
+            queries=[],
+            terms=[],
+            context="",
         )
