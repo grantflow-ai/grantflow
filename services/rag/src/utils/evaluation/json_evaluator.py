@@ -33,9 +33,7 @@ def _detect_json_content_type(parsed_content: Any) -> str | None:
         return "relationships"
 
     if isinstance(parsed_content, dict) and (
-        "enriched_objective" in parsed_content
-        or "core_scientific_terms" in parsed_content
-        or "research_objective" in parsed_content
+        "enriched" in parsed_content or "terms" in parsed_content or "research_objective" in parsed_content
     ):
         return "enrichment"
 
