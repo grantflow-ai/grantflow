@@ -43,6 +43,7 @@ export function WizardClientComponent({
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const getApplication = useApplicationStore((state) => state.getApplication);
+
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
 
