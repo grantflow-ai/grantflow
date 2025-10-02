@@ -42,7 +42,7 @@ Note: NLP analysis provides categorized sentences to help locate information. Re
 ## Task
 
 Identify ALL sections applicants must write. For each:
-- Extract exact section name from CFP
+- Extract exact section title from CFP (the heading applicants will use in their application)
 - Provide definition and source reference
 - List all requirements with verbatim quotes
 - Include length constraints and evaluation criteria
@@ -54,7 +54,7 @@ Identify ALL sections applicants must write. For each:
 
 Output format with 4 arrays:
 
-1. **required_sections**: Section objects with name, definition, source reference, requirements array, dependencies
+1. **required_sections**: Section objects with title, definition, source reference, requirements array, dependencies
 2. **length_constraints**: Page/word/character limits with exact quotes
 3. **evaluation_criteria**: Assessment factors with weights and quotes
 4. **additional_requirements**: Other requirements (formatting, submission, eligibility)
@@ -78,7 +78,7 @@ Output:
 {
   "required_sections": [
     {
-      "section_name": "PROJECT SUMMARY",
+      "title": "Project Summary",
       "definition": "One-page overview of proposed research including objectives and impacts",
       "cfp_source_reference": "II.A. Project Summary (1 page) - The project summary must provide a clear overview of the proposed research.",
       "requirements": [
@@ -96,7 +96,7 @@ Output:
       "dependencies": []
     },
     {
-      "section_name": "RESEARCH PLAN",
+      "title": "Research Plan",
       "definition": "Detailed description of research methodology and expected outcomes",
       "cfp_source_reference": "II.B. Research Plan (15 pages maximum, excluding references)",
       "requirements": [
@@ -111,19 +111,19 @@ Output:
           "category": "outcomes"
         }
       ],
-      "dependencies": ["PROJECT SUMMARY"]
+      "dependencies": ["Project Summary"]
     }
   ],
   "length_constraints": [
     {
-      "section_name": "PROJECT SUMMARY",
+      "title": "Project Summary",
       "measurement_type": "pages",
       "limit_description": "1 page maximum",
       "quote_from_source": "Project Summary (1 page)",
       "exclusions": []
     },
     {
-      "section_name": "RESEARCH PLAN",
+      "title": "Research Plan",
       "measurement_type": "pages",
       "limit_description": "15 pages maximum",
       "quote_from_source": "15 pages maximum, excluding references",
@@ -156,9 +156,9 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "minItems": 1,
             "items": {
                 "type": "object",
-                "required": ["section_name", "definition", "requirements", "dependencies"],
+                "required": ["title", "definition", "requirements", "dependencies"],
                 "properties": {
-                    "section_name": {"type": "string", "minLength": 1},
+                    "title": {"type": "string", "minLength": 1},
                     "definition": {"type": "string", "minLength": 10},
                     "cfp_source_reference": {
                         "type": "string",
@@ -186,14 +186,14 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "items": {
                 "type": "object",
                 "required": [
-                    "section_name",
+                    "title",
                     "measurement_type",
                     "limit_description",
                     "quote_from_source",
                     "exclusions",
                 ],
                 "properties": {
-                    "section_name": {"type": "string", "minLength": 1},
+                    "title": {"type": "string", "minLength": 1},
                     "measurement_type": {"type": "string", "enum": ["pages", "words", "characters", "other"]},
                     "limit_description": {"type": "string", "minLength": 5},
                     "quote_from_source": {"type": "string", "minLength": 10},
@@ -288,7 +288,7 @@ def validate_cfp_analysis(response: CFPSectionAnalysis) -> None:
 
     for section in response["required_sections"]:
         if not section.get("cfp_source_reference"):
-            section["cfp_source_reference"] = f"CFP defines {section['section_name']}: {section['definition'][:100]}..."
+            section["cfp_source_reference"] = f"CFP defines {section['title']}: {section['definition'][:100]}..."
         elif section["cfp_source_reference"] and len(section["cfp_source_reference"]) < 10:
             section["cfp_source_reference"] = f"CFP section requirement: {section['cfp_source_reference']}"
 
