@@ -30,7 +30,7 @@ class ExtractedCFPData(TypedDict):
     subject: str
     deadline: str | None
     content: list[CFPContentSection]
-    full_text: str
+    text: str
     error: NotRequired[str | None]
 
 

@@ -349,9 +349,9 @@ def convert_to_db_format(response: CFPSectionAnalysis) -> DBCFPSectionAnalysis:
             )
             for req in response["additional_requirements"]
         ],
-        sections_count=response["count"],
-        length_constraints_found=response["constraints_count"],
-        evaluation_criteria_count=response["criteria_count"],
+        count=response["count"],
+        constraints_count=response["constraints_count"],
+        criteria_count=response["criteria_count"],
         error=response.get("error"),
     )
 

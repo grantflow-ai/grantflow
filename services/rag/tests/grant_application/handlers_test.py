@@ -410,6 +410,9 @@ async def test_generate_research_plan_stage_success(
                 "context": "Context",
                 "enriched": "Enriched objective",
                 "queries": ["query"],
+                "instructions": "Instructions",
+                "description": "Description",
+                "questions": ["Question"],
             }
         ],
     )

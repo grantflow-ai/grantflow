@@ -135,7 +135,7 @@ def sample_extract_cfp_dto() -> ExtractCFPContentStageDTO:
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         },
     )
 
@@ -147,9 +147,9 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: ExtractCFPContentStageDTO) ->
         extracted_data=sample_extract_cfp_dto["extracted_data"],
         analysis_results={
             "cfp_analysis": {
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
+                "count": 3,
+                "constraints_count": 2,
+                "criteria_count": 2,
                 "required_sections": [],
                 "length_constraints": [],
                 "evaluation_criteria": [],

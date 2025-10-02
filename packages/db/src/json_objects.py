@@ -131,9 +131,9 @@ class CFPSectionAnalysis(TypedDict):
     length_constraints: list[CFPSectionLengthConstraint]
     evaluation_criteria: list[CFPAnalysisEvaluationCriterion]
     additional_requirements: list[CFPAnalysisRequirementWithQuote]
-    sections_count: int
-    length_constraints_found: int
-    evaluation_criteria_count: int
+    count: int
+    constraints_count: int
+    criteria_count: int
     error: NotRequired[str | None]
 
 

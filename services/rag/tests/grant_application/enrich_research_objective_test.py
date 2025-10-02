@@ -193,7 +193,7 @@ async def test_validate_enrichment_response_wrong_terms_count() -> None:
         },
     )
 
-    with pytest.raises(ValidationError, match="Objective must have exactly 5 terms"):
+    with pytest.raises(ValidationError, match="Objective must have exactly 5 core scientific terms"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
@@ -214,7 +214,7 @@ async def test_validate_enrichment_response_insufficient_questions() -> None:
         },
     )
 
-    with pytest.raises(ValidationError, match="Objective must have at least 3 questions"):
+    with pytest.raises(ValidationError, match="Objective must have at least 3 guiding questions"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
@@ -235,7 +235,7 @@ async def test_validate_enrichment_response_insufficient_queries() -> None:
         },
     )
 
-    with pytest.raises(ValidationError, match="Objective must have at least 3 queries"):
+    with pytest.raises(ValidationError, match="Objective must have at least 3 search queries"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
@@ -359,7 +359,7 @@ async def test_validate_enrichment_response_invalid_task_fields() -> None:
         },
     )
 
-    with pytest.raises(ValidationError, match="Task at index 0 must have exactly 5 terms"):
+    with pytest.raises(ValidationError, match="Task at index 0 must have exactly 5 core scientific terms"):
         validate_enrichment_response(invalid_response, input_objective=None)
 
 
