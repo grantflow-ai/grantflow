@@ -38,7 +38,7 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
         "evaluation_criteria_count": 2,
         "required_sections": [
             {
-                "section_name": "Project Summary",
+                "title": "Project Summary",
                 "definition": "Brief overview of the proposed research project",
                 "requirements": [
                     {
@@ -55,7 +55,7 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
                 "dependencies": [],
             },
             {
-                "section_name": "Research Plan",
+                "title": "Research Plan",
                 "definition": "Detailed description of the research methodology and approach",
                 "requirements": [
                     {
@@ -69,14 +69,14 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
         ],
         "length_constraints": [
             {
-                "section_name": "Project Summary",
+                "title": "Project Summary",
                 "measurement_type": "pages",
                 "limit_description": "1 page maximum",
                 "quote_from_source": "Project summary is limited to one page including figures and tables",
                 "exclusions": [],
             },
             {
-                "section_name": "Research Plan",
+                "title": "Research Plan",
                 "measurement_type": "pages",
                 "limit_description": "15 pages maximum",
                 "quote_from_source": "Research plan cannot exceed 15 pages excluding references and appendices",
@@ -152,7 +152,7 @@ def test_validate_cfp_analysis_count_mismatch() -> None:
         "length_constraints_found": 0,
         "evaluation_criteria_count": 0,
         "required_sections": [
-            {"section_name": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
+            {"title": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
         ],
         "length_constraints": [],
         "evaluation_criteria": [],

@@ -211,7 +211,7 @@ Create structured section template by:
 ## Section Data Transfer
 
 For each section:
-1. **Title**: Use exact `section_name` from CFP analysis `required_sections`
+1. **Title**: Use exact `title` from CFP analysis `required_sections` (the section heading from the CFP)
 2. **Requirements**: Copy entire `requirements` array from matching CFP section (do not modify)
 3. **Definition**: Copy exact `definition` string from matching CFP section
 4. **Length**: Convert to words (e.g., "2 pages" → 830 words) → `length_limit` + `length_source`
@@ -244,7 +244,7 @@ Input CFP Analysis excerpt:
 {
   "required_sections": [
     {
-      "section_name": "PROJECT SUMMARY",
+      "title": "Project Summary",
       "definition": "One-page overview of the proposed research",
       "requirements": [
         {"requirement": "Must describe research objectives", "quote_from_source": "provide clear objectives", "category": "content"},
@@ -253,7 +253,7 @@ Input CFP Analysis excerpt:
     }
   ],
   "length_constraints": [
-    {"section_name": "PROJECT SUMMARY", "measurement_type": "pages", "limit_description": "1 page maximum", "quote_from_source": "limited to one page"}
+    {"title": "Project Summary", "measurement_type": "pages", "limit_description": "1 page maximum", "quote_from_source": "limited to one page"}
   ]
 }
 ```
@@ -263,7 +263,7 @@ Output:
 {
   "sections": [
     {
-      "title": "PROJECT SUMMARY",
+      "title": "Project Summary",
       "id": "project_summary",
       "order": 1,
       "parent_id": null,
@@ -410,7 +410,7 @@ section_extraction_json_schema = {
                     },
                     "requirements": {
                         "type": "array",
-                        "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'section_name' matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
+                        "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'title' matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -455,7 +455,7 @@ section_extraction_json_schema = {
                     "definition": {
                         "type": "string",
                         "nullable": True,
-                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
+                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'title' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
                     },
                     "needs_applicant_writing": {
                         "type": "boolean",
