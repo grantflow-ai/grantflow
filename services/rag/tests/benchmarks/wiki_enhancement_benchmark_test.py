@@ -87,32 +87,32 @@ async def test_wikidata_context_generation_performance(
 async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
     test_enrichment_data: ObjectiveEnrichmentDTO = {
         "research_objective": {
-            "enriched_objective": "",
-            "search_queries": [],
-            "core_scientific_terms": ["machine learning", "artificial intelligence", "neural networks"],
-            "scientific_context": "",
+            "enriched": "",
+            "queries": [],
+            "terms": ["machine learning", "artificial intelligence", "neural networks"],
+            "context": "",
             "instructions": "Test instructions",
             "description": "Test description",
-            "guiding_questions": ["Question 1", "Question 2", "Question 3"],
+            "questions": ["Question 1", "Question 2", "Question 3"],
         },
         "research_tasks": [
             {
-                "enriched_objective": "",
-                "search_queries": [],
-                "core_scientific_terms": ["deep learning", "computer vision"],
-                "scientific_context": "",
+                "enriched": "",
+                "queries": [],
+                "terms": ["deep learning", "computer vision"],
+                "context": "",
                 "instructions": "Task 1 instructions",
                 "description": "Task 1 description",
-                "guiding_questions": ["Task 1 Question 1", "Task 1 Question 2", "Task 1 Question 3"],
+                "questions": ["Task 1 Question 1", "Task 1 Question 2", "Task 1 Question 3"],
             },
             {
-                "enriched_objective": "",
-                "search_queries": [],
-                "core_scientific_terms": ["natural language processing", "reinforcement learning"],
-                "scientific_context": "",
+                "enriched": "",
+                "queries": [],
+                "terms": ["natural language processing", "reinforcement learning"],
+                "context": "",
                 "instructions": "Task 2 instructions",
                 "description": "Task 2 description",
-                "guiding_questions": ["Task 2 Question 1", "Task 2 Question 2", "Task 2 Question 3"],
+                "questions": ["Task 2 Question 1", "Task 2 Question 2", "Task 2 Question 3"],
             },
         ],
     }
@@ -139,12 +139,12 @@ async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mo
         end_time = time.time()
 
         processing_time_ms = (end_time - start_time) * 1000
-        terms_count = len(result.get("core_scientific_terms", []))
+        terms_count = len(result.get("terms", []))
         terms_per_second = terms_count / (processing_time_ms / 1000) if processing_time_ms > 0 else 0
 
         assert processing_time_ms < 2000, f"Processing time too slow: {processing_time_ms:.2f}ms"
         assert terms_per_second > 0.5, f"Terms per second too low: {terms_per_second:.2f}"
-        assert len(result.get("scientific_context", "")) > 0, "No scientific context generated"
+        assert len(result.get("context", "")) > 0, "No scientific context generated"
 
 
 async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:

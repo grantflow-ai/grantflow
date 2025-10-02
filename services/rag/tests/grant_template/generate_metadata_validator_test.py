@@ -20,17 +20,17 @@ def create_extracted_section(
         "id": section_id,
         "title": title,
         "order": order,
-        "is_long_form": is_long_form,
+        "long_form": is_long_form,
         "evidence": f"CFP evidence for {title}",
     }
     if parent_id is not None:
-        result["parent_id"] = parent_id
+        result["parent"] = parent_id
     if is_detailed_research_plan is not None:
-        result["is_detailed_research_plan"] = is_detailed_research_plan
+        result["is_plan"] = is_detailed_research_plan
     if is_title_only is not None:
-        result["is_title_only"] = is_title_only
+        result["title_only"] = is_title_only
     if is_clinical_trial is not None:
-        result["is_clinical_trial"] = is_clinical_trial
+        result["clinical"] = is_clinical_trial
     return result
 
 
