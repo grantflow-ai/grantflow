@@ -9,8 +9,10 @@ import {
 	type AutofillProgressMessage,
 	hasApplicationData,
 	isAutofillProgressMessage,
+	isRagProcessingErrorMessage,
 	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
+	type RagProcessingErrorMessage,
 	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
@@ -131,6 +133,36 @@ export function WizardClientComponent({
 		}
 	}, []);
 
+	const handleRagProcessingError = useCallback(
+		(notification: RagProcessingErrorMessage) => {
+			const { event } = notification;
+			const { error_type, recoverable } = notification.data;
+
+			log.error("RAG processing error received", {
+				error_type,
+				event,
+				recoverable,
+			});
+
+			const errorMessages: Record<string, string> = {
+				indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
+				indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
+				insufficient_context_error:
+					"Not enough context to generate the template. Please add more sources or documents.",
+				internal_error: "An internal error occurred. Please try again or contact support.",
+				llm_timeout: "AI processing timed out. Please try again.",
+				pipeline_error: "An unexpected error occurred. Please try again or contact support.",
+			};
+
+			const message = errorMessages[event] ?? "Template generation failed. Please try again.";
+
+			setGeneratingTemplate(false);
+			useWizardStore.getState().setTemplateGenerationFailed(true, message);
+			toast.error(message);
+		},
+		[setGeneratingTemplate],
+	);
+
 	useEffect(() => {
 		if (notifications.length === 0) {
 			return;
@@ -154,8 +186,16 @@ export function WizardClientComponent({
 			handleSourceProcessingNotification(latestNotification);
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
+		} else if (isRagProcessingErrorMessage(latestNotification)) {
+			handleRagProcessingError(latestNotification);
 		}
-	}, [notifications, setApplication, handleSourceProcessingNotification, handleAutofillProgress]);
+	}, [
+		notifications,
+		setApplication,
+		handleSourceProcessingNotification,
+		handleAutofillProgress,
+		handleRagProcessingError,
+	]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
@@ -208,11 +248,6 @@ export function WizardClientComponent({
 
 		if (event === "grant_template_created") {
 			setGeneratingTemplate(false);
-		}
-
-		if (event === "pipeline_error") {
-			setGeneratingTemplate(false);
-			useWizardStore.getState().setTemplateGenerationFailed(true);
 		}
 
 		if (event === "grant_application_generation_completed") {

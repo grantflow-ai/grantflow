@@ -21,6 +21,14 @@ export interface AutofillProgressNotification {
 	total_stages?: number;
 }
 
+export type RagProcessingErrorMessage = WebsocketMessage<RagProcessingErrorNotification>;
+
+export interface RagProcessingErrorNotification {
+	error_type: string;
+	message?: string;
+	recoverable?: boolean;
+	retryable?: boolean;
+}
 export type RagProcessingStatusMessage = WebsocketMessage<Record<string, unknown>>;
 
 export interface SourceProcessingNotification {
@@ -41,17 +49,17 @@ export interface WebsocketMessage<T> {
 }
 
 export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
-	(value: unknown) => isRecord(value) && "type" in value,
+	(value: unknown) => isRecord(value) && Object.hasOwn(value, "type"),
 );
 export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProcessingNotificationMessage>(
 	(value: unknown) =>
 		isWebsocketMessage(value) &&
 		isRecord(value.data) &&
-		"indexing_status" in value.data &&
-		"source_id" in value.data,
+		Object.hasOwn(value.data, "indexing_status") &&
+		Object.hasOwn(value.data, "source_id"),
 );
 export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>((value: unknown) => {
-	if (!(isWebsocketMessage(value) && isRecord(value.data) && "event" in value)) {
+	if (!(isWebsocketMessage(value) && isRecord(value.data) && Object.hasOwn(value, "event"))) {
 		return false;
 	}
 
@@ -59,9 +67,21 @@ export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusM
 	return isTemplateEvent(event) || isApplicationEvent(event);
 });
 
+export const isRagProcessingErrorMessage = createTypeGuard<RagProcessingErrorMessage>(
+	(value: unknown) =>
+		isRagProcessingStatusMessage(value) &&
+		(value.type === "error" || value.type === "warning") &&
+		isRecord(value.data) &&
+		Object.hasOwn(value.data, "error_type") &&
+		typeof value.data.error_type === "string",
+);
+
 export const isAutofillProgressMessage = createTypeGuard<AutofillProgressMessage>(
 	(value: unknown) =>
-		isWebsocketMessage(value) && isRecord(value.data) && "autofill_type" in value.data && "message" in value.data,
+		isWebsocketMessage(value) &&
+		isRecord(value.data) &&
+		Object.hasOwn(value.data, "autofill_type") &&
+		Object.hasOwn(value.data, "message"),
 );
 
 export const hasApplicationData = (
@@ -271,6 +291,7 @@ export function useApplicationNotifications({
 
 	const getMessageType = useCallback((message: WebsocketMessage<unknown>): string => {
 		if (isSourceProcessingNotificationMessage(message)) return "SourceProcessingNotification";
+		if (isRagProcessingErrorMessage(message)) return "RagProcessingError";
 		if (isRagProcessingStatusMessage(message)) return "RagProcessingStatus";
 		if (isAutofillProgressMessage(message)) return "AutofillProgress";
 		return "Unknown";
