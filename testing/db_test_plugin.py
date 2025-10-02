@@ -306,13 +306,8 @@ async def restore_database_snapshot(
 
     yield
 
-    # Force engine to release all connections before next test
-    # With NullPool, this should be immediate, but we add a small delay
-    # to ensure any pending async operations complete
     if engine_ref.value:
-        # Clear any remaining connections in the engine
         await engine_ref.value.dispose()
-        # Recreate the engine for the next test
         engine_ref.value = create_async_engine(
             db_connection_string,
             echo=False,
@@ -336,7 +331,6 @@ async def _restore_from_snapshot(template_db_name: str, db_connection_string: st
     logger.info("Connected to admin database")
 
     try:
-        # Terminate active connections with retry
         for attempt in range(3):
             logger.info("Terminating connections (attempt %d/3)", attempt + 1)
             await admin_conn.execute(f"""
@@ -345,10 +339,8 @@ async def _restore_from_snapshot(template_db_name: str, db_connection_string: st
                 WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
             """)
 
-            # Give connections time to close
             await asyncio.sleep(0.1)
 
-            # Check if any connections remain
             remaining = await admin_conn.fetchval(f"""
                 SELECT COUNT(*)
                 FROM pg_stat_activity

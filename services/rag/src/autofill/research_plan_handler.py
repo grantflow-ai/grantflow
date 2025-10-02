@@ -197,7 +197,6 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    # Compress only the retrieval context before template substitution
     raw_context = "\n".join(retrieval_results)
     compressed_context = compress_prompt_text(raw_context, aggressive=True)
 

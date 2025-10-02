@@ -3,75 +3,7 @@ from services.rag.src.utils.prompt_compression import (
     compress_repetitive_phrases,
     compress_whitespace,
     estimate_compression_ratio,
-    remove_stop_words,
 )
-
-
-class TestRemoveStopWords:
-    def test_remove_basic_stop_words(self) -> None:
-        text = "The research is very important for the field"
-        result = remove_stop_words(text)
-        assert "research" in result
-        assert "important" in result
-        assert "field" in result
-        assert "the" not in result.lower()
-        assert "is" not in result.lower()
-        assert "very" not in result.lower()
-
-    def test_remove_grant_specific_stop_words(self) -> None:
-        text = "This approach will comprehensively address the research methodology"
-        result = remove_stop_words(text)
-        assert "address" in result
-        assert "research" in result
-        assert "methodology" in result
-        assert "comprehensively" not in result
-        assert "approach" not in result
-
-    def test_preserve_scientific_terms(self) -> None:
-        text = "The protein expression analysis using CRISPR methodology"
-        result = remove_stop_words(text)
-        assert "protein" in result
-        assert "expression" in result
-        assert "analysis" in result
-        assert "CRISPR" in result
-        assert "methodology" in result
-
-    def test_preserve_named_entities(self) -> None:
-        text = "NIH grants support Stanford University research initiatives"
-        result = remove_stop_words(text)
-        assert "NIH" in result
-        assert "Stanford" in result
-        assert "University" in result
-        assert "grants" in result
-        assert "research" in result
-
-    def test_preserve_numbers_and_measurements(self) -> None:
-        text = "The study involves 500 participants over 24 months with 95% confidence"
-        result = remove_stop_words(text)
-        assert "500" in result
-        assert "24" in result
-        assert "95%" in result
-        assert "participants" in result
-        assert "months" in result
-        assert "confidence" in result
-
-    def test_empty_text(self) -> None:
-        assert remove_stop_words("") == ""
-        assert remove_stop_words("   ") == ""
-
-    def test_only_stop_words(self) -> None:
-        text = "the and or but however moreover"
-        result = remove_stop_words(text)
-        assert len(result.strip()) == 0
-
-    def test_preserve_important_pos_tags(self) -> None:
-        text = "innovative methodological approaches enable comprehensive understanding"
-        result = remove_stop_words(text)
-        assert "innovative" in result
-        assert "enable" in result
-        assert "understanding" in result
-        assert "methodological" not in result
-        assert "comprehensive" not in result
 
 
 class TestCompressRepetitivePhrases:

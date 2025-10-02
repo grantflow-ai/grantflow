@@ -198,6 +198,7 @@ Extract grant application section structure from CFP analysis.
 ${organization_guidelines}
 <cfp_subject>${cfp_subject}</cfp_subject>
 <cfp_content>${cfp_content}</cfp_content>
+<cfp_full_text>${cfp_full_text}</cfp_full_text>
 
 ## Task
 
@@ -688,40 +689,33 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
     valid_ids = {s["id"] for s in sections}
 
     for section in sections:
-        # Remove invalid parent references using walrus operator
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
-        # Clean legacy (from:...) patterns from titles using walrus operator
         if (title := section["title"]) and (from_idx := title.find("(from:")) != -1 and ")" in title:
             section["title"] = title[:from_idx].strip()
 
-        # Set default evidence if missing
         section.setdefault("evidence", f"CFP section: {section['title']}")
 
-        # Set defaults for CFP constraint fields (TypedDict-compatible)
         section.setdefault("requirements", [])
         section.setdefault("length_limit", None)
         section.setdefault("length_source", None)
         section.setdefault("other_limits", [])
         section.setdefault("definition", None)
 
-        # Determine needs_applicant_writing using match/case
         if "needs_applicant_writing" not in section:
             title_lower = section.get("title", "").lower()
             budget_keywords = {"justification", "narrative", "explanation", "description"}
 
             match ("budget" in title_lower, any(kw in title_lower for kw in budget_keywords)):
-                case (True, False):  # Has "budget" but no writing keywords
+                case (True, False):
                     section["needs_applicant_writing"] = False
-                case _:  # All other cases require applicant writing
+                case _:
                     section["needs_applicant_writing"] = True
 
-    # Ensure all sections have order numbers
     for i, section in enumerate(sections):
         section.setdefault("order", i + 1)
 
-    # Sort by order and renumber sequentially
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
         section["order"] = i
@@ -756,6 +750,7 @@ async def extract_sections(
 async def handle_extract_sections(
     cfp_content: list[CFPContentSection],
     cfp_subject: str,
+    cfp_full_text: str,
     trace_id: str,
     *,
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
@@ -764,7 +759,6 @@ async def handle_extract_sections(
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
-    # Log CFP analysis details for debugging
     logger.info(
         "Received CFP analysis for section extraction",
         cfp_analysis_type=type(cfp_analysis).__name__,
@@ -804,6 +798,7 @@ async def handle_extract_sections(
         cfp_analysis=cfp_analysis_text,
         cfp_subject=cfp_subject,
         cfp_content="\n".join(content_list),
+        cfp_full_text=cfp_full_text,
         organization_guidelines=organization_guidelines,
     )
 

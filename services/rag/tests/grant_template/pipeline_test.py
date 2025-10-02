@@ -135,6 +135,7 @@ def sample_extract_cfp_dto() -> ExtractCFPContentStageDTO:
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
+            "full_text": "Full text of the CFP document",
         },
     )
 
@@ -497,8 +498,6 @@ async def test_cfp_constraint_fields_persisted_to_db(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    """Test that CFP constraint fields are saved and retrieved from DB."""
-    # Create sections with CFP constraint data using proper TypedDicts
     requirement: CFPAnalysisRequirementWithQuote = {
         "requirement": "Must include statistical analysis plan",
         "quote_from_source": "Applications must provide detailed statistical methods",
@@ -534,12 +533,10 @@ async def test_cfp_constraint_fields_persisted_to_db(
 
     grant_sections: list[GrantLongFormSection | GrantElement] = [section]
 
-    # Save to DB
     async with async_session_maker() as session, session.begin():
         grant_template.grant_sections = grant_sections
         session.add(grant_template)
 
-    # Retrieve from DB
     async with async_session_maker() as session:
         result = await session.execute(select(GrantTemplate).where(GrantTemplate.id == grant_template.id))
         retrieved_template = result.scalar_one()
@@ -549,11 +546,9 @@ async def test_cfp_constraint_fields_persisted_to_db(
 
         section = retrieved_template.grant_sections[0]
 
-        # Verify core fields
         assert section["id"] == "research_plan"
         assert section["evidence"] == "From CFP page 5: detailed research methodology"
 
-        # Verify CFP constraint fields are persisted
         assert section.get("requirements") == [
             {
                 "requirement": "Must include statistical analysis plan",

@@ -67,7 +67,6 @@ ACADEMIC_FILLER_STOP_WORDS: Final[set[str]] = {
     "challenges",
 }
 
-# Keep only true marketing buzzwords that don't carry substantive meaning
 GRANT_BUZZWORD_STOP_WORDS: Final[set[str]] = {
     "cutting-edge",
     "state-of-the-art",
@@ -75,11 +74,6 @@ GRANT_BUZZWORD_STOP_WORDS: Final[set[str]] = {
     "pioneering",
 }
 
-# Removed QUANTITATIVE_STOP_WORDS: Terms like "significant", "comprehensive", "detailed"
-# are essential for scientific writing and grant evaluation criteria.
-#
-# Removed METHODOLOGICAL_STOP_WORDS: Terms like "method", "technique", "mechanism", "pathway"
-# are core scientific concepts that should never be removed during compression.
 
 ACADEMIC_STOP_WORDS: Final[set[str]] = (
     TRANSITIONAL_STOP_WORDS

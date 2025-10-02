@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def mock_cfp_analysis() -> CFPAnalysisResult:
-    """Create a mock CFP analysis result for testing."""
     return {
         "cfp_analysis": {
             "required_sections": [],
@@ -575,6 +574,7 @@ async def test_handle_extract_sections_success(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
         cfp_subject="Test Grant Program",
+        cfp_full_text="Test CFP full text",
         trace_id=trace_id,
         cfp_analysis=mock_cfp_analysis,
         organization={
@@ -610,6 +610,7 @@ async def test_handle_extract_sections_no_organization(
             job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="Test Grant",
+            cfp_full_text="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -633,6 +634,7 @@ async def test_handle_extract_sections_empty_cfp_content(
             job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="",
+            cfp_full_text="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -700,6 +702,7 @@ async def test_end_to_end_section_extraction(
             job_manager=mock_job_manager,
             cfp_content=cfp_content_list,
             cfp_subject="Advanced Research Grant",
+            cfp_full_text="Advanced Research Grant CFP text",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,

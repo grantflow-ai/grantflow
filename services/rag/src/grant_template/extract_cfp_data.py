@@ -388,6 +388,8 @@ async def handle_extract_cfp_data(
         ),
     )
 
+    result["full_text"] = formatted_sources
+
     _cache_cfp_result(cache_key, result)
 
     return result
