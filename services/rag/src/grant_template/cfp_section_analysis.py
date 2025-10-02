@@ -307,7 +307,7 @@ def convert_to_db_format(response: CFPSectionAnalysis) -> DBCFPSectionAnalysis:
     return DBCFPSectionAnalysis(
         required_sections=[
             DBCFPSectionReq(
-                section_name=section["name"],
+                title=section["name"],
                 definition=section["definition"],
                 requirements=[
                     DBCFPRequirement(
@@ -324,7 +324,7 @@ def convert_to_db_format(response: CFPSectionAnalysis) -> DBCFPSectionAnalysis:
         ],
         length_constraints=[
             DBCFPLengthConstraint(
-                section_name=constraint["name"],
+                title=constraint["name"],
                 measurement_type=constraint["type"],
                 limit_description=constraint["limit"],
                 quote_from_source=constraint["quote"],

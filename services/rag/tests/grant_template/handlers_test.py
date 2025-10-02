@@ -81,7 +81,7 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                 "evaluation_criteria_count": 2,
                 "required_sections": [
                     {
-                        "section_name": "Project Summary",
+                        "title": "Project Summary",
                         "definition": "Brief overview of the project",
                         "requirements": [
                             {
@@ -95,7 +95,7 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                 ],
                 "length_constraints": [
                     {
-                        "section_name": "Project Summary",
+                        "title": "Project Summary",
                         "measurement_type": "pages",
                         "limit_description": "1 page maximum",
                         "quote_from_source": "Project summary is limited to one page",
@@ -354,7 +354,7 @@ async def test_cfp_analysis_stage_success(
             "evaluation_criteria_count": 3,
             "required_sections": [
                 {
-                    "section_name": "Research Plan",
+                    "title": "Research Plan",
                     "definition": "Detailed description of the research methodology",
                     "requirements": [
                         {
@@ -368,7 +368,7 @@ async def test_cfp_analysis_stage_success(
             ],
             "length_constraints": [
                 {
-                    "section_name": "Research Plan",
+                    "title": "Research Plan",
                     "measurement_type": "pages",
                     "limit_description": "15 pages maximum",
                     "quote_from_source": "Research plan cannot exceed 15 pages",
@@ -453,7 +453,7 @@ async def test_cfp_analysis_stage_limited_disciplines(
             "evaluation_criteria_count": 2,
             "required_sections": [
                 {
-                    "section_name": "Abstract",
+                    "title": "Abstract",
                     "definition": "Summary of the proposed research",
                     "requirements": [
                         {
@@ -467,7 +467,7 @@ async def test_cfp_analysis_stage_limited_disciplines(
             ],
             "length_constraints": [
                 {
-                    "section_name": "Abstract",
+                    "title": "Abstract",
                     "measurement_type": "words",
                     "limit_description": "300 words maximum",
                     "quote_from_source": "Abstract is limited to 300 words",
@@ -544,7 +544,7 @@ async def test_cfp_analysis_stage_no_disciplines(
             "evaluation_criteria_count": 1,
             "required_sections": [
                 {
-                    "section_name": "Project Description",
+                    "title": "Project Description",
                     "definition": "Basic description of the project",
                     "requirements": [
                         {
@@ -1116,7 +1116,7 @@ async def test_handlers_preserve_data_flow(
                 "evaluation_criteria_count": 1,
                 "required_sections": [
                     {
-                        "section_name": "Research Strategy",
+                        "title": "Research Strategy",
                         "definition": "Comprehensive research approach",
                         "requirements": [
                             {
@@ -1130,7 +1130,7 @@ async def test_handlers_preserve_data_flow(
                 ],
                 "length_constraints": [
                     {
-                        "section_name": "Research Strategy",
+                        "title": "Research Strategy",
                         "measurement_type": "pages",
                         "limit_description": "12 pages maximum",
                         "quote_from_source": "Research strategy limited to 12 pages",

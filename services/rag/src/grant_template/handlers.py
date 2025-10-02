@@ -157,7 +157,6 @@ async def handle_section_extraction_stage(
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["subject"],
-        cfp_full_text=analysis_result["extracted_data"]["full_text"],
         trace_id=trace_id,
         job_manager=job_manager,
         cfp_analysis=analysis_result["analysis_results"],

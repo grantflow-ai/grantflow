@@ -57,8 +57,8 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
         relevant_requirements = [
             section_req
             for section_req in cfp_analysis["required_sections"]
-            if section_req["section_name"].lower() in section_title_lower
-            or section_title_lower in section_req["section_name"].lower()
+            if section_req["title"].lower() in section_title_lower
+            or section_title_lower in section_req["title"].lower()
         ]
 
         relevant_constraints = [
@@ -81,7 +81,7 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
             if relevant_requirements:
                 cfp_text += "### Section Requirements\n"
                 for req_section in relevant_requirements:
-                    cfp_text += f"**{req_section['section_name']}:**\n"
+                    cfp_text += f"**{req_section['title']}:**\n"
                     for req in req_section["requirements"]:
                         cfp_text += f"- {req['requirement']}\n"
                         cfp_text += f'  > *Quote: "{req["quote_from_source"]}"*\n\n'

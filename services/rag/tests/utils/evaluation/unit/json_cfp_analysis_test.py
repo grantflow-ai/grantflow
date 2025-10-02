@@ -47,7 +47,7 @@ class TestCFPAnalysisQualityEvaluation:
             ],
             "sections": [
                 CFPSectionRequirement(
-                    section_name="Project narrative",
+                    title="Project narrative",
                     definition="Detailed description of research project",
                     requirements=[
                         CFPAnalysisRequirementWithQuote(
@@ -61,7 +61,7 @@ class TestCFPAnalysisQualityEvaluation:
             ],
             "length_constraints": [
                 CFPSectionLengthConstraint(
-                    section_name="Project narrative",
+                    title="Project narrative",
                     measurement_type="pages",
                     limit_description="15 pages maximum",
                     quote_from_source="Project narrative (15 pages maximum)",
@@ -195,7 +195,7 @@ class TestCFPAnalysisCompleteness:
             ],
             "sections": [
                 CFPSectionRequirement(
-                    section_name="Project description",
+                    title="Project description",
                     definition="Detailed project description",
                     requirements=[],
                     dependencies=[],
@@ -210,7 +210,7 @@ class TestCFPAnalysisCompleteness:
             ],
             "length_constraints": [
                 CFPSectionLengthConstraint(
-                    section_name="Project description",
+                    title="Project description",
                     measurement_type="pages",
                     limit_description="10 pages maximum",
                     quote_from_source="Project description (10 pages max)",
@@ -276,7 +276,7 @@ class TestCFPAnalysisCompleteness:
             ],
             "length_constraints": [
                 CFPSectionLengthConstraint(
-                    section_name="Summary",
+                    title="Summary",
                     measurement_type="words",
                     limit_description="500 words maximum",
                     quote_from_source="Summary (500 words max)",
