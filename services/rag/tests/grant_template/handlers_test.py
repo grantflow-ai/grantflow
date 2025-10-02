@@ -64,6 +64,7 @@ def sample_extract_cfp_dto() -> Any:
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
+            "full_text": "Full text of the CFP document",
         },
     )
 
@@ -151,6 +152,7 @@ def sample_sections_dto(sample_analyze_cfp_dto: Any) -> Any:
                 "is_clinical_trial": False,
                 "is_long_form": True,
                 "order": 1,
+                "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
@@ -160,6 +162,7 @@ def sample_sections_dto(sample_analyze_cfp_dto: Any) -> Any:
                 "is_clinical_trial": False,
                 "is_long_form": True,
                 "order": 2,
+                "evidence": "CFP evidence for Research Plan",
             },
         ],
     )
@@ -199,13 +202,8 @@ async def test_cfp_extraction_stage_success(
 
     assert mock_grant_template_job_manager.ensure_not_cancelled.call_count == 2
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Analyzing call for proposals document",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
         message="Document analysis complete",
         notification_type="success",
@@ -424,13 +422,8 @@ async def test_cfp_analysis_stage_success(
 
     mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Analyzing application requirements",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.SECTIONS_EXTRACTED,
         message="Requirements analysis complete",
         notification_type="success",
@@ -623,6 +616,7 @@ async def test_section_extraction_stage_success(
             "is_detailed_research_plan": False,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
@@ -630,6 +624,7 @@ async def test_section_extraction_stage_success(
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 2,
+            "evidence": "CFP evidence for Research Plan",
         },
     ]
     mock_handle_extract_sections.return_value = mock_extracted_sections
@@ -647,13 +642,8 @@ async def test_section_extraction_stage_success(
 
     mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.METADATA_GENERATED,
-        message="Extracting application sections",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.METADATA_GENERATED,
         message="Section extraction complete",
         notification_type="success",
@@ -757,6 +747,7 @@ async def test_save_grant_template_success(
             id="section1",
             title="Project Summary",
             order=1,
+            evidence="CFP evidence for Project Summary",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -771,6 +762,7 @@ async def test_save_grant_template_success(
             id="section2",
             title="Research Plan",
             order=2,
+            evidence="CFP evidence for Research Plan",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -785,6 +777,7 @@ async def test_save_grant_template_success(
             id="research_objectives",
             title="Research Objectives",
             order=3,
+            evidence="CFP evidence for Research Objectives",
             parent_id="section2",
             keywords=[],
             topics=[],
@@ -799,6 +792,7 @@ async def test_save_grant_template_success(
             id="methodology",
             title="Methodology",
             order=4,
+            evidence="CFP evidence for Methodology",
             parent_id="section2",
             keywords=[],
             topics=[],
@@ -862,6 +856,7 @@ async def test_save_grant_template_no_organization(
             id="section1",
             title="Project Summary",
             order=1,
+            evidence="CFP evidence for Project Summary",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -876,6 +871,7 @@ async def test_save_grant_template_no_organization(
             id="summary_overview",
             title="Project Overview",
             order=2,
+            evidence="CFP evidence for Project Overview",
             parent_id="section1",
             keywords=[],
             topics=[],
@@ -933,6 +929,7 @@ async def test_save_grant_template_no_submission_date(
             id="section1",
             title="Project Summary",
             order=1,
+            evidence="CFP evidence for Project Summary",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -947,6 +944,7 @@ async def test_save_grant_template_no_submission_date(
             id="summary_objectives",
             title="Project Objectives",
             order=2,
+            evidence="CFP evidence for Project Objectives",
             parent_id="section1",
             keywords=[],
             topics=[],
@@ -990,6 +988,7 @@ async def test_save_grant_template_date_parsing(
             id="section1",
             title="Project Summary",
             order=1,
+            evidence="CFP evidence for Project Summary",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -1004,6 +1003,7 @@ async def test_save_grant_template_date_parsing(
             id="summary_background",
             title="Background",
             order=2,
+            evidence="CFP evidence for Background",
             parent_id="section1",
             keywords=[],
             topics=[],
@@ -1042,6 +1042,7 @@ async def test_save_grant_template_database_error(
             id="section1",
             title="Project Summary",
             order=1,
+            evidence="CFP evidence for Project Summary",
             parent_id=None,
             keywords=[],
             topics=[],
@@ -1056,6 +1057,7 @@ async def test_save_grant_template_database_error(
             id="summary_aims",
             title="Specific Aims",
             order=2,
+            evidence="CFP evidence for Specific Aims",
             parent_id="section1",
             keywords=[],
             topics=[],
@@ -1104,6 +1106,7 @@ async def test_handlers_preserve_data_flow(
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
+            "full_text": "Full text of the CFP document",
         }
 
         mock_analyze.return_value = {
@@ -1176,6 +1179,7 @@ async def test_handlers_preserve_data_flow(
                 "is_clinical_trial": False,
                 "is_long_form": True,
                 "order": 1,
+                "evidence": "CFP evidence for Abstract",
             }
         ]
 

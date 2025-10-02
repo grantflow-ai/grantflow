@@ -26,10 +26,7 @@ from services.rag.src.utils.job_manager import JobManager
 
 @pytest.fixture
 def mock_grant_application_job_manager() -> AsyncMock:
-    mock = AsyncMock(spec=JobManager)
-    mock.ensure_not_cancelled = AsyncMock()
-    mock.add_notification = AsyncMock()
-    return mock
+    return AsyncMock()
 
 
 @pytest.fixture
@@ -38,6 +35,7 @@ def sample_work_plan_section() -> GrantLongFormSection:
         id="research_plan",
         title="Research Plan",
         order=3,
+        evidence="CFP evidence for Research Plan",
         parent_id=None,
         keywords=["methodology"],
         topics=["methods"],
@@ -57,6 +55,7 @@ def sample_grant_sections() -> list[GrantLongFormSection]:
             id="abstract",
             title="Abstract",
             order=1,
+            evidence="CFP evidence for Abstract",
             parent_id=None,
             keywords=["summary"],
             topics=["overview"],
@@ -71,6 +70,7 @@ def sample_grant_sections() -> list[GrantLongFormSection]:
             id="significance",
             title="Significance",
             order=2,
+            evidence="CFP evidence for Significance",
             parent_id=None,
             keywords=["impact"],
             topics=["importance"],

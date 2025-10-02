@@ -44,51 +44,6 @@ FREQUENCY_STOP_WORDS: Final[set[str]] = {
     "systematically",
 }
 
-QUANTITATIVE_STOP_WORDS: Final[set[str]] = {
-    "various",
-    "numerous",
-    "several",
-    "multiple",
-    "different",
-    "diverse",
-    "wide",
-    "broad",
-    "comprehensive",
-    "extensive",
-    "detailed",
-    "thorough",
-    "complete",
-    "full",
-    "entire",
-    "substantial",
-    "considerable",
-    "significant",
-    "major",
-    "minor",
-    "primary",
-    "secondary",
-}
-
-METHODOLOGICAL_STOP_WORDS: Final[set[str]] = {
-    "approach",
-    "method",
-    "technique",
-    "strategy",
-    "process",
-    "procedure",
-    "system",
-    "framework",
-    "structure",
-    "mechanism",
-    "pathway",
-    "means",
-    "way",
-    "manner",
-    "methodological",
-    "procedural",
-    "strategic",
-}
-
 ACADEMIC_FILLER_STOP_WORDS: Final[set[str]] = {
     "aspect",
     "aspects",
@@ -117,27 +72,12 @@ GRANT_BUZZWORD_STOP_WORDS: Final[set[str]] = {
     "state-of-the-art",
     "groundbreaking",
     "pioneering",
-    "sophisticated",
-    "optimal",
-    "efficacious",
-    "efficient",
-    "effective",
-    "successful",
-    "promising",
-    "potential",
-    "feasible",
-    "viable",
-    "suitable",
-    "appropriate",
-    "relevant",
-    "pertinent",
 }
+
 
 ACADEMIC_STOP_WORDS: Final[set[str]] = (
     TRANSITIONAL_STOP_WORDS
     | FREQUENCY_STOP_WORDS
-    | QUANTITATIVE_STOP_WORDS
-    | METHODOLOGICAL_STOP_WORDS
     | ACADEMIC_FILLER_STOP_WORDS
     | GRANT_BUZZWORD_STOP_WORDS
 )

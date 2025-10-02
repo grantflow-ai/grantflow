@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def mock_cfp_analysis() -> CFPAnalysisResult:
-    """Create a mock CFP analysis result for testing."""
     return {
         "cfp_analysis": {
             "required_sections": [],
@@ -62,6 +61,7 @@ def test_extracted_section_dto_required_fields() -> None:
         "order": 1,
         "is_long_form": True,
         "is_detailed_research_plan": True,
+        "evidence": "CFP evidence for Project Summary",
     }
 
     assert section["title"] == "Project Summary"
@@ -80,6 +80,7 @@ def test_extracted_section_dto_optional_fields() -> None:
         "is_detailed_research_plan": True,
         "is_title_only": False,
         "is_clinical_trial": True,
+        "evidence": "CFP evidence for Research Plan",
     }
 
     assert section["parent_id"] == "parent_section"
@@ -97,6 +98,7 @@ def test_validate_section_extraction_valid_sections() -> None:
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
@@ -104,6 +106,7 @@ def test_validate_section_extraction_valid_sections() -> None:
                 "order": 2,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Research Plan",
             },
         ]
     }
@@ -130,6 +133,7 @@ def test_validate_section_extraction_null_string_error_ignored() -> None:
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Valid Section",
             }
         ],
         "error": "null",
@@ -154,6 +158,7 @@ def test_validate_section_extraction_short_title_raises_validation_error() -> No
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for AB",
             }
         ]
     }
@@ -171,6 +176,7 @@ def test_validate_section_extraction_duplicate_titles_raises_validation_error() 
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Same Title",
             },
             {
                 "title": "Same Title",
@@ -178,6 +184,7 @@ def test_validate_section_extraction_duplicate_titles_raises_validation_error() 
                 "order": 2,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Same Title",
             },
         ]
     }
@@ -195,6 +202,7 @@ def test_validate_section_extraction_duplicate_orders_raises_validation_error() 
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Section One",
             },
             {
                 "title": "Section Two",
@@ -202,6 +210,7 @@ def test_validate_section_extraction_duplicate_orders_raises_validation_error() 
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Section Two",
             },
         ]
     }
@@ -219,6 +228,7 @@ def test_validate_section_extraction_non_consecutive_orders_raises_validation_er
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Section One",
             },
             {
                 "title": "Section Two",
@@ -226,6 +236,7 @@ def test_validate_section_extraction_non_consecutive_orders_raises_validation_er
                 "order": 3,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Section Two",
             },
         ]
     }
@@ -250,6 +261,7 @@ def test_should_keep_section_high_similarity_section(trace_id: str) -> None:
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": False,
+            "evidence": "CFP evidence for Budget Justification",
         }
 
         result = _should_keep_section(
@@ -279,6 +291,7 @@ def test_should_keep_section_low_similarity_section(trace_id: str) -> None:
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": False,
+            "evidence": "CFP evidence for Research Methods",
         }
 
         result = _should_keep_section(
@@ -299,6 +312,7 @@ def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
         "order": 1,
         "is_long_form": True,
         "is_detailed_research_plan": False,
+        "evidence": "CFP evidence for budget justification",
     }
 
     result = _should_keep_section(
@@ -317,6 +331,7 @@ def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
         "order": 1,
         "is_long_form": True,
         "is_detailed_research_plan": False,
+        "evidence": "CFP evidence for BUDGET JUSTIFICATION",
     }
 
     result = _should_keep_section(
@@ -367,6 +382,7 @@ def test_maintain_hierarchy_integrity_valid_hierarchy() -> None:
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": True,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Specific Aims",
@@ -375,6 +391,7 @@ def test_maintain_hierarchy_integrity_valid_hierarchy() -> None:
             "is_long_form": True,
             "parent_id": "research_plan",
             "is_detailed_research_plan": False,
+            "evidence": "CFP evidence for Specific Aims",
         },
     ]
 
@@ -392,6 +409,7 @@ def test_maintain_hierarchy_integrity_remove_orphaned_children() -> None:
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": True,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Orphaned Section",
@@ -400,6 +418,7 @@ def test_maintain_hierarchy_integrity_remove_orphaned_children() -> None:
             "is_long_form": True,
             "parent_id": "non_existent_parent",
             "is_detailed_research_plan": False,
+            "evidence": "CFP evidence for Orphaned Section",
         },
     ]
 
@@ -434,6 +453,7 @@ async def test_filter_extracted_sections_success(
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": True,
+            "evidence": "CFP evidence for Research Methods",
         },
         {
             "title": "Budget",
@@ -441,13 +461,14 @@ async def test_filter_extracted_sections_success(
             "order": 2,
             "is_long_form": True,
             "is_detailed_research_plan": False,
+            "evidence": "CFP evidence for Budget",
         },
     ]
 
     with patch("services.rag.src.grant_template.extract_sections._should_keep_section") as mock_should_keep:
 
         def mock_keep(section: ExtractedSectionDTO, **kwargs: Any) -> bool:
-            return section["title"] == "Research Methods"
+            return bool(section["title"] == "Research Methods")
 
         mock_should_keep.side_effect = mock_keep
 
@@ -469,6 +490,7 @@ async def test_extract_sections_success(
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
@@ -476,6 +498,7 @@ async def test_extract_sections_success(
                 "order": 2,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Research Plan",
             },
         ]
     }
@@ -527,6 +550,7 @@ async def test_handle_extract_sections_success(
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Project Summary",
             }
         ]
     }
@@ -537,6 +561,7 @@ async def test_handle_extract_sections_success(
             "order": 1,
             "is_long_form": True,
             "is_detailed_research_plan": True,
+            "evidence": "CFP evidence for Project Summary",
         }
     ]
 
@@ -549,6 +574,7 @@ async def test_handle_extract_sections_success(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
         cfp_subject="Test Grant Program",
+        cfp_full_text="Test CFP full text",
         trace_id=trace_id,
         cfp_analysis=mock_cfp_analysis,
         organization={
@@ -584,6 +610,7 @@ async def test_handle_extract_sections_no_organization(
             job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="Test Grant",
+            cfp_full_text="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -607,6 +634,7 @@ async def test_handle_extract_sections_empty_cfp_content(
             job_manager=mock_job_manager,
             cfp_content=[],
             cfp_subject="",
+            cfp_full_text="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -641,6 +669,7 @@ async def test_end_to_end_section_extraction(
                 "order": 1,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Budget Justification",
@@ -648,6 +677,7 @@ async def test_end_to_end_section_extraction(
                 "order": 2,
                 "is_long_form": True,
                 "is_detailed_research_plan": False,
+                "evidence": "CFP evidence for Budget Justification",
             },
             {
                 "title": "Research Plan",
@@ -655,6 +685,7 @@ async def test_end_to_end_section_extraction(
                 "order": 3,
                 "is_long_form": True,
                 "is_detailed_research_plan": True,
+                "evidence": "CFP evidence for Research Plan",
             },
         ]
     }
@@ -671,6 +702,7 @@ async def test_end_to_end_section_extraction(
             job_manager=mock_job_manager,
             cfp_content=cfp_content_list,
             cfp_subject="Advanced Research Grant",
+            cfp_full_text="Advanced Research Grant CFP text",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,

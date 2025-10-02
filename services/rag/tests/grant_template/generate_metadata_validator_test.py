@@ -21,6 +21,7 @@ def create_extracted_section(
         "title": title,
         "order": order,
         "is_long_form": is_long_form,
+        "evidence": f"CFP evidence for {title}",
     }
     if parent_id is not None:
         result["parent_id"] = parent_id

@@ -38,12 +38,6 @@ async def handle_cfp_extraction_stage(
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Analyzing call for proposals document",
-        notification_type="info",
-    )
-
     # this can take a while, that's why we are rechecking cancellation ~keep
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
@@ -125,12 +119,6 @@ async def handle_cfp_analysis_stage(
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Analyzing application requirements",
-        notification_type="info",
-    )
-
     analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
         full_cfp_text="\n".join(
             [
@@ -166,15 +154,10 @@ async def handle_section_extraction_stage(
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.METADATA_GENERATED,
-        message="Extracting application sections",
-        notification_type="info",
-    )
-
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
+        cfp_full_text=analysis_result["extracted_data"]["full_text"],
         trace_id=trace_id,
         job_manager=job_manager,
         cfp_analysis=analysis_result["analysis_results"],
@@ -226,39 +209,62 @@ async def handle_generate_metadata_stage(
 
     ret: list[GrantElement | GrantLongFormSection] = []
     for section in sections_requiring_writing:
-        if section.get("is_title_only"):
-            element: GrantElement = {
-                "id": section["id"],
-                "order": section["order"],
-                "parent_id": section.get("parent_id"),
-                "title": section["title"],
-                "evidence": section["evidence"],
-            }
-            needs_writing = section.get("needs_applicant_writing")
-            if needs_writing is not None:
-                element["needs_applicant_writing"] = needs_writing
-            ret.append(element)
-        else:
-            metadata = mapped_metadata[section["id"]]
-            long_form: GrantLongFormSection = {
-                "depends_on": metadata["depends_on"],
-                "generation_instructions": metadata["generation_instructions"],
-                "id": section["id"],
-                "is_clinical_trial": section.get("is_clinical_trial"),
-                "is_detailed_research_plan": section.get("is_detailed_research_plan"),
-                "keywords": metadata["keywords"],
-                "max_words": metadata["max_words"],
-                "order": section["order"],
-                "parent_id": section.get("parent_id"),
-                "search_queries": metadata["search_queries"],
-                "title": section["title"],
-                "evidence": section["evidence"],
-                "topics": metadata["topics"],
-            }
-            needs_writing = section.get("needs_applicant_writing")
-            if needs_writing is not None:
-                long_form["needs_applicant_writing"] = needs_writing
-            ret.append(long_form)
+        match section.get("is_title_only"):
+            case True:
+                element: GrantElement = {
+                    "id": section["id"],
+                    "order": section["order"],
+                    "parent_id": section.get("parent_id"),
+                    "title": section["title"],
+                    "evidence": section["evidence"],
+                }
+                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                    element["needs_applicant_writing"] = needs_writing
+                ret.append(element)
+
+            case _:
+                metadata = mapped_metadata[section["id"]]
+
+                long_form: GrantLongFormSection = {
+                    "id": section["id"],
+                    "order": section["order"],
+                    "title": section["title"],
+                    "evidence": section["evidence"],
+                    "parent_id": section.get("parent_id"),
+                    "depends_on": metadata["depends_on"],
+                    "generation_instructions": metadata["generation_instructions"],
+                    "is_clinical_trial": section.get("is_clinical_trial"),
+                    "is_detailed_research_plan": section.get("is_detailed_research_plan"),
+                    "keywords": metadata["keywords"],
+                    "max_words": metadata["max_words"],
+                    "search_queries": metadata["search_queries"],
+                    "topics": metadata["topics"],
+                }
+
+                if "requirements" in section:
+                    long_form["requirements"] = section["requirements"]
+                if "length_limit" in section:
+                    long_form["length_limit"] = section["length_limit"]
+                if "length_source" in section:
+                    long_form["length_source"] = section["length_source"]
+                if "other_limits" in section:
+                    long_form["other_limits"] = section["other_limits"]
+                if "definition" in section:
+                    long_form["definition"] = section["definition"]
+
+                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                    long_form["needs_applicant_writing"] = needs_writing
+
+                ret.append(long_form)
+
+    await job_manager.add_notification(
+        event=NotificationEvents.METADATA_GENERATED,
+        message="Template metadata generated",
+        notification_type="success",
+        data={
+            "sections": len(ret),
+        },
+    )
 
     return ret
 

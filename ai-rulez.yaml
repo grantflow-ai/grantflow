@@ -80,6 +80,9 @@ rules:
   - name: Python Testing Standards
     priority: critical
     content: Test files must end with _test.py. Use TypedDict constructors for creating test data (e.g., ResearchTask(number=1, title="Test")). All tests must be functional with proper type annotations. Avoid redundant/duplicate tests. Mock async functions with new_callable=AsyncMock. Always add check_if_cancelled and handle_cancellation mocks to JobManager. Use real PostgreSQL via async_sessionmaker fixture.
+  - name: Gemini Prompt Engineering
+    priority: high
+    content: "All prompts targeting Gemini models (Flash 2.5, 1M context) must follow official guidelines: (1) Clear, concise instructions - say things once, no repetition or shouting. (2) Few-shot examples - include 2-3 concrete examples for complex JSON outputs. (3) Hierarchical structure - use ## headers and numbered lists. (4) JSON prompts: provide schema + examples, use input/output prefixes. (5) Text prompts: Requirements → Materials → Guidelines → Format. (6) Avoid: excessive verbosity, ALL CAPS, emoji warnings, contradictory instructions. (7) Use model's thinking mode - don't prescribe chain-of-thought. Target: <100 lines for complex prompts, <50 for simple. See services/rag/README.md for RAG-specific guidelines."
 agents:
   - description: Expert Python developer for implementing features and fixing bugs
     id: python-engineer

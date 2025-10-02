@@ -155,6 +155,7 @@ async def test_rag_focused_prompts_generation(
                 "search_queries": [],
                 "is_detailed_research_plan": True,
                 "is_clinical_trial": None,
+                "evidence": "CFP evidence for Research Plan",
             },
             relationships={},
             enrichment_responses=[],

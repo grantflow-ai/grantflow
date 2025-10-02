@@ -71,52 +71,93 @@ def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
 TEMPERATURE: Final[float] = 0.1
 
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
-Extract structured requirements from funding announcements.
-Prioritize official CFP docs over supplementary materials.
-
-CRITICAL: Respond only with valid JSON. Do not include repetitive text, escaped characters, or malformed content.
-If encountering unclear content, use "[UNCLEAR]" markers instead of repeating text patterns.
+Extract structured requirements from funding announcements. Prioritize official CFP documents.
+Return valid JSON only. Use "[UNCLEAR]" for ambiguous information. Avoid repetitive patterns.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_cfp_data_multi_source",
     template="""
-    Extract from: <rag_sources>${rag_sources}</rag_sources>
-    Organizations: <orgs>${organization_mapping}</orgs>
+Extract structured CFP data from funding announcements.
 
-    USE NLP ANALYSIS AS SUPPLEMENTAL GUIDANCE:
-    Each source includes semantic categorization to help identify key content:
-    - Money/Budget, Date/Time, Writing-related requirements
-    - Orders (mandatory) vs Recommendations (optional)
-    - Positive vs Negative instructions
-    - Evaluation criteria
+## Input
 
-    IMPORTANT: You must still read and analyze ALL source content comprehensively.
-    The NLP analysis is supportive context - not a replacement for thorough text analysis.
+<rag_sources>${rag_sources}</rag_sources>
+<orgs>${organization_mapping}</orgs>
 
-    EXTRACTION PRIORITIES (NLP categories help identify):
-    1. Orders & Positive Instructions → Likely contain mandatory requirements
-    2. Evaluation Criteria → Often critical for application structure
-    3. Date/Time → May contain essential deadlines (prioritize for submission_date)
-    4. Writing-related → May contain format compliance requirements
-    5. Money/Budget → May provide funding context
-    6. Negative Instructions → May contain important restrictions
+## Task
 
-    Extract:
-    1. Organization ID from mapping (or null)
-    2. CFP subject (one sentence: type, audience, focus)
-    3. Deadline (YYYY-MM-DD format) - prioritize Date/Time categories from NLP
-    4. Section structure (titles, page limits, preserve numbering) - use Orders/Writing-related
+Each source includes NLP analysis (Money/Budget, Date/Time, Writing, Orders, Recommendations, Evaluation) to help locate information. Read all source content comprehensively - NLP is guidance, not replacement.
 
-    Exclude: URLs, Grants.gov steps, addresses, admin details
+Extract four fields:
+1. **organization_id**: Match from organization mapping (null if not found)
+2. **cfp_subject**: One-sentence summary (funding type, audience, focus)
+3. **submission_date**: Final deadline in YYYY-MM-DD (null if not found)
+4. **content**: Section structure with titles and subtitles
 
-    IMPORTANT OUTPUT RULES:
-    - Return valid JSON only
-    - Maximum 50 subtitles per section
-    - No repetitive text patterns
-    - Use "[UNCLEAR]" for ambiguous information
-    - Limit response to 5000 tokens maximum
-    - Leverage NLP categorization to improve extraction quality
+Exclude: URLs, Grants.gov steps, addresses, admin details.
+
+## Example
+
+Input sources:
+```
+### Source 0: PDF (ID: abc123)
+#### NLP Analysis:
+Date/Time: 2 sentences ("Applications due March 15, 2026")
+Orders: 15 sentences ("Applicants must submit...", "Projects must include...")
+Writing: 8 sentences ("Proposals should be 15 pages...", "Use 12pt font...")
+
+#### Full Content:
+NSF Research Grants Program - 2026
+
+Application Deadline: March 15, 2026
+
+I. PROJECT DESCRIPTION (15 pages)
+Describe proposed research objectives, methodology, and expected outcomes.
+
+II. BUDGET JUSTIFICATION (5 pages)
+Provide detailed breakdown of costs.
+```
+
+Organizations:
+```json
+{"National Science Foundation": {"organization_id": "550e8400-e29b-41d4-a716-446655440000", "abbreviation": "NSF"}}
+```
+
+Output:
+```json
+{
+  "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+  "cfp_subject": "NSF research grants for scientific projects requiring detailed methodology and budget justification",
+  "content": [
+    {
+      "title": "PROJECT DESCRIPTION",
+      "subtitles": [
+        "Research objectives",
+        "Methodology",
+        "Expected outcomes",
+        "15 page limit"
+      ]
+    },
+    {
+      "title": "BUDGET JUSTIFICATION",
+      "subtitles": [
+        "Detailed cost breakdown",
+        "5 page limit"
+      ]
+    }
+  ],
+  "submission_date": "2026-03-15",
+  "error": null
+}
+```
+
+## Output Requirements
+
+- Valid JSON only (max 50 subtitles per section)
+- Use "[UNCLEAR]" for ambiguous information
+- Prioritize Date/Time categories for submission_date
+- Use Orders/Writing categories for section structure
     """,
 )
 
@@ -346,6 +387,8 @@ async def handle_extract_cfp_data(
             is_json_content=True,
         ),
     )
+
+    result["full_text"] = formatted_sources
 
     _cache_cfp_result(cache_key, result)
 

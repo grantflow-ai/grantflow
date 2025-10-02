@@ -1,10 +1,10 @@
-import logging
 from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
 from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
@@ -17,135 +17,73 @@ from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
-You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
-Your role is to enhance research objectives with detailed scientific content, guiding questions,
-and search queries that will produce competitive and compelling grant applications.
+Enrich research objectives with detailed scientific content for grant applications.
+Generate guiding questions, search queries, and metadata to support text generation.
 """
 
 ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="enrich_research_objective",
     template="""
-    Your task is to enrich a specific research objective and its tasks with detailed, scientifically rigorous information to guide the generation of a comprehensive, persuasive, and competitive work plan for a grant application.
+Enrich research objective with metadata for grant work plan generation.
 
-    ## Sources
+## Input
 
-    The Research Objective and Tasks:
-        <objective_and_tasks>
-        ${objective_and_tasks}
-        </objective_and_tasks>
+<objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
+<rag_results>${rag_results}</rag_results>
+<form_inputs>${form_inputs}</form_inputs>
+<keywords>${keywords}</keywords>
+<topics>${topics}</topics>
 
-    Retrieval Results:
-        <rag_results>
-        ${rag_results}
-        </rag_results>
+## Required Fields (7 per objective/task)
 
-    User Inputs:
-        <form_inputs>
-        ${form_inputs}
-        </form_inputs>
+1. enriched_objective: Enhanced version with scientific rationale and impact (min 50 chars)
+2. core_scientific_terms: Exactly 5 fundamental terms central to this research
+3. scientific_context: Background explaining why this research is needed (min 50 chars)
+4. instructions: AI generation guidance (writing style, technical depth, formatting) (min 50 chars)
+5. description: Purpose, methodology, expected results, dependencies, risks, innovation (min 50 chars)
+6. guiding_questions: 3-10 questions addressing purpose, methodology, outcomes, challenges
+7. search_queries: 3-10 concise phrases (3-7 words) for vector retrieval
 
-    ## Metadata
+## Example
 
-    Keywords:
-        <keywords>
-        ${keywords}
-        </keywords>
+Input objective:
+```
+Objective 1: Develop CRISPR-based gene editing platform for cancer therapy
+Task 1.1: Optimize Cas9 delivery mechanisms in tumor cells
+Task 1.2: Validate off-target effects in preclinical models
+```
 
-    Topics:
-        <topics>
-        ${topics}
-        </topics>
+Output (showing objective only, tasks follow same pattern):
+```json
+{
+  "research_objective": {
+    "enriched_objective": "Develop a novel CRISPR-Cas9 gene editing platform specifically optimized for cancer therapy, addressing current limitations in delivery efficiency and specificity, with potential to revolutionize targeted oncology treatments through precise genomic interventions",
+    "core_scientific_terms": ["CRISPR-Cas9", "gene editing", "tumor microenvironment", "off-target effects", "therapeutic efficacy"],
+    "scientific_context": "Current gene editing approaches face significant challenges in clinical translation due to delivery inefficiencies and potential off-target effects. This research addresses the critical need for precision oncology tools by developing optimized CRISPR systems that can selectively target cancer cells while minimizing collateral genomic damage",
+    "instructions": "Write in formal academic tone with high technical precision. Emphasize the innovation in delivery mechanisms and specificity improvements. Use domain-specific terminology from molecular oncology. Balance technical detail with accessibility for interdisciplinary reviewers. Highlight competitive advantages over existing gene therapy approaches",
+    "description": "Purpose: Establish a clinically viable gene editing platform for cancer treatment. Methodology: Employ lipid nanoparticle delivery systems, conduct in vitro tumor cell line testing, perform whole-genome sequencing for off-target analysis. Expected Results: 80% delivery efficiency, <0.1% off-target rate, validated preclinical efficacy data. Dependencies: Access to tumor cell lines and sequencing facilities. Risks: Delivery efficiency may vary across tumor types; mitigation through multiple delivery vector testing. Innovation: Novel targeting mechanism combines tumor-specific promoters with optimized guide RNA design",
+    "guiding_questions": [
+      "What specific delivery mechanisms will be tested and how do they compare to current standards?",
+      "How will off-target effects be quantified and what thresholds define acceptable specificity?",
+      "What are the expected clinical translation pathways for this platform?",
+      "How does this approach address limitations of existing CRISPR cancer therapies?"
+    ],
+    "search_queries": [
+      "CRISPR delivery systems cancer",
+      "Cas9 specificity tumor targeting",
+      "gene editing clinical translation",
+      "nanoparticle mediated gene therapy"
+    ]
+  },
+  "research_tasks": [...]
+}
+```
 
-    ## Instructions
-
-    1. **Generate an enriched objective** that enhances and expands the original research objective or task:
-        - Provide a comprehensive, detailed version of the original objective/task
-        - Expand on the scientific rationale and potential impact
-        - Include technical details that enhance understanding
-        - Maintain alignment with the original purpose while adding scientific depth
-        - Minimum 50 characters required
-
-    2. **Generate scientific context** that explains the rationale and background for this research:
-        - Provide scientific background that justifies the research approach
-        - Explain the current state of knowledge in this area
-        - Describe why this research is needed and timely
-        - Connect to broader scientific trends and challenges
-        - Ground the work in established scientific principles
-        - Minimum 50 characters required
-
-    3. **Generate 5 core scientific terms** that are fundamental to understanding and executing this research:
-        - Identify the most important scientific concepts, methodologies, or technologies central to this research
-        - Focus on terms that represent the foundational scientific principles underlying the research objective
-        - Select terms that would be essential for any researcher or reviewer to understand the scientific basis
-        - Ensure terms are specific enough to be meaningful but broad enough to capture key scientific domains
-        - These terms will be used for scientific context enhancement and should represent the core scientific foundation
-
-    4. Formulate between 3 to 10 guiding questions for the objective and its tasks:
-        - Focus on questions that address the core purpose, methodology, expected outcomes, potential challenges, and broader implications of the research.
-        - Ground the questions in the provided keywords and topics to ensure relevance and focus.
-        - Include questions that prompt consideration of scientific rigor, innovation potential, and impact.
-        - Ensure questions address the relationship between the main objective and its component tasks.
-        - Craft questions that will elicit evidence-based, detailed responses suitable for a grant application.
-
-    5. Generate detailed descriptions for the objective and its tasks, addressing the following elements:
-        - **Purpose:** Clearly state the purpose and its contribution to the overall research goal, emphasizing scientific significance.
-        - **Methodology:** Describe the methods and techniques to be employed with technical precision and scientific rigor.
-        - **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact with measurable indicators.
-        - **Dependencies:** Summarize key dependencies, highlighting critical path relationships between tasks and the main objective.
-        - **Potential Risks:** Identify potential challenges, limitations, and mitigation strategies backed by scientific reasoning.
-        - **Innovation Elements:** Highlight novel approaches or techniques that distinguish this research in its field.
-        - Ensure all descriptions are grounded in the provided keywords and topics.
-        - Support descriptions with evidence from the retrieval results where applicable.
-
-    6. Write detailed instructions for AI text generation:
-        - Provide detailed instructions for AI text generation of the objective and task descriptions.
-        - Prioritize information from the sources and incorporate metadata.
-        - Specify the desired writing style (e.g., formal and academic, persuasive, concise).
-        - Include instructions on the level of detail, use of technical terminology, and any specific formatting requirements.
-        - Explicitly instruct the AI to use the provided keywords and topics to guide the generation of the text.
-        - Direct the AI to maintain a cohesive narrative across the objective and its tasks.
-        - Include instructions for emphasizing competitive aspects and advantages of the research approach.
-        - Provide guidance on balancing technical detail with accessibility for grant reviewers.
-
-    7. Generate between 3-10 search queries for retrieval of relevant information for the objective and its tasks:
-        - Identify the specific terminology that is relevant to the objective and its tasks.
-        - Construct queries using precise scientific terminology from the domain.
-        - Include queries that combine multiple relevant concepts to increase specificity.
-        - Formulate queries using both technical terms and their common variants.
-        - Brainstorm different potential queries - balance specificity with breadth for RAG retrieval.
-        - Consider potential synonyms or related terms that could broaden the search.
-        - Include queries that target methodological approaches specific to the research.
-        - Evaluate each generated query for relevance and effectiveness, refining as necessary.
-        - Format queries as concise phrases (3-7 words) rather than complete sentences for optimal retrieval.
-
-    ## Output Structure
-
-    Provide enriched content for the research objective and its tasks with the following structure:
-
-    **For the research objective:**
-    - Enriched objective: Enhanced and detailed version of the original research objective
-    - Core scientific terms: Exactly 5 fundamental scientific terms central to this research
-    - Scientific context: Scientific background and context explaining the rationale for this research
-    - Instructions: Detailed guidance for AI text generation including writing style, technical depth, and formatting requirements
-    - Description: Comprehensive scientific description covering purpose, methodology, expected results, dependencies, risks, and innovation
-    - Guiding questions: 3-10 questions addressing core purpose, methodology, outcomes, challenges, and implications
-    - Search queries: 3-10 concise queries (3-7 words) using precise scientific terminology for optimal retrieval
-
-    **For each research task:**
-    - The same seven components as above, but specific to each individual task
-    - Tasks must correspond exactly to those in the input objective
-    - Each task represents a specific component of the overall research objective
-
-    Important requirements:
-    - All text fields must be substantial (minimum 50 characters) and scientifically meaningful
-    - Search queries should be concise, specific phrases optimized for vector retrieval
-    - Content must be grounded in provided keywords and topics
-    - Maintain consistency across objective and task descriptions
-    - Core scientific terms must be exactly 5 terms that represent the foundational scientific concepts
-    """,
+Return enriched content for objective and all tasks following this structure.
+""",
 )
 
 enriched_object_schema = {
@@ -377,13 +315,22 @@ async def handle_enrich_objective(
         form_inputs=dto["form_inputs"],
     )
 
-    full_prompt = enrichment_prompt.to_string(rag_results=dto["retrieval_context"])
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+    compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)
+
+    logger.debug(
+        "Prepared and compressed context for objective enrichment",
+        objective_number=dto["research_objective"]["number"],
+        original_context_chars=len(dto["retrieval_context"]),
+        compressed_context_chars=len(compressed_context),
+        trace_id=dto["trace_id"],
+    )
+
+    full_prompt = enrichment_prompt.to_string(rag_results=compressed_context)
 
     return await with_evaluation(
         prompt_identifier="enrich_objective",
         prompt_handler=enrich_objective_generation,
-        prompt=compressed_prompt,
+        prompt=full_prompt,
         input_objective=dto["research_objective"],
         trace_id=dto["trace_id"],
         **get_evaluation_kwargs(

@@ -41,7 +41,7 @@ class VectorTableModifier:
 
         if "EMBEDDING_DIMENSIONS" not in self._original_constants:
             self._original_constants["EMBEDDING_DIMENSIONS"] = db_constants.EMBEDDING_DIMENSIONS
-        db_constants.EMBEDDING_DIMENSIONS = new_dimension  # type: ignore[misc]
+        db_constants.EMBEDDING_DIMENSIONS = new_dimension
 
         import pgvector
 
@@ -112,7 +112,7 @@ class VectorTableModifier:
             import packages.db.src.constants as db_constants
 
             if "EMBEDDING_DIMENSIONS" in self._original_constants:
-                db_constants.EMBEDDING_DIMENSIONS = self._original_constants["EMBEDDING_DIMENSIONS"]  # type: ignore[misc]
+                db_constants.EMBEDDING_DIMENSIONS = self._original_constants["EMBEDDING_DIMENSIONS"]
 
             if "original_to_db" in self._original_constants:
                 import pgvector

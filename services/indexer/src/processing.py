@@ -25,7 +25,7 @@ async def process_source(
     filename: str,
     mime_type: str,
     model_name: str | None = None,
-    enable_token_reduction: bool = True,
+    enable_token_reduction: bool = False,
     language_hint: str = "en",
 ) -> tuple[list[VectorDTO], str, "DocumentMetadata"]:
     logger.debug(

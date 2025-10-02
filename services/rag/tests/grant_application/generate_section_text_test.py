@@ -14,6 +14,7 @@ def sample_grant_section() -> GrantLongFormSection:
         id="research_strategy",
         title="Research Strategy",
         order=1,
+        evidence="CFP evidence for Research Strategy",
         parent_id=None,
         keywords=["methodology", "approach"],
         topics=["methods", "experimental design"],

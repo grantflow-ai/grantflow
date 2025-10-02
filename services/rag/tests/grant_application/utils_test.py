@@ -1,5 +1,7 @@
+from typing import cast
+
 import pytest
-from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from testing.factories import GrantSectionFactory
 
 from services.rag.src.grant_application.utils import (
@@ -34,6 +36,7 @@ def grant_sections() -> list[GrantLongFormSection]:
             "search_queries": [],
             "generation_instructions": "Write a clear and concise abstract",
             "is_clinical_trial": False,
+            "evidence": "CFP evidence for Abstract",
         },
         {
             "id": "research_strategy",
@@ -48,6 +51,7 @@ def grant_sections() -> list[GrantLongFormSection]:
             "search_queries": [],
             "generation_instructions": "Detail the research strategy",
             "is_clinical_trial": False,
+            "evidence": "CFP evidence for Research Strategy",
         },
         {
             "id": "risks_and_mitigations",
@@ -62,6 +66,7 @@ def grant_sections() -> list[GrantLongFormSection]:
             "search_queries": [],
             "generation_instructions": "Describe potential risks and mitigation strategies",
             "is_clinical_trial": False,
+            "evidence": "CFP evidence for Risks and Mitigations",
         },
         {
             "id": "impact",
@@ -76,12 +81,17 @@ def grant_sections() -> list[GrantLongFormSection]:
             "search_queries": [],
             "generation_instructions": "Describe the potential impact of the research",
             "is_clinical_trial": False,
+            "evidence": "CFP evidence for Potential Impact",
         },
     ]
 
 
 def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id=None)  # type: ignore[arg-type]
+    result = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", grant_sections),
+        section_texts=SAMPLE_TEXTS,
+        parent_id=None,
+    )
     assert len(result) == 1
     assert result[0]["title"] == "Abstract"
     assert result[0]["text"] == "This is an abstract."
@@ -89,14 +99,22 @@ def test_map_to_tree_simple(grant_sections: list[GrantLongFormSection]) -> None:
 
 
 def test_map_to_tree_nested(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")  # type: ignore[arg-type]
+    result = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", grant_sections),
+        section_texts=SAMPLE_TEXTS,
+        parent_id="narrative",
+    )
     assert len(result) == 3
     assert result[0]["title"] == "Research Strategy"
     assert result[0]["text"] == "This is the research strategy."
 
 
 def test_map_to_tree_ordering(grant_sections: list[GrantLongFormSection]) -> None:
-    result = map_to_tree(sections=grant_sections, section_texts=SAMPLE_TEXTS, parent_id="narrative")  # type: ignore[arg-type]
+    result = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", grant_sections),
+        section_texts=SAMPLE_TEXTS,
+        parent_id="narrative",
+    )
     children_titles = [child["title"] for child in result]
     assert children_titles == ["Research Strategy", "Risks and Mitigations", "Potential Impact"]
 
@@ -244,13 +262,17 @@ def multi_level_sections() -> list[GrantLongFormSection]:
 
 
 def test_tree_multi_level_root_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
+    tree = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", multi_level_sections), section_texts={}
+    )
     root_titles = [node["title"] for node in tree]
     assert root_titles == ["Part A", "Part B"]
 
 
 def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
+    tree = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", multi_level_sections), section_texts={}
+    )
 
     part_a = next(node for node in tree if node["title"] == "Part A")
     part_a_children = [node["title"] for node in part_a["children"]]
@@ -262,7 +284,9 @@ def test_tree_multi_level_children_ordering(multi_level_sections: list[GrantLong
 
 
 def test_tree_multi_level_grandchildren_ordering(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
+    tree = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", multi_level_sections), section_texts={}
+    )
 
     part_b = next(node for node in tree if node["title"] == "Part B")
     section_b1 = next(node for node in part_b["children"] if node["title"] == "Section B1")
@@ -282,7 +306,9 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFo
         "subsection_b1_2": "Subsection B1.2 content",
     }
 
-    tree = map_to_tree(sections=multi_level_sections, section_texts=section_texts)  # type: ignore[arg-type]
+    tree = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", multi_level_sections), section_texts=section_texts
+    )
     text = create_text_recursively(tree[0])
 
     expected_order = [
@@ -296,7 +322,9 @@ def test_tree_multi_level_text_generation(multi_level_sections: list[GrantLongFo
 
 
 def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantLongFormSection]) -> None:
-    tree = map_to_tree(sections=multi_level_sections, section_texts={})  # type: ignore[arg-type]
+    tree = map_to_tree(
+        sections=cast("list[GrantElement | GrantLongFormSection]", multi_level_sections), section_texts={}
+    )
 
     assert len(tree) == 2
     for root in tree:
@@ -308,52 +336,85 @@ def test_tree_multi_level_complete_structure(multi_level_sections: list[GrantLon
 
 
 def test_generate_application_text() -> None:
-    grant_sections = [
-        {"id": "abstract_section", "order": 1, "parent_id": None, "title": "Abstracts"},
-        {
-            "depends_on": [],
-            "generation_instructions": "",
-            "id": "general_audience_abstract",
-            "is_clinical_trial": False,
-            "is_detailed_research_plan": False,
-            "keywords": [],
-            "max_words": 285,
-            "order": 2,
-            "parent_id": "abstract_section",
-            "search_queries": [],
-            "title": "General Audience Abstract",
-            "topics": [],
-        },
-        {
-            "depends_on": [],
-            "generation_instructions": "",
-            "id": "technical_abstract_section",
-            "is_clinical_trial": False,
-            "is_detailed_research_plan": False,
-            "keywords": [],
-            "max_words": 285,
-            "order": 3,
-            "parent_id": "abstract_section",
-            "search_queries": [],
-            "title": "Technical Abstract",
-            "topics": [],
-        },
-        {"id": "project_description_section", "order": 4, "parent_id": None, "title": "Project Description"},
-        {
-            "depends_on": [],
-            "generation_instructions": "",
-            "id": "background_specific_aims",
-            "is_clinical_trial": False,
-            "is_detailed_research_plan": False,
-            "keywords": [],
-            "max_words": 830,
-            "order": 5,
-            "parent_id": "project_description_section",
-            "search_queries": [],
-            "title": "Background and Specific Aims",
-            "topics": [],
-        },
-        {"id": "clinical_trial_section", "order": 10, "parent_id": None, "title": "Clinical Trial Documentation"},
+    grant_sections: list[GrantElement | GrantLongFormSection] = [
+        cast(
+            "GrantElement",
+            {"id": "abstract_section", "order": 1, "parent_id": None, "title": "Abstracts", "evidence": ""},
+        ),
+        cast(
+            "GrantLongFormSection",
+            {
+                "depends_on": [],
+                "generation_instructions": "",
+                "id": "general_audience_abstract",
+                "is_clinical_trial": False,
+                "is_detailed_research_plan": False,
+                "keywords": [],
+                "max_words": 285,
+                "order": 2,
+                "parent_id": "abstract_section",
+                "search_queries": [],
+                "title": "General Audience Abstract",
+                "topics": [],
+                "evidence": "",
+            },
+        ),
+        cast(
+            "GrantLongFormSection",
+            {
+                "depends_on": [],
+                "generation_instructions": "",
+                "id": "technical_abstract_section",
+                "is_clinical_trial": False,
+                "is_detailed_research_plan": False,
+                "keywords": [],
+                "max_words": 285,
+                "order": 3,
+                "parent_id": "abstract_section",
+                "search_queries": [],
+                "title": "Technical Abstract",
+                "topics": [],
+                "evidence": "",
+            },
+        ),
+        cast(
+            "GrantElement",
+            {
+                "id": "project_description_section",
+                "order": 4,
+                "parent_id": None,
+                "title": "Project Description",
+                "evidence": "",
+            },
+        ),
+        cast(
+            "GrantLongFormSection",
+            {
+                "depends_on": [],
+                "generation_instructions": "",
+                "id": "background_specific_aims",
+                "is_clinical_trial": False,
+                "is_detailed_research_plan": False,
+                "keywords": [],
+                "max_words": 830,
+                "order": 5,
+                "parent_id": "project_description_section",
+                "search_queries": [],
+                "title": "Background and Specific Aims",
+                "topics": [],
+                "evidence": "",
+            },
+        ),
+        cast(
+            "GrantElement",
+            {
+                "id": "clinical_trial_section",
+                "order": 10,
+                "parent_id": None,
+                "title": "Clinical Trial Documentation",
+                "evidence": "",
+            },
+        ),
     ]
     section_texts: dict[str, str] = {
         "general_audience_abstract": "Melanoma is a serious skin cancer...",
@@ -366,7 +427,7 @@ def test_generate_application_text() -> None:
     }
     title = "Developing AI solutions for cancer"
 
-    text = generate_application_text(title, grant_sections, section_texts)  # type: ignore[arg-type]
+    text = generate_application_text(title, grant_sections, section_texts)
 
     assert (
         text

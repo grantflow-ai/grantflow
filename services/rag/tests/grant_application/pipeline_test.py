@@ -57,6 +57,7 @@ def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
             "title": "Research Plan",
             "order": 3,
             "parent_id": None,
+            "evidence": "CFP evidence for Research Plan",
             "keywords": ["methodology"],
             "topics": ["methods"],
             "generation_instructions": "Describe methodology",
@@ -81,6 +82,7 @@ async def test_extract_relationships_stage_first(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    mock_publish_email_notification: Any,
 ) -> None:
     from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
 
@@ -94,6 +96,7 @@ async def test_extract_relationships_stage_first(
             "title": "Test Plan",
             "order": 1,
             "parent_id": None,
+            "evidence": "CFP evidence for Test Plan",
             "keywords": [],
             "topics": [],
             "generation_instructions": "Test instructions",
@@ -139,6 +142,7 @@ async def test_generate_sections_stage_requires_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    mock_publish_email_notification: Any,
     sample_generate_sections_dto: GenerateSectionsStageDTO,
 ) -> None:
     from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
@@ -153,6 +157,7 @@ async def test_generate_sections_stage_requires_checkpoint(
             "title": "Test Plan",
             "order": 1,
             "parent_id": None,
+            "evidence": "CFP evidence for Test Plan",
             "keywords": [],
             "topics": [],
             "generation_instructions": "Test instructions",
@@ -200,6 +205,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    mock_publish_email_notification: Any,
 ) -> None:
     from services.rag.src.grant_application.dto import ExtractRelationshipsStageDTO
 
@@ -213,6 +219,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
             "title": "Test Plan",
             "order": 1,
             "parent_id": None,
+            "evidence": "CFP evidence for Test Plan",
             "keywords": [],
             "topics": [],
             "generation_instructions": "Test instructions",
@@ -259,6 +266,7 @@ async def test_insufficient_context_error_handling(
     sample_rag_sources: list[RagSource],
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    mock_publish_email_notification: Any,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
@@ -294,6 +302,7 @@ async def test_indexing_timeout_error_handling(
     sample_rag_sources: list[RagSource],
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    mock_publish_email_notification: Any,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
@@ -329,6 +338,7 @@ async def test_generic_backend_error_handling(
     sample_rag_sources: list[RagSource],
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
+    mock_publish_email_notification: Any,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
@@ -365,6 +375,7 @@ async def test_missing_cfp_analysis_validation(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    mock_publish_email_notification: Any,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
@@ -407,6 +418,7 @@ async def test_pipeline_creates_database_job_entry(
     sample_generate_sections_dto: GenerateSectionsStageDTO,
     trace_id: str,
     mock_pubsub_for_pipeline_testing: Any,
+    mock_publish_email_notification: Any,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
