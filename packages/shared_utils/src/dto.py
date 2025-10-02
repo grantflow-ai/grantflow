@@ -26,34 +26,30 @@ class CFPContentSection(TypedDict):
 
 
 class ExtractedCFPData(TypedDict):
-    """Optimized CFP extraction DTO with short property names for Gemini."""
-
-    org_id: str | None  # Optimized from organization_id
-    subject: str  # Optimized from cfp_subject
-    deadline: str | None  # Optimized from submission_date
+    org_id: str | None
+    subject: str
+    deadline: str | None
     content: list[CFPContentSection]
     full_text: str
     error: NotRequired[str | None]
 
 
 class ExtractedSectionDTO(TypedDict):
-    """Optimized section extraction DTO with short property names for Gemini."""
-
     title: str
     id: str
     order: int
     evidence: str
-    parent: NotRequired[str | None]  # Optimized from parent_id
-    is_plan: NotRequired[bool | None]  # Optimized from is_detailed_research_plan
-    title_only: NotRequired[bool | None]  # Optimized from is_title_only
-    clinical: NotRequired[bool | None]  # Optimized from is_clinical_trial
-    long_form: bool  # Optimized from is_long_form
+    parent: NotRequired[str | None]
+    is_plan: NotRequired[bool | None]
+    title_only: NotRequired[bool | None]
+    clinical: NotRequired[bool | None]
+    long_form: bool
     requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
-    max_words: NotRequired[int | None]  # Optimized from length_limit
-    source: NotRequired[str | None]  # Optimized from length_source
-    limits: NotRequired[list[CFPConstraint]]  # Optimized from other_limits
+    max_words: NotRequired[int | None]
+    source: NotRequired[str | None]
+    limits: NotRequired[list[CFPConstraint]]
     definition: NotRequired[str | None]
-    needs_writing: NotRequired[bool | None]  # Optimized from needs_applicant_writing
+    needs_writing: NotRequired[bool | None]
 
 
 class SectionMetadata(TypedDict):

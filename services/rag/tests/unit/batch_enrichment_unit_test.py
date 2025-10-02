@@ -55,21 +55,21 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
                 "research_objective": {
                     "instructions": "Test instructions for objective 1",
                     "description": "Test description for objective 1",
-                    "guiding_questions": ["Q1", "Q2", "Q3"],
-                    "search_queries": ["query1", "query2", "query3"],
+                    "questions": ["Q1", "Q2", "Q3"],
+                    "queries": ["query1", "query2", "query3"],
                 },
                 "research_tasks": [
                     {
                         "instructions": "Test instructions for task 1.1",
                         "description": "Test description for task 1.1",
-                        "guiding_questions": ["Q1", "Q2", "Q3"],
-                        "search_queries": ["query1", "query2", "query3"],
+                        "questions": ["Q1", "Q2", "Q3"],
+                        "queries": ["query1", "query2", "query3"],
                     },
                     {
                         "instructions": "Test instructions for task 1.2",
                         "description": "Test description for task 1.2",
-                        "guiding_questions": ["Q1", "Q2", "Q3"],
-                        "search_queries": ["query1", "query2", "query3"],
+                        "questions": ["Q1", "Q2", "Q3"],
+                        "queries": ["query1", "query2", "query3"],
                     },
                 ],
             }
@@ -77,15 +77,15 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
             "research_objective": {
                 "instructions": "Test instructions for objective 2",
                 "description": "Test description for objective 2",
-                "guiding_questions": ["Q1", "Q2", "Q3"],
-                "search_queries": ["query1", "query2", "query3"],
+                "questions": ["Q1", "Q2", "Q3"],
+                "queries": ["query1", "query2", "query3"],
             },
             "research_tasks": [
                 {
                     "instructions": "Test instructions for task 2.1",
                     "description": "Test description for task 2.1",
-                    "guiding_questions": ["Q1", "Q2", "Q3"],
-                    "search_queries": ["query1", "query2", "query3"],
+                    "questions": ["Q1", "Q2", "Q3"],
+                    "queries": ["query1", "query2", "query3"],
                 }
             ],
         }

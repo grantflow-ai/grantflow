@@ -34,54 +34,43 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 
-# Optimized TypedDicts for Gemini LLM responses (short property names)
 class CFPRequirement(TypedDict):
-    """CFP requirement with source quote."""
-
     requirement: str
-    quote: str  # Optimized from quote_from_source
+    quote: str
     category: str
 
 
 class CFPSectionReq(TypedDict):
-    """CFP section requirement."""
-
-    name: str  # Optimized from section_name
+    name: str
     definition: str
     requirements: list[CFPRequirement]
     dependencies: list[str]
-    source: NotRequired[str | None]  # Optimized from cfp_source_reference
+    source: NotRequired[str | None]
 
 
 class CFPLengthConstraint(TypedDict):
-    """CFP length constraint."""
-
-    name: str  # Optimized from section_name
-    type: str  # Optimized from measurement_type
-    limit: str  # Optimized from limit_description
-    quote: str  # Optimized from quote_from_source
+    name: str
+    type: str
+    limit: str
+    quote: str
     exclusions: list[str]
 
 
 class CFPEvalCriterion(TypedDict):
-    """CFP evaluation criterion."""
-
-    name: str  # Optimized from criterion_name
+    name: str
     description: str
-    weight: NotRequired[int | None]  # Optimized from weight_percentage
-    quote: str  # Optimized from quote_from_source
+    weight: NotRequired[int | None]
+    quote: str
 
 
 class CFPSectionAnalysis(TypedDict):
-    """Optimized CFP section analysis response for Gemini."""
-
     required_sections: list[CFPSectionReq]
     length_constraints: list[CFPLengthConstraint]
     evaluation_criteria: list[CFPEvalCriterion]
     additional_requirements: list[CFPRequirement]
-    count: int  # Optimized from sections_count
-    constraints_count: int  # Optimized from length_constraints_found
-    criteria_count: int  # Optimized from evaluation_criteria_count
+    count: int
+    constraints_count: int
+    criteria_count: int
     error: NotRequired[str | None]
 
 
@@ -315,7 +304,6 @@ def validate_cfp_analysis(response: CFPSectionAnalysis) -> None:
 
 
 def convert_to_db_format(response: CFPSectionAnalysis) -> DBCFPSectionAnalysis:
-    """Convert optimized pipeline response to DB format."""
     return DBCFPSectionAnalysis(
         required_sections=[
             DBCFPSectionReq(
@@ -402,7 +390,6 @@ async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysi
 
     cfp_analysis_optimized = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
 
-    # Convert optimized response to DB format
     cfp_analysis_db = convert_to_db_format(cfp_analysis_optimized)
 
     return CFPAnalysisResult(

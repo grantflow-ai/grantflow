@@ -72,21 +72,21 @@ async def test_handle_batch_enrich_objectives_success(
             "research_objective": {
                 "description": "Enhanced objective 1 description",
                 "instructions": "Detailed instructions for objective 1",
-                "guiding_questions": ["Question 1 for objective 1", "Question 2 for objective 1"],
-                "search_queries": ["query1 objective1", "query2 objective1"],
+                "questions": ["Question 1 for objective 1", "Question 2 for objective 1"],
+                "queries": ["query1 objective1", "query2 objective1"],
             },
             "research_tasks": [
                 {
                     "description": "Enhanced task 1.1 description",
                     "instructions": "Task 1.1 instructions",
-                    "guiding_questions": ["Task 1.1 question"],
-                    "search_queries": ["task 1.1 query"],
+                    "questions": ["Task 1.1 question"],
+                    "queries": ["task 1.1 query"],
                 },
                 {
                     "description": "Enhanced task 1.2 description",
                     "instructions": "Task 1.2 instructions",
-                    "guiding_questions": ["Task 1.2 question"],
-                    "search_queries": ["task 1.2 query"],
+                    "questions": ["Task 1.2 question"],
+                    "queries": ["task 1.2 query"],
                 },
             ],
         },
@@ -94,21 +94,21 @@ async def test_handle_batch_enrich_objectives_success(
             "research_objective": {
                 "description": "Enhanced objective 2 description",
                 "instructions": "Detailed instructions for objective 2",
-                "guiding_questions": ["Question 1 for objective 2"],
-                "search_queries": ["query1 objective2"],
+                "questions": ["Question 1 for objective 2"],
+                "queries": ["query1 objective2"],
             },
             "research_tasks": [
                 {
                     "description": "Enhanced task 2.1 description",
                     "instructions": "Task 2.1 instructions",
-                    "guiding_questions": ["Task 2.1 question"],
-                    "search_queries": ["task 2.1 query"],
+                    "questions": ["Task 2.1 question"],
+                    "queries": ["task 2.1 query"],
                 },
                 {
                     "description": "Enhanced task 2.2 description",
                     "instructions": "Task 2.2 instructions",
-                    "guiding_questions": ["Task 2.2 question"],
-                    "search_queries": ["task 2.2 query"],
+                    "questions": ["Task 2.2 question"],
+                    "queries": ["task 2.2 query"],
                 },
             ],
         },
@@ -193,15 +193,15 @@ async def test_handle_batch_enrich_objectives_single_objective(
             "research_objective": {
                 "description": "Enhanced single objective",
                 "instructions": "Single objective instructions",
-                "guiding_questions": ["Single question"],
-                "search_queries": ["single query"],
+                "questions": ["Single question"],
+                "queries": ["single query"],
             },
             "research_tasks": [
                 {
                     "description": "Enhanced single task",
                     "instructions": "Single task instructions",
-                    "guiding_questions": ["Single task question"],
-                    "search_queries": ["single task query"],
+                    "questions": ["Single task question"],
+                    "queries": ["single task query"],
                 }
             ],
         }

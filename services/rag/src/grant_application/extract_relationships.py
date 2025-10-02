@@ -99,16 +99,12 @@ relationships_schema = {
 
 
 class RelationshipItem(TypedDict):
-    """Single relationship with object structure for Gemini."""
-
     source: str
     target: str
     desc: str
 
 
 class RelationshipsDTO(TypedDict):
-    """Optimized relationships DTO with object arrays for Gemini."""
-
     relationships: list[RelationshipItem]
 
 

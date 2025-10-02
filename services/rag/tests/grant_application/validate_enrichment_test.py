@@ -20,15 +20,15 @@ def create_enrichment_data(
     search_queries: list[str] | None = None,
 ) -> EnrichmentDataDTO:
     return {
-        "enriched_objective": "Test enriched objective with sufficient length to pass the validation requirements for testing purposes",
-        "search_queries": search_queries or ["Query 1", "Query 2", "Query 3"],
-        "core_scientific_terms": core_scientific_terms or ["term1", "term2", "term3", "term4", "term5"],
-        "scientific_context": "Test scientific context with background information that meets the minimum length requirement for validation",
+        "enriched": "Test enriched objective with sufficient length to pass the validation requirements for testing purposes",
+        "queries": search_queries or ["Query 1", "Query 2", "Query 3"],
+        "terms": core_scientific_terms or ["term1", "term2", "term3", "term4", "term5"],
+        "context": "Test scientific context with background information that meets the minimum length requirement for validation",
         "instructions": instructions
         or "These are detailed instructions for text generation that exceed the minimum length requirement.",
         "description": description
         or "This is a detailed description of the research objective that exceeds the minimum length requirement.",
-        "guiding_questions": guiding_questions or ["Question 1", "Question 2", "Question 3"],
+        "questions": guiding_questions or ["Question 1", "Question 2", "Question 3"],
     }
 
 
@@ -67,13 +67,13 @@ def test_validate_missing_objective() -> None:
 
 def test_validate_missing_objective_fields() -> None:
     fields = [
-        "enriched_objective",
-        "core_scientific_terms",
-        "scientific_context",
+        "enriched",
+        "terms",
+        "context",
         "instructions",
         "description",
-        "guiding_questions",
-        "search_queries",
+        "questions",
+        "queries",
     ]
 
     for field in fields:
@@ -81,9 +81,9 @@ def test_validate_missing_objective_fields() -> None:
 
         for f in fields:
             if f != field:
-                if f == "core_scientific_terms":
+                if f == "terms":
                     enrichment_data[f] = ["term1", "term2", "term3", "term4", "term5"]
-                elif f in ["guiding_questions", "search_queries"]:
+                elif f in ["questions", "queries"]:
                     enrichment_data[f] = ["Q1", "Q2", "Q3"]
                 else:
                     enrichment_data[f] = "This is a test value that is long enough to pass validation requirements"
@@ -164,13 +164,13 @@ def test_validate_task_count_mismatch() -> None:
 
 def test_validate_task_fields() -> None:
     fields = [
-        "enriched_objective",
-        "core_scientific_terms",
-        "scientific_context",
+        "enriched",
+        "terms",
+        "context",
         "instructions",
         "description",
-        "guiding_questions",
-        "search_queries",
+        "questions",
+        "queries",
     ]
 
     for field in fields:
@@ -178,9 +178,9 @@ def test_validate_task_fields() -> None:
 
         for f in fields:
             if f != field:
-                if f == "core_scientific_terms":
+                if f == "terms":
                     task_data[f] = ["term1", "term2", "term3", "term4", "term5"]
-                elif f in ["guiding_questions", "search_queries"]:
+                elif f in ["questions", "queries"]:
                     task_data[f] = ["Q1", "Q2", "Q3"]
                 else:
                     task_data[f] = "This is a test value that is long enough to pass validation requirements"

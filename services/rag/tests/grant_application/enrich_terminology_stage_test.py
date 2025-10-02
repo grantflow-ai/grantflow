@@ -18,13 +18,13 @@ def _make_enrichment_data(
     core_terms: list[str],
 ) -> EnrichmentDataDTO:
     return EnrichmentDataDTO(
-        enriched_objective="",
+        enriched="",
         description=description,
         instructions=instructions,
-        guiding_questions=guiding_questions,
-        search_queries=search_queries,
-        core_scientific_terms=core_terms,
-        scientific_context="",
+        questions=guiding_questions,
+        queries=search_queries,
+        terms=core_terms,
+        context="",
     )
 
 
@@ -70,9 +70,9 @@ async def test_enrich_objective_with_wikidata_success(
     )
 
     expected_terms = ["biomarkers", "mass spectrometry", "proteomics"]
-    assert result["core_scientific_terms"] == expected_terms
-    assert "scientific_context" in result
-    assert "Biochemistry" in result["scientific_context"]
+    assert result["terms"] == expected_terms
+    assert "context" in result
+    assert "Biochemistry" in result["context"]
     mock_get_scientific_context.assert_called_once_with(expected_terms, test_trace_id)
 
 
@@ -82,7 +82,7 @@ async def test_enrich_objective_with_wikidata_empty_tasks(
 ) -> None:
     enrichment_response_no_tasks = deepcopy(sample_enrichment_response)
     enrichment_response_no_tasks["research_tasks"] = []
-    enrichment_response_no_tasks["research_objective"]["core_scientific_terms"] = ["biomarkers"]
+    enrichment_response_no_tasks["research_objective"]["terms"] = ["biomarkers"]
 
     mock_get_scientific_context.return_value = "**Biochemistry:** biomarkers"
 
@@ -91,7 +91,7 @@ async def test_enrich_objective_with_wikidata_empty_tasks(
         trace_id=str(uuid4()),
     )
 
-    assert result["core_scientific_terms"] == ["biomarkers"]
+    assert result["terms"] == ["biomarkers"]
     mock_get_scientific_context.assert_called_once_with(["biomarkers"], unittest.mock.ANY)
 
 
@@ -100,7 +100,7 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
     mock_get_scientific_context: AsyncMock, sample_enrichment_response: ObjectiveEnrichmentResponse
 ) -> None:
     enrichment_response_multi_tasks = deepcopy(sample_enrichment_response)
-    enrichment_response_multi_tasks["research_objective"]["core_scientific_terms"] = [
+    enrichment_response_multi_tasks["research_objective"]["terms"] = [
         "biomarkers",
         "proteomics",
     ]
@@ -147,9 +147,9 @@ async def test_enrich_objective_with_wikidata_multiple_tasks(
         "sensitivity",
         "standardization",
     ]
-    assert result["core_scientific_terms"] == expected_terms
-    assert "Biochemistry" in result["scientific_context"]
-    assert "Analytics" in result["scientific_context"]
+    assert result["terms"] == expected_terms
+    assert "Biochemistry" in result["context"]
+    assert "Analytics" in result["context"]
     mock_get_scientific_context.assert_called_once_with(expected_terms, unittest.mock.ANY)
 
 
@@ -160,7 +160,7 @@ async def test_enrich_objective_with_wikidata_error_handling(
     import httpx
 
     enrichment_response_with_terms = deepcopy(sample_enrichment_response)
-    enrichment_response_with_terms["research_objective"]["core_scientific_terms"] = ["biomarkers"]
+    enrichment_response_with_terms["research_objective"]["terms"] = ["biomarkers"]
     enrichment_response_with_terms["research_tasks"] = [
         _make_enrichment_data(
             description="Analyze proteomics dataset",
@@ -179,9 +179,9 @@ async def test_enrich_objective_with_wikidata_error_handling(
     )
 
     assert result == {
-        "enriched_objective": "",
-        "search_queries": [],
-        "core_scientific_terms": [],
-        "scientific_context": "",
+        "enriched": "",
+        "queries": [],
+        "terms": [],
+        "context": "",
     }
     mock_get_scientific_context.assert_called_once()
