@@ -59,7 +59,7 @@ interface WizardActions {
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateGenerationEvent: (event: null | TemplateGenerationEvent) => void;
-	setTemplateGenerationFailed: (failed: boolean) => void;
+	setTemplateGenerationFailed: (failed: boolean, errorMessage?: string) => void;
 	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
@@ -88,6 +88,7 @@ interface WizardState {
 	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationErrorMessage: null | string;
 	templateGenerationEvent: null | TemplateGenerationEvent;
 	templateGenerationFailed: boolean;
 }
@@ -142,6 +143,7 @@ const initialWizardState: WizardState = {
 	isGeneratingApplication: false,
 	isGeneratingTemplate: false,
 	showResearchPlanInfoBanner: true,
+	templateGenerationErrorMessage: null,
 	templateGenerationEvent: null,
 	templateGenerationFailed: false,
 };
@@ -511,6 +513,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				isAutofillLoading: initialWizardState.isAutofillLoading,
 				isGeneratingApplication: initialWizardState.isGeneratingApplication,
 				isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
+				templateGenerationErrorMessage: initialWizardState.templateGenerationErrorMessage,
 				templateGenerationEvent: initialWizardState.templateGenerationEvent,
 				templateGenerationFailed: initialWizardState.templateGenerationFailed,
 			});
@@ -533,6 +536,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		resetTemplateGenerationFailed: () => {
 			set((state) => ({
 				...state,
+				templateGenerationErrorMessage: null,
 				templateGenerationFailed: false,
 			}));
 		},
@@ -582,9 +586,10 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}));
 		},
 
-		setTemplateGenerationFailed: (failed: boolean) => {
+		setTemplateGenerationFailed: (failed: boolean, errorMessage?: string) => {
 			set((state) => ({
 				...state,
+				templateGenerationErrorMessage: errorMessage ?? null,
 				templateGenerationFailed: failed,
 			}));
 		},
@@ -650,6 +655,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: false,
+					templateGenerationErrorMessage: null,
 					templateGenerationFailed: false,
 				}));
 			}
