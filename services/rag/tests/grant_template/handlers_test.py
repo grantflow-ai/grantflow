@@ -64,7 +64,7 @@ def sample_extract_cfp_dto() -> Any:
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         },
     )
 
@@ -76,9 +76,9 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
         extracted_data=sample_extract_cfp_dto["extracted_data"],
         analysis_results={
             "cfp_analysis": {
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
+                "count": 3,
+                "constraints_count": 2,
+                "criteria_count": 2,
                 "required_sections": [
                     {
                         "title": "Project Summary",
@@ -349,9 +349,9 @@ async def test_cfp_analysis_stage_success(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 5,
-            "length_constraints_found": 2,
-            "evaluation_criteria_count": 3,
+            "count": 5,
+            "constraints_count": 2,
+            "criteria_count": 3,
             "required_sections": [
                 {
                     "title": "Research Plan",
@@ -448,9 +448,9 @@ async def test_cfp_analysis_stage_limited_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 3,
-            "length_constraints_found": 1,
-            "evaluation_criteria_count": 2,
+            "count": 3,
+            "constraints_count": 1,
+            "criteria_count": 2,
             "required_sections": [
                 {
                     "title": "Abstract",
@@ -539,9 +539,9 @@ async def test_cfp_analysis_stage_no_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 1,
-            "length_constraints_found": 0,
-            "evaluation_criteria_count": 1,
+            "count": 1,
+            "constraints_count": 0,
+            "criteria_count": 1,
             "required_sections": [
                 {
                     "title": "Project Description",
@@ -1106,14 +1106,14 @@ async def test_handlers_preserve_data_flow(
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         }
 
         mock_analyze.return_value = {
             "cfp_analysis": {
-                "sections_count": 2,
-                "length_constraints_found": 1,
-                "evaluation_criteria_count": 1,
+                "count": 2,
+                "constraints_count": 1,
+                "criteria_count": 1,
                 "required_sections": [
                     {
                         "title": "Research Strategy",

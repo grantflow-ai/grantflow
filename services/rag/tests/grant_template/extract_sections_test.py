@@ -31,9 +31,9 @@ def mock_cfp_analysis() -> CFPAnalysisResult:
             "length_constraints": [],
             "evaluation_criteria": [],
             "additional_requirements": [],
-            "sections_count": 0,
-            "length_constraints_found": 0,
-            "evaluation_criteria_count": 0,
+            "count": 0,
+            "constraints_count": 0,
+            "criteria_count": 0,
         },
         "nlp_analysis": {
             "money": [],
@@ -573,7 +573,6 @@ async def test_handle_extract_sections_success(
     result = await handle_extract_sections(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
-        cfp_subject="Test Grant Program",
         trace_id=trace_id,
         cfp_analysis=mock_cfp_analysis,
         organization={
@@ -608,7 +607,6 @@ async def test_handle_extract_sections_no_organization(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=[],
-            cfp_subject="Test Grant",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -631,7 +629,6 @@ async def test_handle_extract_sections_empty_cfp_content(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=[],
-            cfp_subject="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -698,7 +695,6 @@ async def test_end_to_end_section_extraction(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=cfp_content_list,
-            cfp_subject="Advanced Research Grant",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,

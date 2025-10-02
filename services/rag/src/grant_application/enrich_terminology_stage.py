@@ -206,6 +206,9 @@ async def enrich_objective_with_wikidata(
                 "queries": [],
                 "terms": [],
                 "context": "",
+                "instructions": "",
+                "description": "",
+                "questions": [],
             }
 
         scientific_context = await _get_scientific_context(unique_terms, trace_id)
@@ -216,6 +219,9 @@ async def enrich_objective_with_wikidata(
             "queries": [],
             "terms": unique_terms,
             "context": formatted_context,
+            "instructions": "",
+            "description": "",
+            "questions": [],
         }
 
     except (httpx.HTTPError, httpx.TimeoutException) as e:
@@ -229,4 +235,7 @@ async def enrich_objective_with_wikidata(
             queries=[],
             terms=[],
             context="",
+            instructions="",
+            description="",
+            questions=[],
         )

@@ -487,7 +487,6 @@ async def test_handle_generate_grant_template_metadata_success(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="Comprehensive CFP content for advanced research programs",
-        cfp_subject="National Research Initiative",
         organization=organization,
         long_form_sections=long_form_sections,
         trace_id="test-trace-456",
@@ -519,7 +518,6 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content without long form sections",
-        cfp_subject="Short Form Grant",
         organization=None,
         long_form_sections=long_form_sections,
         trace_id="test-trace-789",
@@ -586,7 +584,6 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content with mixed section types",
-        cfp_subject="Mixed Sections Grant",
         organization=None,
         long_form_sections=all_sections,
         trace_id="test-trace-mixed",
@@ -653,7 +650,6 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content for order testing",
-        cfp_subject="Order Test Grant",
         organization=None,
         long_form_sections=long_form_sections,
         trace_id="test-trace-order",
@@ -753,7 +749,6 @@ async def test_integration_generate_metadata_workflow(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
-        cfp_subject="Novel Biomarkers for Early Cancer Detection",
         organization=organization,
         long_form_sections=extracted_sections,
         trace_id="integration-test-001",
@@ -845,7 +840,6 @@ async def test_integration_generate_metadata_with_dependencies(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP with dependency requirements",
-        cfp_subject="Dependent Sections Grant",
         organization=None,
         long_form_sections=extracted_sections,
         trace_id="dependency-test-001",
@@ -879,7 +873,6 @@ async def test_integration_generate_metadata_empty_sections(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP with no long form sections",
-        cfp_subject="No Sections Grant",
         organization=None,
         long_form_sections=extracted_sections,
         trace_id="empty-test-001",

@@ -95,9 +95,9 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
                 },
             ],
             "additional_requirements": [],
-            "sections_count": 1,
-            "length_constraints_found": 1,
-            "evaluation_criteria_count": 2,
+            "count": 1,
+            "constraints_count": 1,
+            "criteria_count": 2,
         },
         nlp_analysis={
             "money": [],

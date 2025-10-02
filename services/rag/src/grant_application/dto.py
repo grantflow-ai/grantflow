@@ -35,9 +35,9 @@ class EnrichmentDataDTO(TypedDict):
     queries: list[str]
     terms: list[str]
     context: str
-    instructions: NotRequired[str]
-    description: NotRequired[str]
-    questions: NotRequired[list[str]]
+    instructions: str
+    description: str
+    questions: list[str]
 
 
 class WikidataExpansionResult(TypedDict):

@@ -251,13 +251,17 @@ cfp_extraction_schema = {
             "nullable": True,
             "description": "Submission deadline YYYY-MM-DD, null if not found",
         },
+        "text": {
+            "type": "string",
+            "description": "Complete formatted source text used for extraction",
+        },
         "error": {
             "type": "string",
             "nullable": True,
             "description": "Error if extraction fails, null on success",
         },
     },
-    "required": ["org_id", "subject", "content", "deadline"],
+    "required": ["org_id", "subject", "content", "deadline", "text"],
 }
 
 
@@ -332,7 +336,7 @@ async def handle_extract_cfp_data(
         ),
     )
 
-    result["full_text"] = formatted_sources
+    result["text"] = formatted_sources
 
     _cache_cfp_result(cache_key, result)
 

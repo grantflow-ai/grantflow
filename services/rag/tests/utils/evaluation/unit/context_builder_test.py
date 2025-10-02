@@ -59,9 +59,9 @@ class TestBuildEvaluationContext:
                 length_constraints=[],
                 evaluation_criteria=[],
                 additional_requirements=[],
-                sections_count=0,
-                length_constraints_found=0,
-                evaluation_criteria_count=0,
+                count=0,
+                constraints_count=0,
+                criteria_count=0,
             ),
             nlp_analysis=CategorizationAnalysisResult(
                 money=[],

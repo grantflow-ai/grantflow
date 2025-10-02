@@ -156,7 +156,6 @@ async def handle_section_extraction_stage(
 
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
-        cfp_subject=analysis_result["extracted_data"]["subject"],
         trace_id=trace_id,
         job_manager=job_manager,
         cfp_analysis=analysis_result["analysis_results"],
@@ -197,7 +196,6 @@ async def handle_generate_metadata_stage(
                 for content in section_extraction_result["extracted_data"]["content"]
             ]
         ),
-        cfp_subject=section_extraction_result["extracted_data"]["subject"],
         organization=section_extraction_result["organization"],
         long_form_sections=[s for s in sections_requiring_writing if not s.get("title_only")],
         trace_id=trace_id,
