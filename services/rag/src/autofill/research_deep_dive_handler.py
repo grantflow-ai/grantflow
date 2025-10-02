@@ -149,7 +149,6 @@ async def _generate_field_answer(
         trace_id=trace_id,
     )
 
-    # Compress only the retrieval context before template substitution
     raw_context = "\n".join(retrieval_results)
     compressed_context = compress_prompt_text(raw_context, aggressive=True)
 
@@ -190,7 +189,6 @@ async def _generate_field_answer_with_context(
         question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
     )
 
-    # Compress only the shared context before template substitution
     compressed_context = compress_prompt_text(shared_context, aggressive=True)
 
     logger.debug(

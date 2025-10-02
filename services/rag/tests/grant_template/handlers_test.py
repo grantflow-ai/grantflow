@@ -64,6 +64,7 @@ def sample_extract_cfp_dto() -> Any:
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
+            "full_text": "Full text of the CFP document",
         },
     )
 
@@ -201,13 +202,8 @@ async def test_cfp_extraction_stage_success(
 
     assert mock_grant_template_job_manager.ensure_not_cancelled.call_count == 2
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Analyzing call for proposals document",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
         message="Document analysis complete",
         notification_type="success",
@@ -426,13 +422,8 @@ async def test_cfp_analysis_stage_success(
 
     mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Analyzing application requirements",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.SECTIONS_EXTRACTED,
         message="Requirements analysis complete",
         notification_type="success",
@@ -651,13 +642,8 @@ async def test_section_extraction_stage_success(
 
     mock_grant_template_job_manager.ensure_not_cancelled.assert_called_once()
 
-    assert mock_grant_template_job_manager.add_notification.call_count == 2
-    mock_grant_template_job_manager.add_notification.assert_any_call(
-        event=NotificationEvents.METADATA_GENERATED,
-        message="Extracting application sections",
-        notification_type="info",
-    )
-    mock_grant_template_job_manager.add_notification.assert_any_call(
+    assert mock_grant_template_job_manager.add_notification.call_count == 1
+    mock_grant_template_job_manager.add_notification.assert_called_once_with(
         event=NotificationEvents.METADATA_GENERATED,
         message="Section extraction complete",
         notification_type="success",
@@ -1120,6 +1106,7 @@ async def test_handlers_preserve_data_flow(
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
+            "full_text": "Full text of the CFP document",
         }
 
         mock_analyze.return_value = {

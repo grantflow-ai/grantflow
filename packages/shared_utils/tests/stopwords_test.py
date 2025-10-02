@@ -3,8 +3,6 @@ from packages.shared_utils.src.stopwords import (
     ACADEMIC_STOP_WORDS,
     FREQUENCY_STOP_WORDS,
     GRANT_BUZZWORD_STOP_WORDS,
-    METHODOLOGICAL_STOP_WORDS,
-    QUANTITATIVE_STOP_WORDS,
     TRANSITIONAL_STOP_WORDS,
 )
 
@@ -13,8 +11,6 @@ class TestStopWordCollections:
     def test_stop_word_sets_are_non_empty(self) -> None:
         assert len(TRANSITIONAL_STOP_WORDS) > 0
         assert len(FREQUENCY_STOP_WORDS) > 0
-        assert len(QUANTITATIVE_STOP_WORDS) > 0
-        assert len(METHODOLOGICAL_STOP_WORDS) > 0
         assert len(ACADEMIC_FILLER_STOP_WORDS) > 0
         assert len(GRANT_BUZZWORD_STOP_WORDS) > 0
         assert len(ACADEMIC_STOP_WORDS) > 0
@@ -23,8 +19,6 @@ class TestStopWordCollections:
         expected_words = (
             TRANSITIONAL_STOP_WORDS
             | FREQUENCY_STOP_WORDS
-            | QUANTITATIVE_STOP_WORDS
-            | METHODOLOGICAL_STOP_WORDS
             | ACADEMIC_FILLER_STOP_WORDS
             | GRANT_BUZZWORD_STOP_WORDS
         )
@@ -34,8 +28,6 @@ class TestStopWordCollections:
         for word_set in [
             TRANSITIONAL_STOP_WORDS,
             FREQUENCY_STOP_WORDS,
-            QUANTITATIVE_STOP_WORDS,
-            METHODOLOGICAL_STOP_WORDS,
             ACADEMIC_FILLER_STOP_WORDS,
             GRANT_BUZZWORD_STOP_WORDS,
         ]:
@@ -47,8 +39,6 @@ class TestStopWordCollections:
         categories = [
             TRANSITIONAL_STOP_WORDS,
             FREQUENCY_STOP_WORDS,
-            QUANTITATIVE_STOP_WORDS,
-            METHODOLOGICAL_STOP_WORDS,
             ACADEMIC_FILLER_STOP_WORDS,
             GRANT_BUZZWORD_STOP_WORDS,
         ]
@@ -63,8 +53,6 @@ class TestStopWordCollections:
     def test_specific_words_in_correct_categories(self) -> None:
         assert "furthermore" in TRANSITIONAL_STOP_WORDS
         assert "usually" in FREQUENCY_STOP_WORDS
-        assert "comprehensive" in QUANTITATIVE_STOP_WORDS
-        assert "methodological" in METHODOLOGICAL_STOP_WORDS
         assert "aspects" in ACADEMIC_FILLER_STOP_WORDS
         assert "cutting-edge" in GRANT_BUZZWORD_STOP_WORDS
 

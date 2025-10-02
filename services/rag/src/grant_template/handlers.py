@@ -38,12 +38,6 @@ async def handle_cfp_extraction_stage(
 ) -> ExtractCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.CFP_DATA_EXTRACTED,
-        message="Analyzing call for proposals document",
-        notification_type="info",
-    )
-
     # this can take a while, that's why we are rechecking cancellation ~keep
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
@@ -125,12 +119,6 @@ async def handle_cfp_analysis_stage(
 ) -> AnalyzeCFPContentStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Analyzing application requirements",
-        notification_type="info",
-    )
-
     analysis_results: CFPAnalysisResult = await handle_analyze_cfp(
         full_cfp_text="\n".join(
             [
@@ -166,15 +154,10 @@ async def handle_section_extraction_stage(
 ) -> ExtractionSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    await job_manager.add_notification(
-        event=NotificationEvents.METADATA_GENERATED,
-        message="Extracting application sections",
-        notification_type="info",
-    )
-
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
         cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
+        cfp_full_text=analysis_result["extracted_data"]["full_text"],
         trace_id=trace_id,
         job_manager=job_manager,
         cfp_analysis=analysis_result["analysis_results"],
@@ -228,7 +211,6 @@ async def handle_generate_metadata_stage(
     for section in sections_requiring_writing:
         match section.get("is_title_only"):
             case True:
-                # Title-only sections become simple GrantElement entries
                 element: GrantElement = {
                     "id": section["id"],
                     "order": section["order"],
@@ -241,10 +223,8 @@ async def handle_generate_metadata_stage(
                 ret.append(element)
 
             case _:
-                # Full sections with metadata become GrantLongFormSection entries
                 metadata = mapped_metadata[section["id"]]
 
-                # Base GrantLongFormSection with core fields
                 long_form: GrantLongFormSection = {
                     "id": section["id"],
                     "order": section["order"],
@@ -261,7 +241,6 @@ async def handle_generate_metadata_stage(
                     "topics": metadata["topics"],
                 }
 
-                # Add CFP constraint data (TypedDict-compatible explicit assignments)
                 if "requirements" in section:
                     long_form["requirements"] = section["requirements"]
                 if "length_limit" in section:
@@ -273,11 +252,19 @@ async def handle_generate_metadata_stage(
                 if "definition" in section:
                     long_form["definition"] = section["definition"]
 
-                # Add optional needs_applicant_writing field
                 if (needs_writing := section.get("needs_applicant_writing")) is not None:
                     long_form["needs_applicant_writing"] = needs_writing
 
                 ret.append(long_form)
+
+    await job_manager.add_notification(
+        event=NotificationEvents.METADATA_GENERATED,
+        message="Template metadata generated",
+        notification_type="success",
+        data={
+            "sections": len(ret),
+        },
+    )
 
     return ret
 

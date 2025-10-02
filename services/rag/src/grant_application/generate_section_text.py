@@ -20,18 +20,14 @@ logger = get_logger(__name__)
 
 
 def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None) -> str:
-    """Format CFP requirements using section-specific data first, falling back to global CFP analysis."""
     cfp_text = ""
 
-    # Use section-specific CFP data (preferred method - more accurate)
     has_section_data = False
 
-    # 1. Section-specific definition
     if definition := section.get("definition"):
         cfp_text += f"## Section Definition\n\n{definition}\n\n"
         has_section_data = True
 
-    # 2. Section-specific requirements
     if requirements := section.get("requirements"):
         cfp_text += "## CFP Requirements\n\n"
         for req in requirements:
@@ -40,7 +36,6 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
             cfp_text += f"  > *Category: {req['category']}*\n\n"
         has_section_data = True
 
-    # 3. Section-specific length constraints
     if length_limit := section.get("length_limit"):
         length_source = section.get("length_source", "Not specified")
         cfp_text += "## Length Requirements\n\n"
@@ -48,7 +43,6 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
         cfp_text += f"  > *Source: {length_source}*\n\n"
         has_section_data = True
 
-    # 4. Section-specific other constraints
     if other_limits := section.get("other_limits"):
         cfp_text += "## Additional Constraints\n\n"
         for limit in other_limits:
@@ -56,7 +50,6 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
             cfp_text += f'  > *CFP Quote: "{limit["source_quote"]}"*\n\n'
         has_section_data = True
 
-    # Fallback to global CFP analysis if no section-specific data available
     if not has_section_data and cfp_analysis:
         section_title = section["title"]
         section_title_lower = section_title.lower()
@@ -105,9 +98,6 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
                     cfp_text += f"- **{criterion['criterion_name']}**\n"
                     cfp_text += f'  > *Quote: "{criterion["quote_from_source"]}"*\n\n'
 
-    # Evidence/source reference: Always shown when available, regardless of whether
-    # we used section-specific data or global analysis. This tracks where the section
-    # came from in the CFP document, which is orthogonal to the requirements data.
     if evidence := section.get("evidence"):
         cfp_text += f"## CFP Source Reference\n\n{evidence}\n\n"
 
@@ -115,19 +105,15 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
 
 
 def _get_section_length_requirements(section: GrantLongFormSection) -> str:
-    """Get length requirements, preferring section-specific CFP data over defaults."""
     section_title = section["title"]
     section_title_lower = section_title.lower()
 
-    # Use section-specific length limit if available (more accurate)
     if length_limit := section.get("length_limit"):
         length_source = section.get("length_source", "CFP-specified")
-        # Calculate range (±15% for flexibility)
         min_words = int(length_limit * 0.85)
         max_words = length_limit
         return f"Target length: {min_words}-{max_words} words ({length_source})"
 
-    # Fallback to heuristic-based defaults
     match True:
         case _ if "abstract" in section_title_lower:
             return "Target length: 250-500 words for comprehensive yet concise overview"
@@ -238,7 +224,6 @@ async def handle_generate_section_text(
 
     research_context = "\n\n".join(research_context_parts)
 
-    # Build relationships context using modern list comprehension
     relationships_context = (
         "\n## Key Relationships Between Research Components\n" + "\n".join(rel_parts[:10])
         if (
@@ -293,7 +278,6 @@ async def handle_generate_section_text(
     keywords_str = ", ".join(section.get("keywords", []))
     topics_str = ", ".join(section.get("topics", []))
 
-    # Compress only large data fields before template substitution
     compressed_context = compress_prompt_text(validated_context, aggressive=True)
     compressed_research_plan = compress_prompt_text(formatted_research_plan_context, aggressive=True)
 

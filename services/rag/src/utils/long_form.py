@@ -137,7 +137,6 @@ async def handle_long_form_text_generation(
 
     time()
     while api_call_num <= max_api_calls:
-        # Compress only large data fields before template substitution
         compressed_sources = compress_prompt_text(str(sources), aggressive=True)
 
         full_prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
@@ -250,7 +249,6 @@ async def generate_long_form_text(
     while long_form_length > max_words and attempts < max_shortening_attempts:
         words_overflow = long_form_length - max_words
 
-        # Compress only the text being shortened, not the template
         compressed_text = compress_prompt_text(long_form_text, aggressive=True)
 
         long_form_text = await handle_long_form_text_generation(

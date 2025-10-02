@@ -315,7 +315,6 @@ async def handle_enrich_objective(
         form_inputs=dto["form_inputs"],
     )
 
-    # Compress only the retrieval context before template substitution
     compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)
 
     logger.debug(

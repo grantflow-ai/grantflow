@@ -394,7 +394,6 @@ async def handle_generate_grant_template_metadata(
             trace_id=trace_id,
         )
 
-        # Compress only the RAG results before template substitution
         compressed_rag_results = compress_prompt_text("\n".join(rag_results), aggressive=True)
 
         logger.debug(
