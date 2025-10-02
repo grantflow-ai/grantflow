@@ -3,7 +3,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
 from packages.db.src.json_objects import CFPAnalysisResult
-from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
 from packages.shared_utils.src.serialization import serialize
 
@@ -172,184 +172,391 @@ EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
 
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """
-Expert grant application analyzer. Extract structured section templates from CFP analysis.
+You are an expert grant application writer with 20+ years of experience helping researchers create winning proposals. You have received a very reliable CFP analysis report that contains detailed section requirements, word limits, and definitions extracted by advanced NLP analysis.
 
-Core task: Use the CFP analysis report as authoritative source. Transfer all data accurately - section names, requirements, definitions, and constraints. Do not generate new content.
+CHAIN OF THOUGHT PROCESS:
+1. First, carefully read the CFP analysis report to understand all section requirements
+2. Verify each section has proper title matching the CFP analyzer findings exactly
+3. Extract and preserve ALL requirements arrays exactly as provided in the report - do not modify or summarize
+4. Map word limits and page constraints accurately using STANDARD CONVERSION: 1 page = 415 words
+5. Include complete definitions from the CFP analysis without paraphrasing
+6. Classify each section for applicant writing requirements
+7. Ensure sections follow the proper weight and structure for excellent applications
 
-Conversion standards:
-- 1 page = 415 words (Times New Roman 11pt)
-- 1 character = 0.2 words
-- Non-length constraints → other_limits array
+YOUR TASK: Create template sections for excellent grant applications where:
+- Titles are EXACTLY like the CFP analyzer determined (no deviations allowed)
+- Requirements are clear and according to the data (report + CFP itself) - copy arrays completely
+- Weight of each section and length is correct per CFP specifications
+- All rich CFP data is preserved for applicant guidance
 
-Classification rules:
-- needs_applicant_writing = true: Narrative sections, research plans, budget justifications
-- needs_applicant_writing = false: CVs, letters, budget forms/spreadsheets
-- Budget sections: Only "Justification/Narrative/Explanation/Description" require writing (true)
+COMPREHENSIVE LIMIT DETECTION AND CONVERSION RULES:
+- CONVERSION STANDARDS: 1 page = 415 words (Times New Roman 11pt), 1 character = 0.2 words (1 word = 5 characters)
+- LENGTH LIMITS: Convert ALL length constraints to words → cfp_length_limit field (numeric only)
+- CONVERSION TRACKING: Document the conversion process → cfp_length_source field (explanatory text)
+- OTHER CONSTRAINTS: Capture non-length limits → cfp_other_limits array (reference counts, file formats, etc.)
+
+CONVERSION EXAMPLES:
+- "2 pages maximum" → cfp_length_limit: 830, cfp_length_source: "Converted from 2 pages (2 x 415 = 830 words)"
+- "1000 characters" → cfp_length_limit: 200, cfp_length_source: "Converted from 1000 characters (1000 / 5 = 200 words)"
+- "500 words" → cfp_length_limit: 500, cfp_length_source: "Original: 500 words"
+- "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
+
+APPLICANT WRITING CLASSIFICATION:
+- needs_applicant_writing = TRUE: Sections where applicants write original content (abstracts, project descriptions, research plans, narrative sections, statements, budget justifications)
+- needs_applicant_writing = FALSE: External documents (CVs, letters of recommendation, letters of support, bibliography/references, biosketches, budget forms/spreadsheets)
+
+BUDGET SECTION CLASSIFICATION (CRITICAL):
+- needs_applicant_writing = TRUE: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description" (requires written content)
+- needs_applicant_writing = FALSE: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary" (just forms/numbers)
+
+CRITICAL: You must transfer ALL CFP analysis data accurately - this is essential for application success. The CFP analysis report is your authoritative source. Do not generate new requirements - only use what the analysis provides.
 """
 
 EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_grant_application_sections",
     template="""
-Extract grant application section structure from CFP analysis.
+    # Grant Application Section Extraction with CFP Analysis Integration
 
-## Input Data
+    You are tasked with creating a grant application template using detailed CFP analysis results.
 
-<cfp_analysis>${cfp_analysis}</cfp_analysis>
-${organization_guidelines}
-<cfp_subject>${cfp_subject}</cfp_subject>
-<cfp_content>${cfp_content}</cfp_content>
-<cfp_full_text>${cfp_full_text}</cfp_full_text>
+    ## CFP Analysis Results
+    The CFP has been thoroughly analyzed and the following structured requirements have been identified:
 
-## Task
+    <cfp_analysis>
+    ${cfp_analysis}
+    </cfp_analysis>
 
-Create structured section template by:
-1. Using CFP analysis `required_sections` as authoritative source for section names
-2. Copying requirements, definitions, and constraints exactly from CFP analysis (no modification)
-3. Converting length limits to words: 1 page = 415 words, 1 character = 0.2 words
-4. Creating subsections for complex sections (≥3 pages or multi-part requirements)
+    ## Organization Guidelines
+    ${organization_guidelines}
 
-## Section Data Transfer
+    ## CFP Content Summary
+    <cfp_subject>${cfp_subject}</cfp_subject>
+    <cfp_content>${cfp_content}</cfp_content>
 
-For each section:
-1. **Title**: Use exact `section_name` from CFP analysis `required_sections`
-2. **Requirements**: Copy entire `requirements` array from matching CFP section (do not modify)
-3. **Definition**: Copy exact `definition` string from matching CFP section
-4. **Length**: Convert to words (e.g., "2 pages" → 830 words) → `length_limit` + `length_source`
-5. **Other constraints**: Extract reference counts, formats, etc. → `other_limits` array
-6. **Evidence**: Include key CFP quote that defines this section
+    ## Instructions
 
-## Key Rules
+    ### 1. MANDATORY: Understanding CFP Titles and Section Breakdown
+    **🚨 CRITICAL: TITLES ARE SUBMISSION PARTS THAT MUST BE BROKEN INTO SECTIONS 🚨**
 
-**Budget Classification:**
-- Include: "Budget Justification/Narrative/Explanation/Description" (requires writing)
-- Exclude: "Budget/Budget Form/Budget Spreadsheet/Budget Table" (just forms)
+    **WHAT YOU RECEIVE**:
+    - The CFP Analyzer Report contains **TITLES** from the CFP document
+    - Each **TITLE** represents a **part of the grant application submission** (e.g., "Research Plan", "Project Summary")
+    - These titles are the **major components** that must appear in the submitted application
 
-**Subsections:**
-- Sections ≥3 pages: Create subsections based on `requirements` array structure
-- Parent becomes `is_title_only=true`, children have `parent_id`
-- Distribute words proportionally (methods 40-50%, background 15-25%, results 20-30%)
-- Max depth: 2 levels (parent→child only)
+    **YOUR TASK - BREAK TITLES INTO SECTIONS**:
+    1. **READ THE CFP ANALYZER REPORT FIRST** - It contains titles extracted from the CFP
+    2. **UNDERSTAND**: Each `title` is a **submission part** that applicants must write
+    3. **BREAK DOWN LARGE TITLES**: Titles with >1 page (>450 words) usually need to be broken into multiple sections
+    4. **CREATE SECTION STRUCTURE**: Convert titles into a structured section hierarchy
 
-**Section Properties:**
-- `is_detailed_research_plan`: Mark exactly one main methodology section as true
-- `is_long_form`: True for all narrative writing sections
-- `needs_applicant_writing`: True for narratives, false for external docs (CVs, letters, budget forms)
+    **CRITICAL RULE - TITLE BREAKDOWN**:
+    - **Small titles** (≤1 page / ≤450 words): Create ONE section with the title as-is
+    - **Large titles** (>1 page / >450 words): Break into MULTIPLE sections:
+      - Create a **parent section** with `is_title_only=true` using the CFP title
+      - Create **child sections** (subsections) with `parent_id` pointing to parent
+      - **TOTAL word limit of all child sections = parent's word limit** (from CFP)
 
-## Examples
+    **EXAMPLE - SMALL TITLE (≤450 words)**:
+    ```
+    CFP Title: "Project Summary" (300 words)
+    → Create: 1 section
+      - id: "project_summary"
+      - title: "Project Summary"
+      - length_limit: 300
+      - parent_id: null
+    ```
 
-**Example 1: Simple grant with 3 sections**
+    **EXAMPLE - LARGE TITLE (>450 words) - HOW REQUIREMENTS BECOME SECTIONS**:
+    ```
+    CFP Title: "Research Plan" (2000 words)
+    CFP Requirements array:
+    [
+      "Provide background on the research problem and its significance",
+      "Describe the proposed research methods and approach",
+      "Explain how data will be analyzed",
+      "Detail expected outcomes and potential impact"
+    ]
 
-Input CFP Analysis excerpt:
-```json
-{
-  "required_sections": [
-    {
-      "section_name": "PROJECT SUMMARY",
-      "definition": "One-page overview of the proposed research",
-      "requirements": [
-        {"requirement": "Must describe research objectives", "quote_from_source": "provide clear objectives", "category": "content"},
-        {"requirement": "Must state broader impacts", "quote_from_source": "describe potential impacts", "category": "impact"}
-      ]
-    }
-  ],
-  "length_constraints": [
-    {"section_name": "PROJECT SUMMARY", "measurement_type": "pages", "limit_description": "1 page maximum", "quote_from_source": "limited to one page"}
-  ]
-}
-```
+    → Analyze each requirement → Create sections:
 
-Output:
-```json
-{
-  "sections": [
-    {
-      "title": "PROJECT SUMMARY",
-      "id": "project_summary",
-      "order": 1,
-      "parent_id": null,
-      "evidence": "Section II.A: Project Summary - limited to one page",
-      "requirements": [
-        {"requirement": "Must describe research objectives", "quote_from_source": "provide clear objectives", "category": "content"},
-        {"requirement": "Must state broader impacts", "quote_from_source": "describe potential impacts", "category": "impact"}
-      ],
-      "length_limit": 415,
-      "length_source": "Converted from 1 page (1 x 415 = 415 words)",
-      "other_limits": [],
-      "definition": "One-page overview of the proposed research",
-      "needs_applicant_writing": true,
-      "is_detailed_research_plan": false,
-      "is_title_only": false,
-      "is_long_form": true,
-      "is_clinical_trial": false
-    }
-  ]
-}
-```
+    Parent (title-only, just a container):
+      - id: "research_plan"
+      - title: "Research Plan"  ← Exact CFP title
+      - is_title_only: true
+      - parent_id: null
+      - length_limit: 2000 words (total from CFP)
 
-**Example 2: Complex section with subsections**
+    Children (actual writing sections, derived FROM requirements):
+      - id: "research_plan_background"
+        title: "Background and Significance"  ← From requirement #1
+        length_limit: 400 words (20%)
+        parent_id: "research_plan"
 
-Input: "RESEARCH PLAN" section with 5 pages (2075 words) and multi-part requirements
+      - id: "research_plan_methods"
+        title: "Research Methods"  ← From requirement #2
+        length_limit: 800 words (40%)
+        parent_id: "research_plan"
 
-Output:
-```json
-{
-  "sections": [
-    {
-      "title": "RESEARCH PLAN",
-      "id": "research_plan",
-      "order": 3,
-      "parent_id": null,
-      "evidence": "Section III: Research Plan - maximum 5 pages",
-      "requirements": [],
-      "length_limit": 2075,
-      "length_source": "Converted from 5 pages (5 x 415 = 2075 words)",
-      "other_limits": [],
-      "definition": "Detailed description of proposed research methodology and approach",
-      "needs_applicant_writing": true,
-      "is_detailed_research_plan": true,
-      "is_title_only": true,
-      "is_long_form": true,
-      "is_clinical_trial": false
-    },
-    {
-      "title": "Background and Significance",
-      "id": "research_plan_background",
-      "order": 4,
-      "parent_id": "research_plan",
-      "evidence": "Research Plan subsection covering background",
-      "requirements": [],
-      "length_limit": 415,
-      "length_source": "Proportional allocation (20% of parent)",
-      "other_limits": [],
-      "definition": null,
-      "needs_applicant_writing": true,
-      "is_detailed_research_plan": false,
-      "is_title_only": false,
-      "is_long_form": true,
-      "is_clinical_trial": false
-    },
-    {
-      "title": "Methods and Approach",
-      "id": "research_plan_methods",
-      "order": 5,
-      "parent_id": "research_plan",
-      "evidence": "Research Plan subsection covering methodology",
-      "requirements": [],
-      "length_limit": 830,
-      "length_source": "Proportional allocation (40% of parent - most important)",
-      "other_limits": [],
-      "definition": null,
-      "needs_applicant_writing": true,
-      "is_detailed_research_plan": false,
-      "is_title_only": false,
-      "is_long_form": true,
-      "is_clinical_trial": false
-    }
-  ]
-}
-```
+      - id: "research_plan_analysis"
+        title: "Data Analysis"  ← From requirement #3
+        length_limit: 400 words (20%)
+        parent_id: "research_plan"
 
-Return complete section structure following these patterns.
+      - id: "research_plan_outcomes"
+        title: "Expected Outcomes"  ← From requirement #4
+        length_limit: 400 words (20%)
+        parent_id: "research_plan"
+
+      Total: 400+800+400+400 = 2000 ✅ (matches parent limit)
+
+    Each child section title is derived by analyzing what that requirement is asking for.
+    ```
+
+    **HOW TO IDENTIFY SECTIONS FROM TITLE REQUIREMENTS**:
+
+    **🚨 CRITICAL: Sections come from analyzing the title's requirements 🚨**
+
+    Each large title has a `cfp_requirements` array that describes what must be included.
+    Each requirement in this array represents a **writing part** that could become a section.
+
+    **STEP-BY-STEP PROCESS**:
+    1. **Read the title's `cfp_requirements` array** - Each requirement describes content that must be written
+    2. **Identify natural groupings** - Requirements that belong together become one section
+    3. **Look for explicit parts** - "must include: a) Introduction, b) Current State, c) Methods"
+    4. **Each part becomes a section** if it's substantial enough (typically >100 words)
+
+    **EXAMPLE - Title Requirements → Sections**:
+    ```
+    CFP Title: "Proposal Narrative" (2000 words)
+    Requirements array:
+    [
+      "Provide an introduction to the problem",
+      "Describe the current state of research in this area",
+      "Explain your proposed approach and methodology",
+      "Detail expected outcomes and impact"
+    ]
+
+    → Analyze requirements → Create 4 sections:
+      1. "Introduction" (~400 words) - from requirement #1
+      2. "Current State of Research" (~500 words) - from requirement #2
+      3. "Proposed Methodology" (~800 words) - from requirement #3
+      4. "Expected Outcomes" (~300 words) - from requirement #4
+    ```
+
+    **COMMON REQUIREMENT PATTERNS**:
+    - "must include a) X, b) Y, c) Z" → Each letter becomes a section
+    - "describe background, then methods, then results" → 3 sections
+    - "provide introduction and summary" → 2 sections
+    - Single requirement with no parts → 1 section (keep title as-is)
+
+    **REAL-WORLD EXAMPLE - "Proposal Narrative" Title**:
+    ```
+    CFP Title: "Proposal Narrative" (1800 words)
+    Requirements:
+    [
+      "Must provide an introduction to the problem being addressed",
+      "Must describe the current state of the field today",
+      "Must explain the proposed solution and methodology"
+    ]
+
+    → Each requirement becomes a section:
+      1. Parent "Proposal Narrative" (is_title_only=true, container)
+      2. Child "Introduction" (~500 words) ← From "introduction to the problem"
+      3. Child "Current State of the Field" (~600 words) ← From "current state today"
+      4. Child "Proposed Solution" (~700 words) ← From "proposed solution and methodology"
+
+    The section titles are extracted from analyzing what each requirement asks for.
+    If a requirement says "provide introduction" → section title is "Introduction"
+    If a requirement says "describe current state" → section title is "Current State of the Field"
+    ```
+
+    **⚠️ SYSTEM REQUIREMENT**: If CFP analyzer report is not provided, the system should RED FLAG this - the LLM cannot proceed without it.
+
+    ### 2. CRITICAL: Understanding Titles vs Sections
+
+    **KEY CONCEPT**:
+    - **CFP TITLE** = A submission part from the CFP (e.g., "Research Plan", "Proposal Narrative")
+    - **SECTION** = A writing part you create by analyzing the title's requirements
+    - **Sections come FROM the title's requirements** - they represent the specific parts applicants must write
+
+    **FOR SMALL TITLES (≤450 words)**:
+    - CFP has 1 title with simple requirements → You create 1 section
+    - The section's `title` field = CFP title
+    - Example: CFP "Project Summary" (300 words) with requirement "Summarize the project" → 1 section "Project Summary"
+
+    **FOR LARGE TITLES (>450 words)**:
+    - CFP has 1 title with multiple requirements → You create MULTIPLE sections (parent + children)
+    - **Parent section**: Uses exact CFP title, `is_title_only=true` (just a container)
+    - **Child sections**: Named after the requirement parts (Introduction, Current State, Methods, etc.)
+    - **Each child section** represents one part from the requirements
+
+    **DETAILED EXAMPLE**:
+    ```
+    CFP Title: "Proposal Narrative" (2000 words)
+    Requirements:
+    - "Must include an introduction explaining the problem"
+    - "Must describe current state of research"
+    - "Must explain proposed methodology"
+
+    → You create:
+      1. Parent "Proposal Narrative" (is_title_only=true, no content)
+      2. Child "Introduction" (from requirement #1)
+      3. Child "Current State of Research" (from requirement #2)
+      4. Child "Proposed Methodology" (from requirement #3)
+
+    The child section titles ("Introduction", "Current State of Research", "Proposed Methodology")
+    are derived by analyzing what each requirement asks for.
+    ```
+
+    ### 3. CRITICAL: Extract Rich Section Data from CFP Analysis
+
+    **STEP-BY-STEP DATA TRANSFER PROCESS:**
+    For EACH section you generate, you MUST perform this exact matching and copying process:
+
+    1. **FIND MATCHING CFP TITLE**:
+       - **For parent sections**: Match exactly to CFP `title` field
+       - **For child sections**: Match to parent's CFP title (inherit parent's CFP data)
+       - Find the object in the CFP Analysis `required_sections` array whose `title` field matches
+
+    2. **COPY REQUIREMENTS ARRAY**: Once you find the matching CFP section, copy its ENTIRE `requirements` array to the `cfp_requirements` field. DO NOT modify, summarize, or generate new requirements. Copy exactly as-is.
+
+    3. **COPY DEFINITION**: Copy the exact `definition` string from the matching CFP section to the `cfp_definition` field. DO NOT paraphrase.
+
+    4. **PROCESS ALL CONSTRAINTS**: Look in the CFP Analysis for ALL constraints for this section:
+       - LENGTH CONSTRAINTS: Convert pages/characters to words → `cfp_length_limit` (numeric) + `cfp_length_source` (explanation)
+       - OTHER CONSTRAINTS: Extract reference counts, file formats, deadlines → `cfp_other_limits` array
+       - Use CONVERSION RULES: 1 page = 415 words, 1 character = 0.2 words (1 word = 5 characters)
+
+    **EXAMPLE MATCHING PROCESS:**
+    - If generating section "PROJECT SUMMARY/ABSTRACT", find CFP object with `title`: "PROJECT SUMMARY/ABSTRACT"
+    - Copy its `requirements` array (e.g., 4 requirement objects) to `cfp_requirements`
+    - Copy its `definition` string to `cfp_definition`
+    - Process constraints: "1 page maximum" → cfp_length_limit: 415, cfp_length_source: "Converted from 1 page (1 x 415 = 415 words)"
+    - Process non-length constraints: "30 references maximum" → cfp_other_limits: [{"constraint_type": "reference_count", "constraint_value": "30 references maximum", "source_quote": "up to 30 references"}]
+
+    **SECTION CREATION DETAILS:**
+    **🚨 CRITICAL: SECTION TITLES MUST COME FROM CFP ANALYZER (GEMINI NLP) 🚨**
+    **❌ ANY OTHER NAMING IS A SYSTEM FAILURE ❌**
+
+    **Section Title Rules (MANDATORY):**
+    - **ONLY USE** the exact `title` from CFP analysis required_sections array
+    - **NO PREDETERMINED TITLES** - the system has no fixed section titles
+    - **CFP ANALYZER (Gemini NLP) DETERMINES ALL TITLES** based on actual CFP content
+    - **ANY DEVIATION FROM CFP ANALYZER TITLES = FAILURE**
+    - The `title` field contains the section heading as it will appear in the grant application
+    - **TITLE ONLY** - do NOT include source reference in title, it goes in `cfp_source_reference` field
+
+    **EXAMPLES OF CORRECT APPROACH:**
+    - ✅ IF CFP analyzer found "PROJECT SUMMARY" → Use "PROJECT SUMMARY"
+    - ✅ IF CFP analyzer found "RESEARCH PROPOSAL" → Use "RESEARCH PROPOSAL"
+    - ✅ IF CFP analyzer found "STUDY DESIGN" → Use "STUDY DESIGN"
+    - ❌ NEVER use generic names like "Specific Aims" if CFP analyzer didn't find it
+    - ❌ NEVER use system defaults - ONLY use CFP analyzer results
+
+    ### 3. Mandatory Section Rules
+    Based on the CFP analysis, include ALL sections that require written content:
+    - **INCLUDE**: All sections where applicants write original research content
+    - **EXCLUDE**: Administrative forms, budget spreadsheets, CVs, recommendation letters
+    - **INCLUDE**: Budget justification narratives, biographical sketches with written content
+
+    ### 3.1 CRITICAL: Budget Section Classification Rules
+    **IMPORTANT**: Distinguish between budget forms and budget narratives:
+    - ❌ **EXCLUDE sections named**: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary"
+    - ✅ **INCLUDE sections named**: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description"
+    - **Decision Rule**: Only include budget sections that explicitly require written justification/narrative content
+    - **Keyword Test**: If section name contains "Budget" but lacks "Justification|Narrative|Explanation|Description", likely exclude it
+
+    ### 4. Section Properties - What to Set for Each Section
+
+    **For ALL sections** (both parent and child):
+    - `is_long_form`: True for sections requiring substantial written content
+    - `is_clinical_trial`: True for clinical trial-specific sections
+    - `is_detailed_research_plan`: Mark the main methodology/approach section as true
+
+    **For PARENT sections** (title-only):
+    - `is_title_only`: **TRUE** (parent has no content, only children do)
+    - `parent_id`: null
+    - `length_limit`: Total word limit from CFP
+
+    **For CHILD sections** (actual writing):
+    - `is_title_only`: **FALSE** (children have actual content)
+    - `parent_id`: ID of parent section
+    - `length_limit`: Portion of parent's limit (must sum to parent's total)
+
+    **For STANDALONE sections** (small titles, no breakdown):
+    - `is_title_only`: **FALSE**
+    - `parent_id`: null
+    - `length_limit`: Word limit from CFP
+
+    ### 5. Length Constraints Integration
+    - Use `length_constraints` from CFP analysis to set realistic word limits
+    - Convert page limits using: 415 words/page (TNR 11pt) or 500 words/page (Arial 11pt)
+    - Account for figures by reducing total by 12.5%
+
+    ### 6. Hierarchy and Dependencies - MANDATORY TITLE BREAKDOWN RULES
+
+    **🚨 CRITICAL: WHEN TO BREAK TITLES INTO SECTIONS 🚨**
+
+    **DECISION RULE**:
+    - **Title ≤1 page (≤450 words)**: Create 1 section, NO breakdown needed
+    - **Title >1 page (>450 words)**: Create parent + multiple child sections
+
+    **BREAKDOWN REQUIREMENTS FOR LARGE TITLES**:
+    - **2 pages (830 words)**: Parent + 2-3 child sections
+    - **3 pages (1245 words)**: Parent + 3-4 child sections
+    - **4 pages (1660 words)**: Parent + 4 child sections
+    - **5+ pages (2075+ words)**: Parent + 4-5 child sections
+
+    **PARENT-CHILD STRUCTURE**:
+    1. **Parent Section** (title-only, no content):
+       - `title`: Use exact CFP title (e.g., "Research Plan")
+       - `is_title_only`: true
+       - `parent_id`: null
+       - `length_limit`: Total word limit from CFP
+
+    2. **Child Sections** (actual writing sections):
+       - `title`: Descriptive subsection name (e.g., "Background", "Methods")
+       - `is_title_only`: false
+       - `parent_id`: ID of parent section
+       - `length_limit`: Portion of parent's limit
+       - **SUM of all children limits = parent's total limit**
+
+    **LENGTH DISTRIBUTION RULES**:
+    - **Methods/Approach sections**: 40-50% of total words (most important)
+    - **Background/Context sections**: 15-25% of total words
+    - **Results/Outcomes sections**: 20-30% of total words
+    - **Equal distribution**: When sections have similar importance
+
+    **Length Distribution Examples:**
+    - "Research Plan" (5 pages/2075 words) →
+      * "Background" (415 words, 20%)
+      * "Methods" (830 words, 40% - most important)
+      * "Analysis" (415 words, 20%)
+      * "Expected Outcomes" (415 words, 20%)
+    - "Project Description" (3 pages/1245 words) →
+      * "Objectives" (415 words, 33%)
+      * "Approach" (415 words, 33%)
+      * "Impact" (415 words, 33%)
+
+    **Distribution Rules:**
+    1. **Equal Distribution**: Default for similar importance subsections
+    2. **Methods-Heavy**: Give 40-50% to methodology subsections
+    3. **Background-Light**: Give 15-25% to background/overview subsections
+    4. **Results-Moderate**: Give 20-30% to results/outcomes subsections
+
+    **Maximum nesting depth**: 2 levels (parent→child only, no grandchildren)
+
+    ### 7. Quality Requirements
+    - Ensure exactly one section is marked as `is_detailed_research_plan`
+    - All sections must have unique IDs in snake_case format
+    - Order sections logically based on CFP structure and standard grant conventions
+
+    ### 8. CFP Source Evidence
+    - Each section must include `evidence` field with the key phrase/quote from CFP that defines this section
+    - Section titles should be CLEAN - no source reference in title
+    - The `evidence` field provides traceability from CFP to template sections
+
+    Return the complete section structure with CFP source correlations clearly indicated.
     """,
 )
 
@@ -410,7 +617,7 @@ section_extraction_json_schema = {
                     },
                     "requirements": {
                         "type": "array",
-                        "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'section_name' matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
+                        "description": "CRITICAL DATA TRANSFER: Find the object in the CFP Analysis JSON whose 'title' field matches this section's title. Copy the ENTIRE 'requirements' array from that object exactly as-is. Each requirement object must contain: requirement (string), quote_from_source (string), category (string). DO NOT generate new content. If no exact match found, use empty array [].",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -455,7 +662,7 @@ section_extraction_json_schema = {
                     "definition": {
                         "type": "string",
                         "nullable": True,
-                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'section_name' matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
+                        "description": "CRITICAL DATA TRANSFER: Find the object in CFP Analysis JSON whose 'title' field matches this section's title. Copy the exact 'definition' string from that object. DO NOT paraphrase or generate new content. If no match found, use null.",
                     },
                     "needs_applicant_writing": {
                         "type": "boolean",
@@ -490,6 +697,92 @@ section_extraction_json_schema = {
 class ExtractedSections(TypedDict):
     sections: list[ExtractedSectionDTO]
     error: NotRequired[str | None]
+
+
+WORD_LIMIT_TOLERANCE: Final[float] = 0.1
+MAX_NESTING_DEPTH: Final[int] = 5
+
+
+def _get_children_map(sections: list[ExtractedSectionDTO]) -> dict[str, list[ExtractedSectionDTO]]:
+    children_map: dict[str, list[ExtractedSectionDTO]] = {}
+    for section in sections:
+        parent_id = section.get("parent_id")
+        if parent_id:
+            if parent_id not in children_map:
+                children_map[parent_id] = []
+            children_map[parent_id].append(section)
+    return children_map
+
+
+def _validate_parent_child_structure(
+    sections: list[ExtractedSectionDTO], children_map: dict[str, list[ExtractedSectionDTO]]
+) -> None:
+    for section in sections:
+        section_id = section["id"]
+        children = children_map.get(section_id, [])
+
+        if children and not section.get("is_title_only"):
+            raise ValidationError(
+                "Parent sections with children must be title-only (is_title_only=true)",
+                context={
+                    "parent_id": section_id,
+                    "parent_title": section["title"],
+                    "is_title_only": section.get("is_title_only"),
+                    "children_count": len(children),
+                    "children_ids": [c["id"] for c in children],
+                },
+            )
+
+        if section.get("is_title_only") and not children:
+            raise ValidationError(
+                "Title-only sections must have at least one child section",
+                context={
+                    "section_id": section_id,
+                    "section_title": section["title"],
+                    "is_title_only": section.get("is_title_only"),
+                },
+            )
+
+
+def _validate_word_limit_distribution(section: ExtractedSectionDTO, children: list[ExtractedSectionDTO]) -> None:
+    parent_limit = section.get("length_limit")
+    if parent_limit is None:
+        return
+
+    children_total = sum(c.get("length_limit") or 0 for c in children)
+    tolerance = parent_limit * WORD_LIMIT_TOLERANCE
+    difference = abs(children_total - parent_limit)
+
+    if difference > tolerance:
+        raise ValidationError(
+            "Child section word limits must sum to parent's total limit (±10% tolerance)",
+            context={
+                "parent_id": section["id"],
+                "parent_title": section["title"],
+                "parent_limit": parent_limit,
+                "children_total": children_total,
+                "difference": difference,
+                "tolerance": tolerance,
+                "children": [{"id": c["id"], "title": c["title"], "limit": c.get("length_limit", 0)} for c in children],
+            },
+        )
+
+
+def _validate_section_depth(section: ExtractedSectionDTO, mapped_sections: dict[str, ExtractedSectionDTO]) -> None:
+    depth = 1
+    current_id = section["id"]
+    parent_id = mapped_sections[current_id].get("parent_id")
+
+    while parent_id:
+        depth += 1
+        current_id = parent_id
+        parent_id = mapped_sections[current_id].get("parent_id")
+
+    if depth > MAX_NESTING_DEPTH:
+        raise ValidationError(
+            "Maximum nesting depth exceeded",
+            context={"section_id": section["id"], "depth": depth, "max_depth": MAX_NESTING_DEPTH},
+        )
 
 
 def validate_section_extraction(response: ExtractedSections) -> None:
@@ -588,17 +881,15 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                     context={"research_plan_id": parent_id, "child_id": section["id"]},
                 )
 
-        depth = 1
-        current_id = section["id"]
-        while parent_id := mapped_sections[current_id].get("parent_id"):
-            depth += 1
-            current_id = parent_id
+        _validate_section_depth(section, mapped_sections)
 
-        if depth > 5:
-            raise ValidationError(
-                "Maximum nesting depth exceeded",
-                context={"section_id": section["id"], "depth": depth, "max_depth": 5},
-            )
+    children_map = _get_children_map(response["sections"])
+    _validate_parent_child_structure(response["sections"], children_map)
+
+    for section in response["sections"]:
+        children = children_map.get(section["id"], [])
+        if children:
+            _validate_word_limit_distribution(section, children)
 
 
 def _should_keep_section(
@@ -692,29 +983,41 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
         if (parent_id := section.get("parent_id")) and parent_id not in valid_ids:
             del section["parent_id"]
 
-        if (title := section["title"]) and (from_idx := title.find("(from:")) != -1 and ")" in title:
-            section["title"] = title[:from_idx].strip()
+        # Clean title if it has (from:...) embedded (legacy cleanup)
+        title = section["title"]
+        if "(from:" in title and ")" in title:
+            from_start = title.find("(from:")
+            section["title"] = title[:from_start].strip()
 
-        section.setdefault("evidence", f"CFP section: {section['title']}")
+        # Ensure evidence field is populated
+        if not section.get("evidence"):
+            section["evidence"] = f"CFP section: {section['title']}"
 
-        section.setdefault("requirements", [])
-        section.setdefault("length_limit", None)
-        section.setdefault("length_source", None)
-        section.setdefault("other_limits", [])
-        section.setdefault("definition", None)
+        if not section.get("requirements"):
+            section["requirements"] = []
+
+        if not section.get("length_limit"):
+            section["length_limit"] = None
+        if not section.get("length_source"):
+            section["length_source"] = None
+        if not section.get("other_limits"):
+            section["other_limits"] = []
+
+        if not section.get("definition"):
+            section["definition"] = None
 
         if "needs_applicant_writing" not in section:
             title_lower = section.get("title", "").lower()
-            budget_keywords = {"justification", "narrative", "explanation", "description"}
-
-            match ("budget" in title_lower, any(kw in title_lower for kw in budget_keywords)):
-                case (True, False):
-                    section["needs_applicant_writing"] = False
-                case _:
-                    section["needs_applicant_writing"] = True
+            if "budget" in title_lower and not any(
+                keyword in title_lower for keyword in ["justification", "narrative", "explanation", "description"]
+            ):
+                section["needs_applicant_writing"] = False
+            else:
+                section["needs_applicant_writing"] = True
 
     for i, section in enumerate(sections):
-        section.setdefault("order", i + 1)
+        if "order" not in section:
+            section["order"] = i + 1
 
     sorted_sections = sorted(sections, key=lambda s: s["order"])
     for i, section in enumerate(sorted_sections, start=1):
@@ -733,16 +1036,28 @@ async def extract_sections(
         trace_id=trace_id,
     )
 
+    if True:
+        return await handle_completions_request(
+            prompt_identifier="section_extraction",
+            model="gemini-2.5-flash",
+            messages=task_description,
+            system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
+            response_schema=section_extraction_json_schema,
+            response_type=ExtractedSections,
+            validator=validate_section_extraction,
+            temperature=0.1,
+            timeout=300,
+            trace_id=trace_id,
+        )
+
     return await handle_completions_request(
         prompt_identifier="section_extraction",
-        model=GEMINI_FLASH_MODEL,
+        model=ANTHROPIC_SONNET_MODEL,
         messages=task_description,
         system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
-        temperature=0.1,
-        timeout=300,
         trace_id=trace_id,
     )
 
@@ -750,7 +1065,6 @@ async def extract_sections(
 async def handle_extract_sections(
     cfp_content: list[CFPContentSection],
     cfp_subject: str,
-    cfp_full_text: str,
     trace_id: str,
     *,
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
@@ -759,6 +1073,7 @@ async def handle_extract_sections(
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
+    # Log CFP analysis details for debugging
     logger.info(
         "Received CFP analysis for section extraction",
         cfp_analysis_type=type(cfp_analysis).__name__,
@@ -784,6 +1099,7 @@ async def handle_extract_sections(
             organization_id=str(organization["organization_id"]),
             task_description="Grant application section extraction with CFP analysis",
             search_queries=EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES,
+            model=ANTHROPIC_SONNET_MODEL,
             trace_id=trace_id,
         )
         organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
@@ -798,7 +1114,6 @@ async def handle_extract_sections(
         cfp_analysis=cfp_analysis_text,
         cfp_subject=cfp_subject,
         cfp_content="\n".join(content_list),
-        cfp_full_text=cfp_full_text,
         organization_guidelines=organization_guidelines,
     )
 

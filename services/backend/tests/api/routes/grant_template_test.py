@@ -49,6 +49,7 @@ async def test_update_grant_template_success(
                 "order": 1,
                 "title": "Introduction",
                 "parent_id": None,
+                "evidence": "Provide an introduction to the research",
                 "depends_on": [],
                 "generation_instructions": "Write an introduction",
                 "is_clinical_trial": False,

@@ -56,6 +56,8 @@
 .windsurfrules
 AGENTS.md
 AI_EVALUATION_BENCHMARK_REPORT.md
+*_REPORT.md
+docs/implementation/
 build/
 CLAUDE.md
 coverage.*
