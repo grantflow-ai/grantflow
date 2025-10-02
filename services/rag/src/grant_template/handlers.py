@@ -92,7 +92,7 @@ async def handle_cfp_extraction_stage(
 
     org_name = organization["full_name"] if organization else "Unknown"
     submission_date = (
-        datetime.strptime(extraction_result["deadline"], "%Y-%m-%d").date()  # noqa: DTZ007
+        datetime.strptime(extraction_result["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
         if extraction_result["deadline"]
         else None
     )
