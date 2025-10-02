@@ -7,16 +7,12 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { hasDetailedResearchPlan } from "@/types/grant-sections";
 import type { TemplateGenerationEvent } from "@/types/notification-events";
-
-type ApplicationType = NonNullable<ReturnType<typeof useApplicationStore.getState>["application"]>;
-
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 
 const DEBOUNCE_DELAY_MS = 2000;
-const POLLING_INTERVAL_DURATION = 10_000;
 export const MIN_TITLE_LENGTH = 10;
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
@@ -30,35 +26,6 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
-const hasAutofillResults = (
-	type: "research_deep_dive" | "research_plan",
-	application: NonNullable<API.RetrieveApplication.Http200.ResponseBody>,
-): boolean => {
-	if (type === "research_plan" && application.research_objectives) {
-		return application.research_objectives.some((obj) => obj.research_tasks.length > 0);
-	}
-
-	if (type === "research_deep_dive" && application.form_inputs) {
-		const requiredFields = [
-			"background_context",
-			"hypothesis",
-			"rationale",
-			"novelty_and_innovation",
-			"impact",
-			"team_excellence",
-			"research_feasibility",
-			"preliminary_data",
-		] as const;
-
-		return requiredFields.some((field) => {
-			const fieldValue = application.form_inputs?.[field]?.trim();
-			return Boolean(fieldValue && fieldValue.length > 0);
-		});
-	}
-
-	return false;
-};
-
 export interface ValidationResult {
 	isValid: boolean;
 	metadata?: {
@@ -69,31 +36,16 @@ export interface ValidationResult {
 	reason: ApplicationDetailsValidationReason | string;
 }
 
-interface PollingActions {
-	start: (apiFunction: () => Promise<void>, duration: number, callImmediately?: boolean) => void;
-	stop: () => void;
-}
-
-interface PollingState {
-	intervalId: NodeJS.Timeout | null;
-	isActive: boolean;
-}
-
 type RagSourceStatus = NonNullable<
 	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
 >["rag_sources"][0]["status"];
 
 interface WizardActions {
-	checkApplicationGeneration: () => Promise<void>;
-	checkAutofillResults: () => Promise<void>;
-	checkRagSourcesStatus: () => Promise<void>;
-	checkTemplateGeneration: () => Promise<void>;
 	createObjective: (objective: ResearchObjective) => Promise<void>;
 	generateApplication: () => Promise<boolean>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleTitleChange: (title: string) => void;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
-	polling: PollingActions;
 	refreshApplicationData: () => Promise<void>;
 	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
@@ -135,7 +87,6 @@ interface WizardState {
 	};
 	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
-	polling: PollingState;
 	showResearchPlanInfoBanner: boolean;
 	templateGenerationEvent: null | TemplateGenerationEvent;
 	templateGenerationFailed: boolean;
@@ -190,10 +141,6 @@ const initialWizardState: WizardState = {
 	},
 	isGeneratingApplication: false,
 	isGeneratingTemplate: false,
-	polling: {
-		intervalId: null,
-		isActive: false,
-	},
 	showResearchPlanInfoBanner: true,
 	templateGenerationEvent: null,
 	templateGenerationFailed: false,
@@ -261,52 +208,6 @@ const validateAutofillRequirements = (application: API.RetrieveApplication.Http2
 	}
 
 	return false;
-};
-
-const refreshRagSourceStatus = async (application: NonNullable<ApplicationType>) => {
-	const { selectedOrganizationId } = useOrganizationStore.getState();
-	if (!selectedOrganizationId) return;
-
-	const { getApplication } = useApplicationStore.getState();
-	await getApplication(selectedOrganizationId, application.project_id, application.id);
-};
-
-const handleRagSourcePollingStatus = () => {
-	const { polling } = useWizardStore.getState();
-	const { application } = useApplicationStore.getState();
-
-	if (!application?.grant_template) {
-		return;
-	}
-
-	const ragSources = application.grant_template.rag_sources;
-
-	if (ragSources.length === 0) {
-		log.info("[Wizard Store] No RAG sources found - stopping polling");
-		if (polling.isActive) {
-			polling.stop();
-		}
-		return;
-	}
-
-	const processingSources = ragSources.filter(
-		(source) => source.status === "CREATED" || source.status === "INDEXING",
-	);
-
-	log.info("[Wizard Store] RAG source status check", {
-		pollingActive: polling.isActive,
-		processingCount: processingSources.length,
-		statuses: ragSources.map((s) => ({ id: s.sourceId, status: s.status })),
-		totalSources: ragSources.length,
-	});
-
-	if (processingSources.length === 0 && polling.isActive) {
-		log.info("[Wizard Store] All RAG sources completed processing - stopping polling", {
-			failedCount: ragSources.filter((s) => s.status === "FAILED").length,
-			finishedCount: ragSources.filter((s) => s.status === "FINISHED").length,
-		});
-		polling.stop();
-	}
 };
 
 const trackAutofillEvent = async (
@@ -450,168 +351,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 	return {
 		...initialWizardState,
 
-		checkApplicationGeneration: async () => {
-			const { application, getApplication } = useApplicationStore.getState();
-			const { polling } = get();
-
-			if (!application) {
-				return;
-			}
-
-			try {
-				const { selectedOrganizationId } = useOrganizationStore.getState();
-				if (!selectedOrganizationId) return;
-
-				await getApplication(selectedOrganizationId, application.project_id, application.id);
-
-				const { application: updatedApplication } = useApplicationStore.getState();
-
-				if (updatedApplication?.text && updatedApplication.text.trim().length > 0) {
-					polling.stop();
-					set((state) => ({
-						...state,
-						applicationGenerationComplete: true,
-						isGeneratingApplication: false,
-					}));
-					return;
-				}
-			} catch (error) {
-				log.error("checkApplicationGeneration", error);
-				polling.stop();
-
-				toast.error(
-					"Application generation failed. Please check your research plan and try again, or contact support.",
-				);
-
-				set((state) => ({
-					...state,
-					applicationGenerationFailed: true,
-					isGeneratingApplication: false,
-				}));
-			}
-		},
-
-		checkAutofillResults: async () => {
-			const { application, getApplication } = useApplicationStore.getState();
-			const { autofillMessageId, autofillType, polling } = get();
-
-			if (!(application && autofillType && autofillMessageId)) {
-				return;
-			}
-
-			try {
-				const { selectedOrganizationId } = useOrganizationStore.getState();
-				if (!selectedOrganizationId) return;
-
-				await getApplication(selectedOrganizationId, application.project_id, application.id);
-				const { application: updatedApplication } = useApplicationStore.getState();
-
-				if (updatedApplication && hasAutofillResults(autofillType, updatedApplication)) {
-					polling.stop();
-					set((state) => ({
-						...state,
-						autofillMessageId: null,
-						autofillType: null,
-						isAutofillLoading: {
-							...state.isAutofillLoading,
-							[autofillType]: false,
-						},
-					}));
-					toast.success("Autofill completed successfully!");
-				}
-			} catch (error) {
-				log.error("checkAutofillResults", error);
-				polling.stop();
-				toast.error("Failed to check autofill results. Please try again or contact support.");
-				set((state) => ({
-					...state,
-					autofillMessageId: null,
-					autofillType: null,
-					isAutofillLoading: {
-						...state.isAutofillLoading,
-						[autofillType]: false,
-					},
-				}));
-			}
-		},
-
-		checkRagSourcesStatus: async () => {
-			const { currentStep, polling } = get();
-
-			if (currentStep !== WizardStep.APPLICATION_DETAILS) {
-				if (polling.isActive) {
-					log.info("[Wizard Store] Stopping RAG polling - not on APPLICATION_DETAILS step", {
-						currentStep,
-						pollingWasActive: true,
-					});
-					polling.stop();
-				}
-				return;
-			}
-
-			const { application } = useApplicationStore.getState();
-			if (!application?.grant_template) {
-				log.warn("[Wizard Store] No application or template found during RAG source polling");
-				if (polling.isActive) {
-					polling.stop();
-				}
-				return;
-			}
-
-			try {
-				await refreshRagSourceStatus(application);
-				handleRagSourcePollingStatus();
-			} catch (error) {
-				log.error("checkRagSourcesStatus", error);
-				if (polling.isActive) {
-					polling.stop();
-				}
-			}
-		},
-
-		checkTemplateGeneration: async () => {
-			const { application, getApplication } = useApplicationStore.getState();
-			const { polling, templateGenerationFailed } = get();
-
-			if (!application) {
-				return;
-			}
-
-			if (templateGenerationFailed) {
-				polling.stop();
-				return;
-			}
-
-			try {
-				const { selectedOrganizationId } = useOrganizationStore.getState();
-				if (!selectedOrganizationId) return;
-
-				await getApplication(selectedOrganizationId, application.project_id, application.id);
-
-				const { application: updatedApplication } = useApplicationStore.getState();
-
-				if (updatedApplication?.grant_template?.grant_sections.length) {
-					polling.stop();
-					set((state) => ({
-						...state,
-						isGeneratingTemplate: false,
-					}));
-					return;
-				}
-			} catch (error) {
-				log.error("checkTemplateGeneration", error);
-				polling.stop();
-
-				toast.error("Template generation failed. Please try uploading different documents or contact support.");
-
-				set((state) => ({
-					...state,
-					isGeneratingTemplate: false,
-					templateGenerationFailed: true,
-				}));
-			}
-		},
-
 		createObjective: async (objective: ResearchObjective): Promise<void> => {
 			return withErrorHandling(async () => {
 				if (!objective.title.trim()) {
@@ -644,7 +383,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		generateApplication: async (): Promise<boolean> => {
 			const { application, generateApplication } = useApplicationStore.getState();
-			const { polling } = get();
 
 			if (!application) {
 				log.error("generateApplication: No application found");
@@ -683,8 +421,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					}));
 					return false;
 				}
-
-				polling.start(get().checkApplicationGeneration, POLLING_INTERVAL_DURATION, false);
 
 				log.info("Grant application generation initiated", {
 					application_id: application.id,
@@ -735,58 +471,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
 		},
 
-		polling: {
-			...initialWizardState.polling,
-
-			start: (apiFunction: () => Promise<void>, duration: number, callImmediately = true) => {
-				const { polling } = get();
-				if (polling.isActive || polling.intervalId) {
-					return;
-				}
-
-				set(({ polling, ...state }) => ({
-					...state,
-					polling: {
-						...polling,
-						isActive: true,
-					},
-				}));
-
-				if (callImmediately) {
-					void apiFunction();
-				}
-
-				const intervalId = setInterval(() => {
-					void apiFunction();
-				}, duration);
-
-				set(({ polling, ...state }) => ({
-					...state,
-					polling: {
-						...polling,
-						intervalId,
-						isActive: true,
-					},
-				}));
-			},
-
-			stop: () => {
-				const { polling } = get();
-				if (polling.intervalId) {
-					clearInterval(polling.intervalId);
-				}
-
-				set(({ polling, ...state }) => ({
-					...state,
-					polling: {
-						...polling,
-						intervalId: null,
-						isActive: false,
-					},
-				}));
-			},
-		},
-
 		refreshApplicationData: async () => {
 			const { application } = useApplicationStore.getState();
 			if (!application) {
@@ -818,10 +502,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		},
 
 		reset: () => {
-			const currentState = get();
-			if (currentState.polling.intervalId) {
-				clearInterval(currentState.polling.intervalId);
-			}
 			set({
 				applicationGenerationComplete: initialWizardState.applicationGenerationComplete,
 				applicationGenerationFailed: initialWizardState.applicationGenerationFailed,
@@ -831,10 +511,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				isAutofillLoading: initialWizardState.isAutofillLoading,
 				isGeneratingApplication: initialWizardState.isGeneratingApplication,
 				isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
-				polling: {
-					...currentState.polling,
-					...initialWizardState.polling,
-				},
 				templateGenerationEvent: initialWizardState.templateGenerationEvent,
 				templateGenerationFailed: initialWizardState.templateGenerationFailed,
 			});
@@ -915,7 +591,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		startTemplateGeneration: () => {
 			const { application, generateTemplate } = useApplicationStore.getState();
-			const { polling } = get();
 
 			if (application?.grant_template?.id) {
 				void generateTemplate(application.grant_template.id);
@@ -925,27 +600,17 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					isGeneratingTemplate: true,
 					templateGenerationFailed: false,
 				}));
-
-				polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
 			}
 		},
 
 		toNextStep: () => {
-			const { currentStep, hasTemplateSourcesWithStatuses, polling, startTemplateGeneration } = get();
+			const { currentStep, hasTemplateSourcesWithStatuses, startTemplateGeneration } = get();
 
 			if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 				return;
 			}
 
-			if (currentStep === WizardStep.APPLICATION_DETAILS && polling.isActive) {
-				log.info("[Wizard Store] Stopping RAG source polling when leaving APPLICATION_DETAILS", {
-					nextStep: WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1],
-				});
-				polling.stop();
-			}
-
 			if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
-				polling.stop();
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: false,
@@ -974,7 +639,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		},
 
 		toPreviousStep: () => {
-			const { currentStep, isGeneratingTemplate, polling } = get();
+			const { currentStep, isGeneratingTemplate } = get();
 			const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
 			if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
@@ -982,7 +647,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}
 
 			if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
-				polling.stop();
 				set((state) => ({
 					...state,
 					isGeneratingTemplate: false,
@@ -1003,7 +667,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		) => {
 			const { application } = useApplicationStore.getState();
 			const { selectedOrganizationId } = useOrganizationStore.getState();
-			const { polling } = get();
 
 			const validationError = validateAutofillRequirements(application);
 			if (validationError) return;
@@ -1044,8 +707,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					autofillMessageId: response.message_id,
 					autofillType: type,
 				}));
-
-				polling.start(get().checkAutofillResults, POLLING_INTERVAL_DURATION, false);
 
 				await trackAutofillEvent(
 					get().currentStep,
