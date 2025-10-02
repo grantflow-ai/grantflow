@@ -16,20 +16,24 @@ def create_section(
     parent_section_id: str | None = None,
     is_detailed_research_plan: bool | None = None,
     is_long_form: bool = True,
+    is_title_only: bool = False,
     title: str = "Test Section",
     order: int = 1,
+    evidence: str = "Test evidence from CFP",
 ) -> ExtractedSectionDTO:
     result: ExtractedSectionDTO = {
         "id": section_id,
         "title": title,
         "is_long_form": is_long_form,
         "order": order,
-        "evidence": f"CFP evidence for {title}",
+        "evidence": evidence,
     }
     if parent_section_id is not None:
         result["parent_id"] = parent_section_id
     if is_detailed_research_plan is not None:
         result["is_detailed_research_plan"] = is_detailed_research_plan
+    if is_title_only:
+        result["is_title_only"] = is_title_only
     return result
 
 
@@ -119,7 +123,7 @@ def test_validate_parent_references() -> None:
     validate_section_extraction(
         {
             "sections": [
-                create_section(section_id="test_parent_section", order=1, title="Parent Section"),
+                create_section(section_id="test_parent_section", order=1, title="Parent Section", is_title_only=True),
                 create_section(
                     section_id="test_child_section",
                     parent_section_id="test_parent_section",
@@ -200,11 +204,27 @@ def test_duplicate_section_titles() -> None:
 def test_validate_nesting_depth() -> None:
     sections: ExtractedSections = {
         "sections": [
-            create_section(section_id="level_one", order=1, title="Level One"),
-            create_section(section_id="level_two", parent_section_id="level_one", order=2, title="Level Two"),
-            create_section(section_id="level_three", parent_section_id="level_two", order=3, title="Level Three"),
-            create_section(section_id="level_four", parent_section_id="level_three", order=4, title="Level Four"),
-            create_section(section_id="level_five", parent_section_id="level_four", order=5, title="Level Five"),
+            create_section(section_id="level_one", order=1, title="Level One", is_title_only=True),
+            create_section(
+                section_id="level_two", parent_section_id="level_one", order=2, title="Level Two", is_title_only=True
+            ),
+            create_section(
+                section_id="level_three",
+                parent_section_id="level_two",
+                order=3,
+                title="Level Three",
+                is_title_only=True,
+            ),
+            create_section(
+                section_id="level_four",
+                parent_section_id="level_three",
+                order=4,
+                title="Level Four",
+                is_title_only=True,
+            ),
+            create_section(
+                section_id="level_five", parent_section_id="level_four", order=5, title="Level Five", is_title_only=True
+            ),
             create_section(section_id="level_six", parent_section_id="level_five", order=6, title="Level Six"),
             create_section(
                 section_id="research_plan_section", is_detailed_research_plan=True, order=7, title="Research Plan"
@@ -217,6 +237,7 @@ def test_validate_nesting_depth() -> None:
     assert "Maximum nesting depth exceeded" in str(exc.value)
 
     sections["sections"].pop(5)
+    sections["sections"][4]["is_title_only"] = False
 
     sections["sections"][-1]["order"] = 6
     validate_section_extraction(sections)
