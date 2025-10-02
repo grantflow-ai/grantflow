@@ -4,12 +4,13 @@ import pytest
 from packages.db.src.json_objects import (
     CategorizationAnalysisResult,
     CFPAnalysisResult,
-    CFPSectionAnalysis,
 )
 from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_template.cfp_section_analysis import (
+    CFPSectionAnalysis,
     analyze_cfp_sections,
+    convert_to_db_format,
     handle_analyze_cfp,
     validate_cfp_analysis,
 )
@@ -33,34 +34,34 @@ def sample_nlp_analysis() -> CategorizationAnalysisResult:
 @pytest.fixture
 def sample_cfp_analysis() -> CFPSectionAnalysis:
     return {
-        "sections_count": 2,
-        "length_constraints_found": 2,
-        "evaluation_criteria_count": 2,
+        "count": 2,
+        "constraints_count": 2,
+        "criteria_count": 2,
         "required_sections": [
             {
-                "title": "Project Summary",
+                "name": "Project Summary",
                 "definition": "Brief overview of the proposed research project",
                 "requirements": [
                     {
                         "requirement": "Must include project objectives",
-                        "quote_from_source": "The project summary must clearly state the project objectives and expected outcomes",
+                        "quote": "The project summary must clearly state the project objectives and expected outcomes",
                         "category": "content",
                     },
                     {
                         "requirement": "Must be self-contained",
-                        "quote_from_source": "Project summary should be self-contained and understandable without additional context",
+                        "quote": "Project summary should be self-contained and understandable without additional context",
                         "category": "content",
                     },
                 ],
                 "dependencies": [],
             },
             {
-                "title": "Research Plan",
+                "name": "Research Plan",
                 "definition": "Detailed description of the research methodology and approach",
                 "requirements": [
                     {
                         "requirement": "Must include detailed methodology",
-                        "quote_from_source": "Research plan must provide detailed methodology and experimental design",
+                        "quote": "Research plan must provide detailed methodology and experimental design",
                         "category": "content",
                     }
                 ],
@@ -69,42 +70,42 @@ def sample_cfp_analysis() -> CFPSectionAnalysis:
         ],
         "length_constraints": [
             {
-                "title": "Project Summary",
-                "measurement_type": "pages",
-                "limit_description": "1 page maximum",
-                "quote_from_source": "Project summary is limited to one page including figures and tables",
+                "name": "Project Summary",
+                "type": "pages",
+                "limit": "1 page maximum",
+                "quote": "Project summary is limited to one page including figures and tables",
                 "exclusions": [],
             },
             {
-                "title": "Research Plan",
-                "measurement_type": "pages",
-                "limit_description": "15 pages maximum",
-                "quote_from_source": "Research plan cannot exceed 15 pages excluding references and appendices",
+                "name": "Research Plan",
+                "type": "pages",
+                "limit": "15 pages maximum",
+                "quote": "Research plan cannot exceed 15 pages excluding references and appendices",
                 "exclusions": ["References", "Appendices"],
             },
         ],
         "evaluation_criteria": [
             {
-                "criterion_name": "Scientific Merit",
+                "name": "Scientific Merit",
                 "description": "Quality and significance of the scientific approach",
-                "quote_from_source": "Applications will be evaluated based on scientific merit and innovation",
-                "weight_percentage": 40,
+                "quote": "Applications will be evaluated based on scientific merit and innovation",
+                "weight": 40,
             },
             {
-                "criterion_name": "Feasibility",
+                "name": "Feasibility",
                 "description": "Likelihood of successful project completion",
-                "quote_from_source": "Feasibility of the proposed research will be a key evaluation factor",
+                "quote": "Feasibility of the proposed research will be a key evaluation factor",
             },
         ],
         "additional_requirements": [
             {
                 "requirement": "Must use 12-point font",
-                "quote_from_source": "All text must be in 12-point Times New Roman font",
+                "quote": "All text must be in 12-point Times New Roman font",
                 "category": "formatting",
             },
             {
                 "requirement": "Must include budget justification",
-                "quote_from_source": "A detailed budget justification is required for all proposed expenses",
+                "quote": "A detailed budget justification is required for all proposed expenses",
                 "category": "budget",
             },
         ],
@@ -117,9 +118,9 @@ def test_validate_cfp_analysis_valid_response(sample_cfp_analysis: CFPSectionAna
 
 def test_validate_cfp_analysis_with_error_field() -> None:
     response: CFPSectionAnalysis = {
-        "sections_count": 0,
-        "length_constraints_found": 0,
-        "evaluation_criteria_count": 0,
+        "count": 0,
+        "constraints_count": 0,
+        "criteria_count": 0,
         "required_sections": [],
         "length_constraints": [],
         "evaluation_criteria": [],
@@ -133,9 +134,9 @@ def test_validate_cfp_analysis_with_error_field() -> None:
 
 def test_validate_cfp_analysis_no_sections() -> None:
     response: CFPSectionAnalysis = {
-        "sections_count": 0,
-        "length_constraints_found": 0,
-        "evaluation_criteria_count": 0,
+        "count": 0,
+        "constraints_count": 0,
+        "criteria_count": 0,
         "required_sections": [],
         "length_constraints": [],
         "evaluation_criteria": [],
@@ -148,11 +149,11 @@ def test_validate_cfp_analysis_no_sections() -> None:
 
 def test_validate_cfp_analysis_count_mismatch() -> None:
     response: CFPSectionAnalysis = {
-        "sections_count": 2,
-        "length_constraints_found": 0,
-        "evaluation_criteria_count": 0,
+        "count": 2,
+        "constraints_count": 0,
+        "criteria_count": 0,
         "required_sections": [
-            {"title": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
+            {"name": "Test Section", "definition": "Test definition", "requirements": [], "dependencies": []}
         ],
         "length_constraints": [],
         "evaluation_criteria": [],
@@ -170,18 +171,18 @@ def test_validate_cfp_analysis_auto_fixes_missing_cfp_source_reference(sample_cf
 
     assert "required_sections" in response
     assert len(response["required_sections"]) == 2
-    cfp_ref = response["required_sections"][0]["cfp_source_reference"]
+    cfp_ref = response["required_sections"][0].get("source")
     assert cfp_ref is not None
     assert cfp_ref.startswith("CFP defines")
 
 
 def test_validate_cfp_analysis_fixes_short_quotes(sample_cfp_analysis: CFPSectionAnalysis) -> None:
     response = sample_cfp_analysis.copy()
-    response["required_sections"][0]["requirements"][0]["quote_from_source"] = "Short quote from CFP"
+    response["required_sections"][0]["requirements"][0]["quote"] = "Short quote from CFP"
 
     validate_cfp_analysis(response)
 
-    quote = response["required_sections"][0]["requirements"][0]["quote_from_source"]
+    quote = response["required_sections"][0]["requirements"][0]["quote"]
     assert quote == "Short quote from CFP"
 
 
@@ -223,7 +224,7 @@ async def test_handle_analyze_cfp_success(
     result = await handle_analyze_cfp(full_cfp_text="Sample CFP content for testing", trace_id="test-trace-id")
 
     expected_result: CFPAnalysisResult = {
-        "cfp_analysis": sample_cfp_analysis,
+        "cfp_analysis": convert_to_db_format(sample_cfp_analysis),
         "nlp_analysis": sample_nlp_analysis,
         "analysis_metadata": {
             "content_length": len("Sample CFP content for testing"),
@@ -260,9 +261,9 @@ async def test_handle_analyze_cfp_calculates_metadata_correctly(
 
     with patch("services.rag.src.grant_template.cfp_section_analysis.analyze_cfp_sections") as mock_analyze:
         mock_analyze.return_value = {
-            "sections_count": 1,
-            "length_constraints_found": 1,
-            "evaluation_criteria_count": 1,
+            "count": 1,
+            "constraints_count": 1,
+            "criteria_count": 1,
             "required_sections": [],
             "length_constraints": [],
             "evaluation_criteria": [],
