@@ -26,9 +26,11 @@ class CFPContentSection(TypedDict):
 
 
 class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    cfp_subject: str
-    submission_date: str | None
+    """Optimized CFP extraction DTO with short property names for Gemini."""
+
+    org_id: str | None  # Optimized from organization_id
+    subject: str  # Optimized from cfp_subject
+    deadline: str | None  # Optimized from submission_date
     content: list[CFPContentSection]
     full_text: str
     error: NotRequired[str | None]
