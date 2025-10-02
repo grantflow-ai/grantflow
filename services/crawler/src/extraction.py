@@ -167,7 +167,7 @@ async def extract_and_process_content(
     if clean_html:
         config = get_scientific_extraction_config(
             chunk_content=False,
-            enable_token_reduction=True,
+            enable_token_reduction=False,
             enable_entity_extraction=True,
             enable_keyword_extraction=True,
             enable_document_classification=True,
@@ -663,7 +663,7 @@ async def crawl_url(
     try:
         config = get_scientific_extraction_config(
             chunk_content=True,
-            enable_token_reduction=True,
+            enable_token_reduction=False,
             enable_entity_extraction=True,
             enable_keyword_extraction=True,
             enable_document_classification=True,

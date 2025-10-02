@@ -12,6 +12,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "id": "abstracts",
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Abstracts",
         },
         {
             "title": "Scientific Background",
@@ -19,6 +20,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 3,
+            "evidence": "CFP evidence for Scientific Background",
         },
         {
             "title": "Research Question",
@@ -26,6 +28,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 4,
+            "evidence": "CFP evidence for Research Question",
         },
         {
             "title": "Study Design",
@@ -33,6 +36,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 5,
+            "evidence": "CFP evidence for Study Design",
         },
         {
             "title": "Detailed Plan & Methods",
@@ -41,6 +45,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 6,
+            "evidence": "CFP evidence for Detailed Plan & Methods",
         },
         {
             "title": "Sample Size Justification",
@@ -48,6 +53,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "study_design",
             "is_long_form": True,
             "order": 7,
+            "evidence": "CFP evidence for Sample Size Justification",
         },
         {
             "title": "Preliminary Results",
@@ -55,6 +61,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 8,
+            "evidence": "CFP evidence for Preliminary Results",
         },
         {
             "title": "Schematic Representation",
@@ -62,6 +69,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 9,
+            "evidence": "CFP evidence for Schematic Representation",
         },
         {
             "title": "Partner Responsibilities",
@@ -69,6 +77,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "schematic_representation",
             "is_long_form": True,
             "order": 10,
+            "evidence": "CFP evidence for Partner Responsibilities",
         },
         {
             "title": "Time Estimate for Each Stage",
@@ -76,48 +85,56 @@ SECTION_OUTPOUT: ExtractedSections = {
             "parent_id": "research_plan",
             "is_long_form": True,
             "order": 11,
+            "evidence": "CFP evidence for Time Estimate for Each Stage",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "is_long_form": True,
             "order": 2,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Budget",
             "id": "budget",
             "is_long_form": True,
             "order": 12,
+            "evidence": "CFP evidence for Budget",
         },
         {
             "title": "Curriculum Vitae",
             "id": "curriculum_vitae",
             "is_long_form": True,
             "order": 13,
+            "evidence": "CFP evidence for Curriculum Vitae",
         },
         {
             "title": "Collaboration Letters",
             "id": "collaboration_letters",
             "is_long_form": True,
             "order": 14,
+            "evidence": "CFP evidence for Collaboration Letters",
         },
         {
             "title": "Bio-Ethics Approvals",
             "id": "bio_ethics_approvals",
             "is_long_form": True,
             "order": 15,
+            "evidence": "CFP evidence for Bio-Ethics Approvals",
         },
         {
             "title": "Suggested Reviewers",
             "id": "suggested_reviewers",
             "is_long_form": True,
             "order": 16,
+            "evidence": "CFP evidence for Suggested Reviewers",
         },
         {
             "title": "Checklist",
             "id": "checklist",
             "is_long_form": True,
             "order": 17,
+            "evidence": "CFP evidence for Checklist",
         },
     ],
 }
@@ -142,6 +159,7 @@ async def test_section_filtering_always_keeps_research_plan() -> None:
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Methods",
         }
     ]
     result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.1)
@@ -157,6 +175,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
             "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 1,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Methods",
@@ -165,6 +184,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 2,
+            "evidence": "CFP evidence for Methods",
         },
     ]
     result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.9)
@@ -180,6 +200,7 @@ async def test_section_filtering_removes_non_long_form() -> None:
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Research Plan",
@@ -187,6 +208,7 @@ async def test_section_filtering_removes_non_long_form() -> None:
             "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 2,
+            "evidence": "CFP evidence for Research Plan",
         },
     ]
     result = await filter_extracted_sections(sections=sections, trace_id="test-trace", initial_threshold=0.9)
@@ -202,6 +224,7 @@ async def test_section_filtering_threshold() -> None:
             "is_detailed_research_plan": False,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Research Methods Section",
         }
     ]
 
@@ -219,6 +242,7 @@ async def test_adaptive_threshold_preserves_research_plan() -> None:
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Methods",
         }
     ]
 
@@ -235,6 +259,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "is_detailed_research_plan": False,
             "is_long_form": True,
             "order": 1,
+            "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Methods",
@@ -243,6 +268,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 2,
+            "evidence": "CFP evidence for Methods",
         },
         {
             "title": "Budget",
@@ -250,6 +276,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 3,
+            "evidence": "CFP evidence for Budget",
         },
     ]
 

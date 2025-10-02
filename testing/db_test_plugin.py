@@ -306,6 +306,16 @@ async def restore_database_snapshot(
 
     yield
 
+    if engine_ref.value:
+        await engine_ref.value.dispose()
+        engine_ref.value = create_async_engine(
+            db_connection_string,
+            echo=False,
+            poolclass=NullPool,
+            pool_pre_ping=True,
+        )
+    await asyncio.sleep(0.1)
+
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
@@ -315,20 +325,44 @@ async def _restore_from_snapshot(template_db_name: str, db_connection_string: st
     admin_connection_string = urlunparse(parsed._replace(path=base_path))
     db_name = parsed.path.lstrip("/")
 
+    logger.info("Starting snapshot restoration for database: %s", db_name)
+
     admin_conn = await connect(admin_connection_string)
+    logger.info("Connected to admin database")
 
     try:
-        await admin_conn.execute(f"""
-            SELECT pg_terminate_backend(pid)
-            FROM pg_stat_activity
-            WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
-        """)
+        for attempt in range(3):
+            logger.info("Terminating connections (attempt %d/3)", attempt + 1)
+            await admin_conn.execute(f"""
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+            """)
 
+            await asyncio.sleep(0.1)
+
+            remaining = await admin_conn.fetchval(f"""
+                SELECT COUNT(*)
+                FROM pg_stat_activity
+                WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+            """)
+            logger.info("Remaining connections: %d", remaining)
+
+            if remaining == 0:
+                break
+
+            if attempt < 2:
+                await asyncio.sleep(0.2 * (attempt + 1))
+
+        logger.info("Dropping database: %s", db_name)
         await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
+        logger.info("Creating database from template: %s", template_db_name)
         await admin_conn.execute(f'CREATE DATABASE "{db_name}" WITH TEMPLATE "{template_db_name}"')
+        logger.info("Snapshot restoration complete")
 
     finally:
         await admin_conn.close()
+        logger.info("Admin connection closed")
 
 
 @pytest.fixture

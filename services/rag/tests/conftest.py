@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import UUID
 
@@ -567,7 +567,7 @@ async def template_rag_source(
 
         await session.commit()
         await session.refresh(source)
-        return source
+        return cast("RagSource", source)
 
 
 @pytest.fixture
@@ -592,7 +592,7 @@ async def application_rag_source(
 
         await session.commit()
         await session.refresh(source)
-        return source
+        return cast("RagSource", source)
 
 
 @pytest.fixture

@@ -149,12 +149,22 @@ async def _generate_field_answer(
         trace_id=trace_id,
     )
 
-    full_prompt = prompt_with_title.to_string(context="\n".join(retrieval_results))
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+    raw_context = "\n".join(retrieval_results)
+    compressed_context = compress_prompt_text(raw_context, aggressive=True)
+
+    logger.debug(
+        "Prepared and compressed context for research deep dive field",
+        field_name=field_name,
+        original_context_chars=len(raw_context),
+        compressed_context_chars=len(compressed_context),
+        trace_id=trace_id,
+    )
+
+    full_prompt = prompt_with_title.to_string(context=compressed_context)
 
     response: AnswerResponse = await handle_completions_request(
         prompt_identifier="research_deep_dive_generation",
-        messages=compressed_prompt,
+        messages=full_prompt,
         system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
         response_schema=answer_response_schema,
         response_type=AnswerResponse,
@@ -179,12 +189,21 @@ async def _generate_field_answer_with_context(
         question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
     )
 
-    full_prompt = prompt_with_title.to_string(context=shared_context)
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+    compressed_context = compress_prompt_text(shared_context, aggressive=True)
+
+    logger.debug(
+        "Prepared and compressed shared context for research deep dive field",
+        field_name=field_name,
+        original_context_chars=len(shared_context),
+        compressed_context_chars=len(compressed_context),
+        trace_id=trace_id,
+    )
+
+    full_prompt = prompt_with_title.to_string(context=compressed_context)
 
     response: AnswerResponse = await handle_completions_request(
         prompt_identifier="research_deep_dive_generation",
-        messages=compressed_prompt,
+        messages=full_prompt,
         system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
         response_schema=answer_response_schema,
         response_type=AnswerResponse,

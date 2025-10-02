@@ -234,6 +234,13 @@ ignore_missing_imports = true
 follow_imports = "skip"
 no_implicit_reexport = false
 
+[[tool.mypy.overrides]]
+module = [
+  "*.tests.*",
+  "tests.*",
+]
+disable_error_code = ["misc"]
+
 [tool.uv.workspace]
 members = [
   "packages/db",

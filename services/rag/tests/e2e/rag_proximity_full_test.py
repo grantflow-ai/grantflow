@@ -27,7 +27,7 @@ def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysi
     keywords = " ".join(section.get("keywords", []))
     search_queries = " ".join(section.get("search_queries", []))
 
-    cfp_requirements = _format_cfp_requirements_for_section(section_title, cfp_analysis)
+    cfp_requirements = _format_cfp_requirements_for_section(section, cfp_analysis)
 
     return f"""
     Section: {section_title}

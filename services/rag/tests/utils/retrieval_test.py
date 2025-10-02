@@ -98,15 +98,17 @@ def test_calculate_document_metadata_score_all_factors() -> None:
 
 
 def test_calculate_document_metadata_score_string_keywords() -> None:
-    metadata = {"keywords": ["cancer", "research", "treatment"], "entities": [], "document_type": "article"}
-    score = calculate_document_metadata_score(metadata, ["cancer treatment"])  # type: ignore[arg-type]
+    metadata = _create_enriched_metadata(
+        keywords=["cancer", "research", "treatment"], entities=[], document_type="article"
+    )
+    score = calculate_document_metadata_score(metadata, ["cancer treatment"])
     assert 0.5 <= score <= 1.0
     assert score > 0.5
 
 
 def test_calculate_document_metadata_score_string_entities() -> None:
-    metadata = {"keywords": [], "entities": ["NIH", "Dr. Smith"], "document_type": "article"}
-    score = calculate_document_metadata_score(metadata, ["NIH funding"])  # type: ignore[arg-type]
+    metadata = _create_enriched_metadata(keywords=[], entities=["NIH", "Dr. Smith"], document_type="article")
+    score = calculate_document_metadata_score(metadata, ["NIH funding"])
     assert 0.5 <= score <= 1.0
     assert score > 0.5
 

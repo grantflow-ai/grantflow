@@ -43,6 +43,7 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
         "generation_instructions": "Test instructions",
         "is_clinical_trial": False,
         "is_detailed_research_plan": False,
+        "evidence": "CFP evidence for Test Section",
     }
 
     mock_form_inputs: ResearchDeepDive = {}

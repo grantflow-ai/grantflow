@@ -112,6 +112,7 @@ def sample_dto_input() -> EnrichObjectiveInputDTO:
             id="work_plan",
             title="Work Plan",
             order=1,
+            evidence="CFP evidence for Work Plan",
             parent_id=None,
             depends_on=[],
             generation_instructions="Generate detailed work plan",

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Final, TypedDict
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
@@ -17,89 +18,88 @@ if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 
+logger = get_logger(__name__)
+
 ResearchRelationships = dict[str, list[tuple[str, str]]]
 
 
 EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
-You are a specialized component in a RAG system dedicated to analyzing STEM grant applications.
-Your specific role is to identify and characterize relationships between research objectives and tasks,
-helping create a coherent research narrative that demonstrates strategic planning and scientific rigor.
+Identify and characterize relationships between research objectives and tasks.
+Create coherent research narrative demonstrating strategic planning.
 """
 
 EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_relationships",
     template="""
-    Your task is to analyze the research objectives and identify the significant relationships between them and their tasks. This critical analysis will guide the generation of a comprehensive, coherent, and persuasive work plan that demonstrates a well-structured research strategy.
+Identify significant relationships between research objectives and tasks.
 
-    ## Sources
+## Input
 
-    Research Objectives:
-        <research_objectives>
-        ${research_objectives}
-        </research_objectives>
+<research_objectives>${research_objectives}</research_objectives>
+<rag_results>${rag_results}</rag_results>
+<form_inputs>${form_inputs}</form_inputs>
 
-    Retrieval Results:
-        <rag_results>
-        ${rag_results}
-        </rag_results>
+## Task
 
-    User Inputs:
-        <form_inputs>
-        ${form_inputs}
-        </form_inputs>
+Analyze objectives and tasks to identify:
+- Dependencies (between objectives, between tasks, across objectives)
+- Relationship types: Sequential, Causal, Complementary, Iterative, Methodological, Conceptual
+- Information flow and strategic alignment
 
-    ## Instructions
+## Notation
 
-    1. Analyze the Research Objectives:
-        - Examine each research objective and its constituent research tasks in detail.
-        - Assess how each task contributes to fulfilling its parent objective.
-        - Identify the scientific and methodological connections between objectives and tasks.
-        - Consider both explicit connections (clearly stated) and implicit connections (logically necessary).
-        - Evaluate the temporal sequencing and logical flow between objectives and tasks.
+- Objectives: "1", "2", "3"
+- Tasks: "1.1", "2.3", "3.2"
 
-    2. Identify and Characterize Relationships:
-        - Identify dependencies between objectives (e.g., Objective 2 builds upon the foundation established in Objective 1).
-        - Identify dependencies between tasks within an objective (e.g., Task 1.1 must be completed before Task 1.2 can begin).
-        - Identify dependencies across objectives (e.g., Findings from Task 2.3 will inform the approach taken in Objective 4).
-        - Specify the type and nature of each relationship using the following categories:
-              * Sequential: One element must precede another in time (prerequisite relationships)
-              * Causal: One element directly leads to or influences another
-              * Complementary: Elements work together synergistically without strict dependencies
-              * Iterative: Elements involve feedback loops or cyclical refinement processes
-              * Methodological: Elements share similar techniques or approaches
-              * Conceptual: Elements are connected through theoretical frameworks
-        - For each relationship, explain precisely how the elements interact and why the relationship exists.
-        - Ensure relationships are bidirectional when appropriate (i.e., consider how elements influence each other).
+## Output
 
-    3. Ensure Coherence and Strategic Alignment:
-        - Verify that the identified relationships form a cohesive and logical research strategy.
-        - Check that relationships demonstrate how the objectives collectively address the overall research goals.
-        - Ensure the relationships describe clear pathways for information flow between research components.
-        - Confirm that the relationship network doesn't contain contradictions or impossible sequences.
-        - Focus on relationships that meaningfully contribute to the research narrative and avoid trivial connections.
+Array of relationships as three-element arrays: [source_id, target_id, description]
 
-    ## Relationship Notation
+Description (100-200 words) should explain:
+- Relationship type and nature
+- How elements interact
+- Significance for research plan
 
-    When identifying relationships between objectives and tasks, use the following notation:
-    - For relationships between objectives: use the objective numbers (e.g., "1", "2", "3")
-    - For relationships between tasks: use the full task ID including objective (e.g., "1.1", "2.3", "3.2")
-    - For relationships between objectives and tasks: use the appropriate notation for each element
+Focus on meaningful relationships (quality over quantity).
 
-    ## Output Structure
+## Example
 
-    Provide a structured output containing an array of relationships. Each relationship should be represented as a three-element array:
-    - First element: The identifier for the source research element (objective or task)
-    - Second element: The identifier for the target research element (objective or task)
-    - Third element: A detailed description of the relationship (100-200 words)
+Input:
+```
+Objective 1: Develop CRISPR gene editing platform
+  Task 1.1: Optimize Cas9 delivery
+  Task 1.2: Validate off-target effects
 
-    The description should explain:
-    - The nature and type of the relationship (sequential, causal, complementary, etc.)
-    - How the elements interact and influence each other
-    - The significance of this connection for the overall research plan
-    - Any bidirectional aspects or feedback mechanisms
+Objective 2: Test platform in preclinical models
+  Task 2.1: Establish tumor xenograft models
+  Task 2.2: Assess therapeutic efficacy
+```
 
-    Focus on identifying the most significant and meaningful relationships rather than attempting to connect every possible pair of research elements. Quality is more important than quantity - each relationship should be substantive and contribute to understanding the research plan.
-    """,
+Output:
+```json
+{
+  "relationships": [
+    [
+      "1.1",
+      "1.2",
+      "Sequential relationship: Task 1.1 (Cas9 delivery optimization) must precede Task 1.2 (off-target validation) because effective delivery mechanisms are prerequisite for meaningful off-target analysis. The optimized delivery parameters from 1.1 (e.g., nanoparticle composition, dosing) directly inform the experimental design for 1.2. This sequential dependency ensures that off-target assessment reflects realistic therapeutic conditions rather than suboptimal delivery artifacts."
+    ],
+    [
+      "1",
+      "2",
+      "Causal relationship: Objective 1 (platform development) directly enables Objective 2 (preclinical testing). The validated CRISPR platform with optimized delivery and confirmed specificity from Objective 1 becomes the therapeutic intervention tested in Objective 2. Findings from 1.2 (off-target validation) establish safety parameters that guide dosing strategies in 2.2. This causal chain demonstrates logical research progression from tool development to biological validation."
+    ],
+    [
+      "1.2",
+      "2.1",
+      "Methodological relationship: Task 1.2 (off-target validation) and Task 2.1 (xenograft establishment) share whole-genome sequencing methodologies and bioinformatics pipelines. Technical expertise and protocols developed for genomic analysis in 1.2 will be adapted for tumor characterization in 2.1, creating methodological synergy that enhances experimental rigor and reduces technical risk across both objectives."
+    ]
+  ]
+}
+```
+
+Return array with all significant relationships.
+""",
 )
 
 relationships_schema = {
@@ -277,12 +277,20 @@ async def handle_extract_relationships(
         trace_id=trace_id,
     )
 
-    full_prompt = prompt.to_string(rag_results=rag_results)
-    compressed_prompt = compress_prompt_text(full_prompt, aggressive=True)
+    compressed_rag_results = compress_prompt_text("\n".join(rag_results), aggressive=True)
+
+    logger.debug(
+        "Prepared and compressed RAG results for relationship extraction",
+        original_rag_chars=len("\n".join(rag_results)),
+        compressed_rag_chars=len(compressed_rag_results),
+        trace_id=trace_id,
+    )
+
+    full_prompt = prompt.to_string(rag_results=compressed_rag_results)
 
     result = await with_evaluation(
         prompt_identifier="extract_relationships",
-        prompt=compressed_prompt,
+        prompt=full_prompt,
         prompt_handler=extract_relationships_generation,
         research_objectives=research_objectives,
         trace_id=trace_id,

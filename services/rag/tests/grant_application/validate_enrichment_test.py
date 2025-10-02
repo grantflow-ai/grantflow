@@ -61,7 +61,7 @@ def create_research_objective(*, tasks: list[dict[str, Any]] | None = None) -> R
 
 def test_validate_missing_objective() -> None:
     with pytest.raises(ValidationError) as exc:
-        validate_enrichment_response({"research_tasks": []}, input_objective=None)  # type: ignore
+        validate_enrichment_response({"research_tasks": []}, input_objective=None)  # type: ignore[typeddict-item]
     assert "Missing objective in response" in str(exc.value)
 
 
@@ -90,7 +90,7 @@ def test_validate_missing_objective_fields() -> None:
 
         with pytest.raises(ValidationError) as exc:
             validate_enrichment_response(
-                {"research_objective": enrichment_data, "research_tasks": []},  # type: ignore
+                {"research_objective": enrichment_data, "research_tasks": []},  # type: ignore[typeddict-item]
                 input_objective=None,
             )
         assert f"Missing {field} in objective" in str(exc.value)
@@ -136,7 +136,7 @@ def test_validate_missing_tasks() -> None:
     enrichment_data = create_enrichment_data()
     with pytest.raises(ValidationError) as exc:
         validate_enrichment_response(
-            {"research_objective": enrichment_data},  # type: ignore
+            {"research_objective": enrichment_data},  # type: ignore[typeddict-item]
             input_objective=None,
         )
     assert "Missing tasks in response" in str(exc.value)
@@ -189,7 +189,7 @@ def test_validate_task_fields() -> None:
             validate_enrichment_response(
                 {
                     "research_objective": create_enrichment_data(),
-                    "research_tasks": [task_data],  # type: ignore
+                    "research_tasks": [task_data],  # type: ignore[list-item]
                 },
                 input_objective=None,
             )
