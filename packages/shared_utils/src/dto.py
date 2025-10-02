@@ -35,21 +35,23 @@ class ExtractedCFPData(TypedDict):
 
 
 class ExtractedSectionDTO(TypedDict):
+    """Optimized section extraction DTO with short property names for Gemini."""
+
     title: str
     id: str
     order: int
     evidence: str
-    parent_id: NotRequired[str | None]
-    is_detailed_research_plan: NotRequired[bool | None]
-    is_title_only: NotRequired[bool | None]
-    is_clinical_trial: NotRequired[bool | None]
-    is_long_form: bool
+    parent: NotRequired[str | None]  # Optimized from parent_id
+    is_plan: NotRequired[bool | None]  # Optimized from is_detailed_research_plan
+    title_only: NotRequired[bool | None]  # Optimized from is_title_only
+    clinical: NotRequired[bool | None]  # Optimized from is_clinical_trial
+    long_form: bool  # Optimized from is_long_form
     requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
-    length_limit: NotRequired[int | None]
-    length_source: NotRequired[str | None]
-    other_limits: NotRequired[list[CFPConstraint]]
+    max_words: NotRequired[int | None]  # Optimized from length_limit
+    source: NotRequired[str | None]  # Optimized from length_source
+    limits: NotRequired[list[CFPConstraint]]  # Optimized from other_limits
     definition: NotRequired[str | None]
-    needs_applicant_writing: NotRequired[bool | None]
+    needs_writing: NotRequired[bool | None]  # Optimized from needs_applicant_writing
 
 
 class SectionMetadata(TypedDict):
