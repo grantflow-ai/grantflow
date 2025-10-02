@@ -181,7 +181,7 @@ async def test_cfp_extraction_stage_success(
 ) -> None:
     mock_verify_rag_sources.return_value = None
     mock_handle_extract_cfp_data.return_value = {
-        "organization_id": str(nih_organization.id),
+        "org_id": str(nih_organization.id),
         "subject": "Research Grant Program",
         "deadline": "2025-03-31",
     }
@@ -240,7 +240,7 @@ async def test_cfp_extraction_stage_no_organization_match(
 ) -> None:
     mock_verify_rag_sources.return_value = None
     mock_handle_extract_cfp_data.return_value = {
-        "organization_id": str(uuid4()),
+        "org_id": str(uuid4()),
         "subject": "Research Grant Program",
         "deadline": "2025-03-31",
     }
@@ -613,16 +613,16 @@ async def test_section_extraction_stage_success(
         {
             "title": "Project Summary",
             "id": "project_summary",
-            "is_detailed_research_plan": False,
-            "is_long_form": True,
+            "is_plan": False,
+            "long_form": True,
             "order": 1,
             "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
-            "is_detailed_research_plan": True,
-            "is_long_form": True,
+            "is_plan": True,
+            "long_form": True,
             "order": 2,
             "evidence": "CFP evidence for Research Plan",
         },
@@ -1174,10 +1174,10 @@ async def test_handlers_preserve_data_flow(
             {
                 "title": "Abstract",
                 "id": "abstract",
-                "is_detailed_research_plan": False,
-                "is_title_only": False,
-                "is_clinical_trial": False,
-                "is_long_form": True,
+                "is_plan": False,
+                "title_only": False,
+                "clinical": False,
+                "long_form": True,
                 "order": 1,
                 "evidence": "CFP evidence for Abstract",
             }
