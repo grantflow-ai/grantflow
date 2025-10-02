@@ -31,13 +31,15 @@ class EnrichObjectiveInputDTO(TypedDict):
 
 
 class EnrichmentDataDTO(TypedDict):
-    enriched_objective: str
-    search_queries: list[str]
-    core_scientific_terms: list[str]
-    scientific_context: str
+    """Optimized enrichment DTO with short property names for Gemini."""
+
+    enriched: str  # Optimized from enriched_objective
+    queries: list[str]  # Optimized from search_queries
+    terms: list[str]  # Optimized from core_scientific_terms
+    context: str  # Optimized from scientific_context
     instructions: NotRequired[str]
     description: NotRequired[str]
-    guiding_questions: NotRequired[list[str]]
+    questions: NotRequired[list[str]]  # Optimized from guiding_questions
 
 
 class WikidataExpansionResult(TypedDict):
