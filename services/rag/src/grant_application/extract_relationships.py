@@ -53,52 +53,17 @@ Analyze objectives and tasks to identify:
 
 ## Output
 
-Array of relationships as three-element arrays: [source_id, target_id, description]
+Array of relationship objects with properties:
+- **source**: Source identifier (e.g., "1", "2.3")
+- **target**: Target identifier (e.g., "1", "2.3")
+- **desc**: Relationship description (100-200 words)
 
-Description (100-200 words) should explain:
+Description should explain:
 - Relationship type and nature
 - How elements interact
 - Significance for research plan
 
 Focus on meaningful relationships (quality over quantity).
-
-## Example
-
-Input:
-```
-Objective 1: Develop CRISPR gene editing platform
-  Task 1.1: Optimize Cas9 delivery
-  Task 1.2: Validate off-target effects
-
-Objective 2: Test platform in preclinical models
-  Task 2.1: Establish tumor xenograft models
-  Task 2.2: Assess therapeutic efficacy
-```
-
-Output:
-```json
-{
-  "relationships": [
-    [
-      "1.1",
-      "1.2",
-      "Sequential relationship: Task 1.1 (Cas9 delivery optimization) must precede Task 1.2 (off-target validation) because effective delivery mechanisms are prerequisite for meaningful off-target analysis. The optimized delivery parameters from 1.1 (e.g., nanoparticle composition, dosing) directly inform the experimental design for 1.2. This sequential dependency ensures that off-target assessment reflects realistic therapeutic conditions rather than suboptimal delivery artifacts."
-    ],
-    [
-      "1",
-      "2",
-      "Causal relationship: Objective 1 (platform development) directly enables Objective 2 (preclinical testing). The validated CRISPR platform with optimized delivery and confirmed specificity from Objective 1 becomes the therapeutic intervention tested in Objective 2. Findings from 1.2 (off-target validation) establish safety parameters that guide dosing strategies in 2.2. This causal chain demonstrates logical research progression from tool development to biological validation."
-    ],
-    [
-      "1.2",
-      "2.1",
-      "Methodological relationship: Task 1.2 (off-target validation) and Task 2.1 (xenograft establishment) share whole-genome sequencing methodologies and bioinformatics pipelines. Technical expertise and protocols developed for genomic analysis in 1.2 will be adapted for tumor characterization in 2.1, creating methodological synergy that enhances experimental rigor and reduces technical risk across both objectives."
-    ]
-  ]
-}
-```
-
-Return array with all significant relationships.
 """,
 )
 
@@ -107,16 +72,25 @@ relationships_schema = {
     "properties": {
         "relationships": {
             "type": "array",
-            "description": "Array of relationships between research objectives and tasks",
+            "description": "Relationships between research objectives and tasks",
             "items": {
-                "type": "array",
-                "description": "A three-element array representing a relationship: [source_id, target_id, description]",
-                "items": {
-                    "type": "string",
-                    "description": "Element 0: source identifier (e.g., '1', '2.3'), Element 1: target identifier, Element 2: detailed relationship description (100-200 words)",
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Source identifier (e.g., '1', '2.3')",
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "Target identifier (e.g., '1', '2.3')",
+                    },
+                    "desc": {
+                        "type": "string",
+                        "minLength": 50,
+                        "description": "Relationship description (100-200 words)",
+                    },
                 },
-                "minItems": 3,
-                "maxItems": 3,
+                "required": ["source", "target", "desc"],
             },
         },
     },
@@ -124,8 +98,18 @@ relationships_schema = {
 }
 
 
+class RelationshipItem(TypedDict):
+    """Single relationship with object structure for Gemini."""
+
+    source: str
+    target: str
+    desc: str
+
+
 class RelationshipsDTO(TypedDict):
-    relationships: list[tuple[str, str, str]]
+    """Optimized relationships DTO with object arrays for Gemini."""
+
+    relationships: list[RelationshipItem]
 
 
 def validate_relationships_response(
@@ -151,13 +135,15 @@ def validate_relationships_response(
                 valid_ids.add(task_id)
 
     for idx, relationship in enumerate(response["relationships"]):
-        if len(relationship) != 3:
-            raise ValidationError(
-                f"Relationship at index {idx} has incorrect format",
-                context={"relationship": relationship, "expected_length": 3},
-            )
+        source_id = relationship.get("source")
+        target_id = relationship.get("target")
+        description = relationship.get("desc")
 
-        source_id, target_id, description = relationship
+        if not source_id or not target_id or not description:
+            raise ValidationError(
+                f"Relationship at index {idx} missing required fields",
+                context={"relationship": relationship, "required": ["source", "target", "desc"]},
+            )
 
         if source_id not in valid_ids:
             raise ValidationError(
@@ -179,7 +165,7 @@ def validate_relationships_response(
                 },
             )
 
-        if not description or len(description.strip()) < 50:
+        if len(description.strip()) < 50:
             raise ValidationError(
                 f"Relationship description at index {idx} is too short",
                 context={"relationship": relationship, "min_length": 50},
@@ -191,7 +177,7 @@ def validate_relationships_response(
                 context={"relationship": relationship},
             )
 
-    relationship_pairs = [(r[0], r[1]) for r in response["relationships"]]
+    relationship_pairs = [(r["source"], r["target"]) for r in response["relationships"]]
     unique_pairs = set(relationship_pairs)
 
     if len(unique_pairs) != len(relationship_pairs):
@@ -205,7 +191,8 @@ def validate_relationships_response(
     objectives_in_relationships = set()
 
     for relationship in response["relationships"]:
-        source_id, target_id, _ = relationship
+        source_id = relationship["source"]
+        target_id = relationship["target"]
         if source_id in objective_ids:
             objectives_in_relationships.add(source_id)
         if target_id in objective_ids:
@@ -304,7 +291,7 @@ async def handle_extract_relationships(
         ),
     )
     ret: ResearchRelationships = defaultdict(list)
-    for dependent_id, target_id, description in result["relationships"]:
-        ret[dependent_id].append((target_id, description))
+    for relationship in result["relationships"]:
+        ret[relationship["source"]].append((relationship["target"], relationship["desc"]))
 
     return ret
