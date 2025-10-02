@@ -86,7 +86,7 @@ class CFPAnalysisRequirementWithQuote(TypedDict):
 
 
 class CFPSectionRequirement(TypedDict):
-    section_name: str
+    title: str
     definition: str
     requirements: list[CFPAnalysisRequirementWithQuote]
     dependencies: list[str]
@@ -94,7 +94,7 @@ class CFPSectionRequirement(TypedDict):
 
 
 class CFPSectionLengthConstraint(TypedDict):
-    section_name: str
+    title: str
     measurement_type: str
     limit_description: str
     quote_from_source: str
