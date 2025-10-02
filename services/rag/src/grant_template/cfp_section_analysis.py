@@ -1,10 +1,24 @@
-from typing import Final
+from typing import Final, NotRequired, TypedDict
 
 from packages.db.src.json_objects import (
     CategorizationAnalysisResult,
     CFPAnalysisMetadata,
     CFPAnalysisResult,
-    CFPSectionAnalysis,
+)
+from packages.db.src.json_objects import (
+    CFPAnalysisEvaluationCriterion as DBCFPEvalCriterion,
+)
+from packages.db.src.json_objects import (
+    CFPAnalysisRequirementWithQuote as DBCFPRequirement,
+)
+from packages.db.src.json_objects import (
+    CFPSectionAnalysis as DBCFPSectionAnalysis,
+)
+from packages.db.src.json_objects import (
+    CFPSectionLengthConstraint as DBCFPLengthConstraint,
+)
+from packages.db.src.json_objects import (
+    CFPSectionRequirement as DBCFPSectionReq,
 )
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
@@ -18,6 +32,57 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
+
+
+# Optimized TypedDicts for Gemini LLM responses (short property names)
+class CFPRequirement(TypedDict):
+    """CFP requirement with source quote."""
+
+    requirement: str
+    quote: str  # Optimized from quote_from_source
+    category: str
+
+
+class CFPSectionReq(TypedDict):
+    """CFP section requirement."""
+
+    name: str  # Optimized from section_name
+    definition: str
+    requirements: list[CFPRequirement]
+    dependencies: list[str]
+    source: NotRequired[str | None]  # Optimized from cfp_source_reference
+
+
+class CFPLengthConstraint(TypedDict):
+    """CFP length constraint."""
+
+    name: str  # Optimized from section_name
+    type: str  # Optimized from measurement_type
+    limit: str  # Optimized from limit_description
+    quote: str  # Optimized from quote_from_source
+    exclusions: list[str]
+
+
+class CFPEvalCriterion(TypedDict):
+    """CFP evaluation criterion."""
+
+    name: str  # Optimized from criterion_name
+    description: str
+    weight: NotRequired[int | None]  # Optimized from weight_percentage
+    quote: str  # Optimized from quote_from_source
+
+
+class CFPSectionAnalysis(TypedDict):
+    """Optimized CFP section analysis response for Gemini."""
+
+    required_sections: list[CFPSectionReq]
+    length_constraints: list[CFPLengthConstraint]
+    evaluation_criteria: list[CFPEvalCriterion]
+    additional_requirements: list[CFPRequirement]
+    count: int  # Optimized from sections_count
+    constraints_count: int  # Optimized from length_constraints_found
+    criteria_count: int  # Optimized from evaluation_criteria_count
+    error: NotRequired[str | None]
 
 
 CFP_SECTION_ANALYZER_SYSTEM_PROMPT: Final[str] = """
@@ -50,92 +115,21 @@ Identify ALL sections applicants must write. For each:
 **Include:** Writing sections (narratives, research plans, budget justifications)
 **Exclude:** Forms, CVs, letters, budget spreadsheets (see budget rule in system prompt)
 
-## JSON Structure
+## Output Requirements
 
-Output format with 4 arrays:
+Return JSON with 4 arrays:
 
-1. **required_sections**: Section objects with title, definition, source reference, requirements array, dependencies
-2. **length_constraints**: Page/word/character limits with exact quotes
-3. **evaluation_criteria**: Assessment factors with weights and quotes
-4. **additional_requirements**: Other requirements (formatting, submission, eligibility)
+1. **required_sections**: All writing sections. Each has: name (section title), definition, source (CFP reference), requirements array (each with requirement, quote, category), dependencies
+2. **length_constraints**: Page/word/character limits. Each has: name (section name), type (measurement type: pages/words/characters/other), limit (constraint description), quote (exact CFP quote), exclusions (items not counted)
+3. **evaluation_criteria**: Assessment factors. Each has: name (criterion name), description, weight (percentage if specified), quote (CFP source)
+4. **additional_requirements**: Other requirements. Each has: requirement, quote, category (formatting/submission/eligibility/budget/other)
 
-## Example
+Include count fields:
+- **count**: Total number of required sections
+- **constraints_count**: Number of length constraints found
+- **criteria_count**: Number of evaluation criteria found
 
-CFP excerpt:
-```
-II. APPLICATION COMPONENTS
-
-A. Project Summary (1 page)
-The project summary must provide a clear overview of the proposed research.
-Applicants should describe the research objectives and broader impacts.
-
-B. Research Plan (15 pages maximum, excluding references)
-Describe the research methodology and expected outcomes.
-```
-
-Output:
-```json
-{
-  "required_sections": [
-    {
-      "title": "Project Summary",
-      "definition": "One-page overview of proposed research including objectives and impacts",
-      "cfp_source_reference": "II.A. Project Summary (1 page) - The project summary must provide a clear overview of the proposed research.",
-      "requirements": [
-        {
-          "requirement": "Describe research objectives",
-          "quote_from_source": "Applicants should describe the research objectives",
-          "category": "content"
-        },
-        {
-          "requirement": "Describe broader impacts",
-          "quote_from_source": "Applicants should describe the research objectives and broader impacts",
-          "category": "impact"
-        }
-      ],
-      "dependencies": []
-    },
-    {
-      "title": "Research Plan",
-      "definition": "Detailed description of research methodology and expected outcomes",
-      "cfp_source_reference": "II.B. Research Plan (15 pages maximum, excluding references)",
-      "requirements": [
-        {
-          "requirement": "Describe research methodology",
-          "quote_from_source": "Describe the research methodology",
-          "category": "methodology"
-        },
-        {
-          "requirement": "Describe expected outcomes",
-          "quote_from_source": "Describe the research methodology and expected outcomes",
-          "category": "outcomes"
-        }
-      ],
-      "dependencies": ["Project Summary"]
-    }
-  ],
-  "length_constraints": [
-    {
-      "title": "Project Summary",
-      "measurement_type": "pages",
-      "limit_description": "1 page maximum",
-      "quote_from_source": "Project Summary (1 page)",
-      "exclusions": []
-    },
-    {
-      "title": "Research Plan",
-      "measurement_type": "pages",
-      "limit_description": "15 pages maximum",
-      "quote_from_source": "15 pages maximum, excluding references",
-      "exclusions": ["references"]
-    }
-  ],
-  "evaluation_criteria": [],
-  "additional_requirements": []
-}
-```
-
-Return complete analysis following this pattern with exact quotes from CFP.
+All quotes must be verbatim from CFP source material.
 """,
 )
 
@@ -146,9 +140,9 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
         "length_constraints",
         "evaluation_criteria",
         "additional_requirements",
-        "sections_count",
-        "length_constraints_found",
-        "evaluation_criteria_count",
+        "count",
+        "constraints_count",
+        "criteria_count",
     ],
     "properties": {
         "required_sections": {
@@ -156,23 +150,23 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "minItems": 1,
             "items": {
                 "type": "object",
-                "required": ["title", "definition", "requirements", "dependencies"],
+                "required": ["name", "definition", "requirements", "dependencies"],
                 "properties": {
-                    "title": {"type": "string", "minLength": 1},
+                    "name": {"type": "string", "minLength": 1},
                     "definition": {"type": "string", "minLength": 10},
-                    "cfp_source_reference": {
+                    "source": {
                         "type": "string",
                         "minLength": 10,
-                        "description": "Original text from CFP that defines this section",
+                        "description": "Original text from CFP defining this section",
                     },
                     "requirements": {
                         "type": "array",
                         "items": {
                             "type": "object",
-                            "required": ["requirement", "quote_from_source", "category"],
+                            "required": ["requirement", "quote", "category"],
                             "properties": {
                                 "requirement": {"type": "string", "minLength": 5},
-                                "quote_from_source": {"type": "string", "minLength": 10},
+                                "quote": {"type": "string", "minLength": 10},
                                 "category": {"type": "string", "minLength": 3},
                             },
                         },
@@ -185,18 +179,12 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": [
-                    "title",
-                    "measurement_type",
-                    "limit_description",
-                    "quote_from_source",
-                    "exclusions",
-                ],
+                "required": ["name", "type", "limit", "quote", "exclusions"],
                 "properties": {
-                    "title": {"type": "string", "minLength": 1},
-                    "measurement_type": {"type": "string", "enum": ["pages", "words", "characters", "other"]},
-                    "limit_description": {"type": "string", "minLength": 5},
-                    "quote_from_source": {"type": "string", "minLength": 10},
+                    "name": {"type": "string", "minLength": 1},
+                    "type": {"type": "string", "enum": ["pages", "words", "characters", "other"]},
+                    "limit": {"type": "string", "minLength": 5},
+                    "quote": {"type": "string", "minLength": 10},
                     "exclusions": {"type": "array", "items": {"type": "string"}},
                 },
             },
@@ -205,12 +193,12 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["criterion_name", "description", "quote_from_source"],
+                "required": ["name", "description", "quote"],
                 "properties": {
-                    "criterion_name": {"type": "string", "minLength": 3},
+                    "name": {"type": "string", "minLength": 3},
                     "description": {"type": "string", "minLength": 10},
-                    "weight_percentage": {"type": "integer", "minimum": 0, "maximum": 100},
-                    "quote_from_source": {"type": "string", "minLength": 10},
+                    "weight": {"type": "integer", "minimum": 0, "maximum": 100},
+                    "quote": {"type": "string", "minLength": 10},
                 },
             },
         },
@@ -218,10 +206,10 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["requirement", "quote_from_source", "category"],
+                "required": ["requirement", "quote", "category"],
                 "properties": {
                     "requirement": {"type": "string", "minLength": 5},
-                    "quote_from_source": {"type": "string", "minLength": 10},
+                    "quote": {"type": "string", "minLength": 10},
                     "category": {
                         "type": "string",
                         "enum": ["formatting", "submission", "eligibility", "budget", "other"],
@@ -229,15 +217,15 @@ CFP_SECTION_ANALYZER_SCHEMA: Final = {
                 },
             },
         },
-        "sections_count": {
+        "count": {
             "type": "integer",
             "minimum": 1,
         },
-        "length_constraints_found": {
+        "constraints_count": {
             "type": "integer",
             "minimum": 0,
         },
-        "evaluation_criteria_count": {
+        "criteria_count": {
             "type": "integer",
             "minimum": 0,
         },
@@ -253,79 +241,131 @@ def validate_cfp_analysis(response: CFPSectionAnalysis) -> None:
     if error := response.get("error"):
         raise ValidationError(f"CFP analysis failed: {error}")
 
-    if response["sections_count"] < 1:
+    if response["count"] < 1:
         raise ValidationError(
             "No sections identified - CFP must contain at least one required section",
-            context={"sections_found": response["sections_count"]},
+            context={"sections_found": response["count"]},
         )
 
-    if len(response["required_sections"]) != response["sections_count"]:
+    if len(response["required_sections"]) != response["count"]:
         raise ValidationError(
             "Sections count mismatch - number of sections doesn't match reported count",
             context={
                 "sections_array_length": len(response["required_sections"]),
-                "reported_count": response["sections_count"],
+                "reported_count": response["count"],
             },
         )
 
-    if len(response["length_constraints"]) != response["length_constraints_found"]:
+    if len(response["length_constraints"]) != response["constraints_count"]:
         raise ValidationError(
             "Length constraints count mismatch",
             context={
                 "constraints_array_length": len(response["length_constraints"]),
-                "reported_count": response["length_constraints_found"],
+                "reported_count": response["constraints_count"],
             },
         )
 
-    if len(response["evaluation_criteria"]) != response["evaluation_criteria_count"]:
+    if len(response["evaluation_criteria"]) != response["criteria_count"]:
         raise ValidationError(
             "Evaluation criteria count mismatch",
             context={
                 "criteria_array_length": len(response["evaluation_criteria"]),
-                "reported_count": response["evaluation_criteria_count"],
+                "reported_count": response["criteria_count"],
             },
         )
 
     for section in response["required_sections"]:
-        if not section.get("cfp_source_reference"):
-            section["cfp_source_reference"] = f"CFP defines {section['title']}: {section['definition'][:100]}..."
-        elif section["cfp_source_reference"] and len(section["cfp_source_reference"]) < 10:
-            section["cfp_source_reference"] = f"CFP section requirement: {section['cfp_source_reference']}"
+        if not section.get("source"):
+            section["source"] = f"CFP defines {section['name']}: {section['definition'][:100]}..."
+        elif section["source"] and len(section["source"]) < 10:
+            section["source"] = f"CFP section requirement: {section['source']}"
 
     all_quotes = []
 
     for section in response["required_sections"]:
         for req in section["requirements"]:
-            quote = req["quote_from_source"]
+            quote = req["quote"]
             if len(quote) < 5:
-                req["quote_from_source"] = (
-                    f"CFP states: {quote}" if quote else f"Section requirement: {req['requirement']}"
-                )
-            all_quotes.append(req["quote_from_source"])
+                req["quote"] = f"CFP states: {quote}" if quote else f"Section requirement: {req['requirement']}"
+            all_quotes.append(req["quote"])
 
     for constraint in response["length_constraints"]:
-        quote = constraint["quote_from_source"]
+        quote = constraint["quote"]
         if len(quote) < 5:
-            constraint["quote_from_source"] = f"CFP limits: {quote}" if quote else constraint["limit_description"]
-        all_quotes.append(constraint["quote_from_source"])
+            constraint["quote"] = f"CFP limits: {quote}" if quote else constraint["limit"]
+        all_quotes.append(constraint["quote"])
 
     for criterion in response["evaluation_criteria"]:
-        quote = criterion["quote_from_source"]
+        quote = criterion["quote"]
         if len(quote) < 5:
-            criterion["quote_from_source"] = f"CFP evaluates: {quote}" if quote else criterion["criterion_name"]
-        all_quotes.append(criterion["quote_from_source"])
+            criterion["quote"] = f"CFP evaluates: {quote}" if quote else criterion["name"]
+        all_quotes.append(criterion["quote"])
 
     for req in response["additional_requirements"]:
-        quote = req["quote_from_source"]
+        quote = req["quote"]
         if len(quote) < 5:
-            req["quote_from_source"] = f"CFP requires: {quote}" if quote else req["requirement"]
-        all_quotes.append(req["quote_from_source"])
+            req["quote"] = f"CFP requires: {quote}" if quote else req["requirement"]
+        all_quotes.append(req["quote"])
 
     if len(all_quotes) < 2:
         raise ValidationError(
             "Insufficient quotes - must extract meaningful quotes from CFP content",
             context={"quotes_found": len(all_quotes)},
         )
+
+
+def convert_to_db_format(response: CFPSectionAnalysis) -> DBCFPSectionAnalysis:
+    """Convert optimized pipeline response to DB format."""
+    return DBCFPSectionAnalysis(
+        required_sections=[
+            DBCFPSectionReq(
+                section_name=section["name"],
+                definition=section["definition"],
+                requirements=[
+                    DBCFPRequirement(
+                        requirement=req["requirement"],
+                        quote_from_source=req["quote"],
+                        category=req["category"],
+                    )
+                    for req in section["requirements"]
+                ],
+                dependencies=section["dependencies"],
+                cfp_source_reference=section.get("source"),
+            )
+            for section in response["required_sections"]
+        ],
+        length_constraints=[
+            DBCFPLengthConstraint(
+                section_name=constraint["name"],
+                measurement_type=constraint["type"],
+                limit_description=constraint["limit"],
+                quote_from_source=constraint["quote"],
+                exclusions=constraint["exclusions"],
+            )
+            for constraint in response["length_constraints"]
+        ],
+        evaluation_criteria=[
+            DBCFPEvalCriterion(
+                criterion_name=criterion["name"],
+                description=criterion["description"],
+                weight_percentage=criterion.get("weight"),
+                quote_from_source=criterion["quote"],
+            )
+            for criterion in response["evaluation_criteria"]
+        ],
+        additional_requirements=[
+            DBCFPRequirement(
+                requirement=req["requirement"],
+                quote_from_source=req["quote"],
+                category=req["category"],
+            )
+            for req in response["additional_requirements"]
+        ],
+        sections_count=response["count"],
+        length_constraints_found=response["constraints_count"],
+        evaluation_criteria_count=response["criteria_count"],
+        error=response.get("error"),
+    )
 
 
 async def analyze_cfp_sections(
@@ -360,10 +400,13 @@ async def handle_analyze_cfp(*, full_cfp_text: str, trace_id: str) -> CFPAnalysi
     categories_found = sum(1 for v in nlp_analysis.values() if v)
     total_sentences = sum(len(sentences) for sentences in nlp_analysis.values() if isinstance(sentences, list))
 
-    cfp_analysis = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
+    cfp_analysis_optimized = await analyze_cfp_sections(full_cfp_text, nlp_analysis, trace_id=trace_id)
+
+    # Convert optimized response to DB format
+    cfp_analysis_db = convert_to_db_format(cfp_analysis_optimized)
 
     return CFPAnalysisResult(
-        cfp_analysis=cfp_analysis,
+        cfp_analysis=cfp_analysis_db,
         nlp_analysis=nlp_analysis,
         analysis_metadata=CFPAnalysisMetadata(
             content_length=len(full_cfp_text),
