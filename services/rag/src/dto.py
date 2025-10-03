@@ -1,12 +1,6 @@
 from typing import Literal, NotRequired, TypedDict
 
-from packages.db.src.json_objects import (
-    CFPAnalysisEvaluationCriterion,
-    CFPAnalysisRequirementWithQuote,
-    CFPSectionLengthConstraint,
-    CFPSectionRequirement,
-    TableContext,
-)
+from packages.db.src.json_objects import TableContext
 
 
 class DocumentDTO(TypedDict):
@@ -51,10 +45,3 @@ class EnrichmentData(TypedDict):
     research_questions: NotRequired[list[str]]
     context: NotRequired[str]
     search_queries: NotRequired[list[str]]
-
-
-class CFPAnalysisData(TypedDict):
-    requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
-    sections: NotRequired[list[CFPSectionRequirement]]
-    evaluation_criteria: NotRequired[list[CFPAnalysisEvaluationCriterion]]
-    length_constraints: NotRequired[list[CFPSectionLengthConstraint]]
