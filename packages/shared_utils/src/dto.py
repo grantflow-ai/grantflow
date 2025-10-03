@@ -38,6 +38,18 @@ class ExtractedSectionDTO(TypedDict):
     title: str
     id: str
     order: int
+    parent: NotRequired[str | None]
+    is_plan: NotRequired[bool | None]
+    title_only: NotRequired[bool | None]
+    clinical: NotRequired[bool | None]
+    long_form: bool
+    needs_writing: NotRequired[bool | None]
+
+
+class ProcessedSectionDTO(TypedDict):
+    title: str
+    id: str
+    order: int
     evidence: str
     parent: NotRequired[str | None]
     is_plan: NotRequired[bool | None]

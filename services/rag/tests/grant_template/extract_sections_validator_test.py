@@ -25,7 +25,6 @@ def create_section(
         "title": title,
         "long_form": is_long_form,
         "order": order,
-        "evidence": f"CFP evidence for {title}",
     }
     if parent_section_id is not None:
         result["parent"] = parent_section_id

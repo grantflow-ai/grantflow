@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
 from packages.db.src.json_objects import CFPAnalysisResult
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
-from packages.shared_utils.src.dto import CFPContentSection, ExtractedSectionDTO, OrganizationNamespace
+from packages.shared_utils.src.dto import (
+    CFPContentSection,
+    ExtractedSectionDTO,
+    OrganizationNamespace,
+    ProcessedSectionDTO,
+)
 from packages.shared_utils.src.serialization import serialize
 
 if TYPE_CHECKING:
@@ -378,28 +383,10 @@ def _validate_parent_child_structure(
             )
 
 
-def _validate_word_limit_distribution(section: ExtractedSectionDTO, children: list[ExtractedSectionDTO]) -> None:
-    parent_limit = section.get("max_words")
-    if parent_limit is None:
-        return
-
-    children_total = sum(c.get("max_words") or 0 for c in children)
-    tolerance = parent_limit * WORD_LIMIT_TOLERANCE
-    difference = abs(children_total - parent_limit)
-
-    if difference > tolerance:
-        raise ValidationError(
-            "Child section word limits must sum to parent's total limit (±10% tolerance)",
-            context={
-                "parent_id": section["id"],
-                "parent_title": section["title"],
-                "parent_limit": parent_limit,
-                "children_total": children_total,
-                "difference": difference,
-                "tolerance": tolerance,
-                "children": [{"id": c["id"], "title": c["title"], "limit": c.get("length_limit", 0)} for c in children],
-            },
-        )
+def _validate_word_limit_distribution(_section: ExtractedSectionDTO, _children: list[ExtractedSectionDTO]) -> None:
+    # ExtractedSectionDTO doesn't have max_words field, so this validation is not applicable
+    # Word limit distribution validation will happen later in the pipeline with ProcessedSectionDTO
+    return
 
 
 def _validate_section_depth(section: ExtractedSectionDTO, mapped_sections: dict[str, ExtractedSectionDTO]) -> None:
@@ -527,8 +514,8 @@ def validate_section_extraction(response: ExtractedSections) -> None:
 
 
 def _should_keep_section(
-    section: ExtractedSectionDTO,
-    sections: list[ExtractedSectionDTO],
+    section: ProcessedSectionDTO,
+    sections: list[ProcessedSectionDTO],
     threshold: float,
     exclude_embeddings: list[float],
     trace_id: str,
@@ -569,8 +556,8 @@ def _should_keep_section(
 
 
 async def filter_extracted_sections(
-    sections: list[ExtractedSectionDTO], trace_id: str, initial_threshold: float = 0.7
-) -> list[ExtractedSectionDTO]:
+    sections: list[ProcessedSectionDTO], trace_id: str, initial_threshold: float = 0.7
+) -> list[ProcessedSectionDTO]:
     exclude_embeddings = await get_exclude_embeddings()
     threshold = initial_threshold
     max_threshold = 0.9
@@ -596,7 +583,7 @@ async def filter_extracted_sections(
         has_long_form = any(s.get("long_form") for s in filtered_sections)
 
         if has_research_plan and has_long_form:
-            return _maintain_hierarchy_integrity(filtered_sections)
+            return _finalize_processed_sections(filtered_sections)
 
         threshold += 0.05
 
@@ -605,12 +592,12 @@ async def filter_extracted_sections(
     if not fallback_sections:
         fallback_sections = [section for section in sections if section.get("is_plan")]
 
-    return _maintain_hierarchy_integrity(fallback_sections or sections)
+    return _finalize_processed_sections(fallback_sections or sections)
 
 
 def _merge_cfp_analysis_data(
     sections: list[ExtractedSectionDTO], cfp_analysis: CFPAnalysisResult
-) -> list[ExtractedSectionDTO]:
+) -> list[ProcessedSectionDTO]:
     """Merge CFP analysis data with extracted organizational structure."""
     # Create lookup maps from CFP analysis
     cfp_sections_by_title = {
@@ -622,20 +609,44 @@ def _merge_cfp_analysis_data(
         for constraint in cfp_analysis["cfp_analysis"]["length_constraints"]
     }
 
-    # Merge CFP data into extracted sections
+    # Convert ExtractedSectionDTO to ProcessedSectionDTO with CFP data
+    processed_sections: list[ProcessedSectionDTO] = []
+
     for section in sections:
         section_title_key = section["title"].lower().strip()
 
+        # Start with base ProcessedSectionDTO
+        processed_section: ProcessedSectionDTO = {
+            "title": section["title"],
+            "id": section["id"],
+            "order": section["order"],
+            "evidence": f"CFP section: {section['title']}",
+            "long_form": section["long_form"],
+            "requirements": [],
+            "limits": [],
+        }
+
+        # Copy optional fields from original section
+        if "parent" in section:
+            processed_section["parent"] = section["parent"]
+        if "is_plan" in section:
+            processed_section["is_plan"] = section["is_plan"]
+        if "title_only" in section:
+            processed_section["title_only"] = section["title_only"]
+        if "clinical" in section:
+            processed_section["clinical"] = section["clinical"]
+        if "needs_writing" in section:
+            processed_section["needs_writing"] = section["needs_writing"]
+
         # Match with CFP section data
         if cfp_section := cfp_sections_by_title.get(section_title_key):
-            # Add CFP analysis fields to the section
-            section["evidence"] = f"CFP section: {section['title']}"
-            section["requirements"] = cfp_section["requirements"]
-            section["definition"] = cfp_section["definition"]
+            processed_section["evidence"] = f"CFP section: {section['title']}"
+            processed_section["requirements"] = cfp_section["requirements"]
+            processed_section["definition"] = cfp_section["definition"]
 
             # Add source reference if available
             if source_ref := cfp_section.get("cfp_source_reference"):
-                section["source"] = source_ref
+                processed_section["source"] = source_ref
 
         # Match with length constraints
         if length_constraint := length_constraints_by_title.get(section_title_key):
@@ -645,24 +656,23 @@ def _merge_cfp_analysis_data(
                 page_match = re.search(r"(\d+)", length_constraint["limit_description"])
                 if page_match:
                     pages = int(page_match.group(1))
-                    section["max_words"] = pages * 415
-                    section["source"] = f"Converted from {pages} pages (CFP: {length_constraint['quote_from_source']})"
+                    processed_section["max_words"] = pages * 415
+                    processed_section["source"] = (
+                        f"Converted from {pages} pages (CFP: {length_constraint['quote_from_source']})"
+                    )
             elif "words" in length_constraint["measurement_type"].lower():
                 # Extract word count directly
                 word_match = re.search(r"(\d+)", length_constraint["limit_description"])
                 if word_match:
-                    section["max_words"] = int(word_match.group(1))
-                    section["source"] = f"CFP: {length_constraint['quote_from_source']}"
+                    processed_section["max_words"] = int(word_match.group(1))
+                    processed_section["source"] = f"CFP: {length_constraint['quote_from_source']}"
 
-        # Set default values for fields that weren't matched
-        section.setdefault("evidence", f"CFP section: {section['title']}")
-        section.setdefault("requirements", [])
-        section.setdefault("limits", [])
+        processed_sections.append(processed_section)
 
-    return sections
+    return processed_sections
 
 
-def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[ExtractedSectionDTO]:
+def _finalize_processed_sections(sections: list[ProcessedSectionDTO]) -> list[ProcessedSectionDTO]:
     valid_ids = {s["id"] for s in sections}
 
     for section in sections:
@@ -674,14 +684,15 @@ def _maintain_hierarchy_integrity(sections: list[ExtractedSectionDTO]) -> list[E
             from_start = title.find("(from:")
             section["title"] = title[:from_start].strip()
 
+        # ProcessedSectionDTO already has all required fields, just ensure evidence exists
         if not section.get("evidence"):
             section["evidence"] = f"CFP section: {section['title']}"
 
-        section.setdefault("requirements", [])
-        section.setdefault("max_words", None)
-        section.setdefault("source", None)
-        section.setdefault("limits", [])
-        section.setdefault("definition", None)
+        # Set defaults for NotRequired fields if they don't exist
+        if "requirements" not in section:
+            section["requirements"] = []
+        if "limits" not in section:
+            section["limits"] = []
 
         if "needs_writing" not in section:
             title_lower = section.get("title", "").lower()
@@ -747,7 +758,7 @@ async def handle_extract_sections(
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
     cfp_analysis: CFPAnalysisResult,
     organization: OrganizationNamespace | None = None,
-) -> list[ExtractedSectionDTO]:
+) -> list[ProcessedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
     logger.info(

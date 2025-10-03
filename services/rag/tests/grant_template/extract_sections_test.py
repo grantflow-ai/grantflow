@@ -10,7 +10,7 @@ from services.rag.src.grant_template.extract_sections import (
     EXCLUDE_CATEGORIES,
     ExtractedSectionDTO,
     ExtractedSections,
-    _maintain_hierarchy_integrity,
+    _finalize_processed_sections,
     _should_keep_section,
     extract_sections,
     filter_extracted_sections,
@@ -20,7 +20,7 @@ from services.rag.src.grant_template.extract_sections import (
 )
 
 if TYPE_CHECKING:
-    from packages.shared_utils.src.dto import CFPContentSection
+    from packages.shared_utils.src.dto import CFPContentSection, ProcessedSectionDTO
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def mock_cfp_analysis() -> CFPAnalysisResult:
 
 
 def test_extracted_section_dto_required_fields() -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "Project Summary",
         "id": "project_summary",
         "order": 1,
@@ -71,7 +71,7 @@ def test_extracted_section_dto_required_fields() -> None:
 
 
 def test_extracted_section_dto_optional_fields() -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "Research Plan",
         "id": "research_plan",
         "order": 2,
@@ -98,7 +98,6 @@ def test_validate_section_extraction_valid_sections() -> None:
                 "order": 1,
                 "long_form": True,
                 "is_plan": False,
-                "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
@@ -106,7 +105,6 @@ def test_validate_section_extraction_valid_sections() -> None:
                 "order": 2,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for Research Plan",
             },
         ]
     }
@@ -133,7 +131,6 @@ def test_validate_section_extraction_null_string_error_ignored() -> None:
                 "order": 1,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for Valid Section",
             }
         ],
         "error": "null",
@@ -158,7 +155,6 @@ def test_validate_section_extraction_short_title_raises_validation_error() -> No
                 "order": 1,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for AB",
             }
         ]
     }
@@ -176,7 +172,6 @@ def test_validate_section_extraction_duplicate_titles_raises_validation_error() 
                 "order": 1,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for Same Title",
             },
             {
                 "title": "Same Title",
@@ -184,7 +179,6 @@ def test_validate_section_extraction_duplicate_titles_raises_validation_error() 
                 "order": 2,
                 "long_form": True,
                 "is_plan": False,
-                "evidence": "CFP evidence for Same Title",
             },
         ]
     }
@@ -202,7 +196,6 @@ def test_validate_section_extraction_duplicate_orders_raises_validation_error() 
                 "order": 1,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for Section One",
             },
             {
                 "title": "Section Two",
@@ -210,7 +203,6 @@ def test_validate_section_extraction_duplicate_orders_raises_validation_error() 
                 "order": 1,
                 "long_form": True,
                 "is_plan": False,
-                "evidence": "CFP evidence for Section Two",
             },
         ]
     }
@@ -228,7 +220,6 @@ def test_validate_section_extraction_non_consecutive_orders_raises_validation_er
                 "order": 1,
                 "long_form": True,
                 "is_plan": True,
-                "evidence": "CFP evidence for Section One",
             },
             {
                 "title": "Section Two",
@@ -236,7 +227,6 @@ def test_validate_section_extraction_non_consecutive_orders_raises_validation_er
                 "order": 3,
                 "long_form": True,
                 "is_plan": False,
-                "evidence": "CFP evidence for Section Two",
             },
         ]
     }
@@ -255,7 +245,7 @@ def test_should_keep_section_high_similarity_section(trace_id: str) -> None:
         mock_model.encode.return_value = [0.8, 0.9, 0.7]
         mock_run_sync.return_value = mock_model
 
-        section: ExtractedSectionDTO = {
+        section: ProcessedSectionDTO = {
             "title": "Budget Justification",
             "id": "budget",
             "order": 1,
@@ -285,7 +275,7 @@ def test_should_keep_section_low_similarity_section(trace_id: str) -> None:
         mock_model.encode.return_value = [0.8, 0.9, 0.7]
         mock_run_sync.return_value = mock_model
 
-        section: ExtractedSectionDTO = {
+        section: ProcessedSectionDTO = {
             "title": "Research Methods",
             "id": "research_methods",
             "order": 1,
@@ -306,7 +296,7 @@ def test_should_keep_section_low_similarity_section(trace_id: str) -> None:
 
 
 def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "budget justification",
         "id": "budget",
         "order": 1,
@@ -325,7 +315,7 @@ def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
 
     assert result is False
 
-    section_upper: ExtractedSectionDTO = {
+    section_upper: ProcessedSectionDTO = {
         "title": "BUDGET JUSTIFICATION",
         "id": "budget_upper",
         "order": 1,
@@ -375,7 +365,7 @@ def test_exclude_categories_not_empty() -> None:
 
 
 def test_maintain_hierarchy_integrity_valid_hierarchy() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
@@ -395,14 +385,14 @@ def test_maintain_hierarchy_integrity_valid_hierarchy() -> None:
         },
     ]
 
-    result = _maintain_hierarchy_integrity(sections)
+    result = _finalize_processed_sections(sections)
     assert len(result) == 2
     assert result[0]["id"] == "research_plan"
     assert result[1]["id"] == "specific_aims"
 
 
 def test_maintain_hierarchy_integrity_remove_orphaned_children() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
@@ -422,7 +412,7 @@ def test_maintain_hierarchy_integrity_remove_orphaned_children() -> None:
         },
     ]
 
-    result = _maintain_hierarchy_integrity(sections)
+    result = _finalize_processed_sections(sections)
 
     assert len(result) == 2
     research_plan = next(s for s in result if s["id"] == "research_plan")
@@ -446,7 +436,7 @@ async def test_filter_extracted_sections_success(
     mock_model.encode.return_value = [0.4, 0.5, 0.6]
     mock_run_sync.return_value = mock_model
 
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Methods",
             "id": "research_methods",
@@ -548,9 +538,8 @@ async def test_handle_extract_sections_success(
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Project Summary",
+                "long_form": True,
+                "is_plan": True,
             }
         ]
     }
