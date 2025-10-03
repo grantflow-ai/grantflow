@@ -384,7 +384,7 @@ export function ProjectDetailClient() {
 							applications={applications}
 							downloadingApplications={downloadingApplications}
 							isCreatingApplication={isCreatingApplication}
-							isLoading={isApplicationsLoading || isApplicationsValidating}
+							isLoading={isApplicationsLoading }
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
 							onDownload={handleDownloadApplication}
