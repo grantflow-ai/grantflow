@@ -3,7 +3,6 @@
 from typing import Any
 from uuid import uuid4
 
-import pytest
 from packages.db.src.tables import GrantingInstitution
 from sqlalchemy.ext.asyncio import async_sessionmaker
 

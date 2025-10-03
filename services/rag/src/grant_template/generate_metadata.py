@@ -1,21 +1,21 @@
+import asyncio
 from functools import partial
-from typing import TYPE_CHECKING, Final, NotRequired, TypedDict, cast
+from typing import TYPE_CHECKING, Final, NotRequired, TypedDict, TypeGuard, cast
 
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection, OrganizationNamespace
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 
 if TYPE_CHECKING:
-    from services.rag.src.grant_template.dto import ExtractionSectionsStageDTO
+    from services.rag.src.grant_template.dto import SectionExtractionStageDTO
     from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
@@ -175,9 +175,245 @@ grant_template_generation_json_schema: Final = {
 }
 
 
+# ============================================================================
+# Focused schemas for parallel extraction (better LLM performance)
+# ============================================================================
+
+# 1. Dependencies & word counts extraction
+dependencies_word_counts_schema: Final = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "depends_on": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "max_words": {"type": "integer", "minimum": 50},
+                },
+                "required": ["id", "depends_on", "max_words"],
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+# 2. Content metadata extraction
+content_metadata_schema: Final = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "keywords": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 3,
+                        "maxItems": 20,
+                    },
+                    "topics": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 2,
+                        "maxItems": 10,
+                    },
+                    "generation_instructions": {
+                        "type": "string",
+                        "minLength": 50,
+                    },
+                    "search_queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 3,
+                        "maxItems": 10,
+                    },
+                },
+                "required": ["id", "keywords", "topics", "generation_instructions", "search_queries"],
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+
+class DependenciesWordCountsSection(TypedDict):
+    """Individual section in dependencies & word counts result."""
+    id: str
+    depends_on: list[str]
+    max_words: int
+
+
+class DependenciesWordCountsResult(TypedDict):
+    """Dependencies & word counts extraction result."""
+    sections: list[DependenciesWordCountsSection]
+
+
+class ContentMetadataSection(TypedDict):
+    """Individual section in content metadata result."""
+    id: str
+    keywords: list[str]
+    topics: list[str]
+    generation_instructions: str
+    search_queries: list[str]
+
+
+class ContentMetadataResult(TypedDict):
+    """Content metadata extraction result."""
+    sections: list[ContentMetadataSection]
+
+
 class TemplateSectionsResponse(TypedDict):
     sections: list[SectionMetadata]
     error: NotRequired[str | None]
+
+
+# ============================================================================
+# Type Guards
+# ============================================================================
+
+
+def is_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:
+    """Type guard to check if section is GrantLongFormSection."""
+    return "max_words" in section
+
+
+# ============================================================================
+# Validators for parallel extractions
+# ============================================================================
+
+
+def validate_dependencies_word_counts(
+    response: DependenciesWordCountsResult, *, input_sections: list[ExtractedSectionDTO]
+) -> None:
+    """Validate dependencies and word counts extraction."""
+    if not response.get("sections"):
+        raise ValidationError("No section dependencies/word counts extracted")
+
+    input_section_ids = {section["id"] for section in input_sections}
+    output_section_ids = {section["id"] for section in response["sections"]}
+
+    if input_section_ids != output_section_ids:
+        added = output_section_ids - input_section_ids
+        removed = input_section_ids - output_section_ids
+        raise ValidationError(
+            "Section mismatch in dependencies extraction",
+            context={
+                "added_sections": list(added) if added else None,
+                "removed_sections": list(removed) if removed else None,
+                "expected_section_ids": list(input_section_ids),
+                "actual_section_ids": list(output_section_ids),
+                "recovery_instruction": "Match input section IDs exactly",
+            },
+        )
+
+    for section in response["sections"]:
+        # Validate dependencies reference valid sections
+        for dependency in section["depends_on"]:
+            if dependency not in input_section_ids:
+                raise ValidationError(
+                    "Invalid section dependency",
+                    context={
+                        "section_id": section["id"],
+                        "invalid_dependency": dependency,
+                        "valid_dependencies": list(input_section_ids),
+                        "recovery_instruction": "Use only valid section IDs for dependencies",
+                    },
+                )
+
+        # Validate no self-dependencies
+        if section["id"] in section["depends_on"]:
+            raise ValidationError(
+                "Section cannot depend on itself",
+                context={
+                    "section_id": section["id"],
+                    "recovery_instruction": "Remove self-reference from dependencies",
+                },
+            )
+
+        # Validate word count is reasonable
+        if section["max_words"] <= 0:
+            raise ValidationError(
+                "Invalid word count",
+                context={
+                    "section_id": section["id"],
+                    "max_words": section["max_words"],
+                    "recovery_instruction": "Provide positive word count (at least 50)",
+                },
+            )
+
+
+def validate_content_metadata(
+    response: ContentMetadataResult, *, input_sections: list[ExtractedSectionDTO]
+) -> None:
+    """Validate content metadata extraction."""
+    if not response.get("sections"):
+        raise ValidationError("No content metadata extracted")
+
+    input_section_ids = {section["id"] for section in input_sections}
+    output_section_ids = {section["id"] for section in response["sections"]}
+
+    if input_section_ids != output_section_ids:
+        added = output_section_ids - input_section_ids
+        removed = input_section_ids - output_section_ids
+        raise ValidationError(
+            "Section mismatch in content metadata extraction",
+            context={
+                "added_sections": list(added) if added else None,
+                "removed_sections": list(removed) if removed else None,
+                "expected_section_ids": list(input_section_ids),
+                "actual_section_ids": list(output_section_ids),
+                "recovery_instruction": "Match input section IDs exactly",
+            },
+        )
+
+    for section in response["sections"]:
+        # Validate minimum requirements
+        if len(section["keywords"]) < 3:
+            raise ValidationError(
+                "Insufficient keywords",
+                context={
+                    "section_id": section["id"],
+                    "keyword_count": len(section["keywords"]),
+                    "recovery_instruction": "Provide at least 3 relevant keywords",
+                },
+            )
+
+        if len(section["topics"]) < 2:
+            raise ValidationError(
+                "Insufficient topics",
+                context={
+                    "section_id": section["id"],
+                    "topic_count": len(section["topics"]),
+                    "recovery_instruction": "Provide at least 2 relevant topics",
+                },
+            )
+
+        if len(section["generation_instructions"]) < 50:
+            raise ValidationError(
+                "Generation instructions too short",
+                context={
+                    "section_id": section["id"],
+                    "instruction_length": len(section["generation_instructions"]),
+                    "recovery_instruction": "Provide detailed instructions (at least 50 characters)",
+                },
+            )
+
+        if len(section["search_queries"]) < 3:
+            raise ValidationError(
+                "Insufficient search queries",
+                context={
+                    "section_id": section["id"],
+                    "query_count": len(section["search_queries"]),
+                    "recovery_instruction": "Provide at least 3 diverse search queries",
+                },
+            )
 
 
 def validate_template_sections(
@@ -344,6 +580,76 @@ def validate_template_sections(
             )
 
 
+# ============================================================================
+# Parallel extraction functions (better LLM performance with focused tasks)
+# ============================================================================
+
+
+async def extract_dependencies_word_counts(
+    task_description: str,
+    input_sections: list[ExtractedSectionDTO],
+    *,
+    trace_id: str,
+) -> DependenciesWordCountsResult:
+    """Extract section dependencies and word count allocations.
+
+    Focused extraction for structural relationships and sizing.
+    """
+    return await handle_completions_request(
+        prompt_identifier="dependencies_word_counts",
+        response_type=DependenciesWordCountsResult,
+        response_schema=dependencies_word_counts_schema,
+        validator=partial(validate_dependencies_word_counts, input_sections=input_sections),
+        messages=task_description,
+        system_prompt=(
+            "Extract section dependencies and word count allocations for grant application sections. "
+            "Dependencies: Sections that must be written before this one. "
+            "Word counts: Use 415 words/page (TNR 11pt) or CFP defaults. "
+            "Allocate proportionally based on section importance and CFP requirements. "
+            "Return valid JSON only."
+        ),
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+async def extract_content_metadata(
+    task_description: str,
+    input_sections: list[ExtractedSectionDTO],
+    *,
+    trace_id: str,
+) -> ContentMetadataResult:
+    """Extract content metadata: keywords, topics, instructions, search queries.
+
+    Focused extraction for semantic understanding and generation guidance.
+    """
+    return await handle_completions_request(
+        prompt_identifier="content_metadata",
+        response_type=ContentMetadataResult,
+        response_schema=content_metadata_schema,
+        validator=partial(validate_content_metadata, input_sections=input_sections),
+        messages=task_description,
+        system_prompt=(
+            "Generate content metadata for grant application sections. "
+            "Keywords: 5-15 specific domain terms for this section. "
+            "Topics: 3-8 key areas the section must address. "
+            "Instructions: 100-500 words with purpose, content, style, pitfalls. "
+            "Search queries: 3-10 queries to retrieve relevant evidence. "
+            "Be specific and actionable. Return valid JSON only."
+        ),
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+# ============================================================================
+# Legacy single extraction function (to be deprecated)
+# ============================================================================
+
 async def generate_grant_template(
     task_description: str, *, trace_id: str, input_sections: list[ExtractedSectionDTO]
 ) -> TemplateSectionsResponse:
@@ -381,7 +687,7 @@ def merge_section_with_metadata(
             title=section["title"],
             evidence="",  # Non-long-form sections don't need evidence
             parent_id=section.get("parent"),
-            needs_applicant_writing=section.get("needs_writing", False),
+            needs_applicant_writing=bool(section.get("needs_writing", False)),
         )
 
     # Create GrantLongFormSection with all fields
@@ -392,7 +698,7 @@ def merge_section_with_metadata(
         title=section["title"],
         evidence="",  # Will be populated during application generation
         parent_id=section.get("parent"),
-        needs_applicant_writing=section.get("needs_writing", True),
+        needs_applicant_writing=bool(section.get("needs_writing", True)),
         # Metadata fields from LLM
         depends_on=metadata["depends_on"],
         generation_instructions=metadata["generation_instructions"],
@@ -406,10 +712,10 @@ def merge_section_with_metadata(
     )
 
     # Add constraint fields from extract_sections enrichment
-    if "guidelines" in section and section["guidelines"]:
+    if section.get("guidelines"):
         result["guidelines"] = section["guidelines"]
 
-    if "length_limit" in section and section["length_limit"]:
+    if section.get("length_limit"):
         result["length_limit"] = section["length_limit"]
 
     if "length_source" in section:
@@ -422,18 +728,17 @@ def merge_section_with_metadata(
         result["definition"] = section["definition"]
 
     # Log if CFP constraint conflicts significantly with LLM recommendation
-    if "length_limit" in section and section["length_limit"]:
-        llm_words = metadata["max_words"]
-        cfp_limit = section["length_limit"]
-        if cfp_limit < llm_words * 0.7 or cfp_limit > llm_words * 1.5:
-            logger.warning(
-                "Length constraint mismatch between LLM and CFP",
-                section_id=section["id"],
-                section_title=section["title"],
-                llm_recommendation=llm_words,
-                cfp_constraint=cfp_limit,
-                difference_pct=int(abs(cfp_limit - llm_words) / llm_words * 100),
-            )
+    llm_words = metadata["max_words"]
+    cfp_limit = section.get("length_limit")
+    if cfp_limit is not None and (cfp_limit < llm_words * 0.7 or cfp_limit > llm_words * 1.5):
+        logger.warning(
+            "Length constraint mismatch between LLM and CFP",
+            section_id=section["id"],
+            section_title=section["title"],
+            llm_recommendation=llm_words,
+            cfp_constraint=cfp_limit,
+            difference_pct=int(abs(cfp_limit - llm_words) / llm_words * 100),
+        )
 
     return result
 
@@ -444,7 +749,7 @@ async def handle_generate_grant_template_metadata(
     organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
     trace_id: str,
-    job_manager: "JobManager[ExtractionSectionsStageDTO]",
+    job_manager: "JobManager[SectionExtractionStageDTO]",
 ) -> list[GrantLongFormSection | GrantElement]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
@@ -462,7 +767,7 @@ async def handle_generate_grant_template_metadata(
     rag_results = []
     if organization:
         rag_results = await retrieve_documents(
-            organization_id=str(organization["organization_id"]),
+            organization_id=str(organization["id"]),
             task_description=str(prompt),
             trace_id=trace_id,
         )
@@ -488,33 +793,82 @@ async def handle_generate_grant_template_metadata(
         organization_guidelines=organization_guidelines,
     )
 
-    result: TemplateSectionsResponse = await with_evaluation(
-        prompt_identifier="grant_template_generation",
-        prompt_handler=partial(generate_grant_template, input_sections=long_form_sections),
-        prompt=full_prompt,
+    # Execute parallel extractions for better performance and simpler schemas
+    logger.info("Starting parallel metadata extraction", trace_id=trace_id)
+
+    dependencies_result, content_result = await asyncio.gather(
+        extract_dependencies_word_counts(full_prompt, long_form_sections, trace_id=trace_id),
+        extract_content_metadata(full_prompt, long_form_sections, trace_id=trace_id),
+    )
+
+    logger.info(
+        "Parallel metadata extractions completed",
+        dependencies_sections=len(dependencies_result["sections"]),
+        content_sections=len(content_result["sections"]),
         trace_id=trace_id,
-        **get_evaluation_kwargs(
-            "generate_metadata",
-            job_manager,
-            rag_context=rag_results if rag_results else None,
-            is_json_content=True,
-        ),
+    )
+
+    # Merge results by section ID to create complete SectionMetadata
+    metadata_by_id: dict[str, SectionMetadata] = {}
+
+    # Start with dependencies & word counts
+    for dep_data in dependencies_result["sections"]:
+        base_metadata: SectionMetadata = {
+            "id": dep_data["id"],
+            "depends_on": dep_data["depends_on"],
+            "max_words": dep_data["max_words"],
+            # Placeholder values for required fields that will be filled by content metadata
+            "keywords": [],
+            "topics": [],
+            "generation_instructions": "",
+            "search_queries": [],
+        }
+        metadata_by_id[dep_data["id"]] = base_metadata
+
+    # Merge content metadata
+    for content_data in content_result["sections"]:
+        section_id = content_data["id"]
+        if section_id in metadata_by_id:
+            # Update with content metadata fields
+            metadata_by_id[section_id]["keywords"] = content_data["keywords"]
+            metadata_by_id[section_id]["topics"] = content_data["topics"]
+            metadata_by_id[section_id]["generation_instructions"] = content_data["generation_instructions"]
+            metadata_by_id[section_id]["search_queries"] = content_data["search_queries"]
+        else:
+            logger.warning(
+                "Content metadata for unknown section ID",
+                section_id=section_id,
+                trace_id=trace_id,
+            )
+
+    logger.info(
+        "Merged parallel metadata results",
+        total_metadata_sections=len(metadata_by_id),
+        trace_id=trace_id,
     )
 
     # Merge extracted sections with generated metadata
-    section_metadata_map = {meta["id"]: meta for meta in result["sections"]}
     merged_sections = [
-        merge_section_with_metadata(section, section_metadata_map[section["id"]])
+        merge_section_with_metadata(section, metadata_by_id[section["id"]])
         for section in long_form_sections
-        if section["id"] in section_metadata_map
+        if section["id"] in metadata_by_id
     ]
+
+    # Calculate stats properly for union type using TypeGuard
+    merged_long_form_sections = [s for s in merged_sections if is_long_form_section(s)]
+    sections_with_constraints = sum(1 for s in merged_long_form_sections if s.get("length_source"))
+    avg_word_count = (
+        sum(s["max_words"] for s in merged_long_form_sections) // len(merged_long_form_sections)
+        if merged_long_form_sections
+        else 0
+    )
 
     logger.info(
         "Merged sections with metadata",
         sections_count=len(merged_sections),
-        sections_with_constraints=sum(
-            1 for s in merged_sections if isinstance(s, dict) and s.get("length_source")
-        ),
+        long_form_sections_count=len(merged_long_form_sections),
+        sections_with_constraints=sections_with_constraints,
+        avg_word_count=avg_word_count,
         trace_id=trace_id,
     )
 

@@ -57,15 +57,15 @@ async def handle_cfp_analysis_stage(
     )
 
     # Extract organization namespace for notifications
-    organization = cfp_analysis.organization
-    org_name = organization.full_name if organization else "Unknown"
+    organization = cfp_analysis.get("organization")
+    org_name = organization["full_name"] if organization else "Unknown"
 
     submission_date = None
-    if cfp_analysis.deadline:
+    if cfp_analysis["deadline"]:
         try:
-            submission_date = datetime.strptime(cfp_analysis.deadline, "%Y-%m-%d").replace(tzinfo=UTC).date()
+            submission_date = datetime.strptime(cfp_analysis["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
         except ValueError:
-            logger.warning(f"Invalid deadline format: {cfp_analysis.deadline}", trace_id=trace_id)
+            logger.warning("Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id})
 
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
@@ -73,10 +73,10 @@ async def handle_cfp_analysis_stage(
         notification_type="success",
         data={
             "organization": org_name,
-            "subject": cfp_analysis.subject[:100] if cfp_analysis.subject else None,
+            "subject": cfp_analysis["subject"][:100] if cfp_analysis["subject"] else None,
             "deadline": str(submission_date) if submission_date else None,
-            "sections_count": len(cfp_analysis.content),
-            "categories_found": len(cfp_analysis.analysis_metadata.get("categories", [])),
+            "sections_count": len(cfp_analysis["content"]),
+            "categories_found": len(cfp_analysis["analysis_metadata"].get("categories", [])),
         },
     )
 
@@ -95,17 +95,9 @@ async def handle_section_extraction_stage(
     """Handle section extraction stage using CFP analysis results."""
     await job_manager.ensure_not_cancelled()
 
-    # Extract CFP content for section processing
-    cfp_content = []
-    for section in cfp_analysis_result["cfp_analysis"].content:
-        cfp_content.append({
-            "title": section["title"],
-            "subtitles": section["subtitles"],
-        })
-
     # Process sections using existing extract_sections handler
     extracted_sections = await handle_extract_sections(
-        cfp_content=cfp_content,
+        cfp_content=cfp_analysis_result["cfp_analysis"]["content"],
         trace_id=trace_id,
         cfp_analysis=cfp_analysis_result["cfp_analysis"],
         job_manager=job_manager,
@@ -117,7 +109,7 @@ async def handle_section_extraction_stage(
         notification_type="success",
         data={
             "sections_extracted": len(extracted_sections),
-            "total_requirements": sum(len(s.get("subtitles", [])) for s in cfp_analysis_result["cfp_analysis"].content),
+            "total_requirements": sum(len(s.get("subtitles", [])) for s in cfp_analysis_result["cfp_analysis"]["content"]),
         },
     )
 
@@ -139,8 +131,8 @@ async def handle_generate_metadata_stage(
 
     # Format CFP content for prompt
     cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section['subtitles'])
-        for section in section_extraction_result["cfp_analysis"].content
+        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+        for section in section_extraction_result["cfp_analysis"]["content"]
     ])
 
     grant_sections = await handle_generate_grant_template_metadata(
@@ -152,7 +144,7 @@ async def handle_generate_metadata_stage(
     )
 
     await job_manager.add_notification(
-        event=NotificationEvents.TEMPLATE_GENERATED,
+        event=NotificationEvents.METADATA_GENERATED,
         message="Grant template metadata generated",
         notification_type="success",
         data={
@@ -170,20 +162,36 @@ async def handle_save_grant_template(
     extracted_cfp: SectionExtractionStageDTO,
     grant_sections: list[GrantElement | GrantLongFormSection],
     grant_template: GrantTemplate,
+    job_manager: JobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:
     """Save grant template with CFP analysis and generated sections."""
+    await job_manager.ensure_not_cancelled()
+
     try:
         async with session_maker() as session, session.begin():
-            # Update grant template with CFP analysis and grant sections
+            # Extract organization and submission date from extracted_cfp
+            organization = extracted_cfp["organization"]
+            granting_institution_id = organization["id"] if organization else None
+
+            submission_date = None
+            if cfp_analysis["deadline"]:
+                try:
+                    submission_date = datetime.strptime(cfp_analysis["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
+                except ValueError:
+                    logger.warning("Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id})
+
+            # Update grant template with all data
             await session.execute(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template.id)
                 .values(
                     cfp_analysis=cfp_analysis,
                     grant_sections=grant_sections,
-                    rag_generation_status=RagGenerationStatusEnum.FINISHED,
+                    granting_institution_id=granting_institution_id,
+                    submission_date=submission_date,
+                    rag_generation_status=RagGenerationStatusEnum.COMPLETED,
                 )
             )
 
@@ -193,6 +201,19 @@ async def handle_save_grant_template(
                 sections_count=len(grant_sections),
                 trace_id=trace_id,
             )
+
+        # Mark job as completed and send final notification
+        await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+        await job_manager.add_notification(
+            event=NotificationEvents.GRANT_TEMPLATE_CREATED,
+            message="Grant template ready",
+            notification_type="success",
+            data={
+                "template_id": str(grant_template.id),
+                "sections_created": len(grant_sections),
+                "organization": organization["full_name"] if organization else "Unknown",
+            },
+        )
 
         return grant_template
 

@@ -1,22 +1,21 @@
 """CFP analysis stage - comprehensive extraction, organization identification, and analysis."""
 
+import asyncio
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, Final, TypedDict, cast
 
-from packages.db.src.json_objects import CFPAnalysis, OrganizationNamespace
-from packages.db.src.tables import GrantTemplate, GrantTemplateSource, GrantingInstitution, RagSource, TextVector
+from packages.db.src.json_objects import CFPAnalysis, CFPAnalysisData, CFPContentSection, OrganizationNamespace
+from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource, TextVector
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
-from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.identify_organization import identify_granting_institution
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
 from services.rag.src.grant_template.utils.category_extraction import categorize_text
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 if TYPE_CHECKING:
@@ -70,199 +69,121 @@ CFP_ANALYSIS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
-# JSON schema following Google best practices: short property names, minimal nesting, strategic constraints
-cfp_analysis_schema = {
+# Parallel extraction schemas - focused, minimal schemas for each extraction task
+
+# 1. CFP metadata extraction
+cfp_metadata_schema = {
     "type": "object",
     "properties": {
-        "org_id": {
-            "type": "string",
-            "nullable": True,
-            "description": "Organization UUID from mapping, null if not found",
-        },
-        "subject": {
-            "type": "string",
-            "description": "One-sentence funding opportunity summary",
-        },
-        "content": {
+        "org_id": {"type": "string", "nullable": True},
+        "subject": {"type": "string"},
+        "deadline": {"type": "string", "nullable": True},
+    },
+    "required": ["subject"],
+}
+
+# 2. Content structure extraction
+cfp_content_schema = {
+    "type": "object",
+    "properties": {
+        "sections": {
             "type": "array",
-            "description": "Section structure with titles and subtitles",
-            "minItems": 1,
-            "maxItems": 50,
             "items": {
                 "type": "object",
                 "properties": {
-                    "title": {
-                        "type": "string",
-                        "description": "Section title",
-                    },
-                    "subtitles": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 1,
-                        "maxItems": 50,
-                        "description": "Subsection titles or requirements",
-                    },
+                    "title": {"type": "string"},
+                    "subtitles": {"type": "array", "items": {"type": "string"}},
                 },
                 "required": ["title", "subtitles"],
             },
         },
-        "deadline": {
-            "type": "string",
-            "nullable": True,
-            "description": "Submission deadline YYYY-MM-DD, null if not found",
-        },
-        "analysis": {
-            "type": "object",
-            "description": "Requirements analysis by category",
-            "properties": {
-                "categories": {
-                    "type": "array",
-                    "description": "Requirement categories found",
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "enum": ["Research", "Budget", "Team", "Compliance", "Other"],
-                                "description": "Category name",
-                            },
-                            "count": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "Number of requirements in category",
-                            },
-                            "examples": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "maxItems": 5,
-                                "description": "Example requirements from category",
-                            },
-                        },
-                        "required": ["name", "count", "examples"],
-                    },
+    },
+    "required": ["sections"],
+}
+
+# 3. Category analysis extraction
+cfp_categories_schema = {
+    "type": "object",
+    "properties": {
+        "categories": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "count": {"type": "integer"},
+                    "examples": {"type": "array", "items": {"type": "string"}},
                 },
-                "constraints": {
-                    "type": "array",
-                    "description": "Length and formatting constraints",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": ["word_limit", "page_limit", "char_limit", "format"],
-                                "description": "Constraint type",
-                            },
-                            "value": {
-                                "type": "string",
-                                "description": "Constraint value or description",
-                            },
-                            "section": {
-                                "type": "string",
-                                "nullable": True,
-                                "description": "Specific section this applies to",
-                            },
-                        },
-                        "required": ["type", "value"],
-                    },
-                },
-                "metadata": {
-                    "type": "object",
-                    "description": "Analysis metadata",
-                    "properties": {
-                        "total_sections": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "Total number of sections extracted",
-                        },
-                        "total_requirements": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "Total number of requirements found",
-                        },
-                        "source_count": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "Number of source documents analyzed",
-                        },
-                    },
-                    "required": ["total_sections", "total_requirements", "source_count"],
-                },
+                "required": ["name", "count"],
             },
-            "required": ["categories", "constraints", "metadata"],
-        },
-        "error": {
-            "type": "string",
-            "nullable": True,
-            "description": "Error message if analysis fails, null on success",
         },
     },
-    "required": ["org_id", "subject", "content", "deadline", "analysis"],
+    "required": ["categories"],
+}
+
+# 4. Constraint extraction
+cfp_constraints_schema = {
+    "type": "object",
+    "properties": {
+        "constraints": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string"},
+                    "value": {"type": "string"},
+                    "section": {"type": "string", "nullable": True},
+                },
+                "required": ["type", "value"],
+            },
+        },
+    },
+    "required": ["constraints"],
 }
 
 
-class CFPAnalysisResult(TypedDict):
-    """Result of comprehensive CFP analysis."""
+# Result types for parallel extractions
+
+class CFPMetadataResult(TypedDict):
+    """CFP metadata extraction result."""
     org_id: str | None
     subject: str
-    content: list[dict[str, Any]]
     deadline: str | None
-    analysis: dict[str, Any]
-    error: NotRequired[str | None]
 
 
-def validate_cfp_analysis(response: CFPAnalysisResult) -> None:
-    """Validate CFP analysis response and raise appropriate errors if invalid.
+class CFPContentResult(TypedDict):
+    """CFP content structure extraction result."""
+    sections: list[dict[str, Any]]
 
-    Args:
-        response: CFP analysis result to validate
 
-    Raises:
-        InsufficientContextError: If CFP content is insufficient with recovery instructions
-        ValidationError: If validation fails
-    """
-    if not response["content"]:
-        if error := response.get("error"):
-            raise InsufficientContextError(
-                error,
-                context={
-                    "subject": response.get("subject", ""),
-                    "org_id": response.get("org_id"),
-                    "recovery_instruction": "The CFP content appears insufficient. Try extracting more specific guidelines from all sources.",
-                },
-            )
-        raise ValidationError(
-            "No content extracted from any source.",
-            context={
-                "subject": response.get("subject", ""),
-                "org_id": response.get("org_id"),
-                "recovery_instruction": "Extract at least 3-5 relevant guidelines or provide specific error message.",
-            },
-        )
+class CFPCategoriesResult(TypedDict):
+    """CFP category analysis extraction result."""
+    categories: list[dict[str, Any]]
 
-    # Validate analysis structure
-    analysis = response.get("analysis", {})
-    if not analysis.get("categories"):
-        raise ValidationError(
-            "No requirement categories identified in CFP analysis.",
-            context={
-                "content_sections": len(response["content"]),
-                "recovery_instruction": "Analyze content to identify Research, Budget, Team, Compliance, or Other requirements.",
-            },
-        )
 
-    # Validate metadata consistency
-    metadata = analysis.get("metadata", {})
-    actual_sections = len(response["content"])
-    if metadata.get("total_sections") != actual_sections:
-        raise ValidationError(
-            f"Metadata section count mismatch: expected {metadata.get('total_sections')}, got {actual_sections}",
-            context={
-                "actual_sections": actual_sections,
-                "metadata_sections": metadata.get("total_sections"),
-            },
-        )
+class CFPConstraintsResult(TypedDict):
+    """CFP constraint extraction result."""
+    constraints: list[dict[str, Any]]
+
+
+# Validators for parallel extractions
+
+def validate_cfp_metadata(response: CFPMetadataResult) -> None:
+    """Validate CFP metadata extraction."""
+    if not response.get("subject"):
+        raise ValidationError("No subject extracted from CFP")
+
+
+def validate_cfp_content(response: CFPContentResult) -> None:
+    """Validate CFP content extraction."""
+    if not response.get("sections"):
+        raise ValidationError("No content sections extracted from CFP")
+
+
+def validate_cfp_categories(response: CFPCategoriesResult) -> None:
+    """Validate CFP category analysis."""
+    if not response.get("categories"):
+        raise ValidationError("No requirement categories identified")
 
 
 def validate_section_depth_constraint(sections: list[dict[str, Any]]) -> None:
@@ -314,27 +235,247 @@ def validate_section_depth_constraint(sections: list[dict[str, Any]]) -> None:
             )
 
 
-async def extract_cfp_analysis(
+# Parallel extraction functions - focused, minimal LLM calls
+
+async def extract_cfp_metadata(
     task_description: str,
     *,
     trace_id: str,
-) -> CFPAnalysisResult:
-    """Extract and analyze CFP data using LLM.
-
-    Args:
-        task_description: Formatted prompt with RAG sources and organization mapping
-        trace_id: Trace ID for logging
-
-    Returns:
-        CFPAnalysisResult with comprehensive analysis
-    """
+) -> CFPMetadataResult:
+    """Extract CFP metadata: org_id, subject, deadline."""
     return await handle_completions_request(
-        prompt_identifier="cfp_analysis",
-        response_type=CFPAnalysisResult,
-        response_schema=cfp_analysis_schema,
-        validator=validate_cfp_analysis,
+        prompt_identifier="cfp_metadata",
+        response_type=CFPMetadataResult,
+        response_schema=cfp_metadata_schema,
+        validator=validate_cfp_metadata,
         messages=task_description,
-        system_prompt=CFP_ANALYSIS_SYSTEM_PROMPT,
+        system_prompt="Extract organization ID, subject summary, and deadline from CFP. Return valid JSON only.",
+        temperature=TEMPERATURE,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+# Multi-strategy content extraction functions
+
+async def extract_cfp_content_broad(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> CFPContentResult:
+    """Extract broad organizational sections (5-10 major units)."""
+    return await handle_completions_request(
+        prompt_identifier="cfp_content_broad",
+        response_type=CFPContentResult,
+        response_schema=cfp_content_schema,
+        validator=validate_cfp_content,
+        messages=task_description,
+        system_prompt="Extract major organizational sections from CFP. Focus on high-level categories: Awards, Eligibility, Requirements, Budget, Process, Review. Target 5-10 broad sections. Return valid JSON only.",
+        temperature=0.1,  # Low variance for consistency
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.8,
+        trace_id=trace_id,
+    )
+
+
+async def extract_cfp_content_detailed(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> CFPContentResult:
+    """Extract comprehensive detailed sections (12-20 specific units)."""
+    return await handle_completions_request(
+        prompt_identifier="cfp_content_detailed",
+        response_type=CFPContentResult,
+        response_schema=cfp_content_schema,
+        validator=validate_cfp_content,
+        messages=task_description,
+        system_prompt="Extract comprehensive detailed sections from CFP. Break down into specific categories: each award type, eligibility criteria, budget requirements, application components, deadlines, review process, terms. Target 12-20 detailed sections. Return valid JSON only.",
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.8,
+        trace_id=trace_id,
+    )
+
+
+async def extract_cfp_content_hierarchical(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> CFPContentResult:
+    """Extract structured hierarchical sections (category → subsections)."""
+    return await handle_completions_request(
+        prompt_identifier="cfp_content_hierarchical",
+        response_type=CFPContentResult,
+        response_schema=cfp_content_schema,
+        validator=validate_cfp_content,
+        messages=task_description,
+        system_prompt="Extract structured hierarchical sections from CFP. Organize into logical categories (Awards, Eligibility, Application Requirements, Budget, Submission Process, Review) and break each into relevant subsections. Maintain clear 2-level structure. Return valid JSON only.",
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.8,
+        trace_id=trace_id,
+    )
+
+
+# Consensus merge and validation functions
+
+def calculate_section_similarity(section1: dict[str, Any], section2: dict[str, Any]) -> float:
+    """Calculate semantic similarity between two sections based on titles."""
+    title1 = section1["title"].lower()
+    title2 = section2["title"].lower()
+
+    # Simple overlap-based similarity
+    words1 = set(title1.split())
+    words2 = set(title2.split())
+
+    if not words1 and not words2:
+        return 1.0
+    if not words1 or not words2:
+        return 0.0
+
+    intersection = words1.intersection(words2)
+    union = words1.union(words2)
+
+    return len(intersection) / len(union)
+
+
+def merge_similar_sections(sections: list[dict[str, Any]], similarity_threshold: float = 0.6) -> list[dict[str, Any]]:
+    """Merge sections with similar titles, combining their subtitles."""
+    merged = []
+    used_indices = set()
+
+    for i, section in enumerate(sections):
+        if i in used_indices:
+            continue
+
+        merged_section = {
+            "title": section["title"],
+            "subtitles": list(section["subtitles"])  # Copy to avoid mutation
+        }
+        used_indices.add(i)
+
+        # Find similar sections to merge
+        for j, other_section in enumerate(sections[i + 1:], i + 1):
+            if j in used_indices:
+                continue
+
+            similarity = calculate_section_similarity(section, other_section)
+            if similarity >= similarity_threshold:
+                # Merge subtitles, removing duplicates
+                existing_subtitles = set(merged_section["subtitles"])
+                for subtitle in other_section["subtitles"]:
+                    if subtitle not in existing_subtitles:
+                        merged_section["subtitles"].append(subtitle)
+                        existing_subtitles.add(subtitle)
+                used_indices.add(j)
+
+        merged.append(merged_section)
+
+    return merged
+
+
+def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
+    """Validate that essential CFP concepts are covered in the extraction."""
+    sections = result["sections"]
+    all_text = " ".join([
+        section["title"] + " " + " ".join(section["subtitles"])
+        for section in sections
+    ]).lower()
+
+    # Essential CFP concepts to check for
+    concept_patterns = {
+        "funding": ["fund", "budget", "cost", "money", "dollar", "award", "grant"],
+        "eligibility": ["eligible", "qualify", "requirement", "criteria", "must", "should"],
+        "application": ["apply", "submit", "proposal", "application", "deadline", "due"],
+        "awards": ["award", "grant", "prize", "funding", "opportunity"],
+        "process": ["process", "review", "evaluation", "selection", "timeline"],
+        "requirements": ["require", "needed", "necessary", "mandatory", "document"]
+    }
+
+    coverage = {}
+    for concept, patterns in concept_patterns.items():
+        found = any(pattern in all_text for pattern in patterns)
+        coverage[concept] = found
+
+    coverage_score = sum(coverage.values()) / len(coverage.values())
+
+    return {
+        "coverage_score": coverage_score,
+        "coverage_details": coverage,
+        "total_sections": len(sections),
+        "total_subtitles": sum(len(section["subtitles"]) for section in sections),
+        "avg_subtitles_per_section": sum(len(section["subtitles"]) for section in sections) / len(sections) if sections else 0,
+    }
+
+
+def merge_cfp_extractions(
+    broad: CFPContentResult,
+    detailed: CFPContentResult,
+    hierarchical: CFPContentResult,
+) -> tuple[CFPContentResult, dict[str, Any]]:
+    """Intelligently merge three extraction strategies into comprehensive result."""
+
+    # Combine all sections from all three strategies
+    all_sections = []
+    all_sections.extend(broad["sections"])
+    all_sections.extend(detailed["sections"])
+    all_sections.extend(hierarchical["sections"])
+
+    # Merge similar sections and deduplicate
+    merged_sections = merge_similar_sections(all_sections, similarity_threshold=0.6)
+
+    # Create merged result
+    merged_result = CFPContentResult(sections=merged_sections)
+
+    # Validate semantic completeness
+    quality_metrics = validate_semantic_completeness(merged_result)
+
+    # Add strategy info to metrics
+    quality_metrics["strategy_counts"] = {
+        "broad": len(broad["sections"]),
+        "detailed": len(detailed["sections"]),
+        "hierarchical": len(hierarchical["sections"]),
+        "merged": len(merged_sections),
+    }
+
+    return merged_result, quality_metrics
+
+
+async def extract_cfp_categories(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> CFPCategoriesResult:
+    """Extract CFP requirement categories with examples."""
+    return await handle_completions_request(
+        prompt_identifier="cfp_categories",
+        response_type=CFPCategoriesResult,
+        response_schema=cfp_categories_schema,
+        validator=validate_cfp_categories,
+        messages=task_description,
+        system_prompt="Analyze CFP to identify requirement categories (Research, Budget, Team, Compliance, Other) with counts and examples. Return valid JSON only.",
+        temperature=TEMPERATURE,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+async def extract_cfp_constraints(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> CFPConstraintsResult:
+    """Extract CFP length and formatting constraints."""
+    return await handle_completions_request(
+        prompt_identifier="cfp_constraints",
+        response_type=CFPConstraintsResult,
+        response_schema=cfp_constraints_schema,
+        validator=None,  # Optional extraction
+        messages=task_description,
+        system_prompt="Extract length limits (word/page/char) and formatting requirements from CFP. Return valid JSON only.",
         temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,
@@ -428,7 +569,7 @@ async def handle_cfp_analysis(
         chunks = chunks_by_source.get(source_id, [])
 
         # Perform NLP categorization
-        nlp_analysis = await categorize_text(text_content, trace_id=trace_id)
+        nlp_analysis = await categorize_text(text_content)
 
         rag_sources.append(
             RagSourceData(
@@ -445,29 +586,58 @@ async def handle_cfp_analysis(
     # Format prompt with RAG sources and organization mapping
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
     formatted_org_mapping = "\n".join(
-        f"- {org_id}: {data['full_name']} ({data['abbreviation']})" if data['abbreviation']
+        f"- {org_id}: {data['full_name']} ({data['abbreviation']})" if data["abbreviation"]
         else f"- {org_id}: {data['full_name']}"
         for org_id, data in organization_mapping.items()
     )
 
-    task_description = CFP_ANALYSIS_USER_PROMPT.format(
+    task_description = cast(str, CFP_ANALYSIS_USER_PROMPT.substitute(
         rag_sources=formatted_sources,
         organization_mapping=formatted_org_mapping,
+    ))
+
+    # Execute parallel extractions with multi-strategy consensus approach
+    logger.info("Starting multi-strategy CFP extractions", trace_id=trace_id)
+
+    # Extract metadata, categories, and constraints in parallel (these are stable)
+    # Also extract content using three different strategies for consensus
+    (
+        metadata_result,
+        categories_result,
+        constraints_result,
+        content_broad,
+        content_detailed,
+        content_hierarchical,
+    ) = await asyncio.gather(
+        extract_cfp_metadata(task_description, trace_id=trace_id),
+        extract_cfp_categories(task_description, trace_id=trace_id),
+        extract_cfp_constraints(task_description, trace_id=trace_id),
+        extract_cfp_content_broad(task_description, trace_id=trace_id),
+        extract_cfp_content_detailed(task_description, trace_id=trace_id),
+        extract_cfp_content_hierarchical(task_description, trace_id=trace_id),
     )
 
-    # Extract and analyze CFP data
-    with_evaluation_decorator = with_evaluation(**get_evaluation_kwargs("cfp_analysis"))
-    extract_with_eval = with_evaluation_decorator(extract_cfp_analysis)
+    await job_manager.ensure_not_cancelled()
 
-    extraction_result = await extract_with_eval(
-        task_description=task_description,
+    # Merge the three content extraction strategies using consensus
+    logger.info("Merging multi-strategy content extractions", trace_id=trace_id)
+    content_result, quality_metrics = merge_cfp_extractions(
+        content_broad,
+        content_detailed,
+        content_hierarchical,
+    )
+
+    logger.info(
+        "Multi-strategy extraction completed",
+        quality_metrics=quality_metrics,
         trace_id=trace_id,
     )
 
     await job_manager.ensure_not_cancelled()
 
     # Perform organization identification if not found in extraction
-    if not extraction_result["org_id"]:
+    org_id = metadata_result["org_id"]
+    if not org_id:
         logger.info("Organization not identified in extraction, using hybrid identification", trace_id=trace_id)
 
         # Combine all text content for organization identification
@@ -480,7 +650,6 @@ async def handle_cfp_analysis(
         )
 
         if org_id and confidence >= 0.85:
-            extraction_result["org_id"] = org_id
             logger.info(
                 "Organization identified via hybrid method",
                 org_id=org_id,
@@ -489,32 +658,47 @@ async def handle_cfp_analysis(
                 trace_id=trace_id,
             )
 
+    # Build analysis metadata
+    total_sections = len(content_result["sections"])
+    total_requirements = sum(cat["count"] for cat in categories_result["categories"])
+    source_count = len(rag_sources)
+
+    analysis_metadata = {
+        "categories": categories_result["categories"],
+        "constraints": constraints_result["constraints"],
+        "metadata": {
+            "total_sections": total_sections,
+            "total_requirements": total_requirements,
+            "source_count": source_count,
+        },
+    }
+
     # Convert to CFPAnalysis format
     organization = None
-    if extraction_result["org_id"]:
-        org_data = organization_mapping.get(extraction_result["org_id"])
+    if org_id:
+        org_data = organization_mapping.get(org_id)
         if org_data:
             organization = OrganizationNamespace(
-                id=extraction_result["org_id"],
+                id=org_id,
                 abbreviation=org_data["abbreviation"],
                 full_name=org_data["full_name"],
             )
 
     cfp_analysis = CFPAnalysis(
-        subject=extraction_result["subject"],
-        content=extraction_result["content"],
-        deadline=extraction_result["deadline"],
-        org_id=extraction_result["org_id"],
-        analysis_metadata=extraction_result["analysis"],
+        subject=metadata_result["subject"],
+        content=cast(list[CFPContentSection], content_result["sections"]),
+        deadline=metadata_result["deadline"],
+        org_id=org_id,
+        analysis_metadata=cast(CFPAnalysisData, analysis_metadata),
         organization=organization,
     )
 
     logger.info(
         "CFP analysis completed successfully",
-        sections_count=len(extraction_result["content"]),
-        org_id=extraction_result["org_id"],
-        has_deadline=bool(extraction_result["deadline"]),
-        categories_found=len(extraction_result["analysis"]["categories"]),
+        sections_count=total_sections,
+        org_id=org_id,
+        has_deadline=bool(metadata_result["deadline"]),
+        categories_found=len(categories_result["categories"]),
         trace_id=trace_id,
     )
 

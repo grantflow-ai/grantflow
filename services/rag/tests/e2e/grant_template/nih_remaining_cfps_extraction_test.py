@@ -10,11 +10,12 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplateSource, TextVector
+from packages.db.src.tables import GrantingInstitution, GrantTemplateSource, Organization, RagSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
+
 from .conftest import create_test_grant_template
 
 
@@ -148,9 +149,9 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     # Check for key P01 program sections
     research_found = any("research" in title or "project" in title for title in extracted_titles)
-    program_found = any("program" in title or "multi" in title or "component" in title for title in extracted_titles)
-    leadership_found = any("leadership" in title or "director" in title for title in extracted_titles)
-    core_found = any("core" in title or "administrative" in title for title in extracted_titles)
+    any("program" in title or "multi" in title or "component" in title for title in extracted_titles)
+    any("leadership" in title or "director" in title for title in extracted_titles)
+    any("core" in title or "administrative" in title for title in extracted_titles)
 
     assert research_found, f"Should find research project sections in: {extracted_titles}"
 
@@ -314,9 +315,9 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     # Check for key diabetes digital health sections
     research_found = any("research" in title or "aim" in title for title in extracted_titles)
-    clinical_found = any("clinical" in title or "trial" in title for title in extracted_titles)
-    technology_found = any("technology" in title or "digital" in title for title in extracted_titles)
-    team_found = any("team" in title or "environment" in title for title in extracted_titles)
+    any("clinical" in title or "trial" in title for title in extracted_titles)
+    any("technology" in title or "digital" in title for title in extracted_titles)
+    any("team" in title or "environment" in title for title in extracted_titles)
 
     assert research_found, f"Should find research sections in: {extracted_titles}"
 
@@ -419,7 +420,7 @@ async def test_nih_diabetes_section_structure_validation(
     research_sections = [title for title in section_titles if "research" in title]
     clinical_sections = [title for title in section_titles if "clinical" in title or "trial" in title]
     technology_sections = [title for title in section_titles if "technology" in title or "digital" in title]
-    team_sections = [title for title in section_titles if "team" in title or "environment" in title]
+    [title for title in section_titles if "team" in title or "environment" in title]
 
     assert len(research_sections) > 0, f"Should have research sections: {section_titles}"
 

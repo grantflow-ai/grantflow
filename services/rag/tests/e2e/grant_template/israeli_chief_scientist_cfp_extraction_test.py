@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplateSource, TextVector
+from packages.db.src.tables import GrantingInstitution, GrantTemplateSource, Organization, RagSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+
 from .conftest import create_test_grant_template
 
 
@@ -48,7 +49,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
     )
 
     # Read HTML CFP content
-    cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding='utf-8')
+    cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding="utf-8")
     assert len(cfp_content) > 100, "CFP content should not be empty"
 
     async with async_session_maker() as session, session.begin():
@@ -108,12 +109,12 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
     # Validate CFP analysis structure
     assert cfp_analysis is not None, "CFP analysis should return data"
-    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
-    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
-    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
+    assert cfp_analysis["subject"] is not None, "CFP analysis should contain subject"
+    assert cfp_analysis["content"] is not None, "CFP analysis should contain content sections"
+    assert cfp_analysis["org_id"] is not None, "CFP analysis should contain org_id"
 
-    subject = cfp_analysis.subject
-    content_sections = cfp_analysis.content
+    subject = cfp_analysis["subject"]
+    content_sections = cfp_analysis["content"]
 
     # Validate subject for Israeli Chief Scientist
     assert isinstance(subject, str), "Subject should be string"
@@ -127,13 +128,14 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
     assert israeli_indicators, f"Subject should indicate Israeli/health ministry context: {subject}"
 
     # Validate organization identification
-    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
-    assert cfp_analysis.organization.full_name == israeli_granting_institution.full_name, \
-        f"Should identify Israeli institution: {cfp_analysis.organization.full_name}"
+    assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
+    assert cfp_analysis["organization"]["full_name"] == israeli_granting_institution.full_name, (
+        f"Should identify Israeli institution: {cfp_analysis['organization']['full_name']}"
+    )
 
     # Validate analysis metadata
-    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
+    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
 
     # Validate content structure
     assert isinstance(content_sections, list), "Content should be list of sections"
@@ -158,17 +160,16 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
     project_found = any("project" in title or "information" in title for title in extracted_titles)
     research_found = any("research" in title or "plan" in title for title in extracted_titles)
     budget_found = any("budget" in title or "funding" in title for title in extracted_titles)
-    team_found = any("team" in title or "collaboration" in title for title in extracted_titles)
+    any("team" in title or "collaboration" in title for title in extracted_titles)
 
     assert project_found, f"Should find project information section in: {extracted_titles}"
     assert research_found, f"Should find research-related section in: {extracted_titles}"
     assert budget_found, f"Should find budget section in: {extracted_titles}"
 
     # Check section content for Israeli-specific terminology
-    all_text = " ".join([
-        section["title"] + " " + " ".join(section["subtitles"])
-        for section in content_sections
-    ]).lower()
+    all_text = " ".join(
+        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
+    ).lower()
 
     israeli_keywords = ["project", "research", "budget", "investigator", "institution", "methodology"]
     found_keywords = [kw for kw in israeli_keywords if kw in all_text]
@@ -245,7 +246,7 @@ async def test_israeli_chief_scientist_template_generation_pipeline(
     )
 
     # Read HTML content and create RAG source
-    cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding='utf-8')
+    cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding="utf-8")
 
     async with async_session_maker() as session, session.begin():
         rag_source = RagSource(
@@ -274,8 +275,7 @@ async def test_israeli_chief_scientist_template_generation_pipeline(
 
     # Run the complete template generation pipeline
     await handle_grant_template_pipeline(
-        grant_template_id=str(grant_template.id),
-        organization_mapping=organization_mapping,
+        grant_template=grant_template,
         session_maker=async_session_maker,
         trace_id="israeli-chief-scientist-pipeline-e2e-test",
     )
@@ -298,7 +298,7 @@ async def test_israeli_chief_scientist_template_generation_pipeline(
         assert updated_template is not None, "Template should exist after pipeline"
 
         # Check if CFP data was extracted and stored
-        if hasattr(updated_template, 'cfp_analysis') and updated_template.cfp_analysis:
+        if hasattr(updated_template, "cfp_analysis") and updated_template.cfp_analysis:
             cfp_data = updated_template.cfp_analysis
             assert "subject" in cfp_data, "CFP analysis should contain subject"
             assert "content" in cfp_data, "CFP analysis should contain content"
@@ -380,7 +380,8 @@ async def test_israeli_chief_scientist_section_structure_validation(
 
     israeli_form_elements = ["title", "investigator", "institution", "duration", "objectives", "methodology", "budget"]
     found_form_elements = [
-        element for element in israeli_form_elements
+        element
+        for element in israeli_form_elements
         if any(element in subsection.lower() for subsection in all_subsections)
     ]
     assert len(found_form_elements) >= 4, f"Should have form-like structure elements: {found_form_elements}"

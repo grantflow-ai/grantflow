@@ -2,15 +2,15 @@ import json
 import time
 from pathlib import Path
 from statistics import mean
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from kreuzberg import extract_file
-from packages.db.src.json_objects import CategorizationAnalysisResult
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.utils.category_extraction import (
     CATEGORY_LABELS,
+    CategorizationAnalysisResult,
     categorize_text,
     format_nlp_hints_for_extraction,
 )
@@ -325,7 +325,10 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
 
 async def test_categorize_real_cfp_nih_par_25_450() -> None:
     """Test categorization on NIH PAR-25-450 CFP."""
-    cfp_path = TEST_DATA_DIR / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    cfp_path = (
+        TEST_DATA_DIR
+        / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    )
 
     assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
 
@@ -334,20 +337,13 @@ async def test_categorize_real_cfp_nih_par_25_450() -> None:
 
     result = await categorize_text(cfp_text)
 
-    print(f"\n\n{'='*80}")
-    print(f"NIH PAR-25-450 Categorization Results")
-    print(f"{'='*80}")
-
     for category in CATEGORY_LABELS:
-        sentences = result[category]
+        sentences = cast("list[str]", result.get(category, []))
         if sentences:
-            print(f"\n{category.upper()} ({len(sentences)} items):")
-            for i, sentence in enumerate(sentences[:5], 1):
-                print(f"  {i}. {sentence[:150]}...")
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
 
     formatted_hints = format_nlp_hints_for_extraction(result)
-    print(f"\n\nFORMATTED HINTS:")
-    print(formatted_hints)
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
@@ -355,9 +351,13 @@ async def test_categorize_real_cfp_nih_par_25_450() -> None:
     # Quality assertions - verify reasonable extraction counts for NIH CFP
     # NIH CFPs are typically long, formal documents with many requirements
     assert len(result["orders"]) >= 80, f"Orders count {len(result['orders'])} too low for NIH CFP"
-    assert len(result["writing_related"]) >= 80, f"Writing_related count {len(result['writing_related'])} too low for NIH CFP"
+    assert len(result["writing_related"]) >= 80, (
+        f"Writing_related count {len(result['writing_related'])} too low for NIH CFP"
+    )
     assert len(result["date_time"]) >= 15, f"Date_time count {len(result['date_time'])} too low for NIH CFP"
-    assert len(result["evaluation_criteria"]) >= 60, f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for NIH CFP"
+    assert len(result["evaluation_criteria"]) >= 60, (
+        f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for NIH CFP"
+    )
 
     # Verify formatted hints focus on actionable categories
     assert "orders" in formatted_hints
@@ -377,20 +377,13 @@ async def test_categorize_real_cfp_mra() -> None:
 
     result = await categorize_text(cfp_text)
 
-    print(f"\n\n{'='*80}")
-    print(f"Melanoma Research Alliance Categorization Results")
-    print(f"{'='*80}")
-
     for category in CATEGORY_LABELS:
-        sentences = result[category]
+        sentences = cast("list[str]", result.get(category, []))
         if sentences:
-            print(f"\n{category.upper()} ({len(sentences)} items):")
-            for i, sentence in enumerate(sentences[:5], 1):
-                print(f"  {i}. {sentence[:150]}...")
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
 
     formatted_hints = format_nlp_hints_for_extraction(result)
-    print(f"\n\nFORMATTED HINTS:")
-    print(formatted_hints)
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
@@ -398,9 +391,13 @@ async def test_categorize_real_cfp_mra() -> None:
     # Quality assertions - verify reasonable extraction counts for MRA CFP
     # MRA CFPs are detailed RFPs with comprehensive requirements
     assert len(result["orders"]) >= 100, f"Orders count {len(result['orders'])} too low for MRA CFP"
-    assert len(result["writing_related"]) >= 80, f"Writing_related count {len(result['writing_related'])} too low for MRA CFP"
+    assert len(result["writing_related"]) >= 80, (
+        f"Writing_related count {len(result['writing_related'])} too low for MRA CFP"
+    )
     assert len(result["date_time"]) >= 40, f"Date_time count {len(result['date_time'])} too low for MRA CFP"
-    assert len(result["evaluation_criteria"]) >= 15, f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for MRA CFP"
+    assert len(result["evaluation_criteria"]) >= 15, (
+        f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for MRA CFP"
+    )
 
     # Verify formatted hints focus on actionable categories
     assert "orders" in formatted_hints
@@ -420,20 +417,13 @@ async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
 
     result = await categorize_text(cfp_text)
 
-    print(f"\n\n{'='*80}")
-    print(f"Israeli Chief Scientist Categorization Results")
-    print(f"{'='*80}")
-
     for category in CATEGORY_LABELS:
-        sentences = result[category]
+        sentences = cast("list[str]", result.get(category, []))
         if sentences:
-            print(f"\n{category.upper()} ({len(sentences)} items):")
-            for i, sentence in enumerate(sentences[:5], 1):
-                print(f"  {i}. {sentence[:150]}...")
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
 
     formatted_hints = format_nlp_hints_for_extraction(result)
-    print(f"\n\nFORMATTED HINTS:")
-    print(formatted_hints)
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
@@ -441,7 +431,9 @@ async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
     # Quality assertions - smaller document (application template, not full CFP)
     # Israeli Chief Scientist CFP is a brief application template
     assert len(result["orders"]) >= 3, f"Orders count {len(result['orders'])} too low for template"
-    assert len(result["writing_related"]) >= 5, f"Writing_related count {len(result['writing_related'])} too low for template"
+    assert len(result["writing_related"]) >= 5, (
+        f"Writing_related count {len(result['writing_related'])} too low for template"
+    )
 
     # Verify formatted hints focus on actionable categories
     assert "orders" in formatted_hints or "writing_related" in formatted_hints

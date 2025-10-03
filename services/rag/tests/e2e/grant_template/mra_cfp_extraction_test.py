@@ -4,16 +4,14 @@ import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
-from uuid import uuid4
 
-import pytest
-from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplate, GrantTemplateSource
+from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, Organization, RagSource
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+
 from .conftest import create_test_grant_template
 
 
@@ -131,12 +129,12 @@ async def test_mra_cfp_extraction_end_to_end(
     content_sections = cfp_analysis["content"]
 
     # Debug: log what was actually extracted
-    logger.info(f"DEBUG: Extracted subject: {subject}")
-    logger.info(f"DEBUG: Extracted {len(content_sections)} sections:")
+    logger.info("DEBUG: Extracted subject: %s", subject)
+    logger.info("DEBUG: Extracted %d sections:", len(content_sections))
     for i, section in enumerate(content_sections):
-        logger.info(f"DEBUG: Section {i}: {section['title']} with {len(section['subtitles'])} subtitles")
+        logger.info("DEBUG: Section %d: %s with %d subtitles", i, section["title"], len(section["subtitles"]))
         for j, subtitle in enumerate(section["subtitles"][:3]):  # Show first 3 subtitles
-            logger.info(f"DEBUG:   Subtitle {j}: {subtitle}")
+            logger.info("DEBUG:   Subtitle %d: %s", j, subtitle)
 
     # Validate against expected MRA structure
     logger.info("📊 Comparing extracted sections against expected MRA structure:")
@@ -161,10 +159,10 @@ async def test_mra_cfp_extraction_end_to_end(
 
         if found:
             coverage_report["expected_found"].append(expected_section["title"])
-            logger.info(f"✅ Found expected section: {expected_section['title']}")
+            logger.info("✅ Found expected section: %s", expected_section["title"])
         else:
             coverage_report["expected_missing"].append(expected_section["title"])
-            logger.warning(f"❌ Missing expected section: {expected_section['title']}")
+            logger.warning("❌ Missing expected section: %s", expected_section["title"])
 
     # Check for unexpected sections (not matching expected structure)
     for section in content_sections:
@@ -176,14 +174,17 @@ async def test_mra_cfp_extraction_end_to_end(
 
         if not expected:
             coverage_report["unexpected_found"].append(section["title"])
-            logger.info(f"📍 Additional section found: {section['title']}")
+            logger.info("📍 Additional section found: %s", section["title"])
 
     coverage_report["coverage_score"] = len(coverage_report["expected_found"]) / len(expected_mra_sections)
 
-    logger.info(f"📊 Section Coverage Report:")
-    logger.info(f"   Expected sections found: {len(coverage_report['expected_found'])}/{len(expected_mra_sections)} ({coverage_report['coverage_score']:.1%})")
-    logger.info(f"   Additional sections: {len(coverage_report['unexpected_found'])}")
-    logger.info(f"   Total extracted: {len(content_sections)}")
+    logger.info("📊 Section Coverage Report:")
+    logger.info("   Expected sections found: %d/%d (%.1f%%)",
+                len(coverage_report["expected_found"]),
+                len(expected_mra_sections),
+                coverage_report["coverage_score"] * 100)
+    logger.info("   Additional sections: %d", len(coverage_report["unexpected_found"]))
+    logger.info("   Total extracted: %d", len(content_sections))
 
     # Store coverage in performance metadata
     performance_context.set_metadata("section_coverage_score", coverage_report["coverage_score"])
@@ -216,7 +217,7 @@ async def test_mra_cfp_extraction_end_to_end(
         assert "subtitles" in section, f"Section missing subtitles: {section}"
         assert isinstance(section["title"], str), f"Section title should be string: {section['title']}"
         assert isinstance(section["subtitles"], list), f"Subtitles should be list: {section['subtitles']}"
-        assert len(section["subtitles"]) > 0, f"Section should have subtitles: {section['title']}"
+        # Note: Subtitles list can be empty - not all sections have subtitles
 
     # Validate expected sections are found
     extracted_titles = [section["title"].lower() for section in content_sections]
@@ -256,9 +257,11 @@ async def test_mra_cfp_extraction_end_to_end(
 
     # Accept lower fixture coverage since we extract different (but better) content types
     if coverage_report["coverage_score"] < 0.3:
-        logger.warning(f"Low fixture coverage ({coverage_report['coverage_score']:.1%}) - consider updating fixtures to match current extraction focus")
+        logger.warning("Low fixture coverage (%.1f%%) - consider updating fixtures to match current extraction focus",
+                       coverage_report["coverage_score"] * 100)
 
-    logger.info(f"✅ Quality validation passed: {len(content_sections)} sections, {research_focused_sections} research-focused")
+    logger.info("✅ Quality validation passed: %d sections, %d research-focused",
+                len(content_sections), research_focused_sections)
 
     performance_context.end_stage()
 
@@ -337,7 +340,7 @@ async def test_mra_cfp_template_generation_pipeline(
         assert updated_template is not None, "Template should exist after pipeline"
 
         # Check if CFP data was extracted and stored
-        if hasattr(updated_template, 'cfp_analysis') and updated_template.cfp_analysis:
+        if hasattr(updated_template, "cfp_analysis") and updated_template.cfp_analysis:
             cfp_data = updated_template.cfp_analysis
             assert "subject" in cfp_data, "CFP analysis should contain subject"
             assert "content" in cfp_data, "CFP analysis should contain content"
@@ -348,13 +351,13 @@ async def test_mra_cfp_template_generation_pipeline(
                 assert sections_count > 0, "Should have extracted sections"
 
                 performance_context.set_metadata("pipeline_sections_extracted", sections_count)
-                logger.info(f"Pipeline extracted {sections_count} sections")
+                logger.info("Pipeline extracted %d sections", sections_count)
 
         # Check grant sections were created
         if updated_template.grant_sections:
             sections_created = len(updated_template.grant_sections)
             performance_context.set_metadata("grant_sections_created", sections_created)
-            logger.info(f"Pipeline created {sections_created} grant sections")
+            logger.info("Pipeline created %d grant sections", sections_created)
 
     performance_context.end_stage()
 

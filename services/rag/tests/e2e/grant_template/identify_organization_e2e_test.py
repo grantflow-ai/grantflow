@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Any
 
-import pytest
 from kreuzberg import extract_file
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -82,7 +81,7 @@ async def test_identify_melanoma_research_alliance(async_session_maker: async_se
     parsed = await extract_file(cfp_path)
     cfp_text = parsed.content
 
-    org_id, confidence, method = await identify_granting_institution(
+    org_id, confidence, _method = await identify_granting_institution(
         cfp_text=cfp_text,
         session_maker=async_session_maker,
         trace_id="test_mra",
@@ -101,7 +100,7 @@ async def test_identify_israeli_chief_scientist(async_session_maker: async_sessi
     parsed = await extract_file(cfp_path)
     cfp_text = parsed.content
 
-    org_id, confidence, method = await identify_granting_institution(
+    org_id, confidence, _method = await identify_granting_institution(
         cfp_text=cfp_text,
         session_maker=async_session_maker,
         trace_id="test_israeli_chief_scientist",

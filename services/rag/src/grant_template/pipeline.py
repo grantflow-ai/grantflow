@@ -104,7 +104,7 @@ async def handle_grant_template_pipeline(
         checkpoint_data = await job_manager.get_checkpoint_data()
 
         match current_stage:
-            case GrantTemplateStageEnum.UNIFIED_CFP_ANALYSIS:
+            case GrantTemplateStageEnum.CFP_ANALYSIS:
                 cfp_analysis_result = await handle_cfp_analysis_stage(
                     grant_template=grant_template,
                     job_manager=job_manager,

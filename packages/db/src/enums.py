@@ -38,7 +38,7 @@ class NotificationTypeEnum(StrEnum):
 
 
 class GrantTemplateStageEnum(StrEnum):
-    UNIFIED_CFP_ANALYSIS = "UNIFIED_CFP_ANALYSIS"
+    CFP_ANALYSIS = "CFP_ANALYSIS"
     EXTRACT_SECTIONS = "EXTRACT_SECTIONS"
     GENERATE_METADATA = "GENERATE_METADATA"
 

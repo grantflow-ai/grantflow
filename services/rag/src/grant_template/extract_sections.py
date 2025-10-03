@@ -1,20 +1,20 @@
+import asyncio
 import re
 from collections import defaultdict
-from functools import partial
-from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
+from difflib import SequenceMatcher
+from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict, cast
 
 from packages.db.src.json_objects import (
     CFPAnalysis,
     CFPAnalysisConstraint,
     CFPConstraint,
-)
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
-from packages.shared_utils.src.dto import (
     CFPContentSection,
+)
+from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GEMINI_FLASH_MODEL
+from packages.shared_utils.src.dto import (
     ExtractedSectionDTO,
 )
 from packages.shared_utils.src.serialization import serialize
-from difflib import SequenceMatcher
 
 if TYPE_CHECKING:
     from services.rag.src.grant_template.dto import StageDTO
@@ -27,10 +27,8 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import util
 
-from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -39,8 +37,8 @@ __all__ = [
     "ExtractedSectionDTO",
     "ExtractedSections",
     "extract_sections",
-    "validate_section_extraction",
     "handle_extract_sections",
+    "validate_section_extraction",
 ]
 
 logger = get_logger(__name__)
@@ -55,109 +53,31 @@ async def get_exclude_embeddings() -> list[float]:
     return exclude_embeddings_ref.value
 
 
+# IMPORTANT: ONLY include purely administrative/instructional sections NOT written by applicants
+# DO NOT include required application sections like Budget, Biosketches, Data Management, etc.
 EXCLUDE_CATEGORIES = [
+    # Review process (not for applicants to write)
     "Advisory Input",
-    "Application Processing",
-    "Approvals",
-    "Certifications",
-    "Checklists",
-    "Clearances",
-    "Contact Information",
-    "Cover Sheets",
-    "Credentials",
-    "Eligibility Criteria",
     "Evaluation Criteria",
     "Expert Reviews",
     "Feedback",
+    "Reviewer Instructions",
+    "Reviewers",
+
+    # Navigation/structure (not content sections)
     "Front Matter",
     "Navigation Elements",
-    "Page Limits",
-    "Policies",
-    "Reviewers",
-    "Reviewer Instructions",
-    "Submission Forms",
-    "Submission Guidelines",
-    "Submission Requirements",
-    "Supporting Documentation",
-    "Appendices",
-    "Bibliography",
-    "Citations",
-    "Figure Index",
-    "References",
-    "Supplements",
     "Table Index",
+    "Figure Index",
     "Table of Contents",
     "ToC",
-    "Biosketch",
-    "C.V.",
-    "CVs",
-    "Current/Pending Support",
-    "Curriculum Vitae",
-    "Department Details",
-    "Institutional Information",
-    "Laboratory/Center Data",
-    "Letters of Support",
-    "Patent Records",
-    "Personnel",
-    "Previous Funding",
-    "Previous Grant Performance",
-    "Publication Records",
-    "Breakdown of Subcontracted Work Costs",
-    "Budget Justification",
-    "Budget",
-    "Computing Costs",
-    "Computing Resources",
-    "Conference Travel",
-    "Costs",
-    "Equipment List",
-    "Equipment Specs",
-    "Equipment Usage",
-    "Expenses",
-    "Facility Access",
-    "Facility Use Agreements",
-    "Funding Justification Statements",
-    "High-Performance Computing Resources",
-    "Infrastructure",
-    "Laboratory Space",
-    "Space Allocation",
-    "Biosafety Protocol",
-    "Collaboration Agreements",
-    "Data Use Agreements",
-    "Ethical Approvals",
-    "Ethical Use of AI Authorization",
-    "IRB",
-    "Laboratory Safety",
-    "Open Science Compliance Plan",
-    "Other Authorizations",
-    "Protocol Details",
-    "Quality Assurance",
-    "Quality Control",
-    "Radiation Safety",
-    "Safety Certifications",
-    "Safety Protocols",
-    "Standard Operating Procedures",
-    "Algorithms & Code Repositories",
-    "Analysis Scripts",
-    "Code Sharing",
-    "Data Supplements",
-    "Dataset Provenance Documentation",
-    "Interactive Visualizations or Datasets",
-    "Raw Data",
-    "Software Documentation",
-    "Career Goals",
-    "Coursework",
-    "DEI",
-    "Diversity",
-    "Partnerships",
-    "Partnerships with Non-STEM Fields",
-    "Skill Development",
-    "Specialized Training",
-    "STEM Career Development",
-    "Training",
-    "Workshops on Ethical Research Practices",
-    "Data Management",
-    "Environmental Impact Assessment",
-    "Project Management",
+
+    # Submission process/forms (not narrative content)
+    "Application Processing",
+    "Contact Information",
+    "Cover Sheets",
+    "Page Limits",
+    "Submission Forms",
 ]
 
 
@@ -263,6 +183,181 @@ For each section provide:
     """,
 )
 
+
+# ============================================================================
+# Parallel Extraction Schemas - Focused, minimal schemas for better quality
+# ============================================================================
+
+# 1. Section structure extraction
+section_structure_schema = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "id": {"type": "string"},
+                    "order": {"type": "integer"},
+                    "parent_id": {"type": "string", "nullable": True},
+                },
+                "required": ["title", "id", "order", "parent_id"],
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+# 2. Section classification extraction
+section_classification_schema = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "long_form": {"type": "boolean"},
+                    "is_plan": {"type": "boolean", "nullable": True},
+                    "title_only": {"type": "boolean", "nullable": True},
+                    "clinical": {"type": "boolean", "nullable": True},
+                    "needs_writing": {"type": "boolean"},
+                },
+                "required": ["id", "long_form", "needs_writing"],
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+# 3. Section enrichment extraction (CFP constraints and guidelines)
+section_enrichment_schema = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    # guidelines: optional field, if present must be array of strings
+                    "guidelines": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,  # If present, must have at least 1 item
+                    },
+                    # length_limit: optional field, if present can be int or null
+                    "length_limit": {"type": "integer", "nullable": True},
+                    # length_source: optional field, if present can be string or null
+                    "length_source": {"type": "string", "nullable": True},
+                    # other_limits: optional field, if present must be array of constraints
+                    "other_limits": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "constraint_type": {"type": "string"},
+                                "constraint_value": {"type": "string"},
+                                "source_quote": {"type": "string"},
+                            },
+                            "required": ["constraint_type", "constraint_value", "source_quote"],
+                        },
+                        "minItems": 1,  # If present, must have at least 1 item
+                    },
+                    # definition: optional field, if present can be string or null
+                    "definition": {"type": "string", "nullable": True},
+                },
+                "required": ["id"],  # Only id is required, all enrichment fields are optional
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+
+# Result types for parallel extractions
+
+class SectionStructureItem(TypedDict):
+    """Individual section structure item."""
+    id: str
+    title: str
+    order: int
+    parent_id: str | None
+
+
+class SectionStructureResult(TypedDict):
+    """Section structure extraction result."""
+    sections: list[SectionStructureItem]
+
+
+class SectionClassificationItem(TypedDict):
+    """Individual section classification item."""
+    id: str
+    long_form: bool
+    is_plan: bool
+    title_only: NotRequired[bool]
+    clinical: NotRequired[bool]
+    needs_writing: NotRequired[bool]
+
+
+class SectionClassificationResult(TypedDict):
+    """Section classification extraction result."""
+    sections: list[SectionClassificationItem]
+
+
+class EnrichedSection(TypedDict):
+    """Individual section with enrichment data.
+
+    Matches ExtractedSectionDTO enrichment fields exactly.
+    NotRequired means field can be absent, but if present must match type.
+    Nullable fields use `| None` in the type itself.
+    """
+    id: str
+    guidelines: NotRequired[list[str]]  # Can be absent, but if present must be list[str]
+    length_limit: NotRequired[int | None]  # Can be absent, if present can be int or None
+    length_source: NotRequired[str | None]  # Can be absent, if present can be str or None
+    other_limits: NotRequired[list[CFPConstraint]]  # Can be absent, but if present must be list
+    definition: NotRequired[str | None]  # Can be absent, if present can be str or None
+
+
+class SectionEnrichmentResult(TypedDict):
+    """Section enrichment extraction result."""
+    sections: list[EnrichedSection]
+
+
+# Validators for parallel extractions
+
+def validate_section_structure(response: SectionStructureResult) -> None:
+    """Validate section structure extraction."""
+    if not response.get("sections"):
+        raise ValidationError("No sections extracted from CFP analysis")
+
+    # Validate IDs are unique
+    section_ids = [s["id"] for s in response["sections"]]
+    if len(section_ids) != len(set(section_ids)):
+        raise ValidationError("Duplicate section IDs found in structure extraction")
+
+
+def validate_section_classification(response: SectionClassificationResult) -> None:
+    """Validate section classification extraction."""
+    if not response.get("sections"):
+        raise ValidationError("No section classifications extracted")
+
+    # Validate exactly one is_plan section
+    is_plan_count = sum(1 for s in response["sections"] if s.get("is_plan"))
+    if is_plan_count != 1:
+        raise ValidationError(
+            f"Exactly one section must have is_plan=true, found {is_plan_count}",
+            context={
+                "is_plan_sections": [s["id"] for s in response["sections"] if s.get("is_plan")],
+                "recovery_instruction": "Mark exactly one main research methodology section as is_plan=true",
+            },
+        )
+
+
+# Old combined schema (kept for backward compatibility during migration)
 section_extraction_json_schema = {
     "type": "object",
     "required": ["sections"],
@@ -377,10 +472,7 @@ def match_constraint_to_section(
     # Check if constraint_section is substring of section_title or vice versa
     constraint_lower = constraint_section.lower()
     title_lower = section_title.lower()
-    if constraint_lower in title_lower or title_lower in constraint_lower:
-        return True
-
-    return False
+    return bool(constraint_lower in title_lower or title_lower in constraint_lower)
 
 
 def parse_length_constraint(constraint_value: str, constraint_type: str) -> tuple[int | None, str]:
@@ -394,7 +486,7 @@ def parse_length_constraint(constraint_value: str, constraint_type: str) -> tupl
         "12 pages maximum" -> (12, "page_limit")
     """
     # Extract numbers from constraint value
-    numbers = re.findall(r'\d+', constraint_value)
+    numbers = re.findall(r"\d+", constraint_value)
     if not numbers:
         return None, constraint_value
 
@@ -417,13 +509,12 @@ def convert_to_word_limit(value: int, constraint_type: str) -> int:
     """
     if constraint_type == "word_limit":
         return value
-    elif constraint_type == "page_limit":
+    if constraint_type == "page_limit":
         return value * WORDS_PER_PAGE
-    elif constraint_type == "char_limit":
+    if constraint_type == "char_limit":
         return value // CHARS_PER_WORD
-    else:
-        # For format constraints, return 0 (no word limit)
-        return 0
+    # For format constraints, return 0 (no word limit)
+    return 0
 
 
 def extract_section_guidelines(
@@ -442,6 +533,35 @@ def extract_section_guidelines(
             return subtitles[:max_guidelines]
 
     return []
+
+
+def create_section_definition(guidelines: list[str]) -> str | None:
+    """Create concise section definition from guidelines.
+
+    Uses first guideline as primary definition, with optional summary of additional guidelines.
+
+    Args:
+        guidelines: List of guideline strings from CFP
+
+    Returns:
+        Concise definition string or None if no guidelines
+    """
+    if not guidelines:
+        return None
+
+    if len(guidelines) == 1:
+        return guidelines[0]
+
+    # Use first guideline as primary definition
+    primary = guidelines[0]
+
+    # If there are many guidelines (>3), add count summary
+    if len(guidelines) > 3:
+        return f"{primary} (Plus {len(guidelines) - 1} additional requirements - see guidelines)"
+
+    # For 2-3 guidelines, just use the first one
+    # Full list is available in guidelines field
+    return primary
 
 
 def enrich_section_with_constraints(
@@ -481,11 +601,10 @@ def enrich_section_with_constraints(
                 value, c_type = parse_length_constraint(constraint["value"], constraint["type"])
                 if value is not None:
                     word_limit = convert_to_word_limit(value, c_type)
-                    if word_limit > 0:
+                    if word_limit > 0 and (length_limit is None or word_limit < length_limit):
                         # Use the most restrictive limit if multiple
-                        if length_limit is None or word_limit < length_limit:
-                            length_limit = word_limit
-                            length_source = constraint["value"]
+                        length_limit = word_limit
+                        length_source = constraint["value"]
 
             # Process format/other constraints
             elif constraint["type"] == "format":
@@ -493,15 +612,15 @@ def enrich_section_with_constraints(
                     CFPConstraint(
                         constraint_type=constraint["type"],
                         constraint_value=constraint["value"],
-                        source_quote=constraint.get("section", ""),
+                        source_quote=constraint.get("section") or "",
                     )
                 )
 
     # Extract guidelines from CFP content
     guidelines = extract_section_guidelines(section_title, cfp_content)
 
-    # Extract definition (first guideline or empty)
-    definition = guidelines[0] if guidelines else None
+    # Create intelligent definition from guidelines
+    definition = create_section_definition(guidelines)
 
     # Populate new fields
     if guidelines:
@@ -710,30 +829,18 @@ def validate_section_extraction(response: ExtractedSections) -> None:
             _validate_word_limit_distribution(section, children)
 
 
-def _should_keep_section(
+def _matches_exclude_categories(
     section: ExtractedSectionDTO,
-    sections: list[ExtractedSectionDTO],
-    threshold: float,
     exclude_embeddings: list[float],
+    threshold: float,
     trace_id: str,
 ) -> bool:
-    if section.get("is_plan"):
-        return True
-
-    has_long_form_children = any(s.get("parent") == section["id"] and s.get("long_form") for s in sections)
-
-    has_important_role = section.get("long_form") or has_long_form_children
-
-    if not has_important_role:
-        is_parent = any(s.get("parent") == section["id"] for s in sections)
-        if not is_parent:
-            return False
-
+    """Check if section matches administrative/instructional exclude categories."""
     normalized_title = section["title"].lower().strip()
     for category in EXCLUDE_CATEGORIES:
         normalized_category = category.lower().strip()
         if normalized_category in normalized_title or normalized_title in normalized_category:
-            return False
+            return True
 
     try:
         model = get_embedding_model()
@@ -742,25 +849,103 @@ def _should_keep_section(
         similarities = util.cos_sim(title_embedding, exclude_embeddings)
         if similarities is not None and len(similarities) > 0:
             max_similarity = float(similarities[0].max().item())
-            return max_similarity < threshold
+            return max_similarity >= threshold
 
-        return True
+        return False
     except Exception as e:
         logger.warning(
             "Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id
         )
+        return False
+
+
+def _should_keep_section(
+    section: ExtractedSectionDTO,
+    sections: list[ExtractedSectionDTO],
+    threshold: float,
+    exclude_embeddings: list[float],
+    trace_id: str,
+) -> bool:
+    """Determine if section should be kept based on multiple criteria.
+
+    Keep sections if they meet ANY of these criteria:
+    1. is_plan=True (research plan)
+    2. long_form=True (LLM classified as narrative)
+    3. needs_writing=True (applicant must write content)
+    4. Has length_limit or other_limits (has constraints = important)
+    5. Has guidelines (has requirements = important)
+    6. Has long_form children (parent of important sections)
+    7. Is parent of any sections (structural)
+
+    Only discard truly administrative sections that match EXCLUDE_CATEGORIES.
+    """
+    # Always keep research plan
+    if section.get("is_plan"):
         return True
+
+    # Keep applicant-written content
+    if section.get("needs_writing"):
+        return True
+
+    # Keep sections with constraints (they're important!)
+    if section.get("length_limit") or section.get("other_limits"):
+        return True
+
+    # Keep sections with guidelines (they have requirements!)
+    if section.get("guidelines"):
+        return True
+
+    # Keep long-form narrative sections
+    if section.get("long_form"):
+        return True
+
+    # Keep parents of long-form sections
+    has_long_form_children = any(s.get("parent") == section["id"] and s.get("long_form") for s in sections)
+    if has_long_form_children:
+        return True
+
+    # Keep structural parents (but check exclude list)
+    is_parent = any(s.get("parent") == section["id"] for s in sections)
+    if is_parent:
+        # Still check against exclude categories for structural sections
+        return not _matches_exclude_categories(section, exclude_embeddings, threshold, trace_id)
+
+    # Discard everything else (truly administrative sections)
+    return False
+
+
+def _has_enough_sections(filtered_sections: list[ExtractedSectionDTO], all_sections: list[ExtractedSectionDTO]) -> bool:
+    """Check if we have enough sections to proceed.
+
+    Criteria:
+    - At least 1 is_plan section
+    - At least 3 long_form sections
+    - At least 50% of needs_writing=True sections retained
+    """
+    has_plan = any(s.get("is_plan") for s in filtered_sections)
+    long_form_count = sum(1 for s in filtered_sections if s.get("long_form"))
+
+    needs_writing_total = sum(1 for s in all_sections if s.get("needs_writing"))
+    needs_writing_retained = sum(1 for s in filtered_sections if s.get("needs_writing"))
+
+    retention_rate = needs_writing_retained / needs_writing_total if needs_writing_total > 0 else 1.0
+
+    return has_plan and long_form_count >= 3 and retention_rate >= 0.5
 
 
 async def filter_extracted_sections(
-    sections: list[ExtractedSectionDTO], trace_id: str, initial_threshold: float = 0.7
+    sections: list[ExtractedSectionDTO], trace_id: str, initial_threshold: float = 0.9
 ) -> list[ExtractedSectionDTO]:
-    """Filter out irrelevant sections using embedding similarity to exclude categories."""
+    """Filter out irrelevant sections using embedding similarity to exclude categories.
+
+    Starts with strict filtering (threshold=0.9) and gradually relaxes (down to 0.5)
+    until we have enough sections (at least 1 research plan, 3 long-form, 50% retention).
+    """
     exclude_embeddings = await get_exclude_embeddings()
     threshold = initial_threshold
-    max_threshold = 0.9
+    min_threshold = 0.5
 
-    while threshold <= max_threshold:
+    while threshold >= min_threshold:
         sections_to_keep = [
             _should_keep_section(
                 section=section,
@@ -776,19 +961,35 @@ async def filter_extracted_sections(
             section for section, should_keep in zip(sections, sections_to_keep, strict=True) if should_keep
         ]
 
-        has_research_plan = any(s.get("is_plan") for s in filtered_sections)
-        has_long_form = any(s.get("long_form") for s in filtered_sections)
-
-        if has_research_plan and has_long_form:
+        if _has_enough_sections(filtered_sections, sections):
+            logger.info(
+                "Filtered sections with threshold",
+                threshold=threshold,
+                input_count=len(sections),
+                output_count=len(filtered_sections),
+                trace_id=trace_id,
+            )
             return _finalize_extracted_sections(filtered_sections)
 
-        threshold += 0.05
+        threshold -= 0.05
 
-    # Fallback: keep sections that are research plans or long-form
-    fallback_sections = [section for section in sections if section.get("is_plan") or section.get("long_form")]
+    # Fallback: keep all sections with important criteria (very permissive)
+    fallback_sections = [
+        section
+        for section in sections
+        if section.get("is_plan")
+        or section.get("long_form")
+        or section.get("needs_writing")
+        or section.get("length_limit")
+        or section.get("guidelines")
+    ]
 
-    if not fallback_sections:
-        fallback_sections = [section for section in sections if section.get("is_plan")]
+    logger.warning(
+        "Using fallback filtering - could not find enough sections",
+        input_count=len(sections),
+        output_count=len(fallback_sections),
+        trace_id=trace_id,
+    )
 
     return _finalize_extracted_sections(fallback_sections or sections)
 
@@ -830,6 +1031,103 @@ def _finalize_extracted_sections(sections: list[ExtractedSectionDTO]) -> list[Ex
 
     return sorted_sections
 
+
+# ============================================================================
+# Parallel Extraction Functions - Focused, minimal LLM calls
+# ============================================================================
+
+async def extract_section_structure(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> SectionStructureResult:
+    """Extract hierarchical section structure (title, id, order, parent)."""
+    return await handle_completions_request(
+        prompt_identifier="section_structure",
+        response_type=SectionStructureResult,
+        response_schema=section_structure_schema,
+        validator=validate_section_structure,
+        messages=task_description,
+        system_prompt=(
+            "Extract hierarchical section structure from CFP analysis. "
+            "Create parent-child relationships with max 2-level depth. "
+            "Use exact section titles from CFP. Return valid JSON only."
+        ),
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+async def extract_section_classification(
+    task_description: str,
+    *,
+    trace_id: str,
+) -> SectionClassificationResult:
+    """Classify section types and writing requirements."""
+    return await handle_completions_request(
+        prompt_identifier="section_classification",
+        response_type=SectionClassificationResult,
+        response_schema=section_classification_schema,
+        validator=validate_section_classification,
+        messages=task_description,
+        system_prompt=(
+            "Classify grant application sections by type and writing requirements.\n\n"
+            "## Field Definitions\n"
+            "long_form: Narrative sections requiring substantial writing by applicants. "
+            "Include research plans, project descriptions, abstracts, summaries, justifications, "
+            "data management plans, impact statements, and any section where applicants write prose "
+            "(not just fill forms). Sections with page/word limits are usually long_form.\n\n"
+            "is_plan: Exactly ONE main research methodology section (research approach, methods, aims).\n\n"
+            "title_only: Container sections with subsections only.\n\n"
+            "clinical: Clinical trial sections.\n\n"
+            "needs_writing: True if applicant writes content (not external docs like CVs, letters).\n\n"
+            "Return valid JSON only."
+        ),
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+async def extract_section_enrichment(
+    task_description: str,
+    cfp_analysis: CFPAnalysis,
+    *,
+    trace_id: str,
+) -> SectionEnrichmentResult:
+    """Extract CFP constraints and guidelines for sections."""
+    # Include CFP analysis constraints in prompt for better matching
+    constraints = cfp_analysis.get("analysis_metadata", {}).get("constraints", [])
+    enrichment_prompt = f"{task_description}\n\n<cfp_constraints>{serialize(constraints).decode('utf-8')}</cfp_constraints>"
+
+    return await handle_completions_request(
+        prompt_identifier="section_enrichment",
+        response_type=SectionEnrichmentResult,
+        response_schema=section_enrichment_schema,
+        validator=None,  # Optional extraction - all fields nullable
+        messages=enrichment_prompt,
+        system_prompt=(
+            "Extract CFP constraints and guidelines for grant application sections. "
+            "guidelines: Relevant CFP text excerpts for this section (3-10 items). "
+            "length_limit: Word count from CFP (convert pages: 250 words/page, chars: 6 chars/word). "
+            "length_source: Exact quote from CFP documenting the limit. "
+            "other_limits: Additional formatting/structure constraints. "
+            "definition: Concise summary from guidelines (single guideline as-is, 4+ add 'Plus X additional requirements'). "
+            "Return valid JSON only. All fields nullable if not found."
+        ),
+        temperature=0.1,
+        model=GEMINI_FLASH_MODEL,
+        top_p=0.9,
+        trace_id=trace_id,
+    )
+
+
+# ============================================================================
+# Legacy single extraction function (to be deprecated)
+# ============================================================================
 
 async def extract_sections(
     task_description: str, *, trace_id: str, cfp_analysis: CFPAnalysis
@@ -874,7 +1172,8 @@ async def handle_extract_sections(
     cfp_analysis: CFPAnalysis,
     job_manager: "JobManager[StageDTO]",
 ) -> list[ExtractedSectionDTO]:
-    content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
+    """Extract hierarchical grant application sections from CFP content using parallel strategies."""
+    await job_manager.ensure_not_cancelled()
 
     logger.info(
         "Received CFP analysis for section extraction",
@@ -931,34 +1230,94 @@ async def handle_extract_sections(
         trace_id=trace_id,
     )
 
-    result = await with_evaluation(
-        prompt_identifier="extract_sections",
-        prompt_handler=partial(extract_sections, cfp_analysis=cfp_analysis),
-        prompt=prompt_string,
-        trace_id=trace_id,
-        cfp_analysis=cfp_analysis,
-        **get_evaluation_kwargs(
-            "extract_sections",
-            job_manager,
-            rag_context=rag_results if rag_results else content_list,
-            is_json_content=True,
-        ),
+    # Execute parallel extractions for better performance and simpler schemas
+    logger.info("Starting parallel section extraction", trace_id=trace_id)
+    await job_manager.ensure_not_cancelled()
+
+    structure_result, classification_result, enrichment_result = await asyncio.gather(
+        extract_section_structure(prompt_string, trace_id=trace_id),
+        extract_section_classification(prompt_string, trace_id=trace_id),
+        extract_section_enrichment(prompt_string, cfp_analysis, trace_id=trace_id),
     )
 
-    # Filter and finalize sections
-    filtered_sections = await filter_extracted_sections(result["sections"], trace_id)
+    logger.info(
+        "Parallel extractions completed",
+        structure_sections=len(structure_result["sections"]),
+        classification_sections=len(classification_result["sections"]),
+        enrichment_sections=len(enrichment_result["sections"]),
+        trace_id=trace_id,
+    )
 
-    # Enrich sections with constraints, guidelines, and definitions
-    enriched_sections = [
-        enrich_section_with_constraints(section, cfp_analysis, cfp_content) for section in filtered_sections
+    # Merge results by section ID
+    sections_by_id: dict[str, dict[str, Any]] = {}
+
+    # Start with structure (provides base fields: title, id, order, parent)
+    # Note: Rename parent_id -> parent to match ExtractedSectionDTO
+    for section in structure_result["sections"]:
+        section_dict = dict(section)
+        section_dict["parent"] = section_dict.pop("parent_id")
+        sections_by_id[section["id"]] = section_dict
+
+    # Merge classification fields (long_form, is_plan, title_only, clinical, needs_writing)
+    for classification in classification_result["sections"]:
+        section_id = classification["id"]
+        if section_id in sections_by_id:
+            sections_by_id[section_id].update(classification)
+        else:
+            logger.warning(
+                "Classification for unknown section ID",
+                section_id=section_id,
+                trace_id=trace_id,
+            )
+
+    # Merge enrichment fields (guidelines, length_limit, length_source, other_limits, definition)
+    for enrichment in enrichment_result["sections"]:
+        section_id = enrichment["id"]
+        if section_id in sections_by_id:
+            sections_by_id[section_id].update(enrichment)
+        else:
+            logger.warning(
+                "Enrichment for unknown section ID",
+                section_id=section_id,
+                trace_id=trace_id,
+            )
+
+    # Ensure all sections have default values for required fields
+    # Also regenerate definitions from guidelines to ensure correct format
+    for section_dict in sections_by_id.values():
+        if "long_form" not in section_dict:
+            section_dict["long_form"] = False
+        if "needs_writing" not in section_dict:
+            section_dict["needs_writing"] = True  # Default to True if not specified
+        if "is_plan" not in section_dict:
+            section_dict["is_plan"] = False
+
+        # Regenerate definition from guidelines to ensure correct format
+        # (LLM sometimes merges guidelines instead of using "Plus X additional" format)
+        if section_dict.get("guidelines"):
+            section_dict["definition"] = create_section_definition(section_dict["guidelines"])
+
+    extracted_sections: list[ExtractedSectionDTO] = [
+        cast("ExtractedSectionDTO", section) for section in sections_by_id.values()
     ]
 
     logger.info(
-        "Enriched sections with constraints and guidelines",
-        sections_count=len(enriched_sections),
-        sections_with_constraints=sum(1 for s in enriched_sections if s.get("length_limit")),
-        sections_with_guidelines=sum(1 for s in enriched_sections if s.get("guidelines")),
+        "Merged parallel extraction results",
+        total_sections=len(extracted_sections),
+        sections_with_length_limits=sum(1 for s in extracted_sections if s.get("length_limit")),
+        sections_with_guidelines=sum(1 for s in extracted_sections if s.get("guidelines")),
         trace_id=trace_id,
     )
 
-    return enriched_sections
+    # Filter and finalize sections
+    filtered_sections = await filter_extracted_sections(extracted_sections, trace_id)
+
+    logger.info(
+        "Section extraction completed",
+        sections_count=len(filtered_sections),
+        sections_with_constraints=sum(1 for s in filtered_sections if s.get("length_limit")),
+        sections_with_guidelines=sum(1 for s in filtered_sections if s.get("guidelines")),
+        trace_id=trace_id,
+    )
+
+    return filtered_sections
