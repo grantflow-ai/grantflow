@@ -5,7 +5,7 @@ import time
 from typing import TYPE_CHECKING, Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
-from packages.db.src.query_helpers import select_active
+from packages.db.src.query_helpers import build_metadata_filter, select_active
 from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSource, RagSource, TextVector
 from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
@@ -27,6 +27,14 @@ logger = get_logger(__name__)
 
 MAX_RESULTS: Final[int] = 10
 
+__all__ = [
+    "MetadataFilterParams",
+    "MetadataWeights",
+    "handle_retrieval",
+    "retrieve_documents",
+    "retrieve_vectors_for_embedding",
+]
+
 _document_cache: dict[str, tuple[list[str], float]] = {}
 CACHE_TTL_SECONDS: Final[int] = 1800
 
@@ -42,6 +50,15 @@ DEFAULT_METADATA_WEIGHTS: Final[MetadataWeights] = MetadataWeights(
     entities=0.3,
     doc_type=0.3,
 )
+
+
+class MetadataFilterParams(TypedDict, total=False):
+    """Parameters for pre-filtering documents by metadata before vector search."""
+
+    entity_types: list[str]
+    categories: list[str]
+    category_match_mode: str
+    min_quality_score: float
 
 
 def calculate_document_metadata_score(
@@ -115,6 +132,7 @@ async def retrieve_vectors_for_embedding(
     file_table_cls: type[GrantApplicationSource | GrantingInstitutionSource],
     iteration: int = 1,
     limit: int = MAX_RESULTS,
+    metadata_filter: MetadataFilterParams | None = None,
     organization_id: str | None = None,
     search_queries: list[str] | None = None,
     trace_id: str,
@@ -126,10 +144,11 @@ async def retrieve_vectors_for_embedding(
     similarity_conditions = [TextVector.embedding.cosine_distance(embedding) <= threshold for embedding in embeddings]
 
     async with session_maker() as session:
-        vectors = list(
-            await session.scalars(
+        # Count total vectors before metadata filtering (for metrics)
+        total_vectors_count = None
+        if metadata_filter:
+            base_query = (
                 select_active(TextVector)
-                .options(selectinload(TextVector.rag_source))
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
                 .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
                 .where(
@@ -138,10 +157,54 @@ async def retrieve_vectors_for_embedding(
                     else file_table_cls.granting_institution_id == organization_id
                 )
                 .where(or_(*similarity_conditions))
-                .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
-                .limit(limit * 2)
+            )
+            total_vectors_count = await session.scalar(func.count().select_from(base_query.subquery()))
+
+        query = (
+            select_active(TextVector)
+            .options(selectinload(TextVector.rag_source))
+            .join(RagSource, TextVector.rag_source_id == RagSource.id)
+            .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
+            .where(
+                file_table_cls.grant_application_id == application_id
+                if hasattr(file_table_cls, "grant_application_id")
+                else file_table_cls.granting_institution_id == organization_id
             )
         )
+
+        # Apply metadata pre-filtering if specified
+        if metadata_filter:
+            metadata_condition = build_metadata_filter(RagSource.document_metadata, **metadata_filter)
+            if metadata_condition is not None:
+                query = query.where(metadata_condition)
+
+        # Apply vector similarity filtering
+        query = (
+            query.where(or_(*similarity_conditions))
+            .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
+            .limit(limit * 2)
+        )
+
+        vectors = list(await session.scalars(query))
+
+        # Log metadata filtering metrics
+        if metadata_filter and total_vectors_count is not None:
+            filtered_count = len(vectors)
+            reduction_pct = (
+                ((total_vectors_count - filtered_count) / total_vectors_count * 100)
+                if total_vectors_count > 0
+                else 0.0
+            )
+            logger.info(
+                "Metadata pre-filter applied",
+                trace_id=trace_id,
+                total_candidates=total_vectors_count,
+                after_filter=filtered_count,
+                reduction_pct=round(reduction_pct, 1),
+                entity_types=metadata_filter.get("entity_types"),
+                categories=metadata_filter.get("categories"),
+                min_quality_score=metadata_filter.get("min_quality_score"),
+            )
 
     if search_queries and vectors:
         scored_vectors = []
@@ -177,6 +240,7 @@ async def retrieve_vectors_for_embedding(
             organization_id=organization_id,
             embeddings=embeddings,
             search_queries=search_queries,
+            metadata_filter=metadata_filter,
             limit=limit,
             iteration=iteration + 1,
             trace_id=trace_id,
