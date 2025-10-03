@@ -1,7 +1,8 @@
 from functools import partial
 from typing import TYPE_CHECKING, Final, NotRequired, TypedDict, cast
 
-from packages.shared_utils.src.dto import ExtractedSectionDTO, OrganizationNamespace, SectionMetadata
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection, OrganizationNamespace
+from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
@@ -362,6 +363,67 @@ async def generate_grant_template(
     )
 
 
+def merge_section_with_metadata(
+    section: ExtractedSectionDTO, metadata: SectionMetadata
+) -> GrantLongFormSection | GrantElement:
+    """Merge ExtractedSectionDTO with SectionMetadata to create GrantLongFormSection.
+
+    Combines base section fields, constraint fields, and generated metadata into final structure.
+    """
+    # Determine if this is a long-form section or just a structural element
+    is_long_form = section.get("long_form", False)
+
+    if not is_long_form:
+        # Return basic GrantElement for non-long-form sections
+        return GrantElement(
+            id=section["id"],
+            order=section["order"],
+            title=section["title"],
+            evidence="",  # Non-long-form sections don't need evidence
+            parent_id=section.get("parent"),
+            needs_applicant_writing=section.get("needs_writing", False),
+        )
+
+    # Create GrantLongFormSection with all fields
+    result = GrantLongFormSection(
+        # Base fields from GrantElement
+        id=metadata["id"],
+        order=section["order"],
+        title=section["title"],
+        evidence="",  # Will be populated during application generation
+        parent_id=section.get("parent"),
+        needs_applicant_writing=section.get("needs_writing", True),
+        # Metadata fields from LLM
+        depends_on=metadata["depends_on"],
+        generation_instructions=metadata["generation_instructions"],
+        keywords=metadata["keywords"],
+        max_words=metadata["max_words"],
+        search_queries=metadata["search_queries"],
+        topics=metadata["topics"],
+        # Section type flags
+        is_clinical_trial=section.get("clinical"),
+        is_detailed_research_plan=section.get("is_plan"),
+    )
+
+    # Add constraint fields from extract_sections enrichment
+    # Note: guidelines field is not in GrantLongFormSection schema, so we skip it
+    # TODO: Consider adding guidelines field to schema or storing in definition
+
+    if "length_limit" in section and section["length_limit"]:
+        result["length_limit"] = section["length_limit"]
+
+    if "length_source" in section:
+        result["length_source"] = section["length_source"]
+
+    if "other_limits" in section:
+        result["other_limits"] = section["other_limits"]
+
+    if "definition" in section:
+        result["definition"] = section["definition"]
+
+    return result
+
+
 async def handle_generate_grant_template_metadata(
     *,
     cfp_content: str,
@@ -369,7 +431,7 @@ async def handle_generate_grant_template_metadata(
     long_form_sections: list[ExtractedSectionDTO],
     trace_id: str,
     job_manager: "JobManager[ExtractionSectionsStageDTO]",
-) -> list[SectionMetadata]:
+) -> list[GrantLongFormSection | GrantElement]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
         long_form_sections="\n".join(
@@ -424,4 +486,22 @@ async def handle_generate_grant_template_metadata(
             is_json_content=True,
         ),
     )
-    return result["sections"]
+
+    # Merge extracted sections with generated metadata
+    section_metadata_map = {meta["id"]: meta for meta in result["sections"]}
+    merged_sections = [
+        merge_section_with_metadata(section, section_metadata_map[section["id"]])
+        for section in long_form_sections
+        if section["id"] in section_metadata_map
+    ]
+
+    logger.info(
+        "Merged sections with metadata",
+        sections_count=len(merged_sections),
+        sections_with_constraints=sum(
+            1 for s in merged_sections if isinstance(s, dict) and s.get("length_source")
+        ),
+        trace_id=trace_id,
+    )
+
+    return merged_sections

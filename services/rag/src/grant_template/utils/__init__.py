@@ -2,12 +2,12 @@
 
 from typing import TypedDict
 
-from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.shared_utils.src.dto import ExtractedCFPData
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.utils.category_extraction import (
+    CategorizationAnalysisResult,
     format_nlp_hints_for_extraction,
 )
 from services.rag.src.utils.text_processing import sanitize_text_content

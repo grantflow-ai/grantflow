@@ -12,9 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
-from services.rag.src.grant_template.category_extraction import categorize_text
 from services.rag.src.grant_template.identify_organization import identify_granting_institution
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
+from services.rag.src.grant_template.utils.category_extraction import categorize_text
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
