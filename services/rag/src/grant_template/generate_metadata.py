@@ -349,7 +349,7 @@ def validate_dependencies_word_counts(
                 "Dependency cycle detected in section dependencies",
                 context={
                     "cycle_nodes": cycle_list,
-                    "cycle_path": " → ".join(cycle_list + [cycle_list[0]]),
+                    "cycle_path": " → ".join([*cycle_list, cycle_list[0]]),
                     "recovery_instruction": f"Break the dependency cycle by removing one dependency from the path: {' → '.join(cycle_list)}",
                 },
             )
