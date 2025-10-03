@@ -41,15 +41,13 @@ def test_valid_template_sections() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
     ]
 
@@ -93,8 +91,7 @@ def test_error_field_raises_insufficient_context() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -113,8 +110,7 @@ def test_empty_sections_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -130,8 +126,7 @@ def test_section_id_mismatch_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -162,8 +157,7 @@ def test_missing_keywords_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -194,8 +188,7 @@ def test_missing_topics_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -226,8 +219,7 @@ def test_missing_generation_instructions_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -258,8 +250,7 @@ def test_invalid_max_words_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -290,8 +281,7 @@ def test_missing_search_queries_raises_validation_error() -> None:
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         }
     ]
 
@@ -352,15 +342,13 @@ async def test_generate_grant_template_success(mock_google_completions: AsyncMoc
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
     ]
 
@@ -399,8 +387,7 @@ async def test_generate_grant_template_insufficient_context_error(mock_google_co
             "title": "Complex Section",
             "id": "complex_section",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Complex Section",
+            "long_form": True,
         }
     ]
 
@@ -466,15 +453,13 @@ async def test_handle_generate_grant_template_metadata_success(
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
     ]
 
@@ -487,7 +472,6 @@ async def test_handle_generate_grant_template_metadata_success(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="Comprehensive CFP content for advanced research programs",
-        cfp_subject="National Research Initiative",
         organization=organization,
         long_form_sections=long_form_sections,
         trace_id="test-trace-456",
@@ -519,7 +503,6 @@ async def test_handle_generate_grant_template_metadata_no_long_form_sections(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content without long form sections",
-        cfp_subject="Short Form Grant",
         organization=None,
         long_form_sections=long_form_sections,
         trace_id="test-trace-789",
@@ -564,29 +547,25 @@ async def test_handle_generate_grant_template_metadata_filters_long_form_section
             "title": "Short Title",
             "id": "short_title",
             "order": 1,
-            "is_long_form": False,
-            "evidence": "CFP evidence for Short Title",
+            "long_form": False,
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
         {
             "title": "Brief Summary",
             "id": "brief_summary",
             "order": 3,
-            "is_long_form": False,
-            "evidence": "CFP evidence for Brief Summary",
+            "long_form": False,
         },
     ]
 
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content with mixed section types",
-        cfp_subject="Mixed Sections Grant",
         organization=None,
         long_form_sections=all_sections,
         trace_id="test-trace-mixed",
@@ -638,22 +617,19 @@ async def test_handle_generate_grant_template_metadata_preserves_order(
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
         {
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         },
     ]
 
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP content for order testing",
-        cfp_subject="Order Test Grant",
         organization=None,
         long_form_sections=long_form_sections,
         trace_id="test-trace-order",
@@ -725,22 +701,19 @@ async def test_integration_generate_metadata_workflow(
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Project Summary",
+            "long_form": True,
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Research Plan",
+            "long_form": True,
         },
         {
             "title": "Budget Justification",
             "id": "budget_justification",
             "order": 3,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Budget Justification",
+            "long_form": True,
         },
     ]
 
@@ -753,7 +726,6 @@ async def test_integration_generate_metadata_workflow(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
-        cfp_subject="Novel Biomarkers for Early Cancer Detection",
         organization=organization,
         long_form_sections=extracted_sections,
         trace_id="integration-test-001",
@@ -823,29 +795,25 @@ async def test_integration_generate_metadata_with_dependencies(
             "title": "Abstract",
             "id": "abstract",
             "order": 1,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Abstract",
+            "long_form": True,
         },
         {
             "title": "Background",
             "id": "background",
             "order": 2,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Background",
+            "long_form": True,
         },
         {
             "title": "Methodology",
             "id": "methodology",
             "order": 3,
-            "is_long_form": True,
-            "evidence": "CFP evidence for Methodology",
+            "long_form": True,
         },
     ]
 
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP with dependency requirements",
-        cfp_subject="Dependent Sections Grant",
         organization=None,
         long_form_sections=extracted_sections,
         trace_id="dependency-test-001",
@@ -879,7 +847,6 @@ async def test_integration_generate_metadata_empty_sections(
     result = await handle_generate_grant_template_metadata(
         job_manager=mock_job_manager,
         cfp_content="CFP with no long form sections",
-        cfp_subject="No Sections Grant",
         organization=None,
         long_form_sections=extracted_sections,
         trace_id="empty-test-001",

@@ -90,74 +90,18 @@ Extract structured CFP data from funding announcements.
 Each source includes NLP analysis (Money/Budget, Date/Time, Writing, Orders, Recommendations, Evaluation) to help locate information. Read all source content comprehensively - NLP is guidance, not replacement.
 
 Extract four fields:
-1. **organization_id**: Match from organization mapping (null if not found)
-2. **cfp_subject**: One-sentence summary (funding type, audience, focus)
-3. **submission_date**: Final deadline in YYYY-MM-DD (null if not found)
+1. **org_id**: Match from organization mapping (null if not found)
+2. **subject**: One-sentence funding opportunity summary (type, audience, focus)
+3. **deadline**: Final submission deadline in YYYY-MM-DD (null if not found)
 4. **content**: Section structure with titles and subtitles
 
-Exclude: URLs, Grants.gov steps, addresses, admin details.
+## Requirements
 
-## Example
-
-Input sources:
-```
-### Source 0: PDF (ID: abc123)
-#### NLP Analysis:
-Date/Time: 2 sentences ("Applications due March 15, 2026")
-Orders: 15 sentences ("Applicants must submit...", "Projects must include...")
-Writing: 8 sentences ("Proposals should be 15 pages...", "Use 12pt font...")
-
-#### Full Content:
-NSF Research Grants Program - 2026
-
-Application Deadline: March 15, 2026
-
-I. PROJECT DESCRIPTION (15 pages)
-Describe proposed research objectives, methodology, and expected outcomes.
-
-II. BUDGET JUSTIFICATION (5 pages)
-Provide detailed breakdown of costs.
-```
-
-Organizations:
-```json
-{"National Science Foundation": {"organization_id": "550e8400-e29b-41d4-a716-446655440000", "abbreviation": "NSF"}}
-```
-
-Output:
-```json
-{
-  "organization_id": "550e8400-e29b-41d4-a716-446655440000",
-  "cfp_subject": "NSF research grants for scientific projects requiring detailed methodology and budget justification",
-  "content": [
-    {
-      "title": "PROJECT DESCRIPTION",
-      "subtitles": [
-        "Research objectives",
-        "Methodology",
-        "Expected outcomes",
-        "15 page limit"
-      ]
-    },
-    {
-      "title": "BUDGET JUSTIFICATION",
-      "subtitles": [
-        "Detailed cost breakdown",
-        "5 page limit"
-      ]
-    }
-  ],
-  "submission_date": "2026-03-15",
-  "error": null
-}
-```
-
-## Output Requirements
-
-- Valid JSON only (max 50 subtitles per section)
+- Max 50 subtitles per section
 - Use "[UNCLEAR]" for ambiguous information
-- Prioritize Date/Time categories for submission_date
+- Prioritize Date/Time categories for deadline extraction
 - Use Orders/Writing categories for section structure
+- Exclude: URLs, Grants.gov steps, addresses, admin details
     """,
 )
 
@@ -272,48 +216,52 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 cfp_extraction_schema = {
     "type": "object",
     "properties": {
-        "organization_id": {
+        "org_id": {
             "type": "string",
             "nullable": True,
-            "description": "UUID from organization mapping if the funding organization is found, null otherwise",
+            "description": "UUID from org mapping, null if not found",
         },
-        "cfp_subject": {
+        "subject": {
             "type": "string",
-            "description": "Comprehensive summary of the funding opportunity including type, audience, objectives, and focus areas",
+            "description": "One-sentence funding opportunity summary",
         },
         "content": {
             "type": "array",
-            "description": "Array of sections and requirements extracted from the CFP",
+            "description": "Section structure with titles and subtitles",
             "items": {
                 "type": "object",
                 "properties": {
                     "title": {
                         "type": "string",
                         "nullable": False,
-                        "description": "Section title or requirement category name",
+                        "description": "Section title",
                     },
                     "subtitles": {
                         "type": "array",
                         "items": {"type": "string"},
                         "minItems": 1,
-                        "description": "Array of subsection titles or individual requirements",
+                        "description": "Subsection titles or requirements",
                     },
                 },
                 "required": ["title", "subtitles"],
             },
         },
-        "submission_date": {
+        "deadline": {
             "type": "string",
             "nullable": True,
-            "description": "Final submission deadline in YYYY-MM-DD format if found, null otherwise",
+            "description": "Submission deadline YYYY-MM-DD, null if not found",
+        },
+        "text": {
+            "type": "string",
+            "description": "Complete formatted source text used for extraction",
         },
         "error": {
             "type": "string",
             "nullable": True,
-            "description": "Error message if extraction fails, null on success",
+            "description": "Error if extraction fails, null on success",
         },
     },
-    "required": ["organization_id", "cfp_subject", "content", "submission_date"],
+    "required": ["org_id", "subject", "content", "deadline", "text"],
 }
 
 
@@ -323,16 +271,16 @@ def validate_cfp_extraction(response: ExtractedCFPData) -> None:
             raise InsufficientContextError(
                 error,
                 context={
-                    "cfp_subject": response.get("cfp_subject", ""),
-                    "organization_id": response.get("organization_id"),
+                    "subject": response.get("subject", ""),
+                    "org_id": response.get("org_id"),
                     "recovery_instruction": "The CFP content appears to be insufficient or unclear. Try extracting more specific guidelines or requirements from all available sources.",
                 },
             )
         raise ValidationError(
             "No content extracted from any source. Please provide an error message.",
             context={
-                "cfp_subject": response.get("cfp_subject", ""),
-                "organization_id": response.get("organization_id"),
+                "subject": response.get("subject", ""),
+                "org_id": response.get("org_id"),
                 "recovery_instruction": "Extract at least 3-5 relevant guidelines or requirements from the available RAG sources, or provide a specific error message.",
             },
         )
@@ -388,7 +336,7 @@ async def handle_extract_cfp_data(
         ),
     )
 
-    result["full_text"] = formatted_sources
+    result["text"] = formatted_sources
 
     _cache_cfp_result(cache_key, result)
 

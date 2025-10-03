@@ -77,13 +77,17 @@ async def test_handle_extract_relationships_success(
 ) -> None:
     mock_relationships_response = {
         "relationships": [
-            ("1", "2", "The biomarkers identified in objective 1 will be used as features in the ML model"),
-            ("1", "3", "Validated biomarkers are needed for clinical validation"),
-            ("2", "3", "ML model predictions will guide clinical validation strategy"),
-            ("1.1", "1.2", "Biomarker identification must occur before validation"),
-            ("1.2", "2.1", "Validation results inform algorithm design"),
-            ("2.1", "2.2", "Algorithm design precedes model training"),
-            ("2.2", "3.1", "Trained model guides patient recruitment strategy"),
+            {
+                "source": "1",
+                "target": "2",
+                "desc": "The biomarkers identified in objective 1 will be used as features in the ML model",
+            },
+            {"source": "1", "target": "3", "desc": "Validated biomarkers are needed for clinical validation"},
+            {"source": "2", "target": "3", "desc": "ML model predictions will guide clinical validation strategy"},
+            {"source": "1.1", "target": "1.2", "desc": "Biomarker identification must occur before validation"},
+            {"source": "1.2", "target": "2.1", "desc": "Validation results inform algorithm design"},
+            {"source": "2.1", "target": "2.2", "desc": "Algorithm design precedes model training"},
+            {"source": "2.2", "target": "3.1", "desc": "Trained model guides patient recruitment strategy"},
         ]
     }
     mock_with_evaluation.return_value = mock_relationships_response
@@ -110,7 +114,10 @@ async def test_handle_extract_relationships_success(
     assert "2.2" in result
 
     assert len(result["1"]) == 2
-    assert result["1"][0] == ("2", "The biomarkers identified in objective 1 will be used as features in the ML model")
+    assert result["1"][0] == (
+        "2",
+        "The biomarkers identified in objective 1 will be used as features in the ML model",
+    )
     assert result["1"][1] == ("3", "Validated biomarkers are needed for clinical validation")
 
     mock_with_evaluation.assert_called_once()
@@ -203,18 +210,18 @@ async def test_handle_extract_relationships_complex_dependencies(
 ) -> None:
     mock_relationships_response = {
         "relationships": [
-            ("1", "2", "Biomarkers serve as ML features"),
-            ("1", "3", "Biomarkers enable clinical validation"),
-            ("2", "3", "ML predictions guide clinical studies"),
-            ("2", "1", "ML model depends on biomarker data quality"),
-            ("3", "1", "Clinical validation confirms biomarker utility"),
-            ("3", "2", "Clinical studies evaluate ML model performance"),
-            ("1.1", "1.2", "Identification precedes validation"),
-            ("1.1", "2.1", "Biomarker identification informs algorithm design"),
-            ("1.2", "2.2", "Validation enables model training"),
-            ("1.2", "3.1", "Validation guides patient recruitment"),
-            ("2.1", "2.2", "Design precedes training"),
-            ("2.1", "3.2", "Algorithm design defines data collection requirements"),
+            {"source": "1", "target": "2", "desc": "Biomarkers serve as ML features"},
+            {"source": "1", "target": "3", "desc": "Biomarkers enable clinical validation"},
+            {"source": "2", "target": "3", "desc": "ML predictions guide clinical studies"},
+            {"source": "2", "target": "1", "desc": "ML model depends on biomarker data quality"},
+            {"source": "3", "target": "1", "desc": "Clinical validation confirms biomarker utility"},
+            {"source": "3", "target": "2", "desc": "Clinical studies evaluate ML model performance"},
+            {"source": "1.1", "target": "1.2", "desc": "Identification precedes validation"},
+            {"source": "1.1", "target": "2.1", "desc": "Biomarker identification informs algorithm design"},
+            {"source": "1.2", "target": "2.2", "desc": "Validation enables model training"},
+            {"source": "1.2", "target": "3.1", "desc": "Validation guides patient recruitment"},
+            {"source": "2.1", "target": "2.2", "desc": "Design precedes training"},
+            {"source": "2.1", "target": "3.2", "desc": "Algorithm design defines data collection requirements"},
         ]
     }
     mock_with_evaluation.return_value = mock_relationships_response
@@ -251,7 +258,7 @@ async def test_handle_extract_relationships_no_form_inputs(
 ) -> None:
     mock_relationships_response = {
         "relationships": [
-            ("1", "2", "Basic relationship without context"),
+            {"source": "1", "target": "2", "desc": "Basic relationship without context"},
         ]
     }
     mock_with_evaluation.return_value = mock_relationships_response

@@ -32,7 +32,6 @@ Generate metadata for grant application sections.
 
 ${organization_guidelines}
 
-<cfp_subject>${cfp_subject}</cfp_subject>
 <cfp_content>${cfp_content}</cfp_content>
 <sections>${long_form_sections}</sections>
 
@@ -326,7 +325,7 @@ def validate_template_sections(
             },
         )
 
-    research_plan_sections = [s for s in input_sections if s.get("is_detailed_research_plan")]
+    research_plan_sections = [s for s in input_sections if s.get("is_plan")]
     if research_plan_sections:
         research_plan_id = research_plan_sections[0]["id"]
         research_plan_metadata = next((s for s in response["sections"] if s["id"] == research_plan_id), None)
@@ -366,7 +365,6 @@ async def generate_grant_template(
 async def handle_generate_grant_template_metadata(
     *,
     cfp_content: str,
-    cfp_subject: str,
     organization: OrganizationNamespace | None,
     long_form_sections: list[ExtractedSectionDTO],
     trace_id: str,
@@ -374,13 +372,12 @@ async def handle_generate_grant_template_metadata(
 ) -> list[SectionMetadata]:
     prompt = GENERATE_GRANT_TEMPLATE_USER_PROMPT.substitute(
         cfp_content=cfp_content,
-        cfp_subject=cfp_subject,
         long_form_sections="\n".join(
             [
                 f"- {section['id']}: {section['title']}"
-                + (" (Detailed Research Plan)" if section.get("is_detailed_research_plan") else "")
-                + (" (Clinical Trial)" if section.get("is_clinical_trial") else "")
-                + (" (Title Only)" if section.get("is_title_only") else "")
+                + (" (Detailed Research Plan)" if section.get("is_plan") else "")
+                + (" (Clinical Trial)" if section.get("clinical") else "")
+                + (" (Title Only)" if section.get("title_only") else "")
                 for section in long_form_sections
             ],
         ),

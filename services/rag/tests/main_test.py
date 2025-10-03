@@ -166,7 +166,7 @@ async def test_handle_rag_request_invalid_message(trace_id: TraceId) -> None:
 async def test_handle_rag_request_missing_parent_type(trace_id: TraceId) -> None:
     from services.rag.src.main import app
 
-    data = {"parent_id": str(uuid4()), "trace_id": trace_id}
+    data = {"parent": str(uuid4()), "trace_id": trace_id}
     invalid_event = create_pubsub_event(data)
 
     async with AsyncTestClient(app=app) as client:
@@ -192,7 +192,7 @@ async def test_handle_rag_request_invalid_parent_type(trace_id: TraceId) -> None
 
     data = {
         "parent_type": "invalid_type",
-        "parent_id": str(uuid4()),
+        "parent": str(uuid4()),
         "trace_id": trace_id,
     }
     invalid_event = create_pubsub_event(data)
@@ -438,9 +438,9 @@ async def test_grant_application_missing_cfp_analysis(
                     "generation_instructions": "Test instructions",
                     "depends_on": [],
                     "max_words": 100,
-                    "search_queries": ["test"],
-                    "is_detailed_research_plan": False,
-                    "is_clinical_trial": False,
+                    "queries": ["test"],
+                    "is_plan": False,
+                    "clinical": False,
                 }
             ],
             cfp_analysis=None,

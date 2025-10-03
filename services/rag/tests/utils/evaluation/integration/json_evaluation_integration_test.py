@@ -116,7 +116,7 @@ class TestJSONEvaluationIntegration:
             Our approach builds upon these findings while incorporating novel analytical methods to enhance
             sensitivity and specificity for early-stage cancer detection.
             """,
-            "search_queries": [
+            "queries": [
                 "proteomics biomarker cancer discovery",
                 "mass spectrometry clinical validation",
                 "diagnostic accuracy statistical analysis",
@@ -387,7 +387,7 @@ class TestJSONEvaluationIntegration:
             "technical_terms": ["clinical validation", "biomarker analysis"],
             "research_questions": ["How do biomarkers perform clinically?"],
             "context": "Clinical biomarker validation research with patient populations",
-            "search_queries": ["clinical biomarker validation"],
+            "queries": ["clinical biomarker validation"],
         }
 
         enrichment_result = evaluate_enrichment_quality(enrichment_data, keywords, topics)

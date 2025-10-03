@@ -39,106 +39,71 @@ Enrich research objective with metadata for grant work plan generation.
 
 ## Required Fields (7 per objective/task)
 
-1. enriched_objective: Enhanced version with scientific rationale and impact (min 50 chars)
-2. core_scientific_terms: Exactly 5 fundamental terms central to this research
-3. scientific_context: Background explaining why this research is needed (min 50 chars)
-4. instructions: AI generation guidance (writing style, technical depth, formatting) (min 50 chars)
-5. description: Purpose, methodology, expected results, dependencies, risks, innovation (min 50 chars)
-6. guiding_questions: 3-10 questions addressing purpose, methodology, outcomes, challenges
-7. search_queries: 3-10 concise phrases (3-7 words) for vector retrieval
+1. **enriched**: Enhanced version with scientific rationale and impact (min 50 chars)
+2. **terms**: Exactly 5 fundamental scientific terms central to this research
+3. **context**: Scientific background explaining why this research is needed (min 50 chars)
+4. **instructions**: AI generation guidance (style, technical depth, formatting) (min 50 chars)
+5. **description**: Purpose, methodology, expected results, dependencies, risks, innovation (min 50 chars)
+6. **questions**: 3-10 questions addressing purpose, methodology, outcomes, challenges
+7. **queries**: 3-10 concise phrases (3-7 words) for vector retrieval
 
-## Example
-
-Input objective:
-```
-Objective 1: Develop CRISPR-based gene editing platform for cancer therapy
-Task 1.1: Optimize Cas9 delivery mechanisms in tumor cells
-Task 1.2: Validate off-target effects in preclinical models
-```
-
-Output (showing objective only, tasks follow same pattern):
-```json
-{
-  "research_objective": {
-    "enriched_objective": "Develop a novel CRISPR-Cas9 gene editing platform specifically optimized for cancer therapy, addressing current limitations in delivery efficiency and specificity, with potential to revolutionize targeted oncology treatments through precise genomic interventions",
-    "core_scientific_terms": ["CRISPR-Cas9", "gene editing", "tumor microenvironment", "off-target effects", "therapeutic efficacy"],
-    "scientific_context": "Current gene editing approaches face significant challenges in clinical translation due to delivery inefficiencies and potential off-target effects. This research addresses the critical need for precision oncology tools by developing optimized CRISPR systems that can selectively target cancer cells while minimizing collateral genomic damage",
-    "instructions": "Write in formal academic tone with high technical precision. Emphasize the innovation in delivery mechanisms and specificity improvements. Use domain-specific terminology from molecular oncology. Balance technical detail with accessibility for interdisciplinary reviewers. Highlight competitive advantages over existing gene therapy approaches",
-    "description": "Purpose: Establish a clinically viable gene editing platform for cancer treatment. Methodology: Employ lipid nanoparticle delivery systems, conduct in vitro tumor cell line testing, perform whole-genome sequencing for off-target analysis. Expected Results: 80% delivery efficiency, <0.1% off-target rate, validated preclinical efficacy data. Dependencies: Access to tumor cell lines and sequencing facilities. Risks: Delivery efficiency may vary across tumor types; mitigation through multiple delivery vector testing. Innovation: Novel targeting mechanism combines tumor-specific promoters with optimized guide RNA design",
-    "guiding_questions": [
-      "What specific delivery mechanisms will be tested and how do they compare to current standards?",
-      "How will off-target effects be quantified and what thresholds define acceptable specificity?",
-      "What are the expected clinical translation pathways for this platform?",
-      "How does this approach address limitations of existing CRISPR cancer therapies?"
-    ],
-    "search_queries": [
-      "CRISPR delivery systems cancer",
-      "Cas9 specificity tumor targeting",
-      "gene editing clinical translation",
-      "nanoparticle mediated gene therapy"
-    ]
-  },
-  "research_tasks": [...]
-}
-```
-
-Return enriched content for objective and all tasks following this structure.
+Return enriched content for both research_objective and all research_tasks.
 """,
 )
 
 enriched_object_schema = {
     "type": "object",
     "properties": {
-        "enriched_objective": {
+        "enriched": {
             "type": "string",
             "minLength": 50,
-            "description": "Enhanced and detailed version of the original research objective or task",
+            "description": "Enhanced objective with scientific rationale and impact",
         },
-        "core_scientific_terms": {
+        "terms": {
             "type": "array",
             "items": {"type": "string"},
             "minItems": 5,
             "maxItems": 5,
-            "description": "Exactly 5 fundamental scientific terms central to this research",
+            "description": "Exactly 5 fundamental scientific terms",
         },
-        "scientific_context": {
+        "context": {
             "type": "string",
             "minLength": 50,
-            "description": "Scientific background and context explaining the rationale for this research",
+            "description": "Scientific background explaining research rationale",
         },
         "instructions": {
             "type": "string",
             "minLength": 50,
-            "description": "Detailed instructions for AI text generation including style, technical depth, and formatting",
+            "description": "AI generation guidance (style, depth, formatting)",
         },
         "description": {
             "type": "string",
             "minLength": 50,
-            "description": "Comprehensive description covering purpose, methodology, expected results, dependencies, risks, and innovation",
+            "description": "Purpose, methodology, results, dependencies, risks, innovation",
         },
-        "guiding_questions": {
+        "questions": {
             "type": "array",
             "items": {"type": "string"},
             "minItems": 3,
             "maxItems": 10,
-            "description": "Questions addressing core purpose, methodology, outcomes, challenges, and broader implications",
+            "description": "Questions on purpose, methodology, outcomes, challenges",
         },
-        "search_queries": {
+        "queries": {
             "type": "array",
             "items": {"type": "string"},
             "minItems": 3,
             "maxItems": 10,
-            "description": "Concise queries (3-7 words) using precise scientific terminology for vector retrieval",
+            "description": "Concise queries (3-7 words) for vector retrieval",
         },
     },
     "required": [
-        "enriched_objective",
-        "core_scientific_terms",
-        "scientific_context",
+        "enriched",
+        "terms",
+        "context",
         "instructions",
         "description",
-        "guiding_questions",
-        "search_queries",
+        "questions",
+        "queries",
     ],
 }
 
@@ -177,43 +142,39 @@ def validate_enrichment_response(
         )
 
     for field in [
-        "enriched_objective",
-        "core_scientific_terms",
-        "scientific_context",
+        "enriched",
+        "terms",
+        "context",
         "instructions",
         "description",
-        "guiding_questions",
-        "search_queries",
+        "questions",
+        "queries",
     ]:
         if field not in objective:
             raise ValidationError(f"Missing {field} in objective", context=objective)
 
-    if len(objective["core_scientific_terms"]) != 5:
+    if len(objective["terms"]) != 5:
         raise ValidationError(
             "Objective must have exactly 5 core scientific terms",
-            context={"terms_count": len(objective["core_scientific_terms"])},
+            context={"terms_count": len(objective["terms"])},
         )
 
-    if len(objective["guiding_questions"]) < 3:
+    if len(objective["questions"]) < 3:
         raise ValidationError(
             "Objective must have at least 3 guiding questions",
-            context={"questions_count": len(objective["guiding_questions"])},
+            context={"questions_count": len(objective["questions"])},
         )
 
-    if len(objective["search_queries"]) < 3:
+    if len(objective["queries"]) < 3:
         raise ValidationError(
-            "Objective must have at least 3 search queries", context={"queries_count": len(objective["search_queries"])}
+            "Objective must have at least 3 search queries", context={"queries_count": len(objective["queries"])}
         )
 
-    if len(objective["enriched_objective"].strip()) < 50:
-        raise ValidationError(
-            "Objective enriched_objective too short", context={"content": objective["enriched_objective"]}
-        )
+    if len(objective["enriched"].strip()) < 50:
+        raise ValidationError("Objective enriched too short", context={"content": objective["enriched"]})
 
-    if len(objective["scientific_context"].strip()) < 50:
-        raise ValidationError(
-            "Objective scientific_context too short", context={"content": objective["scientific_context"]}
-        )
+    if len(objective["context"].strip()) < 50:
+        raise ValidationError("Objective context too short", context={"content": objective["context"]})
 
     if len(objective["instructions"].strip()) < 50:
         raise ValidationError("Objective instructions too short", context={"content": objective["instructions"]})
@@ -239,44 +200,40 @@ def validate_enrichment_response(
 
     for i, task in enumerate(response["research_tasks"]):
         for field in [
-            "enriched_objective",
-            "core_scientific_terms",
-            "scientific_context",
+            "enriched",
+            "terms",
+            "context",
             "instructions",
             "description",
-            "guiding_questions",
-            "search_queries",
+            "questions",
+            "queries",
         ]:
             if field not in task:
                 raise ValidationError(f"Missing {field} in task at index {i}", context=task)
 
-        if len(task["core_scientific_terms"]) != 5:
+        if len(task["terms"]) != 5:
             raise ValidationError(
                 f"Task at index {i} must have exactly 5 core scientific terms",
-                context={"terms_count": len(task["core_scientific_terms"])},
+                context={"terms_count": len(task["terms"])},
             )
 
-        if len(task["guiding_questions"]) < 3:
+        if len(task["questions"]) < 3:
             raise ValidationError(
                 f"Task at index {i} must have at least 3 guiding questions",
-                context={"questions_count": len(task["guiding_questions"])},
+                context={"questions_count": len(task["questions"])},
             )
 
-        if len(task["search_queries"]) < 3:
+        if len(task["queries"]) < 3:
             raise ValidationError(
                 f"Task at index {i} must have at least 3 search queries",
-                context={"queries_count": len(task["search_queries"])},
+                context={"queries_count": len(task["queries"])},
             )
 
-        if len(task["enriched_objective"].strip()) < 50:
-            raise ValidationError(
-                f"Task at index {i} enriched_objective too short", context={"content": task["enriched_objective"]}
-            )
+        if len(task["enriched"].strip()) < 50:
+            raise ValidationError(f"Task at index {i} enriched too short", context={"content": task["enriched"]})
 
-        if len(task["scientific_context"].strip()) < 50:
-            raise ValidationError(
-                f"Task at index {i} scientific_context too short", context={"content": task["scientific_context"]}
-            )
+        if len(task["context"].strip()) < 50:
+            raise ValidationError(f"Task at index {i} context too short", context={"content": task["context"]})
 
         if len(task["instructions"].strip()) < 50:
             raise ValidationError(

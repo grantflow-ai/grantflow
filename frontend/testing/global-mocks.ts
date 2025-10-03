@@ -171,9 +171,9 @@ const mockAnalyticsInstance = {
 	ready: vi.fn().mockResolvedValue(undefined),
 	register: vi.fn().mockResolvedValue(undefined),
 	reset: vi.fn().mockResolvedValue(undefined),
-	SNIPPET_VERSION: "5.2.0",
 	screen: vi.fn().mockResolvedValue(undefined),
 	setAnonymousId: vi.fn().mockResolvedValue(undefined),
+	SNIPPET_VERSION: "5.2.0",
 	track: vi.fn().mockResolvedValue(undefined),
 	trackClick: vi.fn().mockResolvedValue(undefined),
 	trackForm: vi.fn().mockResolvedValue(undefined),
@@ -190,6 +190,8 @@ vi.mock("@/utils/segment", () => ({
 }));
 
 vi.mock("@/utils/tracking", () => ({
+	trackError: vi.fn().mockResolvedValue(undefined),
+	trackEvent: vi.fn().mockResolvedValue(undefined),
 	TrackingEvents: {
 		CTA_NEW_APPLICATION_MAIN: "main-cta-new-application",
 		CTA_NEW_APPLICATION_SIDEBAR: "sidebar-cta-new-application",
@@ -202,8 +204,6 @@ vi.mock("@/utils/tracking", () => ({
 		WIZARD_STEP_4_NEXT: "wizard-step-4-next",
 		WIZARD_STEP_5_GENERATE: "wizard-step-5-generate",
 	},
-	trackError: vi.fn().mockResolvedValue(undefined),
-	trackEvent: vi.fn().mockResolvedValue(undefined),
 	trackPageView: vi.fn().mockResolvedValue(undefined),
 }));
 
