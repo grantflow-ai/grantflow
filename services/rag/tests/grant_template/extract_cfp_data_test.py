@@ -5,27 +5,23 @@ from uuid import uuid4
 import pytest
 from packages.db.src.tables import GrantTemplate
 
-from services.rag.src.grant_template.extract_cfp_data import (
-    RagSourceData,
-    extract_cfp_data_multi_source,
-    format_rag_sources_for_prompt,
-    get_rag_sources_data,
-)
+from services.rag.src.grant_template.extract_cfp_data import extract_cfp_data
+from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
 
 
 @pytest.fixture
 def mock_rag_sources() -> list[RagSourceData]:
     return [
-        {
-            "source_id": str(uuid4()),
-            "source_type": "rag_file",
-            "text_content": "Full content of grant guidelines document with funding eligibility criteria for research institutions, application requirements and submission process, evaluation metrics and review timeline.",
-            "chunks": [
+        RagSourceData(
+            source_id=str(uuid4()),
+            source_type="rag_file",
+            text_content="Full content of grant guidelines document with funding eligibility criteria for research institutions, application requirements and submission process, evaluation metrics and review timeline.",
+            chunks=[
                 "Funding eligibility criteria for research institutions",
                 "Application requirements and submission process",
                 "Evaluation metrics and review timeline",
             ],
-            "nlp_analysis": {
+            nlp_analysis={
                 "money": ["$500,000 funding available"],
                 "date_time": ["submission deadline March 15"],
                 "writing_related": ["must submit proposal"],
@@ -36,16 +32,16 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "negative_instructions": ["do not exceed page limit"],
                 "evaluation_criteria": ["innovation and impact"],
             },
-        },
-        {
-            "source_id": str(uuid4()),
-            "source_type": "rag_url",
-            "text_content": "Web content from the funding organization website with past funded projects examples and success stories and detailed guidance on application procedures.",
-            "chunks": [
+        ),
+        RagSourceData(
+            source_id=str(uuid4()),
+            source_type="rag_url",
+            text_content="Web content from the funding organization website with past funded projects examples and success stories and detailed guidance on application procedures.",
+            chunks=[
                 "Web content from the funding organization website",
                 "Past funded projects examples and success stories",
             ],
-            "nlp_analysis": {
+            nlp_analysis={
                 "money": [],
                 "date_time": [],
                 "writing_related": ["application examples"],
@@ -56,40 +52,8 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "negative_instructions": [],
                 "evaluation_criteria": [],
             },
-        },
+        ),
     ]
-
-
-async def test_rag_sources_data_get_rag_sources_data(
-    async_session_maker: Any,
-    grant_template: GrantTemplate,
-) -> None:
-    result = await get_rag_sources_data(
-        source_ids=[str(uuid4()), str(uuid4())],
-        session_maker=async_session_maker,
-    )
-    assert result == []
-
-
-async def test_rag_sources_data_get_rag_sources_data_empty_sources(
-    async_session_maker: Any,
-) -> None:
-    result = await get_rag_sources_data(
-        source_ids=[],
-        session_maker=async_session_maker,
-    )
-    assert result == []
-
-
-async def test_rag_sources_data_get_rag_sources_data_nonexistent_sources(
-    async_session_maker: Any,
-) -> None:
-    fake_uuids = [str(uuid4()), str(uuid4())]
-    result = await get_rag_sources_data(
-        source_ids=fake_uuids,
-        session_maker=async_session_maker,
-    )
-    assert result == []
 
 
 def test_rag_sources_formatting_format_rag_sources_for_prompt(mock_rag_sources: list[RagSourceData]) -> None:
@@ -162,7 +126,7 @@ def test_rag_sources_formatting_format_rag_sources_for_prompt_no_chunks() -> Non
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-async def test_cfp_data_extraction_extract_cfp_data_multi_source_success(
+async def test_cfp_data_extraction_extract_cfp_data_success(
     mock_completions: AsyncMock, mock_rag_sources: list[RagSourceData]
 ) -> None:
     mock_response = {
@@ -177,7 +141,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_success(
     mock_completions.return_value = mock_response
 
     task_description = format_rag_sources_for_prompt(mock_rag_sources)
-    result = await extract_cfp_data_multi_source(task_description, trace_id="test-trace")
+    result = await extract_cfp_data(task_description, trace_id="test-trace")
 
     assert "subject" in result
     assert "content" in result
@@ -194,7 +158,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_success(
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-async def test_cfp_data_extraction_extract_cfp_data_multi_source_minimal_content(mock_completions: AsyncMock) -> None:
+async def test_cfp_data_extraction_extract_cfp_data_minimal_content(mock_completions: AsyncMock) -> None:
     mock_response: dict[str, Any] = {
         "org_id": None,
         "subject": "Basic grant program",
@@ -203,7 +167,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_minimal_content
     }
     mock_completions.return_value = mock_response
 
-    result = await extract_cfp_data_multi_source("Minimal content", trace_id="test-trace")
+    result = await extract_cfp_data("Minimal content", trace_id="test-trace")
 
     assert result["org_id"] is None
     assert result["subject"] == "Basic grant program"
@@ -212,7 +176,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_minimal_content
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-async def test_cfp_data_extraction_extract_cfp_data_multi_source_empty_task_description(
+async def test_cfp_data_extraction_extract_cfp_data_empty_task_description(
     mock_completions: AsyncMock,
 ) -> None:
     mock_response: dict[str, Any] = {
@@ -223,14 +187,14 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_empty_task_desc
     }
     mock_completions.return_value = mock_response
 
-    result = await extract_cfp_data_multi_source("", trace_id="test-trace")
+    result = await extract_cfp_data("", trace_id="test-trace")
 
     assert result["subject"] == ""
     assert result["content"] == []
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
-async def test_cfp_data_extraction_extract_cfp_data_multi_source_complex_content(mock_completions: AsyncMock) -> None:
+async def test_cfp_data_extraction_extract_cfp_data_complex_content(mock_completions: AsyncMock) -> None:
     mock_response = {
         "org_id": "complex-org-id",
         "subject": "Multi-disciplinary research initiative",
@@ -257,7 +221,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_complex_content
     }
     mock_completions.return_value = mock_response
 
-    result = await extract_cfp_data_multi_source("Complex CFP document", trace_id="test-trace")
+    result = await extract_cfp_data("Complex CFP document", trace_id="test-trace")
 
     assert len(result["content"]) == 3
 
@@ -293,7 +257,7 @@ async def test_integration_cfp_data_workflow_full_cfp_data_workflow(
             "deadline": "2025-12-31",
         }
 
-        extracted_data = await extract_cfp_data_multi_source(formatted_prompt, trace_id="test-trace")
+        extracted_data = await extract_cfp_data(formatted_prompt, trace_id="test-trace")
 
         assert extracted_data["org_id"] == "workflow-test-org"
         assert extracted_data["subject"] == "Integrated workflow test grant"
