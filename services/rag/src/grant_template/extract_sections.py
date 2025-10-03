@@ -3,16 +3,21 @@ from collections import defaultdict
 from functools import partial
 from typing import TYPE_CHECKING, Final, NotRequired, TypedDict
 
-from packages.db.src.json_objects import CFPAnalysis, OrganizationNamespace
+from packages.db.src.json_objects import (
+    CFPAnalysis,
+    CFPAnalysisConstraint,
+    CFPConstraint,
+)
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.dto import (
     CFPContentSection,
     ExtractedSectionDTO,
 )
 from packages.shared_utils.src.serialization import serialize
+from difflib import SequenceMatcher
 
 if TYPE_CHECKING:
-    from services.rag.src.grant_template.dto import ExtractionSectionsStageDTO
+    from services.rag.src.grant_template.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
@@ -338,6 +343,169 @@ class ExtractedSections(TypedDict):
 
 WORD_LIMIT_TOLERANCE: Final[float] = 0.1
 MAX_NESTING_DEPTH: Final[int] = 5
+
+# Conversion constants for length limits
+WORDS_PER_PAGE: Final[int] = 250  # Standard ~250 words per page
+CHARS_PER_WORD: Final[int] = 6  # Average ~6 characters per word (including spaces)
+
+
+def _similarity_ratio(s1: str, s2: str) -> float:
+    """Calculate similarity ratio between two strings (0.0 to 1.0)."""
+    return SequenceMatcher(None, s1.lower(), s2.lower()).ratio()
+
+
+def match_constraint_to_section(
+    constraint: CFPAnalysisConstraint, section_title: str, threshold: float = 0.6
+) -> bool:
+    """Fuzzy match constraint.section to section.title.
+
+    Returns True if constraint applies to this section.
+    If constraint.section is None, returns False (constraint is global).
+    """
+    constraint_section = constraint.get("section")
+    if not constraint_section:
+        return False
+
+    # Exact match (case-insensitive)
+    if constraint_section.lower() == section_title.lower():
+        return True
+
+    # Fuzzy match with threshold
+    if _similarity_ratio(constraint_section, section_title) >= threshold:
+        return True
+
+    # Check if constraint_section is substring of section_title or vice versa
+    constraint_lower = constraint_section.lower()
+    title_lower = section_title.lower()
+    if constraint_lower in title_lower or title_lower in constraint_lower:
+        return True
+
+    return False
+
+
+def parse_length_constraint(constraint_value: str, constraint_type: str) -> tuple[int | None, str]:
+    """Extract numeric value and type from constraint string.
+
+    Returns (numeric_value, constraint_type) or (None, constraint_value) if parsing fails.
+
+    Examples:
+        "6 pages" -> (6, "page_limit")
+        "1500 words" -> (1500, "word_limit")
+        "12 pages maximum" -> (12, "page_limit")
+    """
+    # Extract numbers from constraint value
+    numbers = re.findall(r'\d+', constraint_value)
+    if not numbers:
+        return None, constraint_value
+
+    # Use first number found
+    value = int(numbers[0])
+
+    # Return value with constraint type
+    return value, constraint_type
+
+
+def convert_to_word_limit(value: int, constraint_type: str) -> int:
+    """Normalize page/char limits to word count.
+
+    Args:
+        value: Numeric constraint value
+        constraint_type: One of word_limit, page_limit, char_limit, format
+
+    Returns:
+        Word count equivalent
+    """
+    if constraint_type == "word_limit":
+        return value
+    elif constraint_type == "page_limit":
+        return value * WORDS_PER_PAGE
+    elif constraint_type == "char_limit":
+        return value // CHARS_PER_WORD
+    else:
+        # For format constraints, return 0 (no word limit)
+        return 0
+
+
+def extract_section_guidelines(
+    section_title: str, cfp_content: list[CFPContentSection], max_guidelines: int = 10
+) -> list[str]:
+    """Pull relevant subtitles as guidelines for a section.
+
+    Finds the matching CFP content section and returns its subtitles as guidelines.
+    Limits to max_guidelines items to avoid excessive data.
+    """
+    # Find matching CFP content section
+    for content_section in cfp_content:
+        if _similarity_ratio(content_section["title"], section_title) >= 0.6:
+            # Return subtitles, limited to max_guidelines
+            subtitles = content_section.get("subtitles", [])
+            return subtitles[:max_guidelines]
+
+    return []
+
+
+def enrich_section_with_constraints(
+    section: ExtractedSectionDTO,
+    cfp_analysis: CFPAnalysis,
+    cfp_content: list[CFPContentSection],
+) -> ExtractedSectionDTO:
+    """Enrich section with constraints, guidelines, and definition from CFP analysis.
+
+    Matches constraints to sections, extracts guidelines, and populates all new fields.
+    """
+    section_title = section["title"]
+    constraints = cfp_analysis.get("analysis_metadata", {}).get("constraints", [])
+
+    # Extract matching constraints
+    matched_constraints: list[CFPAnalysisConstraint] = []
+    length_limit: int | None = None
+    length_source: str | None = None
+    other_limits: list[CFPConstraint] = []
+
+    for constraint in constraints:
+        if match_constraint_to_section(constraint, section_title):
+            matched_constraints.append(constraint)
+
+            # Process length constraints
+            if constraint["type"] in ["word_limit", "page_limit", "char_limit"]:
+                value, c_type = parse_length_constraint(constraint["value"], constraint["type"])
+                if value is not None:
+                    word_limit = convert_to_word_limit(value, c_type)
+                    if word_limit > 0:
+                        # Use the most restrictive limit if multiple
+                        if length_limit is None or word_limit < length_limit:
+                            length_limit = word_limit
+                            length_source = constraint["value"]
+
+            # Process format/other constraints
+            elif constraint["type"] == "format":
+                other_limits.append(
+                    CFPConstraint(
+                        constraint_type=constraint["type"],
+                        constraint_value=constraint["value"],
+                        source_quote=constraint.get("section", ""),
+                    )
+                )
+
+    # Extract guidelines from CFP content
+    guidelines = extract_section_guidelines(section_title, cfp_content)
+
+    # Extract definition (first guideline or empty)
+    definition = guidelines[0] if guidelines else None
+
+    # Populate new fields
+    if guidelines:
+        section["guidelines"] = guidelines
+    if length_limit is not None:
+        section["length_limit"] = length_limit
+    if length_source:
+        section["length_source"] = length_source
+    if other_limits:
+        section["other_limits"] = other_limits
+    if definition:
+        section["definition"] = definition
+
+    return section
 
 
 def _get_children_map(sections: list[ExtractedSectionDTO]) -> dict[str, list[ExtractedSectionDTO]]:
@@ -673,6 +841,7 @@ async def handle_extract_sections(
     trace_id: str,
     *,
     cfp_analysis: CFPAnalysis,
+    job_manager: "JobManager[StageDTO]",
 ) -> list[ExtractedSectionDTO]:
     content_list = [f"{content['title']}: {'...'.join(content['subtitles'])}" for content in cfp_content]
 
@@ -746,4 +915,19 @@ async def handle_extract_sections(
     )
 
     # Filter and finalize sections
-    return await filter_extracted_sections(result["sections"], trace_id)
+    filtered_sections = await filter_extracted_sections(result["sections"], trace_id)
+
+    # Enrich sections with constraints, guidelines, and definitions
+    enriched_sections = [
+        enrich_section_with_constraints(section, cfp_analysis, cfp_content) for section in filtered_sections
+    ]
+
+    logger.info(
+        "Enriched sections with constraints and guidelines",
+        sections_count=len(enriched_sections),
+        sections_with_constraints=sum(1 for s in enriched_sections if s.get("length_limit")),
+        sections_with_guidelines=sum(1 for s in enriched_sections if s.get("guidelines")),
+        trace_id=trace_id,
+    )
+
+    return enriched_sections
