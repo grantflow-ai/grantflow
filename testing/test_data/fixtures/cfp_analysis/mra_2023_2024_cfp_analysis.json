@@ -1,0 +1,322 @@
+{
+  "subject": "2023-2024 Request for Proposals for translational and early clinical melanoma research with emphasis on Team Science Awards, Young Investigator Awards, Pilot Awards, Dermatology Career Development Awards, and Special Opportunity Awards",
+  "org_id": "mra",
+  "deadline": "2023-10-20T23:59:00-04:00",
+  "organization": {
+    "id": "mra",
+    "full_name": "Melanoma Research Alliance",
+    "abbreviation": "MRA"
+  },
+  "content": [
+    {
+      "title": "Award Mechanisms and Funding Levels",
+      "subtitles": [
+        "Team Science Awards: $300,000 per year, $900,000 total over 3 years",
+        "Young Investigator Awards: $85,000 per year, $255,000 total over 3 years",
+        "Pilot Awards: $50,000 per year, $100,000 total over 2 years",
+        "Dermatology Career Development Awards: $85,000 per year, $170,000 total over 2 years (NEW for 2023-2024)",
+        "Academic-Industry Partnership Award available for Team Science proposals",
+        "Special Opportunity Awards in: Acral Melanoma, Brain Metastasis, Dermatology Technologies, Immunology, Radiation Oncology, Uveal Melanoma, UK/Israel-based researchers",
+        "Total new funding planned: at least $11.5 million in 2023-2024 cycle"
+      ]
+    },
+    {
+      "title": "Application Submission and Access Management",
+      "subtitles": [
+        "Deadline: 11:59 p.m. Eastern Time, proposals not considered after deadline",
+        "Must use ProposalCentral online application tool at https://ProposalCentral.com/",
+        "Use document templates and requirements provided in ProposalCentral",
+        "Enable Other Users to Access this Proposal: grant 'Edit' access to institutional signing officials ahead of time",
+        "Electronic signatures required from Signing Official and PI for submission",
+        "Grant access to Signing Official well in advance to avoid last-minute submission issues"
+      ]
+    },
+    {
+      "title": "Title Page and Project Information",
+      "subtitles": [
+        "Enter project title - will become public if funded, no proprietary information allowed",
+        "Select Special Opportunity Award subprogram if applicable (otherwise N/A)",
+        "For Academic-Industry Partnership proposals: include name of Industry Partner on title page",
+        "PI name and institution become public if awarded"
+      ]
+    },
+    {
+      "title": "Key Personnel and Roles",
+      "subtitles": [
+        "Administrative PI (Team Science only): team leader, primary MRA contact, shares scientific leadership, ensures compliance with award terms",
+        "Principal Investigator (all applications): applicant for Pilot and Young Investigator; shares authority equally with Administrative PI for Team Science",
+        "Co-Investigator: vital scientific contributors with measurable effort, designated as Key Personnel",
+        "Collaborator: lesser role than PI/Co-I, may be designated as Key Personnel if compensated",
+        "Mentor (Team Science and Young Investigator): established investigator at same institution, provides support and career guidance, expertise in melanoma research strongly advised",
+        "Young Investigator (Team Science): within first 5 years of first independent faculty appointment at Assistant Professor level, integral to proposal aims",
+        "Consultant: provides guidance on specific aspects, may be designated as Key Personnel",
+        "Other Key Personnel: Project Managers, Technicians, Postdocs, Fellows, Research Assistants, Graduate Students if contributing substantively",
+        "ORCID IDs required for: PI, Young Investigator, Mentor, Administrative PI"
+      ]
+    },
+    {
+      "title": "Organization and Institution Information",
+      "subtitles": [
+        "Key information about PI's institution required",
+        "Name and email of signing official who will be contacted if funded",
+        "ROR (Research Organization Registry ID) should be included if institution has one",
+        "Signing official must have at least 'Edit' access in ProposalCentral to sign application",
+        "Administrative PI's institution oversees all organization assurances and certifications (Team Science)"
+      ]
+    },
+    {
+      "title": "Data and Renewable Reagent Sharing Plan",
+      "subtitles": [
+        "Describe types of data and renewable reagents that will be generated",
+        "Explain how data and reagents will be shared to promote rapid research advancement, transparency, reproducibility, collaboration",
+        "MRA recommends posting manuscripts to pre-print server ahead of or at journal submission",
+        "MRA recommends posting research outputs (data, code, software) to public repositories when generated",
+        "MRA recommends publishing in open-access journals",
+        "MRA recommends all research outputs use CC BY-NC license (no commercial modification rights)",
+        "MRA requires final accepted publication deposited in PubMed Central, available 12 months after publication",
+        "MRA requires data, code, software for independent verification made freely and publicly available at publication",
+        "MRA will cover policy compliance costs (article processing charges, data storage) if included in original budget"
+      ]
+    },
+    {
+      "title": "Abstracts and Keywords",
+      "subtitles": [
+        "Provide general audience abstract (non-technical): 2,000 characters including spaces maximum",
+        "Provide technical abstract: 2,000 characters including spaces maximum",
+        "Include keywords for both abstracts",
+        "General audience abstract will become public if funded - no proprietary information"
+      ]
+    },
+    {
+      "title": "Budget Requirements and Justification",
+      "subtitles": [
+        "Enter budget details for each award period requested",
+        "Awards will NOT support indirect costs, overhead costs, or similar institutional charges",
+        "Fringe benefits for personnel salaries ARE allowable",
+        "Include costs for MRA data sharing policy compliance",
+        "Academic-Industry Partnership: budget must contain ALL costs from both MRA and industry partner, with contributions clearly explained",
+        "Provide sufficient detail for evaluation of major budget portions (2,000 character limit in ProposalCentral forms)",
+        "If more space needed than ProposalCentral forms allow, upload budget justification document in attachments (step #13)",
+        "Do not exceed yearly and total budget caps for each award mechanism"
+      ]
+    },
+    {
+      "title": "Current and Pending Research Support",
+      "subtitles": [
+        "List all current and pending support for Applicant (required for all)",
+        "Team Science: also list support for Principal Investigators and Young Investigators ONLY",
+        "Young Investigator and Pilot: current/pending support required for Applicant only",
+        "Any overlap with MRA proposal must be described and explained",
+        "Add support to Professional Profile in ProposalCentral Step #6: Other Support",
+        "For Key Personnel: if they grant 'View' access, select their support from profile; otherwise use template from Step #2 and upload in Step #13"
+      ]
+    },
+    {
+      "title": "Organizational Assurances",
+      "subtitles": [
+        "IRB approval if applicable - not required at application but required before initial payments",
+        "IACUC approval if applicable"
+      ]
+    },
+    {
+      "title": "Required Attachments: Biosketches and Support Documentation",
+      "subtitles": [
+        "Biosketch: NIH format for PI and all Key Personnel listed in Step #6",
+        "Biosketches for research support staff, students, postdocs, other training positions NOT required",
+        "Applicants without NIH biosketch may use template in ProposalCentral",
+        "MRA welcomes inclusion of research outputs: datasets, code, patents, papers on preprint servers (in addition to publications)",
+        "Current and pending research support template (Team Science ONLY): use only for Key Personnel where applicant lacks ProposalCentral access to their support"
+      ]
+    },
+    {
+      "title": "Project Description Requirements",
+      "subtitles": [
+        "Must be formatted: Arial 11-point OR Times New Roman 12-point font",
+        "Margins: no less than 1/2 inch (0.5 inches)",
+        "Page limit: 5 pages maximum",
+        "Inclusive of: Background and specific aims, Preliminary data, Experimental design and methods, Statistical plan, Figures (embedded within sections), Rationale/fit with key criteria including potential for clinical impact"
+      ]
+    },
+    {
+      "title": "Literature References",
+      "subtitles": [
+        "Up to 30 references supporting the project description",
+        "Allowed IN ADDITION to the 5-page project description limit",
+        "Separate attachment from project description"
+      ]
+    },
+    {
+      "title": "Mentor Letters and Eligibility Documentation",
+      "subtitles": [
+        "Mentor Letter of Support required for: Young Investigator, Team Science, Dermatology Career Development Award proposals",
+        "Letter should confirm applicant has independent research program",
+        "Include brief statement about: the applicant, Mentor's role, mentoring plan, research environment, institutional support sources",
+        "MRA recommends considering unconscious bias guidelines when preparing support letters (https://tinyurl.com/)",
+        "Applicant Eligibility Checklist required: signature from Department Chair, Division Head, or Dean",
+        "Young Investigator checklist and Dermatology Career Development checklist accessible via provided links",
+        "Young Investigator and Dermatology Career Development: email checklist to kackerman@curemelanoma.org by October 20, 2023, also upload copy to application",
+        "Team Science: upload eligibility checklist as attachment in ProposalCentral"
+      ]
+    },
+    {
+      "title": "Academic-Industry Partnership Requirements",
+      "subtitles": [
+        "Include letter of support from industry partner with minimum requirements:",
+        "Description of total support amount: clearly indicate monetary and/or in-kind portions for full award term",
+        "Must match total funding requested in application",
+        "Acknowledgement: if Award made, industry partner will execute agreement with awardee Institution within 90 days",
+        "Acknowledgement: if Award made, industry partner will execute agreement with MRA within 90 days",
+        "Example template agreement available from MRA upon request (contact kackerman@curemelanoma.org)"
+      ]
+    },
+    {
+      "title": "Clinical Trial Protocol Requirements",
+      "subtitles": [
+        "For proposals involving clinical trials: attach brief protocol synopsis",
+        "Include timeline with milestones",
+        "IRB approval not required at application time",
+        "IRB approval IS required before initial payments are made"
+      ]
+    }
+  ],
+  "analysis_metadata": {
+    "categories": [
+      {
+        "name": "Award Mechanisms",
+        "count": 7,
+        "examples": [
+          "Team Science Awards ($900K/3 years)",
+          "Young Investigator Awards ($255K/3 years)",
+          "Pilot Awards ($100K/2 years)",
+          "Dermatology Career Development Awards ($170K/2 years)",
+          "Academic-Industry Partnership",
+          "Special Opportunity Awards",
+          "Total $11.5M+ funding available"
+        ]
+      },
+      {
+        "name": "Eligibility Requirements",
+        "count": 8,
+        "examples": [
+          "Young Investigator: within 5 years of first independent faculty appointment",
+          "Young Investigator: Assistant Professor level or equivalent",
+          "Team Science: must include at least one Young Investigator",
+          "Young Investigator work must be integral to proposal aims",
+          "Applicant Eligibility Checklist required with Department Chair/Division Head/Dean signature",
+          "Mentor required: established investigator at same institution",
+          "Mentor expertise in melanoma research strongly advised",
+          "IRB approval required before initial payment"
+        ]
+      },
+      {
+        "name": "Application Submission",
+        "count": 6,
+        "examples": [
+          "Deadline: 11:59 PM Eastern Time",
+          "ProposalCentral online tool required",
+          "Electronic signatures required (PI + Signing Official)",
+          "Grant 'Edit' access to Signing Official in advance",
+          "Use provided document templates",
+          "No proposals accepted after deadline"
+        ]
+      },
+      {
+        "name": "Key Personnel Roles",
+        "count": 9,
+        "examples": [
+          "Administrative PI (Team Science): team leader and primary contact",
+          "Principal Investigator required for all applications",
+          "Co-Investigator: vital scientific contributor with measurable effort",
+          "Mentor: provides support and career guidance",
+          "Young Investigator must be designated as Key Personnel",
+          "Consultant may be designated as Key Personnel",
+          "ORCID IDs required: PI, Young Investigator, Mentor, Administrative PI",
+          "Biosketches required for all Key Personnel",
+          "Current/Pending Support required for PI and Young Investigators"
+        ]
+      },
+      {
+        "name": "Data Sharing Policy",
+        "count": 8,
+        "examples": [
+          "Post manuscripts to pre-print server (recommended)",
+          "Post research outputs to public repositories when generated (recommended)",
+          "Publish in open-access journals (recommended)",
+          "Use CC BY-NC license for all research outputs (recommended)",
+          "Deposit final publication in PubMed Central within 12 months (required)",
+          "Make verification data/code/software publicly available at publication (required)",
+          "MRA covers compliance costs if budgeted",
+          "Promotes rapid advancement, transparency, reproducibility, collaboration"
+        ]
+      },
+      {
+        "name": "Budget Constraints",
+        "count": 5,
+        "examples": [
+          "NO indirect costs, overhead, or institutional charges allowed",
+          "Fringe benefits for personnel salaries ARE allowable",
+          "Include data sharing policy compliance costs",
+          "Academic-Industry Partnership: clearly explain contributions from each party",
+          "Do not exceed yearly/total budget caps for mechanism"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "type": "page_limit",
+        "value": "5 pages",
+        "section": "Project Description"
+      },
+      {
+        "type": "char_limit",
+        "value": "2000 characters including spaces",
+        "section": "General Audience Abstract"
+      },
+      {
+        "type": "char_limit",
+        "value": "2000 characters including spaces",
+        "section": "Technical Abstract"
+      },
+      {
+        "type": "format",
+        "value": "Arial 11-point OR Times New Roman 12-point font",
+        "section": "Project Description"
+      },
+      {
+        "type": "format",
+        "value": "0.5 inch margins minimum",
+        "section": "Project Description"
+      },
+      {
+        "type": "format",
+        "value": "30 references maximum",
+        "section": "Literature References"
+      },
+      {
+        "type": "char_limit",
+        "value": "2000 characters",
+        "section": "Budget Justification in ProposalCentral forms"
+      },
+      {
+        "type": "format",
+        "value": "NIH format required",
+        "section": "Biosketches"
+      },
+      {
+        "type": "format",
+        "value": "No indirect costs or overhead allowed",
+        "section": "Budget"
+      },
+      {
+        "type": "format",
+        "value": "Fringe benefits allowable",
+        "section": "Budget"
+      }
+    ],
+    "metadata": {
+      "total_sections": 16,
+      "total_requirements": 43,
+      "source_count": 1
+    }
+  }
+}
