@@ -46,7 +46,7 @@ from packages.db.src.enums import (
     UserRoleEnum,
 )
 from packages.db.src.json_objects import (
-    CFPAnalysisResult,
+    CFPAnalysis,
     Chunk,
     GrantElement,
     GrantLongFormSection,
@@ -490,7 +490,7 @@ class GrantTemplate(BaseWithUUIDPK):
         foreign_keys="[RagGenerationJob.grant_template_id]",
     )
 
-    cfp_analysis: Mapped[CFPAnalysisResult | None] = mapped_column(JSON, nullable=True)
+    cfp_analysis: Mapped[CFPAnalysis | None] = mapped_column(JSON, nullable=True)
 
 
 class GrantTemplateSource(Base):

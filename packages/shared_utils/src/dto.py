@@ -4,7 +4,9 @@ from uuid import UUID
 from packages.db.src.json_objects import (
     CFPAnalysisRequirementWithQuote,
     CFPConstraint,
+    CFPContentSection,
     Chunk,
+    OrganizationNamespace,
 )
 
 
@@ -12,17 +14,6 @@ class VectorDTO(TypedDict):
     chunk: Chunk
     embedding: list[float]
     rag_source_id: str
-
-
-class OrganizationNamespace(TypedDict):
-    full_name: str
-    abbreviation: str
-    organization_id: UUID
-
-
-class CFPContentSection(TypedDict):
-    title: str
-    subtitles: list[str]
 
 
 class ExtractedCFPData(TypedDict):
