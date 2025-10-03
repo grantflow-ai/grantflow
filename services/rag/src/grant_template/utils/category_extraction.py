@@ -213,6 +213,8 @@ DATE_TIME_ENTITIES: Final[set[str]] = {"DATE", "TIME"}
 PERCENTAGE_SYMBOL: Final[str] = "%"
 MIN_SENTENCE_CHARS: Final[int] = 10
 MAX_DISPLAY_ITEMS: Final[int] = 10
+MAX_HINT_ITEMS: Final[int] = 5
+MAX_HINT_TRUNCATE: Final[int] = 150
 MORE_ITEMS_FORMAT: Final[str] = "   ... and {remaining} more"
 NLP_ANALYSIS_HEADER: Final[str] = "## NLP Analysis"
 TOTAL_SENTENCES_FORMAT: Final[str] = "Total: {total_sentences} categorized sentences"
@@ -332,31 +334,46 @@ def _format_category_section(category: str, sentences: list[str]) -> list[str]:
     return section_lines
 
 
-def format_nlp_analysis_for_prompt(analysis: CategorizationAnalysisResult) -> str:
+def smart_truncate(text: str, max_len: int = MAX_HINT_TRUNCATE) -> str:
+    """Truncate text at word boundary to avoid cutting mid-word.
+
+    Args:
+        text: Text to truncate
+        max_len: Maximum length (default 150)
+
+    Returns:
+        Truncated text with ellipsis if needed
+    """
+    if len(text) <= max_len:
+        return text
+
+    # Find last space before max_len
+    truncated = text[:max_len].rsplit(" ", 1)[0]
+    return truncated + "..." if truncated else text[:max_len] + "..."
+
+
+def format_nlp_hints_for_extraction(analysis: CategorizationAnalysisResult) -> str:
+    """Format NLP analysis as concise hints for CFP extraction.
+
+    Focuses on actionable categories with max 5 samples each.
+    De-emphasizes noisy categories (money, other_numbers).
+    """
     if not any(sentences for sentences in analysis.values()):
-        return NO_ANALYSIS_MESSAGE
+        return ""
 
-    total_sentences = sum(len(sentences) for sentences in analysis.values())  # type: ignore[misc, arg-type]
-
-    sections = [
-        NLP_ANALYSIS_HEADER,
-        TOTAL_SENTENCES_FORMAT.format(total_sentences=total_sentences),
-    ]
-
-    categories_to_check = [
-        ("money", analysis["money"]),
-        ("date_time", analysis["date_time"]),
-        ("writing_related", analysis["writing_related"]),
-        ("other_numbers", analysis["other_numbers"]),
-        ("recommendations", analysis["recommendations"]),
+    priority_categories = [
         ("orders", analysis["orders"]),
-        ("positive_instructions", analysis["positive_instructions"]),
-        ("negative_instructions", analysis["negative_instructions"]),
+        ("writing_related", analysis["writing_related"]),
         ("evaluation_criteria", analysis["evaluation_criteria"]),
+        ("date_time", analysis["date_time"]),
     ]
 
-    for category, sentences in categories_to_check:
+    sections = []
+    for category, sentences in priority_categories:
         if sentences:
-            sections.extend(_format_category_section(category, sentences))
+            sample = sentences[:MAX_HINT_ITEMS]
+            # Use smart truncation for each sample
+            truncated_samples = [smart_truncate(s) for s in sample[:3]]
+            sections.append(f"{category} ({len(sentences)}): {', '.join(truncated_samples)}")
 
-    return "\n".join(sections)
+    return "\n".join(sections) if sections else ""

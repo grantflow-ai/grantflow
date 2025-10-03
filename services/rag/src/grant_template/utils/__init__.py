@@ -7,7 +7,9 @@ from packages.shared_utils.src.dto import ExtractedCFPData
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
-from services.rag.src.grant_template.category_extraction import format_nlp_analysis_for_prompt
+from services.rag.src.grant_template.utils.category_extraction import (
+    format_nlp_hints_for_extraction,
+)
 from services.rag.src.utils.text_processing import sanitize_text_content
 
 
@@ -77,8 +79,9 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
         # Add NLP analysis section
         nlp_analysis = source["nlp_analysis"]
-        formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
-        source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
+        formatted_nlp = format_nlp_hints_for_extraction(nlp_analysis)
+        if formatted_nlp:
+            source_section += f"#### NLP Hints:\n{formatted_nlp}\n\n"
 
         # Add sanitized full content
         sanitized_content = sanitize_text_content(source["text_content"])

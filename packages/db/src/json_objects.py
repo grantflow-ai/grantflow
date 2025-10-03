@@ -1,4 +1,5 @@
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
+from uuid import UUID
 
 from packages.db.src.enums import GrantTemplateStageEnum
 
@@ -27,7 +28,28 @@ class ResearchObjective(TypedDict):
     research_tasks: list[ResearchTask]
 
 
+class OrganizationNamespace(TypedDict):
+    """Organization identification data stored in CFP analysis."""
+    id: str
+    full_name: str
+    abbreviation: str
+
+
+class CFPContentSection(TypedDict):
+    """Hierarchical content section from CFP extraction."""
+    title: str
+    subtitles: list[str]
+
+
+class CFPAnalysisRequirementWithQuote(TypedDict):
+    """Requirement extracted from CFP with source quote."""
+    requirement: str
+    quote_from_source: str
+    category: str
+
+
 class CFPConstraint(TypedDict):
+    """Length or formatting constraint from CFP."""
     constraint_type: str
     constraint_value: str
     source_quote: str
@@ -79,65 +101,43 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
     submission_date: NotRequired[str | None]
 
 
-class CFPAnalysisRequirementWithQuote(TypedDict):
-    requirement: str
-    quote_from_source: str
-    category: str
+class CFPAnalysisCategory(TypedDict):
+    """Requirement category from CFP analysis."""
+    name: str
+    count: int
+    examples: list[str]
 
 
-class CFPSectionRequirement(TypedDict):
-    title: str
-    definition: str
-    requirements: list[CFPAnalysisRequirementWithQuote]
-    dependencies: list[str]
-    cfp_source_reference: NotRequired[str | None]
-
-
-class CFPSectionLengthConstraint(TypedDict):
-    title: str
-    measurement_type: str
-    limit_description: str
-    quote_from_source: str
-    exclusions: list[str]
-
-
-class CFPAnalysisEvaluationCriterion(TypedDict):
-    criterion_name: str
-    description: str
-    weight_percentage: NotRequired[int | None]
-    quote_from_source: str
-
-
-class CategorizationAnalysisResult(TypedDict):
-    money: list[str]
-    date_time: list[str]
-    writing_related: list[str]
-    other_numbers: list[str]
-    recommendations: list[str]
-    orders: list[str]
-    positive_instructions: list[str]
-    negative_instructions: list[str]
-    evaluation_criteria: list[str]
+class CFPAnalysisConstraint(TypedDict):
+    """Length or formatting constraint from CFP."""
+    type: str  # word_limit, page_limit, char_limit, format
+    value: str
+    section: NotRequired[str | None]
 
 
 class CFPAnalysisMetadata(TypedDict):
-    content_length: int
-    categories_found: int
-    total_sentences: int
+    """Metadata about the CFP analysis process."""
+    total_sections: int
+    total_requirements: int
+    source_count: int
 
 
-class CFPSectionAnalysis(TypedDict):
-    required_sections: list[CFPSectionRequirement]
-    length_constraints: list[CFPSectionLengthConstraint]
-    evaluation_criteria: list[CFPAnalysisEvaluationCriterion]
-    additional_requirements: list[CFPAnalysisRequirementWithQuote]
-    count: int
-    constraints_count: int
-    criteria_count: int
-    error: NotRequired[str | None]
+class CFPAnalysisData(TypedDict):
+    """Requirements analysis from CFP extraction."""
+    categories: list[CFPAnalysisCategory]
+    constraints: list[CFPAnalysisConstraint]
+    metadata: CFPAnalysisMetadata
 
 
-class CFPAnalysisResult(TypedDict):
-    cfp_analysis: CFPSectionAnalysis
-    nlp_analysis: CategorizationAnalysisResult
-    analysis_metadata: CFPAnalysisMetadata
+class CFPAnalysis(TypedDict):
+    """Complete CFP analysis result with content and metadata.
+
+    This is the unified CFP analysis output combining organization identification,
+    content extraction, and requirements analysis into a single structure.
+    """
+    subject: str
+    content: list[CFPContentSection]
+    deadline: str | None
+    org_id: str | None
+    analysis_metadata: CFPAnalysisData
+    organization: NotRequired[OrganizationNamespace | None]

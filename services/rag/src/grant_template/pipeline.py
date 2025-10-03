@@ -16,14 +16,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.dto import (
-    AnalyzeCFPContentStageDTO,
-    ExtractCFPContentStageDTO,
-    ExtractionSectionsStageDTO,
+    CFPAnalysisStageDTO,
+    SectionExtractionStageDTO,
     StageDTO,
 )
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
-    handle_cfp_extraction_stage,
     handle_generate_metadata_stage,
     handle_save_grant_template,
     handle_section_extraction_stage,
@@ -106,36 +104,23 @@ async def handle_grant_template_pipeline(
         checkpoint_data = await job_manager.get_checkpoint_data()
 
         match current_stage:
-            case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
-                extracted_cfp = await handle_cfp_extraction_stage(
+            case GrantTemplateStageEnum.UNIFIED_CFP_ANALYSIS:
+                cfp_analysis_result = await handle_cfp_analysis_stage(
                     grant_template=grant_template,
                     job_manager=job_manager,
                     session_maker=session_maker,
                     trace_id=trace_id,
                 )
-                await job_manager.transition_to_next_stage(extracted_cfp)
-                return None
-
-            case GrantTemplateStageEnum.ANALYZE_CFP_CONTENT:
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for CFP analysis stage")
-
-                extracted_cfp = cast("ExtractCFPContentStageDTO", checkpoint_data)
-                analyzed_cfp = await handle_cfp_analysis_stage(
-                    extracted_cfp=extracted_cfp,
-                    job_manager=job_manager,
-                    trace_id=trace_id,
-                )
-                await job_manager.transition_to_next_stage(analyzed_cfp)
+                await job_manager.transition_to_next_stage(cfp_analysis_result)
                 return None
 
             case GrantTemplateStageEnum.EXTRACT_SECTIONS:
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for section extraction stage")
 
-                analyzed_cfp = cast("AnalyzeCFPContentStageDTO", checkpoint_data)
+                cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
                 section_extraction_result = await handle_section_extraction_stage(
-                    analysis_result=analyzed_cfp,
+                    cfp_analysis_result=cfp_analysis_result,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
@@ -146,7 +131,7 @@ async def handle_grant_template_pipeline(
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for metadata generation stage")
 
-                section_extraction_result = cast("ExtractionSectionsStageDTO", checkpoint_data)
+                section_extraction_result = cast("SectionExtractionStageDTO", checkpoint_data)
                 grant_sections = await handle_generate_metadata_stage(
                     section_extraction_result=section_extraction_result,
                     job_manager=job_manager,

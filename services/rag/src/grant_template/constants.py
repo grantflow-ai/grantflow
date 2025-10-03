@@ -3,8 +3,7 @@ from typing import Final
 from packages.db.src.enums import GrantTemplateStageEnum
 
 GRANT_TEMPLATE_PIPELINE_STAGES: Final[tuple[GrantTemplateStageEnum, ...]] = (
-    GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-    GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+    GrantTemplateStageEnum.UNIFIED_CFP_ANALYSIS,
     GrantTemplateStageEnum.EXTRACT_SECTIONS,
     GrantTemplateStageEnum.GENERATE_METADATA,
 )

@@ -1,24 +1,20 @@
 from typing import TypedDict
 
-from packages.db.src.json_objects import CFPAnalysisResult
-from packages.shared_utils.src.dto import (
-    ExtractedCFPData,
-    OrganizationNamespace,
-    ProcessedSectionDTO,
-)
+from packages.db.src.json_objects import CFPAnalysis, OrganizationNamespace
+from packages.shared_utils.src.dto import ExtractedSectionDTO
 
 
-class ExtractCFPContentStageDTO(TypedDict):
+class CFPAnalysisStageDTO(TypedDict):
+    """CFP analysis stage - unified CFP analysis with organization identification."""
     organization: OrganizationNamespace | None
-    extracted_data: ExtractedCFPData
+    cfp_analysis: CFPAnalysis
 
 
-class AnalyzeCFPContentStageDTO(ExtractCFPContentStageDTO):
-    analysis_results: CFPAnalysisResult
+class SectionExtractionStageDTO(TypedDict):
+    """Section extraction stage - extracts hierarchical section structure."""
+    organization: OrganizationNamespace | None
+    cfp_analysis: CFPAnalysis
+    extracted_sections: list[ExtractedSectionDTO]
 
 
-class ExtractionSectionsStageDTO(AnalyzeCFPContentStageDTO):
-    extracted_sections: list[ProcessedSectionDTO]
-
-
-StageDTO = ExtractCFPContentStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO
+StageDTO = CFPAnalysisStageDTO | SectionExtractionStageDTO
