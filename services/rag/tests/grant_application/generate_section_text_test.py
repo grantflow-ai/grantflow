@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import CFPAnalysisResult, GrantLongFormSection, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection, ResearchObjective, ResearchTask
 from pytest_mock import MockerFixture
 
 from services.rag.src.grant_application.generate_section_text import generate_section_text, handle_generate_section_text
@@ -51,8 +51,8 @@ def sample_research_objectives() -> list[ResearchObjective]:
 
 
 @pytest.fixture
-def sample_cfp_analysis() -> CFPAnalysisResult:
-    return CFPAnalysisResult(
+def sample_cfp_analysis() -> CFPAnalysis:
+    return CFPAnalysis(
         cfp_analysis={
             "required_sections": [
                 {
@@ -151,7 +151,7 @@ async def test_handle_generate_section_text_with_evaluation(
     mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
-    sample_cfp_analysis: CFPAnalysisResult,
+    sample_cfp_analysis: CFPAnalysis,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",
@@ -207,7 +207,7 @@ async def test_handle_generate_section_text_with_cfp_requirements(
     mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
-    sample_cfp_analysis: CFPAnalysisResult,
+    sample_cfp_analysis: CFPAnalysis,
 ) -> None:
     mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",
@@ -259,7 +259,7 @@ async def test_handle_generate_section_text_with_missing_information_warning(
     mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
-    sample_cfp_analysis: CFPAnalysisResult,
+    sample_cfp_analysis: CFPAnalysis,
 ) -> None:
     mock_validation = mocker.patch(
         "services.rag.src.grant_application.generate_section_text.handle_source_validation",

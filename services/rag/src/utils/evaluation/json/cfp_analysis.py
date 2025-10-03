@@ -180,10 +180,7 @@ def check_cfp_analysis_completeness(cfp_data: CFPAnalysisData) -> dict[str, bool
 
     if has_metadata:
         metadata = cfp_data["metadata"]
-        min_metadata = (
-            metadata.get("total_sections", 0) >= 1
-            and metadata.get("total_requirements", 0) >= 1
-        )
+        min_metadata = metadata.get("total_sections", 0) >= 1 and metadata.get("total_requirements", 0) >= 1
 
     return {
         "has_cfp_analysis": bool(cfp_data),

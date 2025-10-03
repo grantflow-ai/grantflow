@@ -337,6 +337,24 @@ def validate_dependencies_word_counts(
                 },
             )
 
+    # Validate no dependency cycles across all sections
+    from services.rag.src.grant_template.utils import detect_cycle
+
+    dependency_graph = {section["id"]: section["depends_on"] for section in response["sections"]}
+
+    for section_id in dependency_graph:
+        if cycle_nodes := detect_cycle(dependency_graph, section_id):
+            cycle_list = list(cycle_nodes)
+            raise ValidationError(
+                "Dependency cycle detected in section dependencies",
+                context={
+                    "cycle_nodes": cycle_list,
+                    "cycle_path": " → ".join(cycle_list + [cycle_list[0]]),
+                    "recovery_instruction": f"Break the dependency cycle by removing one dependency from the path: {' → '.join(cycle_list)}",
+                },
+            )
+
+    for section in response["sections"]:
         # Validate word count is reasonable
         if section["max_words"] <= 0:
             raise ValidationError(

@@ -1292,9 +1292,9 @@ async def handle_extract_sections(
         if "is_plan" not in section_dict:
             section_dict["is_plan"] = False
 
-        # Regenerate definition from guidelines to ensure correct format
-        # (LLM sometimes merges guidelines instead of using "Plus X additional" format)
-        if section_dict.get("guidelines"):
+        # Generate definition from guidelines only if LLM didn't provide one
+        # Preserve LLM-generated definitions as they contain section-specific context
+        if section_dict.get("guidelines") and not section_dict.get("definition"):
             section_dict["definition"] = create_section_definition(section_dict["guidelines"])
 
     extracted_sections: list[ExtractedSectionDTO] = [

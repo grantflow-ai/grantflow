@@ -125,9 +125,15 @@ def fuzzy_match_organizations(
             # Match abbreviation with word boundaries, parentheses, possessive, hyphenated
             # Examples: "NIH", "(NIH)", "NIH's", "NIH-funded"
             abbr_pattern = re.compile(
-                r"\b" + re.escape(abbr_lower) + r"'?s?\b"  # Possessive: NIH, NIH's
-                + r"|\b" + re.escape(abbr_lower) + r"-\w+"  # Hyphenated: NIH-funded
-                + r"|\(" + re.escape(abbr_lower) + r"\)"  # Parenthetical: (NIH)
+                r"\b"
+                + re.escape(abbr_lower)
+                + r"'?s?\b"  # Possessive: NIH, NIH's
+                + r"|\b"
+                + re.escape(abbr_lower)
+                + r"-\w+"  # Hyphenated: NIH-funded
+                + r"|\("
+                + re.escape(abbr_lower)
+                + r"\)"  # Parenthetical: (NIH)
             )
 
             abbr_count = len(abbr_pattern.findall(full_text_lower))

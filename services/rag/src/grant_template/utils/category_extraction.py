@@ -31,6 +31,7 @@ class CategorizationAnalysisResult(TypedDict):
     negative_instructions: list[str]
     evaluation_criteria: list[str]
 
+
 MONEY_CATEGORY: Final[str] = "money"
 DATE_TIME_CATEGORY: Final[str] = "date_time"
 WRITING_CATEGORY: Final[str] = "writing_related"
