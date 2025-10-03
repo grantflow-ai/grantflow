@@ -1,10 +1,10 @@
+from packages.shared_utils.src.dto import ProcessedSectionDTO
+
 from services.rag.src.grant_template.extract_sections import (
-    ExtractedSectionDTO,
-    ExtractedSections,
     filter_extracted_sections,
 )
 
-SECTION_OUTPOUT: ExtractedSections = {
+SECTION_OUTPOUT: dict[str, list[ProcessedSectionDTO] | None] = {
     "error": None,
     "sections": [
         {
@@ -141,7 +141,9 @@ SECTION_OUTPOUT: ExtractedSections = {
 
 
 async def test_section_filtering() -> None:
-    result = await filter_extracted_sections(sections=SECTION_OUTPOUT["sections"], trace_id="test-trace")
+    sections = SECTION_OUTPOUT["sections"]
+    assert sections is not None
+    result = await filter_extracted_sections(sections=sections, trace_id="test-trace")
     assert len(result) > 0
     assert any(s.get("is_plan") for s in result)
 
@@ -152,7 +154,7 @@ async def test_section_filtering_empty_input() -> None:
 
 
 async def test_section_filtering_always_keeps_research_plan() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Methods",
             "id": "methods",
@@ -168,7 +170,7 @@ async def test_section_filtering_always_keeps_research_plan() -> None:
 
 
 async def test_section_filtering_keeps_long_form_parents() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
@@ -193,7 +195,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
 
 
 async def test_section_filtering_removes_non_long_form() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
@@ -217,7 +219,7 @@ async def test_section_filtering_removes_non_long_form() -> None:
 
 
 async def test_section_filtering_threshold() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Methods Section",
             "id": "methods",
@@ -235,7 +237,7 @@ async def test_section_filtering_threshold() -> None:
 
 
 async def test_adaptive_threshold_preserves_research_plan() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Methods",
             "id": "methods",
@@ -252,7 +254,7 @@ async def test_adaptive_threshold_preserves_research_plan() -> None:
 
 
 async def test_maintain_hierarchy_integrity() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
