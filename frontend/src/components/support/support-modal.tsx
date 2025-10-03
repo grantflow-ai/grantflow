@@ -2,12 +2,13 @@
 
 import { Mail } from "lucide-react";
 import Image from "next/image";
-import { AppButton } from "@/components/app/buttons/app-button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { log } from "@/utils/logger/client";
 import { Label } from "../ui/label";
-import { useState } from "react";
 
 interface SupportModalProps {
 	isOpen: boolean;
@@ -19,19 +20,16 @@ const supportSchema = z.object({
 	subject: z.string().min(1, "Subject cannot be empty."),
 });
 
-
-
 export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 	const [email, setEmail] = useState("");
 	const [subject, setSubject] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState<{ email?: string[]; subject?: string[] }>({});
 	const handleClose = () => {
-		setEmail("")
-		setSubject("")
-		setErrors({})
+		setEmail("");
+		setSubject("");
+		setErrors({});
 		onClose();
-
 	};
 
 	const handleOpenChange = (open: boolean) => {
@@ -41,7 +39,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 	};
 
 	const handleSubmit = async () => {
-		setErrors({}); 
+		setErrors({});
 
 		const result = supportSchema.safeParse({
 			email,
@@ -49,27 +47,29 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 		});
 
 		if (!result.success) {
-			setErrors(result.error.flatten().fieldErrors);
-			return; 
+			const tree = z.treeifyError(result.error);
+
+			setErrors({
+				email: tree.properties?.email?.errors ?? [],
+				subject: tree.properties?.subject?.errors ?? [],
+			});
+			return;
 		}
 
 		setIsLoading(true);
 		try {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
-			// On success: TO DO
 			toast.success("Your support request has been sent!");
-			handleClose() 
+			handleClose();
 		} catch (error) {
 			toast.error("Failed to send request. Please try again.");
-			console.error("Submission failed", error);
+			log.error("Support submission failed", error);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 	return (
-		
-
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
 				className="w-[464px] p-0 bg-white border border-primary rounded-[8px] overflow-hidden"
@@ -96,19 +96,20 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 									Email address
 								</Label>
 								<div>
-
-								<div className="relative">
-									<input
-										className="w-full h-10 px-3 pr-10 border rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary border-app-gray-400"
-										data-testid="email-input"
-										placeholder="contact@example.org"
-										type="email"
-										value={email}
-										onChange={(e)=>setEmail(e.target.value)}
-									/>
-									<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
-								</div>
-								{errors.email && (<p className="text-red-500 text-xs ">{errors.email[0]}</p>)}
+									<div className="relative">
+										<input
+											className="w-full h-10 px-3 pr-10 border rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary border-app-gray-400"
+											data-testid="email-input"
+											onChange={(e) => {
+												setEmail(e.target.value);
+											}}
+											placeholder="contact@example.org"
+											type="email"
+											value={email}
+										/>
+										<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
+									</div>
+									{errors.email && <p className="text-red-500 text-xs ">{errors.email[0]}</p>}
 								</div>
 							</div>
 							<div className="flex flex-col gap-3">
@@ -116,17 +117,17 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 									Subject
 								</Label>
 								<div>
-
-								<textarea
-									className="resize-none w-full h-[122px] px-3 py-2 border rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary border-app-gray-400"
-									data-testid="email-input"
-									placeholder="Brief summary of your request"
-									value={subject}
-									onChange={(e)=>setSubject(e.target.value)}
-								/>
-								{errors.subject && (<p className="text-red-500 text-xs ">{errors.subject[0]}</p>)}
+									<textarea
+										className="resize-none w-full h-[122px] px-3 py-2 border rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary border-app-gray-400"
+										data-testid="email-input"
+										onChange={(e) => {
+											setSubject(e.target.value);
+										}}
+										placeholder="Brief summary of your request"
+										value={subject}
+									/>
+									{errors.subject && <p className="text-red-500 text-xs ">{errors.subject[0]}</p>}
 								</div>
-
 							</div>
 						</div>
 					</div>
@@ -143,13 +144,13 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 						<AppButton
 							className=" px-4 py-2 items-center gap-1 "
 							data-testid="submit-button"
-							onClick={handleSubmit}
 							disabled={isLoading}
+							onClick={handleSubmit}
 							type="button"
 							variant="primary"
 						>
-						{isLoading ? "Sending...":"Send"}
-							
+							{isLoading ? "Sending..." : "Send"}
+
 							<span>
 								<Image alt="Send Icon" height={16} src="/icons/send.svg" width={16} />
 							</span>

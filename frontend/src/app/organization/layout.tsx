@@ -9,7 +9,6 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SWRProvider } from "@/providers/swr-provider";
 
-
 export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (
 		<SharedLayout>
@@ -23,7 +22,6 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 function ProjectLayoutClient({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const isWizardRoute = pathname.includes("/wizard");
-	
 
 	return (
 		<SidebarProvider defaultOpen={false}>
@@ -33,7 +31,6 @@ function ProjectLayoutClient({ children }: { children: ReactNode }) {
 					<div className="flex-1 w-full h-full overflow-hidden bg-preview-bg">{children}</div>
 					<NotificationContainer />
 				</div>
-				
 			</SidebarInset>
 		</SidebarProvider>
 	);
