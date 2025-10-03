@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
-from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection
+from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection
 from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
@@ -81,7 +81,7 @@ def parse_word_limit_from_cfp_constraint(constraint_description: str) -> dict[st
 
 
 def extract_section_word_limits(
-    section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None
+    section: GrantLongFormSection, cfp_analysis: CFPAnalysis | None
 ) -> dict[str, int | None]:
     section_title = section.get("title", "").lower()
 
@@ -175,7 +175,7 @@ def calculate_length_compliance_score(
     }
 
 
-def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None) -> str:
+def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysis: CFPAnalysis | None) -> str:
     section_title = section.get("title", "")
     generation_instructions = section.get("generation_instructions", "")
     keywords = " ".join(section.get("keywords", []))
@@ -195,7 +195,7 @@ def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysi
 async def measure_section_rag_proximity(
     section: GrantLongFormSection,
     application_id: str,
-    cfp_analysis: CFPSectionAnalysis | None = None,
+    cfp_analysis: CFPAnalysis | None = None,
 ) -> dict[str, Any]:
     section_title = section.get("title", "Unknown Section")
 
@@ -243,7 +243,7 @@ async def measure_rag_writing_proximity(
     section: GrantLongFormSection,
     retrieved_context: str,
     research_objectives: list[Any],
-    cfp_analysis: CFPSectionAnalysis | None = None,
+    cfp_analysis: CFPAnalysis | None = None,
 ) -> dict[str, Any]:
     section_title = section.get("title", "Unknown Section")
 

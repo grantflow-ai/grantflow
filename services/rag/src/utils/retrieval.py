@@ -10,7 +10,9 @@ from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSo
 from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
+from sentence_transformers import util
 from sqlalchemy import func, or_
+from sqlalchemy.orm import selectinload
 
 if TYPE_CHECKING:
     from kreuzberg._types import Metadata as DocumentMetadata
@@ -127,6 +129,7 @@ async def retrieve_vectors_for_embedding(
         vectors = list(
             await session.scalars(
                 select_active(TextVector)
+                .options(selectinload(TextVector.rag_source))
                 .join(RagSource, TextVector.rag_source_id == RagSource.id)
                 .join(file_table_cls, RagSource.id == file_table_cls.rag_source_id)
                 .where(
@@ -143,13 +146,14 @@ async def retrieve_vectors_for_embedding(
     if search_queries and vectors:
         scored_vectors = []
         for vector in vectors:
-            cosine_distances = [vector.embedding.cosine_distance(embedding) for embedding in embeddings]
-            min_cosine_distance = min(cosine_distances) if cosine_distances else 1.0
+            # Use sentence_transformers cosine similarity utility
+            # Convert numpy array to list for compatibility with util.cos_sim
+            cosine_similarities = [float(util.cos_sim(vector.embedding, embedding).item()) for embedding in embeddings]
+            max_cosine_similarity = max(cosine_similarities) if cosine_similarities else 0.0
 
             metadata_score = calculate_document_metadata_score(vector.rag_source.document_metadata, search_queries)
 
-            cosine_similarity = 1.0 - min_cosine_distance
-            combined_score = (0.7 * cosine_similarity) + (0.3 * metadata_score)
+            combined_score = (0.7 * max_cosine_similarity) + (0.3 * metadata_score)
 
             scored_vectors.append((vector, combined_score, metadata_score))
 

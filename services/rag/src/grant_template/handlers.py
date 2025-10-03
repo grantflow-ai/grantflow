@@ -21,6 +21,8 @@ from services.rag.src.grant_template.extract_sections import handle_extract_sect
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 
 logger = get_logger(__name__)
 
@@ -80,9 +82,30 @@ async def handle_cfp_analysis_stage(
         },
     )
 
+    # Retrieve organization guidelines once for reuse across stages
+    organization_guidelines = ""
+    if organization:
+        rag_results = await retrieve_documents(
+            organization_id=organization["id"],
+            task_description="Grant template generation - retrieve organization-specific guidelines",
+            trace_id=trace_id,
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results="\n".join(rag_results),
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
+        )
+        logger.info(
+            "Retrieved organization guidelines for pipeline",
+            organization_id=organization["id"],
+            guidelines_length=len(organization_guidelines),
+            trace_id=trace_id,
+        )
+
     return CFPAnalysisStageDTO(
         organization=organization,
         cfp_analysis=cfp_analysis,
+        organization_guidelines=organization_guidelines,
     )
 
 
@@ -101,6 +124,7 @@ async def handle_section_extraction_stage(
         trace_id=trace_id,
         cfp_analysis=cfp_analysis_result["cfp_analysis"],
         job_manager=job_manager,
+        organization_guidelines=cfp_analysis_result["organization_guidelines"],
     )
 
     await job_manager.add_notification(
@@ -116,6 +140,7 @@ async def handle_section_extraction_stage(
     return SectionExtractionStageDTO(
         organization=cfp_analysis_result["organization"],
         cfp_analysis=cfp_analysis_result["cfp_analysis"],
+        organization_guidelines=cfp_analysis_result["organization_guidelines"],
         extracted_sections=extracted_sections,
     )
 
@@ -138,6 +163,7 @@ async def handle_generate_metadata_stage(
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
         organization=section_extraction_result["organization"],
+        organization_guidelines=section_extraction_result["organization_guidelines"],
         long_form_sections=section_extraction_result["extracted_sections"],
         trace_id=trace_id,
         job_manager=job_manager,

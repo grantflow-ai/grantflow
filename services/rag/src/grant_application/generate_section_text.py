@@ -1,7 +1,7 @@
 from functools import partial
 from typing import TYPE_CHECKING, Any, Final
 
-from packages.db.src.json_objects import CFPAnalysisResult, CFPSectionAnalysis, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None) -> str:
+def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_analysis: CFPAnalysis | None) -> str:
     cfp_text = ""
 
     has_section_data = False
@@ -185,7 +185,7 @@ async def handle_generate_section_text(
     section: GrantLongFormSection,
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
-    cfp_analysis: CFPAnalysisResult,
+    cfp_analysis: CFPAnalysis,
     research_plan_text: str,
     enrichment_responses: list[Any],  # noqa: ARG001
     relationships: dict[str, list[tuple[str, str]]],

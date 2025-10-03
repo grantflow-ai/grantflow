@@ -591,7 +591,7 @@ async def handle_cfp_analysis(
         for org_id, data in organization_mapping.items()
     )
 
-    task_description = cast(str, CFP_ANALYSIS_USER_PROMPT.substitute(
+    task_description = cast("str", CFP_ANALYSIS_USER_PROMPT.substitute(
         rag_sources=formatted_sources,
         organization_mapping=formatted_org_mapping,
     ))
@@ -618,6 +618,13 @@ async def handle_cfp_analysis(
     )
 
     await job_manager.ensure_not_cancelled()
+
+    # Notify user that analysis extractions are complete
+    await job_manager.add_notification(
+        event="CFP_ANALYSIS_EXTRACTIONS_COMPLETE",
+        message="CFP requirements extracted, analyzing structure",
+        notification_type="info",
+    )
 
     # Merge the three content extraction strategies using consensus
     logger.info("Merging multi-strategy content extractions", trace_id=trace_id)
@@ -686,10 +693,10 @@ async def handle_cfp_analysis(
 
     cfp_analysis = CFPAnalysis(
         subject=metadata_result["subject"],
-        content=cast(list[CFPContentSection], content_result["sections"]),
+        content=cast("list[CFPContentSection]", content_result["sections"]),
         deadline=metadata_result["deadline"],
         org_id=org_id,
-        analysis_metadata=cast(CFPAnalysisData, analysis_metadata),
+        analysis_metadata=cast("CFPAnalysisData", analysis_metadata),
         organization=organization,
     )
 

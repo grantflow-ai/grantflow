@@ -462,3 +462,23 @@ class JobManager[DTOType]:
             trace_id=self.trace_id,
         )
         return None
+
+    async def clear_checkpoint_data(self) -> None:
+        """Clear checkpoint data from current job for rollback on failure."""
+        if not self.current_job:
+            return
+
+        async with self.session_maker() as session, session.begin():
+            job = await session.get(RagGenerationJob, self.current_job.id)
+            if not job:
+                return
+
+            job.checkpoint_data = None
+            logger.info(
+                "Cleared checkpoint data for failed job",
+                entity_type=self.entity_type,
+                entity_id=str(self.entity_id),
+                job_id=str(self.current_job.id),
+                stage=self.current_stage,
+                trace_id=self.trace_id,
+            )

@@ -3,7 +3,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from packages.db.src.json_objects import CFPSectionAnalysis, GrantLongFormSection
+from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection
 from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
@@ -21,7 +21,7 @@ async def generate_section_text(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return {}
 
 
-def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysis: CFPSectionAnalysis | None) -> str:
+def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysis: CFPAnalysis | None) -> str:
     section_title = section.get("title", "")
     generation_instructions = section.get("generation_instructions", "")
     keywords = " ".join(section.get("keywords", []))
@@ -41,7 +41,7 @@ def extract_section_requirements_text(section: GrantLongFormSection, cfp_analysi
 async def measure_rag_proximity(
     section: GrantLongFormSection,
     application_id: str,
-    cfp_analysis: CFPSectionAnalysis | None = None,
+    cfp_analysis: CFPAnalysis | None = None,
 ) -> dict[str, Any]:
     section_title = section.get("title", "Unknown Section")
     section_requirements = extract_section_requirements_text(section, cfp_analysis)
