@@ -1,8 +1,7 @@
 import re
 from collections import defaultdict
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, TypedDict
 
-from packages.db.src.json_objects import CategorizationAnalysisResult
 from packages.shared_utils.src.nlp import get_spacy_model
 from packages.shared_utils.src.sync import run_sync
 
@@ -17,6 +16,20 @@ CategoryKey = Literal[
     "negative_instructions",
     "evaluation_criteria",
 ]
+
+
+class CategorizationAnalysisResult(TypedDict):
+    """NLP categorization analysis result mapping categories to extracted sentences."""
+
+    money: list[str]
+    date_time: list[str]
+    writing_related: list[str]
+    other_numbers: list[str]
+    recommendations: list[str]
+    orders: list[str]
+    positive_instructions: list[str]
+    negative_instructions: list[str]
+    evaluation_criteria: list[str]
 
 MONEY_CATEGORY: Final[str] = "money"
 DATE_TIME_CATEGORY: Final[str] = "date_time"
