@@ -144,8 +144,10 @@ cfp_constraints_schema = {
 
 # Result types for parallel extractions
 
+
 class CFPMetadataResult(TypedDict):
     """CFP metadata extraction result."""
+
     org_id: str | None
     subject: str
     deadline: str | None
@@ -153,20 +155,24 @@ class CFPMetadataResult(TypedDict):
 
 class CFPContentResult(TypedDict):
     """CFP content structure extraction result."""
+
     sections: list[dict[str, Any]]
 
 
 class CFPCategoriesResult(TypedDict):
     """CFP category analysis extraction result."""
+
     categories: list[dict[str, Any]]
 
 
 class CFPConstraintsResult(TypedDict):
     """CFP constraint extraction result."""
+
     constraints: list[dict[str, Any]]
 
 
 # Validators for parallel extractions
+
 
 def validate_cfp_metadata(response: CFPMetadataResult) -> None:
     """Validate CFP metadata extraction."""
@@ -210,11 +216,13 @@ def validate_cfp_constraints(response: CFPConstraintsResult) -> None:
     for idx, constraint in enumerate(response["constraints"]):
         constraint_type = constraint.get("type", "").lower().replace(" ", "_")
         if constraint_type and constraint_type not in valid_constraint_types:
-            invalid_constraints.append({
-                "index": idx,
-                "type": constraint.get("type"),
-                "value": constraint.get("value"),
-            })
+            invalid_constraints.append(
+                {
+                    "index": idx,
+                    "type": constraint.get("type"),
+                    "value": constraint.get("value"),
+                }
+            )
 
     if invalid_constraints:
         raise ValidationError(
@@ -278,6 +286,7 @@ def validate_section_depth_constraint(sections: list[dict[str, Any]]) -> None:
 
 # Parallel extraction functions - focused, minimal LLM calls
 
+
 async def extract_cfp_metadata(
     task_description: str,
     *,
@@ -299,6 +308,7 @@ async def extract_cfp_metadata(
 
 
 # Multi-strategy content extraction functions
+
 
 async def extract_cfp_content_broad(
     task_description: str,
@@ -362,6 +372,7 @@ async def extract_cfp_content_hierarchical(
 
 # Consensus merge and validation functions
 
+
 def calculate_section_similarity(section1: dict[str, Any], section2: dict[str, Any]) -> float:
     """Calculate semantic similarity between two sections based on titles."""
     title1 = section1["title"].lower()
@@ -393,12 +404,12 @@ def merge_similar_sections(sections: list[dict[str, Any]], similarity_threshold:
 
         merged_section = {
             "title": section["title"],
-            "subtitles": list(section["subtitles"])  # Copy to avoid mutation
+            "subtitles": list(section["subtitles"]),  # Copy to avoid mutation
         }
         used_indices.add(i)
 
         # Find similar sections to merge
-        for j, other_section in enumerate(sections[i + 1:], i + 1):
+        for j, other_section in enumerate(sections[i + 1 :], i + 1):
             if j in used_indices:
                 continue
 
@@ -420,10 +431,7 @@ def merge_similar_sections(sections: list[dict[str, Any]], similarity_threshold:
 def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
     """Validate that essential CFP concepts are covered in the extraction."""
     sections = result["sections"]
-    all_text = " ".join([
-        section["title"] + " " + " ".join(section["subtitles"])
-        for section in sections
-    ]).lower()
+    all_text = " ".join([section["title"] + " " + " ".join(section["subtitles"]) for section in sections]).lower()
 
     # Essential CFP concepts to check for
     concept_patterns = {
@@ -432,7 +440,7 @@ def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
         "application": ["apply", "submit", "proposal", "application", "deadline", "due"],
         "awards": ["award", "grant", "prize", "funding", "opportunity"],
         "process": ["process", "review", "evaluation", "selection", "timeline"],
-        "requirements": ["require", "needed", "necessary", "mandatory", "document"]
+        "requirements": ["require", "needed", "necessary", "mandatory", "document"],
     }
 
     coverage = {}
@@ -447,7 +455,9 @@ def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
         "coverage_details": coverage,
         "total_sections": len(sections),
         "total_subtitles": sum(len(section["subtitles"]) for section in sections),
-        "avg_subtitles_per_section": sum(len(section["subtitles"]) for section in sections) / len(sections) if sections else 0,
+        "avg_subtitles_per_section": sum(len(section["subtitles"]) for section in sections) / len(sections)
+        if sections
+        else 0,
     }
 
 
@@ -627,15 +637,18 @@ async def handle_cfp_analysis(
     # Format prompt with RAG sources and organization mapping
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
     formatted_org_mapping = "\n".join(
-        f"- {org_id}: {data['full_name']} ({data['abbreviation']})" if data["abbreviation"]
+        f"- {org_id}: {data['full_name']} ({data['abbreviation']})"
+        if data["abbreviation"]
         else f"- {org_id}: {data['full_name']}"
         for org_id, data in organization_mapping.items()
     )
 
-    task_description = cast("str", CFP_ANALYSIS_USER_PROMPT.substitute(
-        rag_sources=formatted_sources,
-        organization_mapping=formatted_org_mapping,
-    ))
+    task_description = str(
+        CFP_ANALYSIS_USER_PROMPT.substitute(
+            rag_sources=formatted_sources,
+            organization_mapping=formatted_org_mapping,
+        )
+    )
 
     # Execute parallel extractions with multi-strategy consensus approach
     logger.info("Starting multi-strategy CFP extractions", trace_id=trace_id)
