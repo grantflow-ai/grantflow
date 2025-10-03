@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-import pytest
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplate
+from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplateSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
-from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data
+from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+from .conftest import create_test_grant_template
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -39,6 +39,14 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
     performance_context.start_stage("setup_rag_sources")
 
+    # Create test grant template for CFP analysis
+    grant_template = await create_test_grant_template(
+        async_session_maker=async_session_maker,
+        granting_institution=israeli_granting_institution,
+        organization=test_organization,
+        title="Israeli Chief Scientist CFP E2E Test Template",
+    )
+
     # Read HTML CFP content
     cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding='utf-8')
     assert len(cfp_content) > 100, "CFP content should not be empty"
@@ -49,14 +57,19 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
             organization_id=test_organization.id,
             source_type="rag_file",
             text_content=cfp_content,
-            status="indexed",
+            indexing_status="FINISHED",
         )
         session.add(rag_source)
         await session.flush()
 
-        # Create text chunks representing Israeli CFP structure
-        from packages.db.src.tables import TextVector
+        # Link RAG source to grant template
+        template_source = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(template_source)
 
+        # Create text chunks representing Israeli CFP structure
         chunks = [
             "Israeli Ministry of Health Chief Scientist Grant Proposal Template",
             "Project Information: Title, Principal Investigator, Institution",
@@ -70,7 +83,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
             TextVector(
                 rag_source_id=rag_source.id,
                 chunk={"content": chunk},
-                vector=[0.1] * 1536,  # Mock embedding
+                embedding=[0.1] * 1536,  # Mock embedding
             )
             for chunk in chunks
         ]
@@ -81,10 +94,9 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
     performance_context.start_stage("extract_cfp_data")
 
-    # Test CFP data extraction
-    extracted_data = await handle_extract_cfp_data(
-        source_ids=[rag_source.id],
-        organization_mapping=organization_mapping,
+    # Test CFP analysis with real RAG source
+    cfp_analysis = await handle_cfp_analysis(
+        grant_template=grant_template,
         session_maker=async_session_maker,
         job_manager=mock_job_manager,
         trace_id="israeli-chief-scientist-e2e-test",
@@ -94,14 +106,14 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_extraction_results")
 
-    # Validate extracted data structure
-    assert extracted_data is not None, "CFP extraction should return data"
-    assert "subject" in extracted_data, "Extracted data should contain subject"
-    assert "content" in extracted_data, "Extracted data should contain content sections"
-    assert "org_id" in extracted_data, "Extracted data should contain org_id"
+    # Validate CFP analysis structure
+    assert cfp_analysis is not None, "CFP analysis should return data"
+    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
+    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
+    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
 
-    subject = extracted_data["subject"]
-    content_sections = extracted_data["content"]
+    subject = cfp_analysis.subject
+    content_sections = cfp_analysis.content
 
     # Validate subject for Israeli Chief Scientist
     assert isinstance(subject, str), "Subject should be string"
@@ -113,6 +125,15 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
         term in subject_lower for term in ["israeli", "israel", "health", "ministry", "chief scientist", "grant"]
     )
     assert israeli_indicators, f"Subject should indicate Israeli/health ministry context: {subject}"
+
+    # Validate organization identification
+    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
+    assert cfp_analysis.organization.full_name == israeli_granting_institution.full_name, \
+        f"Should identify Israeli institution: {cfp_analysis.organization.full_name}"
+
+    # Validate analysis metadata
+    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
 
     # Validate content structure
     assert isinstance(content_sections, list), "Content should be list of sections"

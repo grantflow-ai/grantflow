@@ -10,13 +10,11 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-import pytest
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplate, GrantTemplateSource, TextVector
+from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplateSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
-from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
 from .conftest import create_test_grant_template
 
 
@@ -45,6 +43,14 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     performance_context.start_stage("setup_rag_sources")
 
+    # Create test grant template for CFP analysis
+    grant_template = await create_test_grant_template(
+        async_session_maker=async_session_maker,
+        granting_institution=nih_granting_institution,
+        organization=test_organization,
+        title="NIH Tuberculosis CFP E2E Test Template",
+    )
+
     # Create RAG source from CFP file content
     cfp_content = "NIH RFA-AI-25-027 Tuberculosis Research Units P01 CFP content placeholder"
 
@@ -54,14 +60,19 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
             organization_id=test_organization.id,
             source_type="rag_file",
             text_content=cfp_content,
-            status="indexed",
+            indexing_status="FINISHED",
         )
         session.add(rag_source)
         await session.flush()
 
-        # Create text chunks representing P01 multi-component structure
-        from packages.db.src.tables import TextVector
+        # Link RAG source to grant template
+        template_source = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(template_source)
 
+        # Create text chunks representing P01 multi-component structure
         chunks = [
             "RFA-AI-25-027: Tuberculosis Research Units (P01 Clinical Trial Optional)",
             "Multi-Component Research Program: Research Projects and Core Facilities",
@@ -75,7 +86,7 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
             TextVector(
                 rag_source_id=rag_source.id,
                 chunk={"content": chunk},
-                vector=[0.1] * 1536,  # Mock embedding
+                embedding=[0.1] * 1536,  # Mock embedding
             )
             for chunk in chunks
         ]
@@ -86,10 +97,9 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     performance_context.start_stage("extract_cfp_data")
 
-    # Test CFP data extraction
-    extracted_data = await handle_extract_cfp_data(
-        source_ids=[rag_source.id],
-        organization_mapping=organization_mapping,
+    # Test CFP analysis with real RAG source
+    cfp_analysis = await handle_cfp_analysis(
+        grant_template=grant_template,
         session_maker=async_session_maker,
         job_manager=mock_job_manager,
         trace_id="nih-tuberculosis-e2e-test",
@@ -99,13 +109,14 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_extraction_results")
 
-    # Validate extracted data structure
-    assert extracted_data is not None, "CFP extraction should return data"
-    assert "subject" in extracted_data, "Extracted data should contain subject"
-    assert "content" in extracted_data, "Extracted data should contain content sections"
+    # Validate CFP analysis structure
+    assert cfp_analysis is not None, "CFP analysis should return data"
+    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
+    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
+    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
 
-    subject = extracted_data["subject"]
-    content_sections = extracted_data["content"]
+    subject = cfp_analysis.subject
+    content_sections = cfp_analysis.content
 
     # Validate subject for NIH Tuberculosis P01
     assert isinstance(subject, str), "Subject should be string"
@@ -114,6 +125,15 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     subject_lower = subject.lower()
     tb_indicators = any(term in subject_lower for term in ["tuberculosis", "tb", "p01", "research unit"])
     assert tb_indicators, f"Subject should indicate tuberculosis/P01 focus: {subject}"
+
+    # Validate organization identification
+    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
+    assert cfp_analysis.organization.full_name == nih_granting_institution.full_name, \
+        f"Should identify NIH: {cfp_analysis.organization.full_name}"
+
+    # Validate analysis metadata
+    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
 
     # Validate content structure
     assert isinstance(content_sections, list), "Content should be list of sections"
@@ -187,6 +207,14 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     performance_context.start_stage("setup_rag_sources")
 
+    # Create test grant template for CFP analysis
+    grant_template = await create_test_grant_template(
+        async_session_maker=async_session_maker,
+        granting_institution=nih_granting_institution,
+        organization=test_organization,
+        title="NIH Diabetes Digital Health CFP E2E Test Template",
+    )
+
     # Create RAG source from CFP file content
     cfp_content = "NIH RFA-DK-26-315 Digital Health Technology Type 2 Diabetes R01 CFP content placeholder"
 
@@ -196,14 +224,19 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
             organization_id=test_organization.id,
             source_type="rag_file",
             text_content=cfp_content,
-            status="indexed",
+            indexing_status="FINISHED",
         )
         session.add(rag_source)
         await session.flush()
 
-        # Create text chunks representing digital health technology structure
-        from packages.db.src.tables import TextVector
+        # Link RAG source to grant template
+        template_source = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(template_source)
 
+        # Create text chunks representing digital health technology structure
         chunks = [
             "RFA-DK-26-315: Digital Health Technology for Type 2 Diabetes Management (R01 Clinical Trial Required)",
             "Research Plan: Specific Aims, Research Strategy, Innovation, Approach",
@@ -217,7 +250,7 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
             TextVector(
                 rag_source_id=rag_source.id,
                 chunk={"content": chunk},
-                vector=[0.1] * 1536,  # Mock embedding
+                embedding=[0.1] * 1536,  # Mock embedding
             )
             for chunk in chunks
         ]
@@ -228,10 +261,9 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     performance_context.start_stage("extract_cfp_data")
 
-    # Test CFP data extraction
-    extracted_data = await handle_extract_cfp_data(
-        source_ids=[rag_source.id],
-        organization_mapping=organization_mapping,
+    # Test CFP analysis with real RAG source
+    cfp_analysis = await handle_cfp_analysis(
+        grant_template=grant_template,
         session_maker=async_session_maker,
         job_manager=mock_job_manager,
         trace_id="nih-diabetes-e2e-test",
@@ -241,13 +273,14 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_extraction_results")
 
-    # Validate extracted data structure
-    assert extracted_data is not None, "CFP extraction should return data"
-    assert "subject" in extracted_data, "Extracted data should contain subject"
-    assert "content" in extracted_data, "Extracted data should contain content sections"
+    # Validate CFP analysis structure
+    assert cfp_analysis is not None, "CFP analysis should return data"
+    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
+    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
+    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
 
-    subject = extracted_data["subject"]
-    content_sections = extracted_data["content"]
+    subject = cfp_analysis.subject
+    content_sections = cfp_analysis.content
 
     # Validate subject for NIH Diabetes Digital Health R01
     assert isinstance(subject, str), "Subject should be string"
@@ -258,6 +291,15 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
         term in subject_lower for term in ["diabetes", "digital health", "technology", "r01", "clinical trial"]
     )
     assert diabetes_indicators, f"Subject should indicate diabetes/digital health focus: {subject}"
+
+    # Validate organization identification
+    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
+    assert cfp_analysis.organization.full_name == nih_granting_institution.full_name, \
+        f"Should identify NIH: {cfp_analysis.organization.full_name}"
+
+    # Validate analysis metadata
+    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
 
     # Validate content structure
     assert isinstance(content_sections, list), "Content should be list of sections"
