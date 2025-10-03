@@ -1,14 +1,13 @@
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import CFPAnalysis, GrantElement, GrantLongFormSection
-from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -109,6 +108,7 @@ async def handle_section_extraction_stage(
         cfp_content=cfp_content,
         trace_id=trace_id,
         cfp_analysis=cfp_analysis_result["cfp_analysis"],
+        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
@@ -176,20 +176,16 @@ async def handle_save_grant_template(
     """Save grant template with CFP analysis and generated sections."""
     try:
         async with session_maker() as session, session.begin():
-            # Update grant template with CFP analysis
+            # Update grant template with CFP analysis and grant sections
             await session.execute(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template.id)
                 .values(
                     cfp_analysis=cfp_analysis,
+                    grant_sections=grant_sections,
                     rag_generation_status=RagGenerationStatusEnum.FINISHED,
                 )
             )
-
-            # Add grant sections
-            for section in grant_sections:
-                section.grant_template_id = grant_template.id
-                session.add(section)
 
             logger.info(
                 "Grant template saved successfully",

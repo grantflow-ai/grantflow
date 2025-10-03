@@ -148,7 +148,7 @@ async def handle_grant_template_pipeline(
                     grant_template=grant_template,
                     session_maker=session_maker,
                     job_manager=job_manager,
-                    cfp_analysis=section_extraction_result["analysis_results"],
+                    cfp_analysis=section_extraction_result["cfp_analysis"],
                     extracted_cfp=section_extraction_result,
                     grant_sections=grant_sections,
                     trace_id=trace_id,
