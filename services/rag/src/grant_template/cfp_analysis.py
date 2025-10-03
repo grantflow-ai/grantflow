@@ -643,12 +643,10 @@ async def handle_cfp_analysis(
         for org_id, data in organization_mapping.items()
     )
 
-    task_description = str(
-        CFP_ANALYSIS_USER_PROMPT.substitute(
-            rag_sources=formatted_sources,
-            organization_mapping=formatted_org_mapping,
-        )
-    )
+    task_description = CFP_ANALYSIS_USER_PROMPT.substitute(
+        rag_sources=formatted_sources,
+        organization_mapping=formatted_org_mapping,
+    ).to_string()
 
     # Execute parallel extractions with multi-strategy consensus approach
     logger.info("Starting multi-strategy CFP extractions", trace_id=trace_id)

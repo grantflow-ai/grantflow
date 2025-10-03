@@ -27,6 +27,7 @@ from sqlalchemy import (
 from sqlalchemy import (
     UUID as SA_UUID,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, Relationship, class_mapper, mapped_column, relationship
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.functions import now
@@ -230,7 +231,7 @@ class RagSource(BaseWithUUIDPK):
         Enum(SourceIndexingStatusEnum), index=True, default=SourceIndexingStatusEnum.CREATED
     )
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSON, nullable=True)
+    document_metadata: Mapped[DocumentMetadata | None] = mapped_column(JSONB, nullable=True)
     indexing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     error_type: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
@@ -651,7 +652,7 @@ class EditorDocument(BaseWithUUIDPK):
     )
 
     document_metadata: Mapped[dict[str, Any] | None] = mapped_column(
-        JSON, nullable=True, server_default=text("'{}'::jsonb")
+        JSONB, nullable=True, server_default=text("'{}'::jsonb")
     )
     crdt: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
