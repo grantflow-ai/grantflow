@@ -8,6 +8,7 @@ from packages.shared_utils.src.dto import ExtractedSectionDTO, SectionMetadata
 from packages.shared_utils.src.exceptions import InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
+from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -338,8 +339,6 @@ def validate_dependencies_word_counts(
             )
 
     # Validate no dependency cycles across all sections
-    from services.rag.src.grant_template.utils import detect_cycle
-
     dependency_graph = {section["id"]: section["depends_on"] for section in response["sections"]}
 
     for section_id in dependency_graph:
@@ -365,6 +364,33 @@ def validate_dependencies_word_counts(
                     "recovery_instruction": "Provide positive word count (at least 50)",
                 },
             )
+
+    # Validate total word count is reasonable (typical grants: 2000-15000 words)
+    total_words = sum(section["max_words"] for section in response["sections"])
+    min_total_words = 500  # Minimum reasonable total
+    max_total_words = 50000  # Maximum reasonable total
+
+    if total_words < min_total_words:
+        raise ValidationError(
+            "Total word count too low for grant application",
+            context={
+                "total_words": total_words,
+                "min_required": min_total_words,
+                "section_count": len(response["sections"]),
+                "recovery_instruction": f"Increase word counts to reach at least {min_total_words} total words across all sections",
+            },
+        )
+
+    if total_words > max_total_words:
+        raise ValidationError(
+            "Total word count exceeds reasonable grant application length",
+            context={
+                "total_words": total_words,
+                "max_allowed": max_total_words,
+                "section_count": len(response["sections"]),
+                "recovery_instruction": f"Reduce word counts to stay under {max_total_words} total words",
+            },
+        )
 
 
 def validate_content_metadata(
@@ -517,6 +543,41 @@ def validate_template_sections(
                 },
             )
 
+        # Validate generation instructions quality - ensure substantive guidance
+        instructions = section["generation_instructions"]
+        sentence_count = instructions.count(".") + instructions.count("!") + instructions.count("?")
+        word_count = len(instructions.split())
+
+        quality_issues = []
+        if sentence_count < 2:
+            quality_issues.append("Contains fewer than 2 sentences")
+        if word_count < 10:
+            quality_issues.append(f"Contains only {word_count} words (minimum 10)")
+
+        # Check for action verbs or directive language
+        directive_patterns = [
+            "write", "provide", "describe", "explain", "discuss", "include", "address",
+            "focus", "emphasize", "outline", "detail", "analyze", "present", "develop"
+        ]
+        has_directive = any(pattern in instructions.lower() for pattern in directive_patterns)
+        if not has_directive:
+            quality_issues.append("Missing directive language (write, provide, describe, etc.)")
+
+        if quality_issues:
+            raise ValidationError(
+                "Generation instructions lack sufficient detail or directive guidance",
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "quality_issues": quality_issues,
+                    "sentence_count": sentence_count,
+                    "word_count": word_count,
+                    "has_directive_language": has_directive,
+                    "actual_instructions": instructions,
+                    "recovery_instruction": f"Provide detailed, actionable generation instructions with multiple sentences and directive language for section '{section['id']}'",
+                },
+            )
+
         if len(section["search_queries"]) < 3:
             raise ValidationError(
                 "Insufficient search queries provided",
@@ -527,6 +588,34 @@ def validate_template_sections(
                     "min_required": 3,
                     "provided_queries": section["search_queries"],
                     "recovery_instruction": f"Provide at least 3 diverse search queries for section '{section['id']}'",
+                },
+            )
+
+        # Validate search query quality - ensure meaningful, non-trivial queries
+        section_data = next((s for s in input_sections if s["id"] == section["id"]), None)
+        is_research_plan = section_data.get("is_plan") if section_data else False
+        min_query_length = 10 if is_research_plan else 5
+
+        invalid_queries = []
+        for idx, query in enumerate(section["search_queries"]):
+            query_stripped = query.strip()
+            if not query_stripped:
+                invalid_queries.append(f"Query {idx + 1}: empty or whitespace only")
+            elif len(query_stripped) < min_query_length:
+                invalid_queries.append(f"Query {idx + 1}: too short ({len(query_stripped)} chars, min {min_query_length})")
+            elif len(query_stripped.split()) < 2:
+                invalid_queries.append(f"Query {idx + 1}: single word query '{query_stripped}'")
+
+        if invalid_queries:
+            raise ValidationError(
+                "Search queries contain trivial or low-quality entries",
+                context={
+                    "section_id": section["id"],
+                    "section_title": next((s["title"] for s in input_sections if s["id"] == section["id"]), "Unknown"),
+                    "is_research_plan": is_research_plan,
+                    "invalid_queries": invalid_queries,
+                    "min_query_length": min_query_length,
+                    "recovery_instruction": f"Provide meaningful search queries with at least {min_query_length} characters and multiple words for section '{section['id']}'",
                 },
             )
 
@@ -567,6 +656,38 @@ def validate_template_sections(
                     "recovery_instruction": f"Remove self-reference from the dependencies of section '{section['id']}'",
                 },
             )
+
+    # Validate metadata consistency with input section properties
+    input_sections_by_id = {s["id"]: s for s in input_sections}
+    inconsistencies = []
+
+    for section in response["sections"]:
+        input_section = input_sections_by_id.get(section["id"])
+        if not input_section:
+            continue
+
+        # Research plan sections should have substantial metadata
+        if input_section.get("is_plan"):
+            if len(section["keywords"]) < 5:
+                inconsistencies.append(f"Research plan section '{section['id']}' has only {len(section['keywords'])} keywords (expected 5+)")
+            if len(section["topics"]) < 3:
+                inconsistencies.append(f"Research plan section '{section['id']}' has only {len(section['topics'])} topics (expected 3+)")
+            if section["max_words"] < 500:
+                inconsistencies.append(f"Research plan section '{section['id']}' has only {section['max_words']} words (expected 500+)")
+
+        # Long-form sections should have substantial word counts
+        if input_section.get("long_form") and section["max_words"] < 100:
+            inconsistencies.append(f"Long-form section '{section['id']}' has only {section['max_words']} words (expected 100+)")
+
+    if inconsistencies:
+        raise ValidationError(
+            "Metadata inconsistent with input section properties",
+            context={
+                "inconsistencies": inconsistencies,
+                "inconsistency_count": len(inconsistencies),
+                "recovery_instruction": "Ensure metadata (keywords, topics, word counts) aligns with section type (research_plan, long_form)",
+            },
+        )
 
     total_words = sum(section["max_words"] for section in response["sections"])
     if total_words < 50:
