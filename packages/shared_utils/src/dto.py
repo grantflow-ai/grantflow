@@ -26,11 +26,11 @@ class CFPContentSection(TypedDict):
 
 
 class ExtractedCFPData(TypedDict):
-    organization_id: str | None
-    cfp_subject: str
-    submission_date: str | None
+    org_id: str | None
+    subject: str
+    deadline: str | None
     content: list[CFPContentSection]
-    full_text: str
+    text: str
     error: NotRequired[str | None]
 
 
@@ -38,18 +38,30 @@ class ExtractedSectionDTO(TypedDict):
     title: str
     id: str
     order: int
+    parent: NotRequired[str | None]
+    is_plan: NotRequired[bool | None]
+    title_only: NotRequired[bool | None]
+    clinical: NotRequired[bool | None]
+    long_form: bool
+    needs_writing: NotRequired[bool | None]
+
+
+class ProcessedSectionDTO(TypedDict):
+    title: str
+    id: str
+    order: int
     evidence: str
-    parent_id: NotRequired[str | None]
-    is_detailed_research_plan: NotRequired[bool | None]
-    is_title_only: NotRequired[bool | None]
-    is_clinical_trial: NotRequired[bool | None]
-    is_long_form: bool
+    parent: NotRequired[str | None]
+    is_plan: NotRequired[bool | None]
+    title_only: NotRequired[bool | None]
+    clinical: NotRequired[bool | None]
+    long_form: bool
     requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
-    length_limit: NotRequired[int | None]
-    length_source: NotRequired[str | None]
-    other_limits: NotRequired[list[CFPConstraint]]
+    max_words: NotRequired[int | None]
+    source: NotRequired[str | None]
+    limits: NotRequired[list[CFPConstraint]]
     definition: NotRequired[str | None]
-    needs_applicant_writing: NotRequired[bool | None]
+    needs_writing: NotRequired[bool | None]
 
 
 class SectionMetadata(TypedDict):

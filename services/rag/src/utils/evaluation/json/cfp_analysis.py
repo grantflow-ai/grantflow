@@ -65,7 +65,7 @@ def _evaluate_quote_accuracy(cfp_data: CFPAnalysisData) -> float:
     structure_score = 0.0
 
     for section in sections:
-        if section.get("section_name"):
+        if section.get("title"):
             structure_score += 0.2
 
         if section.get("definition"):
@@ -123,7 +123,7 @@ def _evaluate_categorization(cfp_data: CFPAnalysisData) -> float:
     specificity_score = 0.0
 
     for constraint in constraints:
-        if constraint.get("section_name"):
+        if constraint.get("title"):
             specificity_score += 0.2
 
         if constraint.get("measurement_type") in ["pages", "words", "characters", "lines"]:

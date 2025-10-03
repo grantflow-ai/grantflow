@@ -166,29 +166,29 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_success(
     mock_completions: AsyncMock, mock_rag_sources: list[RagSourceData]
 ) -> None:
     mock_response = {
-        "organization_id": "test-org-id",
-        "cfp_subject": "Test grant for researching innovative approaches",
+        "org_id": "test-org-id",
+        "subject": "Test grant for researching innovative approaches",
         "content": [
             {"title": "Background", "subtitles": ["Introduction", "Problem Statement"]},
             {"title": "Methodology", "subtitles": ["Approach", "Timeline"]},
         ],
-        "submission_date": "2025-04-26",
+        "deadline": "2025-04-26",
     }
     mock_completions.return_value = mock_response
 
     task_description = format_rag_sources_for_prompt(mock_rag_sources)
     result = await extract_cfp_data_multi_source(task_description, trace_id="test-trace")
 
-    assert "cfp_subject" in result
+    assert "subject" in result
     assert "content" in result
-    assert "organization_id" in result
-    assert "submission_date" in result
+    assert "org_id" in result
+    assert "deadline" in result
 
-    assert len(result["cfp_subject"]) > 0
+    assert len(result["subject"]) > 0
     assert isinstance(result["content"], list)
     assert len(result["content"]) > 0
-    assert result["organization_id"] == "test-org-id"
-    assert result["submission_date"] == "2025-04-26"
+    assert result["org_id"] == "test-org-id"
+    assert result["deadline"] == "2025-04-26"
 
     mock_completions.assert_called_once()
 
@@ -196,19 +196,19 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_success(
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
 async def test_cfp_data_extraction_extract_cfp_data_multi_source_minimal_content(mock_completions: AsyncMock) -> None:
     mock_response: dict[str, Any] = {
-        "organization_id": None,
-        "cfp_subject": "Basic grant program",
+        "org_id": None,
+        "subject": "Basic grant program",
         "content": [],
-        "submission_date": None,
+        "deadline": None,
     }
     mock_completions.return_value = mock_response
 
     result = await extract_cfp_data_multi_source("Minimal content", trace_id="test-trace")
 
-    assert result["organization_id"] is None
-    assert result["cfp_subject"] == "Basic grant program"
+    assert result["org_id"] is None
+    assert result["subject"] == "Basic grant program"
     assert result["content"] == []
-    assert result["submission_date"] is None
+    assert result["deadline"] is None
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
@@ -216,24 +216,24 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_empty_task_desc
     mock_completions: AsyncMock,
 ) -> None:
     mock_response: dict[str, Any] = {
-        "organization_id": None,
-        "cfp_subject": "",
+        "org_id": None,
+        "subject": "",
         "content": [],
-        "submission_date": None,
+        "deadline": None,
     }
     mock_completions.return_value = mock_response
 
     result = await extract_cfp_data_multi_source("", trace_id="test-trace")
 
-    assert result["cfp_subject"] == ""
+    assert result["subject"] == ""
     assert result["content"] == []
 
 
 @patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request")
 async def test_cfp_data_extraction_extract_cfp_data_multi_source_complex_content(mock_completions: AsyncMock) -> None:
     mock_response = {
-        "organization_id": "complex-org-id",
-        "cfp_subject": "Multi-disciplinary research initiative",
+        "org_id": "complex-org-id",
+        "subject": "Multi-disciplinary research initiative",
         "content": [
             {
                 "title": "Project Description",
@@ -253,7 +253,7 @@ async def test_cfp_data_extraction_extract_cfp_data_multi_source_complex_content
                 "subtitles": ["Principal Investigator", "Co-Investigators", "Research Environment"],
             },
         ],
-        "submission_date": "2025-09-15",
+        "deadline": "2025-09-15",
     }
     mock_completions.return_value = mock_response
 
@@ -287,15 +287,15 @@ async def test_integration_cfp_data_workflow_full_cfp_data_workflow(
 
     with patch("services.rag.src.grant_template.extract_cfp_data.handle_completions_request") as mock_completions:
         mock_completions.return_value = {
-            "organization_id": "workflow-test-org",
-            "cfp_subject": "Integrated workflow test grant",
+            "org_id": "workflow-test-org",
+            "subject": "Integrated workflow test grant",
             "content": [{"title": "Test Section", "subtitles": ["Test Subsection"]}],
-            "submission_date": "2025-12-31",
+            "deadline": "2025-12-31",
         }
 
         extracted_data = await extract_cfp_data_multi_source(formatted_prompt, trace_id="test-trace")
 
-        assert extracted_data["organization_id"] == "workflow-test-org"
-        assert extracted_data["cfp_subject"] == "Integrated workflow test grant"
+        assert extracted_data["org_id"] == "workflow-test-org"
+        assert extracted_data["subject"] == "Integrated workflow test grant"
         assert len(extracted_data["content"]) == 1
-        assert extracted_data["submission_date"] == "2025-12-31"
+        assert extracted_data["deadline"] == "2025-12-31"

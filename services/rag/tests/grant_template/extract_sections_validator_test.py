@@ -16,24 +16,22 @@ def create_section(
     parent_section_id: str | None = None,
     is_detailed_research_plan: bool | None = None,
     is_long_form: bool = True,
-    is_title_only: bool = False,
+    is_title_only: bool | None = None,
     title: str = "Test Section",
     order: int = 1,
-    evidence: str = "Test evidence from CFP",
 ) -> ExtractedSectionDTO:
     result: ExtractedSectionDTO = {
         "id": section_id,
         "title": title,
-        "is_long_form": is_long_form,
+        "long_form": is_long_form,
         "order": order,
-        "evidence": evidence,
     }
     if parent_section_id is not None:
-        result["parent_id"] = parent_section_id
+        result["parent"] = parent_section_id
     if is_detailed_research_plan is not None:
-        result["is_detailed_research_plan"] = is_detailed_research_plan
-    if is_title_only:
-        result["is_title_only"] = is_title_only
+        result["is_plan"] = is_detailed_research_plan
+    if is_title_only is not None:
+        result["title_only"] = is_title_only
     return result
 
 
@@ -237,7 +235,7 @@ def test_validate_nesting_depth() -> None:
     assert "Maximum nesting depth exceeded" in str(exc.value)
 
     sections["sections"].pop(5)
-    sections["sections"][4]["is_title_only"] = False
+    sections["sections"][4]["title_only"] = False
 
     sections["sections"][-1]["order"] = 6
     validate_section_extraction(sections)

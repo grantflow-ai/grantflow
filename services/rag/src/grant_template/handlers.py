@@ -82,18 +82,18 @@ async def handle_cfp_extraction_stage(
                     full_name=org.full_name,
                 )
                 for org in funding_organizations
-                if str(org.id) == extraction_result["organization_id"]
+                if str(org.id) == extraction_result["org_id"]
             ),
             None,
         )
-        if extraction_result["organization_id"]
+        if extraction_result["org_id"]
         else None
     )
 
     org_name = organization["full_name"] if organization else "Unknown"
     submission_date = (
-        datetime.strptime(extraction_result["submission_date"], "%Y-%m-%d").date()  # noqa: DTZ007
-        if extraction_result["submission_date"]
+        datetime.strptime(extraction_result["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
+        if extraction_result["deadline"]
         else None
     )
 
@@ -103,7 +103,7 @@ async def handle_cfp_extraction_stage(
         notification_type="success",
         data={
             "organization": org_name,
-            "subject": extraction_result["cfp_subject"][:100] if extraction_result["cfp_subject"] else None,
+            "subject": extraction_result["subject"][:100] if extraction_result["subject"] else None,
             "deadline": str(submission_date) if submission_date else None,
         },
     )
@@ -156,8 +156,6 @@ async def handle_section_extraction_stage(
 
     sections = await handle_extract_sections(
         cfp_content=analysis_result["extracted_data"]["content"],
-        cfp_subject=analysis_result["extracted_data"]["cfp_subject"],
-        cfp_full_text=analysis_result["extracted_data"]["full_text"],
         trace_id=trace_id,
         job_manager=job_manager,
         cfp_analysis=analysis_result["analysis_results"],
@@ -188,7 +186,7 @@ async def handle_generate_metadata_stage(
     await job_manager.ensure_not_cancelled()
 
     sections_requiring_writing = [
-        s for s in section_extraction_result["extracted_sections"] if s.get("needs_applicant_writing", True)
+        s for s in section_extraction_result["extracted_sections"] if s.get("needs_writing", True)
     ]
 
     section_metadata = await handle_generate_grant_template_metadata(
@@ -198,9 +196,8 @@ async def handle_generate_metadata_stage(
                 for content in section_extraction_result["extracted_data"]["content"]
             ]
         ),
-        cfp_subject=section_extraction_result["extracted_data"]["cfp_subject"],
         organization=section_extraction_result["organization"],
-        long_form_sections=[s for s in sections_requiring_writing if not s.get("is_title_only")],
+        long_form_sections=[s for s in sections_requiring_writing if not s.get("title_only")],
         trace_id=trace_id,
         job_manager=job_manager,
     )
@@ -209,16 +206,16 @@ async def handle_generate_metadata_stage(
 
     ret: list[GrantElement | GrantLongFormSection] = []
     for section in sections_requiring_writing:
-        match section.get("is_title_only"):
+        match section.get("title_only"):
             case True:
                 element: GrantElement = {
                     "id": section["id"],
                     "order": section["order"],
-                    "parent_id": section.get("parent_id"),
+                    "parent_id": section.get("parent"),
                     "title": section["title"],
                     "evidence": section["evidence"],
                 }
-                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                if (needs_writing := section.get("needs_writing")) is not None:
                     element["needs_applicant_writing"] = needs_writing
                 ret.append(element)
 
@@ -230,11 +227,11 @@ async def handle_generate_metadata_stage(
                     "order": section["order"],
                     "title": section["title"],
                     "evidence": section["evidence"],
-                    "parent_id": section.get("parent_id"),
+                    "parent_id": section.get("parent"),
                     "depends_on": metadata["depends_on"],
                     "generation_instructions": metadata["generation_instructions"],
-                    "is_clinical_trial": section.get("is_clinical_trial"),
-                    "is_detailed_research_plan": section.get("is_detailed_research_plan"),
+                    "is_clinical_trial": section.get("clinical"),
+                    "is_detailed_research_plan": section.get("is_plan"),
                     "keywords": metadata["keywords"],
                     "max_words": metadata["max_words"],
                     "search_queries": metadata["search_queries"],
@@ -243,16 +240,16 @@ async def handle_generate_metadata_stage(
 
                 if "requirements" in section:
                     long_form["requirements"] = section["requirements"]
-                if "length_limit" in section:
-                    long_form["length_limit"] = section["length_limit"]
-                if "length_source" in section:
-                    long_form["length_source"] = section["length_source"]
-                if "other_limits" in section:
-                    long_form["other_limits"] = section["other_limits"]
+                if "max_words" in section:
+                    long_form["length_limit"] = section["max_words"]
+                if "source" in section:
+                    long_form["length_source"] = section["source"]
+                if "limits" in section:
+                    long_form["other_limits"] = section["limits"]
                 if "definition" in section:
                     long_form["definition"] = section["definition"]
 
-                if (needs_writing := section.get("needs_applicant_writing")) is not None:
+                if (needs_writing := section.get("needs_writing")) is not None:
                     long_form["needs_applicant_writing"] = needs_writing
 
                 ret.append(long_form)
@@ -287,10 +284,10 @@ async def handle_save_grant_template(
                 "granting_institution_id": extracted_cfp["organization"]["organization_id"]
                 if extracted_cfp["organization"]
                 else None,
-                "submission_date": datetime.strptime(extracted_cfp["extracted_data"]["submission_date"], "%Y-%m-%d")
+                "submission_date": datetime.strptime(extracted_cfp["extracted_data"]["deadline"], "%Y-%m-%d")
                 .replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC)
                 .date()
-                if extracted_cfp["extracted_data"]["submission_date"]
+                if extracted_cfp["extracted_data"]["deadline"]
                 else None,
                 "grant_sections": grant_sections,
                 "cfp_analysis": cfp_analysis,

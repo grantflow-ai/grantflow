@@ -57,14 +57,14 @@ def sample_extract_cfp_dto() -> Any:
             "abbreviation": "NIH",
         },
         extracted_data={
-            "organization_id": str(org_id),
-            "cfp_subject": "Research Grant Program",
-            "submission_date": "2025-03-31",
+            "org_id": str(org_id),
+            "subject": "Research Grant Program",
+            "deadline": "2025-03-31",
             "content": [
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         },
     )
 
@@ -76,12 +76,12 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
         extracted_data=sample_extract_cfp_dto["extracted_data"],
         analysis_results={
             "cfp_analysis": {
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
+                "count": 3,
+                "constraints_count": 2,
+                "criteria_count": 2,
                 "required_sections": [
                     {
-                        "section_name": "Project Summary",
+                        "title": "Project Summary",
                         "definition": "Brief overview of the project",
                         "requirements": [
                             {
@@ -95,7 +95,7 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: Any) -> Any:
                 ],
                 "length_constraints": [
                     {
-                        "section_name": "Project Summary",
+                        "title": "Project Summary",
                         "measurement_type": "pages",
                         "limit_description": "1 page maximum",
                         "quote_from_source": "Project summary is limited to one page",
@@ -147,20 +147,20 @@ def sample_sections_dto(sample_analyze_cfp_dto: Any) -> Any:
             {
                 "title": "Project Summary",
                 "id": "project_summary",
-                "is_detailed_research_plan": False,
-                "is_title_only": False,
-                "is_clinical_trial": False,
-                "is_long_form": True,
+                "is_plan": False,
+                "title_only": False,
+                "clinical": False,
+                "long_form": True,
                 "order": 1,
                 "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
                 "id": "research_plan",
-                "is_detailed_research_plan": True,
-                "is_title_only": False,
-                "is_clinical_trial": False,
-                "is_long_form": True,
+                "is_plan": True,
+                "title_only": False,
+                "clinical": False,
+                "long_form": True,
                 "order": 2,
                 "evidence": "CFP evidence for Research Plan",
             },
@@ -181,9 +181,9 @@ async def test_cfp_extraction_stage_success(
 ) -> None:
     mock_verify_rag_sources.return_value = None
     mock_handle_extract_cfp_data.return_value = {
-        "organization_id": str(nih_organization.id),
-        "cfp_subject": "Research Grant Program",
-        "submission_date": "2025-03-31",
+        "org_id": str(nih_organization.id),
+        "subject": "Research Grant Program",
+        "deadline": "2025-03-31",
     }
 
     result = await handle_cfp_extraction_stage(
@@ -197,8 +197,8 @@ async def test_cfp_extraction_stage_success(
     assert "extracted_data" in result
     if result["organization"]:
         assert result["organization"]["full_name"] == "National Institutes of Health"
-    assert result["extracted_data"]["cfp_subject"] == "Research Grant Program"
-    assert result["extracted_data"]["submission_date"] == "2025-03-31"
+    assert result["extracted_data"]["subject"] == "Research Grant Program"
+    assert result["extracted_data"]["deadline"] == "2025-03-31"
 
     assert mock_grant_template_job_manager.ensure_not_cancelled.call_count == 2
 
@@ -240,9 +240,9 @@ async def test_cfp_extraction_stage_no_organization_match(
 ) -> None:
     mock_verify_rag_sources.return_value = None
     mock_handle_extract_cfp_data.return_value = {
-        "organization_id": str(uuid4()),
-        "cfp_subject": "Research Grant Program",
-        "submission_date": "2025-03-31",
+        "org_id": str(uuid4()),
+        "subject": "Research Grant Program",
+        "deadline": "2025-03-31",
     }
 
     result = await handle_cfp_extraction_stage(
@@ -279,9 +279,9 @@ async def test_cfp_extraction_stage_no_submission_date(
 ) -> None:
     mock_verify_rag_sources.return_value = None
     mock_handle_extract_cfp_data.return_value = {
-        "organization_id": str(nih_organization.id),
-        "cfp_subject": "Research Grant Program",
-        "submission_date": None,
+        "org_id": str(nih_organization.id),
+        "subject": "Research Grant Program",
+        "deadline": None,
     }
 
     result = await handle_cfp_extraction_stage(
@@ -291,7 +291,7 @@ async def test_cfp_extraction_stage_no_submission_date(
         trace_id="test-trace",
     )
 
-    assert result["extracted_data"]["submission_date"] is None
+    assert result["extracted_data"]["deadline"] is None
 
     mock_grant_template_job_manager.add_notification.assert_any_call(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
@@ -317,9 +317,9 @@ async def test_cfp_extraction_stage_database_queries(
         patch("services.rag.src.grant_template.handlers.handle_extract_cfp_data") as mock_extract,
     ):
         mock_extract.return_value = {
-            "organization_id": str(nih_organization.id),
-            "cfp_subject": "Test Subject",
-            "submission_date": "2025-12-31",
+            "org_id": str(nih_organization.id),
+            "subject": "Test Subject",
+            "deadline": "2025-12-31",
         }
 
         result = await handle_cfp_extraction_stage(
@@ -349,12 +349,12 @@ async def test_cfp_analysis_stage_success(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 5,
-            "length_constraints_found": 2,
-            "evaluation_criteria_count": 3,
+            "count": 5,
+            "constraints_count": 2,
+            "criteria_count": 3,
             "required_sections": [
                 {
-                    "section_name": "Research Plan",
+                    "title": "Research Plan",
                     "definition": "Detailed description of the research methodology",
                     "requirements": [
                         {
@@ -368,7 +368,7 @@ async def test_cfp_analysis_stage_success(
             ],
             "length_constraints": [
                 {
-                    "section_name": "Research Plan",
+                    "title": "Research Plan",
                     "measurement_type": "pages",
                     "limit_description": "15 pages maximum",
                     "quote_from_source": "Research plan cannot exceed 15 pages",
@@ -448,12 +448,12 @@ async def test_cfp_analysis_stage_limited_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 3,
-            "length_constraints_found": 1,
-            "evaluation_criteria_count": 2,
+            "count": 3,
+            "constraints_count": 1,
+            "criteria_count": 2,
             "required_sections": [
                 {
-                    "section_name": "Abstract",
+                    "title": "Abstract",
                     "definition": "Summary of the proposed research",
                     "requirements": [
                         {
@@ -467,7 +467,7 @@ async def test_cfp_analysis_stage_limited_disciplines(
             ],
             "length_constraints": [
                 {
-                    "section_name": "Abstract",
+                    "title": "Abstract",
                     "measurement_type": "words",
                     "limit_description": "300 words maximum",
                     "quote_from_source": "Abstract is limited to 300 words",
@@ -539,12 +539,12 @@ async def test_cfp_analysis_stage_no_disciplines(
 ) -> None:
     mock_analysis_result = {
         "cfp_analysis": {
-            "sections_count": 1,
-            "length_constraints_found": 0,
-            "evaluation_criteria_count": 1,
+            "count": 1,
+            "constraints_count": 0,
+            "criteria_count": 1,
             "required_sections": [
                 {
-                    "section_name": "Project Description",
+                    "title": "Project Description",
                     "definition": "Basic description of the project",
                     "requirements": [
                         {
@@ -613,16 +613,16 @@ async def test_section_extraction_stage_success(
         {
             "title": "Project Summary",
             "id": "project_summary",
-            "is_detailed_research_plan": False,
-            "is_long_form": True,
+            "is_plan": False,
+            "long_form": True,
             "order": 1,
             "evidence": "CFP evidence for Project Summary",
         },
         {
             "title": "Research Plan",
             "id": "research_plan",
-            "is_detailed_research_plan": True,
-            "is_long_form": True,
+            "is_plan": True,
+            "long_form": True,
             "order": 2,
             "evidence": "CFP evidence for Research Plan",
         },
@@ -655,7 +655,7 @@ async def test_section_extraction_stage_success(
     mock_handle_extract_sections.assert_called_once()
     call_args = mock_handle_extract_sections.call_args
     assert "cfp_content" in call_args.kwargs
-    assert "cfp_subject" in call_args.kwargs
+    assert "subject" in call_args.kwargs
     assert "organization" in call_args.kwargs
     assert call_args.kwargs["trace_id"] == "test-trace"
 
@@ -730,7 +730,7 @@ async def test_generate_metadata_stage_success(
     mock_handle_generate_metadata.assert_called_once()
     call_args = mock_handle_generate_metadata.call_args
     assert "cfp_content" in call_args.kwargs
-    assert "cfp_subject" in call_args.kwargs
+    assert "subject" in call_args.kwargs
     assert "organization" in call_args.kwargs
     assert "long_form_sections" in call_args.kwargs
 
@@ -807,7 +807,7 @@ async def test_save_grant_template_success(
 
     if sample_sections_dto["organization"]:
         sample_sections_dto["organization"]["organization_id"] = nih_organization.id
-    sample_sections_dto["extracted_data"]["organization_id"] = str(nih_organization.id)
+    sample_sections_dto["extracted_data"]["org_id"] = str(nih_organization.id)
 
     result = await handle_save_grant_template(
         grant_template=grant_template,
@@ -918,11 +918,11 @@ async def test_save_grant_template_no_submission_date(
     nih_organization: Any,
 ) -> None:
     sections_dto_no_date = sample_sections_dto.copy()
-    sections_dto_no_date["extracted_data"]["submission_date"] = None
+    sections_dto_no_date["extracted_data"]["deadline"] = None
 
     if sections_dto_no_date["organization"]:
         sections_dto_no_date["organization"]["organization_id"] = nih_organization.id
-    sections_dto_no_date["extracted_data"]["organization_id"] = str(nih_organization.id)
+    sections_dto_no_date["extracted_data"]["org_id"] = str(nih_organization.id)
 
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
         GrantLongFormSection(
@@ -981,7 +981,7 @@ async def test_save_grant_template_date_parsing(
 ) -> None:
     if sample_sections_dto["organization"]:
         sample_sections_dto["organization"]["organization_id"] = nih_organization.id
-    sample_sections_dto["extracted_data"]["organization_id"] = str(nih_organization.id)
+    sample_sections_dto["extracted_data"]["org_id"] = str(nih_organization.id)
 
     mock_grant_sections: list[GrantElement | GrantLongFormSection] = [
         GrantLongFormSection(
@@ -1099,24 +1099,24 @@ async def test_handlers_preserve_data_flow(
         patch("services.rag.src.grant_template.handlers.handle_extract_sections") as mock_sections,
     ):
         mock_extract.return_value = {
-            "organization_id": str(nih_organization.id),
-            "cfp_subject": "Research Grant",
-            "submission_date": "2025-06-15",
+            "org_id": str(nih_organization.id),
+            "subject": "Research Grant",
+            "deadline": "2025-06-15",
             "content": [
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         }
 
         mock_analyze.return_value = {
             "cfp_analysis": {
-                "sections_count": 2,
-                "length_constraints_found": 1,
-                "evaluation_criteria_count": 1,
+                "count": 2,
+                "constraints_count": 1,
+                "criteria_count": 1,
                 "required_sections": [
                     {
-                        "section_name": "Research Strategy",
+                        "title": "Research Strategy",
                         "definition": "Comprehensive research approach",
                         "requirements": [
                             {
@@ -1130,7 +1130,7 @@ async def test_handlers_preserve_data_flow(
                 ],
                 "length_constraints": [
                     {
-                        "section_name": "Research Strategy",
+                        "title": "Research Strategy",
                         "measurement_type": "pages",
                         "limit_description": "12 pages maximum",
                         "quote_from_source": "Research strategy limited to 12 pages",
@@ -1174,10 +1174,10 @@ async def test_handlers_preserve_data_flow(
             {
                 "title": "Abstract",
                 "id": "abstract",
-                "is_detailed_research_plan": False,
-                "is_title_only": False,
-                "is_clinical_trial": False,
-                "is_long_form": True,
+                "is_plan": False,
+                "title_only": False,
+                "clinical": False,
+                "long_form": True,
                 "order": 1,
                 "evidence": "CFP evidence for Abstract",
             }
@@ -1210,5 +1210,5 @@ async def test_handlers_preserve_data_flow(
         if sections_result["organization"]:
             assert sections_result["organization"]["full_name"] == "National Institutes of Health"
             assert sections_result["organization"]["abbreviation"] == "NIH"
-        assert sections_result["extracted_data"]["cfp_subject"] == "Research Grant"
-        assert sections_result["extracted_data"]["submission_date"] == "2025-06-15"
+        assert sections_result["extracted_data"]["subject"] == "Research Grant"
+        assert sections_result["extracted_data"]["deadline"] == "2025-06-15"

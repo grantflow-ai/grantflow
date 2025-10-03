@@ -128,14 +128,14 @@ def sample_extract_cfp_dto() -> ExtractCFPContentStageDTO:
             "abbreviation": "NSF",
         },
         extracted_data={
-            "organization_id": str(uuid4()),
-            "cfp_subject": "Research Grant Program",
-            "submission_date": "2025-03-31",
+            "org_id": str(uuid4()),
+            "subject": "Research Grant Program",
+            "deadline": "2025-03-31",
             "content": [
                 {"title": "Project Summary", "subtitles": ["Overview", "Objectives"]},
                 {"title": "Research Plan", "subtitles": ["Methods", "Timeline"]},
             ],
-            "full_text": "Full text of the CFP document",
+            "text": "Full text of the CFP document",
         },
     )
 
@@ -147,9 +147,9 @@ def sample_analyze_cfp_dto(sample_extract_cfp_dto: ExtractCFPContentStageDTO) ->
         extracted_data=sample_extract_cfp_dto["extracted_data"],
         analysis_results={
             "cfp_analysis": {
-                "sections_count": 3,
-                "length_constraints_found": 2,
-                "evaluation_criteria_count": 2,
+                "count": 3,
+                "constraints_count": 2,
+                "criteria_count": 2,
                 "required_sections": [],
                 "length_constraints": [],
                 "evaluation_criteria": [],
@@ -185,8 +185,8 @@ def sample_sections_dto(sample_analyze_cfp_dto: AnalyzeCFPContentStageDTO) -> Ex
             {
                 "title": "Project Summary",
                 "id": "project_summary",
-                "is_detailed_research_plan": False,
-                "is_long_form": True,
+                "is_plan": False,
+                "long_form": True,
                 "order": 1,
                 "evidence": "CFP evidence for Project Summary",
             }

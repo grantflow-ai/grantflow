@@ -10,7 +10,7 @@ from services.rag.src.grant_template.extract_sections import (
     EXCLUDE_CATEGORIES,
     ExtractedSectionDTO,
     ExtractedSections,
-    _maintain_hierarchy_integrity,
+    _finalize_processed_sections,
     _should_keep_section,
     extract_sections,
     filter_extracted_sections,
@@ -20,7 +20,7 @@ from services.rag.src.grant_template.extract_sections import (
 )
 
 if TYPE_CHECKING:
-    from packages.shared_utils.src.dto import CFPContentSection
+    from packages.shared_utils.src.dto import CFPContentSection, ProcessedSectionDTO
 
 
 @pytest.fixture
@@ -31,9 +31,9 @@ def mock_cfp_analysis() -> CFPAnalysisResult:
             "length_constraints": [],
             "evaluation_criteria": [],
             "additional_requirements": [],
-            "sections_count": 0,
-            "length_constraints_found": 0,
-            "evaluation_criteria_count": 0,
+            "count": 0,
+            "constraints_count": 0,
+            "criteria_count": 0,
         },
         "nlp_analysis": {
             "money": [],
@@ -55,38 +55,38 @@ def mock_cfp_analysis() -> CFPAnalysisResult:
 
 
 def test_extracted_section_dto_required_fields() -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "Project Summary",
         "id": "project_summary",
         "order": 1,
-        "is_long_form": True,
-        "is_detailed_research_plan": True,
+        "long_form": True,
+        "is_plan": True,
         "evidence": "CFP evidence for Project Summary",
     }
 
     assert section["title"] == "Project Summary"
     assert section["id"] == "project_summary"
     assert section["order"] == 1
-    assert section["is_long_form"] is True
+    assert section["long_form"] is True
 
 
 def test_extracted_section_dto_optional_fields() -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "Research Plan",
         "id": "research_plan",
         "order": 2,
-        "is_long_form": True,
-        "parent_id": "parent_section",
-        "is_detailed_research_plan": True,
-        "is_title_only": False,
-        "is_clinical_trial": True,
+        "long_form": True,
+        "parent": "parent_section",
+        "is_plan": True,
+        "title_only": False,
+        "clinical": True,
         "evidence": "CFP evidence for Research Plan",
     }
 
-    assert section["parent_id"] == "parent_section"
-    assert section["is_detailed_research_plan"] is True
-    assert section["is_title_only"] is False
-    assert section["is_clinical_trial"] is True
+    assert section["parent"] == "parent_section"
+    assert section["is_plan"] is True
+    assert section["title_only"] is False
+    assert section["clinical"] is True
 
 
 def test_validate_section_extraction_valid_sections() -> None:
@@ -96,17 +96,15 @@ def test_validate_section_extraction_valid_sections() -> None:
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
-                "evidence": "CFP evidence for Project Summary",
+                "long_form": True,
+                "is_plan": False,
             },
             {
                 "title": "Research Plan",
                 "id": "research_plan",
                 "order": 2,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Research Plan",
+                "long_form": True,
+                "is_plan": True,
             },
         ]
     }
@@ -131,9 +129,8 @@ def test_validate_section_extraction_null_string_error_ignored() -> None:
                 "title": "Valid Section",
                 "id": "valid",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Valid Section",
+                "long_form": True,
+                "is_plan": True,
             }
         ],
         "error": "null",
@@ -156,9 +153,8 @@ def test_validate_section_extraction_short_title_raises_validation_error() -> No
                 "title": "AB",
                 "id": "short_title",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for AB",
+                "long_form": True,
+                "is_plan": True,
             }
         ]
     }
@@ -174,17 +170,15 @@ def test_validate_section_extraction_duplicate_titles_raises_validation_error() 
                 "title": "Same Title",
                 "id": "section1",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Same Title",
+                "long_form": True,
+                "is_plan": True,
             },
             {
                 "title": "Same Title",
                 "id": "section2",
                 "order": 2,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
-                "evidence": "CFP evidence for Same Title",
+                "long_form": True,
+                "is_plan": False,
             },
         ]
     }
@@ -200,17 +194,15 @@ def test_validate_section_extraction_duplicate_orders_raises_validation_error() 
                 "title": "Section One",
                 "id": "section1",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Section One",
+                "long_form": True,
+                "is_plan": True,
             },
             {
                 "title": "Section Two",
                 "id": "section2",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
-                "evidence": "CFP evidence for Section Two",
+                "long_form": True,
+                "is_plan": False,
             },
         ]
     }
@@ -226,17 +218,15 @@ def test_validate_section_extraction_non_consecutive_orders_raises_validation_er
                 "title": "Section One",
                 "id": "section1",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Section One",
+                "long_form": True,
+                "is_plan": True,
             },
             {
                 "title": "Section Two",
                 "id": "section2",
                 "order": 3,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
-                "evidence": "CFP evidence for Section Two",
+                "long_form": True,
+                "is_plan": False,
             },
         ]
     }
@@ -255,12 +245,12 @@ def test_should_keep_section_high_similarity_section(trace_id: str) -> None:
         mock_model.encode.return_value = [0.8, 0.9, 0.7]
         mock_run_sync.return_value = mock_model
 
-        section: ExtractedSectionDTO = {
+        section: ProcessedSectionDTO = {
             "title": "Budget Justification",
             "id": "budget",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": False,
+            "long_form": True,
+            "is_plan": False,
             "evidence": "CFP evidence for Budget Justification",
         }
 
@@ -285,12 +275,12 @@ def test_should_keep_section_low_similarity_section(trace_id: str) -> None:
         mock_model.encode.return_value = [0.8, 0.9, 0.7]
         mock_run_sync.return_value = mock_model
 
-        section: ExtractedSectionDTO = {
+        section: ProcessedSectionDTO = {
             "title": "Research Methods",
             "id": "research_methods",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": False,
+            "long_form": True,
+            "is_plan": False,
             "evidence": "CFP evidence for Research Methods",
         }
 
@@ -306,12 +296,12 @@ def test_should_keep_section_low_similarity_section(trace_id: str) -> None:
 
 
 def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
-    section: ExtractedSectionDTO = {
+    section: ProcessedSectionDTO = {
         "title": "budget justification",
         "id": "budget",
         "order": 1,
-        "is_long_form": True,
-        "is_detailed_research_plan": False,
+        "long_form": True,
+        "is_plan": False,
         "evidence": "CFP evidence for budget justification",
     }
 
@@ -325,12 +315,12 @@ def test_should_keep_section_exact_match_exclusion(trace_id: str) -> None:
 
     assert result is False
 
-    section_upper: ExtractedSectionDTO = {
+    section_upper: ProcessedSectionDTO = {
         "title": "BUDGET JUSTIFICATION",
         "id": "budget_upper",
         "order": 1,
-        "is_long_form": True,
-        "is_detailed_research_plan": False,
+        "long_form": True,
+        "is_plan": False,
         "evidence": "CFP evidence for BUDGET JUSTIFICATION",
     }
 
@@ -375,64 +365,64 @@ def test_exclude_categories_not_empty() -> None:
 
 
 def test_maintain_hierarchy_integrity_valid_hierarchy() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": True,
+            "long_form": True,
+            "is_plan": True,
             "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Specific Aims",
             "id": "specific_aims",
             "order": 2,
-            "is_long_form": True,
-            "parent_id": "research_plan",
-            "is_detailed_research_plan": False,
+            "long_form": True,
+            "parent": "research_plan",
+            "is_plan": False,
             "evidence": "CFP evidence for Specific Aims",
         },
     ]
 
-    result = _maintain_hierarchy_integrity(sections)
+    result = _finalize_processed_sections(sections)
     assert len(result) == 2
     assert result[0]["id"] == "research_plan"
     assert result[1]["id"] == "specific_aims"
 
 
 def test_maintain_hierarchy_integrity_remove_orphaned_children() -> None:
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Plan",
             "id": "research_plan",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": True,
+            "long_form": True,
+            "is_plan": True,
             "evidence": "CFP evidence for Research Plan",
         },
         {
             "title": "Orphaned Section",
             "id": "orphaned",
             "order": 2,
-            "is_long_form": True,
-            "parent_id": "non_existent_parent",
-            "is_detailed_research_plan": False,
+            "long_form": True,
+            "parent": "non_existent_parent",
+            "is_plan": False,
             "evidence": "CFP evidence for Orphaned Section",
         },
     ]
 
-    result = _maintain_hierarchy_integrity(sections)
+    result = _finalize_processed_sections(sections)
 
     assert len(result) == 2
     research_plan = next(s for s in result if s["id"] == "research_plan")
     orphaned = next(s for s in result if s["id"] == "orphaned")
 
     assert research_plan["id"] == "research_plan"
-    assert not research_plan.get("parent_id")
+    assert not research_plan.get("parent")
 
     assert orphaned["id"] == "orphaned"
-    assert orphaned.get("parent_id") is None
+    assert orphaned.get("parent") is None
 
 
 @patch("services.rag.src.grant_template.extract_sections.get_exclude_embeddings")
@@ -446,21 +436,21 @@ async def test_filter_extracted_sections_success(
     mock_model.encode.return_value = [0.4, 0.5, 0.6]
     mock_run_sync.return_value = mock_model
 
-    sections: list[ExtractedSectionDTO] = [
+    sections: list[ProcessedSectionDTO] = [
         {
             "title": "Research Methods",
             "id": "research_methods",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": True,
+            "long_form": True,
+            "is_plan": True,
             "evidence": "CFP evidence for Research Methods",
         },
         {
             "title": "Budget",
             "id": "budget",
             "order": 2,
-            "is_long_form": True,
-            "is_detailed_research_plan": False,
+            "long_form": True,
+            "is_plan": False,
             "evidence": "CFP evidence for Budget",
         },
     ]
@@ -488,16 +478,16 @@ async def test_extract_sections_success(
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
+                "long_form": True,
+                "is_plan": False,
                 "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Research Plan",
                 "id": "research_plan",
                 "order": 2,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
+                "long_form": True,
+                "is_plan": False,
                 "evidence": "CFP evidence for Research Plan",
             },
         ]
@@ -548,9 +538,8 @@ async def test_handle_extract_sections_success(
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
-                "evidence": "CFP evidence for Project Summary",
+                "long_form": True,
+                "is_plan": True,
             }
         ]
     }
@@ -559,8 +548,8 @@ async def test_handle_extract_sections_success(
             "title": "Project Summary",
             "id": "project_summary",
             "order": 1,
-            "is_long_form": True,
-            "is_detailed_research_plan": True,
+            "long_form": True,
+            "is_plan": True,
             "evidence": "CFP evidence for Project Summary",
         }
     ]
@@ -573,7 +562,6 @@ async def test_handle_extract_sections_success(
     result = await handle_extract_sections(
         job_manager=mock_job_manager,
         cfp_content=cfp_content,
-        cfp_subject="Test Grant Program",
         trace_id=trace_id,
         cfp_analysis=mock_cfp_analysis,
         organization={
@@ -608,7 +596,6 @@ async def test_handle_extract_sections_no_organization(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=[],
-            cfp_subject="Test Grant",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -631,7 +618,6 @@ async def test_handle_extract_sections_empty_cfp_content(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=[],
-            cfp_subject="",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,
@@ -664,24 +650,24 @@ async def test_end_to_end_section_extraction(
                 "title": "Project Summary",
                 "id": "project_summary",
                 "order": 1,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
+                "long_form": True,
+                "is_plan": False,
                 "evidence": "CFP evidence for Project Summary",
             },
             {
                 "title": "Budget Justification",
                 "id": "budget",
                 "order": 2,
-                "is_long_form": True,
-                "is_detailed_research_plan": False,
+                "long_form": True,
+                "is_plan": False,
                 "evidence": "CFP evidence for Budget Justification",
             },
             {
                 "title": "Research Plan",
                 "id": "research_plan",
                 "order": 3,
-                "is_long_form": True,
-                "is_detailed_research_plan": True,
+                "long_form": True,
+                "is_plan": True,
                 "evidence": "CFP evidence for Research Plan",
             },
         ]
@@ -698,7 +684,6 @@ async def test_end_to_end_section_extraction(
         result = await handle_extract_sections(
             job_manager=mock_job_manager,
             cfp_content=cfp_content_list,
-            cfp_subject="Advanced Research Grant",
             trace_id=trace_id,
             cfp_analysis=mock_cfp_analysis,
             organization=None,

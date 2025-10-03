@@ -336,8 +336,8 @@ async def handle_generate_research_plan_stage(
                 title=research_objective["title"],
                 description=objective_enrichment["description"],
                 instructions=objective_enrichment["instructions"],
-                guiding_questions=objective_enrichment["guiding_questions"],
-                search_queries=objective_enrichment["search_queries"],
+                guiding_questions=objective_enrichment["questions"],
+                search_queries=objective_enrichment["queries"],
                 relationships=dto["relationships"].get(str(research_objective["number"]), []),
                 max_words=words_per_component,
                 type="objective",
@@ -350,8 +350,8 @@ async def handle_generate_research_plan_stage(
                     title=research_task["title"],
                     description=task_enrichment["description"],
                     instructions=task_enrichment["instructions"],
-                    guiding_questions=task_enrichment["guiding_questions"],
-                    search_queries=task_enrichment["search_queries"],
+                    guiding_questions=task_enrichment["questions"],
+                    search_queries=task_enrichment["queries"],
                     relationships=dto["relationships"].get(
                         f"{research_objective['number']}.{research_task['number']}", []
                     ),

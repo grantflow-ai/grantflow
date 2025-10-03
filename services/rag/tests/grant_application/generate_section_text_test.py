@@ -56,7 +56,7 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
         cfp_analysis={
             "required_sections": [
                 {
-                    "section_name": "Research Strategy",
+                    "title": "Research Strategy",
                     "definition": "The research strategy section of the proposal",
                     "requirements": [
                         {
@@ -75,7 +75,7 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
             ],
             "length_constraints": [
                 {
-                    "section_name": "Research Strategy",
+                    "title": "Research Strategy",
                     "measurement_type": "pages",
                     "limit_description": "Research Strategy section limited to 6 pages",
                     "quote_from_source": "The Research Strategy must not exceed 6 pages",
@@ -95,9 +95,9 @@ def sample_cfp_analysis() -> CFPAnalysisResult:
                 },
             ],
             "additional_requirements": [],
-            "sections_count": 1,
-            "length_constraints_found": 1,
-            "evaluation_criteria_count": 2,
+            "count": 1,
+            "constraints_count": 1,
+            "criteria_count": 2,
         },
         nlp_analysis={
             "money": [],

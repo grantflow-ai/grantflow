@@ -3,8 +3,8 @@ from typing import TypedDict
 from packages.db.src.json_objects import CFPAnalysisResult
 from packages.shared_utils.src.dto import (
     ExtractedCFPData,
-    ExtractedSectionDTO,
     OrganizationNamespace,
+    ProcessedSectionDTO,
 )
 
 
@@ -18,7 +18,7 @@ class AnalyzeCFPContentStageDTO(ExtractCFPContentStageDTO):
 
 
 class ExtractionSectionsStageDTO(AnalyzeCFPContentStageDTO):
-    extracted_sections: list[ExtractedSectionDTO]
+    extracted_sections: list[ProcessedSectionDTO]
 
 
 StageDTO = ExtractCFPContentStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO

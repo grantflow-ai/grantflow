@@ -31,13 +31,13 @@ class EnrichObjectiveInputDTO(TypedDict):
 
 
 class EnrichmentDataDTO(TypedDict):
-    enriched_objective: str
-    search_queries: list[str]
-    core_scientific_terms: list[str]
-    scientific_context: str
-    instructions: NotRequired[str]
-    description: NotRequired[str]
-    guiding_questions: NotRequired[list[str]]
+    enriched: str
+    queries: list[str]
+    terms: list[str]
+    context: str
+    instructions: str
+    description: str
+    questions: list[str]
 
 
 class WikidataExpansionResult(TypedDict):
