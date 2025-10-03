@@ -5,16 +5,21 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-import pytest
 from packages.db.src.query_helpers import select_active
-from packages.db.src.tables import GrantingInstitution, Organization, RagSource, GrantTemplate, GrantTemplateSource, TextVector
-from sqlalchemy import select
+from packages.db.src.tables import (
+    GrantingInstitution,
+    GrantTemplateSource,
+    Organization,
+    RagSource,
+    TextVector,
+)
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
+
 from .conftest import create_test_grant_template
 
 
@@ -30,7 +35,109 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     mock_job_manager: AsyncMock,
     expected_nih_par_25_450_sections: list[dict[str, Any]],
 ) -> None:
-    """Test end-to-end NIH PAR-25-450 CFP extraction from PDF to structured data."""
+    """Test end-to-end NIH PAR-25-450 CFP extraction from PDF to structured data. ~keep
+
+    NIH PAR-25-450 CFP Structure:
+    Source: testing/test_data/sources/cfps/PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf
+    Extracted: testing/test_data/sources/cfps/PAR-25-450_Clinical_Trial_Readiness_for_Rare_Diseases.md (1306 lines)
+
+    Grant Mechanism: R21 (Exploratory/Developmental Research Grant - Clinical Trial Not Allowed)
+
+    Purpose (line 136-158):
+    Support clinical projects addressing critical needs for clinical trial readiness in rare diseases.
+    Focus on developing/testing biomarkers and clinical outcome measures, or defining disease natural
+    history to enable efficient clinical trial design.
+
+    Scope (line 261-328):
+    Two categories of projects:
+    1. Validation of sensitive, reliable, responsive tools (COA measures, biomarkers) to identify
+       participants or measure intervention effects
+    2. Defining disease presentation/course essential for upcoming clinical trial design
+       (retrospective, longitudinal, or cross-sectional approaches)
+
+    Application Format (Section IV, line 562+):
+    Standard NIH Application Format following SF424(R&R) with PHS 398 Research Plan:
+
+    Required Components:
+    - SF424(R&R) Cover
+    - SF424(R&R) Project/Performance Site Locations
+    - SF424(R&R) Other Project Information
+    - SF424(R&R) Senior/Key Person Profile (biosketches, Current/Pending Support)
+    - R&R or Modular Budget
+    - R&R Subaward Budget
+    - PHS 398 Cover Page Supplement
+    - PHS 398 Research Plan:
+
+        Research Strategy (line 594+):
+        Special Required Subsections:
+
+        1. Evidence Supporting Rare Disease Classification (line 595-612)
+           - Proof disease affects ≤200,000 people in U.S.
+           - FDA orphan status if applicable
+           - Rationale if focusing on rare variant/subset of common condition
+           - Scientific basis for separate biomarker/COA validation
+
+        2. Urgent Need for Clinical Trial Readiness (line 613-660)
+           - Description of trial readiness study need/timing
+           - Critical barriers/bottlenecks addressed
+           - Clinical trial design issues resolved (power calculations, inclusion/exclusion,
+             duration, biomarker/COA validation)
+           - Potential impact on upcoming clinical trials
+           - State of candidate therapeutic development (even if applicant not involved)
+           - Timelines for therapeutics advancing to trials
+           - Description of enabled clinical trial(s) with letters of support from researchers
+           - Next steps for moving to clinical trial if successful
+           - Current COA measures/biomarkers status and limitations
+           - Natural history knowledge gaps compromising trial design
+           - Role of companies/voluntary health organizations
+
+        3. Biomarkers and Context of Use (line 661+)
+           - BEST Resource terminology (FDA-NIH Biomarker Working Group)
+           - Defined context of use statement
+           - Clinical validation requirements
+
+        Standard NIH Sections:
+        - Specific Aims
+        - Significance
+        - Innovation
+        - Approach (including preliminary data, research design, methods)
+        - Bibliography & References Cited
+        - Facilities & Other Resources
+        - Equipment
+
+    Page Limits (line 562-565):
+    - Follow NIH SF424(R&R) Application Guide Table of Page Limits
+    - R21: Typically 6 pages for Research Strategy
+
+    Key Terminology (BEST Resource, line 213-260):
+    - Biomarker: Defined characteristic indicating normal/pathogenic processes or responses
+    - Clinical Outcome Assessment (COA): Assessment of how individual feels/functions/survives
+      (clinician-reported, observer-reported, patient-reported, performance outcomes)
+    - Context of Use (COU): Statement describing tool use and development purpose
+    - Validation: Process establishing acceptable performance for intended purpose
+      - Clinical validation: Test/tool identifies, measures, or predicts concept of interest
+      - Analytical validation: Technical performance (sensitivity, specificity, accuracy, precision)
+
+    Expected cfp_analysis Output:
+    - subject: Clinical trial readiness for rare diseases (R21 mechanism)
+    - organization: National Institutes of Health (NIH) / NCATS
+    - content: Structured sections covering:
+        * Evidence Supporting Rare Disease Classification
+        * Urgent Need for Clinical Trial Readiness
+        * Biomarkers and Context of Use
+        * Research Strategy components (Aims, Significance, Innovation, Approach)
+        * Team/Environment/Resources
+        * Budget components
+    - analysis_metadata.categories: Clinical trial readiness, rare disease research,
+      biomarker validation, outcome measures, R21 mechanism
+    - analysis_metadata.constraints:
+        * Page limit: 6 pages Research Strategy
+        * Must include rare disease classification evidence (non-responsive if missing)
+        * Clinical trial readiness subsection required
+        * BEST Resource terminology required for biomarkers/COAs
+        * No clinical trials allowed (R21 Clinical Trial Not Allowed)
+        * Must have candidate therapeutics ready for testing after study completion
+    """
     performance_context.set_metadata("cfp_type", "nih_par_25_450")
     performance_context.set_metadata("test_type", "cfp_extraction_e2e")
     performance_context.set_metadata("cfp_file", str(nih_par_25_450_cfp_file))
@@ -162,7 +269,7 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
 
     # Check for key NIH PAR-25-450 sections
     research_found = any("research" in title or "aim" in title for title in extracted_titles)
-    clinical_trial_found = any("clinical" in title or "trial" in title for title in extracted_titles)
+    any("clinical" in title or "trial" in title for title in extracted_titles)
     budget_found = any("budget" in title for title in extracted_titles)
 
     assert research_found, f"Should find research-related section in: {extracted_titles}"
@@ -280,8 +387,6 @@ async def test_nih_par_25_450_template_generation_pipeline(
     performance_context.start_stage("validate_pipeline_results")
 
     # Retrieve and validate the results
-    from packages.db.src.query_helpers import select_active
-    from sqlalchemy.orm import selectinload
 
     async with async_session_maker() as session:
         updated_template = await session.scalar(
@@ -293,7 +398,7 @@ async def test_nih_par_25_450_template_generation_pipeline(
         assert updated_template is not None, "Template should exist after pipeline"
 
         # Check if CFP data was extracted and stored
-        if hasattr(updated_template, 'cfp_analysis') and updated_template.cfp_analysis:
+        if hasattr(updated_template, "cfp_analysis") and updated_template.cfp_analysis:
             cfp_data = updated_template.cfp_analysis
             assert "subject" in cfp_data, "CFP analysis should contain subject"
             assert "content" in cfp_data, "CFP analysis should contain content"

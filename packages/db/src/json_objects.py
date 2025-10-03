@@ -1,5 +1,4 @@
-from typing import Any, NotRequired, TypedDict
-from uuid import UUID
+from typing import NotRequired, TypedDict
 
 from packages.db.src.enums import GrantTemplateStageEnum
 
