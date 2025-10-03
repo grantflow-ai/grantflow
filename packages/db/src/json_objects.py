@@ -74,6 +74,7 @@ class GrantLongFormSection(GrantElement):
     search_queries: list[str]
     topics: list[str]
     requirements: NotRequired[list["CFPAnalysisRequirementWithQuote"]]
+    guidelines: NotRequired[list[str]]
     length_limit: NotRequired[int | None]
     length_source: NotRequired[str | None]
     other_limits: NotRequired[list[CFPConstraint]]
