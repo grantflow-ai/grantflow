@@ -1,12 +1,20 @@
 from typing import TYPE_CHECKING
 
-from services.rag.src.dto import CFPAnalysisData
+from packages.db.src.json_objects import CFPAnalysisData
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import CFPAnalysisQualityMetrics
 
 
 def evaluate_cfp_analysis_quality(cfp_data: CFPAnalysisData) -> "CFPAnalysisQualityMetrics":
+    """Evaluate CFP analysis quality based on categories, constraints, and metadata.
+
+    NEW structure evaluation:
+    - requirement_clarity: evaluates category quality (meaningful names, good examples)
+    - quote_accuracy: evaluates category example quality and specificity
+    - completeness: evaluates metadata (reasonable counts, coverage)
+    - categorization: evaluates constraints (well-formed type/value pairs)
+    """
     if not cfp_data:
         return {
             "overall": 0.0,
@@ -16,13 +24,10 @@ def evaluate_cfp_analysis_quality(cfp_data: CFPAnalysisData) -> "CFPAnalysisQual
             "categorization": 0.0,
         }
 
-    requirement_clarity = _evaluate_requirement_clarity(cfp_data)
-
-    quote_accuracy = _evaluate_quote_accuracy(cfp_data)
-
-    completeness = _evaluate_completeness(cfp_data)
-
-    categorization = _evaluate_categorization(cfp_data)
+    requirement_clarity = _evaluate_category_clarity(cfp_data)
+    quote_accuracy = _evaluate_category_examples(cfp_data)
+    completeness = _evaluate_metadata_completeness(cfp_data)
+    categorization = _evaluate_constraints(cfp_data)
 
     overall = requirement_clarity * 0.30 + quote_accuracy * 0.25 + completeness * 0.25 + categorization * 0.20
 
@@ -35,169 +40,156 @@ def evaluate_cfp_analysis_quality(cfp_data: CFPAnalysisData) -> "CFPAnalysisQual
     }
 
 
-def _evaluate_requirement_clarity(cfp_data: CFPAnalysisData) -> float:
-    requirements = cfp_data.get("requirements", [])
+def _evaluate_category_clarity(cfp_data: CFPAnalysisData) -> float:
+    """Evaluate category quality: meaningful names, good examples, reasonable counts."""
+    categories = cfp_data.get("categories", [])
 
-    if not requirements:
+    if not categories:
         return 0.0
 
-    completeness_score = 0.0
+    score = 0.0
 
-    for req in requirements:
-        if req.get("requirement"):
-            completeness_score += 0.3
+    for category in categories:
+        # Meaningful category name (not too short, not generic)
+        name = category.get("name", "")
+        if len(name) > 5 and name.lower() not in ["other", "misc", "miscellaneous", "general"]:
+            score += 0.3
 
-        if req.get("quote_from_source"):
-            completeness_score += 0.4
+        # Has reasonable count (at least 1 requirement in this category)
+        count = category.get("count", 0)
+        if count > 0:
+            score += 0.3
 
-        if req.get("category"):
-            completeness_score += 0.3
+        # Has good examples
+        examples = category.get("examples", [])
+        if len(examples) >= 2:
+            score += 0.4
+        elif len(examples) == 1:
+            score += 0.2
 
-    return min(1.0, completeness_score / len(requirements)) if requirements else 0.0
+    return min(1.0, score / len(categories)) if categories else 0.0
 
 
-def _evaluate_quote_accuracy(cfp_data: CFPAnalysisData) -> float:
-    sections = cfp_data.get("sections", [])
+def _evaluate_category_examples(cfp_data: CFPAnalysisData) -> float:
+    """Evaluate category example quality and specificity."""
+    categories = cfp_data.get("categories", [])
 
-    if not sections:
+    if not categories:
         return 0.0
 
-    structure_score = 0.0
+    score = 0.0
 
-    for section in sections:
-        if section.get("title"):
-            structure_score += 0.2
+    for category in categories:
+        examples = category.get("examples", [])
 
-        if section.get("definition"):
-            structure_score += 0.3
+        # Has examples
+        if not examples:
+            continue
 
-        section_requirements = section.get("requirements", [])
-        if section_requirements and len(section_requirements) >= 2:
-            structure_score += 0.3
+        # Examples have reasonable length (not too short)
+        example_quality = sum(1 for ex in examples if len(ex) > 15) / len(examples)
+        score += example_quality * 0.5
 
-        if "dependencies" in section:
-            structure_score += 0.2
+        # Examples are diverse (not duplicates)
+        unique_ratio = len(set(examples)) / len(examples)
+        score += unique_ratio * 0.3
 
-    if len(sections) >= 3:
-        structure_score += 0.2
+        # Examples match count
+        count = category.get("count", 0)
+        if count > 0 and len(examples) >= min(count, 3):
+            score += 0.2
 
-    return min(1.0, structure_score / len(sections)) if sections else 0.0
+    return min(1.0, score / len(categories)) if categories else 0.0
 
 
-def _evaluate_completeness(cfp_data: CFPAnalysisData) -> float:
-    criteria = cfp_data.get("evaluation_criteria", [])
+def _evaluate_metadata_completeness(cfp_data: CFPAnalysisData) -> float:
+    """Evaluate metadata: reasonable counts and coverage."""
+    metadata = cfp_data.get("metadata", {})
 
-    if not criteria:
+    if not metadata:
         return 0.0
 
-    clarity_score = 0.0
+    score = 0.0
 
-    for criterion in criteria:
-        if isinstance(criterion, str):
-            if len(criterion) > 20:
-                clarity_score += 0.5
-            if any(indicator in criterion.lower() for indicator in ["(%)", "percent", "weight"]):
-                clarity_score += 0.3
-        else:
-            if criterion.get("criterion_name"):
-                clarity_score += 0.2
+    # Has reasonable section count
+    total_sections = metadata.get("total_sections", 0)
+    if total_sections >= 2:
+        score += 0.4
+    elif total_sections >= 1:
+        score += 0.2
 
-            if criterion.get("description") and len(criterion.get("description", "")) > 20:
-                clarity_score += 0.3
+    # Has reasonable requirement count
+    total_requirements = metadata.get("total_requirements", 0)
+    if total_requirements >= 5:
+        score += 0.4
+    elif total_requirements >= 1:
+        score += 0.2
 
-            if criterion.get("weight_percentage") is not None:
-                clarity_score += 0.3
+    # Has source attribution
+    source_count = metadata.get("source_count", 0)
+    if source_count >= 1:
+        score += 0.2
 
-            if criterion.get("quote_from_source"):
-                clarity_score += 0.2
-
-    return min(1.0, clarity_score / len(criteria)) if criteria else 0.0
+    return min(1.0, score)
 
 
-def _evaluate_categorization(cfp_data: CFPAnalysisData) -> float:
-    constraints = cfp_data.get("length_constraints", [])
+def _evaluate_constraints(cfp_data: CFPAnalysisData) -> float:
+    """Evaluate constraints: well-formed type/value pairs."""
+    constraints = cfp_data.get("constraints", [])
 
     if not constraints:
-        return 0.5
+        return 0.5  # Neutral score if no constraints (not all CFPs have them)
 
-    specificity_score = 0.0
+    score = 0.0
+
+    valid_types = ["word_limit", "page_limit", "char_limit", "format"]
 
     for constraint in constraints:
-        if constraint.get("title"):
-            specificity_score += 0.2
+        # Has valid type
+        constraint_type = constraint.get("type", "")
+        if constraint_type in valid_types:
+            score += 0.4
 
-        if constraint.get("measurement_type") in ["pages", "words", "characters", "lines"]:
-            specificity_score += 0.3
+        # Has meaningful value
+        value = constraint.get("value", "")
+        if len(value) > 0:
+            score += 0.3
 
-        if constraint.get("limit_description"):
-            limit_desc = constraint.get("limit_description", "")
-            if any(char.isdigit() for char in limit_desc):
-                specificity_score += 0.3
+        # Value contains numbers for limit types
+        if constraint_type in ["word_limit", "page_limit", "char_limit"]:
+            if any(char.isdigit() for char in value):
+                score += 0.3
             else:
-                specificity_score += 0.1
+                score += 0.1  # Has value but no numbers
 
-        if constraint.get("exclusions"):
-            specificity_score += 0.2
-
-    return min(1.0, specificity_score / len(constraints)) if constraints else 0.5
-
-
-def _evaluate_source_attribution(cfp_data: CFPAnalysisData) -> float:
-    attribution_score = 0.0
-    total_items = 0
-
-    requirements = cfp_data.get("requirements", [])
-    for req in requirements:
-        total_items += 1
-        if req.get("quote_from_source"):
-            attribution_score += 1
-
-    sections = cfp_data.get("sections", [])
-    for section in sections:
-        section_reqs = section.get("requirements", [])
-        for req in section_reqs:
-            total_items += 1
-            if req.get("quote_from_source"):
-                attribution_score += 1
-
-    criteria = cfp_data.get("evaluation_criteria", [])
-    for criterion in criteria:
-        total_items += 1
-        if criterion.get("quote_from_source"):
-            attribution_score += 1
-
-    constraints = cfp_data.get("length_constraints", [])
-    for constraint in constraints:
-        total_items += 1
-        if constraint.get("quote_from_source"):
-            attribution_score += 1
-
-    return attribution_score / total_items if total_items > 0 else 0.0
+    return min(1.0, score / len(constraints)) if constraints else 0.5
 
 
 def check_cfp_analysis_completeness(cfp_data: CFPAnalysisData) -> dict[str, bool]:
-    has_requirements = bool(cfp_data.get("requirements"))
-    has_sections = bool(cfp_data.get("sections"))
-    has_criteria = bool(cfp_data.get("evaluation_criteria"))
-    has_constraints = bool(cfp_data.get("length_constraints"))
+    """Check if CFP analysis has minimum required data."""
+    has_categories = bool(cfp_data.get("categories"))
+    has_constraints = bool(cfp_data.get("constraints"))
+    has_metadata = bool(cfp_data.get("metadata"))
 
-    min_requirements = False
-    min_sections = False
+    min_categories = False
+    min_metadata = False
 
-    if has_requirements:
-        requirements = cfp_data["requirements"]
-        min_requirements = len(requirements) >= 3
+    if has_categories:
+        categories = cfp_data["categories"]
+        min_categories = len(categories) >= 2
 
-    if has_sections:
-        sections = cfp_data["sections"]
-        min_sections = len(sections) >= 2
+    if has_metadata:
+        metadata = cfp_data["metadata"]
+        min_metadata = (
+            metadata.get("total_sections", 0) >= 1
+            and metadata.get("total_requirements", 0) >= 1
+        )
 
     return {
         "has_cfp_analysis": bool(cfp_data),
-        "has_requirements": has_requirements,
-        "has_sections": has_sections,
-        "has_evaluation_criteria": has_criteria,
-        "has_length_constraints": has_constraints,
-        "minimum_requirements": min_requirements,
-        "minimum_sections": min_sections,
+        "has_categories": has_categories,
+        "has_constraints": has_constraints,
+        "has_metadata": has_metadata,
+        "minimum_categories": min_categories,
+        "minimum_metadata": min_metadata,
     }
