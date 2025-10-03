@@ -406,8 +406,8 @@ def merge_section_with_metadata(
     )
 
     # Add constraint fields from extract_sections enrichment
-    # Note: guidelines field is not in GrantLongFormSection schema, so we skip it
-    # TODO: Consider adding guidelines field to schema or storing in definition
+    if "guidelines" in section and section["guidelines"]:
+        result["guidelines"] = section["guidelines"]
 
     if "length_limit" in section and section["length_limit"]:
         result["length_limit"] = section["length_limit"]
@@ -420,6 +420,20 @@ def merge_section_with_metadata(
 
     if "definition" in section:
         result["definition"] = section["definition"]
+
+    # Log if CFP constraint conflicts significantly with LLM recommendation
+    if "length_limit" in section and section["length_limit"]:
+        llm_words = metadata["max_words"]
+        cfp_limit = section["length_limit"]
+        if cfp_limit < llm_words * 0.7 or cfp_limit > llm_words * 1.5:
+            logger.warning(
+                "Length constraint mismatch between LLM and CFP",
+                section_id=section["id"],
+                section_title=section["title"],
+                llm_recommendation=llm_words,
+                cfp_constraint=cfp_limit,
+                difference_pct=int(abs(cfp_limit - llm_words) / llm_words * 100),
+            )
 
     return result
 
