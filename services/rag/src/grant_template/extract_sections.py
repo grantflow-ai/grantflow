@@ -454,6 +454,7 @@ def enrich_section_with_constraints(
     Matches constraints to sections, extracts guidelines, and populates all new fields.
     """
     section_title = section["title"]
+    section_id = section["id"]
     constraints = cfp_analysis.get("analysis_metadata", {}).get("constraints", [])
 
     # Extract matching constraints
@@ -465,6 +466,15 @@ def enrich_section_with_constraints(
     for constraint in constraints:
         if match_constraint_to_section(constraint, section_title):
             matched_constraints.append(constraint)
+
+            logger.debug(
+                "Matched constraint to section",
+                section_id=section_id,
+                section_title=section_title,
+                constraint_type=constraint["type"],
+                constraint_value=constraint["value"],
+                constraint_section=constraint.get("section"),
+            )
 
             # Process length constraints
             if constraint["type"] in ["word_limit", "page_limit", "char_limit"]:
@@ -504,6 +514,27 @@ def enrich_section_with_constraints(
         section["other_limits"] = other_limits
     if definition:
         section["definition"] = definition
+
+    # Log enrichment results
+    if section.get("long_form"):
+        if not length_limit and len(matched_constraints) == 0:
+            logger.info(
+                "Long-form section has no length constraints",
+                section_id=section_id,
+                section_title=section_title,
+                has_guidelines=bool(guidelines),
+                guidelines_count=len(guidelines) if guidelines else 0,
+            )
+        elif length_limit:
+            logger.info(
+                "Section enriched with length constraint",
+                section_id=section_id,
+                section_title=section_title,
+                length_limit=length_limit,
+                length_source=length_source,
+                guidelines_count=len(guidelines) if guidelines else 0,
+                other_constraints_count=len(other_limits),
+            )
 
     return section
 
