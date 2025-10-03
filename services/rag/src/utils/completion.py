@@ -436,7 +436,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
         try:
             msgs = [messages] if isinstance(messages, str) else messages
             if error_message:
-                msgs = [*messages, error_message]
+                msgs = [*msgs, error_message]
 
             if model == ANTHROPIC_SONNET_MODEL:
                 if not isinstance(messages, str):
