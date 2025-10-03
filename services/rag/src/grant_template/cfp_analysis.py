@@ -186,6 +186,47 @@ def validate_cfp_categories(response: CFPCategoriesResult) -> None:
         raise ValidationError("No requirement categories identified")
 
 
+def validate_cfp_constraints(response: CFPConstraintsResult) -> None:
+    """Validate CFP constraint extraction - ensure constraint types are valid."""
+    if not response.get("constraints"):
+        # Empty constraints is valid - not all CFPs have explicit limits
+        return
+
+    # Valid constraint types for grant applications
+    valid_constraint_types = {
+        "word_limit",
+        "page_limit",
+        "char_limit",
+        "character_limit",
+        "format",
+        "font",
+        "spacing",
+        "margin",
+        "length",
+        "size",
+    }
+
+    invalid_constraints = []
+    for idx, constraint in enumerate(response["constraints"]):
+        constraint_type = constraint.get("type", "").lower().replace(" ", "_")
+        if constraint_type and constraint_type not in valid_constraint_types:
+            invalid_constraints.append({
+                "index": idx,
+                "type": constraint.get("type"),
+                "value": constraint.get("value"),
+            })
+
+    if invalid_constraints:
+        raise ValidationError(
+            "Invalid constraint types found in CFP constraints",
+            context={
+                "invalid_constraints": invalid_constraints,
+                "valid_types": sorted(valid_constraint_types),
+                "recovery_instruction": f"Ensure constraint types are one of: {', '.join(sorted(valid_constraint_types))}",
+            },
+        )
+
+
 def validate_section_depth_constraint(sections: list[dict[str, Any]]) -> None:
     """Validate that sections satisfy 2-level depth constraint (parent + children only).
 
@@ -473,7 +514,7 @@ async def extract_cfp_constraints(
         prompt_identifier="cfp_constraints",
         response_type=CFPConstraintsResult,
         response_schema=cfp_constraints_schema,
-        validator=None,  # Optional extraction
+        validator=validate_cfp_constraints,
         messages=task_description,
         system_prompt="Extract length limits (word/page/char) and formatting requirements from CFP. Return valid JSON only.",
         temperature=TEMPERATURE,
@@ -619,13 +660,6 @@ async def handle_cfp_analysis(
 
     await job_manager.ensure_not_cancelled()
 
-    # Notify user that analysis extractions are complete
-    await job_manager.add_notification(
-        event="CFP_ANALYSIS_EXTRACTIONS_COMPLETE",
-        message="CFP requirements extracted, analyzing structure",
-        notification_type="info",
-    )
-
     # Merge the three content extraction strategies using consensus
     logger.info("Merging multi-strategy content extractions", trace_id=trace_id)
     content_result, quality_metrics = merge_cfp_extractions(
@@ -655,6 +689,29 @@ async def handle_cfp_analysis(
             session_maker=session_maker,
             trace_id=trace_id,
         )
+
+        # Validate confidence score is in valid range
+        if confidence < 0.0 or confidence > 1.0:
+            raise ValidationError(
+                "Organization identification confidence out of valid range",
+                context={
+                    "confidence": confidence,
+                    "valid_range": "[0.0, 1.0]",
+                    "org_id": org_id,
+                    "method": method,
+                    "recovery_instruction": "Ensure confidence score is between 0.0 and 1.0",
+                },
+            )
+
+        # Warn if organization identified with low confidence
+        if org_id and confidence < 0.5:
+            logger.warning(
+                "Organization identified with low confidence",
+                org_id=org_id,
+                confidence=confidence,
+                method=method,
+                trace_id=trace_id,
+            )
 
         if org_id and confidence >= 0.85:
             logger.info(

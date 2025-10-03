@@ -672,6 +672,8 @@ def _get_children_map(sections: list[ExtractedSectionDTO]) -> dict[str, list[Ext
 def _validate_parent_child_structure(
     sections: list[ExtractedSectionDTO], children_map: dict[str, list[ExtractedSectionDTO]]
 ) -> None:
+    {s["id"]: s for s in sections}
+
     for section in sections:
         section_id = section["id"]
         children = children_map.get(section_id, [])
@@ -697,6 +699,38 @@ def _validate_parent_child_structure(
                     "title_only": section.get("title_only"),
                 },
             )
+
+        # Validate bidirectional parent-child consistency
+        if parent_id := section.get("parent"):
+            parent_children = children_map.get(parent_id, [])
+            if section not in parent_children:
+                raise ValidationError(
+                    "Parent-child relationship inconsistency detected",
+                    context={
+                        "child_id": section_id,
+                        "child_title": section["title"],
+                        "parent_id": parent_id,
+                        "parent_children_count": len(parent_children),
+                        "parent_children_ids": [c["id"] for c in parent_children],
+                        "recovery_instruction": f"Ensure section '{section_id}' is properly listed as a child of parent '{parent_id}'",
+                    },
+                )
+
+        # Validate children have unique order values within same parent
+        if children:
+            child_orders = [c["order"] for c in children]
+            if len(child_orders) != len(set(child_orders)):
+                duplicates = [order for order in child_orders if child_orders.count(order) > 1]
+                raise ValidationError(
+                    "Children of same parent have duplicate order values",
+                    context={
+                        "parent_id": section_id,
+                        "parent_title": section["title"],
+                        "duplicate_orders": list(set(duplicates)),
+                        "children_orders": [(c["id"], c["order"]) for c in children],
+                        "recovery_instruction": f"Assign unique order values to children of parent '{section_id}'",
+                    },
+                )
 
 
 def _validate_word_limit_distribution(_section: ExtractedSectionDTO, _children: list[ExtractedSectionDTO]) -> None:
@@ -745,6 +779,48 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 "Duplicate section titles found",
                 context={"title": title, "section_ids": [s["id"] for s in duplicate_sections]},
             )
+
+    # Check for similar titles (potential duplicates with slight variations)
+    def get_title_words(title: str) -> set[str]:
+        """Extract meaningful words from title, filtering out common words."""
+        common_words = {"the", "a", "an", "and", "or", "of", "for", "in", "on", "at", "to", "with"}
+        return {word for word in title.lower().split() if word not in common_words and len(word) > 2}
+
+    similar_pairs = []
+    for i, section_a in enumerate(response["sections"]):
+        title_a = section_a["title"].strip()
+        words_a = get_title_words(title_a)
+        if not words_a:
+            continue
+
+        for section_b in response["sections"][i + 1:]:
+            title_b = section_b["title"].strip()
+            words_b = get_title_words(title_b)
+            if not words_b:
+                continue
+
+            # Check if titles share > 50% of meaningful words
+            overlap = words_a & words_b
+            union = words_a | words_b
+            similarity = len(overlap) / len(union) if union else 0
+
+            if similarity > 0.5:
+                similar_pairs.append({
+                    "section_a": {"id": section_a["id"], "title": title_a},
+                    "section_b": {"id": section_b["id"], "title": title_b},
+                    "similarity": round(similarity, 2),
+                    "shared_words": list(overlap),
+                })
+
+    if similar_pairs:
+        raise ValidationError(
+            "Sections with suspiciously similar titles detected",
+            context={
+                "similar_pairs": similar_pairs,
+                "pair_count": len(similar_pairs),
+                "recovery_instruction": "Ensure section titles are distinct and clearly differentiate sections. Consider merging or renaming similar sections.",
+            },
+        )
 
     all_orders = [section["order"] for section in response["sections"]]
     if len(set(all_orders)) != len(all_orders):
@@ -996,6 +1072,19 @@ async def filter_extracted_sections(
 
 def _finalize_extracted_sections(sections: list[ExtractedSectionDTO]) -> list[ExtractedSectionDTO]:
     """Finalize extracted sections: validate parents, clean titles, set defaults, sort by order."""
+    # Validate exactly one research plan section after filtering
+    research_plan_sections = [s for s in sections if s.get("is_plan")]
+    if len(research_plan_sections) != 1:
+        raise ValidationError(
+            f"After filtering, exactly one section must be marked as detailed research_plan. Found {len(research_plan_sections)}.",
+            context={
+                "research_plan_count": len(research_plan_sections),
+                "research_plan_sections": [{"id": s["id"], "title": s["title"]} for s in research_plan_sections],
+                "total_sections": len(sections),
+                "recovery_instruction": "Ensure exactly one section remains marked as is_plan=True after exclude category filtering",
+            },
+        )
+
     valid_ids = {s["id"] for s in sections}
 
     for section in sections:
@@ -1295,7 +1384,30 @@ async def handle_extract_sections(
         # Generate definition from guidelines only if LLM didn't provide one
         # Preserve LLM-generated definitions as they contain section-specific context
         if section_dict.get("guidelines") and not section_dict.get("definition"):
-            section_dict["definition"] = create_section_definition(section_dict["guidelines"])
+            section_dict["definition"] = create_section_definition(cast("list[str]", section_dict["guidelines"]))
+
+    # Validate enrichment coverage: long-form writing sections must have guidance or constraints
+    sections_missing_guidance = []
+    for section_dict in sections_by_id.values():
+        if section_dict.get("needs_writing") and section_dict.get("long_form"):
+            has_guidelines = bool(section_dict.get("guidelines"))
+            has_length = bool(section_dict.get("length_limit"))
+            if not has_guidelines and not has_length:
+                sections_missing_guidance.append({
+                    "id": section_dict["id"],
+                    "title": section_dict["title"],
+                })
+
+    if sections_missing_guidance:
+        section_titles = [cast("str", s["title"]) for s in sections_missing_guidance]
+        raise ValidationError(
+            "Long-form writing sections missing both guidelines and length constraints",
+            context={
+                "sections_missing_guidance": sections_missing_guidance,
+                "section_count": len(sections_missing_guidance),
+                "recovery_instruction": f"Add guidelines or length constraints for: {', '.join(section_titles[:3])}{'...' if len(section_titles) > 3 else ''}",
+            },
+        )
 
     extracted_sections: list[ExtractedSectionDTO] = [
         cast("ExtractedSectionDTO", section) for section in sections_by_id.values()
