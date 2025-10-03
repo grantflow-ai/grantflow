@@ -174,7 +174,7 @@ async def retrieve_vectors_for_embedding(
 
         # Apply metadata pre-filtering if specified
         if metadata_filter:
-            metadata_condition = build_metadata_filter(RagSource.document_metadata, **metadata_filter)
+            metadata_condition = build_metadata_filter(RagSource.document_metadata, **metadata_filter)  # type: ignore[arg-type]
             if metadata_condition is not None:
                 query = query.where(metadata_condition)
 
@@ -191,9 +191,7 @@ async def retrieve_vectors_for_embedding(
         if metadata_filter and total_vectors_count is not None:
             filtered_count = len(vectors)
             reduction_pct = (
-                ((total_vectors_count - filtered_count) / total_vectors_count * 100)
-                if total_vectors_count > 0
-                else 0.0
+                ((total_vectors_count - filtered_count) / total_vectors_count * 100) if total_vectors_count > 0 else 0.0
             )
             logger.info(
                 "Metadata pre-filter applied",

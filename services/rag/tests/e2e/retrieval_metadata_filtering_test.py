@@ -220,14 +220,14 @@ async def test_retrieval_without_metadata_filter(
         limit=10,
     )
 
-    logger.info("Retrieved vectors without metadata filter", count=len(vectors))
+    logger.info("Retrieved %d vectors without metadata filter", len(vectors))
 
     # Should retrieve from both sources
     assert len(vectors) > 0, "Should retrieve at least some vectors"
 
     # Check sources
     source_ids = {v.rag_source_id for v in vectors}
-    logger.info("Source IDs retrieved", source_ids=source_ids)
+    logger.info("Source IDs retrieved: %s", source_ids)
 
 
 @pytest.mark.e2e
@@ -258,23 +258,23 @@ async def test_retrieval_with_organization_entity_filter(
         limit=10,
     )
 
-    logger.info("Retrieved vectors with ORGANIZATION filter", count=len(vectors))
+    logger.info("Retrieved %d vectors with ORGANIZATION filter", len(vectors))
 
     # Should primarily retrieve from NIH paper (has NIH, Memorial Sloan Kettering, Mayo Clinic entities)
     assert len(vectors) > 0, "Should retrieve vectors from documents with organization entities"
 
     # Check that NIH source is represented
     source_ids = {v.rag_source_id for v in vectors}
-    logger.info("Source IDs with ORGANIZATION filter", source_ids=source_ids)
+    logger.info("Source IDs with ORGANIZATION filter: %s", source_ids)
 
     # Verify metadata on retrieved sources
     for vector in vectors[:3]:
         metadata = vector.rag_source.document_metadata
-        if metadata and "entities" in metadata:
-            entities = metadata["entities"]
+        if metadata is not None and "entities" in metadata:
+            entities = metadata.get("entities")
             if isinstance(entities, list):
                 org_entities = [e for e in entities if isinstance(e, dict) and e.get("type") == "ORGANIZATION"]
-                logger.info("Organizations found", organizations=[e.get("text") for e in org_entities])
+                logger.info("Organizations found: %s", [e.get("text") for e in org_entities])
 
 
 @pytest.mark.e2e
@@ -306,7 +306,7 @@ async def test_retrieval_with_category_filter(
         limit=10,
     )
 
-    logger.info("Retrieved vectors with category filter", count=len(vectors))
+    logger.info("Retrieved %d vectors with category filter", len(vectors))
     assert len(vectors) > 0, "Should retrieve vectors from research/scientific documents"
 
     # Verify categories on retrieved sources
@@ -314,7 +314,7 @@ async def test_retrieval_with_category_filter(
         metadata = vector.rag_source.document_metadata
         if metadata and "categories" in metadata:
             categories = metadata["categories"]
-            logger.info("Categories found", categories=categories)
+            logger.info("Categories found: %s", categories)
 
 
 @pytest.mark.e2e
@@ -344,15 +344,16 @@ async def test_retrieval_with_quality_score_filter(
         limit=10,
     )
 
-    logger.info("Retrieved vectors with quality score filter", count=len(vectors))
+    logger.info("Retrieved %d vectors with quality score filter", len(vectors))
 
     # Verify all retrieved documents meet quality threshold
     for vector in vectors:
         metadata = vector.rag_source.document_metadata
         if metadata and "quality_score" in metadata:
             quality_score = metadata["quality_score"]
-            logger.info("Quality score", score=quality_score)
-            assert isinstance(quality_score, (int, float)) and quality_score >= 0.7, f"Quality score {quality_score} below threshold"
+            logger.info("Quality score: %s", quality_score)
+            assert isinstance(quality_score, (int, float)), f"Quality score must be numeric, got {type(quality_score)}"
+            assert quality_score >= 0.7, f"Quality score {quality_score} below threshold"
 
 
 @pytest.mark.e2e
@@ -384,20 +385,20 @@ async def test_retrieval_with_combined_filters(
         limit=10,
     )
 
-    logger.info("Retrieved vectors with combined filters", count=len(vectors))
+    logger.info("Retrieved %d vectors with combined filters", len(vectors))
     assert len(vectors) > 0, "Should retrieve vectors matching all criteria"
 
     # Verify retrieved documents meet all criteria
     for vector in vectors[:3]:
         metadata = vector.rag_source.document_metadata
-        if metadata:
+        if metadata is not None:
             entities = metadata.get("entities", [])
             entity_count = len(entities) if isinstance(entities, list) else 0
             logger.info(
-                "Document metadata",
-                entities=entity_count,
-                categories=metadata.get("categories"),
-                quality=metadata.get("quality_score"),
+                "Document metadata: entities=%d, categories=%s, quality=%s",
+                entity_count,
+                metadata.get("categories"),
+                metadata.get("quality_score"),
             )
 
 
@@ -424,17 +425,17 @@ async def test_metadata_extraction_completeness(
     entities_list = entities if isinstance(entities, list) else []
     keywords_list = keywords if isinstance(keywords, list) else []
 
-    logger.info("Entities extracted", count=len(entities_list))
-    logger.info("Keywords extracted", count=len(keywords_list))
-    logger.info("Categories", categories=categories)
-    logger.info("Document type", doc_type=doc_type)
+    logger.info("Entities extracted: %d", len(entities_list))
+    logger.info("Keywords extracted: %d", len(keywords_list))
+    logger.info("Categories: %s", categories)
+    logger.info("Document type: %s", doc_type)
 
     # Sample some entities
     org_entities = [e for e in entities_list if isinstance(e, dict) and e.get("type") == "ORGANIZATION"]
-    logger.info("Organization entities", organizations=[e.get("text") for e in org_entities[:5]])
+    logger.info("Organization entities: %s", [e.get("text") for e in org_entities[:5]])
 
     person_entities = [e for e in entities_list if isinstance(e, dict) and e.get("type") == "PERSON"]
-    logger.info("Person entities", people=[e.get("text") for e in person_entities[:5]])
+    logger.info("Person entities: %s", [e.get("text") for e in person_entities[:5]])
 
     # Sample keywords
-    logger.info("Top keywords", keywords=keywords_list[:10])
+    logger.info("Top keywords: %s", keywords_list[:10])
