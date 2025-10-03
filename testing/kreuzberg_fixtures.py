@@ -48,7 +48,7 @@ def _load_from_cache(cache_key: str) -> tuple[str, str, list[str] | None, Docume
         return None
 
     try:
-        with open(cache_file) as f:
+        with cache_file.open() as f:
             data = json.load(f)
         return (
             data["content"],
@@ -71,7 +71,7 @@ def _save_to_cache(
     """Save extraction result to cache."""
     cache_file = CACHE_DIR / f"{cache_key}.json"
     try:
-        with open(cache_file, "w") as f:
+        with cache_file.open("w") as f:
             json.dump(
                 {
                     "content": content,
