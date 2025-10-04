@@ -12,6 +12,11 @@ dependencies = [
   "firebase-functions>=0.4.3",
 ]
 
+[dependency-groups]
+dev = [
+  "types-requests>=2.32", # Specific to functions, not in root
+]
+
 [tool.mypy]
 python_version = "3.13"
 strict = true
@@ -26,8 +31,3 @@ module = [
 ignore_missing_imports = true
 follow_imports = "skip"
 no_implicit_reexport = false
-
-[tool.uv]
-dev-dependencies = [
-  "types-requests>=2.32.0", # Specific to functions, not in root
-]
