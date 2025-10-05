@@ -1,4 +1,3 @@
-
 import logging
 from pathlib import Path
 from typing import Any
@@ -22,7 +21,6 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     test_organization: Organization,
     organization_mapping: dict[str, dict[str, str]],
     mock_job_manager: AsyncMock,
-    expected_nih_tuberculosis_sections: list[dict[str, Any]],
 ) -> None:
     performance_context.set_metadata("cfp_type", "nih_tuberculosis_research_units")
     performance_context.set_metadata("test_type", "cfp_extraction_e2e")
@@ -97,12 +95,12 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     performance_context.start_stage("validate_extraction_results")
 
     assert cfp_analysis is not None, "CFP analysis should return data"
-    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
-    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
-    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
+    assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
+    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
-    subject = cfp_analysis.subject
-    content_sections = cfp_analysis.content
+    subject = cfp_analysis["subject"]
+    content_sections = cfp_analysis["content"]
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
@@ -111,16 +109,31 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     tb_indicators = any(term in subject_lower for term in ["tuberculosis", "tb", "p01", "research unit"])
     assert tb_indicators, f"Subject should indicate tuberculosis/P01 focus: {subject}"
 
-    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
-    assert cfp_analysis.organization.full_name == nih_granting_institution.full_name, (
-        f"Should identify NIH: {cfp_analysis.organization.full_name}"
+    assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
+    assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
+        f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
     )
 
-    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
+    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
 
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
+
+    for section in content_sections:
+        assert "id" in section
+        assert "title" in section
+        assert "parent_id" in section
+        assert "subtitles" in section
+        assert "categories" in section
+        assert "constraints" in section
+
+        assert isinstance(section["id"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["subtitles"], list)
+        assert len(section["subtitles"]) == 0
+        assert isinstance(section["categories"], list)
+        assert isinstance(section["constraints"], list)
 
     performance_context.end_stage()
 
@@ -135,9 +148,7 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     assert research_found, f"Should find research project sections in: {extracted_titles}"
 
-    all_text = " ".join(
-        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
-    ).lower()
+    all_text = " ".join(s["title"] for s in content_sections).lower()
 
     tb_keywords = ["tuberculosis", "research", "program", "project", "core", "leadership"]
     found_keywords = [kw for kw in tb_keywords if kw in all_text]
@@ -145,16 +156,20 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     performance_context.end_stage()
 
-    total_subtitles = sum(len(section["subtitles"]) for section in content_sections)
+    parent_sections = [s for s in content_sections if s.get("parent_id") is None]
+    child_sections = [s for s in content_sections if s.get("parent_id") is not None]
+
     performance_context.set_metadata("extracted_sections_count", len(content_sections))
-    performance_context.set_metadata("total_subtitles_count", total_subtitles)
+    performance_context.set_metadata("parent_sections_count", len(parent_sections))
+    performance_context.set_metadata("child_sections_count", len(child_sections))
     performance_context.set_metadata("tb_keywords_found", found_keywords)
 
     logger.info(
         "✅ NIH Tuberculosis Research Units CFP extraction E2E test completed successfully",
         extra={
             "sections_extracted": len(content_sections),
-            "total_subtitles": total_subtitles,
+            "parent_sections": len(parent_sections),
+            "child_sections": len(child_sections),
             "keywords_found": found_keywords,
         },
     )
@@ -170,7 +185,6 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
     test_organization: Organization,
     organization_mapping: dict[str, dict[str, str]],
     mock_job_manager: AsyncMock,
-    expected_nih_diabetes_sections: list[dict[str, Any]],
 ) -> None:
     performance_context.set_metadata("cfp_type", "nih_diabetes_digital_health")
     performance_context.set_metadata("test_type", "cfp_extraction_e2e")
@@ -245,12 +259,12 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
     performance_context.start_stage("validate_extraction_results")
 
     assert cfp_analysis is not None, "CFP analysis should return data"
-    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
-    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
-    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
+    assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
+    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
-    subject = cfp_analysis.subject
-    content_sections = cfp_analysis.content
+    subject = cfp_analysis["subject"]
+    content_sections = cfp_analysis["content"]
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
@@ -261,16 +275,31 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
     )
     assert diabetes_indicators, f"Subject should indicate diabetes/digital health focus: {subject}"
 
-    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
-    assert cfp_analysis.organization.full_name == nih_granting_institution.full_name, (
-        f"Should identify NIH: {cfp_analysis.organization.full_name}"
+    assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
+    assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
+        f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
     )
 
-    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
+    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
 
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
+
+    for section in content_sections:
+        assert "id" in section
+        assert "title" in section
+        assert "parent_id" in section
+        assert "subtitles" in section
+        assert "categories" in section
+        assert "constraints" in section
+
+        assert isinstance(section["id"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["subtitles"], list)
+        assert len(section["subtitles"]) == 0
+        assert isinstance(section["categories"], list)
+        assert isinstance(section["constraints"], list)
 
     performance_context.end_stage()
 
@@ -285,9 +314,7 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     assert research_found, f"Should find research sections in: {extracted_titles}"
 
-    all_text = " ".join(
-        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
-    ).lower()
+    all_text = " ".join(s["title"] for s in content_sections).lower()
 
     diabetes_keywords = ["diabetes", "digital", "technology", "clinical", "trial", "research", "health"]
     found_keywords = [kw for kw in diabetes_keywords if kw in all_text]
@@ -299,118 +326,21 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     performance_context.end_stage()
 
-    total_subtitles = sum(len(section["subtitles"]) for section in content_sections)
+    parent_sections = [s for s in content_sections if s.get("parent_id") is None]
+    child_sections = [s for s in content_sections if s.get("parent_id") is not None]
+
     performance_context.set_metadata("extracted_sections_count", len(content_sections))
-    performance_context.set_metadata("total_subtitles_count", total_subtitles)
+    performance_context.set_metadata("parent_sections_count", len(parent_sections))
+    performance_context.set_metadata("child_sections_count", len(child_sections))
     performance_context.set_metadata("diabetes_keywords_found", found_keywords)
 
     logger.info(
         "✅ NIH Digital Health Technology for Type 2 Diabetes CFP extraction E2E test completed successfully",
         extra={
             "sections_extracted": len(content_sections),
-            "total_subtitles": total_subtitles,
+            "parent_sections": len(parent_sections),
+            "child_sections": len(child_sections),
             "keywords_found": found_keywords,
             "clinical_trial_score": trial_content_found,
-        },
-    )
-
-
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_TEMPLATE, timeout=600)
-async def test_nih_tuberculosis_section_structure_validation(
-    logger: logging.Logger,
-    expected_nih_tuberculosis_sections: list[dict[str, Any]],
-    performance_context: PerformanceTestContext,
-) -> None:
-    performance_context.set_metadata("test_type", "section_structure_validation")
-    performance_context.set_metadata("cfp_type", "nih_tuberculosis_research_units")
-    performance_context.set_metadata("grant_mechanism", "P01")
-
-    logger.info("📋 Validating NIH Tuberculosis Research Units CFP expected section structure")
-
-    assert len(expected_nih_tuberculosis_sections) > 0, "Should have expected sections defined"
-
-    section_titles = [section["title"].lower() for section in expected_nih_tuberculosis_sections]
-
-    research_sections = [title for title in section_titles if "research" in title]
-    program_sections = [title for title in section_titles if "program" in title or "component" in title]
-    leadership_sections = [title for title in section_titles if "leadership" in title or "team" in title]
-    environment_sections = [title for title in section_titles if "environment" in title or "resource" in title]
-
-    assert len(research_sections) > 0, f"Should have research sections: {section_titles}"
-    assert len(environment_sections) > 0, f"Should have environment sections: {section_titles}"
-
-    performance_context.set_metadata("expected_sections_count", len(expected_nih_tuberculosis_sections))
-    performance_context.set_metadata("research_sections_count", len(research_sections))
-    performance_context.set_metadata("program_sections_count", len(program_sections))
-    performance_context.set_metadata("leadership_sections_count", len(leadership_sections))
-
-    logger.info(
-        "✅ NIH Tuberculosis Research Units CFP section structure validation completed",
-        extra={
-            "total_sections": len(expected_nih_tuberculosis_sections),
-            "research_sections": len(research_sections),
-            "program_sections": len(program_sections),
-            "leadership_sections": len(leadership_sections),
-        },
-    )
-
-
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_TEMPLATE, timeout=600)
-async def test_nih_diabetes_section_structure_validation(
-    logger: logging.Logger,
-    expected_nih_diabetes_sections: list[dict[str, Any]],
-    performance_context: PerformanceTestContext,
-) -> None:
-    performance_context.set_metadata("test_type", "section_structure_validation")
-    performance_context.set_metadata("cfp_type", "nih_diabetes_digital_health")
-    performance_context.set_metadata("grant_mechanism", "R01")
-
-    logger.info("📋 Validating NIH Digital Health Technology for Type 2 Diabetes CFP expected section structure")
-
-    assert len(expected_nih_diabetes_sections) > 0, "Should have expected sections defined"
-
-    section_titles = [section["title"].lower() for section in expected_nih_diabetes_sections]
-
-    research_sections = [title for title in section_titles if "research" in title]
-    clinical_sections = [title for title in section_titles if "clinical" in title or "trial" in title]
-    technology_sections = [title for title in section_titles if "technology" in title or "digital" in title]
-    [title for title in section_titles if "team" in title or "environment" in title]
-
-    assert len(research_sections) > 0, f"Should have research sections: {section_titles}"
-
-    all_subsections = []
-    for section in expected_nih_diabetes_sections:
-        all_subsections.extend(section["expected_subsections"])
-
-    digital_health_elements = ["technology", "digital", "implementation", "usability", "data management"]
-    clinical_trial_elements = ["study design", "participants", "intervention", "outcomes"]
-
-    found_digital_elements = [
-        element
-        for element in digital_health_elements
-        if any(element in subsection.lower() for subsection in all_subsections)
-    ]
-    found_clinical_elements = [
-        element
-        for element in clinical_trial_elements
-        if any(element in subsection.lower() for subsection in all_subsections)
-    ]
-
-    performance_context.set_metadata("expected_sections_count", len(expected_nih_diabetes_sections))
-    performance_context.set_metadata("research_sections_count", len(research_sections))
-    performance_context.set_metadata("clinical_sections_count", len(clinical_sections))
-    performance_context.set_metadata("technology_sections_count", len(technology_sections))
-    performance_context.set_metadata("digital_elements_found", found_digital_elements)
-    performance_context.set_metadata("clinical_elements_found", found_clinical_elements)
-
-    logger.info(
-        "✅ NIH Digital Health Technology for Type 2 Diabetes CFP section structure validation completed",
-        extra={
-            "total_sections": len(expected_nih_diabetes_sections),
-            "research_sections": len(research_sections),
-            "clinical_sections": len(clinical_sections),
-            "technology_sections": len(technology_sections),
-            "digital_elements": len(found_digital_elements),
-            "clinical_elements": len(found_clinical_elements),
         },
     )

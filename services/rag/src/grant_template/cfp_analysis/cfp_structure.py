@@ -4,13 +4,15 @@ from packages.db.src.json_objects import CFPContentSection
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
+from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 CFP_CONTENT_EXTRACTION_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
-    "Your task is to deconstruct the provided CFP text into a structured list of sections and their corresponding subsections. "
+    "You are an expert in analyzing grant application Calls for Proposals (CFPs)."
+    "Your task is to identify the expected application sections into a structured list of sections and their corresponding subsections."
     "Pay close attention to the specific instructions in the user prompt, as they will guide the desired granularity of the output."
+    "Remember - you need to determine the expected application sections, not the sections of the CFP itself."
 )
 
 CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT: Final[str] = """
@@ -95,7 +97,7 @@ async def extract_cfp_structure(
         validator=validate_cfp_content,
         messages=task_description,
         system_prompt=CFP_CONTENT_EXTRACTION_SYSTEM_PROMPT,
-        temperature=0.1,
+        temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.8,
         trace_id=trace_id,

@@ -1,8 +1,10 @@
+from functools import partial
 from typing import Final, TypedDict
 
-from packages.db.src.json_objects import CFPAnalysisConstraint
+from packages.db.src.json_objects import CFPAnalysisConstraint, CFPSection
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
@@ -23,42 +25,44 @@ CONSTRAINT_TYPES: Final[frozenset[str]] = frozenset(
     }
 )
 
-CFP_CATEGORIES_EXTRACTION_SYSTEM_PROMPT: Final[str] = (
+CFP_CONSTRAINTS_SYSTEM_EXTRACTION_PROMPT: Final[str] = (
     "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
-    "Your task is to meticulously extract all explicit constraints and limitations from the provided text. "
-    "Focus on quantifiable limits and specific formatting requirements."
+    "Your task is to meticulously extract all explicit constraints and limitations from the provided text, "
+    "associating them with the relevant sections."
 )
 
-CFP_CATEGORIES_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+CFP_CONSTRAINTS_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_constraints_extraction",
-    template="""
-    # CFP Constraint Extraction
+    template="""# CFP Constraint Extraction
 
     ## Sources
     <rag_sources>${rag_sources}</rag_sources>
 
+    ## Sections
+    <sections>${sections}</sections>
+
     ## Task
 
-    Analyze the provided sources and extract all constraints related to the grant application's format and length.
+    For each section in the `<sections>` list, analyze the provided sources and identify which constraints apply to it. Return the full section object with a new `constraints` field.
 
-    ### Constraint Types and Definitions
-
-    - **word_limit**: Maximum number of words.
-    - **page_limit**: Maximum number of pages.
-    - **char_limit** or **character_limit**: Maximum number of characters.
-    - **format**: Specific file format (e.g., PDF, Word).
-    - **font**: Required font size or family (e.g., 11-point Arial).
-    - **spacing**: Line spacing requirements (e.g., single-spaced, double-spaced).
-    - **margin**: Required document margins (e.g., 1-inch margins).
-    - **length**: A generic length constraint when the unit is not specified.
-    - **size**: A file size constraint (e.g., 10MB).
+    ### Constraint Types
+    - word_limit
+    - page_limit
+    - char_limit / character_limit
+    - format
+    - font
+    - spacing
+    - margin
+    - length
+    - size
 
     ### Output Format
 
-    For each constraint found, provide:
+    Return a list of section objects. Each object should have all the original fields from the input, plus a new `constraints` field containing a list of constraint objects that apply to that section.
+
+    For each constraint, provide:
     - `type`: One of the allowed constraint types.
     - `value`: The specific value of the constraint (e.g., "10 pages", "PDF", "1-inch").
-    - `section`: The name of the section the constraint applies to. If it applies to the whole application, use "Full Application".
 
     Return valid JSON only.
 """,
@@ -67,44 +71,81 @@ CFP_CATEGORIES_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 cfp_constraints_schema = {
     "type": "object",
     "properties": {
-        "constraints": {
+        "sections": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "type": {"type": "string", "enum": sorted(CONSTRAINT_TYPES)},
-                    "value": {"type": "string"},
-                    "section": {"type": "string"},
+                    "id": {"type": "string"},
+                    "title": {"type": "string"},
+                    "parent_id": {"type": "string", "nullable": True},
+                    "subtitles": {"type": "array", "items": {"type": "string"}},
+                    "constraints": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string", "enum": sorted(CONSTRAINT_TYPES)},
+                                "value": {"type": "string"},
+                            },
+                            "required": ["type", "value"],
+                        },
+                    },
                 },
-                "required": ["type", "value"],
+                "required": ["id", "title", "parent_id", "subtitles", "constraints"],
             },
         },
     },
-    "required": ["constraints"],
+    "required": ["sections"],
 }
 
 
-class CFPConstraintsResult(TypedDict):
+class ConstrainedCFPSection(TypedDict):
+    id: str
+    title: str
+    parent_id: str | None
+    subtitles: list[str]
     constraints: list[CFPAnalysisConstraint]
 
 
-def validate_cfp_constraints(response: CFPConstraintsResult) -> None:
-    if not response.get("constraints"):
+class CFPConstraintsResult(TypedDict):
+    sections: list[ConstrainedCFPSection]
+
+
+def validate_cfp_constraints(response: CFPConstraintsResult, expected_ids: set[str]) -> None:
+    if not response.get("sections"):
         raise ValidationError("No constraints identified")
+
+    response_ids = {s["id"] for s in response["sections"]}
+    if response_ids != expected_ids:
+        raise ValidationError(
+            "The constrained sections do not match the input sections.",
+            context={
+                "missing_ids": list(expected_ids - response_ids),
+                "extra_ids": list(response_ids - expected_ids),
+            },
+        )
 
 
 async def extract_cfp_constraints(
-    task_description: str,
+    rag_sources: str,
+    sections: list[CFPSection],
     *,
     trace_id: str,
 ) -> CFPConstraintsResult:
+    messages = CFP_CONSTRAINTS_EXTRACTION_USER_PROMPT.to_string(
+        rag_sources=rag_sources, sections=serialize(sections).decode("utf-8")
+    )
+
+    validator = partial(validate_cfp_constraints, expected_ids={s["id"] for s in sections})
+
     return await handle_completions_request(
         prompt_identifier="cfp_constraints",
         response_type=CFPConstraintsResult,
         response_schema=cfp_constraints_schema,
-        validator=validate_cfp_constraints,
-        messages=task_description,
-        system_prompt=CFP_CATEGORIES_EXTRACTION_SYSTEM_PROMPT,
+        validator=validator,
+        messages=messages,
+        system_prompt=CFP_CONSTRAINTS_SYSTEM_EXTRACTION_PROMPT,
         temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,
