@@ -1,17 +1,13 @@
 import asyncio
 import re
-from difflib import SequenceMatcher
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from packages.db.src.json_objects import (
     CFPAnalysis,
-    CFPAnalysisConstraint,
-    CFPConstraint,
     CFPContentSection,
 )
-from packages.shared_utils.src.dto import (
-    ExtractedSectionDTO,
-)
+from packages.shared_utils.src.dto import ExtractedSectionDTO
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -20,19 +16,13 @@ from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import util
 
 from services.rag.src.grant_template.extract_section.section_classification import (
-    SECTION_CLASSIFICATION_USER_PROMPT,
-    extract_section_classification,
+    classify_writing_requirements,
 )
-from services.rag.src.grant_template.extract_section.section_enrichment import (
-    SECTION_ENRICHMENT_USER_PROMPT,
-    extract_section_enrichment,
-)
+from services.rag.src.grant_template.extract_section.section_enrichment import enrich_with_details
 from services.rag.src.grant_template.extract_section.section_structure import (
-    SECTION_STRUCTURE_USER_PROMPT,
-    extract_section_structure,
+    DefinedSection,
+    structure_and_classify_sections,
 )
-
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from services.rag.src.grant_template.dto import StageDTO
@@ -40,8 +30,16 @@ if TYPE_CHECKING:
 
 exclude_embeddings_ref = Ref[list[float]]()
 
+logger = get_logger(__name__)
 
-EXCLUDE_CATEGORIES = [
+WORD_LIMIT_TOLERANCE: Final[float] = 0.1
+WORDS_PER_PAGE: Final[int] = 250
+CHARS_PER_WORD: Final[int] = 6
+
+SNAKE_CASE_PATTERN_1 = re.compile(r"(.)([A-Z][a-z]+)")
+SNAKE_CASE_PATTERN_2 = re.compile(r"([a-z0-9])([A-Z])")
+
+EXCLUDE_CATEGORIES: Final[list[str]] = [
     "Advisory Input",
     "Evaluation Criteria",
     "Expert Reviews",
@@ -62,7 +60,7 @@ EXCLUDE_CATEGORIES = [
 ]
 
 
-EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES = [
+EXTRACT_GRANT_APPLICATION_SECTIONS_QUERIES: Final[list[str]] = [
     "detailed research_plan research plan experimental approach specific aims methodology protocols",
     "research strategy experimental design technical approach methods procedures protocols",
     "project timeline milestones tasks deliverables research objectives implementation",
@@ -89,165 +87,10 @@ async def get_exclude_embeddings() -> list[float]:
     return exclude_embeddings_ref.value
 
 
-WORD_LIMIT_TOLERANCE: Final[float] = 0.1
-
-WORDS_PER_PAGE: Final[int] = 250
-CHARS_PER_WORD: Final[int] = 6
-
-
-def _similarity_ratio(s1: str, s2: str) -> float:
-    return SequenceMatcher(None, s1.lower(), s2.lower()).ratio()
-
-
-def match_constraint_to_section(constraint: CFPAnalysisConstraint, section_title: str, threshold: float = 0.6) -> bool:
-    constraint_section = constraint.get("section")
-    if not constraint_section:
-        return False
-
-    if constraint_section.lower() == section_title.lower():
-        return True
-
-    if _similarity_ratio(constraint_section, section_title) >= threshold:
-        return True
-
-    constraint_lower = constraint_section.lower()
-    title_lower = section_title.lower()
-    return bool(constraint_lower in title_lower or title_lower in constraint_lower)
-
-
-def parse_length_constraint(constraint_value: str, constraint_type: str) -> tuple[int | None, str]:
-    numbers = re.findall(r"\d+", constraint_value)
-    if not numbers:
-        return None, constraint_value
-
-    value = int(numbers[0])
-
-    return value, constraint_type
-
-
-def convert_to_word_limit(value: int, constraint_type: str) -> int:
-    if constraint_type == "word_limit":
-        return value
-    if constraint_type == "page_limit":
-        return value * WORDS_PER_PAGE
-    if constraint_type == "char_limit":
-        return value // CHARS_PER_WORD
-    return 0
-
-
-def extract_section_guidelines(
-    section_title: str, cfp_content: list[CFPContentSection], max_guidelines: int = 10
-) -> list[str]:
-    for content_section in cfp_content:
-        if _similarity_ratio(content_section["title"], section_title) >= 0.6:
-            subtitles = content_section.get("subtitles", [])
-            return subtitles[:max_guidelines]
-
-    return []
-
-
-def create_section_definition(guidelines: list[str]) -> str | None:
-    if not guidelines:
-        return None
-
-    if len(guidelines) == 1:
-        return guidelines[0]
-
-    primary = guidelines[0]
-
-    if len(guidelines) > 3:
-        return f"{primary} (Plus {len(guidelines) - 1} additional requirements - see guidelines)"
-
-    return primary
-
-
-def enrich_section_with_constraints(
-    section: ExtractedSectionDTO,
-    cfp_analysis: CFPAnalysis,
-    cfp_content: list[CFPContentSection],
-) -> ExtractedSectionDTO:
-    section_title = section["title"]
-    section_id = section["id"]
-    constraints = cfp_analysis.get("analysis_metadata", {}).get("constraints", [])
-
-    matched_constraints: list[CFPAnalysisConstraint] = []
-    length_limit: int | None = None
-    length_source: str | None = None
-    other_limits: list[CFPConstraint] = []
-
-    for constraint in constraints:
-        if match_constraint_to_section(constraint, section_title):
-            matched_constraints.append(constraint)
-
-            logger.debug(
-                "Matched constraint to section",
-                section_id=section_id,
-                section_title=section_title,
-                constraint_type=constraint["type"],
-                constraint_value=constraint["value"],
-                constraint_section=constraint.get("section"),
-            )
-
-            if constraint["type"] in ["word_limit", "page_limit", "char_limit"]:
-                value, c_type = parse_length_constraint(constraint["value"], constraint["type"])
-                if value is not None:
-                    word_limit = convert_to_word_limit(value, c_type)
-                    if word_limit > 0 and (length_limit is None or word_limit < length_limit):
-                        length_limit = word_limit
-                        length_source = constraint["value"]
-
-            elif constraint["type"] == "format":
-                other_limits.append(
-                    CFPConstraint(
-                        constraint_type=constraint["type"],
-                        constraint_value=constraint["value"],
-                        source_quote=constraint.get("section") or "",
-                    )
-                )
-
-    guidelines = extract_section_guidelines(section_title, cfp_content)
-
-    definition = create_section_definition(guidelines)
-
-    if guidelines:
-        section["guidelines"] = guidelines
-    if length_limit is not None:
-        section["length_limit"] = length_limit
-    if length_source:
-        section["length_source"] = length_source
-    if other_limits:
-        section["other_limits"] = other_limits
-    if definition:
-        section["definition"] = definition
-
-    if section.get("long_form"):
-        if not length_limit and len(matched_constraints) == 0:
-            logger.info(
-                "Long-form section has no length constraints",
-                section_id=section_id,
-                section_title=section_title,
-                has_guidelines=bool(guidelines),
-                guidelines_count=len(guidelines) if guidelines else 0,
-            )
-        elif length_limit:
-            logger.info(
-                "Section enriched with length constraint",
-                section_id=section_id,
-                section_title=section_title,
-                length_limit=length_limit,
-                length_source=length_source,
-                guidelines_count=len(guidelines) if guidelines else 0,
-                other_constraints_count=len(other_limits),
-            )
-
-    return section
-
-
 def _matches_exclude_categories(
     section: ExtractedSectionDTO,
     exclude_embeddings: list[float],
     threshold: float,
-    trace_id: str,
 ) -> bool:
     normalized_title = section["title"].lower().strip()
     for category in EXCLUDE_CATEGORIES:
@@ -255,21 +98,15 @@ def _matches_exclude_categories(
         if normalized_category in normalized_title or normalized_title in normalized_category:
             return True
 
-    try:
-        model = get_embedding_model()
-        title_embedding = model.encode(section["title"], convert_to_tensor=True, device="cpu")
+    model = get_embedding_model()
+    title_embedding = model.encode(section["title"], convert_to_tensor=True, device="cpu")
 
-        similarities = util.cos_sim(title_embedding, exclude_embeddings)
-        if similarities is not None and len(similarities) > 0:
-            max_similarity = float(similarities[0].max().item())
-            return max_similarity >= threshold
+    similarities = util.cos_sim(title_embedding, exclude_embeddings)
+    if similarities is not None and len(similarities) > 0:
+        max_similarity = float(similarities[0].max().item())
+        return max_similarity >= threshold
 
-        return False
-    except Exception as e:
-        logger.warning(
-            "Embedding calculation failed for section", title=section["title"], error=str(e), trace_id=trace_id
-        )
-        return False
+    return False
 
 
 def _should_keep_section(
@@ -277,21 +114,18 @@ def _should_keep_section(
     sections: list[ExtractedSectionDTO],
     threshold: float,
     exclude_embeddings: list[float],
-    trace_id: str,
 ) -> bool:
-    if section.get("is_plan"):
-        return True
-
-    if section.get("needs_writing"):
-        return True
-
-    if section.get("length_limit") or section.get("other_limits"):
-        return True
-
-    if section.get("guidelines"):
-        return True
-
-    if section.get("long_form"):
+    if any(
+        section.get(key)
+        for key in (
+            "is_plan",
+            "long_form",
+            "needs_writing",
+            "length_limit",
+            "other_limits",
+            "guidelines",
+        )
+    ):
         return True
 
     has_long_form_children = any(s.get("parent") == section["id"] and s.get("long_form") for s in sections)
@@ -300,7 +134,7 @@ def _should_keep_section(
 
     is_parent = any(s.get("parent") == section["id"] for s in sections)
     if is_parent:
-        return not _matches_exclude_categories(section, exclude_embeddings, threshold, trace_id)
+        return not _matches_exclude_categories(section, exclude_embeddings, threshold)
 
     return False
 
@@ -308,12 +142,9 @@ def _should_keep_section(
 def _has_enough_sections(filtered_sections: list[ExtractedSectionDTO], all_sections: list[ExtractedSectionDTO]) -> bool:
     has_plan = any(s.get("is_plan") for s in filtered_sections)
     long_form_count = sum(1 for s in filtered_sections if s.get("long_form"))
-
     needs_writing_total = sum(1 for s in all_sections if s.get("needs_writing"))
     needs_writing_retained = sum(1 for s in filtered_sections if s.get("needs_writing"))
-
     retention_rate = needs_writing_retained / needs_writing_total if needs_writing_total > 0 else 1.0
-
     return has_plan and long_form_count >= 3 and retention_rate >= 0.5
 
 
@@ -331,7 +162,6 @@ async def filter_extracted_sections(
                 sections=sections,
                 threshold=threshold,
                 exclude_embeddings=exclude_embeddings,
-                trace_id=trace_id,
             )
             for section in sections
         ]
@@ -355,11 +185,7 @@ async def filter_extracted_sections(
     fallback_sections = [
         section
         for section in sections
-        if section.get("is_plan")
-        or section.get("long_form")
-        or section.get("needs_writing")
-        or section.get("length_limit")
-        or section.get("guidelines")
+        if any(section.get(key) for key in ("is_plan", "long_form", "needs_writing", "length_limit", "guidelines"))
     ]
 
     logger.warning(
@@ -417,6 +243,36 @@ def _finalize_extracted_sections(sections: list[ExtractedSectionDTO]) -> list[Ex
     return sorted_sections
 
 
+def to_snake_case(text: str) -> str:
+    s1 = SNAKE_CASE_PATTERN_1.sub(r"\1_\2", text)
+    return SNAKE_CASE_PATTERN_2.sub(r"\1_\2", s1).lower().replace(" ", "_")
+
+
+def generate_unique_id(title: str) -> str:
+    id_counts: defaultdict[str, int] = defaultdict(int)
+
+    base_id = to_snake_case(title)
+    count = id_counts[base_id]
+    id_counts[base_id] += 1
+    if count > 0:
+        return f"{base_id}_{count}"
+    return base_id
+
+
+def create_section_definitions(cfp_content: list[CFPContentSection]) -> list[DefinedSection]:
+    sections: list[DefinedSection] = []
+    for content_section in cfp_content:
+        parent_id = generate_unique_id(content_section["title"])
+        sections.append(DefinedSection(title=content_section["title"], id=parent_id, parent_id=None))
+        sections.extend(
+            [
+                DefinedSection(title=subtitle, id=generate_unique_id(subtitle), parent_id=parent_id)
+                for subtitle in content_section["subtitles"]
+            ]
+        )
+    return sections
+
+
 async def handle_extract_sections(
     *,
     cfp_analysis: CFPAnalysis,
@@ -426,117 +282,61 @@ async def handle_extract_sections(
 ) -> list[ExtractedSectionDTO]:
     await job_manager.ensure_not_cancelled()
 
-    logger.info("Starting parallel section extraction", trace_id=trace_id)
-    await job_manager.ensure_not_cancelled()
+    logger.info("Defining section structure from CFP content", trace_id=trace_id)
+    defined_sections = create_section_definitions(cfp_analysis["content"])
 
-    structure_result, classification_result, enrichment_result = await asyncio.gather(
-        extract_section_structure(
-            SECTION_STRUCTURE_USER_PROMPT.to_string(
-                cfp_analysis=cfp_analysis,
-            ),
-            trace_id=trace_id,
-        ),
-        extract_section_classification(
-            SECTION_CLASSIFICATION_USER_PROMPT.to_string(
-                cfp_analysis=cfp_analysis,
-                organization_guidelines=organization_guidelines,
-            ),
-            trace_id=trace_id,
-        ),
-        extract_section_enrichment(
-            SECTION_ENRICHMENT_USER_PROMPT.to_string(
-                cfp_analysis=cfp_analysis,
-                cfp_constraints=cfp_analysis.get("analysis_metadata", {}).get("constraints", []),
-            ),
-            trace_id=trace_id,
-        ),
-    )
-
-    logger.info(
-        "Parallel extractions completed",
-        structure_sections=len(structure_result["sections"]),
-        classification_sections=len(classification_result["sections"]),
-        enrichment_sections=len(enrichment_result["sections"]),
+    logger.info("Structuring and classifying sections", trace_id=trace_id)
+    structured_sections = await structure_and_classify_sections(
+        sections=defined_sections,
+        cfp_analysis=cfp_analysis,
         trace_id=trace_id,
     )
 
-    sections_by_id: dict[str, dict[str, Any]] = {}
+    logger.info("Classifying writing requirements and enriching with details in parallel", trace_id=trace_id)
 
-    for section in structure_result["sections"]:
-        section_dict = dict(section)
-        section_dict["parent"] = section_dict.pop("parent_id")
-        sections_by_id[section["id"]] = section_dict
+    classification_results, enrichment_results = await asyncio.gather(
+        classify_writing_requirements(
+            sections=structured_sections,
+            cfp_analysis=cfp_analysis,
+            organization_guidelines=organization_guidelines,
+            trace_id=trace_id,
+        ),
+        enrich_with_details(
+            sections=structured_sections,
+            cfp_analysis=cfp_analysis,
+            trace_id=trace_id,
+        ),
+    )
 
-    for classification in classification_result["sections"]:
-        section_id = classification["id"]
-        if section_id in sections_by_id:
-            sections_by_id[section_id].update(classification)
-        else:
-            logger.warning(
-                "Classification for unknown section ID",
-                section_id=section_id,
-                trace_id=trace_id,
-            )
+    classification_map = {item["id"]: item for item in classification_results}
+    enrichment_map = {item["id"]: item for item in enrichment_results}
 
-    for enrichment in enrichment_result["sections"]:
-        section_id = enrichment["id"]
-        if section_id in sections_by_id:
-            sections_by_id[section_id].update(enrichment)
-        else:
-            logger.warning(
-                "Enrichment for unknown section ID",
-                section_id=section_id,
-                trace_id=trace_id,
-            )
+    final_sections: list[ExtractedSectionDTO] = []
+    for section in structured_sections:
+        section_id = section["id"]
+        merged_section: dict[str, Any] = dict(section)
 
-    for section_dict in sections_by_id.values():
-        if "long_form" not in section_dict:
-            section_dict["long_form"] = False
-        if "needs_writing" not in section_dict:
-            section_dict["needs_writing"] = True
-        if "is_plan" not in section_dict:
-            section_dict["is_plan"] = False
+        if classification := classification_map.get(section_id):
+            classification_copy = dict(**classification)
+            classification_copy.pop("id", None)
+            merged_section.update(classification_copy)
 
-        if section_dict.get("guidelines") and not section_dict.get("definition"):
-            section_dict["definition"] = create_section_definition(cast("list[str]", section_dict["guidelines"]))
+        if enrichment := enrichment_map.get(section_id):
+            enrichment_copy = dict(**enrichment)
+            enrichment_copy.pop("id", None)
+            merged_section.update(enrichment_copy)
 
-    sections_missing_guidance = []
-    for section_dict in sections_by_id.values():
-        if section_dict.get("needs_writing") and section_dict.get("long_form"):
-            has_guidelines = bool(section_dict.get("guidelines"))
-            has_length = bool(section_dict.get("length_limit"))
-            if not has_guidelines and not has_length:
-                sections_missing_guidance.append(
-                    {
-                        "id": section_dict["id"],
-                        "title": section_dict["title"],
-                    }
-                )
-
-    if sections_missing_guidance:
-        section_titles = [cast("str", s["title"]) for s in sections_missing_guidance]
-        raise ValidationError(
-            "Long-form writing sections missing both guidelines and length constraints",
-            context={
-                "sections_missing_guidance": sections_missing_guidance,
-                "section_count": len(sections_missing_guidance),
-                "recovery_instruction": f"Add guidelines or length constraints for: {', '.join(section_titles[:3])}{'...' if len(section_titles) > 3 else ''}",
-            },
-        )
-
-    extracted_sections: list[ExtractedSectionDTO] = [
-        cast("ExtractedSectionDTO", section) for section in sections_by_id.values()
-    ]
+        final_sections.append(cast("ExtractedSectionDTO", merged_section))
 
     logger.info(
-        "Merged parallel extraction results",
-        total_sections=len(extracted_sections),
-        sections_with_length_limits=sum(1 for s in extracted_sections if s.get("length_limit")),
-        sections_with_guidelines=sum(1 for s in extracted_sections if s.get("guidelines")),
+        "Merged extraction results",
+        total_sections=len(final_sections),
+        sections_with_length_limits=sum(1 for s in final_sections if s.get("length_limit")),
+        sections_with_guidelines=sum(1 for s in final_sections if s.get("guidelines")),
         trace_id=trace_id,
     )
 
-    filtered_sections = await filter_extracted_sections(extracted_sections, trace_id)
+    filtered_sections = await filter_extracted_sections(final_sections, trace_id)
 
     logger.info(
         "Section extraction completed",

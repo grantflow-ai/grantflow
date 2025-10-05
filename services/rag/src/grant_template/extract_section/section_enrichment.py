@@ -1,54 +1,58 @@
-from typing import Final, NotRequired, TypedDict
+from functools import partial
+from typing import Final, NotRequired, TypedDict, cast
 
-from packages.db.src.json_objects import CFPConstraint
+from packages.db.src.json_objects import CFPAnalysis, CFPConstraint
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.extract_section.constants import TEMPERATURE
+from services.rag.src.grant_template.extract_section.section_structure import StructuredSection
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
-SECTION_ENRICHMENT_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert in analyzing grant application guidelines. Your task is to extract constraints and guidelines for each section of the grant application from the provided text."
+SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application guidelines. Your task is to extract specific details, guidelines, and constraints for each section."
 )
 
-SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="section_enrichment",
+USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="enrich_with_details",
     template="""
-    # Section Enrichment Extraction
-    
-    <cfp_analysis>${task_description}</cfp_analysis>
-    <cfp_constraints>${cfp_constraints}</cfp_constraints>
-    
-    ## Task
-    
-    Extract CFP constraints and guidelines for grant application sections.
-    
-    ## Field Definitions
-    
-    1.  **guidelines**: Relevant CFP text excerpts for this section (3-10 items).
-    2.  **length_limit**: Word count from CFP (convert pages: 250 words/page, chars: 6 chars/word).
-    3.  **length_source**: Exact quote from CFP documenting the limit.
-    4.  **other_limits**: Additional formatting/structure constraints.
-    5.  **definition**: Concise summary from guidelines (single guideline as-is, 4+ add 'Plus X additional requirements').
-    
-    Return valid JSON only. All fields nullable if not found.
+# Enrich Sections with Details
+
+<sections>${sections}</sections>
+<cfp_analysis>${cfp_analysis}</cfp_analysis>
+
+## Task
+
+For each section in the `<sections>` list, extract the following details from the CFP analysis.
+
+## Field Definitions
+
+1.  **guidelines**: Relevant CFP text excerpts for this section (3-10 items).
+2.  **length_limit**: Word count from CFP (convert pages: 250 words/page, chars: 6 chars/word).
+3.  **length_source**: Exact quote from CFP documenting the limit.
+4.  **other_limits**: Additional formatting/structure constraints.
+5.  **definition**: Concise summary from guidelines (single guideline as-is, 4+ add 'Plus X additional requirements').
+
+Return valid JSON only. All fields are optional.
 """,
 )
 
-section_enrichment_schema = {
+enrichment_json_schema = {
     "type": "object",
+    "required": ["sections"],
     "properties": {
         "sections": {
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["id"],
                 "properties": {
                     "id": {"type": "string"},
                     "guidelines": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "minItems": 1,
                     },
                     "length_limit": {"type": "integer", "nullable": True},
                     "length_source": {"type": "string", "nullable": True},
@@ -63,19 +67,16 @@ section_enrichment_schema = {
                             },
                             "required": ["constraint_type", "constraint_value", "source_quote"],
                         },
-                        "minItems": 1,
                     },
                     "definition": {"type": "string", "nullable": True},
                 },
-                "required": ["id"],
             },
         },
     },
-    "required": ["sections"],
 }
 
 
-class EnrichedSection(TypedDict):
+class EnrichedSectionDetails(TypedDict):
     id: str
     guidelines: NotRequired[list[str]]
     length_limit: NotRequired[int | None]
@@ -84,18 +85,33 @@ class EnrichedSection(TypedDict):
     definition: NotRequired[str | None]
 
 
-class SectionEnrichmentResult(TypedDict):
-    sections: list[EnrichedSection]
+class EnrichmentResult(TypedDict):
+    sections: list[EnrichedSectionDetails]
 
 
-def validate_section_enrichment(response: SectionEnrichmentResult) -> None:
+class EnrichedSection(StructuredSection):
+    guidelines: NotRequired[list[str]]
+    length_limit: NotRequired[int | None]
+    length_source: NotRequired[str | None]
+    other_limits: NotRequired[list[CFPConstraint]]
+    definition: NotRequired[str | None]
+
+
+def validate_enrichment_details(response: EnrichmentResult, expected_ids: set[str]) -> None:
     if not response.get("sections"):
-        raise ValidationError("No section enrichments extracted")
+        raise ValidationError("No details were extracted for enrichment.")
+
+    response_ids = {s["id"] for s in response["sections"]}
+    if response_ids != expected_ids:
+        raise ValidationError(
+            "The enriched sections do not match the input sections.",
+            context={
+                "missing_ids": list(expected_ids - response_ids),
+                "extra_ids": list(response_ids - expected_ids),
+            },
+        )
 
     for section in response["sections"]:
-        if not section.get("id"):
-            raise ValidationError("Enriched section is missing an ID")
-
         if section.get("length_limit") is not None and not section.get("length_source"):
             raise ValidationError(
                 f"Section {section.get('id')} has length_limit but no length_source",
@@ -109,20 +125,40 @@ def validate_section_enrichment(response: SectionEnrichmentResult) -> None:
             )
 
 
-async def extract_section_enrichment(
-    task_description: str,
+async def enrich_with_details(
+    sections: list[StructuredSection],
+    cfp_analysis: CFPAnalysis,
     *,
     trace_id: str,
-) -> SectionEnrichmentResult:
-    return await handle_completions_request(
-        prompt_identifier="section_enrichment",
-        response_type=SectionEnrichmentResult,
-        response_schema=section_enrichment_schema,
-        validator=validate_section_enrichment,
-        messages=task_description,
-        system_prompt=SECTION_ENRICHMENT_SYSTEM_PROMPT,
-        temperature=TEMPERATURE,
+) -> list[EnrichedSection]:
+    messages = USER_PROMPT.to_string(
+        sections=serialize(sections).decode("utf-8"),
+        cfp_analysis=cfp_analysis,
+    )
+
+    validator = partial(validate_enrichment_details, expected_ids={s["id"] for s in sections})
+
+    result = await handle_completions_request(
+        prompt_identifier="enrich_with_details",
         model=GEMINI_FLASH_MODEL,
-        top_p=0.9,
+        messages=messages,
+        system_prompt=SYSTEM_PROMPT,
+        response_schema=enrichment_json_schema,
+        response_type=EnrichmentResult,
+        validator=validator,
+        temperature=TEMPERATURE,
         trace_id=trace_id,
     )
+
+    # Merge the results
+    result_map = {item["id"]: item for item in result["sections"]}
+
+    merged_sections: list[EnrichedSection] = []
+    for section in sections:
+        if enrichment := result_map.get(section["id"]):
+            merged_section = cast("EnrichedSection", {**section, **enrichment})
+            merged_sections.append(merged_section)
+        else:
+            merged_sections.append(cast("EnrichedSection", section))
+
+    return merged_sections

@@ -1,106 +1,133 @@
-from typing import Final, NotRequired, TypedDict
+from functools import partial
+from typing import Final, TypedDict, cast
+
+from packages.db.src.json_objects import CFPAnalysis
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.extract_section.constants import TEMPERATURE
+from services.rag.src.grant_template.extract_section.section_structure import StructuredSection
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
-from src.ai import GEMINI_FLASH_MODEL
-from src.exceptions import ValidationError
 
-SECTION_CLASSIFICATION_SYSTEM_PROMPT: Final[str] = (
-    "Given the results of CFP analysis and any available organization guidelines, classify the grant application sections."
+SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application guidelines. Your task is to classify the writing requirements for each section."
 )
-SECTION_CLASSIFICATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="section_classification",
+
+USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="classify_writing_requirements",
     template="""
-    # Section Classification
-    
+    # Classify Writing Requirements
+
+    <sections>${sections}</sections>
     <cfp_analysis>${cfp_analysis}</cfp_analysis>
     <organization_guidelines>${organization_guidelines}</organization_guidelines>
 
     ## Task
-    
-    Classify grant application sections by type and writing requirements.
-    
-    ## Field Definitions
-        
-    1. **long_form**: Narrative sections requiring substantial writing by applicants. 
-        Include research plans, project descriptions, abstracts, summaries, justifications, data management plans, 
-        impact statements, and any section where applicants write prose 
-        (not just fill forms). Sections with page/word limits are usually long_form.
-    2. **is_plan**: Exactly ONE main research methodology section (research approach, methods, aims).
-    3. **title_only**: Container sections with subsections only.
-    4. **clinical**: Clinical trial sections.
-    5. **needs_writing**: True if applicant writes content (not external docs like CVs, letters).
-            
+
+    For each section in the `<sections>` list, classify its writing requirements.
+
+    ### Instructions
+
+    - Return all the sections with the new fields.
+    - `long_form`: True if the section requires substantial narrative writing.
+    - `needs_writing`: True if the applicant needs to write original content.
+    - `clinical`: True if the section is related to clinical trials.
+
     Return valid JSON only.
 """,
 )
 
-section_classification_schema = {
+classification_json_schema = {
     "type": "object",
+    "required": ["sections"],
     "properties": {
         "sections": {
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["id", "long_form", "needs_writing", "clinical"],
                 "properties": {
                     "id": {"type": "string"},
                     "long_form": {"type": "boolean"},
-                    "is_plan": {"type": "boolean", "nullable": True},
-                    "title_only": {"type": "boolean", "nullable": True},
-                    "clinical": {"type": "boolean", "nullable": True},
                     "needs_writing": {"type": "boolean"},
+                    "clinical": {"type": "boolean"},
                 },
-                "required": ["id", "long_form", "needs_writing"],
             },
         },
     },
-    "required": ["sections"],
 }
 
 
-class SectionClassificationItem(TypedDict):
+class WritingRequirements(TypedDict):
     id: str
     long_form: bool
-    is_plan: bool
-    title_only: NotRequired[bool]
-    clinical: NotRequired[bool]
-    needs_writing: NotRequired[bool]
+    needs_writing: bool
+    clinical: bool
 
 
-class SectionClassificationResult(TypedDict):
-    sections: list[SectionClassificationItem]
+class WritingRequirementsResult(TypedDict):
+    sections: list[WritingRequirements]
 
 
-def validate_section_classification(response: SectionClassificationResult) -> None:
+class ClassifiedSection(StructuredSection):
+    long_form: bool
+    needs_writing: bool
+    clinical: bool
+
+
+def validate_writing_requirements(response: WritingRequirementsResult, expected_ids: set[str]) -> None:
     if not response.get("sections"):
-        raise ValidationError("No section classifications extracted")
+        raise ValidationError("No writing requirements were classified.")
 
-    is_plan_count = sum(1 for s in response["sections"] if s.get("is_plan"))
-    if is_plan_count != 1:
+    response_ids = {s["id"] for s in response["sections"]}
+    if response_ids != expected_ids:
         raise ValidationError(
-            f"Exactly one section must have is_plan=true, found {is_plan_count}",
+            "The classified sections do not match the input sections.",
             context={
-                "is_plan_sections": [s["id"] for s in response["sections"] if s.get("is_plan")],
-                "recovery_instruction": "Mark exactly one main research methodology section as is_plan=true",
+                "missing_ids": list(expected_ids - response_ids),
+                "extra_ids": list(response_ids - expected_ids),
             },
         )
 
 
-async def extract_section_classification(
-    task_description: str,
+async def classify_writing_requirements(
+    sections: list[StructuredSection],
+    cfp_analysis: CFPAnalysis,
+    organization_guidelines: str,
     *,
     trace_id: str,
-) -> SectionClassificationResult:
-    return await handle_completions_request(
-        prompt_identifier="section_classification",
-        response_type=SectionClassificationResult,
-        response_schema=section_classification_schema,
-        validator=validate_section_classification,
-        messages=task_description,
-        system_prompt=SECTION_CLASSIFICATION_SYSTEM_PROMPT,
-        temperature=TEMPERATURE,
+) -> list[ClassifiedSection]:
+    messages = USER_PROMPT.to_string(
+        sections=serialize(sections).decode("utf-8"),
+        cfp_analysis=cfp_analysis,
+        organization_guidelines=organization_guidelines,
+    )
+
+    validator = partial(validate_writing_requirements, expected_ids={s["id"] for s in sections})
+
+    result = await handle_completions_request(
+        prompt_identifier="classify_writing_requirements",
         model=GEMINI_FLASH_MODEL,
-        top_p=0.9,
+        messages=messages,
+        system_prompt=SYSTEM_PROMPT,
+        response_schema=classification_json_schema,
+        response_type=WritingRequirementsResult,
+        validator=validator,
+        temperature=TEMPERATURE,
         trace_id=trace_id,
     )
+
+    # Merge the results
+    result_map = {item["id"]: item for item in result["sections"]}
+
+    merged_sections: list[ClassifiedSection] = []
+    for section in sections:
+        if classification := result_map.get(section["id"]):
+            merged_section = cast("ClassifiedSection", {**section, **classification})
+            merged_sections.append(merged_section)
+        else:
+            merged_sections.append(cast("ClassifiedSection", section))
+
+    return merged_sections

@@ -1,97 +1,154 @@
-from typing import Final, TypedDict
+from functools import partial
+from typing import Final, NotRequired, TypedDict, cast
 
+from packages.db.src.json_objects import CFPAnalysis
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.serialization import serialize
+
+from services.rag.src.grant_template.extract_section.constants import TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
-from src.ai import GEMINI_FLASH_MODEL
-from src.exceptions import ValidationError
 
-SECTION_STRUCTURE_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert in analyzing grant application guidelines. Your task is to extract the hierarchical structure of the application sections from the provided text."
+SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in organizing grant applications. Your task is to determine the order and high-level classification of sections."
 )
 
-SECTION_STRUCTURE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="section_structure",
+USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="structure_and_classify_sections",
     template="""
-    # Section Structure Extraction
-    
+    # Structure and Classify Grant Application Sections
+
+    <sections>${sections}</sections>
     <cfp_analysis>${cfp_analysis}</cfp_analysis>
-    
+
     ## Task
-    
-    Extract the hierarchical section structure from the provided CFP analysis.
-    
-    - Create parent-child relationships with a maximum depth of 2 levels.
-    - Use the exact section titles from the CFP.
-    - Assign a unique ID to each section.
-    - Ensure the `order` field reflects the sequence of sections.
-    - The `parent_id` should be the ID of the parent section, or `null` for top-level sections.
-    
-    ## Field Definitions
-    
-    1.  **title**: The exact title of the section.
-    2.  **id**: A unique identifier for the section (e.g., "section-1").
-    3.  **order**: The 1-based index of the section in the overall structure.
-    4.  **parent_id**: The ID of the parent section, or `null` if it is a top-level section.
-    
+
+    Based on the provided list of sections and the CFP analysis, determine the correct order and perform high-level classification for each section.
+
+    ### Instructions
+
+    - Return all the sections with the new fields.
+    - `order`: A 1-based integer, unique and consecutive across all sections.
+    - `title_only`: True if the section is a container for subsections.
+    - `is_plan`: True for the single, main research methodology section.
+
     Return valid JSON only.
 """,
 )
 
-section_structure_schema = {
+structure_and_classify_json_schema = {
     "type": "object",
+    "required": ["sections"],
     "properties": {
         "sections": {
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["id", "order", "title_only", "is_plan"],
                 "properties": {
-                    "title": {"type": "string"},
                     "id": {"type": "string"},
                     "order": {"type": "integer"},
-                    "parent_id": {"type": "string", "nullable": True},
+                    "title_only": {"type": "boolean"},
+                    "is_plan": {"type": "boolean"},
                 },
-                "required": ["title", "id", "order", "parent_id"],
             },
         },
     },
-    "required": ["sections"],
 }
 
 
-class SectionStructureItem(TypedDict):
-    id: str
+class DefinedSection(TypedDict):
     title: str
+    id: str
+    parent_id: NotRequired[str | None]
+
+
+class StructuredAndClassifiedSection(TypedDict):
+    id: str
     order: int
-    parent_id: str | None
+    title_only: bool
+    is_plan: bool
 
 
-class SectionStructureResult(TypedDict):
-    sections: list[SectionStructureItem]
+class StructuredAndClassifiedResult(TypedDict):
+    sections: list[StructuredAndClassifiedSection]
 
 
-def validate_section_structure(response: SectionStructureResult) -> None:
+class StructuredSection(DefinedSection):
+    order: int
+    title_only: bool
+    is_plan: bool
+
+
+def validate_structure_and_classification(response: StructuredAndClassifiedResult, expected_ids: set[str]) -> None:
     if not response.get("sections"):
-        raise ValidationError("No sections extracted from CFP analysis")
+        raise ValidationError("No sections were structured or classified.")
 
-    section_ids = [s["id"] for s in response["sections"]]
-    if len(section_ids) != len(set(section_ids)):
-        raise ValidationError("Duplicate section IDs found in structure extraction")
+    response_ids = {s["id"] for s in response["sections"]}
+    if response_ids != expected_ids:
+        raise ValidationError(
+            "The structured sections do not match the input sections.",
+            context={
+                "missing_ids": list(expected_ids - response_ids),
+                "extra_ids": list(response_ids - expected_ids),
+            },
+        )
+
+    orders = [section["order"] for section in response["sections"]]
+    if len(orders) != len(set(orders)):
+        duplicate_orders = [order for order in orders if orders.count(order) > 1]
+        raise ValidationError("Duplicate order values found.", context={"duplicate_orders": duplicate_orders})
+
+    if min(orders) != 1 or max(orders) != len(orders):
+        raise ValidationError(
+            "Order values must be consecutive and start from 1.",
+            context={"min_order": min(orders), "max_order": max(orders), "expected_max": len(orders)},
+        )
+
+    is_plan_count = sum(1 for s in response["sections"] if s.get("is_plan"))
+    if is_plan_count != 1:
+        raise ValidationError(
+            f"Exactly one section must have is_plan=true, found {is_plan_count}",
+            context={
+                "is_plan_sections": [s["id"] for s in response["sections"] if s.get("is_plan")],
+            },
+        )
 
 
-async def extract_section_structure(
-    task_description: str,
-    *,
-    trace_id: str,
-) -> SectionStructureResult:
-    return await handle_completions_request(
-        prompt_identifier="section_structure",
-        response_type=SectionStructureResult,
-        response_schema=section_structure_schema,
-        validator=validate_section_structure,
-        messages=task_description,
-        system_prompt=SECTION_STRUCTURE_SYSTEM_PROMPT,
-        temperature=0.1,
+async def structure_and_classify_sections(
+    sections: list[DefinedSection], cfp_analysis: CFPAnalysis, *, trace_id: str
+) -> list[StructuredSection]:
+    messages = USER_PROMPT.to_string(
+        sections=serialize(sections).decode("utf-8"),
+        cfp_analysis=cfp_analysis,
+    )
+
+    validator = partial(validate_structure_and_classification, expected_ids={s["id"] for s in sections})
+
+    result = await handle_completions_request(
+        prompt_identifier="structure_and_classify_sections",
         model=GEMINI_FLASH_MODEL,
-        top_p=0.9,
+        messages=messages,
+        system_prompt=SYSTEM_PROMPT,
+        response_schema=structure_and_classify_json_schema,
+        response_type=StructuredAndClassifiedResult,
+        validator=validator,
+        temperature=TEMPERATURE,
         trace_id=trace_id,
     )
+
+    # Merge the results
+    result_map = {item["id"]: item for item in result["sections"]}
+
+    merged_sections: list[StructuredSection] = []
+    for section in sections:
+        if structured := result_map.get(section["id"]):
+            merged_section = cast("StructuredSection", {**section, **structured})
+            merged_sections.append(merged_section)
+        else:
+            merged_sections.append(cast("StructuredSection", section))
+
+    merged_sections.sort(key=lambda s: s.get("order", 0))
+
+    return merged_sections
