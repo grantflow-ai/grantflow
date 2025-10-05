@@ -7,20 +7,35 @@ from packages.shared_utils.src.exceptions import ValidationError
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
-CFP_CONTENT_EXTRACTIONSYSTEM_PROMPT: Final[str] = """Extract sections from the CFP. For each section, return:
-    1. **Title**: The title of the section, or an appropriate title if none given
-    2. **subtitles**: Any subtitles in the section
+CFP_CONTENT_EXTRACTION_SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
+    "Your task is to deconstruct the provided CFP text into a structured list of sections and their corresponding subsections. "
+    "Pay close attention to the specific instructions in the user prompt, as they will guide the desired granularity of the output."
+)
+
+CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT: Final[str] = """
+### Strategy: Hierarchical Extraction
+
+- **Goal**: Organize the CFP content into a logical, 2-level hierarchy.
+- **Top-Level Sections**: Group the content into primary categories like 'Awards', 'Eligibility', 'Application Requirements', etc.
+- **Subsections**: For each top-level section, extract its constituent parts as subtitles.
 """
 
-CFP_HIERARCHICAL_CONTENT_EXTRACTION_FRAGMENT: Final[str] = (
-    "Extract structured hierarchical sections from CFP. Organize into logical categories (Awards, Eligibility, Application Requirements, Budget, Submission Process, Review) and break each into relevant subsections. Maintain clear 2-level structure. Return valid JSON only."
-)
-CFP_DETAILED_CONTENT_EXTRACTION_FRAGMENT: Final[str] = (
-    "Extract comprehensive detailed sections from CFP. Break down into specific categories: each award type, eligibility criteria, budget requirements, application components, deadlines, review process, terms. Target 12-20 detailed sections. Return valid JSON only."
-)
-CFP_BROAD_CONTENT_EXTRACTION_FRAGMENT: Final[str] = (
-    "Extract major organizational sections from CFP. Focus on high-level categories: Awards, Eligibility, Requirements, Budget, Process, Review. Target 5-10 broad sections. Return valid JSON only."
-)
+CFP_CONTENT_EXTRACTION_DETAILED_FRAGMENT: Final[str] = """
+### Strategy: Detailed Extraction
+
+- **Goal**: Deconstruct the CFP into a fine-grained list of all possible sections.
+- **Method**: Treat every distinct topic as a separate section. Do not create subtitles.
+- **Target**: Aim for 12-20 detailed sections.
+"""
+
+CFP_CONTENT_EXTRACTION_BROAD_FRAGMENT: Final[str] = """
+### Strategy: Broad Extraction
+
+- **Goal**: Identify only the major, top-level organizational sections.
+- **Method**: Focus on the main headings and ignore smaller subsections.
+- **Target**: Aim for 5-10 broad sections.
+"""
 
 CFP_CONTENT_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_content_extraction",
@@ -79,7 +94,7 @@ async def extract_cfp_structure(
         response_schema=cfp_content_schema,
         validator=validate_cfp_content,
         messages=task_description,
-        system_prompt=CFP_CONTENT_EXTRACTIONSYSTEM_PROMPT,
+        system_prompt=CFP_CONTENT_EXTRACTION_SYSTEM_PROMPT,
         temperature=0.1,
         model=GEMINI_FLASH_MODEL,
         top_p=0.8,

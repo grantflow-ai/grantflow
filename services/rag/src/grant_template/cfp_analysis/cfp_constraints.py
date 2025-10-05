@@ -23,22 +23,45 @@ CONSTRAINT_TYPES: Final[frozenset[str]] = frozenset(
     }
 )
 
+CFP_CATEGORIES_EXTRACTION_SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
+    "Your task is to meticulously extract all explicit constraints and limitations from the provided text. "
+    "Focus on quantifiable limits and specific formatting requirements."
+)
 
 CFP_CATEGORIES_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="cfp_length_limit_extraction",
+    name="cfp_constraints_extraction",
     template="""
-    # CFP Length Limits Extraction
+    # CFP Constraint Extraction
 
     ## Sources
     <rag_sources>${rag_sources}</rag_sources>
 
     ## Task
 
-    Extract legnth requirements for each section:
-    - **type**: Words, characters, pages
-    - **value**: The limit
-    - **Section**: The section, if per section
-    """,
+    Analyze the provided sources and extract all constraints related to the grant application's format and length.
+
+    ### Constraint Types and Definitions
+
+    - **word_limit**: Maximum number of words.
+    - **page_limit**: Maximum number of pages.
+    - **char_limit** or **character_limit**: Maximum number of characters.
+    - **format**: Specific file format (e.g., PDF, Word).
+    - **font**: Required font size or family (e.g., 11-point Arial).
+    - **spacing**: Line spacing requirements (e.g., single-spaced, double-spaced).
+    - **margin**: Required document margins (e.g., 1-inch margins).
+    - **length**: A generic length constraint when the unit is not specified.
+    - **size**: A file size constraint (e.g., 10MB).
+
+    ### Output Format
+
+    For each constraint found, provide:
+    - `type`: One of the allowed constraint types.
+    - `value`: The specific value of the constraint (e.g., "10 pages", "PDF", "1-inch").
+    - `section`: The name of the section the constraint applies to. If it applies to the whole application, use "Full Application".
+
+    Return valid JSON only.
+""",
 )
 
 cfp_constraints_schema = {
@@ -51,7 +74,7 @@ cfp_constraints_schema = {
                 "properties": {
                     "type": {"type": "string", "enum": sorted(CONSTRAINT_TYPES)},
                     "value": {"type": "string"},
-                    "section": {"type": "string", "nullable": True},
+                    "section": {"type": "string"},
                 },
                 "required": ["type", "value"],
             },
@@ -67,29 +90,7 @@ class CFPConstraintsResult(TypedDict):
 
 def validate_cfp_constraints(response: CFPConstraintsResult) -> None:
     if not response.get("constraints"):
-        return
-
-    invalid_constraints = []
-    for idx, constraint in enumerate(response["constraints"]):
-        constraint_type = constraint.get("type", "").lower().replace(" ", "_")
-        if constraint_type and constraint_type not in CONSTRAINT_TYPES:
-            invalid_constraints.append(
-                {
-                    "index": idx,
-                    "type": constraint.get("type"),
-                    "value": constraint.get("value"),
-                }
-            )
-
-    if invalid_constraints:
-        raise ValidationError(
-            "Invalid constraint types found in CFP constraints",
-            context={
-                "invalid_constraints": invalid_constraints,
-                "valid_types": sorted(CONSTRAINT_TYPES),
-                "recovery_instruction": f"Ensure constraint types are one of: {', '.join(sorted(CONSTRAINT_TYPES))}",
-            },
-        )
+        raise ValidationError("No constraints identified")
 
 
 async def extract_cfp_constraints(
@@ -97,14 +98,13 @@ async def extract_cfp_constraints(
     *,
     trace_id: str,
 ) -> CFPConstraintsResult:
-    # TODO: add evaluation here
     return await handle_completions_request(
         prompt_identifier="cfp_constraints",
         response_type=CFPConstraintsResult,
         response_schema=cfp_constraints_schema,
         validator=validate_cfp_constraints,
         messages=task_description,
-        system_prompt="Extract length limits (word/page/char) and formatting requirements from CFP. Return valid JSON only.",
+        system_prompt=CFP_CATEGORIES_EXTRACTION_SYSTEM_PROMPT,
         temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,

@@ -25,25 +25,54 @@ POSITION_BONUS_WEIGHT: Final[float] = 0.5
 MAX_NORMALIZED_SCORE: Final[float] = 0.9
 ORG_CACHE_TTL: Final[int] = 3600
 
-IDENTIFY_ORG_SYSTEM_PROMPT: Final[str] = """Identify the granting organization from CFP text.
-
-Return JSON with org_id from provided array (null if uncertain), confidence (0.0-1.0), and reason."""
+IDENTIFY_ORG_SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
+    "Your task is to identify the single, primary granting organization from the provided text. "
+    "You will be given a list of candidate organizations and a preview of the CFP text. "
+    "Your response must be in JSON format."
+)
 
 IDENTIFY_ORG_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="identify_organization",
     template="""
-    # Organizations
-    <organizations>${organizations}</organizations>
+# Identify Granting Organization
 
-    # CFP Text Preview (first {preview_length} chars)
-    <cfp_preview>${cfp_preview}</cfp_preview>
+## Task
 
-    Identify the granting organization. Return org_id from the array or null if uncertain.
+From the provided list of candidate organizations, identify the one that is the primary source of funding for the grant described in the CFP text preview.
+
+### Candidate Organizations
+
+Here is the list of possible organizations with their IDs:
+<organizations>
+${organizations}
+</organizations>
+
+### CFP Text Preview
+
+Here is a preview of the Call for Proposals text:
+<cfp_preview>
+${cfp_preview}
+</cfp_preview>
+
+### Instructions
+
+1.  **Analyze**: Read the CFP text preview and determine which of the candidate organizations is the granting institution.
+2.  **Confidence**: Rate your confidence in your choice on a scale of 0.0 to 1.0.
+3.  **Justify**: Provide a brief reason for your choice, referencing the text if possible.
+4.  **Uncertainty**: If you cannot determine the organization with reasonable certainty, or if none of the candidates seem correct, return `null` for the `org_id`.
+
+### Output Format
+
+Return a single JSON object with the following fields:
+- `org_id`: The ID of the matching organization from the provided list, or `null`.
+- `confidence`: Your confidence score (0.0 to 1.0).
+- `reason`: A brief explanation for your decision.
 """,
 )
 
 
-class LLMOrgResponse(TypedDict):
+class OrgResponse(TypedDict):
     org_id: str | None
     confidence: float
     reason: str
@@ -189,7 +218,7 @@ async def llm_identify_organization(
                 },
                 "required": ["org_id", "confidence", "reason"],
             },
-            response_type=LLMOrgResponse,
+            response_type=OrgResponse,
             trace_id=trace_id,
         )
 

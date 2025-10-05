@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from packages.db.src.enums import GrantTemplateStageEnum
 
@@ -98,7 +98,7 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
 
 
 class CFPAnalysisCategory(TypedDict):
-    name: str
+    name: Literal["research", "budget", "team", "compliance", "other"]
     count: int
     examples: list[str]
 

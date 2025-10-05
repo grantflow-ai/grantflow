@@ -6,8 +6,8 @@ from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.serialization import serialize
 
-from services.rag.src.grant_template.extract_section.constants import TEMPERATURE
-from services.rag.src.grant_template.extract_section.section_structure import StructuredSection
+from services.rag.src.grant_template.extract_sections.constants import TEMPERATURE
+from services.rag.src.grant_template.extract_sections.section_structure import StructuredSection
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 

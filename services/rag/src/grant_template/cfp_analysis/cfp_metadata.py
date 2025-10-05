@@ -8,7 +8,8 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 CFP_METADATA_EXTRACTION_SYSTEM_PROMPT: Final[str] = (
-    "Extract organization ID, subject summary, and deadline from CFP. Return valid JSON only."
+    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
+    "Your task is to extract key metadata from the provided text, including the granting organization, submission deadline, and a concise subject summary."
 )
 
 CFP_METADATA_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -16,17 +17,37 @@ CFP_METADATA_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     template="""
     # CFP Metadata Extraction
 
-    ## Sources
-    <rag_sources>${rag_sources}</rag_sources>
-    <organizations>${organizations}</organizations>
-
     ## Task
 
-    Extract precise CFP metadata:
+    Analyze the provided sources and extract the following metadata.
 
-    1. **Organization Identification**: Return the organization ID correlating with the identified organization from the organizations array, if any
-    2. **Deadline Extraction**: Include submission deadline if found (YYYY-MM-DD format)
-    3. **Subject Analysis**: Summarize the funding opportunity concisely using exact terminology
+    ### Sources
+    <rag_sources>
+    ${rag_sources}
+    </rag_sources>
+
+    ### Candidate Organizations
+    <organizations>
+    ${organizations}
+    </organizations>
+
+    ### Instructions & Output Format
+
+    Return a single JSON object with the following fields:
+
+    1.  **org_id**:
+        -   Identify the granting organization from the text by matching it with an entry in the `<organizations>` list.
+        -   Return the corresponding `id` of the matched organization.
+        -   If no clear match is found, return `null`.
+
+    2.  **deadline**:
+        -   Find the final submission deadline mentioned in the text.
+        -   Format the date as `YYYY-MM-DD`.
+        -   If no deadline is found, return `null`.
+
+    3.  **subject**:
+        -   Provide a concise, one-sentence summary of the funding opportunity's main subject.
+        -   Use key terminology found directly in the source text.
     """,
 )
 

@@ -20,10 +20,10 @@ from services.rag.src.grant_template.cfp_analysis.cfp_metadata import (
     extract_cfp_metadata,
 )
 from services.rag.src.grant_template.cfp_analysis.cfp_structure import (
-    CFP_BROAD_CONTENT_EXTRACTION_FRAGMENT,
+    CFP_CONTENT_EXTRACTION_BROAD_FRAGMENT,
+    CFP_CONTENT_EXTRACTION_DETAILED_FRAGMENT,
+    CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT,
     CFP_CONTENT_EXTRACTION_USER_PROMPT,
-    CFP_DETAILED_CONTENT_EXTRACTION_FRAGMENT,
-    CFP_HIERARCHICAL_CONTENT_EXTRACTION_FRAGMENT,
     CFPContentResult,
     extract_cfp_structure,
 )
@@ -274,19 +274,19 @@ async def handle_extract_content(
         # 3. we have to do some json evaluation of the outputs
         extract_cfp_structure(
             CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_HIERARCHICAL_CONTENT_EXTRACTION_FRAGMENT
+                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT
             ),
             trace_id=trace_id,
         ),
         extract_cfp_structure(
             CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_DETAILED_CONTENT_EXTRACTION_FRAGMENT
+                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_BROAD_FRAGMENT
             ),
             trace_id=trace_id,
         ),
         extract_cfp_structure(
             CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_BROAD_CONTENT_EXTRACTION_FRAGMENT
+                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_DETAILED_FRAGMENT
             ),
             trace_id=trace_id,
         ),
