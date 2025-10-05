@@ -8,41 +8,65 @@ from packages.shared_utils.src.exceptions import InsufficientContextError, Valid
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.patterns import SNAKE_CASE_PATTERN
 
+from services.rag.src.grant_template.extract_section.constants import TEMPERATURE
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
-EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT: Final[str] = """
-You are an expert grant application structuring specialist. Create organized section hierarchies for grant applications using CFP analysis section titles.
 
-YOUR TASK: Create section structure and organization based on CFP analysis titles:
-- Use exact section titles from CFP analysis required_sections array
-- Organize sections into logical hierarchy with parent-child relationships
-- Classify section types (narrative, container, research plan, clinical trial)
-- Determine writing requirements (applicant content vs external documents)
+SYSTEM_PROMPT: Final[str] = (
+    "You are an expert grant application structuring specialist. Your task is to create an organized and hierarchical structure for a grant application based on a list of section titles from a Call for Proposals (CFP) analysis."
+)
 
-SECTION CLASSIFICATION:
-- needs_writing = TRUE: Sections where applicants write original content (abstracts, project descriptions, research plans, narrative sections, statements, budget justifications)
-- needs_writing = FALSE: External documents (CVs, letters of recommendation, letters of support, bibliography/references, biosketches, budget forms/spreadsheets)
+USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="section_extraction",
+    template="""
+    # Grant Application Section Structuring
+    
+    <required_sections>${task_description}</required_sections>
+    
+    ## Task
+    
+    Create a structured and organized hierarchy for a grant application based on the provided section titles.
+    
+    ### Instructions
+    
+    - Use the exact section titles from the provided list.
+    - Organize sections into a logical hierarchy with parent-child relationships.
+    - Classify section types (narrative, container, research plan, clinical trial).
+    - Determine writing requirements (applicant content vs external documents).
+    
+    ### Section Classification Rules
+    
+    - **needs_writing = TRUE**: Sections where applicants write original content (e.g., abstracts, project descriptions, research plans, narrative sections, statements, budget justifications).
+    - **needs_writing = FALSE**: Sections for external documents (e.g., CVs, letters of recommendation, letters of support, bibliography/references, biosketches, budget forms/spreadsheets).
+    
+    ### Budget Section Classification
+    
+    - **needs_writing = TRUE**: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description" (requires written content).
+    - **needs_writing = FALSE**: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary" (for forms/numbers only).
+    
+    ### Hierarchy Rules
+    
+    - Create subsections for complex sections (e.g., those with page limits >= 3 pages or multi-part requirements).
+    - Parent sections should be containers with `title_only=true`.
+    - Child sections are the actual writing sections.
+    - Maximum hierarchy depth is 2 levels.
+    
+    ### Section Types
+    
+    - **long_form**: Narrative sections requiring substantial writing.
+    - **is_plan**: Exactly one main research methodology section.
+    - **clinical**: Sections related to clinical trials.
+    - **title_only**: Container sections that only have subsections.
+    
+    Focus on structure and organization. Other requirements like constraints will be handled separately.
+    
+    Return valid JSON only.
+""",
+)
 
-BUDGET SECTION CLASSIFICATION:
-- needs_writing = TRUE: "Budget Justification", "Budget Narrative", "Budget Explanation", "Budget Description" (requires written content)
-- needs_writing = FALSE: "Budget", "Budget Form", "Budget Spreadsheet", "Budget Table", "Budget Summary" (just forms/numbers)
-
-HIERARCHY RULES:
-- Create subsections for complex sections (≥3 pages or multi-part requirements)
-- Parent sections: title_only=true, contain CFP title
-- Child sections: actual writing sections
-- Max depth: 2 levels
-
-SECTION TYPES:
-- long_form: Narrative sections requiring substantial writing
-- is_plan: Exactly one main research methodology section
-- clinical: Clinical trial sections
-- title_only: Container sections with subsections
-
-Focus on structure and organization. CFP requirements and constraints will be populated separately.
-"""
 section_extraction_json_schema = {
     "type": "object",
     "required": ["sections"],
@@ -218,6 +242,11 @@ def _validate_section_depth(section: ExtractedSectionDTO, mapped_sections: dict[
         )
 
 
+def get_title_words(title: str) -> set[str]:
+    common_words = {"the", "a", "an", "and", "or", "of", "for", "in", "on", "at", "to", "with"}
+    return {word for word in title.lower().split() if word not in common_words and len(word) > 2}
+
+
 def validate_section_extraction(response: ExtractedSections) -> None:
     if (
         error := response.get("error")
@@ -241,10 +270,6 @@ def validate_section_extraction(response: ExtractedSections) -> None:
                 "Duplicate section titles found",
                 context={"title": title, "section_ids": [s["id"] for s in duplicate_sections]},
             )
-
-    def get_title_words(title: str) -> set[str]:
-        common_words = {"the", "a", "an", "and", "or", "of", "for", "in", "on", "at", "to", "with"}
-        return {word for word in title.lower().split() if word not in common_words and len(word) > 2}
 
     similar_pairs = []
     for i, section_a in enumerate(response["sections"]):
@@ -377,12 +402,11 @@ async def extract_sections(task_description: str, *, trace_id: str, cfp_analysis
     return await handle_completions_request(
         prompt_identifier="section_extraction",
         model=GEMINI_FLASH_MODEL,
-        messages=task_description,
-        system_prompt=EXTRACT_GRANT_APPLICATION_SECTIONS_SYSTEM_PROMPT,
+        messages=USER_PROMPT.to_string(task_description=task_description),
+        system_prompt=SYSTEM_PROMPT,
         response_schema=section_extraction_json_schema,
         response_type=ExtractedSections,
         validator=validate_section_extraction,
-        temperature=0.1,
-        timeout=300,
+        temperature=TEMPERATURE,
         trace_id=trace_id,
     )
