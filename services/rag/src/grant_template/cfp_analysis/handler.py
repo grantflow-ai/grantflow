@@ -3,7 +3,6 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
 from packages.db.src.json_objects import (
     CFPAnalysis,
     CFPAnalysisData,
@@ -12,10 +11,8 @@ from packages.db.src.json_objects import (
     OrganizationNamespace,
 )
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource, TextVector
-from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -27,12 +24,8 @@ from services.rag.src.grant_template.cfp_analysis.cfp_metadata import (
     extract_cfp_metadata,
 )
 from services.rag.src.grant_template.cfp_analysis.cfp_structure import (
-    CFP_CONTENT_EXTRACTION_BROAD_FRAGMENT,
-    CFP_CONTENT_EXTRACTION_DETAILED_FRAGMENT,
-    CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT,
-    CFP_CONTENT_EXTRACTION_USER_PROMPT,
-    CFPContentResult,
     extract_cfp_structure,
+    validate_and_refine_cfp_structure,
 )
 from services.rag.src.grant_template.cfp_analysis.identify_organization import identify_granting_institution
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
@@ -43,174 +36,8 @@ if TYPE_CHECKING:
 
 SNAKE_CASE_PATTERN_1 = re.compile(r"(.)([A-Z][a-z]+)")
 SNAKE_CASE_PATTERN_2 = re.compile(r"([a-z0-9])([A-Z])")
-BASIC_STOP_WORDS = {"the", "a", "an", "and", "or", "but", "of", "to", "in", "for", "on", "with", "from", "by"}
-ALL_STOP_WORDS = BASIC_STOP_WORDS | {word.lower() for word in ACADEMIC_STOP_WORDS}
 
 logger = get_logger(__name__)
-
-
-def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
-    """Calculate cosine similarity between two embedding vectors."""
-    v1 = np.array(vec1)
-    v2 = np.array(vec2)
-    dot_product = np.dot(v1, v2)
-    norm_product = np.linalg.norm(v1) * np.linalg.norm(v2)
-    if norm_product == 0:
-        return 0.0
-    return float(dot_product / norm_product)
-
-
-def normalize_title(title: str) -> str:
-    """Normalize title by lowercasing and removing stop words."""
-    words = title.lower().split()
-    filtered = [w.strip(",.;:!?\"'") for w in words if w.lower() not in ALL_STOP_WORDS]
-    return " ".join(filtered) if filtered else title.lower()
-
-
-async def calculate_section_similarity(section1: CFPContentSection, section2: CFPContentSection) -> float:
-    """Calculate semantic similarity between section titles using embeddings."""
-    title1 = normalize_title(section1["title"])
-    title2 = normalize_title(section2["title"])
-
-    if not title1 or not title2:
-        return 0.0
-
-    if title1 == title2:
-        return 1.0
-
-    embeddings = await generate_embeddings([title1, title2])
-    return cosine_similarity(embeddings[0], embeddings[1])
-
-
-def choose_better_title(title1: str, title2: str) -> str:
-    """Choose the more descriptive/informative title between two similar titles."""
-    len1, len2 = len(title1), len(title2)
-    if abs(len1 - len2) > 5:
-        return title1 if len1 > len2 else title2
-
-    words1 = set(title1.lower().split())
-    words2 = set(title2.lower().split())
-
-    informative_words = {
-        "requirement",
-        "detail",
-        "information",
-        "criteria",
-        "guideline",
-        "instruction",
-        "specification",
-        "description",
-        "overview",
-    }
-
-    score1 = len(words1.intersection(informative_words))
-    score2 = len(words2.intersection(informative_words))
-
-    if score1 != score2:
-        return title1 if score1 > score2 else title2
-
-    return title1 if len1 >= len2 else title2
-
-
-async def merge_similar_sections(
-    sections: list[CFPContentSection], similarity_threshold: float = 0.75
-) -> list[CFPContentSection]:
-    """Merge sections with similar titles using semantic embeddings."""
-    if not sections:
-        return []
-
-    merged = []
-    used_indices = set()
-
-    all_titles = [normalize_title(s["title"]) for s in sections]
-    title_embeddings = await generate_embeddings(all_titles)
-
-    for i, section in enumerate(sections):
-        if i in used_indices:
-            continue
-
-        merged_section: CFPContentSection = {
-            "title": section["title"],
-            "subtitles": list(section["subtitles"]),
-        }
-        used_indices.add(i)
-
-        for j in range(i + 1, len(sections)):
-            if j in used_indices:
-                continue
-
-            similarity = cosine_similarity(title_embeddings[i], title_embeddings[j])
-            if similarity >= similarity_threshold:
-                logger.debug(
-                    "Merging similar sections",
-                    section1=section["title"],
-                    section2=sections[j]["title"],
-                    similarity=round(similarity, 3),
-                )
-
-                merged_section["title"] = choose_better_title(merged_section["title"], sections[j]["title"])
-
-                existing_subtitles = set(merged_section["subtitles"])
-                for subtitle in sections[j]["subtitles"]:
-                    if subtitle not in existing_subtitles:
-                        merged_section["subtitles"].append(subtitle)
-                        existing_subtitles.add(subtitle)
-                used_indices.add(j)
-
-        merged.append(merged_section)
-
-    return merged
-
-
-def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
-    sections = result["sections"]
-    all_text = " ".join([section["title"] + " " + " ".join(section["subtitles"]) for section in sections]).lower()
-
-    concept_patterns = {
-        "funding": ["fund", "budget", "cost", "money", "dollar", "award", "grant"],
-        "eligibility": ["eligible", "qualify", "requirement", "criteria", "must", "should"],
-        "application": ["apply", "submit", "proposal", "application", "deadline", "due"],
-        "awards": ["award", "grant", "prize", "funding", "opportunity"],
-        "process": ["process", "review", "evaluation", "selection", "timeline"],
-        "requirements": ["require", "needed", "necessary", "mandatory", "document"],
-    }
-
-    coverage = {}
-    for concept, patterns in concept_patterns.items():
-        found = any(pattern in all_text for pattern in patterns)
-        coverage[concept] = found
-
-    coverage_score = sum(coverage.values()) / len(coverage.values())
-
-    return {
-        "coverage_score": coverage_score,
-        "coverage_details": coverage,
-        "total_sections": len(sections),
-        "total_subtitles": sum(len(section["subtitles"]) for section in sections),
-        "avg_subtitles_per_section": sum(len(section["subtitles"]) for section in sections) / len(sections)
-        if sections
-        else 0,
-    }
-
-
-async def merge_cfp_extractions(
-    broad: CFPContentResult,
-    detailed: CFPContentResult,
-    hierarchical: CFPContentResult,
-) -> tuple[CFPContentResult, dict[str, Any]]:
-    all_sections = [*broad["sections"], *detailed["sections"], *hierarchical["sections"]]
-    merged_sections = await merge_similar_sections(all_sections)
-    merged_result = CFPContentResult(sections=merged_sections)
-    quality_metrics = validate_semantic_completeness(merged_result)
-
-    quality_metrics["strategy_counts"] = {
-        "broad": len(broad["sections"]),
-        "detailed": len(detailed["sections"]),
-        "hierarchical": len(hierarchical["sections"]),
-        "merged": len(merged_sections),
-    }
-
-    return merged_result, quality_metrics
 
 
 async def handle_prepare_context(
@@ -257,23 +84,18 @@ async def handle_prepare_context(
 
         institutions = list(await session.scalars(select(GrantingInstitution)))
 
-    rag_sources: list[RagSourceData] = []
-    for source in sources:
-        source_id = str(source.id)
-        text_content = source.text_content or ""
-        chunks = chunks_by_source.get(source_id, [])
+    nlp_analyses = await asyncio.gather(*[categorize_text(source.text_content or "") for source in sources])
 
-        nlp_analysis = await categorize_text(text_content)
-
-        rag_sources.append(
-            RagSourceData(
-                source_id=source_id,
-                source_type=source.source_type,
-                text_content=text_content,
-                chunks=chunks,
-                nlp_analysis=nlp_analysis,
-            )
+    rag_sources: list[RagSourceData] = [
+        RagSourceData(
+            source_id=str(source.id),
+            source_type=source.source_type,
+            text_content=source.text_content or "",
+            chunks=chunks_by_source.get(str(source.id), []),
+            nlp_analysis=nlp_analysis,
         )
+        for source, nlp_analysis in zip(sources, nlp_analyses, strict=True)
+    ]
 
     full_cfp_text = "\n\n".join(source["text_content"] for source in rag_sources if source["text_content"])
 
@@ -336,40 +158,31 @@ async def handle_extract_sections(
     formatted_sources: str,
     trace_id: str,
 ) -> list[CFPSection]:
-    (
-        content_hierarchical,
-        content_broad,
-        content_detailed,
-    ) = await asyncio.gather(
-        extract_cfp_structure(
-            CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_HIERARCHICAL_FRAGMENT
-            ),
-            trace_id=trace_id,
-        ),
-        extract_cfp_structure(
-            CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_BROAD_FRAGMENT
-            ),
-            trace_id=trace_id,
-        ),
-        extract_cfp_structure(
-            CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources, task=CFP_CONTENT_EXTRACTION_DETAILED_FRAGMENT
-            ),
-            trace_id=trace_id,
-        ),
+    logger.info("Extracting CFP sections (step 1: initial extraction)", trace_id=trace_id)
+    initial_result = await extract_cfp_structure(
+        formatted_sources=formatted_sources,
+        trace_id=trace_id,
     )
 
-    results, quality_metrics = await merge_cfp_extractions(
-        content_broad,
-        content_detailed,
-        content_hierarchical,
+    logger.info(
+        "Validating and refining sections (step 2: gap fill + dedup)",
+        initial_count=len(initial_result["sections"]),
+        trace_id=trace_id,
+    )
+    refined_result = await validate_and_refine_cfp_structure(
+        formatted_sources=formatted_sources,
+        existing_sections=initial_result["sections"],
+        trace_id=trace_id,
     )
 
-    logger.info("Merged multi-strategy content extractions", trace_id=trace_id, quality_metrics=quality_metrics)
+    logger.info(
+        "Section extraction completed",
+        initial_sections=len(initial_result["sections"]),
+        final_sections=len(refined_result["sections"]),
+        trace_id=trace_id,
+    )
 
-    return create_flat_sections(results["sections"])
+    return create_flat_sections(refined_result["sections"])
 
 
 async def handle_extract_metadata(
