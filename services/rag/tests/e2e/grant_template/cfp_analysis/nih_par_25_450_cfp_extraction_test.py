@@ -1,4 +1,3 @@
-
 import logging
 from pathlib import Path
 from typing import Any
@@ -28,7 +27,6 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     test_organization: Organization,
     organization_mapping: dict[str, dict[str, str]],
     mock_job_manager: AsyncMock,
-    expected_nih_par_25_450_sections: list[dict[str, Any]],
 ) -> None:
     """Test end-to-end NIH PAR-25-450 CFP extraction from PDF to structured data. ~keep
 
@@ -209,12 +207,12 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     performance_context.start_stage("validate_extraction_results")
 
     assert cfp_analysis is not None, "CFP analysis should return data"
-    assert cfp_analysis.subject is not None, "CFP analysis should contain subject"
-    assert cfp_analysis.content is not None, "CFP analysis should contain content sections"
-    assert cfp_analysis.org_id is not None, "CFP analysis should contain org_id"
+    assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
+    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
-    subject = cfp_analysis.subject
-    content_sections = cfp_analysis.content
+    subject = cfp_analysis["subject"]
+    content_sections = cfp_analysis["content"]
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
@@ -223,24 +221,32 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     nih_indicators = any(term in subject_lower for term in ["nih", "clinical trial", "rare disease", "r21"])
     assert nih_indicators, f"Subject should indicate NIH/rare disease focus: {subject}"
 
-    assert cfp_analysis.organization is not None, "CFP analysis should identify organization"
-    assert cfp_analysis.organization.full_name == nih_granting_institution.full_name, (
-        f"Should identify NIH: {cfp_analysis.organization.full_name}"
+    assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
+    assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
+        f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
     )
 
-    assert cfp_analysis.analysis_metadata is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis.analysis_metadata, "Analysis should contain categories"
-    assert len(cfp_analysis.analysis_metadata["categories"]) > 0, "Should identify requirement categories"
+    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
+    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
+    assert len(cfp_analysis["analysis_metadata"]["categories"]) > 0, "Should identify requirement categories"
 
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
 
     for section in content_sections:
-        assert "title" in section, f"Section missing title: {section}"
-        assert "subtitles" in section, f"Section missing subtitles: {section}"
-        assert isinstance(section["title"], str), f"Section title should be string: {section['title']}"
-        assert isinstance(section["subtitles"], list), f"Subtitles should be list: {section['subtitles']}"
-        assert len(section["subtitles"]) > 0, f"Section should have subtitles: {section['title']}"
+        assert "id" in section
+        assert "title" in section
+        assert "parent_id" in section
+        assert "subtitles" in section
+        assert "categories" in section
+        assert "constraints" in section
+
+        assert isinstance(section["id"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["subtitles"], list)
+        assert len(section["subtitles"]) == 0
+        assert isinstance(section["categories"], list)
+        assert isinstance(section["constraints"], list)
 
     performance_context.end_stage()
 
@@ -255,9 +261,7 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     assert research_found, f"Should find research-related section in: {extracted_titles}"
     assert budget_found, f"Should find budget section in: {extracted_titles}"
 
-    all_text = " ".join(
-        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
-    ).lower()
+    all_text = " ".join(s["title"] for s in content_sections).lower()
 
     nih_keywords = ["research", "clinical", "trial", "rare disease", "budget", "nih"]
     found_keywords = [kw for kw in nih_keywords if kw in all_text]
@@ -267,17 +271,17 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_section_quality")
 
-    total_subtitles = sum(len(section["subtitles"]) for section in content_sections)
-    assert total_subtitles >= 5, f"Should extract substantial content: {total_subtitles} subtitles"
+    parent_sections = [s for s in content_sections if s.get("parent_id") is None]
+    child_sections = [s for s in content_sections if s.get("parent_id") is not None]
 
-    substantial_sections = [s for s in content_sections if len(s["subtitles"]) >= 2]
-    assert len(substantial_sections) >= 2, "Should have multiple substantial sections"
+    assert len(parent_sections) > 0, "Should have at least one parent section"
+    assert len(child_sections) > 0, "Should have at least one child section"
 
     performance_context.end_stage()
 
     performance_context.set_metadata("extracted_sections_count", len(content_sections))
-    performance_context.set_metadata("total_subtitles_count", total_subtitles)
-    performance_context.set_metadata("substantial_sections_count", len(substantial_sections))
+    performance_context.set_metadata("parent_sections_count", len(parent_sections))
+    performance_context.set_metadata("child_sections_count", len(child_sections))
     performance_context.set_metadata("subject_length", len(subject))
     performance_context.set_metadata("nih_keywords_found", found_keywords)
 
@@ -285,75 +289,9 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
         "✅ NIH PAR-25-450 CFP extraction E2E test completed successfully",
         extra={
             "sections_extracted": len(content_sections),
-            "total_subtitles": total_subtitles,
-            "substantial_sections": len(substantial_sections),
+            "parent_sections": len(parent_sections),
+            "child_sections": len(child_sections),
             "subject_preview": subject[:100] + "..." if len(subject) > 100 else subject,
             "keywords_found": found_keywords,
-        },
-    )
-
-
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_TEMPLATE, timeout=600)
-async def test_nih_par_25_450_section_structure_validation(
-    logger: logging.Logger,
-    expected_nih_par_25_450_sections: list[dict[str, Any]],
-    performance_context: PerformanceTestContext,
-) -> None:
-    performance_context.set_metadata("test_type", "section_structure_validation")
-    performance_context.set_metadata("cfp_type", "nih_par_25_450")
-    performance_context.set_metadata("grant_mechanism", "R21")
-
-    logger.info("📋 Validating NIH PAR-25-450 CFP expected section structure")
-
-    performance_context.start_stage("validate_expected_sections")
-
-    assert len(expected_nih_par_25_450_sections) > 0, "Should have expected sections defined"
-
-    for expected_section in expected_nih_par_25_450_sections:
-        assert "title" in expected_section, f"Expected section missing title: {expected_section}"
-        assert "expected_subsections" in expected_section, f"Expected section missing subsections: {expected_section}"
-
-        title = expected_section["title"]
-        subsections = expected_section["expected_subsections"]
-
-        assert isinstance(title, str), f"Section title should be string: {title}"
-        assert isinstance(subsections, list), f"Subsections should be list: {subsections}"
-        assert len(subsections) > 0, f"Section should have subsections: {title}"
-
-    performance_context.end_stage()
-
-    section_titles = [section["title"].lower() for section in expected_nih_par_25_450_sections]
-
-    research_sections = [title for title in section_titles if "research" in title]
-    clinical_sections = [title for title in section_titles if "clinical" in title or "trial" in title]
-    budget_sections = [title for title in section_titles if "budget" in title]
-
-    assert len(research_sections) > 0, f"Should have research sections: {section_titles}"
-    assert len(budget_sections) > 0, f"Should have budget sections: {section_titles}"
-
-    clinical_subsections = []
-    for section in expected_nih_par_25_450_sections:
-        if "clinical" in section["title"].lower() or "trial" in section["title"].lower():
-            clinical_subsections.extend(section["expected_subsections"])
-
-    if clinical_subsections:
-        clinical_terms = ["regulatory", "trial", "outcome", "safety", "design"]
-        found_clinical_terms = [
-            term for term in clinical_terms if any(term in subsection.lower() for subsection in clinical_subsections)
-        ]
-        assert len(found_clinical_terms) >= 2, f"Clinical sections should have relevant terms: {found_clinical_terms}"
-
-    performance_context.set_metadata("expected_sections_count", len(expected_nih_par_25_450_sections))
-    performance_context.set_metadata("research_sections_count", len(research_sections))
-    performance_context.set_metadata("clinical_sections_count", len(clinical_sections))
-    performance_context.set_metadata("budget_sections_count", len(budget_sections))
-
-    logger.info(
-        "✅ NIH PAR-25-450 CFP section structure validation completed",
-        extra={
-            "total_sections": len(expected_nih_par_25_450_sections),
-            "research_sections": len(research_sections),
-            "clinical_sections": len(clinical_sections),
-            "budget_sections": len(budget_sections),
         },
     )

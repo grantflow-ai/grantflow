@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -102,15 +102,19 @@ async def mra_granting_institution(async_session_maker: async_sessionmaker[Any])
 @pytest.fixture
 async def nih_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
     async with async_session_maker() as session:
-        result = await session.execute(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "NIH"))
-        return result.scalar_one()
+        return cast(
+            "GrantingInstitution",
+            await session.scalar(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "NIH")),
+        )
 
 
 @pytest.fixture
 async def erc_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
     async with async_session_maker() as session:
-        result = await session.execute(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "ERC"))
-        return result.scalar_one()
+        return cast(
+            "GrantingInstitution",
+            await session.scalar(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "ERC")),
+        )
 
 
 @pytest.fixture

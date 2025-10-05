@@ -22,7 +22,6 @@ async def test_mra_cfp_extraction_end_to_end(
     test_organization: Organization,
     organization_mapping: dict[str, dict[str, str]],
     mock_job_manager: AsyncMock,
-    expected_mra_sections: list[dict[str, Any]],
 ) -> None:
     """Test end-to-end MRA CFP extraction using real RAG sources. ~keep
 
@@ -112,67 +111,12 @@ async def test_mra_cfp_extraction_end_to_end(
     performance_context.start_stage("validate_extraction_results")
 
     assert cfp_analysis is not None, "CFP analysis should return data"
-    assert cfp_analysis["subject"] is not None, "CFP analysis should contain subject"
-    assert cfp_analysis["content"] is not None, "CFP analysis should contain content sections"
-    assert cfp_analysis["org_id"] is not None, "CFP analysis should contain org_id"
+    assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
+    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
     subject = cfp_analysis["subject"]
     content_sections = cfp_analysis["content"]
-
-    logger.info("DEBUG: Extracted subject: %s", subject)
-    logger.info("DEBUG: Extracted %d sections:", len(content_sections))
-    for i, section in enumerate(content_sections):
-        logger.info("DEBUG: Section %d: %s with %d subtitles", i, section["title"], len(section["subtitles"]))
-        for j, subtitle in enumerate(section["subtitles"][:3]):
-            logger.info("DEBUG:   Subtitle %d: %s", j, subtitle)
-
-    logger.info("📊 Comparing extracted sections against expected MRA structure:")
-
-    extracted_titles = [section["title"].lower() for section in content_sections]
-    expected_titles = [exp_section["title"].lower() for exp_section in expected_mra_sections]
-
-    coverage_report = {"expected_found": [], "expected_missing": [], "unexpected_found": [], "coverage_score": 0.0}
-
-    for expected_section in expected_mra_sections:
-        expected_title = expected_section["title"].lower()
-        found = any(
-            expected_title in extracted_title or extracted_title in expected_title
-            for extracted_title in extracted_titles
-        )
-
-        if found:
-            coverage_report["expected_found"].append(expected_section["title"])
-            logger.info("✅ Found expected section: %s", expected_section["title"])
-        else:
-            coverage_report["expected_missing"].append(expected_section["title"])
-            logger.warning("❌ Missing expected section: %s", expected_section["title"])
-
-    for section in content_sections:
-        extracted_title = section["title"].lower()
-        expected = any(
-            expected_title in extracted_title or extracted_title in expected_title for expected_title in expected_titles
-        )
-
-        if not expected:
-            coverage_report["unexpected_found"].append(section["title"])
-            logger.info("📍 Additional section found: %s", section["title"])
-
-    coverage_report["coverage_score"] = len(coverage_report["expected_found"]) / len(expected_mra_sections)
-
-    logger.info("📊 Section Coverage Report:")
-    logger.info(
-        "   Expected sections found: %d/%d (%.1f%%)",
-        len(coverage_report["expected_found"]),
-        len(expected_mra_sections),
-        coverage_report["coverage_score"] * 100,
-    )
-    logger.info("   Additional sections: %d", len(coverage_report["unexpected_found"]))
-    logger.info("   Total extracted: %d", len(content_sections))
-
-    performance_context.set_metadata("section_coverage_score", coverage_report["coverage_score"])
-    performance_context.set_metadata("expected_sections_found", len(coverage_report["expected_found"]))
-    performance_context.set_metadata("expected_sections_missing", len(coverage_report["expected_missing"]))
-    performance_context.set_metadata("additional_sections_found", len(coverage_report["unexpected_found"]))
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
@@ -182,8 +126,8 @@ async def test_mra_cfp_extraction_end_to_end(
     assert len(content_sections) > 0, "Should extract at least one section"
 
     assert cfp_analysis.get("organization") is not None, "CFP analysis should identify organization"
-    assert cfp_analysis["organization"]["full_name"] == mra_granting_institution.full_name, (
-        f"Should identify MRA: {cfp_analysis['organization']['full_name']}"
+    assert cfp_analysis["organization"]["full_name"] == mra_granting_institution.full_name, (  # type: ignore[index]
+        f"Should identify MRA: {cfp_analysis['organization']['full_name']}"  # type: ignore[index]
     )
 
     assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
@@ -191,10 +135,19 @@ async def test_mra_cfp_extraction_end_to_end(
     assert len(cfp_analysis["analysis_metadata"]["categories"]) > 0, "Should identify requirement categories"
 
     for section in content_sections:
-        assert "title" in section, f"Section missing title: {section}"
-        assert "subtitles" in section, f"Section missing subtitles: {section}"
-        assert isinstance(section["title"], str), f"Section title should be string: {section['title']}"
-        assert isinstance(section["subtitles"], list), f"Subtitles should be list: {section['subtitles']}"
+        assert "id" in section
+        assert "title" in section
+        assert "parent_id" in section
+        assert "subtitles" in section
+        assert "categories" in section
+        assert "constraints" in section
+
+        assert isinstance(section["id"], str)
+        assert isinstance(section["title"], str)
+        assert isinstance(section["subtitles"], list)
+        assert len(section["subtitles"]) == 0
+        assert isinstance(section["categories"], list)
+        assert isinstance(section["constraints"], list)
 
     extracted_titles = [section["title"].lower() for section in content_sections]
 
@@ -207,14 +160,11 @@ async def test_mra_cfp_extraction_end_to_end(
     assert len(extracted_titles) >= 5, f"Should extract meaningful sections, got {len(extracted_titles)}"
     assert len(extracted_titles) <= 30, f"Should not over-fragment, got {len(extracted_titles)}"
 
-    total_subtitles = sum(len(section["subtitles"]) for section in content_sections)
-    avg_subtitles_per_section = total_subtitles / len(content_sections) if content_sections else 0
-    assert avg_subtitles_per_section >= 2.0, (
-        f"Sections should have substantial content: {avg_subtitles_per_section:.1f} avg subtitles per section"
-    )
+    parent_sections = [s for s in content_sections if s.get("parent_id") is None]
+    child_sections = [s for s in content_sections if s.get("parent_id") is not None]
 
-    assert len(content_sections) >= 15, f"Should extract comprehensive sections, got {len(content_sections)}"
-    assert len(content_sections) <= 35, f"Should not over-fragment, got {len(content_sections)}"
+    assert len(parent_sections) > 0, "Should have at least one parent section"
+    assert len(child_sections) > 0, "Should have at least one child section"
 
     research_focused_sections = sum(
         1
@@ -228,12 +178,6 @@ async def test_mra_cfp_extraction_end_to_end(
         f"Should extract substantial research-focused content, got {research_focused_sections}"
     )
 
-    if coverage_report["coverage_score"] < 0.3:
-        logger.warning(
-            "Low fixture coverage (%.1f%%) - consider updating fixtures to match current extraction focus",
-            coverage_report["coverage_score"] * 100,
-        )
-
     logger.info(
         "✅ Quality validation passed: %d sections, %d research-focused",
         len(content_sections),
@@ -244,9 +188,7 @@ async def test_mra_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_section_quality")
 
-    all_text = " ".join(
-        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
-    ).lower()
+    all_text = " ".join(s["title"] for s in content_sections).lower()
 
     mra_keywords = ["melanoma", "research", "application", "award", "proposal"]
     found_keywords = [kw for kw in mra_keywords if kw in all_text]
@@ -255,8 +197,8 @@ async def test_mra_cfp_extraction_end_to_end(
     performance_context.end_stage()
 
     performance_context.set_metadata("extracted_sections_count", len(content_sections))
-    performance_context.set_metadata("total_subtitles_count", total_subtitles)
-    performance_context.set_metadata("avg_subtitles_per_section", avg_subtitles_per_section)
+    performance_context.set_metadata("parent_sections_count", len(parent_sections))
+    performance_context.set_metadata("child_sections_count", len(child_sections))
     performance_context.set_metadata("subject_length", len(subject))
     performance_context.set_metadata("mra_keywords_found", found_keywords)
 
@@ -264,65 +206,9 @@ async def test_mra_cfp_extraction_end_to_end(
         "✅ MRA CFP extraction E2E test completed successfully",
         extra={
             "sections_extracted": len(content_sections),
-            "total_subtitles": total_subtitles,
+            "parent_sections": len(parent_sections),
+            "child_sections": len(child_sections),
             "subject_preview": subject[:100] + "..." if len(subject) > 100 else subject,
             "keywords_found": found_keywords,
-        },
-    )
-
-
-@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_TEMPLATE, timeout=600)
-async def test_mra_cfp_section_structure_validation(
-    logger: logging.Logger,
-    expected_mra_sections: list[dict[str, Any]],
-    performance_context: PerformanceTestContext,
-) -> None:
-    performance_context.set_metadata("test_type", "section_structure_validation")
-    performance_context.set_metadata("cfp_type", "melanoma_research_alliance")
-
-    logger.info("📋 Validating MRA CFP expected section structure")
-
-    performance_context.start_stage("validate_expected_sections")
-
-    assert len(expected_mra_sections) > 0, "Should have expected sections defined"
-
-    for expected_section in expected_mra_sections:
-        assert "title" in expected_section, f"Expected section missing title: {expected_section}"
-        assert "expected_subsections" in expected_section, f"Expected section missing subsections: {expected_section}"
-
-        title = expected_section["title"]
-        subsections = expected_section["expected_subsections"]
-
-        assert isinstance(title, str), f"Section title should be string: {title}"
-        assert isinstance(subsections, list), f"Subsections should be list: {subsections}"
-        assert len(subsections) > 0, f"Section should have subsections: {title}"
-
-        for subsection in subsections:
-            assert isinstance(subsection, str), f"Subsection should be string: {subsection}"
-            assert len(subsection) > 0, f"Subsection should not be empty: {subsection}"
-
-    performance_context.end_stage()
-
-    section_titles = [section["title"].lower() for section in expected_mra_sections]
-
-    research_sections = [title for title in section_titles if "research" in title]
-    budget_sections = [title for title in section_titles if "budget" in title or "resource" in title]
-    team_sections = [title for title in section_titles if "team" in title or "investigator" in title]
-
-    assert len(research_sections) > 0, f"Should have research sections: {section_titles}"
-    assert len(budget_sections) > 0, f"Should have budget sections: {section_titles}"
-
-    performance_context.set_metadata("expected_sections_count", len(expected_mra_sections))
-    performance_context.set_metadata("research_sections_count", len(research_sections))
-    performance_context.set_metadata("budget_sections_count", len(budget_sections))
-    performance_context.set_metadata("team_sections_count", len(team_sections))
-
-    logger.info(
-        "✅ MRA CFP section structure validation completed",
-        extra={
-            "total_sections": len(expected_mra_sections),
-            "research_sections": len(research_sections),
-            "budget_sections": len(budget_sections),
-            "team_sections": len(team_sections),
         },
     )
