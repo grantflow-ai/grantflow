@@ -7,11 +7,11 @@ import * as firebase from "@/utils/firebase";
 import { handleGoogleLogin, handleOrcidLogin, handleOrcidSignup } from "./auth-providers";
 
 vi.mock("firebase/auth", () => ({
+	getAdditionalUserInfo: vi.fn(),
 	GoogleAuthProvider: Object.assign(
 		vi.fn(() => ({})),
 		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
 	),
-	getAdditionalUserInfo: vi.fn(),
 	OAuthProvider: vi.fn(() => {
 		return {
 			setCustomParameters: vi.fn(),

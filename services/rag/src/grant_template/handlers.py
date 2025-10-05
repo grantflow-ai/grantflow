@@ -53,7 +53,7 @@ async def handle_cfp_analysis_stage(
     )
 
     organization = cfp_analysis.get("organization")
-    org_name = organization["full_name"] if organization else "Unknown"
+    org_name = organization["full_name"] if organization else "unknown"
 
     submission_date = None
     if cfp_analysis["deadline"]:
@@ -123,7 +123,9 @@ async def handle_section_extraction_stage(
         notification_type="success",
         data={
             "sections_extracted": len(extracted_sections),
-            "total_requirements": sum(len(s.get("subtitles", [])) for s in cfp_analysis_result["cfp_analysis"]["content"]),
+            "total_requirements": sum(
+                len(s.get("subtitles", [])) for s in cfp_analysis_result["cfp_analysis"]["content"]
+            ),
         },
     )
 
@@ -143,10 +145,12 @@ async def handle_generate_metadata_stage(
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in section_extraction_result["cfp_analysis"]["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in section_extraction_result["cfp_analysis"]["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -163,7 +167,9 @@ async def handle_generate_metadata_stage(
         notification_type="success",
         data={
             "sections_created": len(grant_sections),
-            "organization": section_extraction_result["organization"]["full_name"] if section_extraction_result["organization"] else "Unknown",
+            "organization": section_extraction_result["organization"]["full_name"]
+            if section_extraction_result["organization"]
+            else "Unknown",
         },
     )
 
@@ -192,7 +198,9 @@ async def handle_save_grant_template(
                 try:
                     submission_date = datetime.strptime(cfp_analysis["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
                 except ValueError:
-                    logger.warning("Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id})
+                    logger.warning(
+                        "Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id}
+                    )
 
             await session.execute(
                 update(GrantTemplate)
