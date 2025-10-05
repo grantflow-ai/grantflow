@@ -1,13 +1,3 @@
-"""Comprehensive E2E quality tests for generate_metadata across all CFP types.
-
-Tests LLM metadata generation quality, field preservation, and validation
-for Stage 3 of the grant template pipeline across all available CFP types:
-- MRA
-- NIH PAR-25-450
-- Israeli Chief Scientist
-- NIH Tuberculosis (RFA-AI-25-027)
-- NIH Diabetes (RFA-DK-26-315)
-"""
 
 import logging
 from typing import Any
@@ -21,8 +11,7 @@ from testing.performance_framework import PerformanceTestContext, TestDomain, Te
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.extract_sections import handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
-
-from .conftest import (
+from services.rag.tests.e2e.grant_template.conftest import (
     create_test_grant_template,
 )
 
@@ -31,11 +20,10 @@ def validate_metadata_structure(
     grant_sections: list[GrantLongFormSection | GrantElement],
     logger: logging.Logger,
 ) -> None:
-    """Validate metadata has proper structure and required fields."""
-    # Filter to only GrantLongFormSection which has metadata fields
     long_form_sections: list[GrantLongFormSection] = [
-        s for s in grant_sections
-        if isinstance(s.get("max_words"), int)  # GrantLongFormSection has max_words
+        s
+        for s in grant_sections
+        if isinstance(s.get("max_words"), int)  
     ]  # type: ignore[misc]
 
     assert len(long_form_sections) > 0, "Should have at least one long-form section with metadata"
@@ -44,7 +32,6 @@ def validate_metadata_structure(
         section_id = section.get("id")
         section_title = section.get("title", "Unknown")
 
-        # Required fields for all long-form sections
         assert "max_words" in section, f"Missing max_words for {section_title}"
         assert section["max_words"] > 0, f"Invalid max_words for {section_title}: {section['max_words']}"
 
@@ -55,7 +42,9 @@ def validate_metadata_structure(
         assert len(section["topics"]) >= 2, f"Too few topics for {section_title}: {len(section['topics'])}"
 
         assert "search_queries" in section, f"Missing search_queries for {section_title}"
-        assert len(section["search_queries"]) >= 3, f"Too few search_queries for {section_title}: {len(section['search_queries'])}"
+        assert len(section["search_queries"]) >= 3, (
+            f"Too few search_queries for {section_title}: {len(section['search_queries'])}"
+        )
 
         assert "generation_instructions" in section, f"Missing generation_instructions for {section_title}"
         assert len(section["generation_instructions"]) >= 50, f"generation_instructions too short for {section_title}"
@@ -63,7 +52,6 @@ def validate_metadata_structure(
         assert "depends_on" in section, f"Missing depends_on for {section_title}"
         assert isinstance(section["depends_on"], list), f"depends_on should be list for {section_title}"
 
-        # Validate dependency IDs exist in grant_sections
         all_section_ids = {s["id"] for s in grant_sections}
         for dep_id in section["depends_on"]:
             assert dep_id in all_section_ids, f"Invalid dependency {dep_id} for {section_title}"
@@ -83,18 +71,19 @@ def validate_research_plan_metadata(
     grant_sections: list[GrantLongFormSection | GrantElement],
     logger: logging.Logger,
 ) -> None:
-    """Validate research plan section has enhanced metadata quality."""
     research_plan_sections: list[GrantLongFormSection] = [
-        s for s in grant_sections  # type: ignore[misc]
+        s
+        for s in grant_sections  # type: ignore[misc]
         if isinstance(s.get("is_detailed_research_plan"), bool) and s.get("is_detailed_research_plan")
     ]
 
-    assert len(research_plan_sections) == 1, f"Should have exactly 1 research plan section, found {len(research_plan_sections)}"
+    assert len(research_plan_sections) == 1, (
+        f"Should have exactly 1 research plan section, found {len(research_plan_sections)}"
+    )
 
     research_plan = research_plan_sections[0]
     section_title = research_plan.get("title", "Unknown")
 
-    # Research plan should have more comprehensive metadata
     assert len(research_plan["keywords"]) >= 5, (
         f"Research plan should have ≥5 keywords, found {len(research_plan['keywords'])}"
     )
@@ -122,14 +111,13 @@ def validate_total_word_count(
     grant_sections: list[GrantLongFormSection | GrantElement],
     logger: logging.Logger,
 ) -> None:
-    """Validate total word count across all sections is reasonable."""
     long_form_sections: list[GrantLongFormSection] = [
-        s for s in grant_sections  # type: ignore[misc]
+        s
+        for s in grant_sections  # type: ignore[misc]
         if isinstance(s.get("max_words"), int)
     ]
     total_words = sum(s["max_words"] for s in long_form_sections)
 
-    # Total should be between 500-50,000 words (validation in generate_metadata ensures this)
     assert 500 <= total_words <= 50000, f"Total word count {total_words} outside reasonable range [500, 50000]"
 
     logger.info(
@@ -149,14 +137,12 @@ async def test_generate_metadata_quality_israeli_chief_scientist(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test generate_metadata quality for Israeli Chief Scientist CFP."""
     performance_context.set_metadata("test_type", "generate_metadata_quality")
     performance_context.set_metadata("cfp_type", "israeli_chief_scientist")
     performance_context.set_metadata("stage", "generate_metadata")
 
     logger.info("📈 Starting Israeli Chief Scientist metadata quality test")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=israeli_granting_institution,
@@ -164,7 +150,6 @@ async def test_generate_metadata_quality_israeli_chief_scientist(
         title="Israeli Chief Scientist Metadata Quality Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -174,7 +159,6 @@ async def test_generate_metadata_quality_israeli_chief_scientist(
         )
         session.add(template_source)
 
-    # Run full pipeline
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -189,10 +173,12 @@ async def test_generate_metadata_quality_israeli_chief_scientist(
         trace_id="israeli-metadata-quality-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -204,23 +190,16 @@ async def test_generate_metadata_quality_israeli_chief_scientist(
 
     logger.info("📊 Validating metadata quality for %d sections", len(grant_sections))
 
-    # Validate metadata structure
     validate_metadata_structure(grant_sections, logger)
 
-    # Validate research plan metadata
     validate_research_plan_metadata(grant_sections, logger)
 
-    # Validate total word count
     validate_total_word_count(grant_sections, logger)
 
-    # Set performance metadata
     long_form_sections = [s for s in grant_sections if "max_words" in s]
     performance_context.set_metadata("total_sections", len(grant_sections))
     performance_context.set_metadata("long_form_sections", len(long_form_sections))
-    performance_context.set_metadata(
-        "total_word_count",
-        sum(s["max_words"] for s in long_form_sections)
-    )
+    performance_context.set_metadata("total_word_count", sum(s["max_words"] for s in long_form_sections))
 
     logger.info("✅ Israeli Chief Scientist metadata quality test completed successfully")
 
@@ -235,14 +214,12 @@ async def test_generate_metadata_quality_nih_tuberculosis(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test generate_metadata quality for NIH Tuberculosis Research Units CFP."""
     performance_context.set_metadata("test_type", "generate_metadata_quality")
     performance_context.set_metadata("cfp_type", "nih_tuberculosis")
     performance_context.set_metadata("stage", "generate_metadata")
 
     logger.info("📈 Starting NIH Tuberculosis metadata quality test")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=nih_granting_institution,
@@ -250,7 +227,6 @@ async def test_generate_metadata_quality_nih_tuberculosis(
         title="NIH Tuberculosis Metadata Quality Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -260,7 +236,6 @@ async def test_generate_metadata_quality_nih_tuberculosis(
         )
         session.add(template_source)
 
-    # Run full pipeline
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -275,10 +250,12 @@ async def test_generate_metadata_quality_nih_tuberculosis(
         trace_id="tuberculosis-metadata-quality-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -290,23 +267,16 @@ async def test_generate_metadata_quality_nih_tuberculosis(
 
     logger.info("📊 Validating metadata quality for %d sections", len(grant_sections))
 
-    # Validate metadata structure
     validate_metadata_structure(grant_sections, logger)
 
-    # Validate research plan metadata
     validate_research_plan_metadata(grant_sections, logger)
 
-    # Validate total word count
     validate_total_word_count(grant_sections, logger)
 
-    # Set performance metadata
     long_form_sections = [s for s in grant_sections if "max_words" in s]
     performance_context.set_metadata("total_sections", len(grant_sections))
     performance_context.set_metadata("long_form_sections", len(long_form_sections))
-    performance_context.set_metadata(
-        "total_word_count",
-        sum(s["max_words"] for s in long_form_sections)
-    )
+    performance_context.set_metadata("total_word_count", sum(s["max_words"] for s in long_form_sections))
 
     logger.info("✅ NIH Tuberculosis metadata quality test completed successfully")
 
@@ -321,14 +291,12 @@ async def test_generate_metadata_quality_nih_diabetes(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test generate_metadata quality for NIH Digital Health Type 2 Diabetes CFP."""
     performance_context.set_metadata("test_type", "generate_metadata_quality")
     performance_context.set_metadata("cfp_type", "nih_diabetes")
     performance_context.set_metadata("stage", "generate_metadata")
 
     logger.info("📈 Starting NIH Diabetes metadata quality test")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=nih_granting_institution,
@@ -336,7 +304,6 @@ async def test_generate_metadata_quality_nih_diabetes(
         title="NIH Diabetes Metadata Quality Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -346,7 +313,6 @@ async def test_generate_metadata_quality_nih_diabetes(
         )
         session.add(template_source)
 
-    # Run full pipeline
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -361,10 +327,12 @@ async def test_generate_metadata_quality_nih_diabetes(
         trace_id="diabetes-metadata-quality-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -376,22 +344,15 @@ async def test_generate_metadata_quality_nih_diabetes(
 
     logger.info("📊 Validating metadata quality for %d sections", len(grant_sections))
 
-    # Validate metadata structure
     validate_metadata_structure(grant_sections, logger)
 
-    # Validate research plan metadata
     validate_research_plan_metadata(grant_sections, logger)
 
-    # Validate total word count
     validate_total_word_count(grant_sections, logger)
 
-    # Set performance metadata
     long_form_sections = [s for s in grant_sections if "max_words" in s]
     performance_context.set_metadata("total_sections", len(grant_sections))
     performance_context.set_metadata("long_form_sections", len(long_form_sections))
-    performance_context.set_metadata(
-        "total_word_count",
-        sum(s["max_words"] for s in long_form_sections)
-    )
+    performance_context.set_metadata("total_word_count", sum(s["max_words"] for s in long_form_sections))
 
     logger.info("✅ NIH Diabetes metadata quality test completed successfully")

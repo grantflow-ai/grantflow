@@ -1,5 +1,3 @@
-"""Shared fixtures for grant template E2E tests."""
-
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
@@ -20,6 +18,7 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.serialization import deserialize
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing import FIXTURES_FOLDER, SOURCES_FOLDER
 from testing.factories import (
     GrantApplicationFactory,
     GrantingInstitutionFactory,
@@ -33,43 +32,42 @@ from testing.factories import (
 
 @pytest.fixture
 def cfp_files_dir() -> Path:
-    """Directory containing CFP test files."""
-    return Path("testing/test_data/sources/cfps")
+    return SOURCES_FOLDER / "cfps"
 
 
 @pytest.fixture
 def mra_cfp_file(cfp_files_dir: Path) -> Path:
-    """MRA CFP file path."""
     return cfp_files_dir / "MRA-2023-2024-RFP-Final.pdf"
 
 
 @pytest.fixture
 def nih_par_25_450_cfp_file(cfp_files_dir: Path) -> Path:
-    """NIH PAR-25-450 CFP file path."""
-    return cfp_files_dir / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    return (
+        cfp_files_dir
+        / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    )
 
 
 @pytest.fixture
 def israeli_chief_scientist_cfp_file(cfp_files_dir: Path) -> Path:
-    """Israeli Chief Scientist CFP file path."""
     return cfp_files_dir / "israeli_chief_scientist_cfp.html"
 
 
 @pytest.fixture
 def nih_tuberculosis_cfp_file(cfp_files_dir: Path) -> Path:
-    """NIH Tuberculosis Research Units CFP file path."""
     return cfp_files_dir / "RFA-AI-25-027_ Tuberculosis Research Units (P01 Clinical Trial Optional).pdf"
 
 
 @pytest.fixture
 def nih_diabetes_cfp_file(cfp_files_dir: Path) -> Path:
-    """NIH Digital Health Technology for Type 2 Diabetes CFP file path."""
-    return cfp_files_dir / "RFA-DK-26-315_ Advancing Research on the Application of Digital Health Technology to the Management of Type 2 Diabetes (R01- Clinical Trail Required).pdf"
+    return (
+        cfp_files_dir
+        / "RFA-DK-26-315_ Advancing Research on the Application of Digital Health Technology to the Management of Type 2 Diabetes (R01- Clinical Trail Required).pdf"
+    )
 
 
 @pytest.fixture
 async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
-    """Create test organization for CFP extraction tests."""
     async with async_session_maker() as session, session.begin():
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -80,7 +78,6 @@ async def test_organization(async_session_maker: async_sessionmaker[Any]) -> Org
 
 @pytest.fixture
 async def test_user(async_session_maker: async_sessionmaker[Any], test_organization: Organization) -> OrganizationUser:
-    """Create test user for CFP extraction tests."""
     async with async_session_maker() as session, session.begin():
         user = OrganizationUserFactory.build(organization_id=test_organization.id)
         session.add(user)
@@ -91,7 +88,6 @@ async def test_user(async_session_maker: async_sessionmaker[Any], test_organizat
 
 @pytest.fixture
 async def mra_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
-    """Create MRA granting institution."""
     async with async_session_maker() as session, session.begin():
         institution = GrantingInstitutionFactory.build(
             full_name="Melanoma Research Alliance",
@@ -105,27 +101,20 @@ async def mra_granting_institution(async_session_maker: async_sessionmaker[Any])
 
 @pytest.fixture
 async def nih_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
-    """Get NIH granting institution from seeded data."""
     async with async_session_maker() as session:
-        result = await session.execute(
-            select(GrantingInstitution).where(GrantingInstitution.abbreviation == "NIH")
-        )
+        result = await session.execute(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "NIH"))
         return result.scalar_one()
 
 
 @pytest.fixture
 async def erc_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
-    """Get ERC granting institution from seeded data."""
     async with async_session_maker() as session:
-        result = await session.execute(
-            select(GrantingInstitution).where(GrantingInstitution.abbreviation == "ERC")
-        )
+        result = await session.execute(select(GrantingInstitution).where(GrantingInstitution.abbreviation == "ERC"))
         return result.scalar_one()
 
 
 @pytest.fixture
 async def israeli_granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
-    """Create Israeli Ministry of Health granting institution."""
     async with async_session_maker() as session, session.begin():
         institution = GrantingInstitutionFactory.build(
             full_name="Israeli Ministry of Health",
@@ -142,15 +131,15 @@ async def nih_guideline_rag_sources(
     async_session_maker: async_sessionmaker[Any],
     nih_granting_institution: GrantingInstitution,
 ) -> list[RagSource]:
-    """Load NIH guideline JSON and create RagSource + GrantingInstitutionSource entries."""
-    guideline_file = Path("testing/test_data/fixtures/organization_files/nih/files/NIH- Instructions for Research (R).json")
+    guideline_file = (
+        FIXTURES_FOLDER / "organization_files" / "nih" / "files" / "NIH- Instructions for Research (R).json"
+    )
     assert guideline_file.exists(), f"NIH guideline fixture not found: {guideline_file}"
 
     guideline_data = deserialize(guideline_file.read_bytes(), dict)
     rag_file_data = guideline_data["rag_file"]
 
     async with async_session_maker() as session, session.begin():
-        # Create RagSource from guideline data
         rag_source = RagFileFactory.build(
             text_content=rag_file_data["text_content"],
             indexing_status=SourceIndexingStatusEnum.FINISHED,
@@ -160,7 +149,6 @@ async def nih_guideline_rag_sources(
         session.add(rag_source)
         await session.flush()
 
-        # Link to GrantingInstitution via GrantingInstitutionSource
         granting_institution_source = GrantingInstitutionSource(
             rag_source_id=rag_source.id,
             granting_institution_id=nih_granting_institution.id,
@@ -168,7 +156,6 @@ async def nih_guideline_rag_sources(
         session.add(granting_institution_source)
         await session.flush()
 
-        # Create TextVector embeddings from guideline data
         text_vectors = []
         for vector_data in rag_file_data["text_vectors"]:
             text_vector = TextVector(
@@ -190,16 +177,15 @@ async def erc_guideline_rag_sources(
     async_session_maker: async_sessionmaker[Any],
     erc_granting_institution: GrantingInstitution,
 ) -> list[RagSource]:
-    """Load ERC guideline JSON and create RagSource + GrantingInstitutionSource entries."""
     async with async_session_maker() as session, session.begin():
-
-        guideline_file = Path("testing/test_data/fixtures/organization_files/erc/files/ERC- Information for Applicants PoC.json")
+        guideline_file = (
+            FIXTURES_FOLDER / "organization_files" / "erc" / "files" / "ERC- Information for Applicants PoC.json"
+        )
         assert guideline_file.exists(), f"ERC guideline fixture not found: {guideline_file}"
 
         guideline_data = deserialize(guideline_file.read_bytes(), dict)
         rag_file_data = guideline_data["rag_file"]
 
-        # Create RagSource from guideline data
         rag_source = RagFileFactory.build(
             text_content=rag_file_data["text_content"],
             indexing_status=SourceIndexingStatusEnum.FINISHED,
@@ -209,7 +195,6 @@ async def erc_guideline_rag_sources(
         session.add(rag_source)
         await session.flush()
 
-        # Link to GrantingInstitution via GrantingInstitutionSource
         granting_institution_source = GrantingInstitutionSource(
             rag_source_id=rag_source.id,
             granting_institution_id=erc_granting_institution.id,
@@ -217,7 +202,6 @@ async def erc_guideline_rag_sources(
         session.add(granting_institution_source)
         await session.flush()
 
-        # Create TextVector embeddings from guideline data
         text_vectors = []
         for vector_data in rag_file_data["text_vectors"]:
             text_vector = TextVector(
@@ -240,11 +224,7 @@ async def mra_cfp_rag_source(
     mra_cfp_file: Path,
     mra_granting_institution: GrantingInstitution,
 ) -> RagSource:
-    """Create MRA CFP RAG source with real content."""
-    from testing import FIXTURES_FOLDER
-
     async with async_session_maker() as session, session.begin():
-        # Use real MRA CFP content from fixtures instead of placeholder
         cfp_content_file = FIXTURES_FOLDER / "cfps" / "melanoma_alliance.md"
         assert cfp_content_file.exists(), f"MRA CFP fixture not found: {cfp_content_file}"
         cfp_content = cfp_content_file.read_text()
@@ -266,13 +246,9 @@ async def nih_par_25_450_cfp_rag_source(
     async_session_maker: async_sessionmaker[Any],
     nih_par_25_450_cfp_file: Path,
     nih_granting_institution: GrantingInstitution,
-    nih_guideline_rag_sources: list[RagSource],  # Add dependency on guidelines
+    nih_guideline_rag_sources: list[RagSource],
 ) -> RagSource:
-    """Create NIH PAR-25-450 CFP RAG source with real content."""
-    from testing import FIXTURES_FOLDER
-
     async with async_session_maker() as session, session.begin():
-        # Use real NIH CFP content from fixtures
         cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
         assert cfp_content_file.exists(), f"NIH CFP fixture not found: {cfp_content_file}"
         cfp_content = cfp_content_file.read_text()
@@ -295,16 +271,13 @@ async def israeli_chief_scientist_cfp_rag_source(
     israeli_chief_scientist_cfp_file: Path,
     israeli_granting_institution: GrantingInstitution,
 ) -> RagSource:
-    """Create Israeli Chief Scientist CFP RAG source with real content."""
     from testing import FIXTURES_FOLDER
 
     async with async_session_maker() as session, session.begin():
-        # Use real Israeli CFP content from fixtures if available, otherwise use HTML file
         cfp_content_file = FIXTURES_FOLDER / "cfps" / "ics.md"
         if cfp_content_file.exists():
             cfp_content = cfp_content_file.read_text()
         else:
-            # Fallback to reading the HTML file directly
             cfp_content = israeli_chief_scientist_cfp_file.read_text(encoding="utf-8")
 
         rag_source = RagFileFactory.build(
@@ -324,13 +297,11 @@ async def nih_tuberculosis_cfp_rag_source(
     async_session_maker: async_sessionmaker[Any],
     nih_tuberculosis_cfp_file: Path,
     nih_granting_institution: GrantingInstitution,
-    nih_guideline_rag_sources: list[RagSource],  # Add dependency on guidelines
+    nih_guideline_rag_sources: list[RagSource],
 ) -> RagSource:
-    """Create NIH Tuberculosis Research Units CFP RAG source with real content."""
     from testing import FIXTURES_FOLDER
 
     async with async_session_maker() as session, session.begin():
-        # Use real NIH CFP content from fixtures
         cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
         assert cfp_content_file.exists(), f"NIH CFP fixture not found: {cfp_content_file}"
         cfp_content = cfp_content_file.read_text()
@@ -352,13 +323,11 @@ async def nih_diabetes_cfp_rag_source(
     async_session_maker: async_sessionmaker[Any],
     nih_diabetes_cfp_file: Path,
     nih_granting_institution: GrantingInstitution,
-    nih_guideline_rag_sources: list[RagSource],  # Add dependency on guidelines
+    nih_guideline_rag_sources: list[RagSource],
 ) -> RagSource:
-    """Create NIH Digital Health Technology for Type 2 Diabetes CFP RAG source with real content."""
     from testing import FIXTURES_FOLDER
 
     async with async_session_maker() as session, session.begin():
-        # Use real NIH CFP content from fixtures
         cfp_content_file = FIXTURES_FOLDER / "cfps" / "nih.md"
         assert cfp_content_file.exists(), f"NIH CFP fixture not found: {cfp_content_file}"
         cfp_content = cfp_content_file.read_text()
@@ -382,7 +351,6 @@ def organization_mapping(
     erc_granting_institution: GrantingInstitution,
     israeli_granting_institution: GrantingInstitution,
 ) -> dict[str, dict[str, str]]:
-    """Organization mapping using actual DB UUIDs."""
     return {
         str(mra_granting_institution.id): {
             "full_name": mra_granting_institution.full_name,
@@ -405,7 +373,6 @@ def organization_mapping(
 
 @pytest.fixture
 def mock_job_manager() -> AsyncMock:
-    """Create mock job manager for CFP extraction tests."""
     mock_manager = AsyncMock()
     mock_manager.create_grant_template_job = AsyncMock()
     mock_manager.update_job_status = AsyncMock()
@@ -418,7 +385,7 @@ def mock_job_manager() -> AsyncMock:
 @pytest.fixture
 def mra_cfp_analysis_fixture() -> CFPAnalysis:
     """Load MRA CFP analysis fixture representing high-quality cfp_analysis output. ~keep"""
-    fixture_file = Path("testing/test_data/fixtures/cfp_analysis/mra_2023_2024_cfp_analysis.json")
+    fixture_file = FIXTURES_FOLDER / "cfp_analysis" / "mra_2023_2024_cfp_analysis.json"
     assert fixture_file.exists(), f"MRA CFP analysis fixture not found: {fixture_file}"
     return deserialize(fixture_file.read_bytes(), CFPAnalysis)
 
@@ -426,7 +393,7 @@ def mra_cfp_analysis_fixture() -> CFPAnalysis:
 @pytest.fixture
 def nih_par_25_450_cfp_analysis_fixture() -> CFPAnalysis:
     """Load NIH PAR-25-450 CFP analysis fixture representing high-quality cfp_analysis output. ~keep"""
-    fixture_file = Path("testing/test_data/fixtures/cfp_analysis/nih_par_25_450_cfp_analysis.json")
+    fixture_file = FIXTURES_FOLDER / "cfp_analysis" / "nih_par_25_450_cfp_analysis.json"
     assert fixture_file.exists(), f"NIH PAR-25-450 CFP analysis fixture not found: {fixture_file}"
     return deserialize(fixture_file.read_bytes(), CFPAnalysis)
 
@@ -440,7 +407,7 @@ def expected_mra_sections(mra_cfp_analysis_fixture: CFPAnalysis) -> list[dict[st
     return [
         {
             "title": section["title"],
-            "expected_subsections": section["subtitles"][:5],  # First 5 subtitles as key expectations
+            "expected_subsections": section["subtitles"][:5],
         }
         for section in mra_cfp_analysis_fixture["content"]
     ]
@@ -455,7 +422,7 @@ def expected_nih_par_25_450_sections(nih_par_25_450_cfp_analysis_fixture: CFPAna
     return [
         {
             "title": section["title"],
-            "expected_subsections": section["subtitles"][:5],  # First 5 subtitles as key expectations
+            "expected_subsections": section["subtitles"][:5],
         }
         for section in nih_par_25_450_cfp_analysis_fixture["content"]
     ]
@@ -463,7 +430,6 @@ def expected_nih_par_25_450_sections(nih_par_25_450_cfp_analysis_fixture: CFPAna
 
 @pytest.fixture
 def expected_israeli_chief_scientist_sections() -> list[dict[str, Any]]:
-    """Expected sections for Israeli Chief Scientist CFP based on manual analysis."""
     return [
         {
             "title": "Project Information",
@@ -504,7 +470,6 @@ def expected_israeli_chief_scientist_sections() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def expected_nih_tuberculosis_sections() -> list[dict[str, Any]]:
-    """Expected sections for NIH Tuberculosis Research Units CFP based on manual analysis."""
     return [
         {
             "title": "Research Plan",
@@ -546,7 +511,6 @@ def expected_nih_tuberculosis_sections() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def expected_nih_diabetes_sections() -> list[dict[str, Any]]:
-    """Expected sections for NIH Digital Health Technology for Type 2 Diabetes CFP based on manual analysis."""
     return [
         {
             "title": "Research Plan",
@@ -593,14 +557,11 @@ async def mra_grant_template_with_rag_source(
     test_organization: Organization,
     mra_cfp_rag_source: RagSource,
 ) -> GrantTemplate:
-    """Create MRA grant template linked to RAG source."""
     async with async_session_maker() as session, session.begin():
-        # First create a project
         project = ProjectFactory.build(organization_id=test_organization.id)
         session.add(project)
         await session.flush()
 
-        # Then create a grant application
         grant_application = GrantApplicationFactory.build(
             title="MRA E2E Test Template",
             project_id=project.id,
@@ -608,7 +569,6 @@ async def mra_grant_template_with_rag_source(
         session.add(grant_application)
         await session.flush()
 
-        # Finally create the grant template
         template = GrantTemplateFactory.build(
             grant_application_id=grant_application.id,
             granting_institution_id=mra_granting_institution.id,
@@ -616,7 +576,6 @@ async def mra_grant_template_with_rag_source(
         session.add(template)
         await session.flush()
 
-        # Link RAG source to template
         template_source = GrantTemplateSource(
             grant_template_id=template.id,
             rag_source_id=mra_cfp_rag_source.id,
@@ -624,7 +583,6 @@ async def mra_grant_template_with_rag_source(
         session.add(template_source)
         await session.flush()
         await session.refresh(template)
-        # Note: session.begin() handles commit automatically
         return template
 
 
@@ -634,16 +592,13 @@ async def nih_par_25_450_grant_template_with_rag_source(
     nih_granting_institution: GrantingInstitution,
     test_organization: Organization,
     nih_par_25_450_cfp_rag_source: RagSource,
-    nih_guideline_rag_sources: list[RagSource],  # Add dependency on guidelines
+    nih_guideline_rag_sources: list[RagSource],
 ) -> GrantTemplate:
-    """Create NIH PAR-25-450 grant template linked to RAG source."""
     async with async_session_maker() as session, session.begin():
-        # First create a project
         project = ProjectFactory.build(organization_id=test_organization.id)
         session.add(project)
         await session.flush()
 
-        # Then create a grant application
         grant_application = GrantApplicationFactory.build(
             title="NIH PAR-25-450 E2E Test Template",
             project_id=project.id,
@@ -651,7 +606,6 @@ async def nih_par_25_450_grant_template_with_rag_source(
         session.add(grant_application)
         await session.flush()
 
-        # Finally create the grant template
         template = GrantTemplateFactory.build(
             grant_application_id=grant_application.id,
             granting_institution_id=nih_granting_institution.id,
@@ -659,7 +613,6 @@ async def nih_par_25_450_grant_template_with_rag_source(
         session.add(template)
         await session.flush()
 
-        # Link RAG source to template
         template_source = GrantTemplateSource(
             grant_template_id=template.id,
             rag_source_id=nih_par_25_450_cfp_rag_source.id,
@@ -667,7 +620,6 @@ async def nih_par_25_450_grant_template_with_rag_source(
         session.add(template_source)
         await session.flush()
         await session.refresh(template)
-        # Note: session.begin() handles commit automatically
         return template
 
 
@@ -678,14 +630,11 @@ async def israeli_chief_scientist_grant_template_with_rag_source(
     test_organization: Organization,
     israeli_chief_scientist_cfp_rag_source: RagSource,
 ) -> GrantTemplate:
-    """Create Israeli Chief Scientist grant template linked to RAG source."""
     async with async_session_maker() as session, session.begin():
-        # First create a project
         project = ProjectFactory.build(organization_id=test_organization.id)
         session.add(project)
         await session.flush()
 
-        # Then create a grant application
         grant_application = GrantApplicationFactory.build(
             title="Israeli Chief Scientist E2E Test Template",
             project_id=project.id,
@@ -693,7 +642,6 @@ async def israeli_chief_scientist_grant_template_with_rag_source(
         session.add(grant_application)
         await session.flush()
 
-        # Finally create the grant template
         template = GrantTemplateFactory.build(
             grant_application_id=grant_application.id,
             granting_institution_id=israeli_granting_institution.id,
@@ -701,7 +649,6 @@ async def israeli_chief_scientist_grant_template_with_rag_source(
         session.add(template)
         await session.flush()
 
-        # Link RAG source to template
         template_source = GrantTemplateSource(
             grant_template_id=template.id,
             rag_source_id=israeli_chief_scientist_cfp_rag_source.id,
@@ -709,7 +656,6 @@ async def israeli_chief_scientist_grant_template_with_rag_source(
         session.add(template_source)
         await session.flush()
         await session.refresh(template)
-        # Note: session.begin() handles commit automatically
         return template
 
 
@@ -719,14 +665,11 @@ async def create_test_grant_template(
     organization: Organization,
     title: str,
 ) -> GrantTemplate:
-    """Helper function to create a test grant template."""
     async with async_session_maker() as session, session.begin():
-        # First create a project
         project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
-        # Then create a grant application
         grant_application = GrantApplicationFactory.build(
             title=title,
             project_id=project.id,
@@ -734,7 +677,6 @@ async def create_test_grant_template(
         session.add(grant_application)
         await session.flush()
 
-        # Finally create the grant template
         template = GrantTemplateFactory.build(
             grant_application_id=grant_application.id,
             granting_institution_id=granting_institution.id,
@@ -745,44 +687,31 @@ async def create_test_grant_template(
         return template
 
 
-# ============================================================================
-# E2E Test Expectations and Validation Helpers
-# ============================================================================
-
-
 @pytest.fixture
 def expected_nih_par_25_450_constraints() -> dict[str, dict[str, Any]]:
-    """Expected constraints for NIH PAR-25-450 sections.
-
-    Based on NIH grant application guidelines:
-    - 1 page = 250 words (approximate)
-    - Specific Aims: 1 page maximum
-    - Research Strategy: 12 pages maximum
-    - Various other section limits per NIH guidelines
-    """
     return {
         "Specific Aims": {
-            "length_limit": 250,  # 1 page
+            "length_limit": 250,
             "constraint_type": "page_limit",
             "source_keywords": ["one page", "1 page"],
         },
         "Research Strategy": {
-            "length_limit": 3000,  # 12 pages
+            "length_limit": 3000,
             "constraint_type": "page_limit",
             "source_keywords": ["12 pages", "twelve pages"],
         },
         "Significance": {
-            "length_limit": 750,  # Part of Research Strategy (12 pages total)
+            "length_limit": 750,
             "constraint_type": "page_limit",
             "source_keywords": ["research strategy"],
         },
         "Innovation": {
-            "length_limit": 500,  # Part of Research Strategy
+            "length_limit": 500,
             "constraint_type": "page_limit",
             "source_keywords": ["research strategy"],
         },
         "Approach": {
-            "length_limit": 1750,  # Part of Research Strategy
+            "length_limit": 1750,
             "constraint_type": "page_limit",
             "source_keywords": ["research strategy"],
         },
@@ -791,18 +720,14 @@ def expected_nih_par_25_450_constraints() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture
 def expected_mra_constraints() -> dict[str, dict[str, Any]]:
-    """Expected constraints for MRA CFP sections.
-
-    MRA typically has fewer explicit constraints than NIH.
-    """
     return {
         "Research Plan": {
-            "length_limit": 1500,  # 6 pages
+            "length_limit": 1500,
             "constraint_type": "page_limit",
             "source_keywords": ["6 pages", "six pages"],
         },
         "Budget Justification": {
-            "length_limit": 500,  # 2 pages
+            "length_limit": 500,
             "constraint_type": "page_limit",
             "source_keywords": ["2 pages", "two pages"],
         },
@@ -811,11 +736,6 @@ def expected_mra_constraints() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture
 def expected_nih_metadata_quality() -> dict[str, dict[str, int]]:
-    """Expected metadata quality metrics for NIH sections.
-
-    These ranges are based on typical LLM metadata generation
-    for grant template sections.
-    """
     return {
         "keywords_count": {"min": 3, "max": 10},
         "topics_count": {"min": 3, "max": 7},
@@ -826,7 +746,6 @@ def expected_nih_metadata_quality() -> dict[str, dict[str, int]]:
 
 @pytest.fixture
 def expected_mra_metadata_quality() -> dict[str, dict[str, int]]:
-    """Expected metadata quality metrics for MRA sections."""
     return {
         "keywords_count": {"min": 3, "max": 10},
         "topics_count": {"min": 3, "max": 7},
@@ -837,16 +756,11 @@ def expected_mra_metadata_quality() -> dict[str, dict[str, int]]:
 
 @pytest.fixture
 def expected_conflict_sections() -> list[dict[str, Any]]:
-    """Sections expected to have LLM vs CFP length conflicts.
-
-    These represent cases where the CFP constraint is significantly
-    different from the LLM's recommended length.
-    """
     return [
         {
             "title": "Specific Aims",
-            "expected_max_words_range": (200, 400),  # LLM typically recommends more
-            "expected_length_limit": 250,  # CFP constraint (1 page)
+            "expected_max_words_range": (200, 400),
+            "expected_length_limit": 250,
             "conflict_reason": "CFP more restrictive than typical LLM recommendation",
         },
     ]
@@ -855,72 +769,44 @@ def expected_conflict_sections() -> list[dict[str, Any]]:
 def validate_constraint_match(
     section: dict[str, Any],
     expected_constraint: dict[str, Any],
-    tolerance: float = 0.15,  # 15% tolerance for conversion variations
+    tolerance: float = 0.15,
 ) -> None:
-    """Validate constraint matches expected values within tolerance.
-
-    Args:
-        section: ExtractedSectionDTO with constraint data
-        expected_constraint: Expected constraint values
-        tolerance: Allowable percentage difference (default 15%)
-
-    Raises:
-        AssertionError: If constraint doesn't match expectations
-    """
     assert "length_limit" in section, f"Section missing length_limit: {section.get('title', 'Unknown')}"
 
     actual_limit = section["length_limit"]
     expected_limit = expected_constraint["length_limit"]
 
-    # Allow tolerance for conversion differences (pages/chars → words)
     lower_bound = expected_limit * (1 - tolerance)
     upper_bound = expected_limit * (1 + tolerance)
 
     assert lower_bound <= actual_limit <= upper_bound, (
         f"Constraint mismatch for {section.get('title', 'Unknown')}: "
-        f"expected {expected_limit} (±{tolerance*100}%), got {actual_limit}"
+        f"expected {expected_limit} (±{tolerance * 100}%), got {actual_limit}"
     )
 
-    # Validate length_source is present
-    assert section.get("length_source"), (
-        f"Section missing length_source: {section.get('title', 'Unknown')}"
-    )
+    assert section.get("length_source"), f"Section missing length_source: {section.get('title', 'Unknown')}"
 
 
 def validate_metadata_quality(
     section: dict[str, Any],
     quality_metrics: dict[str, dict[str, int]],
 ) -> None:
-    """Validate LLM metadata quality meets expected ranges.
-
-    Args:
-        section: GrantLongFormSection with metadata
-        quality_metrics: Expected quality ranges for metadata fields
-
-    Raises:
-        AssertionError: If metadata quality is outside expected ranges
-    """
     section_title = section.get("title", "Unknown")
 
-    # Validate keywords
     keywords = section.get("keywords", [])
     min_keywords = quality_metrics["keywords_count"]["min"]
     max_keywords = quality_metrics["keywords_count"]["max"]
     assert min_keywords <= len(keywords) <= max_keywords, (
-        f"Unexpected keyword count for {section_title}: {len(keywords)} "
-        f"(expected {min_keywords}-{max_keywords})"
+        f"Unexpected keyword count for {section_title}: {len(keywords)} (expected {min_keywords}-{max_keywords})"
     )
 
-    # Validate topics
     topics = section.get("topics", [])
     min_topics = quality_metrics["topics_count"]["min"]
     max_topics = quality_metrics["topics_count"]["max"]
     assert min_topics <= len(topics) <= max_topics, (
-        f"Unexpected topic count for {section_title}: {len(topics)} "
-        f"(expected {min_topics}-{max_topics})"
+        f"Unexpected topic count for {section_title}: {len(topics)} (expected {min_topics}-{max_topics})"
     )
 
-    # Validate search_queries
     search_queries = section.get("search_queries", [])
     min_queries = quality_metrics["search_queries_count"]["min"]
     max_queries = quality_metrics["search_queries_count"]["max"]
@@ -929,13 +815,11 @@ def validate_metadata_quality(
         f"(expected {min_queries}-{max_queries})"
     )
 
-    # Validate max_words
     max_words = section.get("max_words", 0)
     min_words = quality_metrics["max_words_range"]["min"]
     max_words_limit = quality_metrics["max_words_range"]["max"]
     assert min_words <= max_words <= max_words_limit, (
-        f"Unexpected max_words for {section_title}: {max_words} "
-        f"(expected {min_words}-{max_words_limit})"
+        f"Unexpected max_words for {section_title}: {max_words} (expected {min_words}-{max_words_limit})"
     )
 
 
@@ -943,23 +827,12 @@ def validate_dual_field_preservation(
     section: dict[str, Any],
     has_cfp_constraint: bool = True,
 ) -> None:
-    """Validate both max_words and length_limit are present when expected.
-
-    Args:
-        section: GrantLongFormSection to validate
-        has_cfp_constraint: Whether section should have CFP constraint
-
-    Raises:
-        AssertionError: If required fields are missing
-    """
     section_title = section.get("title", "Unknown")
 
-    # max_words should always be present for long-form sections
     assert "max_words" in section, f"max_words missing for {section_title}"
     assert section["max_words"] > 0, f"max_words invalid for {section_title}: {section['max_words']}"
 
     if has_cfp_constraint:
-        # When CFP specifies constraint, both fields should be present
         assert "length_limit" in section, f"length_limit missing for {section_title}"
         assert section["length_limit"], (
             f"length_limit must be truthy for {section_title}: {section.get('length_limit')}"
@@ -967,9 +840,7 @@ def validate_dual_field_preservation(
         assert section["length_limit"] > 0, (
             f"length_limit must be positive for {section_title}: {section.get('length_limit')}"
         )
-        assert section.get("length_source"), (
-            f"length_source missing for {section_title}"
-        )
+        assert section.get("length_source"), f"length_source missing for {section_title}"
 
 
 def validate_guidelines_extraction(
@@ -977,16 +848,6 @@ def validate_guidelines_extraction(
     min_guidelines: int = 1,
     max_guidelines: int = 10,
 ) -> None:
-    """Validate guideline extraction completeness and quality.
-
-    Args:
-        section: ExtractedSectionDTO or GrantLongFormSection with guidelines
-        min_guidelines: Minimum expected guidelines
-        max_guidelines: Maximum expected guidelines
-
-    Raises:
-        AssertionError: If guidelines don't meet expectations
-    """
     section_title = section.get("title", "Unknown")
 
     assert "guidelines" in section, f"guidelines missing for {section_title}"
@@ -998,14 +859,10 @@ def validate_guidelines_extraction(
         f"(expected {min_guidelines}-{max_guidelines})"
     )
 
-    # Validate guidelines are non-empty strings
     for i, guideline in enumerate(guidelines):
-        assert isinstance(guideline, str), (
-            f"Guideline {i} should be string for {section_title}: {type(guideline)}"
-        )
+        assert isinstance(guideline, str), f"Guideline {i} should be string for {section_title}: {type(guideline)}"
         assert len(guideline) > 0, f"Guideline {i} should not be empty for {section_title}"
 
-    # Check for duplicates
     unique_guidelines = set(guidelines)
     assert len(unique_guidelines) == len(guidelines), (
         f"Duplicate guidelines found for {section_title}: {len(guidelines) - len(unique_guidelines)} duplicates"
@@ -1016,44 +873,20 @@ def validate_definition_generation(
     section: dict[str, Any],
     guidelines: list[str],
 ) -> None:
-    """Validate definition generation quality based on guidelines.
-
-    Rules:
-    - Single guideline: definition should equal guideline
-    - 2-3 guidelines: definition should use first guideline
-    - 4+ guidelines: definition should include summary ("Plus X additional requirements")
-
-    Args:
-        section: ExtractedSectionDTO or GrantLongFormSection with definition
-        guidelines: List of guidelines for the section
-
-    Raises:
-        AssertionError: If definition doesn't match expected pattern
-    """
     section_title = section.get("title", "Unknown")
 
     if not guidelines:
-        # No guidelines, no definition expected
         return
 
     assert "definition" in section, f"definition missing for {section_title}"
     definition = section["definition"]
 
     if len(guidelines) == 1:
-        # Single guideline: definition should equal guideline
-        assert definition == guidelines[0], (
-            f"Definition should equal single guideline for {section_title}"
-        )
+        assert definition == guidelines[0], f"Definition should equal single guideline for {section_title}"
     elif len(guidelines) <= 3:
-        # 2-3 guidelines: definition should use first guideline
-        assert definition == guidelines[0], (
-            f"Definition should equal first guideline for {section_title}"
-        )
+        assert definition == guidelines[0], f"Definition should equal first guideline for {section_title}"
     else:
-        # 4+ guidelines: definition should include summary
         assert "Plus" in definition or "additional" in definition, (
             f"Definition should include summary for {section_title} with {len(guidelines)} guidelines"
         )
-        assert guidelines[0] in definition, (
-            f"Definition should include first guideline for {section_title}"
-        )
+        assert guidelines[0] in definition, f"Definition should include first guideline for {section_title}"

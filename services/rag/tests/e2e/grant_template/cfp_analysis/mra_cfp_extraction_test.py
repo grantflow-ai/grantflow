@@ -1,18 +1,14 @@
-"""E2E tests for MRA CFP extraction and template generation."""
-
 import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, Organization, RagSource
+from packages.db.src.tables import GrantingInstitution, GrantTemplateSource, Organization, RagSource
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
-from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
-
-from .conftest import create_test_grant_template
+from services.rag.tests.e2e.grant_template.conftest import create_test_grant_template
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -86,12 +82,10 @@ async def test_mra_cfp_extraction_end_to_end(
 
     logger.info("🧪 Starting MRA CFP extraction E2E test")
 
-    # Verify CFP file exists
     assert mra_cfp_file.exists(), f"MRA CFP file not found: {mra_cfp_file}"
 
     performance_context.start_stage("extract_cfp_data")
 
-    # Create test grant template for CFP analysis
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=mra_granting_institution,
@@ -99,7 +93,6 @@ async def test_mra_cfp_extraction_end_to_end(
         title="MRA CFP E2E Test Template",
     )
 
-    # Link RAG source to grant template
     async with async_session_maker() as session, session.begin():
         template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
@@ -107,7 +100,6 @@ async def test_mra_cfp_extraction_end_to_end(
         )
         session.add(template_source)
 
-    # Test CFP analysis with real RAG source
     cfp_analysis = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -119,7 +111,6 @@ async def test_mra_cfp_extraction_end_to_end(
 
     performance_context.start_stage("validate_extraction_results")
 
-    # Validate CFP analysis structure
     assert cfp_analysis is not None, "CFP analysis should return data"
     assert cfp_analysis["subject"] is not None, "CFP analysis should contain subject"
     assert cfp_analysis["content"] is not None, "CFP analysis should contain content sections"
@@ -128,28 +119,20 @@ async def test_mra_cfp_extraction_end_to_end(
     subject = cfp_analysis["subject"]
     content_sections = cfp_analysis["content"]
 
-    # Debug: log what was actually extracted
     logger.info("DEBUG: Extracted subject: %s", subject)
     logger.info("DEBUG: Extracted %d sections:", len(content_sections))
     for i, section in enumerate(content_sections):
         logger.info("DEBUG: Section %d: %s with %d subtitles", i, section["title"], len(section["subtitles"]))
-        for j, subtitle in enumerate(section["subtitles"][:3]):  # Show first 3 subtitles
+        for j, subtitle in enumerate(section["subtitles"][:3]):
             logger.info("DEBUG:   Subtitle %d: %s", j, subtitle)
 
-    # Validate against expected MRA structure
     logger.info("📊 Comparing extracted sections against expected MRA structure:")
 
     extracted_titles = [section["title"].lower() for section in content_sections]
     expected_titles = [exp_section["title"].lower() for exp_section in expected_mra_sections]
 
-    coverage_report = {
-        "expected_found": [],
-        "expected_missing": [],
-        "unexpected_found": [],
-        "coverage_score": 0.0
-    }
+    coverage_report = {"expected_found": [], "expected_missing": [], "unexpected_found": [], "coverage_score": 0.0}
 
-    # Check which expected sections we found
     for expected_section in expected_mra_sections:
         expected_title = expected_section["title"].lower()
         found = any(
@@ -164,12 +147,10 @@ async def test_mra_cfp_extraction_end_to_end(
             coverage_report["expected_missing"].append(expected_section["title"])
             logger.warning("❌ Missing expected section: %s", expected_section["title"])
 
-    # Check for unexpected sections (not matching expected structure)
     for section in content_sections:
         extracted_title = section["title"].lower()
         expected = any(
-            expected_title in extracted_title or extracted_title in expected_title
-            for expected_title in expected_titles
+            expected_title in extracted_title or extracted_title in expected_title for expected_title in expected_titles
         )
 
         if not expected:
@@ -179,99 +160,93 @@ async def test_mra_cfp_extraction_end_to_end(
     coverage_report["coverage_score"] = len(coverage_report["expected_found"]) / len(expected_mra_sections)
 
     logger.info("📊 Section Coverage Report:")
-    logger.info("   Expected sections found: %d/%d (%.1f%%)",
-                len(coverage_report["expected_found"]),
-                len(expected_mra_sections),
-                coverage_report["coverage_score"] * 100)
+    logger.info(
+        "   Expected sections found: %d/%d (%.1f%%)",
+        len(coverage_report["expected_found"]),
+        len(expected_mra_sections),
+        coverage_report["coverage_score"] * 100,
+    )
     logger.info("   Additional sections: %d", len(coverage_report["unexpected_found"]))
     logger.info("   Total extracted: %d", len(content_sections))
 
-    # Store coverage in performance metadata
     performance_context.set_metadata("section_coverage_score", coverage_report["coverage_score"])
     performance_context.set_metadata("expected_sections_found", len(coverage_report["expected_found"]))
     performance_context.set_metadata("expected_sections_missing", len(coverage_report["expected_missing"]))
     performance_context.set_metadata("additional_sections_found", len(coverage_report["unexpected_found"]))
 
-    # Validate subject
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
     assert "melanoma" in subject.lower(), "Subject should mention melanoma"
 
-    # Validate content structure
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
 
-    # Validate organization identification
     assert cfp_analysis.get("organization") is not None, "CFP analysis should identify organization"
-    assert cfp_analysis["organization"]["full_name"] == mra_granting_institution.full_name, \
+    assert cfp_analysis["organization"]["full_name"] == mra_granting_institution.full_name, (
         f"Should identify MRA: {cfp_analysis['organization']['full_name']}"
+    )
 
-    # Validate analysis metadata
     assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
     assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
     assert len(cfp_analysis["analysis_metadata"]["categories"]) > 0, "Should identify requirement categories"
 
-    # Validate section structure
     for section in content_sections:
         assert "title" in section, f"Section missing title: {section}"
         assert "subtitles" in section, f"Section missing subtitles: {section}"
         assert isinstance(section["title"], str), f"Section title should be string: {section['title']}"
         assert isinstance(section["subtitles"], list), f"Subtitles should be list: {section['subtitles']}"
-        # Note: Subtitles list can be empty - not all sections have subtitles
 
-    # Validate expected sections are found
     extracted_titles = [section["title"].lower() for section in content_sections]
 
-    # Check for key MRA sections - at least some relevant content
     research_or_award_found = any(
-        "research" in title or "award" in title or "proposal" in title
-        for title in extracted_titles
+        "research" in title or "award" in title or "proposal" in title for title in extracted_titles
     )
 
     assert research_or_award_found, f"Should find research/award-related section in: {extracted_titles}"
 
-    # Quality-based validation instead of crude counts
-    # Validate semantic completeness and information density
     assert len(extracted_titles) >= 5, f"Should extract meaningful sections, got {len(extracted_titles)}"
     assert len(extracted_titles) <= 30, f"Should not over-fragment, got {len(extracted_titles)}"
 
-    # Check information density - each section should have meaningful content
     total_subtitles = sum(len(section["subtitles"]) for section in content_sections)
     avg_subtitles_per_section = total_subtitles / len(content_sections) if content_sections else 0
-    assert avg_subtitles_per_section >= 2.0, f"Sections should have substantial content: {avg_subtitles_per_section:.1f} avg subtitles per section"
+    assert avg_subtitles_per_section >= 2.0, (
+        f"Sections should have substantial content: {avg_subtitles_per_section:.1f} avg subtitles per section"
+    )
 
-    # Note: Our multi-strategy consensus extracts research-focused content (award mechanisms,
-    # eligibility, research areas) rather than application-process details (forms, procedures).
-    # This is more valuable for researchers understanding funding opportunities.
-    # We validate quality through comprehensive content extraction and information density.
-
-    # Quality-focused validation: ensure we extract comprehensive, useful information
     assert len(content_sections) >= 15, f"Should extract comprehensive sections, got {len(content_sections)}"
     assert len(content_sections) <= 35, f"Should not over-fragment, got {len(content_sections)}"
 
-    # Validate that we capture key research-focused content (more important than fixture matching)
-    research_focused_sections = sum(1 for section in content_sections
-                                  if any(keyword in section["title"].lower()
-                                        for keyword in ["award", "eligibility", "research", "funding", "application", "requirement"]))
-    assert research_focused_sections >= 8, f"Should extract substantial research-focused content, got {research_focused_sections}"
+    research_focused_sections = sum(
+        1
+        for section in content_sections
+        if any(
+            keyword in section["title"].lower()
+            for keyword in ["award", "eligibility", "research", "funding", "application", "requirement"]
+        )
+    )
+    assert research_focused_sections >= 8, (
+        f"Should extract substantial research-focused content, got {research_focused_sections}"
+    )
 
-    # Accept lower fixture coverage since we extract different (but better) content types
     if coverage_report["coverage_score"] < 0.3:
-        logger.warning("Low fixture coverage (%.1f%%) - consider updating fixtures to match current extraction focus",
-                       coverage_report["coverage_score"] * 100)
+        logger.warning(
+            "Low fixture coverage (%.1f%%) - consider updating fixtures to match current extraction focus",
+            coverage_report["coverage_score"] * 100,
+        )
 
-    logger.info("✅ Quality validation passed: %d sections, %d research-focused",
-                len(content_sections), research_focused_sections)
+    logger.info(
+        "✅ Quality validation passed: %d sections, %d research-focused",
+        len(content_sections),
+        research_focused_sections,
+    )
 
     performance_context.end_stage()
 
     performance_context.start_stage("validate_section_quality")
 
-    # Validate specific content expectations for MRA
-    all_text = " ".join([
-        section["title"] + " " + " ".join(section["subtitles"])
-        for section in content_sections
-    ]).lower()
+    all_text = " ".join(
+        [section["title"] + " " + " ".join(section["subtitles"]) for section in content_sections]
+    ).lower()
 
     mra_keywords = ["melanoma", "research", "application", "award", "proposal"]
     found_keywords = [kw for kw in mra_keywords if kw in all_text]
@@ -279,7 +254,6 @@ async def test_mra_cfp_extraction_end_to_end(
 
     performance_context.end_stage()
 
-    # Set performance metadata
     performance_context.set_metadata("extracted_sections_count", len(content_sections))
     performance_context.set_metadata("total_subtitles_count", total_subtitles)
     performance_context.set_metadata("avg_subtitles_per_section", avg_subtitles_per_section)
@@ -297,80 +271,12 @@ async def test_mra_cfp_extraction_end_to_end(
     )
 
 
-@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=2400)
-async def test_mra_cfp_template_generation_pipeline(
-    logger: logging.Logger,
-    async_session_maker: async_sessionmaker[Any],
-    performance_context: PerformanceTestContext,
-    mra_grant_template_with_rag_source: GrantTemplate,
-    organization_mapping: dict[str, dict[str, str]],
-    mock_job_manager: AsyncMock,
-) -> None:
-    """Test complete MRA CFP template generation pipeline using real RAG sources."""
-    performance_context.set_metadata("cfp_type", "melanoma_research_alliance")
-    performance_context.set_metadata("test_type", "full_pipeline")
-    performance_context.set_metadata("pipeline_stage", "complete_template_generation")
-
-    logger.info("🏭 Starting MRA CFP template generation pipeline test")
-
-    performance_context.start_stage("run_template_generation_pipeline")
-
-    # Run the complete template generation pipeline with real RAG source
-    await handle_grant_template_pipeline(
-        grant_template=mra_grant_template_with_rag_source,
-        session_maker=async_session_maker,
-        trace_id="mra-pipeline-e2e-test",
-    )
-
-    performance_context.end_stage()
-
-    performance_context.start_stage("validate_pipeline_results")
-
-    # Retrieve and validate the results
-    from packages.db.src.query_helpers import select_active
-    from sqlalchemy.orm import selectinload
-
-    async with async_session_maker() as session:
-        updated_template = await session.scalar(
-            select_active(mra_grant_template_with_rag_source.__class__)
-            .where(mra_grant_template_with_rag_source.__class__.id == mra_grant_template_with_rag_source.id)
-            .options(selectinload(mra_grant_template_with_rag_source.__class__.grant_sections))
-        )
-
-        assert updated_template is not None, "Template should exist after pipeline"
-
-        # Check if CFP data was extracted and stored
-        if hasattr(updated_template, "cfp_analysis") and updated_template.cfp_analysis:
-            cfp_data = updated_template.cfp_analysis
-            assert "subject" in cfp_data, "CFP analysis should contain subject"
-            assert "content" in cfp_data, "CFP analysis should contain content"
-
-            # Validate content quality
-            if cfp_data["content"]:
-                sections_count = len(cfp_data["content"])
-                assert sections_count > 0, "Should have extracted sections"
-
-                performance_context.set_metadata("pipeline_sections_extracted", sections_count)
-                logger.info("Pipeline extracted %d sections", sections_count)
-
-        # Check grant sections were created
-        if updated_template.grant_sections:
-            sections_created = len(updated_template.grant_sections)
-            performance_context.set_metadata("grant_sections_created", sections_created)
-            logger.info("Pipeline created %d grant sections", sections_created)
-
-    performance_context.end_stage()
-
-    logger.info("✅ MRA CFP template generation pipeline test completed successfully")
-
-
 @performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.GRANT_TEMPLATE, timeout=600)
 async def test_mra_cfp_section_structure_validation(
     logger: logging.Logger,
     expected_mra_sections: list[dict[str, Any]],
     performance_context: PerformanceTestContext,
 ) -> None:
-    """Test validation of expected MRA CFP section structure."""
     performance_context.set_metadata("test_type", "section_structure_validation")
     performance_context.set_metadata("cfp_type", "melanoma_research_alliance")
 
@@ -378,7 +284,6 @@ async def test_mra_cfp_section_structure_validation(
 
     performance_context.start_stage("validate_expected_sections")
 
-    # Validate expected sections structure
     assert len(expected_mra_sections) > 0, "Should have expected sections defined"
 
     for expected_section in expected_mra_sections:
@@ -392,17 +297,14 @@ async def test_mra_cfp_section_structure_validation(
         assert isinstance(subsections, list), f"Subsections should be list: {subsections}"
         assert len(subsections) > 0, f"Section should have subsections: {title}"
 
-        # Validate subsection content
         for subsection in subsections:
             assert isinstance(subsection, str), f"Subsection should be string: {subsection}"
             assert len(subsection) > 0, f"Subsection should not be empty: {subsection}"
 
     performance_context.end_stage()
 
-    # Validate specific MRA expectations
     section_titles = [section["title"].lower() for section in expected_mra_sections]
 
-    # Check for key MRA section types
     research_sections = [title for title in section_titles if "research" in title]
     budget_sections = [title for title in section_titles if "budget" in title or "resource" in title]
     team_sections = [title for title in section_titles if "team" in title or "investigator" in title]

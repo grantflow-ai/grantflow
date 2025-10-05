@@ -17,7 +17,6 @@ ContentType = Literal["text", "objectives", "relationships", "enrichment", "cfp_
 ComplexityLevel = Literal["simple", "moderate", "complex", "very_complex"]
 QualityLevel = Literal["excellent", "good", "acceptable", "poor", "unacceptable"]
 
-# Relationship data format: source_id -> list of [target_id, description] pairs
 type RelationshipData = dict[str, list[list[str]]]
 
 

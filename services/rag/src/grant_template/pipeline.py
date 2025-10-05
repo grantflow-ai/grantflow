@@ -195,7 +195,6 @@ async def handle_grant_template_pipeline(
         if error_context:
             detailed_error_message += f"\nContext: {error_context}"
 
-        # Clear checkpoint data to allow clean retry from failed stage
         await job_manager.clear_checkpoint_data()
 
         await job_manager.update_job_status(

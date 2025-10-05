@@ -1,8 +1,3 @@
-"""E2E tests for generate_metadata stage quality validation.
-
-Tests LLM metadata generation, section merging, and field preservation
-for Stage 3 of the grant template pipeline.
-"""
 
 import logging
 from typing import Any
@@ -15,8 +10,7 @@ from testing.performance_framework import PerformanceTestContext, TestDomain, Te
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.extract_sections import handle_extract_sections
 from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
-
-from .conftest import (
+from services.rag.tests.e2e.grant_template.conftest import (
     create_test_grant_template,
     validate_dual_field_preservation,
     validate_metadata_quality,
@@ -33,14 +27,6 @@ async def test_generate_metadata_field_preservation_nih(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test that generate_metadata preserves all fields from extract_sections.
-
-    Validates that:
-    1. All ExtractedSectionDTO fields are preserved in GrantLongFormSection
-    2. SectionMetadata fields are added without overwriting existing data
-    3. Both max_words (LLM) and length_limit (CFP) are present when expected
-    4. Guidelines, definition, and constraints are preserved
-    """
     performance_context.set_metadata("test_type", "generate_metadata_field_preservation")
     performance_context.set_metadata("cfp_type", "nih_par_25_450")
     performance_context.set_metadata("stage", "generate_metadata")
@@ -49,7 +35,6 @@ async def test_generate_metadata_field_preservation_nih(
 
     performance_context.start_stage("setup_and_run_pipeline")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=nih_granting_institution,
@@ -57,7 +42,6 @@ async def test_generate_metadata_field_preservation_nih(
         title="NIH PAR-25-450 Metadata Field Preservation Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -67,7 +51,6 @@ async def test_generate_metadata_field_preservation_nih(
         )
         session.add(template_source)
 
-    # Run CFP analysis
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -75,7 +58,6 @@ async def test_generate_metadata_field_preservation_nih(
         trace_id="metadata-field-preservation-test",
     )
 
-    # Run extract_sections
     from services.rag.src.grant_template.dto import CFPAnalysisStageDTO
 
     CFPAnalysisStageDTO(
@@ -94,11 +76,12 @@ async def test_generate_metadata_field_preservation_nih(
 
     performance_context.start_stage("run_generate_metadata")
 
-    # Run generate_metadata
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -114,17 +97,16 @@ async def test_generate_metadata_field_preservation_nih(
 
     logger.info(
         "📊 Validating field preservation for %d grant sections from %d extracted sections",
-        len(grant_sections), len(extracted_sections)
+        len(grant_sections),
+        len(extracted_sections),
     )
 
-    # Validate field preservation for each long-form section
     long_form_grant_sections = [s for s in grant_sections if s.get("long_form", False)]
 
     for grant_section in long_form_grant_sections:
         section_title = grant_section.get("title", "Unknown")
         section_id = grant_section.get("id")
 
-        # Find corresponding extracted section
         extracted = next(
             (s for s in extracted_sections if s["id"] == section_id),
             None,
@@ -136,59 +118,34 @@ async def test_generate_metadata_field_preservation_nih(
 
         logger.info("✅ Validating field preservation for '%s'", section_title)
 
-        # Validate CFP constraint fields are preserved
         if extracted.get("length_limit"):
-            assert "length_limit" in grant_section, (
-                f"length_limit missing for {section_title}"
-            )
+            assert "length_limit" in grant_section, f"length_limit missing for {section_title}"
             assert grant_section["length_limit"] == extracted["length_limit"], (
                 f"length_limit changed for {section_title}: "
                 f"{extracted['length_limit']} → {grant_section.get('length_limit')}"
             )
 
-            assert grant_section.get("length_source"), (
-                f"length_source missing for {section_title}"
-            )
+            assert grant_section.get("length_source"), f"length_source missing for {section_title}"
 
-        # Validate guidelines are preserved
         if extracted.get("guidelines"):
-            assert "guidelines" in grant_section, (
-                f"guidelines missing for {section_title}"
-            )
-            assert grant_section["guidelines"] == extracted["guidelines"], (
-                f"guidelines changed for {section_title}"
-            )
+            assert "guidelines" in grant_section, f"guidelines missing for {section_title}"
+            assert grant_section["guidelines"] == extracted["guidelines"], f"guidelines changed for {section_title}"
 
-        # Validate definition is preserved
         if extracted.get("definition"):
-            assert "definition" in grant_section, (
-                f"definition missing for {section_title}"
-            )
-            assert grant_section["definition"] == extracted["definition"], (
-                f"definition changed for {section_title}"
-            )
+            assert "definition" in grant_section, f"definition missing for {section_title}"
+            assert grant_section["definition"] == extracted["definition"], f"definition changed for {section_title}"
 
-        # Validate LLM metadata is present
-        assert "max_words" in grant_section, (
-            f"max_words missing for {section_title}"
-        )
+        assert "max_words" in grant_section, f"max_words missing for {section_title}"
         assert grant_section["max_words"] > 0, (
             f"max_words should be positive for {section_title}: {grant_section.get('max_words')}"
         )
 
-        assert grant_section.get("keywords"), (
-            f"keywords missing or empty for {section_title}"
-        )
-        assert grant_section.get("topics"), (
-            f"topics missing or empty for {section_title}"
-        )
-        assert grant_section.get("search_queries"), (
-            f"search_queries missing or empty for {section_title}"
-        )
+        assert grant_section.get("keywords"), f"keywords missing or empty for {section_title}"
+        assert grant_section.get("topics"), f"topics missing or empty for {section_title}"
+        assert grant_section.get("search_queries"), f"search_queries missing or empty for {section_title}"
 
     performance_context.end_stage()
 
-    # Set performance metadata
     performance_context.set_metadata("total_grant_sections", len(grant_sections))
     performance_context.set_metadata("long_form_sections", len(long_form_grant_sections))
 
@@ -211,11 +168,6 @@ async def test_generate_metadata_field_preservation_mra(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test field preservation for MRA CFP.
-
-    MRA has fewer constraints than NIH, so this validates field preservation
-    works correctly even with sparse constraint data.
-    """
     performance_context.set_metadata("test_type", "generate_metadata_field_preservation")
     performance_context.set_metadata("cfp_type", "mra")
     performance_context.set_metadata("stage", "generate_metadata")
@@ -224,7 +176,6 @@ async def test_generate_metadata_field_preservation_mra(
 
     performance_context.start_stage("setup_and_run_pipeline")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=mra_granting_institution,
@@ -232,7 +183,6 @@ async def test_generate_metadata_field_preservation_mra(
         title="MRA Metadata Field Preservation Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -242,7 +192,6 @@ async def test_generate_metadata_field_preservation_mra(
         )
         session.add(template_source)
 
-    # Run full pipeline through generate_metadata
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -264,10 +213,12 @@ async def test_generate_metadata_field_preservation_mra(
         trace_id="mra-metadata-preservation-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -283,15 +234,12 @@ async def test_generate_metadata_field_preservation_mra(
 
     logger.info("📊 Validating MRA field preservation for %d sections", len(grant_sections))
 
-    # Validate at least some sections were generated
     assert len(grant_sections) > 0, "Should generate at least one section"
 
-    # Validate long-form sections have metadata
     long_form_sections = [s for s in grant_sections if s.get("long_form", False)]
     for section in long_form_sections:
         section_title = section.get("title", "Unknown")
 
-        # LLM metadata should be present
         assert "max_words" in section, f"max_words missing for {section_title}"
         assert section["max_words"] > 0, f"max_words invalid for {section_title}"
         assert "keywords" in section, f"keywords missing for {section_title}"
@@ -322,14 +270,6 @@ async def test_generate_metadata_quality_nih(
     mock_job_manager: AsyncMock,
     expected_nih_metadata_quality: dict[str, dict[str, int]],
 ) -> None:
-    """Test LLM metadata generation quality for NIH PAR-25-450 CFP.
-
-    Validates that:
-    1. Keywords are relevant and specific (3-10 per section)
-    2. Topics are diverse and comprehensive (3-7 per section)
-    3. Search queries are actionable (3-7 per section)
-    4. max_words is reasonable for section complexity (50-3000)
-    """
     performance_context.set_metadata("test_type", "generate_metadata_quality")
     performance_context.set_metadata("cfp_type", "nih_par_25_450")
     performance_context.set_metadata("stage", "generate_metadata")
@@ -338,7 +278,6 @@ async def test_generate_metadata_quality_nih(
 
     performance_context.start_stage("setup_and_run_pipeline")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=nih_granting_institution,
@@ -346,7 +285,6 @@ async def test_generate_metadata_quality_nih(
         title="NIH PAR-25-450 Metadata Quality Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -356,7 +294,6 @@ async def test_generate_metadata_quality_nih(
         )
         session.add(template_source)
 
-    # Run full pipeline
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -378,10 +315,12 @@ async def test_generate_metadata_quality_nih(
         trace_id="metadata-quality-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -397,7 +336,6 @@ async def test_generate_metadata_quality_nih(
 
     logger.info("📊 Validating metadata quality for %d sections", len(grant_sections))
 
-    # Validate metadata quality for long-form sections
     long_form_sections = [s for s in grant_sections if s.get("long_form", False)]
 
     for section in long_form_sections:
@@ -408,10 +346,9 @@ async def test_generate_metadata_quality_nih(
             section_title,
             len(section.get("keywords", [])),
             len(section.get("topics", [])),
-            section.get("max_words", 0)
+            section.get("max_words", 0),
         )
 
-        # Use validation helper
         validate_metadata_quality(
             section=section,
             quality_metrics=expected_nih_metadata_quality,
@@ -419,15 +356,20 @@ async def test_generate_metadata_quality_nih(
 
     performance_context.end_stage()
 
-    # Calculate quality statistics
     total_keywords = sum(len(s.get("keywords", [])) for s in long_form_sections)
     total_topics = sum(len(s.get("topics", [])) for s in long_form_sections)
     total_queries = sum(len(s.get("search_queries", [])) for s in long_form_sections)
 
     performance_context.set_metadata("total_long_form_sections", len(long_form_sections))
-    performance_context.set_metadata("avg_keywords_per_section", total_keywords / len(long_form_sections) if long_form_sections else 0)
-    performance_context.set_metadata("avg_topics_per_section", total_topics / len(long_form_sections) if long_form_sections else 0)
-    performance_context.set_metadata("avg_queries_per_section", total_queries / len(long_form_sections) if long_form_sections else 0)
+    performance_context.set_metadata(
+        "avg_keywords_per_section", total_keywords / len(long_form_sections) if long_form_sections else 0
+    )
+    performance_context.set_metadata(
+        "avg_topics_per_section", total_topics / len(long_form_sections) if long_form_sections else 0
+    )
+    performance_context.set_metadata(
+        "avg_queries_per_section", total_queries / len(long_form_sections) if long_form_sections else 0
+    )
 
     logger.info(
         "✅ NIH PAR-25-450 metadata quality test completed successfully",
@@ -450,14 +392,6 @@ async def test_generate_metadata_dual_field_preservation_nih(
     test_organization: Organization,
     mock_job_manager: AsyncMock,
 ) -> None:
-    """Test dual-field preservation: max_words (LLM) and length_limit (CFP).
-
-    Validates that:
-    1. max_words is always present for long-form sections
-    2. length_limit is present when CFP specifies constraint
-    3. Both fields coexist without overwriting each other
-    4. Application generation can use length_limit with max_words fallback
-    """
     performance_context.set_metadata("test_type", "generate_metadata_dual_field_preservation")
     performance_context.set_metadata("cfp_type", "nih_par_25_450")
     performance_context.set_metadata("stage", "generate_metadata")
@@ -466,7 +400,6 @@ async def test_generate_metadata_dual_field_preservation_nih(
 
     performance_context.start_stage("setup_and_run_pipeline")
 
-    # Create grant template
     grant_template = await create_test_grant_template(
         async_session_maker=async_session_maker,
         granting_institution=nih_granting_institution,
@@ -474,7 +407,6 @@ async def test_generate_metadata_dual_field_preservation_nih(
         title="NIH PAR-25-450 Dual-Field Preservation Test",
     )
 
-    # Link RAG source
     from packages.db.src.tables import GrantTemplateSource
 
     async with async_session_maker() as session, session.begin():
@@ -484,7 +416,6 @@ async def test_generate_metadata_dual_field_preservation_nih(
         )
         session.add(template_source)
 
-    # Run full pipeline
     cfp_analysis_result = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=async_session_maker,
@@ -506,10 +437,12 @@ async def test_generate_metadata_dual_field_preservation_nih(
         trace_id="dual-field-preservation-test",
     )
 
-    cfp_content_str = "\n\n".join([
-        f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-        for section in cfp_analysis_result["content"]
-    ])
+    cfp_content_str = "\n\n".join(
+        [
+            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
+            for section in cfp_analysis_result["content"]
+        ]
+    )
 
     grant_sections = await handle_generate_grant_template_metadata(
         cfp_content=cfp_content_str,
@@ -525,43 +458,35 @@ async def test_generate_metadata_dual_field_preservation_nih(
 
     logger.info("📊 Validating dual-field preservation for %d sections", len(grant_sections))
 
-    # Find sections with CFP constraints
     long_form_sections = [s for s in grant_sections if s.get("long_form", False)]
-    sections_with_cfp_constraints = [
-        s for s in long_form_sections
-        if s.get("length_limit")
-    ]
+    sections_with_cfp_constraints = [s for s in long_form_sections if s.get("length_limit")]
 
     logger.info(
         "Found %d/%d long-form sections with CFP constraints",
-        len(sections_with_cfp_constraints), len(long_form_sections)
+        len(sections_with_cfp_constraints),
+        len(long_form_sections),
     )
 
-    # Validate dual-field preservation for sections with constraints
     for section in sections_with_cfp_constraints:
         section_title = section.get("title", "Unknown")
 
         logger.info(
             "✅ Validating dual fields for '%s': max_words=%s, length_limit=%s",
-            section_title, section.get("max_words"), section.get("length_limit")
+            section_title,
+            section.get("max_words"),
+            section.get("length_limit"),
         )
 
-        # Use validation helper
         validate_dual_field_preservation(
             section=section,
             has_cfp_constraint=True,
         )
 
-    # Validate sections without constraints still have max_words
-    sections_without_constraints = [
-        s for s in long_form_sections
-        if s not in sections_with_cfp_constraints
-    ]
+    sections_without_constraints = [s for s in long_form_sections if s not in sections_with_cfp_constraints]
 
     for section in sections_without_constraints:
         section_title = section.get("title", "Unknown")
 
-        # Should still have max_words even without CFP constraint
         validate_dual_field_preservation(
             section=section,
             has_cfp_constraint=False,
@@ -569,7 +494,6 @@ async def test_generate_metadata_dual_field_preservation_nih(
 
     performance_context.end_stage()
 
-    # Set performance metadata
     performance_context.set_metadata("long_form_sections", len(long_form_sections))
     performance_context.set_metadata("sections_with_constraints", len(sections_with_cfp_constraints))
     performance_context.set_metadata("sections_without_constraints", len(sections_without_constraints))

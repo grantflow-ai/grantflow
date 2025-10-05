@@ -1,4 +1,3 @@
-"""E2E tests for metadata-enhanced retrieval with kreuzberg-extracted fixtures."""
 
 import logging
 from typing import Any
@@ -19,8 +18,6 @@ async def nih_research_paper_source(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> RagSource:
-    """Create RagSource with real kreuzberg-extracted metadata from NIH research paper."""
-    # Sample NIH research paper content
     paper_content = b"""
     Melanoma Brain Metastases: Current Understanding and Novel Therapeutic Approaches
 
@@ -59,8 +56,6 @@ async def nih_research_paper_source(
     and the National Cancer Institute.
     """
 
-    # Extract with kreuzberg (with caching)
-    # Use text/html to ensure metadata extraction works
     content, _mime_type, chunks, metadata = await extract_with_cache(
         content=paper_content,
         mime_type="text/html",
@@ -71,12 +66,10 @@ async def nih_research_paper_source(
         enable_document_classification=True,
     )
 
-    # Verify metadata extraction
     assert metadata is not None, "Kreuzberg metadata extraction failed"
     assert "entities" in metadata, "Entities not extracted"
     assert "keywords" in metadata, "Keywords not extracted"
 
-    # Create RagSource with metadata
     async with async_session_maker() as session:
         source = RagSource(
             id=UUID("11111111-1111-1111-1111-111111111111"),
@@ -89,7 +82,6 @@ async def nih_research_paper_source(
         session.add(source)
         await session.flush()
 
-        # Link to grant application
         app_source = GrantApplicationSource(
             rag_source_id=source.id,
             grant_application_id=grant_application.id,
@@ -97,9 +89,8 @@ async def nih_research_paper_source(
         session.add(app_source)
         await session.flush()
 
-        # Create vectors from chunks
         if chunks:
-            embeddings = await generate_embeddings(chunks[:5])  # Limit to 5 chunks for speed
+            embeddings = await generate_embeddings(chunks[:5])  
             for i, (chunk_content, embedding) in enumerate(zip(chunks[:5], embeddings, strict=False)):
                 vector = TextVector(
                     rag_source_id=source.id,
@@ -119,8 +110,6 @@ async def generic_cancer_research_source(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
 ) -> RagSource:
-    """Create RagSource with generic cancer research content (no specific entities)."""
-    # Generic cancer research content without specific organizations or people
     paper_content = b"""
     Advances in Cancer Immunotherapy: A Comprehensive Review
 
@@ -146,8 +135,6 @@ async def generic_cancer_research_source(
     microenvironment composition and PD-L1 expression are important factors.
     """
 
-    # Extract with kreuzberg (with caching)
-    # Use text/html to ensure metadata extraction works
     content, _mime_type, chunks, metadata = await extract_with_cache(
         content=paper_content,
         mime_type="text/html",
@@ -160,7 +147,6 @@ async def generic_cancer_research_source(
 
     assert metadata is not None, "Kreuzberg metadata extraction failed"
 
-    # Create RagSource with metadata
     async with async_session_maker() as session:
         source = RagSource(
             id=UUID("22222222-2222-2222-2222-222222222222"),
@@ -173,7 +159,6 @@ async def generic_cancer_research_source(
         session.add(source)
         await session.flush()
 
-        # Link to grant application
         app_source = GrantApplicationSource(
             rag_source_id=source.id,
             grant_application_id=grant_application.id,
@@ -181,7 +166,6 @@ async def generic_cancer_research_source(
         session.add(app_source)
         await session.flush()
 
-        # Create vectors from chunks
         if chunks:
             embeddings = await generate_embeddings(chunks[:5])
             for i, (chunk_content, embedding) in enumerate(zip(chunks[:5], embeddings, strict=False)):
@@ -206,8 +190,6 @@ async def test_retrieval_without_metadata_filter(
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
-    """Test baseline retrieval without metadata filtering."""
-    # Query about melanoma immunotherapy
     search_queries = ["melanoma immunotherapy brain metastases treatment"]
     embeddings = await generate_embeddings(search_queries)
 
@@ -222,10 +204,8 @@ async def test_retrieval_without_metadata_filter(
 
     logger.info("Retrieved %d vectors without metadata filter", len(vectors))
 
-    # Should retrieve from both sources
     assert len(vectors) > 0, "Should retrieve at least some vectors"
 
-    # Check sources
     source_ids = {v.rag_source_id for v in vectors}
     logger.info("Source IDs retrieved: %s", source_ids)
 
@@ -238,12 +218,9 @@ async def test_retrieval_with_organization_entity_filter(
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
-    """Test metadata pre-filtering by ORGANIZATION entity type."""
-    # Query about melanoma immunotherapy
     search_queries = ["melanoma immunotherapy NIH research"]
     embeddings = await generate_embeddings(search_queries)
 
-    # Filter for documents mentioning organizations (NIH paper should match)
     metadata_filter: MetadataFilterParams = {
         "entity_types": ["ORGANIZATION"],
     }
@@ -260,14 +237,11 @@ async def test_retrieval_with_organization_entity_filter(
 
     logger.info("Retrieved %d vectors with ORGANIZATION filter", len(vectors))
 
-    # Should primarily retrieve from NIH paper (has NIH, Memorial Sloan Kettering, Mayo Clinic entities)
     assert len(vectors) > 0, "Should retrieve vectors from documents with organization entities"
 
-    # Check that NIH source is represented
     source_ids = {v.rag_source_id for v in vectors}
     logger.info("Source IDs with ORGANIZATION filter: %s", source_ids)
 
-    # Verify metadata on retrieved sources
     for vector in vectors[:3]:
         metadata = vector.rag_source.document_metadata
         if metadata is not None and "entities" in metadata:
@@ -285,12 +259,9 @@ async def test_retrieval_with_category_filter(
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
-    """Test metadata pre-filtering by document categories."""
-    # Query about research methodology
     search_queries = ["cancer research methodology clinical trials"]
     embeddings = await generate_embeddings(search_queries)
 
-    # Filter for scientific/research documents
     metadata_filter: MetadataFilterParams = {
         "categories": ["research", "scientific"],
         "category_match_mode": "any",
@@ -309,7 +280,6 @@ async def test_retrieval_with_category_filter(
     logger.info("Retrieved %d vectors with category filter", len(vectors))
     assert len(vectors) > 0, "Should retrieve vectors from research/scientific documents"
 
-    # Verify categories on retrieved sources
     for vector in vectors[:3]:
         metadata = vector.rag_source.document_metadata
         if metadata and "categories" in metadata:
@@ -325,11 +295,9 @@ async def test_retrieval_with_quality_score_filter(
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
-    """Test metadata pre-filtering by quality score threshold."""
     search_queries = ["melanoma treatment research"]
     embeddings = await generate_embeddings(search_queries)
 
-    # Filter for high-quality documents only
     metadata_filter: MetadataFilterParams = {
         "min_quality_score": 0.7,
     }
@@ -346,7 +314,6 @@ async def test_retrieval_with_quality_score_filter(
 
     logger.info("Retrieved %d vectors with quality score filter", len(vectors))
 
-    # Verify all retrieved documents meet quality threshold
     for vector in vectors:
         metadata = vector.rag_source.document_metadata
         if metadata and "quality_score" in metadata:
@@ -364,11 +331,9 @@ async def test_retrieval_with_combined_filters(
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
-    """Test metadata pre-filtering with multiple combined criteria."""
     search_queries = ["NIH melanoma research methodology"]
     embeddings = await generate_embeddings(search_queries)
 
-    # Combine multiple filters
     metadata_filter: MetadataFilterParams = {
         "entity_types": ["ORGANIZATION"],
         "categories": ["research", "scientific"],
@@ -388,7 +353,6 @@ async def test_retrieval_with_combined_filters(
     logger.info("Retrieved %d vectors with combined filters", len(vectors))
     assert len(vectors) > 0, "Should retrieve vectors matching all criteria"
 
-    # Verify retrieved documents meet all criteria
     for vector in vectors[:3]:
         metadata = vector.rag_source.document_metadata
         if metadata is not None:
@@ -408,7 +372,6 @@ async def test_metadata_extraction_completeness(
     nih_research_paper_source: RagSource,
     logger: logging.Logger,
 ) -> None:
-    """Verify kreuzberg extraction produces expected metadata fields."""
     metadata = nih_research_paper_source.document_metadata
 
     assert metadata is not None, "Metadata should be extracted"
@@ -416,7 +379,6 @@ async def test_metadata_extraction_completeness(
     assert "keywords" in metadata, "Should extract keywords"
     assert "categories" in metadata or "document_type" in metadata, "Should classify document"
 
-    # Log extracted metadata for inspection
     entities = metadata.get("entities", [])
     keywords = metadata.get("keywords", [])
     categories = metadata.get("categories", [])
@@ -430,12 +392,10 @@ async def test_metadata_extraction_completeness(
     logger.info("Categories: %s", categories)
     logger.info("Document type: %s", doc_type)
 
-    # Sample some entities
     org_entities = [e for e in entities_list if isinstance(e, dict) and e.get("type") == "ORGANIZATION"]
     logger.info("Organization entities: %s", [e.get("text") for e in org_entities[:5]])
 
     person_entities = [e for e in entities_list if isinstance(e, dict) and e.get("type") == "PERSON"]
     logger.info("Person entities: %s", [e.get("text") for e in person_entities[:5]])
 
-    # Sample keywords
     logger.info("Top keywords: %s", keywords_list[:10])

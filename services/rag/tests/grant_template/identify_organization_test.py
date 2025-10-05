@@ -1,4 +1,3 @@
-"""Tests for organization identification."""
 
 from typing import Any
 from uuid import uuid4
@@ -15,7 +14,6 @@ from services.rag.src.grant_template.identify_organization import (
 
 
 def create_sample_organizations() -> list[GrantingInstitution]:
-    """Create sample granting institutions for testing."""
     return [
         GrantingInstitution(
             id=uuid4(),
@@ -46,7 +44,6 @@ def create_sample_organizations() -> list[GrantingInstitution]:
 
 
 def test_fuzzy_match_exact_full_name() -> None:
-    """Test exact match on full organization name."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     FUNDING OPPORTUNITY ANNOUNCEMENT
@@ -65,7 +62,6 @@ def test_fuzzy_match_exact_full_name() -> None:
 
 
 def test_fuzzy_match_abbreviation() -> None:
-    """Test match on abbreviation."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     NSF CAREER Award Program
@@ -83,7 +79,6 @@ def test_fuzzy_match_abbreviation() -> None:
 
 
 def test_fuzzy_match_abbreviation_in_parentheses() -> None:
-    """Test abbreviation match in parentheses format."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     European Research Council (ERC) Starting Grant
@@ -101,9 +96,7 @@ def test_fuzzy_match_abbreviation_in_parentheses() -> None:
 
 
 def test_fuzzy_match_header_weighting() -> None:
-    """Test that header mentions are weighted more heavily."""
     sample_organizations = create_sample_organizations()
-    # Two CFPs with same number of mentions, but different positions
     cfp_header = """
     Melanoma Research Alliance
     MRA Grant Program
@@ -118,12 +111,10 @@ def test_fuzzy_match_header_weighting() -> None:
     result_header: OrganizationMatchResult = fuzzy_match_organizations(cfp_header, sample_organizations)
     result_body: OrganizationMatchResult = fuzzy_match_organizations(cfp_body, sample_organizations)
 
-    # Header match should have higher or equal confidence
     assert result_header["confidence"] >= result_body["confidence"]
 
 
 def test_fuzzy_match_no_organization() -> None:
-    """Test CFP with no identifiable organization."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     Generic Research Funding Opportunity
@@ -140,7 +131,6 @@ def test_fuzzy_match_no_organization() -> None:
 
 
 def test_fuzzy_match_empty_text() -> None:
-    """Test with empty CFP text."""
     sample_organizations = create_sample_organizations()
     result: OrganizationMatchResult = fuzzy_match_organizations("", sample_organizations)
 
@@ -150,7 +140,6 @@ def test_fuzzy_match_empty_text() -> None:
 
 
 def test_fuzzy_match_no_abbreviation() -> None:
-    """Test organization without abbreviation."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     Israeli Ministry of Health Research Grant
@@ -168,7 +157,6 @@ def test_fuzzy_match_no_abbreviation() -> None:
 
 
 def test_fuzzy_match_multiple_mentions() -> None:
-    """Test that multiple mentions increase confidence."""
     sample_organizations = create_sample_organizations()
     cfp_single = "National Science Foundation grant program."
 
@@ -188,7 +176,6 @@ def test_fuzzy_match_multiple_mentions() -> None:
 
 
 def test_fuzzy_match_case_insensitive() -> None:
-    """Test that matching is case-insensitive."""
     sample_organizations = create_sample_organizations()
     cfp_text = """
     NATIONAL INSTITUTES OF HEALTH
@@ -207,7 +194,6 @@ def test_fuzzy_match_case_insensitive() -> None:
 async def test_identify_granting_institution_high_confidence(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test identification with high-confidence regex match."""
     cfp_text = """
     National Institutes of Health
     NIH Grant Program R01
@@ -230,7 +216,6 @@ async def test_identify_granting_institution_high_confidence(
 async def test_identify_granting_institution_empty_text(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test with empty CFP text."""
     org_id, confidence, method = await identify_granting_institution(
         cfp_text="",
         session_maker=async_session_maker,
@@ -245,7 +230,6 @@ async def test_identify_granting_institution_empty_text(
 async def test_identify_granting_institution_abbreviation_match(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test identification using abbreviation."""
     cfp_text = """
     ERC Starting Grant 2025
 
@@ -265,9 +249,7 @@ async def test_identify_granting_institution_abbreviation_match(
 
 
 def test_fuzzy_match_partial_name_no_match() -> None:
-    """Test that partial name matches are rejected (word boundary enforcement)."""
     sample_organizations = create_sample_organizations()
-    # "National Institute" is not "National Institutes of Health"
     cfp_text = """
     National Institute for Advanced Studies
     Research funding opportunity.
@@ -275,5 +257,4 @@ def test_fuzzy_match_partial_name_no_match() -> None:
 
     result: OrganizationMatchResult = fuzzy_match_organizations(cfp_text, sample_organizations)
 
-    # Should not match NIH since "National Institute" != "National Institutes"
     assert result["organization_id"] is None or result["confidence"] < MIN_CONFIDENCE
