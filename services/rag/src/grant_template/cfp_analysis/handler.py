@@ -37,42 +37,6 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def validate_section_depth_constraint(sections: list[dict[str, Any]]) -> None:
-    section_map: dict[str, dict[str, Any]] = {section["id"]: section for section in sections}
-
-    for section in sections:
-        parent_id = section.get("parent_id")
-
-        if not parent_id:
-            continue
-
-        if parent_id not in section_map:
-            raise ValidationError(
-                f"Section '{section['title']}' references non-existent parent_id: {parent_id}",
-                context={
-                    "section_id": section["id"],
-                    "section_title": section["title"],
-                    "invalid_parent_id": parent_id,
-                    "recovery_instruction": "Ensure all parent_id references point to existing sections.",
-                },
-            )
-
-        parent_section = section_map[parent_id]
-        if parent_section.get("parent_id"):
-            raise ValidationError(
-                f"Section '{section['title']}' has grandparent (violates 2-level depth constraint). "
-                f"Parent '{parent_section['title']}' has parent_id: {parent_section['parent_id']}",
-                context={
-                    "section_id": section["id"],
-                    "section_title": section["title"],
-                    "parent_id": parent_id,
-                    "parent_title": parent_section["title"],
-                    "grandparent_id": parent_section["parent_id"],
-                    "recovery_instruction": "Flatten or merge sections to satisfy 2-level depth constraint (root + children only).",
-                },
-            )
-
-
 def calculate_section_similarity(section1: CFPContentSection, section2: CFPContentSection) -> float:
     title1 = section1["title"].lower()
     title2 = section2["title"].lower()
