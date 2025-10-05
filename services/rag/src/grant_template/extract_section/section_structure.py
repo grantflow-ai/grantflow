@@ -1,8 +1,41 @@
-from typing import TypedDict
+from typing import Final, TypedDict
 
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_template import PromptTemplate
 from src.ai import GEMINI_FLASH_MODEL
 from src.exceptions import ValidationError
+
+SECTION_STRUCTURE_SYSTEM_PROMPT: Final[str] = (
+    "You are an expert in analyzing grant application guidelines. Your task is to extract the hierarchical structure of the application sections from the provided text."
+)
+
+SECTION_STRUCTURE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="section_structure",
+    template="""
+    # Section Structure Extraction
+    
+    <cfp_analysis>${cfp_analysis}</cfp_analysis>
+    
+    ## Task
+    
+    Extract the hierarchical section structure from the provided CFP analysis.
+    
+    - Create parent-child relationships with a maximum depth of 2 levels.
+    - Use the exact section titles from the CFP.
+    - Assign a unique ID to each section.
+    - Ensure the `order` field reflects the sequence of sections.
+    - The `parent_id` should be the ID of the parent section, or `null` for top-level sections.
+    
+    ## Field Definitions
+    
+    1.  **title**: The exact title of the section.
+    2.  **id**: A unique identifier for the section (e.g., "section-1").
+    3.  **order**: The 1-based index of the section in the overall structure.
+    4.  **parent_id**: The ID of the parent section, or `null` if it is a top-level section.
+    
+    Return valid JSON only.
+""",
+)
 
 section_structure_schema = {
     "type": "object",
@@ -56,11 +89,7 @@ async def extract_section_structure(
         response_schema=section_structure_schema,
         validator=validate_section_structure,
         messages=task_description,
-        system_prompt=(
-            "Extract hierarchical section structure from CFP analysis. "
-            "Create parent-child relationships with max 2-level depth. "
-            "Use exact section titles from CFP. Return valid JSON only."
-        ),
+        system_prompt=SECTION_STRUCTURE_SYSTEM_PROMPT,
         temperature=0.1,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,

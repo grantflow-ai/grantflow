@@ -19,9 +19,18 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import util
 
-from services.rag.src.grant_template.extract_section.section_classification import extract_section_classification
-from services.rag.src.grant_template.extract_section.section_enrichment import extract_section_enrichment
-from services.rag.src.grant_template.extract_section.section_structure import extract_section_structure
+from services.rag.src.grant_template.extract_section.section_classification import (
+    SECTION_CLASSIFICATION_USER_PROMPT,
+    extract_section_classification,
+)
+from services.rag.src.grant_template.extract_section.section_enrichment import (
+    SECTION_ENRICHMENT_USER_PROMPT,
+    extract_section_enrichment,
+)
+from services.rag.src.grant_template.extract_section.section_structure import (
+    SECTION_STRUCTURE_USER_PROMPT,
+    extract_section_structure,
+)
 
 logger = get_logger(__name__)
 
@@ -417,18 +426,30 @@ async def handle_extract_sections(
 ) -> list[ExtractedSectionDTO]:
     await job_manager.ensure_not_cancelled()
 
-    prompt = EXTRACT_GRANT_APPLICATION_SECTIONS_USER_PROMPT.to_string(
-        cfp_analysis=cfp_analysis,
-        organization_guidelines=organization_guidelines,
-    )
-
     logger.info("Starting parallel section extraction", trace_id=trace_id)
     await job_manager.ensure_not_cancelled()
 
     structure_result, classification_result, enrichment_result = await asyncio.gather(
-        extract_section_structure(prompt, trace_id=trace_id),
-        extract_section_classification(prompt, trace_id=trace_id),
-        extract_section_enrichment(prompt, cfp_analysis, trace_id=trace_id),
+        extract_section_structure(
+            SECTION_STRUCTURE_USER_PROMPT.to_string(
+                cfp_analysis=cfp_analysis,
+            ),
+            trace_id=trace_id,
+        ),
+        extract_section_classification(
+            SECTION_CLASSIFICATION_USER_PROMPT.to_string(
+                cfp_analysis=cfp_analysis,
+                organization_guidelines=organization_guidelines,
+            ),
+            trace_id=trace_id,
+        ),
+        extract_section_enrichment(
+            SECTION_ENRICHMENT_USER_PROMPT.to_string(
+                cfp_analysis=cfp_analysis,
+                cfp_constraints=cfp_analysis.get("analysis_metadata", {}).get("constraints", []),
+            ),
+            trace_id=trace_id,
+        ),
     )
 
     logger.info(
