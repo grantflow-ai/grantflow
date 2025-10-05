@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 from packages.db.src.json_objects import (
     CFPAnalysis,
     CFPAnalysisData,
@@ -11,8 +12,10 @@ from packages.db.src.json_objects import (
     OrganizationNamespace,
 )
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource, TextVector
+from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -40,40 +43,43 @@ if TYPE_CHECKING:
 
 SNAKE_CASE_PATTERN_1 = re.compile(r"(.)([A-Z][a-z]+)")
 SNAKE_CASE_PATTERN_2 = re.compile(r"([a-z0-9])([A-Z])")
+BASIC_STOP_WORDS = {"the", "a", "an", "and", "or", "but", "of", "to", "in", "for", "on", "with", "from", "by"}
+ALL_STOP_WORDS = BASIC_STOP_WORDS | {word.lower() for word in ACADEMIC_STOP_WORDS}
 
 logger = get_logger(__name__)
 
 
-STOP_WORDS = {"the", "a", "an", "and", "or", "but", "of", "to", "in", "for", "on", "with", "from", "by"}
+def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
+    """Calculate cosine similarity between two embedding vectors."""
+    v1 = np.array(vec1)
+    v2 = np.array(vec2)
+    dot_product = np.dot(v1, v2)
+    norm_product = np.linalg.norm(v1) * np.linalg.norm(v2)
+    if norm_product == 0:
+        return 0.0
+    return float(dot_product / norm_product)
 
 
-def normalize_title(title: str) -> set[str]:
-    """Normalize title by lowercasing, removing stop words, and handling plurals."""
+def normalize_title(title: str) -> str:
+    """Normalize title by lowercasing and removing stop words."""
     words = title.lower().split()
-    normalized = set()
-    for word in words:
-        word = word.strip(",.;:!?\"'")
-        if word in STOP_WORDS:
-            continue
-        singular = word.rstrip("s") if word.endswith("s") and len(word) > 2 else word
-        normalized.add(singular)
-    return normalized
+    filtered = [w.strip(",.;:!?\"'") for w in words if w.lower() not in ALL_STOP_WORDS]
+    return " ".join(filtered) if filtered else title.lower()
 
 
-def calculate_section_similarity(section1: CFPContentSection, section2: CFPContentSection) -> float:
-    """Calculate Jaccard similarity between normalized section titles."""
-    words1 = normalize_title(section1["title"])
-    words2 = normalize_title(section2["title"])
+async def calculate_section_similarity(section1: CFPContentSection, section2: CFPContentSection) -> float:
+    """Calculate semantic similarity between section titles using embeddings."""
+    title1 = normalize_title(section1["title"])
+    title2 = normalize_title(section2["title"])
 
-    if not words1 and not words2:
-        return 1.0
-    if not words1 or not words2:
+    if not title1 or not title2:
         return 0.0
 
-    intersection = words1.intersection(words2)
-    union = words1.union(words2)
+    if title1 == title2:
+        return 1.0
 
-    return len(intersection) / len(union)
+    embeddings = await generate_embeddings([title1, title2])
+    return cosine_similarity(embeddings[0], embeddings[1])
 
 
 def choose_better_title(title1: str, title2: str) -> str:
@@ -86,8 +92,15 @@ def choose_better_title(title1: str, title2: str) -> str:
     words2 = set(title2.lower().split())
 
     informative_words = {
-        "requirement", "detail", "information", "criteria", "guideline",
-        "instruction", "specification", "description", "overview"
+        "requirement",
+        "detail",
+        "information",
+        "criteria",
+        "guideline",
+        "instruction",
+        "specification",
+        "description",
+        "overview",
     }
 
     score1 = len(words1.intersection(informative_words))
@@ -99,12 +112,18 @@ def choose_better_title(title1: str, title2: str) -> str:
     return title1 if len1 >= len2 else title2
 
 
-def merge_similar_sections(
-    sections: list[CFPContentSection], similarity_threshold: float = 0.5
+async def merge_similar_sections(
+    sections: list[CFPContentSection], similarity_threshold: float = 0.75
 ) -> list[CFPContentSection]:
-    """Merge sections with similar titles, combining subtitles and choosing better titles."""
+    """Merge sections with similar titles using semantic embeddings."""
+    if not sections:
+        return []
+
     merged = []
     used_indices = set()
+
+    all_titles = [normalize_title(s["title"]) for s in sections]
+    title_embeddings = await generate_embeddings(all_titles)
 
     for i, section in enumerate(sections):
         if i in used_indices:
@@ -116,26 +135,26 @@ def merge_similar_sections(
         }
         used_indices.add(i)
 
-        for j, other_section in enumerate(sections[i + 1 :], i + 1):
+        for j in range(i + 1, len(sections)):
             if j in used_indices:
                 continue
 
-            similarity = calculate_section_similarity(section, other_section)
+            similarity = cosine_similarity(title_embeddings[i], title_embeddings[j])
             if similarity >= similarity_threshold:
-                merged_section["title"] = choose_better_title(merged_section["title"], other_section["title"])
+                logger.debug(
+                    "Merging similar sections",
+                    section1=section["title"],
+                    section2=sections[j]["title"],
+                    similarity=round(similarity, 3),
+                )
+
+                merged_section["title"] = choose_better_title(merged_section["title"], sections[j]["title"])
 
                 existing_subtitles = set(merged_section["subtitles"])
-                for subtitle in other_section["subtitles"]:
+                for subtitle in sections[j]["subtitles"]:
                     if subtitle not in existing_subtitles:
-                        subtitle_normalized = normalize_title(subtitle)
-                        is_duplicate = any(
-                            len(subtitle_normalized.intersection(normalize_title(existing))) /
-                            max(len(subtitle_normalized), len(normalize_title(existing))) >= 0.7
-                            for existing in existing_subtitles
-                        )
-                        if not is_duplicate:
-                            merged_section["subtitles"].append(subtitle)
-                            existing_subtitles.add(subtitle)
+                        merged_section["subtitles"].append(subtitle)
+                        existing_subtitles.add(subtitle)
                 used_indices.add(j)
 
         merged.append(merged_section)
@@ -174,13 +193,13 @@ def validate_semantic_completeness(result: CFPContentResult) -> dict[str, Any]:
     }
 
 
-def merge_cfp_extractions(
+async def merge_cfp_extractions(
     broad: CFPContentResult,
     detailed: CFPContentResult,
     hierarchical: CFPContentResult,
 ) -> tuple[CFPContentResult, dict[str, Any]]:
     all_sections = [*broad["sections"], *detailed["sections"], *hierarchical["sections"]]
-    merged_sections = merge_similar_sections(all_sections)
+    merged_sections = await merge_similar_sections(all_sections)
     merged_result = CFPContentResult(sections=merged_sections)
     quality_metrics = validate_semantic_completeness(merged_result)
 
@@ -342,7 +361,7 @@ async def handle_extract_sections(
         ),
     )
 
-    results, quality_metrics = merge_cfp_extractions(
+    results, quality_metrics = await merge_cfp_extractions(
         content_broad,
         content_detailed,
         content_hierarchical,
