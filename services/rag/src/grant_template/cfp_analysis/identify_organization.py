@@ -1,16 +1,17 @@
-
 import re
 import time
-from typing import Any, Final, Literal, NotRequired, TypedDict
+from typing import Final, Literal, NotRequired, TypedDict
 
 from msgspec import ValidationError
+from packages.db.src.json_objects import OrganizationNamespace
 from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.rag.src.utils.completion import handle_completions_request
+from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
@@ -24,9 +25,31 @@ POSITION_BONUS_WEIGHT: Final[float] = 0.5
 MAX_NORMALIZED_SCORE: Final[float] = 0.9
 ORG_CACHE_TTL: Final[int] = 3600
 
+IDENTIFY_ORG_SYSTEM_PROMPT: Final[str] = """Identify the granting organization from CFP text.
+
+Return JSON with org_id from provided array (null if uncertain), confidence (0.0-1.0), and reason."""
+
+IDENTIFY_ORG_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="identify_organization",
+    template="""
+    # Organizations
+    <organizations>${organizations}</organizations>
+
+    # CFP Text Preview (first {preview_length} chars)
+    <cfp_preview>${cfp_preview}</cfp_preview>
+
+    Identify the granting organization. Return org_id from the array or null if uncertain.
+""",
+)
+
+
+class LLMOrgResponse(TypedDict):
+    org_id: str | None
+    confidence: float
+    reason: str
+
 
 class OrganizationMatchResult(TypedDict):
-
     organization_id: str | None
     confidence: float
     method: Literal["regex", "llm", "none"]
@@ -54,7 +77,7 @@ async def get_all_organizations(session: AsyncSession) -> list[GrantingInstituti
 
 def fuzzy_match_organizations(
     cfp_text: str,
-    organizations: list[GrantingInstitution],
+    organizations: list[OrganizationNamespace],
 ) -> OrganizationMatchResult:
     if not cfp_text or not organizations:
         return OrganizationMatchResult(
@@ -78,7 +101,7 @@ def fuzzy_match_organizations(
         score = 0.0
         matched_text = None
 
-        full_name_lower = org.full_name.lower()
+        full_name_lower = org["full_name"].lower()
         full_name_pattern = re.compile(r"\b" + re.escape(full_name_lower) + r"\b")
 
         full_text_count = len(full_name_pattern.findall(full_text_lower))
@@ -90,20 +113,20 @@ def fuzzy_match_organizations(
             frequency_score = min(body_count + header_count + footer_count, MAX_MENTION_COUNT) / MAX_MENTION_COUNT
             position_bonus = (header_count + footer_count) * POSITION_BONUS_WEIGHT
             score = frequency_score + position_bonus
-            matched_text = org.full_name
+            matched_text = org["full_name"]
 
-        if org.abbreviation:
-            abbr_lower = org.abbreviation.lower()
+        if org["abbreviation"]:
+            abbr_lower = org["abbreviation"].lower()
             abbr_pattern = re.compile(
                 r"\b"
                 + re.escape(abbr_lower)
-                + r"'?s?\b"  
+                + r"'?s?\b"
                 + r"|\b"
                 + re.escape(abbr_lower)
-                + r"-\w+"  
+                + r"-\w+"
                 + r"|\("
                 + re.escape(abbr_lower)
-                + r"\)"  
+                + r"\)"
             )
 
             abbr_count = len(abbr_pattern.findall(full_text_lower))
@@ -118,14 +141,14 @@ def fuzzy_match_organizations(
 
                 if abbr_total > score:
                     score = abbr_total
-                    matched_text = org.abbreviation
+                    matched_text = org["abbreviation"]
 
         normalized_score = min(score / MAX_NORMALIZED_SCORE, 1.0)
 
         if normalized_score > best_score:
             best_score = normalized_score
             best_match = OrganizationMatchResult(
-                organization_id=str(org.id),
+                organization_id=str(org["id"]),
                 confidence=normalized_score,
                 method="regex",
                 matched_text=matched_text,
@@ -138,51 +161,15 @@ def fuzzy_match_organizations(
     )
 
 
-IDENTIFY_ORG_SYSTEM_PROMPT: Final[str] = """Identify the granting organization from CFP text.
-
-Return JSON with org_id from mapping (null if uncertain), confidence (0.0-1.0), and reason."""
-
-IDENTIFY_ORG_USER_PROMPT: Final[str] = """# Organizations
-{organization_mapping}
-
-# CFP Text Preview (first {preview_length} chars)
-{cfp_preview}
-
-Identify the granting organization. Return org_id from mapping or null if uncertain."""
-
-
-class LLMOrgResponse(TypedDict):
-
-    org_id: str | None
-    confidence: float
-    reason: str
-
-
 async def llm_identify_organization(
     cfp_text: str,
-    organization_mapping: dict[str, dict[str, str]],
+    organizations: list[OrganizationNamespace],
     trace_id: str,
 ) -> OrganizationMatchResult:
-    if not cfp_text or not organization_mapping:
-        return OrganizationMatchResult(
-            organization_id=None,
-            confidence=0.0,
-            method="none",
-        )
-
     cfp_preview = cfp_text[:PREVIEW_LENGTH]
 
-    org_list = []
-    for org_id, org_data in organization_mapping.items():
-        full_name = org_data.get("full_name", "")
-        abbreviation = org_data.get("abbreviation", "")
-        abbr_text = f" ({abbreviation})" if abbreviation else ""
-        org_list.append(f"- {org_id}: {full_name}{abbr_text}")
-
-    org_mapping_text = "\n".join(org_list)
-
-    prompt = IDENTIFY_ORG_USER_PROMPT.format(
-        organization_mapping=org_mapping_text,
+    prompt = IDENTIFY_ORG_USER_PROMPT.to_string(
+        organizations=organizations,
         preview_length=PREVIEW_LENGTH,
         cfp_preview=cfp_preview,
     )
@@ -237,20 +224,14 @@ async def llm_identify_organization(
 
 
 async def identify_granting_institution(
+    *,
     cfp_text: str,
-    session_maker: async_sessionmaker[Any],
+    organizations: list[OrganizationNamespace],
     trace_id: str,
 ) -> tuple[str | None, float, str]:
     if not cfp_text:
         logger.warning("Empty CFP text provided for organization identification", trace_id=trace_id)
-        return (None, 0.0, "none")
-
-    async with session_maker() as session:
-        organizations = await get_all_organizations(session)
-
-    if not organizations:
-        logger.warning("No organizations found in database", trace_id=trace_id)
-        return (None, 0.0, "none")
+        return None, 0.0, "none"
 
     regex_match = fuzzy_match_organizations(cfp_text, organizations)
 
@@ -265,15 +246,7 @@ async def identify_granting_institution(
     if regex_match["confidence"] >= MIN_CONFIDENCE:
         return regex_match["organization_id"], regex_match["confidence"], "regex"
 
-    organization_mapping = {
-        str(org.id): {
-            "full_name": org.full_name,
-            "abbreviation": org.abbreviation or "",
-        }
-        for org in organizations
-    }
-
-    llm_match = await llm_identify_organization(cfp_text, organization_mapping, trace_id)
+    llm_match = await llm_identify_organization(cfp_text, organizations, trace_id)
 
     if llm_match["confidence"] > regex_match["confidence"]:
         logger.info(

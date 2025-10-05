@@ -8,14 +8,14 @@ class CFPAnalysisStageDTO(TypedDict):
 
     organization: OrganizationNamespace | None
     cfp_analysis: CFPAnalysis
-    organization_guidelines: str  
+    organization_guidelines: str
 
 
 class SectionExtractionStageDTO(TypedDict):
 
     organization: OrganizationNamespace | None
     cfp_analysis: CFPAnalysis
-    organization_guidelines: str  
+    organization_guidelines: str
     extracted_sections: list[ExtractedSectionDTO]
 
 

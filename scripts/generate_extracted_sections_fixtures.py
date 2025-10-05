@@ -29,7 +29,7 @@ async def generate_extracted_sections_fixture(
     mock_job_manager.ensure_not_cancelled = AsyncMock()
 
     async def mock_retrieve_documents(*args: Any, **kwargs: Any) -> list[str]:
-        return []  
+        return []
 
     with patch("services.rag.src.grant_template.extract_sections.retrieve_documents", side_effect=mock_retrieve_documents):
         extracted_sections = await handle_extract_sections(

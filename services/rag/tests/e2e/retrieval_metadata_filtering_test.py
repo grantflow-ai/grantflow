@@ -90,7 +90,7 @@ async def nih_research_paper_source(
         await session.flush()
 
         if chunks:
-            embeddings = await generate_embeddings(chunks[:5])  
+            embeddings = await generate_embeddings(chunks[:5])
             for i, (chunk_content, embedding) in enumerate(zip(chunks[:5], embeddings, strict=False)):
                 vector = TextVector(
                     rag_source_id=source.id,

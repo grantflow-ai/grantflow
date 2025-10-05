@@ -23,7 +23,7 @@ def validate_metadata_structure(
     long_form_sections: list[GrantLongFormSection] = [
         s
         for s in grant_sections
-        if isinstance(s.get("max_words"), int)  
+        if isinstance(s.get("max_words"), int)
     ]  # type: ignore[misc]
 
     assert len(long_form_sections) > 0, "Should have at least one long-form section with metadata"

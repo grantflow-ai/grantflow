@@ -5,7 +5,7 @@ from typing import Any
 from kreuzberg import extract_file
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.grant_template.identify_organization import identify_granting_institution
+from services.rag.src.grant_template.cfp_analysis.identify_organization import identify_granting_institution
 
 TEST_DATA_DIR = Path(__file__).parent.parent.parent.parent.parent.parent / "testing/test_data/sources/cfps"
 

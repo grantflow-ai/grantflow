@@ -186,7 +186,7 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
             TextVector(
                 rag_source_id=rag_source.id,
                 chunk={"content": chunk},
-                embedding=[0.1] * 1536,  
+                embedding=[0.1] * 1536,
             )
             for chunk in chunks
         ]

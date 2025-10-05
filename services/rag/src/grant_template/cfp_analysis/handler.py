@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from packages.db.src.json_objects import CFPAnalysis, CFPAnalysisData, CFPContentSection, OrganizationNamespace
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource, TextVector
@@ -16,6 +16,7 @@ from services.rag.src.grant_template.cfp_analysis.cfp_categories import (
 from services.rag.src.grant_template.cfp_analysis.cfp_constraints import extract_cfp_constraints
 from services.rag.src.grant_template.cfp_analysis.cfp_metadata import (
     CFP_METADATA_EXTRACTION_USER_PROMPT,
+    CFPMetadataResult,
     extract_cfp_metadata,
 )
 from services.rag.src.grant_template.cfp_analysis.cfp_structure import (
@@ -26,7 +27,7 @@ from services.rag.src.grant_template.cfp_analysis.cfp_structure import (
     CFPContentResult,
     extract_cfp_structure,
 )
-from services.rag.src.grant_template.identify_organization import identify_granting_institution
+from services.rag.src.grant_template.cfp_analysis.identify_organization import identify_granting_institution
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
 from services.rag.src.grant_template.utils.category_extraction import categorize_text
 
@@ -182,10 +183,7 @@ async def handle_prepare_context(
     *,
     grant_template: GrantTemplate,
     session_maker: async_sessionmaker[Any],
-) -> tuple[
-    list[RagSourceData],
-    list[OrganizationNamespace],
-]:
+) -> tuple[list[RagSourceData], list[OrganizationNamespace], str]:
     async with session_maker() as session:
         source_ids = list(
             await session.scalars(
@@ -244,46 +242,28 @@ async def handle_prepare_context(
             )
         )
 
-    return rag_sources, [
-        OrganizationNamespace(
-            id=str(org.id),
-            full_name=org.full_name,
-            abbreviation=org.abbreviation or "",
-        )
-        for org in institutions
-    ]
+    full_cfp_text = "\n\n".join(source["text_content"] for source in rag_sources if source["text_content"])
+
+    return (
+        rag_sources,
+        [
+            OrganizationNamespace(
+                id=str(org.id),
+                full_name=org.full_name,
+                abbreviation=org.abbreviation or "",
+            )
+            for org in institutions
+        ],
+        full_cfp_text,
+    )
 
 
-async def handle_cfp_analysis(
+async def handle_extract_content(
     *,
-    grant_template: GrantTemplate,
-    session_maker: async_sessionmaker[Any],
-    job_manager: "JobManager[Any]",
+    formatted_sources: str,
     trace_id: str,
-) -> CFPAnalysis:
-    await job_manager.ensure_not_cancelled()
-
-    logger.info("Starting comprehensive CFP analysis", trace_id=trace_id)
-
-    rag_sources, organizations = await handle_prepare_context(
-        grant_template=grant_template,
-        session_maker=session_maker,
-    )
-
-    await job_manager.ensure_not_cancelled()
-
-    formatted_sources = format_rag_sources_for_prompt(rag_sources)
-    formatted_org_mapping = "\n".join(
-        f"- {organization_namespace['id']}: {organization_namespace['full_name']} ({organization_namespace['abbreviation']})"
-        for organization_namespace in organizations
-    )
-
-    logger.info("Starting multi-strategy CFP extractions", trace_id=trace_id)
-
+) -> CFPContentResult:
     (
-        metadata_result,
-        categories_result,
-        constraints_result,
         content_hierarchical,
         content_broad,
         content_detailed,
@@ -292,19 +272,6 @@ async def handle_cfp_analysis(
         # 1. use anyio taskgroups with cancellation.
         # 2. consider using batching - if we hit ratelimits too often
         # 3. we have to do some json evaluation of the outputs
-        extract_cfp_metadata(
-            CFP_METADATA_EXTRACTION_USER_PROMPT.to_string(
-                rag_sources=formatted_sources,
-                organization_mapping=formatted_org_mapping,
-            ),
-            trace_id=trace_id,
-        ),
-        extract_cfp_categories(
-            CFP_CATEGORIES_EXTRACTION_USER_PROMPT.to_string(rag_sources=rag_sources), trace_id=trace_id
-        ),
-        extract_cfp_constraints(
-            CFP_CATEGORIES_EXTRACTION_USER_PROMPT.to_string(rag_sources=rag_sources), trace_id=trace_id
-        ),
         extract_cfp_structure(
             CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
                 rag_sources=formatted_sources, task=CFP_HIERARCHICAL_CONTENT_EXTRACTION_FRAGMENT
@@ -325,32 +292,37 @@ async def handle_cfp_analysis(
         ),
     )
 
-    await job_manager.ensure_not_cancelled()
-
-    logger.info("Merging multi-strategy content extractions", trace_id=trace_id)
-    content_result, quality_metrics = merge_cfp_extractions(
+    results, quality_metrics = merge_cfp_extractions(
         content_broad,
         content_detailed,
         content_hierarchical,
     )
 
-    logger.info(
-        "Multi-strategy extraction completed",
-        quality_metrics=quality_metrics,
+    logger.info("Merged multi-strategy content extractions", trace_id=trace_id, quality_metrics=quality_metrics)
+    return results
+
+
+async def handle_extract_metadata(
+    *,
+    formatted_sources: str,
+    full_cfp_text: str,
+    organizations: list[OrganizationNamespace],
+    trace_id: str,
+) -> CFPMetadataResult:
+    metadata_result = await extract_cfp_metadata(
+        CFP_METADATA_EXTRACTION_USER_PROMPT.to_string(
+            rag_sources=formatted_sources,
+            organizations=organizations,
+        ),
         trace_id=trace_id,
     )
 
-    await job_manager.ensure_not_cancelled()
-
-    org_id = metadata_result["org_id"]
-    if not org_id:
+    if not metadata_result["org_id"]:
         logger.info("Organization not identified in extraction, using hybrid identification", trace_id=trace_id)
-
-        full_cfp_text = "\n\n".join(source["text_content"] for source in rag_sources if source["text_content"])
 
         org_id, confidence, method = await identify_granting_institution(
             cfp_text=full_cfp_text,
-            session_maker=session_maker,
+            organizations=organizations,
             trace_id=trace_id,
         )
 
@@ -376,6 +348,7 @@ async def handle_cfp_analysis(
             )
 
         if org_id and confidence >= 0.85:
+            metadata_result["org_id"] = org_id
             logger.info(
                 "Organization identified via hybrid method",
                 org_id=org_id,
@@ -384,40 +357,85 @@ async def handle_cfp_analysis(
                 trace_id=trace_id,
             )
 
+    return metadata_result
+
+
+async def handle_cfp_analysis(
+    *,
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    job_manager: "JobManager[Any]",
+    trace_id: str,
+) -> CFPAnalysis:
+    await job_manager.ensure_not_cancelled()
+
+    logger.info("Starting comprehensive CFP analysis", trace_id=trace_id)
+
+    rag_sources, organizations, full_cfp_text = await handle_prepare_context(
+        grant_template=grant_template,
+        session_maker=session_maker,
+    )
+
+    await job_manager.ensure_not_cancelled()
+
+    formatted_sources = format_rag_sources_for_prompt(rag_sources)
+
+    logger.info("Starting multi-strategy CFP extractions", trace_id=trace_id)
+
+    (metadata_result, categories_result, constraints_result, content_result) = await asyncio.gather(
+        # TODO:
+        # 1. use anyio taskgroups with cancellation.
+        # 2. consider using batching - if we hit ratelimits too often
+        # 3. we have to do some json evaluation of the outputs
+        handle_extract_metadata(
+            full_cfp_text=full_cfp_text,
+            formatted_sources=formatted_sources,
+            organizations=organizations,
+            trace_id=trace_id,
+        ),
+        extract_cfp_categories(
+            CFP_CATEGORIES_EXTRACTION_USER_PROMPT.to_string(rag_sources=rag_sources), trace_id=trace_id
+        ),
+        extract_cfp_constraints(
+            CFP_CATEGORIES_EXTRACTION_USER_PROMPT.to_string(rag_sources=rag_sources), trace_id=trace_id
+        ),
+        handle_extract_content(
+            formatted_sources=formatted_sources,
+            trace_id=trace_id,
+        ),
+    )
+
+    await job_manager.ensure_not_cancelled()
+
     total_sections = len(content_result["sections"])
     total_requirements = sum(cat["count"] for cat in categories_result["categories"])
     source_count = len(rag_sources)
 
-    analysis_metadata = {
-        "categories": categories_result["categories"],
-        "constraints": constraints_result["constraints"],
-        "metadata": {
-            "total_sections": total_sections,
-            "total_requirements": total_requirements,
-            "source_count": source_count,
-        },
-    }
-
     organization = None
-    if org_id and (orgs := [org for org in organizations if org["id"] == org_id]):
+    if metadata_result["org_id"] and (orgs := [org for org in organizations if org["id"] == metadata_result["org_id"]]):
         organization = orgs[0]
-
-    cfp_analysis = CFPAnalysis(
-        subject=metadata_result["subject"],
-        content=content_result["sections"],
-        deadline=metadata_result["deadline"],
-        org_id=org_id,
-        analysis_metadata=cast("CFPAnalysisData", analysis_metadata),
-        organization=organization,
-    )
 
     logger.info(
         "CFP analysis completed successfully",
         sections_count=total_sections,
-        org_id=org_id,
+        organization=organization,
         has_deadline=bool(metadata_result["deadline"]),
         categories_found=len(categories_result["categories"]),
         trace_id=trace_id,
     )
 
-    return cfp_analysis
+    return CFPAnalysis(
+        subject=metadata_result["subject"],
+        content=content_result["sections"],
+        deadline=metadata_result["deadline"],
+        analysis_metadata=CFPAnalysisData(
+            categories=categories_result["categories"],
+            constraints=constraints_result["constraints"],
+            metadata={
+                "total_sections": total_sections,
+                "total_requirements": total_requirements,
+                "source_count": source_count,
+            },
+        ),
+        organization=organization,
+    )
