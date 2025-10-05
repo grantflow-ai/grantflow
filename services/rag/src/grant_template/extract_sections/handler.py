@@ -15,11 +15,11 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.sync import run_sync
 from sentence_transformers import util
 
-from services.rag.src.grant_template.extract_section.section_classification import (
+from services.rag.src.grant_template.extract_sections.section_classification import (
     classify_writing_requirements,
 )
-from services.rag.src.grant_template.extract_section.section_enrichment import enrich_with_details
-from services.rag.src.grant_template.extract_section.section_structure import (
+from services.rag.src.grant_template.extract_sections.section_enrichment import enrich_with_details
+from services.rag.src.grant_template.extract_sections.section_structure import (
     DefinedSection,
     structure_and_classify_sections,
 )
