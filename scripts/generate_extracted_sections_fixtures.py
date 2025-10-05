@@ -1,14 +1,3 @@
-#!/usr/bin/env python3
-"""Generate extracted_sections fixtures from CFP analysis fixtures.
-
-This script:
-1. Loads existing CFP analysis fixtures
-2. Runs handle_extract_sections on each
-3. Saves results as extracted_sections fixtures for generate_metadata tests
-
-Usage:
-    PYTHONPATH=. uv run python scripts/generate_extracted_sections_fixtures.py
-"""
 
 import asyncio
 from pathlib import Path
@@ -27,7 +16,6 @@ async def generate_extracted_sections_fixture(
     cfp_analysis_fixture_path: Path,
     output_fixture_path: Path,
 ) -> None:
-    """Generate extracted_sections fixture from CFP analysis fixture."""
     logger.info("Loading CFP analysis fixture from %s", cfp_analysis_fixture_path)
 
     cfp_analysis = deserialize(cfp_analysis_fixture_path.read_bytes(), CFPAnalysis)
@@ -37,15 +25,12 @@ async def generate_extracted_sections_fixture(
         len(cfp_analysis["content"])
     )
 
-    # Create mock job manager
     mock_job_manager = AsyncMock()
     mock_job_manager.ensure_not_cancelled = AsyncMock()
 
-    # Mock retrieve_documents to avoid database dependency
     async def mock_retrieve_documents(*args: Any, **kwargs: Any) -> list[str]:
-        return []  # Return empty list for organization guidelines
+        return []  
 
-    # Run extract_sections with mocked retrieval
     with patch("services.rag.src.grant_template.extract_sections.retrieve_documents", side_effect=mock_retrieve_documents):
         extracted_sections = await handle_extract_sections(
             cfp_content=cfp_analysis["content"],
@@ -60,7 +45,6 @@ async def generate_extracted_sections_fixture(
         sum(1 for s in extracted_sections if s.get("long_form"))
     )
 
-    # Save as fixture
     output_fixture_path.parent.mkdir(parents=True, exist_ok=True)
     output_fixture_path.write_bytes(serialize(extracted_sections))
 
@@ -68,7 +52,6 @@ async def generate_extracted_sections_fixture(
 
 
 async def main() -> None:
-    """Generate all extracted_sections fixtures."""
     fixtures_base = Path("testing/test_data/fixtures")
     cfp_analysis_dir = fixtures_base / "cfp_analysis"
     extracted_sections_dir = fixtures_base / "extracted_sections"

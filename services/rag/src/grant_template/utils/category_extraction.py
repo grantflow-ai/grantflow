@@ -19,7 +19,6 @@ CategoryKey = Literal[
 
 
 class CategorizationAnalysisResult(TypedDict):
-    """NLP categorization analysis result mapping categories to extracted sentences."""
 
     money: list[str]
     date_time: list[str]
@@ -349,29 +348,14 @@ def _format_category_section(category: str, sentences: list[str]) -> list[str]:
 
 
 def smart_truncate(text: str, max_len: int = MAX_HINT_TRUNCATE) -> str:
-    """Truncate text at word boundary to avoid cutting mid-word.
-
-    Args:
-        text: Text to truncate
-        max_len: Maximum length (default 150)
-
-    Returns:
-        Truncated text with ellipsis if needed
-    """
     if len(text) <= max_len:
         return text
 
-    # Find last space before max_len
     truncated = text[:max_len].rsplit(" ", 1)[0]
     return truncated + "..." if truncated else text[:max_len] + "..."
 
 
 def format_nlp_hints_for_extraction(analysis: CategorizationAnalysisResult) -> str:
-    """Format NLP analysis as concise hints for CFP extraction.
-
-    Focuses on actionable categories with max 5 samples each.
-    De-emphasizes noisy categories (money, other_numbers).
-    """
     if not any(sentences for sentences in analysis.values()):
         return ""
 
@@ -386,7 +370,6 @@ def format_nlp_hints_for_extraction(analysis: CategorizationAnalysisResult) -> s
     for category, sentences in priority_categories:
         if sentences:
             sample = sentences[:MAX_HINT_ITEMS]
-            # Use smart truncation for each sample
             truncated_samples = [smart_truncate(s) for s in sample[:3]]
             sections.append(f"{category} ({len(sentences)}): {', '.join(truncated_samples)}")
 

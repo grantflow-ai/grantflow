@@ -28,27 +28,23 @@ class ResearchObjective(TypedDict):
 
 
 class OrganizationNamespace(TypedDict):
-    """Organization identification data stored in CFP analysis."""
     id: str
     full_name: str
     abbreviation: str
 
 
 class CFPContentSection(TypedDict):
-    """Hierarchical content section from CFP extraction."""
     title: str
     subtitles: list[str]
 
 
 class CFPAnalysisRequirementWithQuote(TypedDict):
-    """Requirement extracted from CFP with source quote."""
     requirement: str
     quote_from_source: str
     category: str
 
 
 class CFPConstraint(TypedDict):
-    """Length or formatting constraint from CFP."""
     constraint_type: str
     constraint_value: str
     source_quote: str
@@ -102,39 +98,30 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
 
 
 class CFPAnalysisCategory(TypedDict):
-    """Requirement category from CFP analysis."""
     name: str
     count: int
     examples: list[str]
 
 
 class CFPAnalysisConstraint(TypedDict):
-    """Length or formatting constraint from CFP."""
-    type: str  # word_limit, page_limit, char_limit, format
+    type: str  
     value: str
     section: NotRequired[str | None]
 
 
 class CFPAnalysisMetadata(TypedDict):
-    """Metadata about the CFP analysis process."""
     total_sections: int
     total_requirements: int
     source_count: int
 
 
 class CFPAnalysisData(TypedDict):
-    """Requirements analysis from CFP extraction."""
     categories: list[CFPAnalysisCategory]
     constraints: list[CFPAnalysisConstraint]
     metadata: CFPAnalysisMetadata
 
 
 class CFPAnalysis(TypedDict):
-    """Complete CFP analysis result with content and metadata.
-
-    This is the unified CFP analysis output combining organization identification,
-    content extraction, and requirements analysis into a single structure.
-    """
     subject: str
     content: list[CFPContentSection]
     deadline: str | None

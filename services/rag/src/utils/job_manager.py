@@ -464,7 +464,6 @@ class JobManager[DTOType]:
         return None
 
     async def clear_checkpoint_data(self) -> None:
-        """Clear checkpoint data from current job for rollback on failure."""
         if not self.current_job:
             return
 

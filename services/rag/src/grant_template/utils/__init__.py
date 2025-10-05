@@ -1,4 +1,3 @@
-"""Utilities specific to grant template processing."""
 
 from typing import TypedDict
 
@@ -14,7 +13,6 @@ from services.rag.src.utils.text_processing import sanitize_text_content
 
 
 class RagSourceData(TypedDict):
-    """Data structure for RAG source with content and analysis."""
 
     source_id: str
     source_type: str
@@ -63,34 +61,22 @@ def detect_cycle(
 
 
 def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
-    """
-    Format RAG sources data into a structured prompt format.
-
-    Args:
-        rag_sources: List of RAG source data with content and analysis
-
-    Returns:
-        Formatted string suitable for prompt inclusion
-    """
     formatted_sources = []
 
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
-        # Add NLP analysis section
         nlp_analysis = source["nlp_analysis"]
         formatted_nlp = format_nlp_hints_for_extraction(nlp_analysis)
         if formatted_nlp:
             source_section += f"#### NLP Hints:\n{formatted_nlp}\n\n"
 
-        # Add sanitized full content
         sanitized_content = sanitize_text_content(source["text_content"])
         source_section += "#### Full Content:\n"
         source_section += (
             f"{sanitized_content[:MAX_SOURCE_SIZE]}{'...' if len(sanitized_content) > MAX_SOURCE_SIZE else ''}\n\n"
         )
 
-        # Add key chunks
         source_section += "#### Key Chunks:\n"
         for j, chunk in enumerate(source["chunks"][:NUM_CHUNKS]):
             sanitized_chunk = sanitize_text_content(chunk)
@@ -104,16 +90,6 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
 
 def validate_cfp_extraction(response: ExtractedCFPData) -> None:
-    """
-    Validate extracted CFP data and raise appropriate errors if invalid.
-
-    Args:
-        response: Extracted CFP data to validate
-
-    Raises:
-        InsufficientContextError: If CFP content is insufficient with recovery instructions
-        ValidationError: If no content was extracted without a specific error message
-    """
     if not response["content"]:
         if error := response.get("error"):
             raise InsufficientContextError(

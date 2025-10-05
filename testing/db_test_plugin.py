@@ -169,7 +169,7 @@ async def cleanup_orphaned_test_databases(connection_string: str) -> None:
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
     base_connection_string = (
-        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql+asyncpg://local:local@localhost:5432/local"
+        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql+asyncpg://local:local@localhost:5432"
     )
 
     process_id = os.getpid()

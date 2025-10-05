@@ -1,4 +1,3 @@
-"""Organization identification for CFP documents."""
 
 import re
 import time
@@ -27,7 +26,6 @@ ORG_CACHE_TTL: Final[int] = 3600
 
 
 class OrganizationMatchResult(TypedDict):
-    """Result of organization matching attempt."""
 
     organization_id: str | None
     confidence: float
@@ -36,25 +34,18 @@ class OrganizationMatchResult(TypedDict):
 
 
 async def get_all_organizations(session: AsyncSession) -> list[GrantingInstitution]:
-    """Retrieve all granting institutions from database with caching.
-
-    Cache expires after ORG_CACHE_TTL seconds (default 3600 = 1 hour).
-    """
     cache_key = "all_orgs"
     current_time = time.time()
 
-    # Check cache
     if cache_key in _org_cache:
         cached_orgs, cached_time = _org_cache[cache_key]
         if current_time - cached_time < ORG_CACHE_TTL:
             logger.debug("Using cached organizations", count=len(cached_orgs))
             return cached_orgs
 
-    # Fetch from database
     result = await session.execute(select(GrantingInstitution))
     orgs = list(result.scalars().all())
 
-    # Update cache
     _org_cache[cache_key] = (orgs, current_time)
     logger.debug("Cached organizations", count=len(orgs))
 
@@ -65,18 +56,6 @@ def fuzzy_match_organizations(
     cfp_text: str,
     organizations: list[GrantingInstitution],
 ) -> OrganizationMatchResult:
-    """Fast regex/fuzzy matching for organization identification.
-
-    Searches CFP text for exact/fuzzy matches using regex patterns.
-    Scores matches by frequency and position (header/footer weighted higher).
-
-    Args:
-        cfp_text: Full CFP text content
-        organizations: List of GrantingInstitution objects from database
-
-    Returns:
-        OrganizationMatchResult with confidence score (0.0-1.0)
-    """
     if not cfp_text or not organizations:
         return OrganizationMatchResult(
             organization_id=None,
@@ -84,7 +63,6 @@ def fuzzy_match_organizations(
             method="none",
         )
 
-    # Split text into sections for positional weighting
     text_length = len(cfp_text)
     header_end = min(HEADER_FOOTER_SIZE, text_length // 2)
     footer_start = max(text_length - HEADER_FOOTER_SIZE, text_length // 2)
@@ -100,40 +78,32 @@ def fuzzy_match_organizations(
         score = 0.0
         matched_text = None
 
-        # Check full name (case-insensitive)
         full_name_lower = org.full_name.lower()
         full_name_pattern = re.compile(r"\b" + re.escape(full_name_lower) + r"\b")
 
-        # Count occurrences
         full_text_count = len(full_name_pattern.findall(full_text_lower))
         header_count = len(full_name_pattern.findall(header_text))
         footer_count = len(full_name_pattern.findall(footer_text))
 
         if full_text_count > 0:
-            # Base score from frequency (capped at MAX_MENTION_COUNT)
-            # Use exclusive body count to avoid double-counting header/footer mentions
             body_count = max(0, full_text_count - header_count - footer_count)
             frequency_score = min(body_count + header_count + footer_count, MAX_MENTION_COUNT) / MAX_MENTION_COUNT
-            # Positional bonus for header/footer (exclusive weighting)
             position_bonus = (header_count + footer_count) * POSITION_BONUS_WEIGHT
             score = frequency_score + position_bonus
             matched_text = org.full_name
 
-        # Check abbreviation if available
         if org.abbreviation:
             abbr_lower = org.abbreviation.lower()
-            # Match abbreviation with word boundaries, parentheses, possessive, hyphenated
-            # Examples: "NIH", "(NIH)", "NIH's", "NIH-funded"
             abbr_pattern = re.compile(
                 r"\b"
                 + re.escape(abbr_lower)
-                + r"'?s?\b"  # Possessive: NIH, NIH's
+                + r"'?s?\b"  
                 + r"|\b"
                 + re.escape(abbr_lower)
-                + r"-\w+"  # Hyphenated: NIH-funded
+                + r"-\w+"  
                 + r"|\("
                 + re.escape(abbr_lower)
-                + r"\)"  # Parenthetical: (NIH)
+                + r"\)"  
             )
 
             abbr_count = len(abbr_pattern.findall(full_text_lower))
@@ -141,18 +111,15 @@ def fuzzy_match_organizations(
             abbr_footer = len(abbr_pattern.findall(footer_text))
 
             if abbr_count > 0:
-                # Use exclusive body count to avoid double-counting
                 abbr_body = max(0, abbr_count - abbr_header - abbr_footer)
                 abbr_freq_score = min(abbr_body + abbr_header + abbr_footer, MAX_MENTION_COUNT) / MAX_MENTION_COUNT
                 abbr_bonus = (abbr_header + abbr_footer) * POSITION_BONUS_WEIGHT
                 abbr_total = abbr_freq_score + abbr_bonus
 
-                # Use abbreviation score if higher
                 if abbr_total > score:
                     score = abbr_total
                     matched_text = org.abbreviation
 
-        # Normalize score to 0-1 range
         normalized_score = min(score / MAX_NORMALIZED_SCORE, 1.0)
 
         if normalized_score > best_score:
@@ -185,7 +152,6 @@ Identify the granting organization. Return org_id from mapping or null if uncert
 
 
 class LLMOrgResponse(TypedDict):
-    """LLM response for organization identification."""
 
     org_id: str | None
     confidence: float
@@ -197,16 +163,6 @@ async def llm_identify_organization(
     organization_mapping: dict[str, dict[str, str]],
     trace_id: str,
 ) -> OrganizationMatchResult:
-    """LLM fallback for organization identification using Flash model.
-
-    Args:
-        cfp_text: Full CFP text content
-        organization_mapping: Mapping of org IDs to names/abbreviations
-        trace_id: Trace ID for logging
-
-    Returns:
-        OrganizationMatchResult with LLM-determined confidence
-    """
     if not cfp_text or not organization_mapping:
         return OrganizationMatchResult(
             organization_id=None,
@@ -216,7 +172,6 @@ async def llm_identify_organization(
 
     cfp_preview = cfp_text[:PREVIEW_LENGTH]
 
-    # Format organization mapping for prompt
     org_list = []
     for org_id, org_data in organization_mapping.items():
         full_name = org_data.get("full_name", "")
@@ -286,26 +241,10 @@ async def identify_granting_institution(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> tuple[str | None, float, str]:
-    """Identify granting institution using hybrid approach.
-
-    Strategy:
-    1. Try fast regex/NLP matching first
-    2. If confidence >= MIN_CONFIDENCE (0.85), return immediately
-    3. Otherwise fallback to LLM identification
-
-    Args:
-        cfp_text: Full CFP text content
-        session_maker: Database session factory
-        trace_id: Trace ID for logging
-
-    Returns:
-        Tuple of (org_id, confidence_score, method_used)
-    """
     if not cfp_text:
         logger.warning("Empty CFP text provided for organization identification", trace_id=trace_id)
         return (None, 0.0, "none")
 
-    # Step 1: Get all organizations from database
     async with session_maker() as session:
         organizations = await get_all_organizations(session)
 
@@ -313,7 +252,6 @@ async def identify_granting_institution(
         logger.warning("No organizations found in database", trace_id=trace_id)
         return (None, 0.0, "none")
 
-    # Step 2: Try fast regex matching
     regex_match = fuzzy_match_organizations(cfp_text, organizations)
 
     logger.info(
@@ -324,12 +262,9 @@ async def identify_granting_institution(
         trace_id=trace_id,
     )
 
-    # If high confidence, return immediately
     if regex_match["confidence"] >= MIN_CONFIDENCE:
         return regex_match["organization_id"], regex_match["confidence"], "regex"
 
-    # Step 3: Fallback to LLM identification
-    # Build organization mapping
     organization_mapping = {
         str(org.id): {
             "full_name": org.full_name,
@@ -340,7 +275,6 @@ async def identify_granting_institution(
 
     llm_match = await llm_identify_organization(cfp_text, organization_mapping, trace_id)
 
-    # Use LLM result if confidence is higher than regex
     if llm_match["confidence"] > regex_match["confidence"]:
         logger.info(
             "Using LLM identification result",
@@ -350,5 +284,4 @@ async def identify_granting_institution(
         )
         return llm_match["organization_id"], llm_match["confidence"], "llm"
 
-    # Otherwise use regex result (even if low confidence)
     return regex_match["organization_id"], regex_match["confidence"], "regex"

@@ -53,7 +53,6 @@ DEFAULT_METADATA_WEIGHTS: Final[MetadataWeights] = MetadataWeights(
 
 
 class MetadataFilterParams(TypedDict, total=False):
-    """Parameters for pre-filtering documents by metadata before vector search."""
 
     entity_types: list[str]
     categories: list[str]
@@ -144,7 +143,6 @@ async def retrieve_vectors_for_embedding(
     similarity_conditions = [TextVector.embedding.cosine_distance(embedding) <= threshold for embedding in embeddings]
 
     async with session_maker() as session:
-        # Count total vectors before metadata filtering (for metrics)
         total_vectors_count = None
         if metadata_filter:
             base_query = (
@@ -172,13 +170,11 @@ async def retrieve_vectors_for_embedding(
             )
         )
 
-        # Apply metadata pre-filtering if specified
         if metadata_filter:
             metadata_condition = build_metadata_filter(RagSource.document_metadata, **metadata_filter)  # type: ignore[arg-type]
             if metadata_condition is not None:
                 query = query.where(metadata_condition)
 
-        # Apply vector similarity filtering
         query = (
             query.where(or_(*similarity_conditions))
             .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
@@ -187,7 +183,6 @@ async def retrieve_vectors_for_embedding(
 
         vectors = list(await session.scalars(query))
 
-        # Log metadata filtering metrics
         if metadata_filter and total_vectors_count is not None:
             filtered_count = len(vectors)
             reduction_pct = (
@@ -207,8 +202,6 @@ async def retrieve_vectors_for_embedding(
     if search_queries and vectors:
         scored_vectors = []
         for vector in vectors:
-            # Use sentence_transformers cosine similarity utility
-            # Convert numpy array to list for compatibility with util.cos_sim
             cosine_similarities = [float(util.cos_sim(vector.embedding, embedding).item()) for embedding in embeddings]
             max_cosine_similarity = max(cosine_similarities) if cosine_similarities else 0.0
 

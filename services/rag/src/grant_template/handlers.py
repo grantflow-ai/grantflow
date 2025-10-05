@@ -34,13 +34,8 @@ async def handle_cfp_analysis_stage(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> CFPAnalysisStageDTO:
-    """Handle comprehensive CFP analysis stage.
-
-    Combines extraction, organization identification, and analysis into single operation.
-    """
     await job_manager.ensure_not_cancelled()
 
-    # Verify RAG sources are indexed
     await verify_rag_sources_indexed(
         parent_id=grant_template.id,
         session_maker=session_maker,
@@ -50,7 +45,6 @@ async def handle_cfp_analysis_stage(
 
     await job_manager.ensure_not_cancelled()
 
-    # Perform comprehensive CFP analysis
     cfp_analysis = await handle_cfp_analysis(
         grant_template=grant_template,
         session_maker=session_maker,
@@ -58,7 +52,6 @@ async def handle_cfp_analysis_stage(
         trace_id=trace_id,
     )
 
-    # Extract organization namespace for notifications
     organization = cfp_analysis.get("organization")
     org_name = organization["full_name"] if organization else "Unknown"
 
@@ -82,7 +75,6 @@ async def handle_cfp_analysis_stage(
         },
     )
 
-    # Retrieve organization guidelines once for reuse across stages
     organization_guidelines = ""
     if organization:
         rag_results = await retrieve_documents(
@@ -115,10 +107,8 @@ async def handle_section_extraction_stage(
     job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> SectionExtractionStageDTO:
-    """Handle section extraction stage using CFP analysis results."""
     await job_manager.ensure_not_cancelled()
 
-    # Process sections using existing extract_sections handler
     extracted_sections = await handle_extract_sections(
         cfp_content=cfp_analysis_result["cfp_analysis"]["content"],
         trace_id=trace_id,
@@ -151,10 +141,8 @@ async def handle_generate_metadata_stage(
     job_manager: JobManager[StageDTO],
     trace_id: str,
 ) -> list[GrantElement | GrantLongFormSection]:
-    """Handle metadata generation stage."""
     await job_manager.ensure_not_cancelled()
 
-    # Format CFP content for prompt
     cfp_content_str = "\n\n".join([
         f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
         for section in section_extraction_result["cfp_analysis"]["content"]
@@ -192,12 +180,10 @@ async def handle_save_grant_template(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> GrantTemplate:
-    """Save grant template with CFP analysis and generated sections."""
     await job_manager.ensure_not_cancelled()
 
     try:
         async with session_maker() as session, session.begin():
-            # Extract organization and submission date from extracted_cfp
             organization = extracted_cfp["organization"]
             granting_institution_id = organization["id"] if organization else None
 
@@ -208,7 +194,6 @@ async def handle_save_grant_template(
                 except ValueError:
                     logger.warning("Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id})
 
-            # Update grant template with all data
             await session.execute(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template.id)
@@ -228,7 +213,6 @@ async def handle_save_grant_template(
                 trace_id=trace_id,
             )
 
-        # Mark job as completed and send final notification
         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
         await job_manager.add_notification(
             event=NotificationEvents.GRANT_TEMPLATE_CREATED,
