@@ -116,7 +116,7 @@ def _evaluate_constraints(cfp_data: CFPAnalysisData) -> float:
     constraints = cfp_data.get("constraints", [])
 
     if not constraints:
-        return 0.5  
+        return 0.5
 
     score = 0.0
 
@@ -135,7 +135,7 @@ def _evaluate_constraints(cfp_data: CFPAnalysisData) -> float:
             if any(char.isdigit() for char in value):
                 score += 0.3
             else:
-                score += 0.1  
+                score += 0.1
 
     return min(1.0, score / len(constraints)) if constraints else 0.5
 

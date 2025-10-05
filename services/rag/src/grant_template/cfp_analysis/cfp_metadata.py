@@ -18,13 +18,13 @@ CFP_METADATA_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Sources
     <rag_sources>${rag_sources}</rag_sources>
-    <organization_mapping>${organization_mapping}</organization_mapping>
+    <organizations>${organizations}</organizations>
 
     ## Task
 
     Extract precise CFP metadata:
 
-    1. **Organization Identification**: Return the organization ID from the mapping
+    1. **Organization Identification**: Return the organization ID correlating with the identified organization from the organizations array, if any
     2. **Deadline Extraction**: Include submission deadline if found (YYYY-MM-DD format)
     3. **Subject Analysis**: Summarize the funding opportunity concisely using exact terminology
     """,

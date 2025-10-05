@@ -345,8 +345,8 @@ def validate_dependencies_word_counts(
             )
 
     total_words = sum(section["max_words"] for section in response["sections"])
-    min_total_words = 500  
-    max_total_words = 50000  
+    min_total_words = 500
+    max_total_words = 50000
 
     if total_words < min_total_words:
         raise ValidationError(
@@ -774,7 +774,7 @@ def merge_section_with_metadata(
             id=section["id"],
             order=section["order"],
             title=section["title"],
-            evidence="",  
+            evidence="",
             parent_id=section.get("parent"),
             needs_applicant_writing=bool(section.get("needs_writing", False)),
         )
@@ -783,7 +783,7 @@ def merge_section_with_metadata(
         id=metadata["id"],
         order=section["order"],
         title=section["title"],
-        evidence="",  
+        evidence="",
         parent_id=section.get("parent"),
         needs_applicant_writing=bool(section.get("needs_writing", True)),
         depends_on=metadata["depends_on"],

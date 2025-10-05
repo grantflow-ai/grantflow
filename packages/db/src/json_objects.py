@@ -104,7 +104,7 @@ class CFPAnalysisCategory(TypedDict):
 
 
 class CFPAnalysisConstraint(TypedDict):
-    type: str  
+    type: str
     value: str
     section: NotRequired[str | None]
 
@@ -125,6 +125,5 @@ class CFPAnalysis(TypedDict):
     subject: str
     content: list[CFPContentSection]
     deadline: str | None
-    org_id: str | None
     analysis_metadata: CFPAnalysisData
     organization: NotRequired[OrganizationNamespace | None]

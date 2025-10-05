@@ -114,7 +114,7 @@ async def test_extract_sections_constraint_matching_nih(
             validate_constraint_match(
                 section=section,
                 expected_constraint=expected_constraint,
-                tolerance=0.15,  
+                tolerance=0.15,
             )
 
         assert section["length_limit"] > 0, f"Invalid length_limit for {section_title}: {section['length_limit']}"

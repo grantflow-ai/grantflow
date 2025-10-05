@@ -5,7 +5,7 @@ from uuid import uuid4
 from packages.db.src.tables import GrantingInstitution
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.grant_template.identify_organization import (
+from services.rag.src.grant_template.cfp_analysis.identify_organization import (
     MIN_CONFIDENCE,
     OrganizationMatchResult,
     fuzzy_match_organizations,

@@ -1,5 +1,6 @@
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
 
+from packages.db.src.json_objects import CFPAnalysisCategory
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
@@ -51,7 +52,7 @@ cfp_categories_schema = {
 
 
 class CFPCategoriesResult(TypedDict):
-    categories: list[dict[str, Any]]
+    categories: list[CFPAnalysisCategory]
 
 
 def validate_cfp_categories(response: CFPCategoriesResult) -> None:

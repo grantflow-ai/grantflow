@@ -356,7 +356,7 @@ async def test_categorize_real_cfp_nih_par_25_450() -> None:
     assert "orders" in formatted_hints
     assert "writing_related" in formatted_hints
     assert "evaluation_criteria" in formatted_hints
-    assert "money" not in formatted_hints  
+    assert "money" not in formatted_hints
 
 
 async def test_categorize_real_cfp_mra() -> None:
@@ -392,7 +392,7 @@ async def test_categorize_real_cfp_mra() -> None:
     assert "orders" in formatted_hints
     assert "writing_related" in formatted_hints
     assert "evaluation_criteria" in formatted_hints
-    assert "money" not in formatted_hints  
+    assert "money" not in formatted_hints
 
 
 async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
@@ -422,4 +422,4 @@ async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
     )
 
     assert "orders" in formatted_hints or "writing_related" in formatted_hints
-    assert "money" not in formatted_hints  
+    assert "money" not in formatted_hints

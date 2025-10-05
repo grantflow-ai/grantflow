@@ -1,5 +1,6 @@
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
 
+from packages.db.src.json_objects import CFPAnalysisConstraint
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
@@ -61,7 +62,7 @@ cfp_constraints_schema = {
 
 
 class CFPConstraintsResult(TypedDict):
-    constraints: list[dict[str, Any]]
+    constraints: list[CFPAnalysisConstraint]
 
 
 def validate_cfp_constraints(response: CFPConstraintsResult) -> None:
