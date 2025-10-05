@@ -461,8 +461,8 @@ importers:
         specifier: ^1.11.0
         version: 1.11.0
       loglayer:
-        specifier: ^6.7.1
-        version: 6.7.1
+        specifier: ^6.7.2
+        version: 6.7.2
       lucide-react:
         specifier: ^0.544.0
         version: 0.544.0(react@19.2.0)
@@ -4671,8 +4671,8 @@ packages:
     resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
     engines: {node: ^4.5.0 || >= 5.9}
 
-  baseline-browser-mapping@2.8.11:
-    resolution: {integrity: sha512-i+sRXGhz4+QW8aACZ3+r1GAKMt0wlFpeA8M5rOQd0HEYw9zhDrlx9Wc8uQ0IdXakjJRthzglEwfB/yqIjO6iDg==}
+  baseline-browser-mapping@2.8.12:
+    resolution: {integrity: sha512-vAPMQdnyKCBtkmQA6FMCBvU9qFIppS3nzyXnEM+Lo2IAhG4Mpjv9cCxMudhgV3YdNNJv6TNqXy97dfRVL2LmaQ==}
     hasBin: true
 
   better-opn@3.0.2:
@@ -6544,8 +6544,8 @@ packages:
     resolution: {integrity: sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg==}
     engines: {node: '>=18'}
 
-  loglayer@6.7.1:
-    resolution: {integrity: sha512-DebfZ71899idwfbUQ50CiuVbdyA9pzv8fjs+/VblL5ili56x3zD/0OtUcwVjoBQSBNPEbAglsJMk2tKqMIZ4og==}
+  loglayer@6.7.2:
+    resolution: {integrity: sha512-KMO8DRs3VagTkNmexZNi9IQqFxvNJ6C2J84kDarwj6u8TyEGtRqh/+21FMQ2VIV2YFu1P96OrRglYZERSOXjBg==}
     engines: {node: '>=18'}
 
   long@5.3.2:
@@ -13191,7 +13191,7 @@ snapshots:
 
   base64id@2.0.0: {}
 
-  baseline-browser-mapping@2.8.11: {}
+  baseline-browser-mapping@2.8.12: {}
 
   better-opn@3.0.2:
     dependencies:
@@ -13230,7 +13230,7 @@ snapshots:
 
   browserslist@4.26.3:
     dependencies:
-      baseline-browser-mapping: 2.8.11
+      baseline-browser-mapping: 2.8.12
       caniuse-lite: 1.0.30001747
       electron-to-chromium: 1.5.230
       node-releases: 2.0.23
@@ -15205,7 +15205,7 @@ snapshots:
       is-unicode-supported: 2.1.0
       yoctocolors: 2.1.2
 
-  loglayer@6.7.1:
+  loglayer@6.7.2:
     dependencies:
       '@loglayer/context-manager': 1.1.2
       '@loglayer/plugin': 2.1.2

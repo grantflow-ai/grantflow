@@ -40,7 +40,6 @@ export default eslintTS.config(
 	reactPerfPlugin.configs.flat.recommended,
 	eslintPluginJsxA11y.flatConfigs.recommended,
 	...eslintPluginStorybook.configs["flat/recommended"],
-	...compat.extends("plugin:react-hooks/recommended"),
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	eslintPluginImportX.flatConfigs.recommended,
 	eslintPluginImportX.flatConfigs.typescript,
