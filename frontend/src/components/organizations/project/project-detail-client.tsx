@@ -83,11 +83,7 @@ export function ProjectDetailClient() {
 		}
 	}, [selectedOrganizationId, getProjects]);
 
-	const {
-		data: applicationsData,
-		isLoading: isApplicationsLoading,
-		isValidating: isApplicationsValidating,
-	} = useSWR(
+	const { data: applicationsData, isLoading: isApplicationsLoading } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
 			: null,
@@ -384,7 +380,7 @@ export function ProjectDetailClient() {
 							applications={applications}
 							downloadingApplications={downloadingApplications}
 							isCreatingApplication={isCreatingApplication}
-							isLoading={isApplicationsLoading }
+							isLoading={isApplicationsLoading}
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
 							onDownload={handleDownloadApplication}
