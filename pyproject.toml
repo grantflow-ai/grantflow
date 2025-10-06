@@ -239,7 +239,7 @@ module = [
   "*.tests.*",
   "tests.*",
 ]
-disable_error_code = ["misc"]
+disable_error_code = [ "misc" ]
 
 [tool.uv.workspace]
 members = [
@@ -250,7 +250,6 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
-  "functions",
 ]
 
 [tool.uv.sources]
