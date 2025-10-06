@@ -30,7 +30,7 @@ const handleResetFormInputs = async () => {
 export function ResearchDeepDiveStep() {
 	return (
 		<div
-			className="flex flex-col h-full lg:px-6 lg:pt-6 md:px-4 md:pt-4 px-3 pt-3 bg-preview-bg space-y-6 overflow-y-auto"
+			className="flex flex-col h-full lg:px-6 2xl:pt-6 md:px-4 px-3 bg-preview-bg space-y-4 2xl:space-y-6 overflow-y-auto"
 			data-testid="research-deep-dive-step"
 		>
 			<ResearchDeepDiveHeader onResetFormInputs={handleResetFormInputs} />
@@ -46,7 +46,7 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 
 	return (
-		<div className="flex items-center justify-between mt-5 px-17 gap-4">
+		<div className="flex items-center justify-between 2xl:mt-5 px-17 gap-4">
 			<div className="flex flex-col">
 				<h2
 					className="text-app-black text-3xl font-medium font-heading leading-loose"

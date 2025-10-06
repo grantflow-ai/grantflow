@@ -77,7 +77,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 					</p>
 				</div>
 
-				<div className="space-y-4">
+				<div className="space-y-2 2xl:space-y-4">
 					{!showObjectiveForm && (
 						<>
 							<AppButton
@@ -105,7 +105,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 
 					{showObjectiveForm && (
 						<ObjectiveForm
-							className="px-3 pb-3"
+							className="px-3 pb-8"
 							objectiveNumber={objectives.length + 1}
 							onSaveAction={handleSaveObjective}
 						/>

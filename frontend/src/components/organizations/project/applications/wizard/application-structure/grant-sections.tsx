@@ -162,7 +162,7 @@ export function SortableSection({
 			>
 				{/* biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 				<div
-					className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+					className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-3 2xl:py-4"}`}
 					data-testid="section-container"
 					onMouseEnter={handleMouseEnter}
 				>
@@ -226,8 +226,8 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 
 	return (
 		<div className="px-6 py-3">
-			<div className="space-y-5">
-				<div className="space-y-3">
+			<div className="space-y-4 2xl:space-y-5">
+				<div className="space-y-2 2xl:space-y-3">
 					<h3
 						className="font-heading leading-snug text-base font-semibold text-app-black"
 						data-testid={`edit-form-header-${section.id}`}
@@ -279,24 +279,24 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 					<p className="text-app-gray-600 text-base font-normal leading-tight">
 						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
-				</div>
 
-				<div className="gap-4 h-12">
-					<div className="w-64">
-						<InputField
-							label="Max words/characters"
-							onChange={(e) => {
-								setFormData({
-									...formData,
-									max_words: Number.parseInt(e.target.value, 10) || 0,
-								});
-							}}
-							placeholder="3,000"
-							showCountTypeTag
-							testId={`max-count-${section.id}`}
-							type="number"
-							value={formData.max_words}
-						/>
+					<div className="gap-4 h-12 2xl:mt-4">
+						<div className="w-64">
+							<InputField
+								label="Max words/characters"
+								onChange={(e) => {
+									setFormData({
+										...formData,
+										max_words: Number.parseInt(e.target.value, 10) || 0,
+									});
+								}}
+								placeholder="3,000"
+								showCountTypeTag
+								testId={`max-count-${section.id}`}
+								type="number"
+								value={formData.max_words}
+							/>
+						</div>
 					</div>
 				</div>
 

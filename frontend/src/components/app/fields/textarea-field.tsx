@@ -24,6 +24,7 @@ const formatCount = (count: number) => {
 
 export default function AppTextArea({
 	className,
+	containerClass,
 	countType = "chars",
 	errorMessage,
 	label,
@@ -34,6 +35,7 @@ export default function AppTextArea({
 	...props
 }: {
 	className?: string;
+	containerClass?: string;
 	countType?: "chars" | "words";
 	errorMessage?: null | React.ReactNode | string;
 	label?: string;
@@ -52,7 +54,7 @@ export default function AppTextArea({
 	const textColorClass = getTextColorClass(hasError, props.disabled);
 
 	return (
-		<div className="w-full">
+		<div className={cn("w-full", containerClass)}>
 			<div className="flex items-center justify-between">
 				{label && (
 					<Label

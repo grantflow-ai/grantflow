@@ -426,7 +426,7 @@ describe("SortableSection", () => {
 		render(<SortableSection {...defaultProps} isSubsection={false} section={section} />);
 
 		const container = screen.getByTestId("section-container");
-		expect(container).toHaveClass("px-3", "py-4");
+		expect(container).toHaveClass("px-3", "py-3");
 		expect(container).not.toHaveClass("ml-[6.875rem]");
 	});
 

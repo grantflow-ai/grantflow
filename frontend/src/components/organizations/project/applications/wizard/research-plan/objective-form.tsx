@@ -215,7 +215,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 	};
 
 	return (
-		<div className="flex flex-col space-y-3">
+		<div className="flex flex-col space-y-2 2xl:space-y-3">
 			<div className={cn("space-y-3", className)} data-testid="objective-form">
 				<h2
 					className="font-semibold font-heading text-app-black leading-snug"
@@ -225,7 +225,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				</h2>
 
 				<AppTextArea
-					className="min-h-32"
+					className="min-h-24 2xl:min-h-32"
 					errorMessage={errors.title}
 					id="objective-title-input"
 					label="Objective title"
@@ -238,7 +238,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				/>
 
 				<AppTextArea
-					className="min-h-52"
+					className="min-h-32 2xl:min-h-52"
 					errorMessage={errors.description}
 					id="objective-description-input"
 					label="Objective description"
@@ -260,7 +260,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					return (
 						<div className="space-y-3" key={task.id}>
 							<AppTextArea
-								className="min-h-32"
+								className="min-h-24 2xl:min-h-32"
 								errorMessage={task.title.trim() ? undefined : errors.tasks?.[task.id]}
 								id={`task-title-${index}`}
 								label="Task title"
@@ -281,7 +281,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 								)}
 							>
 								<AppTextArea
-									className="min-h-52"
+									className="min-h-32 2xl:min-h-52"
 									id={`task-description-${index}`}
 									label="Task description"
 									onChange={(e) => {
