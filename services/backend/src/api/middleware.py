@@ -97,6 +97,10 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 has_auth_header=bool(auth_header),
             )
 
+            if get_env("PUBSUB_EMULATOR_HOST"):
+                # bypass for local pubsub emulator ~keep
+                return AuthenticationResult(user=None, auth=None)
+
             if not auth_header or not auth_header.startswith("Bearer "):
                 logger.warning(
                     "Missing or invalid Bearer token for webhook",
