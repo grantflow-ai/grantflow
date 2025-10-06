@@ -5,7 +5,7 @@ from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.dto import GroundingMetrics
-from services.rag.tests.utils.rouge_utils import calculate_rouge_l, calculate_rouge_n
+from services.rag.src.utils.rouge_utils import calculate_rouge_l, calculate_rouge_n
 
 CITATION_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\[[^\]]+\]"),
