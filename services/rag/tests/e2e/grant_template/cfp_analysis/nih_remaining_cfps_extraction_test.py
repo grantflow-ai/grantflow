@@ -96,11 +96,11 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
     assert cfp_analysis is not None, "CFP analysis should return data"
     assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
-    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("sections"), "CFP analysis should contain content sections"
     assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
     subject = cfp_analysis["subject"]
-    content_sections = cfp_analysis["content"]
+    content_sections = cfp_analysis["sections"]
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"
@@ -258,11 +258,11 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
     assert cfp_analysis is not None, "CFP analysis should return data"
     assert cfp_analysis.get("subject"), "CFP analysis should contain subject"
-    assert cfp_analysis.get("content"), "CFP analysis should contain content sections"
+    assert cfp_analysis.get("sections"), "CFP analysis should contain content sections"
     assert cfp_analysis.get("organization"), "CFP analysis should contain organization"
 
     subject = cfp_analysis["subject"]
-    content_sections = cfp_analysis["content"]
+    content_sections = cfp_analysis["sections"]
 
     assert isinstance(subject, str), "Subject should be string"
     assert len(subject) > 10, f"Subject too short: {len(subject)} chars"

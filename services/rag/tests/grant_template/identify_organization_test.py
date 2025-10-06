@@ -1,4 +1,3 @@
-
 from typing import Any
 from uuid import uuid4
 
@@ -103,10 +102,13 @@ def test_fuzzy_match_header_weighting() -> None:
 
     """ + ("Some filler text. " * 100)
 
-    cfp_body = ("Some filler text. " * 50) + """
+    cfp_body = (
+        ("Some filler text. " * 50)
+        + """
     Melanoma Research Alliance
     MRA Grant Program
     """
+    )
 
     result_header: OrganizationMatchResult = fuzzy_match_organizations(cfp_header, sample_organizations)
     result_body: OrganizationMatchResult = fuzzy_match_organizations(cfp_body, sample_organizations)

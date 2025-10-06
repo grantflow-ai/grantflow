@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING
-
-from packages.db.src.json_objects import CFPAnalysisData
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import CFPAnalysisQualityMetrics
 
 
-def evaluate_cfp_analysis_quality(cfp_data: CFPAnalysisData) -> "CFPAnalysisQualityMetrics":
+def evaluate_cfp_analysis_quality(cfp_data: dict[str, Any]) -> "CFPAnalysisQualityMetrics":
     if not cfp_data:
         return {
             "overall": 0.0,
@@ -32,7 +30,7 @@ def evaluate_cfp_analysis_quality(cfp_data: CFPAnalysisData) -> "CFPAnalysisQual
     }
 
 
-def _evaluate_category_clarity(cfp_data: CFPAnalysisData) -> float:
+def _evaluate_category_clarity(cfp_data: dict[str, Any]) -> float:
     categories = cfp_data.get("categories", [])
 
     if not categories:
@@ -58,7 +56,7 @@ def _evaluate_category_clarity(cfp_data: CFPAnalysisData) -> float:
     return min(1.0, score / len(categories)) if categories else 0.0
 
 
-def _evaluate_category_examples(cfp_data: CFPAnalysisData) -> float:
+def _evaluate_category_examples(cfp_data: dict[str, Any]) -> float:
     categories = cfp_data.get("categories", [])
 
     if not categories:
@@ -85,7 +83,7 @@ def _evaluate_category_examples(cfp_data: CFPAnalysisData) -> float:
     return min(1.0, score / len(categories)) if categories else 0.0
 
 
-def _evaluate_metadata_completeness(cfp_data: CFPAnalysisData) -> float:
+def _evaluate_metadata_completeness(cfp_data: dict[str, Any]) -> float:
     metadata = cfp_data.get("metadata", {})
 
     if not metadata:
@@ -112,7 +110,7 @@ def _evaluate_metadata_completeness(cfp_data: CFPAnalysisData) -> float:
     return min(1.0, score)
 
 
-def _evaluate_constraints(cfp_data: CFPAnalysisData) -> float:
+def _evaluate_constraints(cfp_data: dict[str, Any]) -> float:
     constraints = cfp_data.get("constraints", [])
 
     if not constraints:
@@ -140,7 +138,7 @@ def _evaluate_constraints(cfp_data: CFPAnalysisData) -> float:
     return min(1.0, score / len(constraints)) if constraints else 0.5
 
 
-def check_cfp_analysis_completeness(cfp_data: CFPAnalysisData) -> dict[str, bool]:
+def check_cfp_analysis_completeness(cfp_data: dict[str, Any]) -> dict[str, bool]:
     has_categories = bool(cfp_data.get("categories"))
     has_constraints = bool(cfp_data.get("constraints"))
     has_metadata = bool(cfp_data.get("metadata"))

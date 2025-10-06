@@ -36,8 +36,6 @@ def add_active_filter_for_joins(query: Select[Any]) -> Select[Any]:
     return query
 
 
-
-
 def metadata_has_entity_type(
     metadata_column: InstrumentedAttribute[dict[str, Any] | None],
     entity_type: str,
@@ -90,9 +88,7 @@ def build_metadata_filter(
             conditions.append(or_(*entity_conditions))
 
     if categories:
-        conditions.append(
-            metadata_has_categories(metadata_column, categories, match_mode=category_match_mode)
-        )
+        conditions.append(metadata_has_categories(metadata_column, categories, match_mode=category_match_mode))
 
     if min_quality_score is not None:
         quality_score_expr = cast(metadata_column["quality_score"].astext, DOUBLE_PRECISION)

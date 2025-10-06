@@ -19,7 +19,6 @@ CategoryKey = Literal[
 
 
 class CategorizationAnalysisResult(TypedDict):
-
     money: list[str]
     date_time: list[str]
     writing_related: list[str]

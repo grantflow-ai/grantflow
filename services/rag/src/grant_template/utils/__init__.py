@@ -1,4 +1,3 @@
-
 from typing import TypedDict
 
 from packages.shared_utils.src.dto import ExtractedCFPData
@@ -13,7 +12,6 @@ from services.rag.src.utils.text_processing import sanitize_text_content
 
 
 class RagSourceData(TypedDict):
-
     source_id: str
     source_type: str
     text_content: str

@@ -121,15 +121,12 @@ async def handle_prepare_context(
     )
 
 
-
-
 async def handle_extract_sections(
     *,
     formatted_sources: str,
     organization_guidelines: str,
     trace_id: str,
 ) -> list[CFPSection]:
-    """2-step section extraction: extract → validate."""
     logger.info("Extracting CFP sections (step 1: initial extraction)", trace_id=trace_id)
     initial_result = await extract_cfp_structure(
         formatted_sources=formatted_sources,
@@ -166,7 +163,6 @@ async def handle_enrich_sections(
     organization_guidelines: str,
     trace_id: str,
 ) -> list[CFPSection]:
-    """2-step section enrichment: enrich → validate."""
     logger.info("Enriching sections with constraints (step 1)", trace_id=trace_id)
     enriched = await enrich_sections(
         formatted_sources=formatted_sources,
@@ -185,8 +181,6 @@ async def handle_enrich_sections(
 
     logger.info("Section enrichment completed", sections_count=len(validated["sections"]), trace_id=trace_id)
     return validated["sections"]
-
-
 
 
 async def handle_cfp_analysis(
@@ -236,7 +230,7 @@ async def handle_cfp_analysis(
             task_description="Retrieve organization-specific grant application guidelines and formatting requirements",
             trace_id=trace_id,
         )
-        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+        organization["guidelines"] = organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
             rag_results="\n".join(rag_results),
             organization_full_name=organization["full_name"],
             organization_abbreviation=organization["abbreviation"],
@@ -250,7 +244,6 @@ async def handle_cfp_analysis(
 
     await job_manager.ensure_not_cancelled()
 
-    # Step 3: Extract sections with guidelines context
     logger.info("Extracting application structure", trace_id=trace_id)
     content_sections = await handle_extract_sections(
         formatted_sources=formatted_sources,
@@ -260,7 +253,6 @@ async def handle_cfp_analysis(
 
     await job_manager.ensure_not_cancelled()
 
-    # Step 4: Enrich sections with constraints and guidelines context
     logger.info("Enriching sections with constraints", trace_id=trace_id)
     enriched_sections = await handle_enrich_sections(
         formatted_sources=formatted_sources,
@@ -282,7 +274,7 @@ async def handle_cfp_analysis(
 
     return CFPAnalysis(
         subject=metadata_result["subject"],
-        content=enriched_sections,
+        sections=enriched_sections,
         deadlines=metadata_result["deadlines"],
         global_constraints=metadata_result["constraints"],
         organization=organization,
