@@ -77,16 +77,15 @@ async def handle_prepare_context(
         )
         sources = sources_result.fetchall()
 
-        chunks_result = list(
-            await session.scalars(
-                select(TextVector.rag_source_id, TextVector.chunk)
-                .where(TextVector.rag_source_id.in_(source_ids))
-                .where(TextVector.deleted_at.is_(None))
-            )
+        chunks_result = await session.execute(
+            select(TextVector.rag_source_id, TextVector.chunk)
+            .where(TextVector.rag_source_id.in_(source_ids))
+            .where(TextVector.deleted_at.is_(None))
         )
+        chunks = chunks_result.fetchall()
 
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
-        for row in chunks_result:
+        for row in chunks:
             chunk_content = row.chunk.get("content", "") if isinstance(row.chunk, dict) else str(row.chunk)
             chunks_by_source[str(row.rag_source_id)].append(chunk_content)
 

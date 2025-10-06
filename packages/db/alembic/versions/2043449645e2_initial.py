@@ -3,8 +3,9 @@ from collections.abc import Sequence
 import pgvector
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
-revision: str = "237a216a94bf"
+revision: str = "2043449645e2"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -77,8 +78,12 @@ def upgrade() -> None:  # noqa: PLR0915
             nullable=False,
         ),
         sa.Column("text_content", sa.Text(), nullable=True),
-        sa.Column("document_metadata", sa.JSON(), nullable=True),
+        sa.Column("document_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("indexing_started_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("error_type", sa.String(length=255), nullable=True),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("retry_count", sa.BigInteger(), nullable=False),
+        sa.Column("last_retry_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("parent_id", sa.UUID(), nullable=True),
         sa.Column("source_type", sa.String(length=50), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -90,7 +95,9 @@ def upgrade() -> None:  # noqa: PLR0915
     )
     op.create_index(op.f("ix_rag_sources_created_at"), "rag_sources", ["created_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_deleted_at"), "rag_sources", ["deleted_at"], unique=False)
+    op.create_index(op.f("ix_rag_sources_error_type"), "rag_sources", ["error_type"], unique=False)
     op.create_index(op.f("ix_rag_sources_indexing_status"), "rag_sources", ["indexing_status"], unique=False)
+    op.create_index(op.f("ix_rag_sources_last_retry_at"), "rag_sources", ["last_retry_at"], unique=False)
     op.create_index(op.f("ix_rag_sources_parent_id"), "rag_sources", ["parent_id"], unique=False)
     op.create_table(
         "granting_institution_sources",
@@ -417,7 +424,12 @@ def upgrade() -> None:  # noqa: PLR0915
     op.create_table(
         "editor_documents",
         sa.Column("grant_application_id", sa.UUID(), nullable=True),
-        sa.Column("document_metadata", sa.JSON(), server_default=sa.text("'{}'::jsonb"), nullable=True),
+        sa.Column(
+            "document_metadata",
+            postgresql.JSONB(astext_type=sa.Text()),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=True,
+        ),
         sa.Column("crdt", sa.LargeBinary(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -492,13 +504,7 @@ def upgrade() -> None:  # noqa: PLR0915
         sa.Column("grant_application_id", sa.UUID(), nullable=True),
         sa.Column(
             "template_stage",
-            sa.Enum(
-                "EXTRACT_CFP_CONTENT",
-                "ANALYZE_CFP_CONTENT",
-                "EXTRACT_SECTIONS",
-                "GENERATE_METADATA",
-                name="granttemplatestageenum",
-            ),
+            sa.Enum("CFP_ANALYSIS", "TEMPLATE_GENERATION", name="granttemplatestageenum"),
             nullable=True,
         ),
         sa.Column(
@@ -769,7 +775,9 @@ def downgrade() -> None:  # noqa: PLR0915
     op.drop_index(op.f("ix_granting_institution_sources_created_at"), table_name="granting_institution_sources")
     op.drop_table("granting_institution_sources")
     op.drop_index(op.f("ix_rag_sources_parent_id"), table_name="rag_sources")
+    op.drop_index(op.f("ix_rag_sources_last_retry_at"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_indexing_status"), table_name="rag_sources")
+    op.drop_index(op.f("ix_rag_sources_error_type"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_deleted_at"), table_name="rag_sources")
     op.drop_index(op.f("ix_rag_sources_created_at"), table_name="rag_sources")
     op.drop_table("rag_sources")

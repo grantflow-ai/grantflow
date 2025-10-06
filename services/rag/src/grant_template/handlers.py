@@ -142,7 +142,6 @@ async def handle_save_grant_template(
                     grant_sections=grant_sections,
                     granting_institution_id=granting_institution_id,
                     submission_date=submission_date,
-                    rag_generation_status=RagGenerationStatusEnum.COMPLETED,
                 )
             )
 

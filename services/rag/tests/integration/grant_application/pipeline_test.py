@@ -128,9 +128,7 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
         )
         job = result.scalar_one_or_none()
         assert job is not None
-        if job.status == RagGenerationStatusEnum.FAILED:
-            pass
-        assert job.status != RagGenerationStatusEnum.FAILED
+        assert job.status != RagGenerationStatusEnum.FAILED, f"Job failed with error: {job.error_message}"
 
 
 async def test_complete_pipeline_updates_application_status_to_working_draft(
@@ -150,7 +148,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
 
     with (
         patch("services.rag.src.utils.checks.verify_rag_sources_indexed", return_value=None),
-        patch("services.rag.src.grant_application.handlers.handle_generate_research_plan_stage") as mock_final_stage,
+        patch("services.rag.src.grant_application.handlers.handle_generate_sections_stage") as mock_final_stage,
         patch("packages.shared_utils.src.pubsub.publish_email_notification", return_value=None),
         patch("packages.shared_utils.src.pubsub.publish_notification", return_value=None),
     ):
@@ -163,15 +161,15 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                 "id": "research_plan",
                 "title": "Research Plan",
                 "order": 2,
-                "parent": None,
+                "parent_id": None,
                 "keywords": ["methodology"],
                 "topics": ["methods"],
                 "generation_instructions": "Describe methodology",
                 "depends_on": [],
                 "max_words": 1500,
-                "queries": ["methodology"],
-                "is_plan": True,
-                "clinical": False,
+                "search_queries": ["methodology"],
+                "is_detailed_research_plan": True,
+                "is_clinical_trial": False,
             },
             "relationships": {"1": ["Task 1.1 depends on Objective 1"]},
             "enrichment_responses": [],
@@ -193,12 +191,39 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
 
             from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 
+            # Create checkpoint data for the GENERATE_RESEARCH_PLAN stage (the last completed stage)
+            checkpoint_data = {
+                "section_texts": [],
+                "work_plan_section": {
+                    "id": "research_plan",
+                    "title": "Research Plan",
+                    "order": 2,
+                    "parent_id": None,
+                    "keywords": ["methodology"],
+                    "topics": ["methods"],
+                    "generation_instructions": "Describe methodology",
+                    "depends_on": [],
+                    "max_words": 1500,
+                    "search_queries": ["methodology"],
+                    "is_detailed_research_plan": True,
+                    "is_clinical_trial": False,
+                },
+                "relationships": {"1": ["Task 1.1 depends on Objective 1"]},
+                "enrichment_responses": [],
+                "wikidata_enrichments": [],
+                "research_plan_text": "Generated comprehensive research plan text.",
+            }
+
             for stage in GRANT_APPLICATION_STAGES_ORDER[:-1]:
                 job = RagGenerationJob(
                     grant_application_id=application.id,
                     application_stage=stage,
                     status=RagGenerationStatusEnum.COMPLETED,
                     retry_count=0,
+                    # Add checkpoint data only for the last stage before GENERATE_SECTIONS
+                    checkpoint_data=checkpoint_data
+                    if stage == GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN
+                    else None,
                 )
                 session.add(job)
             await session.commit()

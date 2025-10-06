@@ -179,13 +179,13 @@ describe("ApplicationStructureLeftPane", () => {
 		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 	});
 
-	it("shows template generation progress with sections_extracted event", () => {
+	it("shows template generation progress with metadata_generated event", () => {
 		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationEvent: "sections_extracted",
+			templateGenerationEvent: "metadata_generated",
 		});
 
 		render(<ApplicationStructureLeftPane />);

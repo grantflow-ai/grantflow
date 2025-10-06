@@ -841,6 +841,46 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
 
         application.grant_template = template
 
+        # Create indexed RAG source for application
+        from packages.db.src.enums import SourceIndexingStatusEnum
+        from packages.db.src.tables import GrantApplicationSource, RagFile, TextVector
+        from packages.shared_utils.src.embeddings import generate_embeddings
+
+        rag_file = RagFile(
+            id=UUID("00000000-0000-0000-0000-000000000003"),
+            filename="test_document.pdf",
+            bucket_name="test-bucket",
+            object_path="test/path/test_document.pdf",
+            mime_type="application/pdf",
+            size=1024,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+            text_content="Sample research document content for testing.",
+            document_metadata={
+                "keywords": [{"keyword": "research"}],
+                "entities": [{"text": "testing"}],
+                "document_type": "research",
+            },
+        )
+        session.add(rag_file)
+        await session.flush()
+
+        grant_app_source = GrantApplicationSource(
+            grant_application_id=application.id,
+            rag_source_id=rag_file.id,
+        )
+        session.add(grant_app_source)
+        await session.flush()
+
+        # Create text vector chunk for retrieval
+        chunk_text = "Sample research methodology and experimental design for testing grant application generation."
+        embeddings = await generate_embeddings([chunk_text])
+        text_vector = TextVector(
+            rag_source_id=rag_file.id,
+            chunk={"content": chunk_text, "page_number": 1},
+            embedding=embeddings[0],
+        )
+        session.add(text_vector)
+
         await session.commit()
         await session.refresh(application)
 
