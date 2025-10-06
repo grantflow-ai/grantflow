@@ -1,24 +1,15 @@
 from typing import TypedDict
 
-from packages.db.src.json_objects import CFPAnalysisResult
-from packages.shared_utils.src.dto import (
-    ExtractedCFPData,
-    OrganizationNamespace,
-    ProcessedSectionDTO,
-)
+from packages.db.src.json_objects import CFPAnalysis, GrantElement, GrantLongFormSection
 
 
-class ExtractCFPContentStageDTO(TypedDict):
-    organization: OrganizationNamespace | None
-    extracted_data: ExtractedCFPData
+class CFPAnalysisStageDTO(TypedDict):
+    cfp_analysis: CFPAnalysis
 
 
-class AnalyzeCFPContentStageDTO(ExtractCFPContentStageDTO):
-    analysis_results: CFPAnalysisResult
+class TemplateGenerationStageDTO(TypedDict):
+    cfp_analysis: CFPAnalysis
+    grant_sections: list[GrantElement | GrantLongFormSection]
 
 
-class ExtractionSectionsStageDTO(AnalyzeCFPContentStageDTO):
-    extracted_sections: list[ProcessedSectionDTO]
-
-
-StageDTO = ExtractCFPContentStageDTO | AnalyzeCFPContentStageDTO | ExtractionSectionsStageDTO
+StageDTO = CFPAnalysisStageDTO | TemplateGenerationStageDTO

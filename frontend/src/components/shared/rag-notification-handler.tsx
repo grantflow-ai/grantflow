@@ -78,15 +78,18 @@ function generateMessageFromEvent(event: string, data: Record<string, unknown>):
 		case "cfp_data_extracted": {
 			const organization = data.organization as string;
 			const subject = data.subject as string;
-			if (organization && subject) {
+			if (organization && organization !== "Unknown" && subject) {
 				return `Extracted grant details from organization ${organization}: ${subject.slice(0, 60)}...`;
+			}
+			if (subject) {
+				return `Extracted grant details: ${subject.slice(0, 60)}...`;
 			}
 			return "Successfully extracted grant application details";
 		}
 		case "grant_template_created": {
 			const sections = data.sections as number;
 			const organization = data.organization as string;
-			return `Created template with ${sections} sections for ${organization || "grant application"}`;
+			return `Created template with ${sections} sections for ${organization && organization !== "Unknown" ? organization : "grant application"}`;
 		}
 		case "metadata_generated": {
 			const sections = data.sections as number;

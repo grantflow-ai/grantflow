@@ -2,17 +2,20 @@ import json
 import time
 from pathlib import Path
 from statistics import mean
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from packages.db.src.json_objects import CategorizationAnalysisResult
+from kreuzberg import extract_file
 from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
-from services.rag.src.grant_template.category_extraction import (
+from services.rag.src.grant_template.utils.category_extraction import (
     CATEGORY_LABELS,
+    CategorizationAnalysisResult,
     categorize_text,
-    format_nlp_analysis_for_prompt,
+    format_nlp_hints_for_extraction,
 )
+
+TEST_DATA_DIR = Path(__file__).parent.parent.parent.parent.parent / "testing/test_data/sources/cfps"
 
 
 async def test_categorize_text_basic() -> None:
@@ -57,28 +60,29 @@ async def test_categorize_text_async() -> None:
     assert any("25,000" in str(item) for item in result["money"])
 
 
-def test_format_nlp_analysis_for_prompt_with_content() -> None:
+def test_format_nlp_hints_for_extraction_with_content() -> None:
     analysis = CategorizationAnalysisResult(
         money=["Budget should not exceed $100,000"],
-        orders=["You must submit detailed plans"],
-        date_time=[],
-        writing_related=[],
+        orders=["You must submit detailed plans", "Applications must be complete"],
+        date_time=["Deadline is March 15"],
+        writing_related=["Maximum 10 pages"],
         other_numbers=[],
         recommendations=[],
         positive_instructions=[],
         negative_instructions=[],
-        evaluation_criteria=[],
+        evaluation_criteria=["Will be evaluated on merit"],
     )
 
-    result = format_nlp_analysis_for_prompt(analysis)
+    result = format_nlp_hints_for_extraction(analysis)
 
-    assert "NLP Analysis" in result
-    assert "Total: 2 categorized sentences" in result
-    assert "money (1)" in result
-    assert "orders (1)" in result
+    assert "orders (2)" in result
+    assert "writing_related (1)" in result
+    assert "evaluation_criteria (1)" in result
+    assert "date_time (1)" in result
+    assert "money" not in result
 
 
-def test_format_nlp_analysis_for_prompt_empty() -> None:
+def test_format_nlp_hints_for_extraction_empty() -> None:
     analysis = CategorizationAnalysisResult(
         money=[],
         date_time=[],
@@ -91,9 +95,31 @@ def test_format_nlp_analysis_for_prompt_empty() -> None:
         evaluation_criteria=[],
     )
 
-    result = format_nlp_analysis_for_prompt(analysis)
+    result = format_nlp_hints_for_extraction(analysis)
 
-    assert result == "No NLP analysis available - no categorized content found."
+    assert result == ""
+
+
+def test_format_nlp_hints_for_extraction_samples_only_three() -> None:
+    analysis = CategorizationAnalysisResult(
+        money=[],
+        date_time=[],
+        writing_related=[],
+        other_numbers=[],
+        recommendations=[],
+        orders=["Order 1", "Order 2", "Order 3", "Order 4", "Order 5", "Order 6"],
+        positive_instructions=[],
+        negative_instructions=[],
+        evaluation_criteria=[],
+    )
+
+    result = format_nlp_hints_for_extraction(analysis)
+
+    assert "orders (6)" in result
+    assert "Order 1" in result
+    assert "Order 2" in result
+    assert "Order 3" in result
+    assert "Order 4" not in result
 
 
 @pytest.fixture
@@ -292,3 +318,108 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     assert avg_processing_time < 10.0, f"Average processing time {avg_processing_time:.2f}s too slow"
     assert total_categories >= 10, f"Too few categories detected: {total_categories}"
     assert total_sentences >= 20, f"Too few sentences categorized: {total_sentences}"
+
+
+async def test_categorize_real_cfp_nih_par_25_450() -> None:
+    cfp_path = (
+        TEST_DATA_DIR
+        / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    )
+
+    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
+
+    parsed = await extract_file(cfp_path)
+    cfp_text = parsed.content
+
+    result = await categorize_text(cfp_text)
+
+    for category in CATEGORY_LABELS:
+        sentences = cast("list[str]", result.get(category, []))
+        if sentences:
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
+
+    formatted_hints = format_nlp_hints_for_extraction(result)
+
+    assert isinstance(result, dict)
+    assert all(category in result for category in CATEGORY_LABELS)
+
+    assert len(result["orders"]) >= 80, f"Orders count {len(result['orders'])} too low for NIH CFP"
+    assert len(result["writing_related"]) >= 80, (
+        f"Writing_related count {len(result['writing_related'])} too low for NIH CFP"
+    )
+    assert len(result["date_time"]) >= 15, f"Date_time count {len(result['date_time'])} too low for NIH CFP"
+    assert len(result["evaluation_criteria"]) >= 60, (
+        f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for NIH CFP"
+    )
+
+    assert "orders" in formatted_hints
+    assert "writing_related" in formatted_hints
+    assert "evaluation_criteria" in formatted_hints
+    assert "money" not in formatted_hints
+
+
+async def test_categorize_real_cfp_mra() -> None:
+    cfp_path = TEST_DATA_DIR / "MRA-2023-2024-RFP-Final.pdf"
+
+    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
+
+    parsed = await extract_file(cfp_path)
+    cfp_text = parsed.content
+
+    result = await categorize_text(cfp_text)
+
+    for category in CATEGORY_LABELS:
+        sentences = cast("list[str]", result.get(category, []))
+        if sentences:
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
+
+    formatted_hints = format_nlp_hints_for_extraction(result)
+
+    assert isinstance(result, dict)
+    assert all(category in result for category in CATEGORY_LABELS)
+
+    assert len(result["orders"]) >= 100, f"Orders count {len(result['orders'])} too low for MRA CFP"
+    assert len(result["writing_related"]) >= 80, (
+        f"Writing_related count {len(result['writing_related'])} too low for MRA CFP"
+    )
+    assert len(result["date_time"]) >= 40, f"Date_time count {len(result['date_time'])} too low for MRA CFP"
+    assert len(result["evaluation_criteria"]) >= 15, (
+        f"Evaluation_criteria count {len(result['evaluation_criteria'])} too low for MRA CFP"
+    )
+
+    assert "orders" in formatted_hints
+    assert "writing_related" in formatted_hints
+    assert "evaluation_criteria" in formatted_hints
+    assert "money" not in formatted_hints
+
+
+async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
+    cfp_path = TEST_DATA_DIR / "israeli_chief_scientist_cfp.html"
+
+    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
+
+    parsed = await extract_file(cfp_path)
+    cfp_text = parsed.content
+
+    result = await categorize_text(cfp_text)
+
+    for category in CATEGORY_LABELS:
+        sentences = cast("list[str]", result.get(category, []))
+        if sentences:
+            for _i, _sentence in enumerate(sentences[:5], 1):
+                pass
+
+    formatted_hints = format_nlp_hints_for_extraction(result)
+
+    assert isinstance(result, dict)
+    assert all(category in result for category in CATEGORY_LABELS)
+
+    assert len(result["orders"]) >= 3, f"Orders count {len(result['orders'])} too low for template"
+    assert len(result["writing_related"]) >= 5, (
+        f"Writing_related count {len(result['writing_related'])} too low for template"
+    )
+
+    assert "orders" in formatted_hints or "writing_related" in formatted_hints
+    assert "money" not in formatted_hints

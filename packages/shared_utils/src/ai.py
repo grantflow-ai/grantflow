@@ -15,7 +15,9 @@ from packages.shared_utils.src.serialization import deserialize
 
 
 EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.5-flash")
-GENERATION_MODEL: Final[str] = get_env("GENERATION_MODEL", fallback="gemini-2.5-flash")
+GENERATION_MODEL: Final[str] = get_env(
+    "GENERATION_MODEL", fallback="gemini-flash-latest"
+)
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
     "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4-20250514"
 )
@@ -28,7 +30,7 @@ CUSTOM_MODEL_REASON: Final[str] = "Custom model specified"
 
 init_ref = Ref[bool]()
 anthropic_client = Ref[AsyncAnthropic]()
-google_client = Ref[genai.Client | None](None)
+google_client = Ref[genai.Client | None]()
 
 
 def get_vertex_credentials() -> Credentials:

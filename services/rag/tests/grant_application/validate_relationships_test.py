@@ -91,7 +91,7 @@ def test_validate_relationship_description() -> None:
             {"relationships": [{"source": "1", "target": "1.1", "desc": ""}]},
             research_objectives=objectives,
         )
-    assert "too short" in str(exc.value)
+    assert "missing required fields" in str(exc.value)
 
     with pytest.raises(ValidationError) as exc:
         validate_relationships_response(

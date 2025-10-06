@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.llm.evaluation import EvaluationToolResponse
 
 from packages.db.src.json_objects import (
-    CFPAnalysisResult,
+    CFPAnalysis,
     GrantLongFormSection,
     ResearchObjective,
 )
@@ -16,6 +16,8 @@ EvaluationPathType = Literal["nlp_only", "llm_only", "nlp_with_llm_fallback", "e
 ContentType = Literal["text", "objectives", "relationships", "enrichment", "cfp_analysis"]
 ComplexityLevel = Literal["simple", "moderate", "complex", "very_complex"]
 QualityLevel = Literal["excellent", "good", "acceptable", "poor", "unacceptable"]
+
+type RelationshipData = dict[str, list[list[str]]]
 
 
 class BaseMetrics(TypedDict):
@@ -125,13 +127,13 @@ class EvaluationContext(TypedDict, total=False):
     research_objectives: list[ResearchObjective]
     reference_corpus: list[str]
     content_type: ContentType
-    cfp_analysis: CFPAnalysisResult
+    cfp_analysis: CFPAnalysis
     keywords: list[str]
     topics: list[str]
 
 
 class JsonEvaluationContext(EvaluationContext):
-    json_content: ResearchObjective | CFPAnalysisResult | dict[str, list[list[str]]]
+    json_content: ResearchObjective | CFPAnalysis | RelationshipData
 
 
 class EvaluationResult(TypedDict):

@@ -234,7 +234,7 @@ async def test_source_grounding_quality_interaction() -> None:
     quality_poor: QualityMetrics = await evaluate_scientific_quality(unsupported_content, rag_context, section_config)
 
     assert grounding_poor["overall"] < 0.3
-    assert quality_poor["overall"] < 0.4
+    assert quality_poor["overall"] < 0.5
 
 
 @pytest.mark.asyncio

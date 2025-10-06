@@ -1,4 +1,4 @@
-from services.rag.src.grant_template.extract_cfp_data import sanitize_text_content
+from services.rag.src.utils.text_processing import sanitize_text_content
 
 
 def test_removes_excessive_newlines() -> None:
