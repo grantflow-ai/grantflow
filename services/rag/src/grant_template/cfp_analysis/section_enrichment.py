@@ -73,13 +73,14 @@ Extract ALL formatting and length constraints mentioned in CFP for each section:
 For each constraint found:
 - type: One of [${constraint_types}]
 - value: Exact requirement from CFP
+- quote: Direct quote from source showing where constraint was found
 
 **Examples of constraint matching**:
-- "Project description should be 5 pages maximum" → {type: "page_limit", value: "5 pages maximum"}
-- "Arial 11-point or Times New Roman 12-point font" → {type: "font", value: "Arial 11pt or Times New Roman 12pt"}
-- "2,000 characters, including spaces, maximum" → {type: "char_limit", value: "2000 characters including spaces"}
-- "no less than ½ inch margins" → {type: "margin", value: "at least ½ inch margins"}
-- "Up to 30 references" → {type: "length", value: "up to 30 references"}
+- "Project description should be 5 pages maximum" → {type: "page_limit", value: "5 pages maximum", quote: "Project description should be 5 pages maximum"}
+- "Arial 11-point or Times New Roman 12-point font" → {type: "font", value: "Arial 11pt or Times New Roman 12pt", quote: "Arial 11-point or Times New Roman 12-point font"}
+- "2,000 characters, including spaces, maximum" → {type: "char_limit", value: "2000 characters including spaces", quote: "2,000 characters, including spaces, maximum"}
+- "no less than ½ inch margins" → {type: "margin", value: "at least ½ inch margins", quote: "no less than ½ inch margins"}
+- "Up to 30 references" → {type: "length", value: "up to 30 references", quote: "Up to 30 references"}
 
 ### Categories
 Verify and refine categories for each section from: research, budget, team, compliance, other
@@ -149,8 +150,9 @@ section_enrichment_schema = {
                             "properties": {
                                 "type": {"type": "string", "enum": sorted(CONSTRAINT_TYPES)},
                                 "value": {"type": "string"},
+                                "quote": {"type": "string"},
                             },
-                            "required": ["type", "value"],
+                            "required": ["type", "value", "quote"],
                         },
                     },
                     "categories": {
