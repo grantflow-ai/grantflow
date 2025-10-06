@@ -22,41 +22,41 @@ LENGTH_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="length_extraction",
     template="""# Extract Section Length Constraints
 
-## Organization Guidelines
-${organization_guidelines}
+    ## Organization Guidelines
+    ${organization_guidelines}
 
-## Sections with Constraints
-${sections}
+    ## Sections with Constraints
+    ${sections}
 
-## Task
+    ## Task
 
-For each section, extract length constraints and other formatting requirements.
+    For each section, extract length constraints and other formatting requirements.
 
-### Length Constraints
+    ### Length Constraints
 
-Parse the "constraints" field and extract length limits:
-- **Page limits**: "5 pages maximum" -> 2075 words (5 * 415)
-- **Word limits**: "500 words" -> 500 words
-- **Character limits**: "2000 characters" -> ~300 words (/ 6.5)
-- Use 415 words/page conversion factor
+    Parse the "constraints" field and extract length limits:
+    - **Page limits**: "5 pages maximum" -> 2075 words (5 * 415)
+    - **Word limits**: "500 words" -> 500 words
+    - **Character limits**: "2000 characters" -> ~300 words (/ 6.5)
+    - Use 415 words/page conversion factor
 
-### Fields
+    ### Fields
 
-1. **length_limit**: Total words allowed (integer or null if no limit)
-2. **length_source**: Human-readable source from CFP (e.g., "5 pages maximum per CFP section 3.2")
-3. **other_limits**: Non-length constraints (font, spacing, margins, format)
+    1. **length_limit**: Total words allowed (integer or null if no limit)
+    2. **length_source**: Human-readable source from CFP (e.g., "5 pages maximum per CFP section 3.2")
+    3. **other_limits**: Non-length constraints (font, spacing, margins, format)
 
-### Guidelines
+    ### Guidelines
 
-- If section has no constraints, set length_limit=null, length_source=null, other_limits=[]
-- For page limits, convert to words: pages * 415
-- For character limits, convert to words: chars / 6.5
-- Preserve exact CFP language in length_source
-- Move non-length constraints to other_limits
+    - If section has no constraints, set length_limit=null, length_source=null, other_limits=[]
+    - For page limits, convert to words: pages * 415
+    - For character limits, convert to words: chars / 6.5
+    - Preserve exact CFP language in length_source
+    - Move non-length constraints to other_limits
 
-### Output
+    ### Output
 
-Return all sections with parsed length information.
+    Return all sections with parsed length information.
 """,
 )
 
@@ -158,9 +158,9 @@ def validate_length_extraction(response: LengthExtractionResult, *, input_sectio
 
 
 async def extract_length_constraints(
-    sections: list[CFPSection],
-    organization_guidelines: str,
     *,
+    organization_guidelines: str,
+    sections: list[CFPSection],
     trace_id: str,
 ) -> LengthExtractionResult:
     messages = LENGTH_EXTRACTION_USER_PROMPT.to_string(

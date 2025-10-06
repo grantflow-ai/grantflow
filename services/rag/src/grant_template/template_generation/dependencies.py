@@ -20,47 +20,47 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="dependencies_word_counts",
     template="""# Generate Section Dependencies and Word Counts
 
-## Enriched Sections
-${sections}
+    ## Enriched Sections
+    ${sections}
 
-## Task
+    ## Task
 
-For each section, determine dependencies and allocate word counts.
+    For each section, determine dependencies and allocate word counts.
 
-### Dependencies
+    ### Dependencies
 
-List section IDs that this section logically depends on (must be written first):
-- Project Summary depends on: [] (written first)
-- Background depends on: ["project_summary"]
-- Methodology depends on: ["background", "specific_aims"]
-- Budget Justification depends on: ["methodology"]
+    List section IDs that this section logically depends on (must be written first):
+    - Project Summary depends on: [] (written first)
+    - Background depends on: ["project_summary"]
+    - Methodology depends on: ["background", "specific_aims"]
+    - Budget Justification depends on: ["methodology"]
 
-Rules:
-- NO circular dependencies (A→B→A)
-- NO self-dependencies (section depends on itself)
-- Use actual section IDs from input
-- Empty array if no dependencies
+    Rules:
+    - NO circular dependencies (A→B→A)
+    - NO self-dependencies (section depends on itself)
+    - Use actual section IDs from input
+    - Empty array if no dependencies
 
-### Word Counts
+    ### Word Counts
 
-Allocate realistic word counts based on:
-1. **CFP length limits** (if provided): Use as primary guidance
-2. **Default allocations**:
-   - Project Summary: 300 words
-   - Research Plan (is_plan=true): 2000-5000 words
-   - Background/Significance: 800-1200 words
-   - Methodology: 1000-2000 words
-   - Budget Justification: 500-800 words
-   - Data Sharing: 200-400 words
-   - Other sections: 300-600 words
+    Allocate realistic word counts based on:
+    1. **CFP length limits** (if provided): Use as primary guidance
+    2. **Default allocations**:
+       - Project Summary: 300 words
+       - Research Plan (is_plan=true): 2000-5000 words
+       - Background/Significance: 800-1200 words
+       - Methodology: 1000-2000 words
+       - Budget Justification: 500-800 words
+       - Data Sharing: 200-400 words
+       - Other sections: 300-600 words
 
-3. **Page conversions**: Use 415 words/page
-4. **Section importance**: Research plan gets most words
-5. **Total reasonableness**: 500-50000 words total
+    3. **Page conversions**: Use 415 words/page
+    4. **Section importance**: Research plan gets most words
+    5. **Total reasonableness**: 500-50000 words total
 
-### Output
+    ### Output
 
-Return all sections with depends_on and max_words.
+    Return all sections with depends_on and max_words.
 """,
 )
 
@@ -195,9 +195,9 @@ def validate_dependencies_word_counts(
 
 
 async def generate_dependencies_word_counts(
+    *,
     classification: list[SectionClassification],
     length_constraints: list[LengthConstraint],
-    *,
     trace_id: str,
 ) -> DependencyWordCountResult:
     length_by_id = {lc["id"]: lc for lc in length_constraints}

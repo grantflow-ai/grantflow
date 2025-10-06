@@ -11,8 +11,7 @@ from packages.db.src.json_objects import (
 )
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
-from services.rag.src.grant_template.template_generation import handle_template_generation
-from services.rag.src.grant_template.template_generation.merge_sections import is_long_form_section
+from services.rag.src.grant_template.template_generation import handle_template_generation, is_long_form_section
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)

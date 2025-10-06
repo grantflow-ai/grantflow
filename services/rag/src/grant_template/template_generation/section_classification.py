@@ -4,7 +4,6 @@ from typing import Final, TypedDict
 from packages.db.src.json_objects import CFPSection
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
@@ -18,48 +17,48 @@ SECTION_CLASSIFICATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_classification",
     template="""# Classify Application Sections
 
-## Organization Guidelines
-${organization_guidelines}
+    ## Organization Guidelines
+    ${organization_guidelines}
 
-## Sections to Classify
-${sections}
+    ## Sections to Classify
+    ${sections}
 
-## Task
+    ## Task
 
-For each section, provide classification and guidelines.
+    For each section, provide classification and guidelines.
 
-### Classifications
+    ### Classifications
 
-1. **long_form**: Does this section require substantial narrative writing? (true/false)
-   - True: Research plans, methodology, background, justifications, protocols
-   - False: Budget tables, biosketches, letters, cover pages, forms
+    1. **long_form**: Does this section require substantial narrative writing? (true/false)
+       - True: Research plans, methodology, background, justifications, protocols
+       - False: Budget tables, biosketches, letters, cover pages, forms
 
-2. **is_plan**: Is this the main detailed research plan section? (true/false)
-   - Exactly ONE section should be true (typically "Research Plan", "Project Description", or "Research Strategy")
+    2. **is_plan**: Is this the main detailed research plan section? (true/false)
+       - Exactly ONE section should be true (typically "Research Plan", "Project Description", or "Research Strategy")
 
-3. **clinical**: Is this specifically for clinical trial information? (true/false)
-   - True: Protocol synopsis, clinical trial design, intervention protocols
-   - False: All other sections
+    3. **clinical**: Is this specifically for clinical trial information? (true/false)
+       - True: Protocol synopsis, clinical trial design, intervention protocols
+       - False: All other sections
 
-4. **title_only**: Is this just a structural header with no content? (true/false)
-   - True: Section groupings like "Application Components", "Required Documents"
-   - False: Sections that need content
+    4. **title_only**: Is this just a structural header with no content? (true/false)
+       - True: Section groupings like "Application Components", "Required Documents"
+       - False: Sections that need content
 
-5. **needs_writing**: Does this require original applicant writing? (true/false)
-   - True: Narrative sections, justifications, descriptions
-   - False: Pre-filled forms, budget tables, biosketches, letters from others
+    5. **needs_writing**: Does this require original applicant writing? (true/false)
+       - True: Narrative sections, justifications, descriptions
+       - False: Pre-filled forms, budget tables, biosketches, letters from others
 
-### Guidelines
+    ### Guidelines
 
-Extract 2-5 specific writing guidelines for each section from CFP/organization guidelines:
-- Length requirements already handled separately
-- Focus on: content requirements, style, formatting, what to include/avoid
-- Be specific and actionable
-- Empty list if no specific guidelines
+    Extract 2-5 specific writing guidelines for each section from CFP/organization guidelines:
+    - Length requirements already handled separately
+    - Focus on: content requirements, style, formatting, what to include/avoid
+    - Be specific and actionable
+    - Empty list if no specific guidelines
 
-### Output
+    ### Output
 
-Return all sections with classifications and guidelines.
+    Return all sections with classifications and guidelines.
 """,
 )
 
@@ -150,14 +149,14 @@ def validate_section_classification(response: SectionClassificationResult, *, in
 
 
 async def classify_sections(
-    sections: list[CFPSection],
-    organization_guidelines: str,
     *,
+    organization_guidelines: str,
+    sections: list[CFPSection],
     trace_id: str,
 ) -> SectionClassificationResult:
     messages = SECTION_CLASSIFICATION_USER_PROMPT.to_string(
         organization_guidelines=organization_guidelines or "No organization guidelines provided.",
-        sections=serialize(sections).decode("utf-8"),
+        sections=sections,
     )
 
     return await handle_completions_request(
