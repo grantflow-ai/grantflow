@@ -190,7 +190,9 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 												<button
 													className="flex flex-col items-start "
 													data-testid={`recent-application-${application.id}`}
-													onClick={() => { handleOpenApplication(application); }}
+													onClick={() => {
+														handleOpenApplication(application);
+													}}
 												>
 													<div
 														className={`w-fit px-1 py-0.5 flex items-center gap-0.5 rounded-full ${statusStyles.bg}`}
