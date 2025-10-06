@@ -10,6 +10,17 @@ import { useProjectStore } from "@/stores/project-store";
 import { NavMain } from "./nav-main";
 
 vi.mock("@/actions/grant-applications");
+vi.mock("next/navigation", () => ({
+	usePathname: vi.fn().mockReturnValue("/"),
+	useRouter: vi.fn(() => ({
+		push: vi.fn(),
+	})),
+}));
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+	},
+}));
 
 const initialOrganizationState = useOrganizationStore.getState();
 
@@ -119,6 +130,54 @@ describe("NavMain", () => {
 			expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
+		});
+	});
+
+	describe("handleOpenApplication", () => {
+		beforeEach(() => {
+			const projectWithCount = {
+				id: "test-project-id",
+				name: "Test Project",
+				applications_count: 1,
+				description: null,
+				grant_applications: [],
+				logo_url: null,
+				members: [],
+				role: "OWNER" as const,
+			};
+			act(() => {
+				useProjectStore.setState({
+					projects: [projectWithCount],
+				});
+			});
+		});
+
+		it("calls navigateToApplication with the correct parameters", async () => {
+			const navigateToApplicationSpy = vi.spyOn(useNavigationStore.getState(), "navigateToApplication");
+			const mockApplications = ListApplicationsResponseFactory.build({
+				applications: ApplicationCardDataFactory.batch(1, { project_id: "test-project-id" }),
+			});
+			vi.mocked(listOrganizationApplications).mockResolvedValue(mockApplications);
+
+			render(
+				<SidebarProvider>
+					<NavMain userRole="OWNER" />
+				</SidebarProvider>,
+			);
+			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
+			const application = mockApplications.applications[0];
+			if (!application) {
+				throw new Error("Application not found");
+			}
+			await screen.findByText(application.title);
+			await userEvent.click(screen.getByTestId(`recent-application-${application.id}`));
+
+			expect(navigateToApplicationSpy).toHaveBeenCalledWith(
+				"test-project-id",
+				"Test Project",
+				application.id,
+				application.title,
+			);
 		});
 	});
 });
