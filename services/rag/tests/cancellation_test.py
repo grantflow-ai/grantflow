@@ -15,7 +15,6 @@ from packages.shared_utils.src.exceptions import RagJobCancelledError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
@@ -45,12 +44,13 @@ async def create_and_cancel_template_job(
 async def create_and_cancel_application_job(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    stage: GrantApplicationStageEnum = GrantApplicationStageEnum.GENERATE_SECTIONS,
 ) -> RagGenerationJob:
     async with async_session_maker() as session, session.begin():
         job = RagGenerationJob(
             grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            application_stage=GRANT_APPLICATION_STAGES_ORDER[0],
+            application_stage=stage,
             retry_count=0,
         )
         session.add(job)

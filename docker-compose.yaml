@@ -19,7 +19,6 @@ services:
     volumes:
       - data:/var/lib/postgresql/data
       - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
-      - ./packages/db/grant-permissions.sql:/docker-entrypoint-initdb.d/grant-permissions.sql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
       interval: 1s
