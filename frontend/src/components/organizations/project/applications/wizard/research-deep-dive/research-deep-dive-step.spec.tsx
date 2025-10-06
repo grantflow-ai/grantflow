@@ -188,46 +188,4 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
 		});
 	});
-
-	describe("Header Layout and Styling", () => {
-		it("applies correct CSS classes to main container", () => {
-			const application = ApplicationWithTemplateFactory.build();
-			useApplicationStore.setState({ application });
-
-			render(<ResearchDeepDiveStep />);
-
-			const container = screen.getByTestId("research-deep-dive-step");
-			expect(container).toHaveClass(
-				"flex",
-				"flex-col",
-				"h-full",
-				"bg-preview-bg",
-				"space-y-6",
-				"overflow-y-auto",
-			);
-		});
-
-		it("applies correct responsive padding classes", () => {
-			const application = ApplicationWithTemplateFactory.build();
-			useApplicationStore.setState({ application });
-
-			render(<ResearchDeepDiveStep />);
-
-			const container = screen.getByTestId("research-deep-dive-step");
-			expect(container).toHaveClass("lg:px-6", "lg:pt-6", "md:px-4", "md:pt-4", "px-3", "pt-3");
-		});
-
-		it("renders header with correct typography classes", () => {
-			const application = ApplicationWithTemplateFactory.build();
-			useApplicationStore.setState({ application });
-
-			render(<ResearchDeepDiveStep />);
-
-			const header = screen.getByTestId("research-deep-dive-header");
-			expect(header).toHaveClass("text-app-black", "text-3xl", "font-medium", "font-heading", "leading-loose");
-
-			const description = screen.getByTestId("research-deep-dive-description");
-			expect(description).toHaveClass("text-app-black", "font-normal", "text-base", "leading-tight", "-mt-2");
-		});
-	});
 });

@@ -101,7 +101,7 @@ function UploadPane({
 }) {
 	return (
 		<WizardLeftPane>
-			<div className="space-y-5">
+			<div className="space-y-3 2xl:space-y-5">
 				<div>
 					<h2 className={uploadPaneHeadingStyles} data-testid="application-title-header">
 						Application Title
@@ -112,7 +112,7 @@ function UploadPane({
 				</div>
 
 				<AppTextArea
-					className="min-h-32"
+					className="min-h-24 2xl:min-h-32"
 					countType="chars"
 					errorMessage={showError ? titleErrorMessage(draftTitle.trim().length) : undefined}
 					id="application-title-textarea"
@@ -128,7 +128,7 @@ function UploadPane({
 				/>
 			</div>
 
-			<div className="space-y-5">
+			<div className="space-y-3 2xl:space-y-5">
 				<h2 className={uploadPaneHeadingStyles} data-testid="application-instructions-header">
 					Application Instructions
 				</h2>
@@ -144,7 +144,7 @@ function UploadPane({
 
 				<div>
 					<h3 className={subHeadingStyles}>Links</h3>
-					<p className={cn(descriptionStyles, "mb-5")}>
+					<p className={cn(descriptionStyles, "mb-3 2xl:mb-5")}>
 						Paste links to any online guidelines or application portals. These will help us better
 						understand the funding requirements.
 					</p>

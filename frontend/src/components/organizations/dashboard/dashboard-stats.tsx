@@ -17,7 +17,7 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 
 	return (
 		<article className="flex gap-8 items-center w-full" data-testid="dashboard-stats">
-			<div className="w-full bg-white border border-app-gray-100 rounded px-8 py-6 flex flex-col gap-2.5">
+			<div className="w-full bg-white border border-app-gray-100 rounded px-6 2xl:px-8 py-4 2xl:py-6 flex flex-col gap-2.5">
 				<h4
 					className="font-button font-normal text-[36px] leading-[42px] text-app-black"
 					data-testid="project-count"
@@ -28,7 +28,7 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 					Research projects
 				</p>
 			</div>
-			<div className="w-full bg-white border border-app-gray-100 rounded px-8 py-6 flex flex-col gap-2.5">
+			<div className="w-full bg-white border border-app-gray-100 rounded px-6 2xl:px-8 py-4 2xl:py-6 flex flex-col gap-2.5">
 				<h4
 					className="font-button font-normal text-[36px] leading-[42px] text-app-black"
 					data-testid="application-count"

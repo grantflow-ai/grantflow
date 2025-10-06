@@ -71,9 +71,9 @@ export function ApplicationPreview({
 	}
 
 	return (
-		<WizardRightPane padding="px-5 md:px-7 py-5 md:py-7">
+		<WizardRightPane padding="px-5 md:px-7 py-5 2xl:py-7">
 			<div className="flex h-full flex-col">
-				<div className="flex-shrink-0 mb-11 flex flex-col items-start gap-2">
+				<div className="flex-shrink-0 mb-9 2xl:mb-11 flex flex-col items-start gap-2">
 					<div className="flex items-center gap-2">
 						<ThemeBadge
 							color="light"

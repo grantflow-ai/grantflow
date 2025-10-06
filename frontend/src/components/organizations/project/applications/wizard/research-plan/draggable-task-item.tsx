@@ -105,7 +105,7 @@ export function DraggableTaskItem({
 							variant="field"
 						/>
 						<AppTextArea
-							className="min-h-32"
+							className="min-h-24 2xl:min-h-32"
 							id={`task-description-${objectiveIndex}-${taskIndex}`}
 							label="Task description"
 							onBlur={handleDescriptionBlur}
