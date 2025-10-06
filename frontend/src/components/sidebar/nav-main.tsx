@@ -193,6 +193,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 													onClick={() => {
 														handleOpenApplication(application);
 													}}
+													type="button"
 												>
 													<div
 														className={`w-fit px-1 py-0.5 flex items-center gap-0.5 rounded-full ${statusStyles.bg}`}
