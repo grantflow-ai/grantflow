@@ -14,19 +14,22 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 
 
-EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.5-flash")
+EVALUATION_MODEL: Final[str] = get_env(
+    "EVALUATION_MODEL", fallback="gemini-flash-latest"
+)
 GENERATION_MODEL: Final[str] = get_env(
     "GENERATION_MODEL", fallback="gemini-flash-latest"
 )
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
     "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4-20250514"
 )
-REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-flash")
+REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-flash-latest")
 
-GEMINI_FLASH_MODEL: Final[str] = "gemini-2.5-flash"
-GEMINI_FLASH_LITE_MODEL: Final[str] = "gemini-2.5-flash-lite"
+GEMINI_FLASH_MODEL: Final[str] = "gemini-flash-latest"
+GEMINI_FLASH_LITE_MODEL: Final[str] = "gemini-flash-latest"
 MODEL_SELECTION_REASON: Final[str] = "Flash for ≤600w, Flash-Lite for >600w"
 CUSTOM_MODEL_REASON: Final[str] = "Custom model specified"
+DEFAULT_THINKING_BUDGET: Final[int] = 3000
 
 init_ref = Ref[bool]()
 anthropic_client = Ref[AsyncAnthropic]()

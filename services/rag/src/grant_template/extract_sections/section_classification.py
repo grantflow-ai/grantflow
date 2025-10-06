@@ -2,7 +2,7 @@ from functools import partial
 from typing import Final, TypedDict, cast
 
 from packages.db.src.json_objects import CFPAnalysis
-from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.ai import DEFAULT_THINKING_BUDGET, GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.serialization import serialize
 
@@ -116,6 +116,7 @@ async def classify_writing_requirements(
         response_type=WritingRequirementsResult,
         validator=validator,
         temperature=TEMPERATURE,
+        thinking_budget=DEFAULT_THINKING_BUDGET,
         trace_id=trace_id,
     )
 

@@ -2,7 +2,7 @@ from functools import partial
 from typing import Final, NotRequired, TypedDict, cast
 
 from packages.db.src.json_objects import CFPAnalysis
-from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.ai import DEFAULT_THINKING_BUDGET, GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.serialization import serialize
 
@@ -75,7 +75,10 @@ class StructuredAndClassifiedResult(TypedDict):
     sections: list[StructuredAndClassifiedSection]
 
 
-class StructuredSection(DefinedSection):
+class StructuredSection(TypedDict):
+    title: str
+    id: str
+    parent: NotRequired[str | None]
     order: int
     title_only: bool
     is_plan: bool
@@ -135,6 +138,7 @@ async def structure_and_classify_sections(
         response_type=StructuredAndClassifiedResult,
         validator=validator,
         temperature=TEMPERATURE,
+        thinking_budget=DEFAULT_THINKING_BUDGET,
         trace_id=trace_id,
     )
 
@@ -143,11 +147,16 @@ async def structure_and_classify_sections(
 
     merged_sections: list[StructuredSection] = []
     for section in sections:
+        # Rename parent_id to parent for consistency with ExtractedSectionDTO
+        section_data = dict(section)
+        if "parent_id" in section_data:
+            section_data["parent"] = section_data.pop("parent_id")
+
         if structured := result_map.get(section["id"]):
-            merged_section = cast("StructuredSection", {**section, **structured})
+            merged_section = cast("StructuredSection", {**section_data, **structured})
             merged_sections.append(merged_section)
         else:
-            merged_sections.append(cast("StructuredSection", section))
+            merged_sections.append(cast("StructuredSection", section_data))
 
     merged_sections.sort(key=lambda s: s.get("order", 0))
 
