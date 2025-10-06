@@ -9,7 +9,10 @@ interface PreviewCardProps extends React.ComponentProps<typeof AppCard> {
 
 export function PreviewCard({ children, className, ...props }: PreviewCardProps) {
 	return (
-		<AppCard className={cn("border-app-gray-100 border p-5 shadow-none gap-8 rounded-sm", className)} {...props}>
+		<AppCard
+			className={cn("border-app-gray-100 border p-3 2xl:p-5 shadow-none gap-8 rounded-sm", className)}
+			{...props}
+		>
 			{children}
 		</AppCard>
 	);

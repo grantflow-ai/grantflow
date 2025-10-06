@@ -102,7 +102,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 				</AppButton>
 			</div>
 			<AppTextArea
-				className="min-h-32"
+				className="min-h-24 2xl:min-h-32"
 				id={`objective-title-${index}`}
 				label="Objective name"
 				onChange={(e) => {
@@ -113,7 +113,7 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 				variant="field"
 			/>
 			<AppTextArea
-				className="min-h-52"
+				className="min-h-32 2xl:min-h-52"
 				id={`objective-description-${index}`}
 				label="Objective description"
 				onChange={(e) => {

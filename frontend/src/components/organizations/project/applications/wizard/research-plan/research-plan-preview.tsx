@@ -37,7 +37,7 @@ export function ResearchPlanPreview({ dialogRef }: ResearchPlanPreviewProps) {
 	}
 
 	return (
-		<WizardRightPane padding="p-6">
+		<WizardRightPane padding="p-4 2xl:p-6">
 			<ObjectiveList
 				editingObjectiveId={editingObjectiveId}
 				objectives={objectives}

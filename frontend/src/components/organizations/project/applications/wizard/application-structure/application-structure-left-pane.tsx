@@ -189,7 +189,7 @@ export function ApplicationStructureLeftPane() {
 				</WizardBanner>
 			)}
 
-			<div className="mt-6">
+			<div className="mt-2 2xl:mt-6">
 				<ApplicationStructureSourcesPreview
 					parentId={parentId}
 					templateFiles={templateFiles}
@@ -324,7 +324,7 @@ function AnalyzingSteps() {
 
 function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithSource[] }) {
 	return (
-		<PreviewCard className="gap-5" data-testid="application-documents">
+		<PreviewCard className="gap-2 2xl:gap-5" data-testid="application-documents">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
 			<div className="flex flex-wrap gap-3" data-testid="file-collection">
 				{templateFiles.map((file, index) => (

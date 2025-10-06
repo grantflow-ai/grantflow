@@ -83,7 +83,10 @@ export function WizardHeader() {
 	};
 
 	return (
-		<header className="w-full border-b-1 border-gray-100 p-4 md:pb-5 sm:pt-6 sm:px-6" data-testid="wizard-header">
+		<header
+			className="w-full border-b-1 border-gray-100 px-4 py-3 2xl:pt-6 2xl:pb-5 2xl:px-6"
+			data-testid="wizard-header"
+		>
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					<ThemeBadge

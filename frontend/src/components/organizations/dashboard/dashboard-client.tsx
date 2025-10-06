@@ -242,10 +242,10 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className=" mb-6 px-10 relative flex flex-1 flex-col gap-10 py-14 rounded-lg mr-5  bg-white border border-app-gray-100 min-h-0"
+						className="mb-4 2xl:mb-6 px-6 2l:px-10 relative flex flex-1 flex-col gap-4 2xl:gap-10 py-6 2xl:py-14 rounded-lg mr-5 bg-white border border-app-gray-100 min-h-0"
 						data-testid="dashboard-main-content"
 					>
-						<main className="flex flex-col gap-8">
+						<main className="flex flex-col gap-6 2xl:gap-8">
 							<article className="text-app-black flex justify-between items-start">
 								<div className="flex flex-col gap-2">
 									<h2
@@ -284,7 +284,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 								Research Projects
 							</h3>
 							<main
-								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-6  overflow-y-auto pr-2 scroll-box"
+								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-4 2xl:mt-6 overflow-y-auto pr-2 scroll-box"
 								data-testid="projects-container"
 							>
 								{projects.length > 0 ? (

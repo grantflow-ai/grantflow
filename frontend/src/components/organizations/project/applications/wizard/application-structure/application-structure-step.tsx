@@ -133,7 +133,7 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 	}
 
 	return (
-		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+		<WizardRightPane padding="p-4 2xl:p-6" testId="application-structure-preview-pane">
 			<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={isDetailedSection} />
 		</WizardRightPane>
 	);

@@ -101,7 +101,7 @@ export function ResearchDeepDiveContent() {
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(() => questionFlowState.selectedQuestion);
 
 	return (
-		<div className="flex w-full gap-6 px-16" data-testid="research-deep-dive-content">
+		<div className="flex w-full gap-6 px-16 pb-2" data-testid="research-deep-dive-content">
 			<QuestionsList onSelectQuestion={setSelectedQuestion} questionFlowState={questionFlowState} />
 
 			<AnswerCard
@@ -161,11 +161,12 @@ function AnswerCard({
 	const handleSaveDebounced = useDebounce(handleSave, 3000);
 
 	return (
-		<div className="w-1/2">
-			<AppCard className="flex flex-col space-y-5 gap-0 p-5 outline-1 outline-primary rounded mb-1">
+		<div className="w-1/2 h-full p-1">
+			<AppCard className="h-full flex flex-col space-y-5 gap-0 p-5 outline-1 outline-primary rounded mb-1">
 				<span className="text-app-black text-base font-semibold leading-tight">{question}</span>
 				<TextareaField
-					className="min-h-96 w-full focus:outline-app-gray-600 focus-visible:outline-app-gray-600 focus-visible:border-app-gray-600"
+					className="h-full w-full focus:outline-app-gray-600 focus-visible:outline-app-gray-600 focus-visible:border-app-gray-600"
+					containerClass="h-full"
 					onChange={(e) => {
 						setAnswerValue(e.target.value);
 						handleSaveDebounced();
@@ -288,7 +289,7 @@ function QuestionsList({
 	const { answeredQuestions, lastAnsweredIndex } = questionFlowState;
 
 	return (
-		<ul className="w-1/2 flex flex-col space-y-3 pb-2">
+		<ul className="w-1/2 p-1 flex flex-col space-y-2 2xl:space-y-3 h-80 overflow-y-scroll 2xl:h-full 2xl:overflow-y-auto">
 			{RESEARCH_QUESTIONS.map((item, index) => {
 				const hasAnswer = answeredQuestions.has(index);
 				const isDisabled = index > 0 && !hasAnswer && index > lastAnsweredIndex + 1;
