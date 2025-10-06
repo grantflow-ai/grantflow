@@ -190,7 +190,7 @@ tasks:
       - task: db:proxy:stop
       - task: db:proxy:start
 
-  db:migrate:remote:
+  db:remote:migrate:
     desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
     deps:
       - task: db:proxy:start
@@ -211,6 +211,28 @@ tasks:
     cmds:
       - 'echo "Running migrations on Cloud SQL..."'
       - uv run alembic --config ./packages/db/alembic.ini upgrade head
+
+  db:remote:seed:
+    desc: Populate Cloud SQL database with initial seed data (requires Cloud SQL Proxy running)
+    deps:
+      - task: db:proxy:start
+    vars:
+      REMOTE_CONNECTION:
+        sh: |
+          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+          if [ -z "$CONNECTION" ]; then
+            echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets" >&2
+            exit 1
+          fi
+          # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+          # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
+          echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+      DATABASE_CONNECTION_STRING: "{{.REMOTE_CONNECTION}}"
+    cmds:
+      - echo "Running seed on Cloud SQL..."
+      - uv run python scripts/seed_db.py
 
   db:create-migration:
     desc: Generate a new database migration from schema changes
@@ -236,28 +258,6 @@ tasks:
       - task: _sleep
         vars:
           SECONDS: "2"
-      - uv run python scripts/seed_db.py
-
-  db:seed:remote:
-    desc: Populate Cloud SQL database with initial seed data (requires Cloud SQL Proxy running)
-    deps:
-      - task: db:proxy:start
-    vars:
-      REMOTE_CONNECTION:
-        sh: |
-          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
-          if [ -z "$CONNECTION" ]; then
-            echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets" >&2
-            exit 1
-          fi
-          # Transform from: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
-          # To: postgresql+asyncpg://user:pass@127.0.0.1:5432/database
-          echo "$CONNECTION" | sed 's|@/\([^?]*\).*|@127.0.0.1:5432/\1|'
-    env:
-      PYTHONPATH: "{{.PYTHON_PATH}}"
-      DATABASE_CONNECTION_STRING: "{{.REMOTE_CONNECTION}}"
-    cmds:
-      - echo "Running seed on Cloud SQL..."
       - uv run python scripts/seed_db.py
 
   db:drop:
