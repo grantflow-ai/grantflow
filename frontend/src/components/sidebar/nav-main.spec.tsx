@@ -136,13 +136,13 @@ describe("NavMain", () => {
 	describe("handleOpenApplication", () => {
 		beforeEach(() => {
 			const projectWithCount = {
-				id: "test-project-id",
-				name: "Test Project",
 				applications_count: 1,
 				description: null,
 				grant_applications: [],
+				id: "test-project-id",
 				logo_url: null,
 				members: [],
+				name: "Test Project",
 				role: "OWNER" as const,
 			};
 			act(() => {
@@ -165,10 +165,7 @@ describe("NavMain", () => {
 				</SidebarProvider>,
 			);
 			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
-			const application = mockApplications.applications[0];
-			if (!application) {
-				throw new Error("Application not found");
-			}
+			const [application] = mockApplications.applications;
 			await screen.findByText(application.title);
 			await userEvent.click(screen.getByTestId(`recent-application-${application.id}`));
 
