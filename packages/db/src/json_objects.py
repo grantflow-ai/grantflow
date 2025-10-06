@@ -97,36 +97,21 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
     submission_date: NotRequired[str | None]
 
 
-CFPAnalysisCategory = Literal["research", "budget", "team", "compliance", "other"]
-
-
 class CFPAnalysisConstraint(TypedDict):
     type: str
     value: str
 
 
-class CFPSection(CFPContentSection):
+class CFPSection(TypedDict):
     id: str
+    title: str
     parent_id: NotRequired[str | None]
-    categories: NotRequired[list[CFPAnalysisCategory]]
     constraints: NotRequired[list[CFPAnalysisConstraint]]
-
-
-class CFPAnalysisMetadata(TypedDict):
-    total_sections: int
-    total_requirements: int
-    source_count: int
-
-
-class CFPAnalysisData(TypedDict):
-    categories: list[CFPAnalysisCategory]
-    constraints: list[CFPAnalysisConstraint]
-    metadata: CFPAnalysisMetadata
 
 
 class CFPAnalysis(TypedDict):
     subject: str
     content: list[CFPSection]
-    deadline: str | None
-    analysis_metadata: CFPAnalysisData
+    deadlines: list[str]
+    global_constraints: list[CFPAnalysisConstraint]
     organization: NotRequired[OrganizationNamespace | None]
