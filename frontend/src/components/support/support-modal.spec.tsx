@@ -87,6 +87,5 @@ describe.sequential("SupportModal", () => {
 
 		expect(submitButton).toBeInTheDocument();
 		await user.click(submitButton);
-		// Currently non-functional, so we just check for its presence and clickability
 	});
 });

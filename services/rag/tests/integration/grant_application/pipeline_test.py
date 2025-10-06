@@ -191,7 +191,6 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
 
             from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 
-            # Create checkpoint data for the GENERATE_RESEARCH_PLAN stage (the last completed stage)
             checkpoint_data = {
                 "section_texts": [],
                 "work_plan_section": {
@@ -220,7 +219,6 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                     application_stage=stage,
                     status=RagGenerationStatusEnum.COMPLETED,
                     retry_count=0,
-                    # Add checkpoint data only for the last stage before GENERATE_SECTIONS
                     checkpoint_data=checkpoint_data
                     if stage == GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN
                     else None,

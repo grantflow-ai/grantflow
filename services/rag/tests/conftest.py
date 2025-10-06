@@ -841,7 +841,6 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
 
         application.grant_template = template
 
-        # Create indexed RAG source for application
         from packages.db.src.enums import SourceIndexingStatusEnum
         from packages.db.src.tables import GrantApplicationSource, RagFile, TextVector
         from packages.shared_utils.src.embeddings import generate_embeddings
@@ -871,7 +870,6 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
         session.add(grant_app_source)
         await session.flush()
 
-        # Create text vector chunk for retrieval
         chunk_text = "Sample research methodology and experimental design for testing grant application generation."
         embeddings = await generate_embeddings([chunk_text])
         text_vector = TextVector(
