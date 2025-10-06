@@ -19,14 +19,11 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_analysis: CFPAnalysis | None) -> str:
+def _format_cfp_requirements_for_section(section: GrantLongFormSection) -> str:
     cfp_text = ""
-
-    has_section_data = False
 
     if definition := section.get("definition"):
         cfp_text += f"## Section Definition\n\n{definition}\n\n"
-        has_section_data = True
 
     if requirements := section.get("requirements"):
         cfp_text += "## CFP Requirements\n\n"
@@ -34,69 +31,18 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection, cfp_anal
             cfp_text += f"- **{req['requirement']}**\n"
             cfp_text += f'  > *CFP Quote: "{req["quote_from_source"]}"*\n'
             cfp_text += f"  > *Category: {req['category']}*\n\n"
-        has_section_data = True
 
     if length_limit := section.get("length_limit"):
         length_source = section.get("length_source", "Not specified")
         cfp_text += "## Length Requirements\n\n"
         cfp_text += f"- **Word Limit:** {length_limit} words\n"
         cfp_text += f"  > *Source: {length_source}*\n\n"
-        has_section_data = True
 
     if other_limits := section.get("other_limits"):
         cfp_text += "## Additional Constraints\n\n"
         for limit in other_limits:
             cfp_text += f"- **{limit['constraint_type']}:** {limit['constraint_value']}\n"
             cfp_text += f'  > *CFP Quote: "{limit["source_quote"]}"*\n\n'
-        has_section_data = True
-
-    if not has_section_data and cfp_analysis:
-        section_title = section["title"]
-        section_title_lower = section_title.lower()
-
-        relevant_requirements = [
-            section_req
-            for section_req in cfp_analysis["required_sections"]
-            if section_req["title"].lower() in section_title_lower
-            or section_title_lower in section_req["title"].lower()
-        ]
-
-        relevant_constraints = [
-            constraint
-            for constraint in cfp_analysis["length_constraints"]
-            if section_title_lower in constraint["limit_description"].lower()
-            or any(word in constraint["limit_description"].lower() for word in section_title_lower.split())
-        ]
-
-        relevant_criteria = [
-            criterion
-            for criterion in cfp_analysis["evaluation_criteria"]
-            if section_title_lower in criterion["criterion_name"].lower()
-            or any(word in criterion["criterion_name"].lower() for word in section_title_lower.split())
-        ]
-
-        if relevant_requirements or relevant_constraints or relevant_criteria:
-            cfp_text += "## CFP Requirements (from global analysis)\n\n"
-
-            if relevant_requirements:
-                cfp_text += "### Section Requirements\n"
-                for req_section in relevant_requirements:
-                    cfp_text += f"**{req_section['title']}:**\n"
-                    for req in req_section["requirements"]:
-                        cfp_text += f"- {req['requirement']}\n"
-                        cfp_text += f'  > *Quote: "{req["quote_from_source"]}"*\n\n'
-
-            if relevant_constraints:
-                cfp_text += "### Length Constraints\n"
-                for constraint in relevant_constraints:
-                    cfp_text += f"- **{constraint['limit_description']}**\n"
-                    cfp_text += f'  > *Quote: "{constraint["quote_from_source"]}"*\n\n'
-
-            if relevant_criteria:
-                cfp_text += "### Evaluation Criteria\n"
-                for criterion in relevant_criteria:
-                    cfp_text += f"- **{criterion['criterion_name']}**\n"
-                    cfp_text += f'  > *Quote: "{criterion["quote_from_source"]}"*\n\n'
 
     if evidence := section.get("evidence"):
         cfp_text += f"## CFP Source Reference\n\n{evidence}\n\n"
@@ -272,7 +218,7 @@ async def handle_generate_section_text(
 
     validated_context = combined_context
 
-    cfp_requirements_text = _format_cfp_requirements_for_section(section, cfp_analysis["cfp_analysis"])
+    cfp_requirements_text = _format_cfp_requirements_for_section(section)
     length_requirements = _get_section_length_requirements(section)
 
     keywords_str = ", ".join(section.get("keywords", []))

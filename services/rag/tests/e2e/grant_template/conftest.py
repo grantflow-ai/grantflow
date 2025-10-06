@@ -411,9 +411,9 @@ def expected_mra_sections(mra_cfp_analysis_fixture: CFPAnalysis) -> list[dict[st
     return [
         {
             "title": section["title"],
-            "expected_subsections": section["subtitles"][:5],
+            "expected_subsections": [],
         }
-        for section in mra_cfp_analysis_fixture["content"]
+        for section in mra_cfp_analysis_fixture["sections"]
     ]
 
 
@@ -426,9 +426,9 @@ def expected_nih_par_25_450_sections(nih_par_25_450_cfp_analysis_fixture: CFPAna
     return [
         {
             "title": section["title"],
-            "expected_subsections": section["subtitles"][:5],
+            "expected_subsections": [],
         }
-        for section in nih_par_25_450_cfp_analysis_fixture["content"]
+        for section in nih_par_25_450_cfp_analysis_fixture["sections"]
     ]
 
 

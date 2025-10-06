@@ -1,4 +1,3 @@
-from services.rag.src.utils.evaluation.core import evaluate_content
 from services.rag.src.utils.evaluation.dto import (
     CoherenceMetrics,
     EvaluationContext,
@@ -34,7 +33,6 @@ __all__ = [
     "RecommendationType",
     "ScientificAnalysis",
     "StructuralMetrics",
-    "evaluate_content",
     "evaluate_output",
     "evaluate_scientific_content",
     "with_evaluation",

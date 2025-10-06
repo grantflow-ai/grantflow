@@ -1,8 +1,4 @@
-from typing import Any
-from uuid import uuid4
-
-from packages.db.src.tables import GrantingInstitution
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from packages.db.src.json_objects import OrganizationNamespace
 
 from services.rag.src.grant_template.cfp_analysis.identify_organization import (
     MIN_CONFIDENCE,
@@ -12,32 +8,32 @@ from services.rag.src.grant_template.cfp_analysis.identify_organization import (
 )
 
 
-def create_sample_organizations() -> list[GrantingInstitution]:
+def create_sample_organizations() -> list[OrganizationNamespace]:
     return [
-        GrantingInstitution(
-            id=uuid4(),
+        OrganizationNamespace(
+            id="nih-id",
             full_name="National Institutes of Health",
             abbreviation="NIH",
         ),
-        GrantingInstitution(
-            id=uuid4(),
+        OrganizationNamespace(
+            id="nsf-id",
             full_name="National Science Foundation",
             abbreviation="NSF",
         ),
-        GrantingInstitution(
-            id=uuid4(),
+        OrganizationNamespace(
+            id="erc-id",
             full_name="European Research Council",
             abbreviation="ERC",
         ),
-        GrantingInstitution(
-            id=uuid4(),
+        OrganizationNamespace(
+            id="mra-id",
             full_name="Melanoma Research Alliance",
             abbreviation="MRA",
         ),
-        GrantingInstitution(
-            id=uuid4(),
+        OrganizationNamespace(
+            id="israeli-moh-id",
             full_name="Israeli Ministry of Health",
-            abbreviation=None,
+            abbreviation="",
         ),
     ]
 
@@ -193,9 +189,7 @@ def test_fuzzy_match_case_insensitive() -> None:
     assert result["confidence"] >= MIN_CONFIDENCE
 
 
-async def test_identify_granting_institution_high_confidence(
-    async_session_maker: async_sessionmaker[Any],
-) -> None:
+async def test_identify_granting_institution_high_confidence() -> None:
     cfp_text = """
     National Institutes of Health
     NIH Grant Program R01
@@ -206,7 +200,7 @@ async def test_identify_granting_institution_high_confidence(
 
     org_id, confidence, method = await identify_granting_institution(
         cfp_text=cfp_text,
-        session_maker=async_session_maker,
+        organizations=create_sample_organizations(),
         trace_id="test_trace_high_confidence",
     )
 
@@ -215,12 +209,10 @@ async def test_identify_granting_institution_high_confidence(
     assert method == "regex"
 
 
-async def test_identify_granting_institution_empty_text(
-    async_session_maker: async_sessionmaker[Any],
-) -> None:
+async def test_identify_granting_institution_empty_text() -> None:
     org_id, confidence, method = await identify_granting_institution(
         cfp_text="",
-        session_maker=async_session_maker,
+        organizations=create_sample_organizations(),
         trace_id="test_trace_empty",
     )
 
@@ -229,9 +221,7 @@ async def test_identify_granting_institution_empty_text(
     assert method == "none"
 
 
-async def test_identify_granting_institution_abbreviation_match(
-    async_session_maker: async_sessionmaker[Any],
-) -> None:
+async def test_identify_granting_institution_abbreviation_match() -> None:
     cfp_text = """
     ERC Starting Grant 2025
 
@@ -241,7 +231,7 @@ async def test_identify_granting_institution_abbreviation_match(
 
     org_id, confidence, method = await identify_granting_institution(
         cfp_text=cfp_text,
-        session_maker=async_session_maker,
+        organizations=create_sample_organizations(),
         trace_id="test_trace_abbreviation",
     )
 

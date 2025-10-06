@@ -2,10 +2,17 @@ import logging
 from unittest.mock import AsyncMock
 
 import pytest
-from packages.db.src.json_objects import CFPAnalysis, CFPAnalysisConstraint, CFPSection, OrganizationNamespace
+from packages.db.src.json_objects import (
+    CFPAnalysis,
+    CFPAnalysisConstraint,
+    CFPSection,
+    GrantLongFormSection,
+    OrganizationNamespace,
+)
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.template_generation import handle_template_generation
+from services.rag.src.grant_template.template_generation.merge_sections import is_long_form_section
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -29,7 +36,7 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
                 title="Executive Summary",
                 parent_id=None,
                 constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="2 pages"),
+                    CFPAnalysisConstraint(type="page_limit", value="2 pages", quote=""),
                 ],
             ),
             CFPSection(
@@ -37,7 +44,7 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
                 title="Technology and Innovation Description",
                 parent_id=None,
                 constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="5 pages"),
+                    CFPAnalysisConstraint(type="page_limit", value="5 pages", quote=""),
                 ],
             ),
             CFPSection(
@@ -57,7 +64,7 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
                 title="Budget and Financial Projections",
                 parent_id=None,
                 constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="3 pages"),
+                    CFPAnalysisConstraint(type="page_limit", value="3 pages", quote=""),
                 ],
             ),
             CFPSection(
@@ -87,9 +94,12 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
 
     performance_context.start_stage("generate_template")
 
+    organization = cfp_analysis.get("organization")
+    organization_guidelines = organization.get("guidelines", "") if organization else ""
+
     grant_sections = await handle_template_generation(
         cfp_analysis=cfp_analysis,
-        organization_guidelines=cfp_analysis["organization"]["guidelines"],
+        organization_guidelines=organization_guidelines,
         job_manager=mock_job_manager,
         trace_id="israeli-template-gen-test",
     )
@@ -101,7 +111,7 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
     assert grant_sections is not None
     assert len(grant_sections) > 0
 
-    long_form_sections = [s for s in grant_sections if "max_words" in s]
+    long_form_sections: list[GrantLongFormSection] = [s for s in grant_sections if is_long_form_section(s)]
     assert len(long_form_sections) > 0
 
     performance_context.end_stage()
