@@ -240,7 +240,6 @@ async def test_nih_par_25_450_template_generation_pipeline(
 
     performance_context.start_stage("validate_pipeline_results")
 
-
     async with async_session_maker() as session:
         updated_template = await session.scalar(
             select_active(grant_template.__class__)

@@ -17,14 +17,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.dto import (
     CFPAnalysisStageDTO,
-    SectionExtractionStageDTO,
     StageDTO,
 )
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
-    handle_generate_metadata_stage,
     handle_save_grant_template,
-    handle_section_extraction_stage,
+    handle_template_generation_stage,
 )
 from services.rag.src.utils.job_manager import JobManager
 
@@ -114,26 +112,13 @@ async def handle_grant_template_pipeline(
                 await job_manager.transition_to_next_stage(cfp_analysis_result)
                 return None
 
-            case GrantTemplateStageEnum.EXTRACT_SECTIONS:
+            case GrantTemplateStageEnum.TEMPLATE_GENERATION:
                 if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for section extraction stage")
+                    raise ValidationError("Missing checkpoint data for template generation stage")
 
                 cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
-                section_extraction_result = await handle_section_extraction_stage(
+                template_generation_result = await handle_template_generation_stage(
                     cfp_analysis_result=cfp_analysis_result,
-                    job_manager=job_manager,
-                    trace_id=trace_id,
-                )
-                await job_manager.transition_to_next_stage(section_extraction_result)
-                return None
-
-            case GrantTemplateStageEnum.GENERATE_METADATA:
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for metadata generation stage")
-
-                section_extraction_result = cast("SectionExtractionStageDTO", checkpoint_data)
-                grant_sections = await handle_generate_metadata_stage(
-                    section_extraction_result=section_extraction_result,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
@@ -148,9 +133,8 @@ async def handle_grant_template_pipeline(
                     grant_template=grant_template,
                     session_maker=session_maker,
                     job_manager=job_manager,
-                    cfp_analysis=section_extraction_result["cfp_analysis"],
-                    extracted_cfp=section_extraction_result,
-                    grant_sections=grant_sections,
+                    cfp_analysis=template_generation_result["cfp_analysis"],
+                    grant_sections=template_generation_result["grant_sections"],
                     trace_id=trace_id,
                 )
 

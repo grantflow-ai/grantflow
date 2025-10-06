@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 from packages.db.src.json_objects import CFPAnalysis
@@ -115,6 +114,4 @@ def test_all_fixtures_have_unique_section_titles() -> None:
         section_titles = [section["title"] for section in fixture["content"]]
 
         duplicates = [title for title in section_titles if section_titles.count(title) > 1]
-        assert not duplicates, (
-            f"Fixture {fixture_file.name} has duplicate section titles: {set(duplicates)}"
-        )
+        assert not duplicates, f"Fixture {fixture_file.name} has duplicate section titles: {set(duplicates)}"

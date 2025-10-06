@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from packages.db.src.enums import GrantTemplateStageEnum
 
@@ -31,6 +31,7 @@ class OrganizationNamespace(TypedDict):
     id: str
     full_name: str
     abbreviation: str
+    guidelines: NotRequired[str]
 
 
 class CFPContentSection(TypedDict):
@@ -111,7 +112,7 @@ class CFPSection(TypedDict):
 
 class CFPAnalysis(TypedDict):
     subject: str
-    content: list[CFPSection]
+    sections: list[CFPSection]
     deadlines: list[str]
     global_constraints: list[CFPAnalysisConstraint]
     organization: NotRequired[OrganizationNamespace | None]

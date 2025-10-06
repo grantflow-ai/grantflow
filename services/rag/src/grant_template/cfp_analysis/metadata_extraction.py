@@ -58,8 +58,7 @@ Return metadata in JSON format.
 )
 
 CFP_METADATA_VALIDATION_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert validator reviewing extracted CFP metadata. "
-    "Validate completeness and accuracy."
+    "You are an expert validator reviewing extracted CFP metadata. Validate completeness and accuracy."
 )
 
 CFP_METADATA_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -181,7 +180,6 @@ async def extract_metadata_with_org_identification(
     organizations: list[OrganizationNamespace],
     trace_id: str,
 ) -> CFPMetadataResult:
-    """2-step metadata extraction with hybrid org identification."""
     logger.info("Extracting CFP metadata (step 1: initial extraction)", trace_id=trace_id)
     initial_metadata = await extract_cfp_metadata(
         formatted_sources=formatted_sources,

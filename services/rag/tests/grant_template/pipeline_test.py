@@ -147,8 +147,6 @@ def sample_cfp_analysis_dto() -> CFPAnalysisStageDTO:
     )
 
 
-
-
 @pytest.fixture
 def sample_sections_dto(sample_cfp_analysis_dto: CFPAnalysisStageDTO) -> SectionExtractionStageDTO:
     return SectionExtractionStageDTO(
@@ -189,7 +187,6 @@ async def test_pipeline_stage_execution_cfp_analysis_stage(
 
     assert result is None
     mock_handle_cfp_extraction.assert_called_once()
-
 
 
 async def test_pipeline_stage_execution_extract_sections_stage(

@@ -66,8 +66,7 @@ Return flat sections array with id, title, parent_id for each.
 )
 
 CFP_VALIDATION_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert validator reviewing extracted CFP sections. "
-    "Remove noise, find gaps, eliminate duplicates."
+    "You are an expert validator reviewing extracted CFP sections. Remove noise, find gaps, eliminate duplicates."
 )
 
 CFP_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -147,7 +146,6 @@ def validate_cfp_content(response: CFPContentResult) -> None:
         if not section.get("title"):
             raise ValidationError("All sections must have a title")
 
-        # Validate max 2-level depth (parent + children only)
         if parent_id := section.get("parent_id"):
             parent = section_map.get(parent_id)
             if parent and parent.get("parent_id") is not None:
@@ -157,7 +155,7 @@ def validate_cfp_content(response: CFPContentResult) -> None:
                         "section_id": section["id"],
                         "parent_id": parent_id,
                         "grandparent_id": parent.get("parent_id"),
-                    }
+                    },
                 )
 
 

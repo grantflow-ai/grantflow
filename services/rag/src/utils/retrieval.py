@@ -53,7 +53,6 @@ DEFAULT_METADATA_WEIGHTS: Final[MetadataWeights] = MetadataWeights(
 
 
 class MetadataFilterParams(TypedDict, total=False):
-
     entity_types: list[str]
     categories: list[str]
     category_match_mode: str

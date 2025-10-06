@@ -14,15 +14,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.grant_template.cfp_analysis import handle_cfp_analysis
 from services.rag.src.grant_template.dto import (
     CFPAnalysisStageDTO,
-    SectionExtractionStageDTO,
     StageDTO,
+    TemplateGenerationStageDTO,
 )
-from services.rag.src.grant_template.extract_sections import handle_extract_sections
-from services.rag.src.grant_template.generate_metadata import handle_generate_grant_template_metadata
+from services.rag.src.grant_template.template_generation import handle_template_generation
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
-from services.rag.src.utils.retrieval import retrieve_documents
-from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 
 logger = get_logger(__name__)
 
@@ -56,11 +53,11 @@ async def handle_cfp_analysis_stage(
     org_name = organization["full_name"] if organization else "unknown"
 
     submission_date = None
-    if cfp_analysis["deadline"]:
+    if cfp_analysis.get("deadlines"):
         try:
-            submission_date = datetime.strptime(cfp_analysis["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
-        except ValueError:
-            logger.warning("Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id})
+            submission_date = datetime.strptime(cfp_analysis["deadlines"][0], "%Y-%m-%d").replace(tzinfo=UTC).date()
+        except (ValueError, IndexError):
+            logger.warning("Invalid or missing deadline", extra={"trace_id": trace_id})
 
     await job_manager.add_notification(
         event=NotificationEvents.CFP_DATA_EXTRACTED,
@@ -70,116 +67,53 @@ async def handle_cfp_analysis_stage(
             "organization": org_name,
             "subject": cfp_analysis["subject"][:100] if cfp_analysis["subject"] else None,
             "deadline": str(submission_date) if submission_date else None,
-            "sections_count": len(cfp_analysis["content"]),
-            "categories_found": len(cfp_analysis["analysis_metadata"].get("categories", [])),
+            "sections_count": len(cfp_analysis["sections"]),
         },
     )
 
-    organization_guidelines = ""
-    if organization:
-        rag_results = await retrieve_documents(
-            organization_id=organization["id"],
-            task_description="Grant template generation - retrieve organization-specific guidelines",
-            trace_id=trace_id,
-        )
-        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
-            rag_results="\n".join(rag_results),
-            organization_full_name=organization["full_name"],
-            organization_abbreviation=organization["abbreviation"],
-        )
-        logger.info(
-            "Retrieved organization guidelines for pipeline",
-            organization_id=organization["id"],
-            guidelines_length=len(organization_guidelines),
-            trace_id=trace_id,
-        )
-
     return CFPAnalysisStageDTO(
-        organization=organization,
         cfp_analysis=cfp_analysis,
-        organization_guidelines=organization_guidelines,
     )
 
 
-async def handle_section_extraction_stage(
+async def handle_template_generation_stage(
     *,
     cfp_analysis_result: CFPAnalysisStageDTO,
     job_manager: JobManager[StageDTO],
     trace_id: str,
-) -> SectionExtractionStageDTO:
+) -> TemplateGenerationStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    extracted_sections = await handle_extract_sections(
-        cfp_content=cfp_analysis_result["cfp_analysis"]["content"],
-        trace_id=trace_id,
-        cfp_analysis=cfp_analysis_result["cfp_analysis"],
+    cfp_analysis = cfp_analysis_result["cfp_analysis"]
+    organization = cfp_analysis.get("organization")
+    organization_guidelines = organization.get("guidelines", "") if organization else ""
+
+    grant_sections = await handle_template_generation(
+        cfp_analysis=cfp_analysis,
+        organization_guidelines=organization_guidelines,
         job_manager=job_manager,
-        organization_guidelines=cfp_analysis_result["organization_guidelines"],
-    )
-
-    await job_manager.add_notification(
-        event=NotificationEvents.SECTIONS_EXTRACTED,
-        message="Section extraction complete",
-        notification_type="success",
-        data={
-            "sections_extracted": len(extracted_sections),
-            "total_requirements": sum(
-                len(s.get("subtitles", [])) for s in cfp_analysis_result["cfp_analysis"]["content"]
-            ),
-        },
-    )
-
-    return SectionExtractionStageDTO(
-        organization=cfp_analysis_result["organization"],
-        cfp_analysis=cfp_analysis_result["cfp_analysis"],
-        organization_guidelines=cfp_analysis_result["organization_guidelines"],
-        extracted_sections=extracted_sections,
-    )
-
-
-async def handle_generate_metadata_stage(
-    *,
-    section_extraction_result: SectionExtractionStageDTO,
-    job_manager: JobManager[StageDTO],
-    trace_id: str,
-) -> list[GrantElement | GrantLongFormSection]:
-    await job_manager.ensure_not_cancelled()
-
-    cfp_content_str = "\n\n".join(
-        [
-            f"## {section['title']}\n" + "\n".join(f"- {subtitle}" for subtitle in section["subtitles"])
-            for section in section_extraction_result["cfp_analysis"]["content"]
-        ]
-    )
-
-    grant_sections = await handle_generate_grant_template_metadata(
-        cfp_content=cfp_content_str,
-        organization=section_extraction_result["organization"],
-        organization_guidelines=section_extraction_result["organization_guidelines"],
-        long_form_sections=section_extraction_result["extracted_sections"],
         trace_id=trace_id,
-        job_manager=job_manager,
     )
 
     await job_manager.add_notification(
         event=NotificationEvents.METADATA_GENERATED,
-        message="Grant template metadata generated",
+        message="Grant template generated",
         notification_type="success",
         data={
             "sections_created": len(grant_sections),
-            "organization": section_extraction_result["organization"]["full_name"]
-            if section_extraction_result["organization"]
-            else "Unknown",
+            "organization": organization["full_name"] if organization else "Unknown",
         },
     )
 
-    return grant_sections
+    return TemplateGenerationStageDTO(
+        cfp_analysis=cfp_analysis,
+        grant_sections=grant_sections,
+    )
 
 
 async def handle_save_grant_template(
     *,
     cfp_analysis: CFPAnalysis,
-    extracted_cfp: SectionExtractionStageDTO,
     grant_sections: list[GrantElement | GrantLongFormSection],
     grant_template: GrantTemplate,
     job_manager: JobManager[StageDTO],
@@ -190,17 +124,17 @@ async def handle_save_grant_template(
 
     try:
         async with session_maker() as session, session.begin():
-            organization = extracted_cfp["organization"]
+            organization = cfp_analysis.get("organization")
             granting_institution_id = organization["id"] if organization else None
 
             submission_date = None
-            if cfp_analysis["deadline"]:
+            if cfp_analysis.get("deadlines"):
                 try:
-                    submission_date = datetime.strptime(cfp_analysis["deadline"], "%Y-%m-%d").replace(tzinfo=UTC).date()
-                except ValueError:
-                    logger.warning(
-                        "Invalid deadline format: %s", cfp_analysis["deadline"], extra={"trace_id": trace_id}
+                    submission_date = (
+                        datetime.strptime(cfp_analysis["deadlines"][0], "%Y-%m-%d").replace(tzinfo=UTC).date()
                     )
+                except (ValueError, IndexError):
+                    logger.warning("Invalid or missing deadline", extra={"trace_id": trace_id})
 
             await session.execute(
                 update(GrantTemplate)
