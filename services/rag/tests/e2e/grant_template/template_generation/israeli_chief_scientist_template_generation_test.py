@@ -94,12 +94,8 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
 
     performance_context.start_stage("generate_template")
 
-    organization = cfp_analysis.get("organization")
-    organization_guidelines = organization.get("guidelines", "") if organization else ""
-
     grant_sections = await handle_template_generation(
         cfp_analysis=cfp_analysis,
-        organization_guidelines=organization_guidelines,
         job_manager=mock_job_manager,
         trace_id="israeli-template-gen-test",
     )

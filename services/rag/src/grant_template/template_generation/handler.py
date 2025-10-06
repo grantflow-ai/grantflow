@@ -20,12 +20,12 @@ logger = get_logger(__name__)
 async def handle_template_generation(
     *,
     cfp_analysis: CFPAnalysis,
-    organization_guidelines: str,
     job_manager: "JobManager[TemplateGenerationStageDTO]",
     trace_id: str,
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
 
+    organization_guidelines = cfp_analysis["organization"]["guidelines"] if cfp_analysis["organization"] else ""
     cfp_sections = cfp_analysis["sections"]
 
     logger.info(

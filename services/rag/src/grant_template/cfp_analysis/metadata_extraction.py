@@ -9,6 +9,10 @@ from packages.shared_utils.src.serialization import serialize
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.grant_template.cfp_analysis.identify_organization import identify_granting_institution
 from services.rag.src.grant_template.cfp_analysis.section_enrichment import CONSTRAINT_TYPES
+from services.rag.src.grant_template.utils.category_extraction import (
+    CategorizationAnalysisResult,
+    format_nlp_hints_for_extraction,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -28,6 +32,9 @@ CFP_METADATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 ## Organizations
 <organizations>${organizations}</organizations>
+
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
 ## Task
 
@@ -67,6 +74,9 @@ CFP_METADATA_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 ## Sources
 <rag_sources>${rag_sources}</rag_sources>
+
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
 ## Extracted Metadata
 <metadata>${metadata}</metadata>
@@ -126,12 +136,15 @@ def validate_cfp_metadata(response: CFPMetadataResult) -> None:
 async def extract_cfp_metadata(
     formatted_sources: str,
     organizations: list[OrganizationNamespace],
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> CFPMetadataResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = CFP_METADATA_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organizations=serialize(organizations).decode("utf-8"),
+        category_hints=category_hints,
     )
 
     return await handle_completions_request(
@@ -151,12 +164,15 @@ async def extract_cfp_metadata(
 async def validate_and_refine_metadata(
     formatted_sources: str,
     existing_metadata: CFPMetadataResult,
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> CFPMetadataResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = CFP_METADATA_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         metadata=serialize(existing_metadata).decode("utf-8"),
+        category_hints=category_hints,
     )
 
     return await handle_completions_request(
@@ -178,12 +194,14 @@ async def extract_metadata_with_org_identification(
     formatted_sources: str,
     full_cfp_text: str,
     organizations: list[OrganizationNamespace],
+    cfp_categories: CategorizationAnalysisResult,
     trace_id: str,
 ) -> CFPMetadataResult:
     logger.info("Extracting CFP metadata (step 1: initial extraction)", trace_id=trace_id)
     initial_metadata = await extract_cfp_metadata(
         formatted_sources=formatted_sources,
         organizations=organizations,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -191,6 +209,7 @@ async def extract_metadata_with_org_identification(
     metadata_result = await validate_and_refine_metadata(
         formatted_sources=formatted_sources,
         existing_metadata=initial_metadata,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 

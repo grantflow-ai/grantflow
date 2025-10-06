@@ -112,7 +112,7 @@ class CFPSection(TypedDict):
     title: str
     parent_id: NotRequired[str | None]
     constraints: NotRequired[list[CFPAnalysisConstraint]]
-    categories: list[CFPAnalysisCategory]
+    categories: NotRequired[list[CFPAnalysisCategory]]
 
 
 class CFPAnalysis(TypedDict):

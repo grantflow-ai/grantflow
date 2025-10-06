@@ -5,6 +5,10 @@ from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
+from services.rag.src.grant_template.utils.category_extraction import (
+    CategorizationAnalysisResult,
+    format_nlp_hints_for_extraction,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -22,6 +26,9 @@ CFP_CONTENT_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 ## Organization Guidelines
 <organization_guidelines>${organization_guidelines}</organization_guidelines>
+
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
 ## Task
 
@@ -43,11 +50,19 @@ Extract ONLY the content sections that applicants must **write or prepare** as p
 
 ### Structure
 Flat list with **maximum 2-level depth** (H2 parent + H3 children only):
-- Each section has: id, title, parent_id
+- Each section has: id, title, parent_id, categories
 - Parent sections (H2): main categories (parent_id = null)
 - Child sections (H3): direct subsections under a parent (parent_id = parent's id)
 - **NO grandchildren** (H4+): flatten into nearest parent
 - Target: 8-15 parent sections total
+
+### Categories
+Assign one or more categories to each section from: research, budget, team, compliance, other
+- **research**: Scientific aims, methodology, data, hypotheses, innovation
+- **budget**: Costs, funding, justifications, resources
+- **team**: Personnel, qualifications, collaboration, organization
+- **compliance**: Ethics, regulations, data sharing, protocols
+- **other**: Anything not fitting above categories
 
 ### Common Grant Application Sections (for reference)
 Most grant applications include sections like:
@@ -61,7 +76,7 @@ Most grant applications include sections like:
 Only include sections explicitly required by this CFP.
 
 ### Output
-Return flat sections array with id, title, parent_id for each.
+Return flat sections array with id, title, parent_id, categories for each.
 """,
 )
 
@@ -78,6 +93,9 @@ CFP_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 ## Organization Guidelines
 <organization_guidelines>${organization_guidelines}</organization_guidelines>
+
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
 ## Extracted Sections
 <sections>${sections}</sections>
@@ -105,8 +123,10 @@ Review and improve the extracted sections.
 
 4. **Verify structure**: Flat list with parent_id relationships, 8-15 parent sections
 
+5. **Verify categories**: Ensure each section has appropriate categories assigned
+
 ### Output
-Return refined flat sections array (id, title, parent_id) with only content applicants write.
+Return refined flat sections array (id, title, parent_id, categories) with only content applicants write.
 """,
 )
 
@@ -121,8 +141,15 @@ cfp_content_schema = {
                     "id": {"type": "string"},
                     "title": {"type": "string"},
                     "parent_id": {"type": "string", "nullable": True},
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["research", "budget", "team", "compliance", "other"],
+                        },
+                    },
                 },
-                "required": ["id", "title", "parent_id"],
+                "required": ["id", "title", "parent_id", "categories"],
             },
         },
     },
@@ -162,12 +189,15 @@ def validate_cfp_content(response: CFPContentResult) -> None:
 async def extract_cfp_structure(
     formatted_sources: str,
     organization_guidelines: str,
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> CFPContentResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
+        category_hints=category_hints,
     )
 
     return await handle_completions_request(
@@ -188,13 +218,16 @@ async def validate_and_refine_cfp_structure(
     formatted_sources: str,
     organization_guidelines: str,
     existing_sections: list[CFPSection],
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> CFPContentResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = CFP_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
         sections=existing_sections,
+        category_hints=category_hints,
     )
 
     return await handle_completions_request(

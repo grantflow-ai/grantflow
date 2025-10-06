@@ -111,12 +111,8 @@ async def test_nih_par_25_450_template_generation_end_to_end(
 
     performance_context.start_stage("generate_template")
 
-    organization = cfp_analysis.get("organization")
-    organization_guidelines = organization.get("guidelines", "") if organization else ""
-
     grant_sections = await handle_template_generation(
         cfp_analysis=cfp_analysis,
-        organization_guidelines=organization_guidelines,
         job_manager=mock_job_manager,
         trace_id="nih-par-25-450-template-gen-test",
     )
