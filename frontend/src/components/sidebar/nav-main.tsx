@@ -18,7 +18,9 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
+import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 import { DashboardIcon } from "../icons/dashboard-icon";
@@ -77,6 +79,8 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const [recentApplications, setRecentApplications] = useState<
 		API.ListOrganizationApplications.Http200.ResponseBody["applications"]
 	>([]);
+	const { navigateToApplication } = useNavigationStore();
+	const { projects } = useProjectStore();
 
 	const handleExpandSidebar = () => {
 		if (state === "collapsed") {
@@ -88,6 +92,16 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 		e.preventDefault();
 
 		router.push(href);
+	};
+
+	const handleOpenApplication = (application: (typeof recentApplications)[0]) => {
+		const project = projects.find((p) => p.id === application.project_id);
+		if (!project) {
+			toast.error("Project not found for this application.");
+			return;
+		}
+		navigateToApplication(project.id, project.name, application.id, application.title);
+		router.push(routes.organization.project.application.wizard());
 	};
 
 	useEffect(() => {
@@ -169,12 +183,16 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 											<SidebarMenuSubButton
 												asChild
 												className="h-auto "
-												isActive={pathname === `/application/${application.id}`}
+												isActive={pathname.includes(
+													routes.organization.project.application.wizard(),
+												)}
 											>
-												<Link
+												<button
 													className="flex flex-col items-start "
 													data-testid={`recent-application-${application.id}`}
-													href={`/application/${application.id}`}
+													onClick={() => {
+														handleOpenApplication(application);
+													}}
 												>
 													<div
 														className={`w-fit px-1 py-0.5 flex items-center gap-0.5 rounded-full ${statusStyles.bg}`}
@@ -194,7 +212,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 													<span className="text-sm font-normal leading-5 tracking-tighter break-words">
 														{application.title}
 													</span>
-												</Link>
+												</button>
 											</SidebarMenuSubButton>
 										</SidebarMenuSubItem>
 									);
