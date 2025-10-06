@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from packages.db.src.json_objects import (
     CFPAnalysis,
@@ -26,11 +26,26 @@ from services.rag.src.grant_template.cfp_analysis.section_enrichment import (
 )
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
 from services.rag.src.grant_template.utils.category_extraction import categorize_text
+from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 
 if TYPE_CHECKING:
     from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
+
+ORGANIZATION_GUIDELINES_SEARCH_QUERIES: Final[frozenset[str]] = frozenset(
+    {
+        "application format instructions sections page limits formatting requirements",
+        "grant application structure required sections mandatory components hierarchy",
+        "research plan project description specific aims background methodology approach",
+        "proposal narrative section organization content requirements definitions",
+        "budget justification personnel facilities resources equipment",
+        "application guidelines section requirements formatting instructions submission template",
+        "required attachments supplementary documents biosketches letters support",
+        "section definitions required elements page limits word counts character limits",
+    }
+)
 
 
 async def handle_prepare_context(
@@ -111,12 +126,14 @@ async def handle_prepare_context(
 async def handle_extract_sections(
     *,
     formatted_sources: str,
+    organization_guidelines: str,
     trace_id: str,
 ) -> list[CFPSection]:
     """2-step section extraction: extract → validate."""
     logger.info("Extracting CFP sections (step 1: initial extraction)", trace_id=trace_id)
     initial_result = await extract_cfp_structure(
         formatted_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
         trace_id=trace_id,
     )
 
@@ -127,6 +144,7 @@ async def handle_extract_sections(
     )
     refined_result = await validate_and_refine_cfp_structure(
         formatted_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
         existing_sections=initial_result["sections"],
         trace_id=trace_id,
     )
@@ -145,13 +163,15 @@ async def handle_enrich_sections(
     *,
     formatted_sources: str,
     sections: list[CFPSection],
+    organization_guidelines: str,
     trace_id: str,
 ) -> list[CFPSection]:
     """2-step section enrichment: enrich → validate."""
-    logger.info("Enriching sections with categories/constraints (step 1)", trace_id=trace_id)
+    logger.info("Enriching sections with constraints (step 1)", trace_id=trace_id)
     enriched = await enrich_sections(
         formatted_sources=formatted_sources,
         sections=sections,
+        organization_guidelines=organization_guidelines,
         trace_id=trace_id,
     )
 
@@ -159,6 +179,7 @@ async def handle_enrich_sections(
     validated = await validate_and_refine_enrichment(
         formatted_sources=formatted_sources,
         enriched_sections=enriched["sections"],
+        organization_guidelines=organization_guidelines,
         trace_id=trace_id,
     )
 
@@ -188,34 +209,67 @@ async def handle_cfp_analysis(
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
 
-    logger.info("Extracting and structuring CFP content", trace_id=trace_id)
-    content_sections = await handle_extract_sections(
+    logger.info("Extracting metadata and identifying organization", trace_id=trace_id)
+    metadata_result = await extract_metadata_with_org_identification(
+        full_cfp_text=full_cfp_text,
         formatted_sources=formatted_sources,
+        organizations=organizations,
         trace_id=trace_id,
     )
 
     await job_manager.ensure_not_cancelled()
 
-    logger.info("Starting detailed parallel analysis", trace_id=trace_id)
-    metadata_result, enriched_sections = await asyncio.gather(
-        extract_metadata_with_org_identification(
-            full_cfp_text=full_cfp_text,
-            formatted_sources=formatted_sources,
-            organizations=organizations,
+    organization = None
+    organization_guidelines = ""
+    if metadata_result["org_id"] and (orgs := [org for org in organizations if org["id"] == metadata_result["org_id"]]):
+        organization = orgs[0]
+
+        logger.info(
+            "Retrieving organization guidelines",
+            organization_id=organization["id"],
+            organization_name=organization["full_name"],
             trace_id=trace_id,
-        ),
-        handle_enrich_sections(
-            formatted_sources=formatted_sources,
-            sections=content_sections,
+        )
+        rag_results = await retrieve_documents(
+            organization_id=organization["id"],
+            search_queries=list(ORGANIZATION_GUIDELINES_SEARCH_QUERIES),
+            task_description="Retrieve organization-specific grant application guidelines and formatting requirements",
             trace_id=trace_id,
-        ),
+        )
+        organization_guidelines = ORGANIZATION_GUIDELINES_FRAGMENT.to_string(
+            rag_results="\n".join(rag_results),
+            organization_full_name=organization["full_name"],
+            organization_abbreviation=organization["abbreviation"],
+        )
+        logger.info(
+            "Retrieved organization guidelines",
+            organization_id=organization["id"],
+            guidelines_length=len(organization_guidelines),
+            trace_id=trace_id,
+        )
+
+    await job_manager.ensure_not_cancelled()
+
+    # Step 3: Extract sections with guidelines context
+    logger.info("Extracting application structure", trace_id=trace_id)
+    content_sections = await handle_extract_sections(
+        formatted_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
+        trace_id=trace_id,
     )
 
     await job_manager.ensure_not_cancelled()
 
-    organization = None
-    if metadata_result["org_id"] and (orgs := [org for org in organizations if org["id"] == metadata_result["org_id"]]):
-        organization = orgs[0]
+    # Step 4: Enrich sections with constraints and guidelines context
+    logger.info("Enriching sections with constraints", trace_id=trace_id)
+    enriched_sections = await handle_enrich_sections(
+        formatted_sources=formatted_sources,
+        sections=content_sections,
+        organization_guidelines=organization_guidelines,
+        trace_id=trace_id,
+    )
+
+    await job_manager.ensure_not_cancelled()
 
     logger.info(
         "CFP analysis completed successfully",

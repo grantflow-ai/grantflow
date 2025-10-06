@@ -157,7 +157,6 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     async with async_session_maker() as session, session.begin():
         rag_source = RagSource(
             id="nih-par-25-450-source-id",
-            organization_id=test_organization.id,
             source_type="rag_file",
             text_content=cfp_content,
             indexing_status="FINISHED",

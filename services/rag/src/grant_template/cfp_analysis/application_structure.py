@@ -17,12 +17,17 @@ CFP_CONTENT_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_content_extraction",
     template="""# Extract Application Content Sections
 
-## Sources
+## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
+
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
 ## Task
 
 Extract ONLY the content sections that applicants must **write or prepare** as part of their proposal.
+
+**IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for application structure. The CFP provides context about the funding opportunity, but guidelines define the actual application sections.
 
 ### Include
 - Narrative sections (Research Plan, Specific Aims, Background, Methodology, etc.)
@@ -69,8 +74,11 @@ CFP_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_validation_extraction",
     template="""# Validate and Refine Application Sections
 
-## Sources
+## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
+
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
 ## Extracted Sections
 <sections>${sections}</sections>
@@ -78,6 +86,8 @@ CFP_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 ## Task
 
 Review and improve the extracted sections.
+
+**IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY source for application structure.
 
 ### Validation Steps
 
@@ -153,10 +163,14 @@ def validate_cfp_content(response: CFPContentResult) -> None:
 
 async def extract_cfp_structure(
     formatted_sources: str,
+    organization_guidelines: str,
     *,
     trace_id: str,
 ) -> CFPContentResult:
-    messages = CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(rag_sources=formatted_sources)
+    messages = CFP_CONTENT_EXTRACTION_USER_PROMPT.to_string(
+        rag_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
+    )
 
     return await handle_completions_request(
         prompt_identifier="cfp_content_extraction",
@@ -174,12 +188,14 @@ async def extract_cfp_structure(
 
 async def validate_and_refine_cfp_structure(
     formatted_sources: str,
+    organization_guidelines: str,
     existing_sections: list[CFPSection],
     *,
     trace_id: str,
 ) -> CFPContentResult:
     messages = CFP_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
         sections=existing_sections,
     )
 
