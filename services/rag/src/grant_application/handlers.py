@@ -26,7 +26,7 @@ from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import CFPAnalysisResult, GrantLongFormSection
+    from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection
     from packages.db.src.tables import GrantApplication
 
 logger = get_logger(__name__)
@@ -94,7 +94,7 @@ async def handle_generate_sections_stage(
             section=section,
             research_deep_dives=grant_application.research_objectives or [],
             shared_context=shared_context,
-            cfp_analysis=cast("CFPAnalysisResult", grant_application.grant_template.cfp_analysis),
+            cfp_analysis=cast("CFPAnalysis", grant_application.grant_template.cfp_analysis),
             research_plan_text=research_plan_text,
             enrichment_responses=enrichment_responses,
             relationships=relationships,

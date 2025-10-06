@@ -1,0 +1,352 @@
+{
+  "subject": "PAR-25-450: Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Exploratory/Developmental Research Grant - Clinical Trial Not Allowed)",
+  "org_id": "nih",
+  "deadline": null,
+  "organization": {
+    "id": "nih",
+    "full_name": "National Institutes of Health",
+    "abbreviation": "NIH"
+  },
+  "content": [
+    {
+      "title": "Evidence Supporting Rare Disease Classification",
+      "subtitles": [
+        "Must provide evidence disease affects ≤200,000 individuals in the United States",
+        "Include references confirming disease/condition prevalence",
+        "If disease granted orphan status by FDA, provide this information",
+        "If rare variant/subset of common condition: provide rationale for focusing trial readiness study on this variant",
+        "Describe scientific basis for separating biomarker/COA validation for rare variant from common condition",
+        "Section required with heading: 'Evidence Supporting Rare Disease Classification'",
+        "Application considered non-responsive and will not be reviewed if missing this section"
+      ]
+    },
+    {
+      "title": "Urgent Need for Clinical Trial Readiness",
+      "subtitles": [
+        "Describe need for conducting trial readiness study at this time",
+        "Explain how project addresses critical barrier or bottleneck to progress toward clinical trials",
+        "Describe clinical trial design issues to be addressed: biomarker/COA validation, power calculations, inclusion/exclusion criteria, trial duration",
+        "Describe potential impact of proposed studies on design and increasing likelihood of success of upcoming clinical trials",
+        "Provide brief description of candidate therapeutics/devices development state (even if applicant not involved)",
+        "Provide timelines for advance of therapeutics/devices to clinical trials",
+        "Describe clinical trial(s) enabled by results of this trial readiness study",
+        "Provide letters of support from researchers expecting to conduct upcoming trials",
+        "Outline next steps for moving into clinical trial if proposed study successful",
+        "Provide rationale that clinical trial is feasible in near future",
+        "Describe currently available COA measures and/or biomarkers",
+        "If appropriate, describe how study will result in advancements over currently available measures/biomarkers",
+        "If current measures/biomarkers inadequate or insufficiently developed: describe limitations and how they may compromise trial success",
+        "If trial readiness study is ancillary to ongoing clinical trial or longitudinal study: describe that study and provide letter of support from lead PD(s)/PI(s)",
+        "Explain how trial readiness study will lead to improvements in future trial design above ongoing study",
+        "Describe gaps in disease natural history knowledge that need addressing to achieve clinical trial readiness",
+        "Explain how lack of this knowledge will compromise clinical trial design and how study overcomes obstacles",
+        "Describe role of companies or voluntary health organizations engaged or potentially available for clinical trial readiness studies or clinical trials",
+        "Section required with heading: 'Urgent Need for Clinical Trial Readiness'"
+      ]
+    },
+    {
+      "title": "Biomarkers and Context of Use",
+      "subtitles": [
+        "Use BEST Resource terminology from FDA-NIH Biomarker Working Group (https://www.ncbi.nlm.nih.gov/books/NBK338448)",
+        "Biomarker definition: defined characteristic measured as indicator of normal biological processes, pathogenic processes, or responses to intervention",
+        "Biomarker types: molecular, histologic, radiographic, physiologic",
+        "Biomarker categories: susceptibility/risk, diagnostic, monitoring, prognostic, predictive, pharmacodynamic/response, safety",
+        "Clinical Outcome Assessment (COA): assessment of how individual feels, functions, or survives",
+        "COA types: clinician-reported, observer-reported, patient-reported, performance outcomes",
+        "Context of Use (COU): statement fully describing how medical product development tool is used and the purpose",
+        "Concept: aspect of individual's clinical, biological, physical, or functional state that assessment captures",
+        "Validation: process establishing test/tool/instrument performance acceptable for intended purpose",
+        "Clinical validation: establishing that test/tool acceptably identifies, measures, or predicts concept of interest",
+        "Analytical validation: establishing technical performance (sensitivity, specificity, accuracy, precision) with specified protocol",
+        "Biochemical and molecular biomarkers should have substantial analytical validation data prior to application submission"
+      ]
+    },
+    {
+      "title": "Specific Aims",
+      "subtitles": [
+        "Concise statement of research goals and objectives",
+        "Clear articulation of hypotheses to be tested",
+        "Explanation of expected outcomes and significance",
+        "Typically 1 page for R21 applications"
+      ]
+    },
+    {
+      "title": "Research Strategy: Significance",
+      "subtitles": [
+        "Explain importance of problem or critical barrier to progress in field",
+        "Describe how proposed project will improve scientific knowledge, technical capability, clinical practice",
+        "Explain how project addresses significant needs in design and increasing likelihood of success of upcoming clinical trials",
+        "Describe how concepts, methods, technologies, treatments, interventions, or preventive strategies that drive field will be changed if aims achieved"
+      ]
+    },
+    {
+      "title": "Research Strategy: Innovation",
+      "subtitles": [
+        "Explain how application challenges and seeks to shift current research or clinical practice paradigms",
+        "Describe novel theoretical concepts, approaches, methodologies, instrumentation, or interventions",
+        "Explain refinements, improvements, or new applications of theoretical concepts, approaches or methodologies, instrumentation or interventions",
+        "For clinical trial readiness: innovation in biomarker/COA development or natural history characterization approaches"
+      ]
+    },
+    {
+      "title": "Research Strategy: Approach",
+      "subtitles": [
+        "Describe overall strategy, methodology, and analyses including means for data collection and analysis",
+        "Describe preliminary studies, data, and/or experience relevant to application",
+        "If using existing resources: describe how they will be leveraged (RDCRN, NeuroNEXT, other rare disease networks)",
+        "If leveraging resources from advocacy groups, private foundations, academic institutions, other government agencies, NIH Intramural program: describe",
+        "Describe research design and methods for achieving specific aims",
+        "Explain expected results, potential problems, alternative strategies",
+        "For biomarker/outcome measure studies: describe validation approach and context of use",
+        "For natural history studies: describe data collection methods, participant characterization, analysis plan",
+        "Statistical plan: describe sample size calculations, power analysis, statistical methods",
+        "Timeline with milestones for project completion",
+        "Plan for dissemination of findings to enable upcoming clinical trials"
+      ]
+    },
+    {
+      "title": "Bibliography & References Cited",
+      "subtitles": [
+        "List all references cited in Research Strategy",
+        "Follow NIH citation format guidelines",
+        "Include author names, article title, journal, volume, pages, year",
+        "References not counted in page limits for Research Strategy"
+      ]
+    },
+    {
+      "title": "Senior/Key Person Profile: Biosketches",
+      "subtitles": [
+        "NIH Biographical Sketch format required for all senior/key personnel",
+        "Include: Personal Statement, Positions and Honors, Contributions to Science, Research Support",
+        "Biosketches limited to 5 pages per person",
+        "List publications most relevant to application",
+        "Describe role in proposed research"
+      ]
+    },
+    {
+      "title": "Senior/Key Person Profile: Current and Pending Support",
+      "subtitles": [
+        "List all current and pending research support for each senior/key person",
+        "Include: funding source, project title, direct costs per year, overlap with proposed project",
+        "Describe overlap and explain how proposed project is distinct",
+        "Updated format following NIH guidelines"
+      ]
+    },
+    {
+      "title": "Budget and Budget Justification",
+      "subtitles": [
+        "R21 mechanism: up to $275,000 in direct costs over 2 years (typically $200,000 max total costs)",
+        "Follow NIH R21 budget guidelines",
+        "Detailed Budget: Personnel, Equipment, Travel, Participant/Trainee Support Costs, Other Direct Costs",
+        "Budget Justification: detailed explanation for each budget category",
+        "For multi-site studies: include subaward budgets",
+        "Justify personnel effort levels",
+        "Justify equipment purchases if needed",
+        "Describe participant costs if applicable",
+        "No preliminary data required for R21, but budget should reflect exploratory nature"
+      ]
+    },
+    {
+      "title": "Facilities and Other Resources",
+      "subtitles": [
+        "Describe institutional facilities available for conduct of proposed research",
+        "Include: Laboratory, Clinical, Animal, Computer, Office, Other facilities",
+        "Describe major equipment available",
+        "Explain adequacy of facilities and resources for proposed work",
+        "For multi-site studies: describe facilities at each site",
+        "If leveraging existing networks/resources: describe access and capabilities"
+      ]
+    },
+    {
+      "title": "Equipment",
+      "subtitles": [
+        "List major items of equipment already available for proposed project",
+        "Equipment valued at $5,000 or more",
+        "Describe how existing equipment supports proposed work",
+        "If equipment purchase requested in budget: justify need and explain why existing equipment insufficient"
+      ]
+    },
+    {
+      "title": "Resource Sharing Plans",
+      "subtitles": [
+        "Data Sharing Plan: describe what data will be shared, when, how, with whom",
+        "Follow NIH Data Sharing Policy requirements",
+        "Model Organism Sharing Plan if applicable",
+        "Genomic Data Sharing Plan if applicable",
+        "Explain any restrictions on data sharing",
+        "Describe repository where data will be deposited",
+        "Timeline for data sharing relative to publication"
+      ]
+    },
+    {
+      "title": "Letters of Support",
+      "subtitles": [
+        "Letters from researchers planning upcoming clinical trials that would be enabled by this work",
+        "Letters from collaborating institutions or networks (if applicable)",
+        "Letters from patient advocacy organizations (if applicable)",
+        "Letters confirming access to patient populations or resources",
+        "If ancillary to ongoing study: letter from lead PD(s)/PI(s) of that study",
+        "Letters should be specific about commitment and role in proposed project"
+      ]
+    }
+  ],
+  "analysis_metadata": {
+    "categories": [
+      {
+        "name": "Clinical Trial Readiness Focus",
+        "count": 12,
+        "examples": [
+          "Validation of sensitive, reliable, responsive tools (COA measures, biomarkers)",
+          "Tools to identify/select appropriate participants for clinical trials",
+          "Tools to measure effects of interventions",
+          "Define disease presentation and course essential for clinical trial design",
+          "Retrospective, longitudinal, or cross-sectional natural history approaches",
+          "Address critical barriers/bottlenecks to clinical trial progress",
+          "Power calculations for upcoming trials",
+          "Inclusion/exclusion criteria determination",
+          "Trial duration determination",
+          "Biomarker/COA validation for specific rare disease populations",
+          "Candidate therapeutics ready for testing after study completion",
+          "Near-term feasibility of moving to clinical trial"
+        ]
+      },
+      {
+        "name": "Rare Disease Requirements",
+        "count": 5,
+        "examples": [
+          "Disease affects ≤200,000 individuals in U.S. (Rare Diseases Act of 2002)",
+          "Evidence Supporting Rare Disease Classification section required (non-responsive if missing)",
+          "Prevalence references required",
+          "FDA orphan status information if applicable",
+          "If rare variant of common condition: scientific basis for separate validation required"
+        ]
+      },
+      {
+        "name": "BEST Resource Terminology",
+        "count": 11,
+        "examples": [
+          "Biomarker: defined characteristic indicating biological/pathogenic processes or intervention responses",
+          "Clinical Outcome Assessment (COA): how individual feels, functions, survives",
+          "Context of Use (COU): statement describing tool use and development purpose",
+          "Concept: aspect of state that assessment captures",
+          "Clinical validation: test/tool identifies, measures, predicts concept of interest",
+          "Analytical validation: technical performance (sensitivity, specificity, accuracy, precision)",
+          "COA types: clinician-reported, observer-reported, patient-reported, performance outcomes",
+          "Biomarker categories: susceptibility/risk, diagnostic, monitoring, prognostic, predictive, pharmacodynamic, safety",
+          "Validation fit-for-purpose within defined context of use",
+          "Biochemical/molecular biomarkers need substantial analytical validation prior to submission",
+          "BEST Resource glossary: https://www.ncbi.nlm.nih.gov/books/NBK338448"
+        ]
+      },
+      {
+        "name": "Leveraging Existing Resources",
+        "count": 7,
+        "examples": [
+          "Rare Diseases Clinical Research Network (RDCRN)",
+          "NeuroNEXT network",
+          "Other existing rare disease clinical research networks",
+          "SMART IRB for multi-center studies",
+          "Advocacy groups and private research foundations",
+          "Academic institutions and NIH Intramural program",
+          "Ancillary studies to ongoing clinical trials or longitudinal studies"
+        ]
+      },
+      {
+        "name": "Research Strategy Components",
+        "count": 4,
+        "examples": [
+          "Specific Aims: goals, objectives, hypotheses, expected outcomes",
+          "Significance: importance of problem, impact on field, addressing critical needs",
+          "Innovation: novel concepts, approaches, methodologies; paradigm shifts",
+          "Approach: overall strategy, methodology, preliminary data, research design, expected results, statistical plan, timeline"
+        ]
+      },
+      {
+        "name": "Application Format",
+        "count": 8,
+        "examples": [
+          "SF424(R&R) Application Components required",
+          "PHS 398 Research Plan required",
+          "NIH Biographical Sketch format (5 pages per person)",
+          "Current and Pending Support documentation",
+          "Budget following R21 guidelines",
+          "Facilities and Other Resources description",
+          "Resource Sharing Plans (Data, Model Organism, Genomic if applicable)",
+          "Letters of Support from upcoming trial researchers"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "type": "page_limit",
+        "value": "6 pages",
+        "section": "Research Strategy (typical for R21)"
+      },
+      {
+        "type": "page_limit",
+        "value": "1 page",
+        "section": "Specific Aims"
+      },
+      {
+        "type": "page_limit",
+        "value": "5 pages per person",
+        "section": "NIH Biographical Sketch"
+      },
+      {
+        "type": "format",
+        "value": "Must follow NIH SF424(R&R) Application Guide Table of Page Limits",
+        "section": "All application components"
+      },
+      {
+        "type": "format",
+        "value": "Evidence Supporting Rare Disease Classification section required (non-responsive if missing)",
+        "section": "Research Strategy required subsection"
+      },
+      {
+        "type": "format",
+        "value": "Urgent Need for Clinical Trial Readiness section required",
+        "section": "Research Strategy required subsection"
+      },
+      {
+        "type": "format",
+        "value": "Must use BEST Resource terminology for biomarkers/COAs",
+        "section": "Research Strategy"
+      },
+      {
+        "type": "format",
+        "value": "Clinical trials NOT allowed (R21 Clinical Trial Not Allowed mechanism)",
+        "section": "Project scope restriction"
+      },
+      {
+        "type": "format",
+        "value": "Candidate therapeutics must be ready for testing after study completion",
+        "section": "Urgent Need for Clinical Trial Readiness"
+      },
+      {
+        "type": "format",
+        "value": "Biochemical/molecular biomarkers need substantial analytical validation data before submission",
+        "section": "Biomarkers"
+      },
+      {
+        "type": "format",
+        "value": "Letters of support required from researchers conducting upcoming enabled trials",
+        "section": "Urgent Need for Clinical Trial Readiness"
+      },
+      {
+        "type": "format",
+        "value": "Disease must affect ≤200,000 people in U.S.",
+        "section": "Rare disease eligibility"
+      },
+      {
+        "type": "format",
+        "value": "Equipment list: major items $5,000 or more",
+        "section": "Equipment section"
+      }
+    ],
+    "metadata": {
+      "total_sections": 15,
+      "total_requirements": 47,
+      "source_count": 1
+    }
+  }
+}

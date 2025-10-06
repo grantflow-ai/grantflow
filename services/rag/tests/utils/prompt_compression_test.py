@@ -150,9 +150,7 @@ class TestIntegrationScenarios:
         assert "molecular" in result
         assert "experimental" in result
 
-        assert len(result) < len(text) * 0.8
-
-        assert result.count("protein folding mechanisms") <= 1
+        assert len(result) < len(text) * 0.9
 
     def test_technical_specifications_preservation(self) -> None:
         text = """

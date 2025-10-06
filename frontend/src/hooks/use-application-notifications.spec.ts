@@ -412,7 +412,7 @@ describe("Type Guards", () => {
 
 		const validNotification = RagProcessingStatusMessageFactory.build({
 			data: { section_count: 5 },
-			event: "sections_extracted",
+			event: "metadata_generated",
 			parent_id: "test-id",
 			type: "info",
 		});
@@ -421,7 +421,7 @@ describe("Type Guards", () => {
 
 		const validNotificationWithoutData = RagProcessingStatusMessageFactory.build({
 			data: {},
-			event: "sections_extracted",
+			event: "metadata_generated",
 			parent_id: "test-id",
 			type: "info",
 		});

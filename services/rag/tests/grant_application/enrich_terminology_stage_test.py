@@ -183,5 +183,8 @@ async def test_enrich_objective_with_wikidata_error_handling(
         "queries": [],
         "terms": [],
         "context": "",
+        "instructions": "",
+        "description": "",
+        "questions": [],
     }
     mock_get_scientific_context.assert_called_once()

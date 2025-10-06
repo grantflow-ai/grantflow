@@ -78,7 +78,7 @@ async def test_retrieve_grant_template_job_success(
             grant_template_id=grant_template.id,
             grant_application_id=None,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
             application_stage=None,
             checkpoint_data={
                 "extracted_sections": [{"id": "section1", "title": "Introduction"}],
@@ -101,7 +101,7 @@ async def test_retrieve_grant_template_job_success(
     assert data["id"] == str(job.id)
     assert data["job_type"] == "grant_template_generation"
     assert data["status"] == RagGenerationStatusEnum.PROCESSING.value
-    assert data["current_stage"] == GrantTemplateStageEnum.ANALYZE_CFP_CONTENT.value
+    assert data["current_stage"] == GrantTemplateStageEnum.CFP_ANALYSIS.value
     assert data["grant_template_id"] == str(grant_template.id)
     assert data["extracted_sections"] == [{"id": "section1", "title": "Introduction"}]
     assert data["extracted_metadata"] == {"key": "value"}
@@ -390,7 +390,7 @@ async def test_cancel_pending_job(
             grant_template_id=grant_template.id,
             grant_application_id=None,
             status=RagGenerationStatusEnum.PENDING,
-            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
             application_stage=None,
         )
         session.add(job)
@@ -430,9 +430,9 @@ async def test_retrieve_job_with_multiple_stages(
     project_member_user: OrganizationUser,
 ) -> None:
     stages = [
-        GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
-        GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
-        GrantTemplateStageEnum.GENERATE_METADATA,
+        GrantTemplateStageEnum.CFP_ANALYSIS,
+        GrantTemplateStageEnum.CFP_ANALYSIS,
+        GrantTemplateStageEnum.TEMPLATE_GENERATION,
     ]
 
     job_ids = []
@@ -461,7 +461,7 @@ async def test_retrieve_job_with_multiple_stages(
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert data["current_stage"] == GrantTemplateStageEnum.GENERATE_METADATA.value
+    assert data["current_stage"] == GrantTemplateStageEnum.TEMPLATE_GENERATION.value
     assert data["status"] == RagGenerationStatusEnum.PROCESSING.value
 
 

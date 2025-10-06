@@ -1,7 +1,7 @@
 from typing import Any
 
 from packages.db.src.json_objects import (
-    CFPAnalysisResult,
+    CFPAnalysis,
     GrantLongFormSection,
     ResearchObjective,
 )
@@ -15,7 +15,7 @@ def build_evaluation_context(
     section_config: GrantLongFormSection | None = None,
     rag_context: str | list[DocumentDTO] | None = None,
     research_objectives: list[ResearchObjective] | None = None,
-    cfp_analysis: CFPAnalysisResult | None = None,
+    cfp_analysis: CFPAnalysis | None = None,
     reference_corpus: list[str] | None = None,
     **additional_context: Any,
 ) -> EvaluationContext:

@@ -25,8 +25,7 @@ export type TemplateGenerationEvent =
 	| "job_cancelled"
 	| "llm_timeout"
 	| "metadata_generated"
-	| "pipeline_error"
-	| "sections_extracted";
+	| "pipeline_error";
 
 export function isApplicationEvent(event: NotificationEvent): event is ApplicationGenerationEvent {
 	return [
@@ -51,7 +50,6 @@ export function isTemplateEvent(event: NotificationEvent): event is TemplateGene
 		"llm_timeout",
 		"metadata_generated",
 		"pipeline_error",
-		"sections_extracted",
 	];
 	return templateEvents.includes(event as TemplateGenerationEvent);
 }
@@ -74,6 +72,5 @@ export const SUCCESS_EVENTS = new Set<NotificationEvent>([
 	"relationships_extracted",
 	"research_plan_completed",
 	"section_texts_generated",
-	"sections_extracted",
 	"wikidata_enhancement_complete",
 ]);

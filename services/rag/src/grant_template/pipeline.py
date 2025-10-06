@@ -16,17 +16,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
 from services.rag.src.grant_template.dto import (
-    AnalyzeCFPContentStageDTO,
-    ExtractCFPContentStageDTO,
-    ExtractionSectionsStageDTO,
+    CFPAnalysisStageDTO,
     StageDTO,
 )
 from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
-    handle_cfp_extraction_stage,
-    handle_generate_metadata_stage,
     handle_save_grant_template,
-    handle_section_extraction_stage,
+    handle_template_generation_stage,
 )
 from services.rag.src.utils.job_manager import JobManager
 
@@ -106,49 +102,23 @@ async def handle_grant_template_pipeline(
         checkpoint_data = await job_manager.get_checkpoint_data()
 
         match current_stage:
-            case GrantTemplateStageEnum.EXTRACT_CFP_CONTENT:
-                extracted_cfp = await handle_cfp_extraction_stage(
+            case GrantTemplateStageEnum.CFP_ANALYSIS:
+                cfp_analysis_result = await handle_cfp_analysis_stage(
                     grant_template=grant_template,
                     job_manager=job_manager,
                     session_maker=session_maker,
                     trace_id=trace_id,
                 )
-                await job_manager.transition_to_next_stage(extracted_cfp)
+                await job_manager.transition_to_next_stage(cfp_analysis_result)
                 return None
 
-            case GrantTemplateStageEnum.ANALYZE_CFP_CONTENT:
+            case GrantTemplateStageEnum.TEMPLATE_GENERATION:
                 if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for CFP analysis stage")
+                    raise ValidationError("Missing checkpoint data for template generation stage")
 
-                extracted_cfp = cast("ExtractCFPContentStageDTO", checkpoint_data)
-                analyzed_cfp = await handle_cfp_analysis_stage(
-                    extracted_cfp=extracted_cfp,
-                    job_manager=job_manager,
-                    trace_id=trace_id,
-                )
-                await job_manager.transition_to_next_stage(analyzed_cfp)
-                return None
-
-            case GrantTemplateStageEnum.EXTRACT_SECTIONS:
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for section extraction stage")
-
-                analyzed_cfp = cast("AnalyzeCFPContentStageDTO", checkpoint_data)
-                section_extraction_result = await handle_section_extraction_stage(
-                    analysis_result=analyzed_cfp,
-                    job_manager=job_manager,
-                    trace_id=trace_id,
-                )
-                await job_manager.transition_to_next_stage(section_extraction_result)
-                return None
-
-            case GrantTemplateStageEnum.GENERATE_METADATA:
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for metadata generation stage")
-
-                section_extraction_result = cast("ExtractionSectionsStageDTO", checkpoint_data)
-                grant_sections = await handle_generate_metadata_stage(
-                    section_extraction_result=section_extraction_result,
+                cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
+                template_generation_result = await handle_template_generation_stage(
+                    cfp_analysis_result=cfp_analysis_result,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
@@ -163,9 +133,8 @@ async def handle_grant_template_pipeline(
                     grant_template=grant_template,
                     session_maker=session_maker,
                     job_manager=job_manager,
-                    cfp_analysis=section_extraction_result["analysis_results"],
-                    extracted_cfp=section_extraction_result,
-                    grant_sections=grant_sections,
+                    cfp_analysis=template_generation_result["cfp_analysis"],
+                    grant_sections=template_generation_result["grant_sections"],
                     trace_id=trace_id,
                 )
 
@@ -209,6 +178,8 @@ async def handle_grant_template_pipeline(
         detailed_error_message = f"{type(e).__name__}: {e!s}"
         if error_context:
             detailed_error_message += f"\nContext: {error_context}"
+
+        await job_manager.clear_checkpoint_data()
 
         await job_manager.update_job_status(
             status=RagGenerationStatusEnum.FAILED,

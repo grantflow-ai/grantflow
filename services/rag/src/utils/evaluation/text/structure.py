@@ -6,7 +6,7 @@ from packages.shared_utils.src.nlp import get_spacy_model, get_word_count
 
 from services.rag.src.utils.evaluation.dto import StructuralMetrics
 
-HEADING_PATTERN: Final[re.Pattern[str]] = re.compile(r"^(#{1,6})\s+.+", re.MULTILINE)
+HEADING_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(#{1,6})\s+(.+)", re.MULTILINE)
 LIST_ITEM_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(?:[*+-]|\d+\.)\s+\S+", re.MULTILINE)
 ACADEMIC_FORMATTING_PATTERNS: Final[list[re.Pattern[str]]] = [
     re.compile(r"\*\*[^*]+\*\*"),
@@ -111,11 +111,17 @@ def check_section_organization(content: str) -> float:
     header_levels = []
     academic_headers = 0
 
-    for header in headers:
-        level = len(header) - len(header.lstrip("#"))
+    for header_match in headers:
+        if isinstance(header_match, tuple):
+            header_hash = header_match[0]
+            header_text = header_match[1].lower()
+        else:
+            header_hash = header_match
+            header_text = header_match.lstrip("# ").lower()
+
+        level = len(header_hash)
         header_levels.append(level)
 
-        header_text = header.lstrip("# ").lower()
         if any(academic_header in header_text for academic_header in ACADEMIC_SECTION_HEADERS):
             academic_headers += 1
 
@@ -172,7 +178,8 @@ def evaluate_header_structure(content: str) -> float:
         return 0.0
 
     header_levels = []
-    for header_hash in headers:
+    for header_match in headers:
+        header_hash = header_match[0] if isinstance(header_match, tuple) else header_match
         level = len(header_hash)
         header_levels.append(level)
 
@@ -199,8 +206,9 @@ def evaluate_header_structure(content: str) -> float:
         structure_score += 0.2
 
     descriptive_headers = 0
-    for header in headers:
-        header_text = header.lstrip("# ").strip()
+    for header_match in headers:
+        header_text = header_match[1] if isinstance(header_match, tuple) else header_match
+        header_text = header_text.strip()
         if 10 <= len(header_text) <= 80:
             descriptive_headers += 1
 
