@@ -143,7 +143,7 @@ tasks:
       - task: db:up
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
-      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5432/local"
+      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
     cmds:
       - task: _db:wait-for-ready
       - uv run alembic --config ./packages/db/alembic.ini upgrade head

@@ -35,7 +35,6 @@ async def seed_db() -> None:
             stmt = stmt.on_conflict_do_nothing(index_elements=["full_name"])
 
             result = await session.execute(stmt)
-            await session.commit()
 
             rows_inserted = result.rowcount
             logger.info(f"Seeding complete: {rows_inserted} new granting institutions added")
