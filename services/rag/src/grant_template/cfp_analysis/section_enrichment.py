@@ -7,6 +7,10 @@ from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
+from services.rag.src.grant_template.utils.category_extraction import (
+    CategorizationAnalysisResult,
+    format_nlp_hints_for_extraction,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -40,12 +44,15 @@ SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 ## Organization Guidelines
 <organization_guidelines>${organization_guidelines}</organization_guidelines>
 
+## Category Hints
+<category_hints>${category_hints}</category_hints>
+
 ## Sections
 <sections>${sections}</sections>
 
 ## Task
 
-For each section, add constraints by searching the ENTIRE CFP document and organization guidelines.
+For each section, add constraints and categories by searching the ENTIRE CFP document and organization guidelines.
 
 **Important**:
 - If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for constraints
@@ -74,8 +81,16 @@ For each constraint found:
 - "no less than ½ inch margins" → {type: "margin", value: "at least ½ inch margins"}
 - "Up to 30 references" → {type: "length", value: "up to 30 references"}
 
+### Categories
+Verify and refine categories for each section from: research, budget, team, compliance, other
+- **research**: Scientific aims, methodology, data, hypotheses, innovation
+- **budget**: Costs, funding, justifications, resources
+- **team**: Personnel, qualifications, collaboration, organization
+- **compliance**: Ethics, regulations, data sharing, protocols
+- **other**: Anything not fitting above categories
+
 ### Output
-Return all sections with added constraints field.
+Return all sections with constraints and categories fields.
 """,
 )
 
@@ -94,6 +109,9 @@ SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 ## Organization Guidelines
 <organization_guidelines>${organization_guidelines}</organization_guidelines>
 
+## Category Hints
+<category_hints>${category_hints}</category_hints>
+
 ## Enriched Sections
 <sections>${sections}</sections>
 
@@ -106,9 +124,10 @@ Review and improve section enrichment.
 ### Actions
 1. **Find missing constraints**: Search CFP sources and organization guidelines for ANY page/word/character limits, font, spacing, or margin requirements not yet captured
 2. Add missed formatting/length requirements with exact values from CFP or guidelines
+3. **Verify categories**: Ensure each section has appropriate categories assigned
 
 ### Output
-Return complete updated sections with validated constraints.
+Return complete updated sections with validated constraints and categories.
 """,
 )
 
@@ -134,8 +153,15 @@ section_enrichment_schema = {
                             "required": ["type", "value"],
                         },
                     },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["research", "budget", "team", "compliance", "other"],
+                        },
+                    },
                 },
-                "required": ["id", "title", "parent_id", "constraints"],
+                "required": ["id", "title", "parent_id", "constraints", "categories"],
             },
         },
     },
@@ -166,14 +192,17 @@ async def enrich_sections(
     formatted_sources: str,
     sections: list[CFPSection],
     organization_guidelines: str,
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> EnrichedSectionsResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = SECTION_ENRICHMENT_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
         sections=serialize(sections).decode("utf-8"),
         constraint_types=", ".join(sorted(CONSTRAINT_TYPES)),
+        category_hints=category_hints,
     )
 
     validator = partial(validate_section_enrichment, expected_ids={s["id"] for s in sections})
@@ -196,13 +225,16 @@ async def validate_and_refine_enrichment(
     formatted_sources: str,
     enriched_sections: list[CFPSection],
     organization_guidelines: str,
+    cfp_categories: CategorizationAnalysisResult,
     *,
     trace_id: str,
 ) -> EnrichedSectionsResult:
+    category_hints = format_nlp_hints_for_extraction(cfp_categories)
     messages = SECTION_ENRICHMENT_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
         sections=serialize(enriched_sections).decode("utf-8"),
+        category_hints=category_hints,
     )
 
     validator = partial(validate_section_enrichment, expected_ids={s["id"] for s in enriched_sections})

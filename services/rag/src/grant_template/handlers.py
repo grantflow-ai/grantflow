@@ -86,11 +86,9 @@ async def handle_template_generation_stage(
 
     cfp_analysis = cfp_analysis_result["cfp_analysis"]
     organization = cfp_analysis.get("organization")
-    organization_guidelines = organization.get("guidelines", "") if organization else ""
 
     grant_sections = await handle_template_generation(
         cfp_analysis=cfp_analysis,
-        organization_guidelines=organization_guidelines,
         job_manager=job_manager,
         trace_id=trace_id,
     )

@@ -25,7 +25,7 @@ from services.rag.src.grant_template.cfp_analysis.section_enrichment import (
     validate_and_refine_enrichment,
 )
 from services.rag.src.grant_template.utils import RagSourceData, format_rag_sources_for_prompt
-from services.rag.src.grant_template.utils.category_extraction import categorize_text
+from services.rag.src.grant_template.utils.category_extraction import CategorizationAnalysisResult, categorize_text
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
 
@@ -125,12 +125,14 @@ async def handle_extract_sections(
     *,
     formatted_sources: str,
     organization_guidelines: str,
+    cfp_categories: CategorizationAnalysisResult,
     trace_id: str,
 ) -> list[CFPSection]:
     logger.info("Extracting CFP sections (step 1: initial extraction)", trace_id=trace_id)
     initial_result = await extract_cfp_structure(
         formatted_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -143,6 +145,7 @@ async def handle_extract_sections(
         formatted_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
         existing_sections=initial_result["sections"],
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -161,6 +164,7 @@ async def handle_enrich_sections(
     formatted_sources: str,
     sections: list[CFPSection],
     organization_guidelines: str,
+    cfp_categories: CategorizationAnalysisResult,
     trace_id: str,
 ) -> list[CFPSection]:
     logger.info("Enriching sections with constraints (step 1)", trace_id=trace_id)
@@ -168,6 +172,7 @@ async def handle_enrich_sections(
         formatted_sources=formatted_sources,
         sections=sections,
         organization_guidelines=organization_guidelines,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -176,6 +181,7 @@ async def handle_enrich_sections(
         formatted_sources=formatted_sources,
         enriched_sections=enriched["sections"],
         organization_guidelines=organization_guidelines,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -203,11 +209,17 @@ async def handle_cfp_analysis(
 
     formatted_sources = format_rag_sources_for_prompt(rag_sources)
 
+    logger.info("Categorizing CFP text", trace_id=trace_id)
+    cfp_categories = await categorize_text(full_cfp_text)
+
+    await job_manager.ensure_not_cancelled()
+
     logger.info("Extracting metadata and identifying organization", trace_id=trace_id)
     metadata_result = await extract_metadata_with_org_identification(
         full_cfp_text=full_cfp_text,
         formatted_sources=formatted_sources,
         organizations=organizations,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -248,6 +260,7 @@ async def handle_cfp_analysis(
     content_sections = await handle_extract_sections(
         formatted_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
@@ -258,6 +271,7 @@ async def handle_cfp_analysis(
         formatted_sources=formatted_sources,
         sections=content_sections,
         organization_guidelines=organization_guidelines,
+        cfp_categories=cfp_categories,
         trace_id=trace_id,
     )
 
