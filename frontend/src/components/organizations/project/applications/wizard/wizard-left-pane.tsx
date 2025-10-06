@@ -4,19 +4,19 @@ import { cn } from "@/lib/utils";
 export function WizardLeftPane({
 	children,
 	className = "",
-	contentSpacing = "space-y-6",
+	contentSpacing = "space-y-3 2xl:space-y-6",
 	innerClassName = "",
 	testId,
 }: {
 	children: ReactNode;
 	className?: string;
-	contentSpacing?: "space-y-2" | "space-y-6";
+	contentSpacing?: "space-y-2" | "space-y-3 2xl:space-y-6" | "space-y-6";
 	innerClassName?: string;
 	testId?: string;
 }) {
 	return (
 		<div className={`w-1/2 md:w-1/3 lg:w-1/4 min-w-1/4 h-full flex flex-col ${className}`} data-testid={testId}>
-			<div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+			<div className="flex-1 overflow-y-auto px-4 py-3 2xl:py-6 2xl:px-6 scrollbar-hide">
 				<div className={cn(contentSpacing, innerClassName)}>{children}</div>
 			</div>
 		</div>
