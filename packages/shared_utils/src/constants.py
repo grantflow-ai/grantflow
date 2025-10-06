@@ -37,5 +37,4 @@ class NotificationEvents(StrEnum):
     RELATIONSHIPS_EXTRACTED = "relationships_extracted"
     RESEARCH_PLAN_COMPLETED = "research_plan_completed"
     SECTION_TEXTS_GENERATED = "section_texts_generated"
-    SECTIONS_EXTRACTED = "sections_extracted"
     WIKIDATA_ENHANCEMENT_COMPLETE = "wikidata_enhancement_complete"

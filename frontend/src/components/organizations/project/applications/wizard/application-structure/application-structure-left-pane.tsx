@@ -124,7 +124,6 @@ const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
 	llm_timeout: -1,
 	metadata_generated: 3,
 	pipeline_error: -1,
-	sections_extracted: 2,
 };
 
 export function ApplicationStructureLeftPane() {
