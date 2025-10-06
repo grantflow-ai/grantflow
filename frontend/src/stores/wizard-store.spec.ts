@@ -53,61 +53,35 @@ describe.sequential("wizard store", () => {
 			const state = useWizardStore.getState();
 			expect(state.currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			expect(state.isGeneratingTemplate).toBe(false);
-			expect(state.polling.isActive).toBe(false);
+			expect(state.templateGenerationFailed).toBe(false);
+			expect(state.templateGenerationErrorMessage).toBe(null);
 		});
 	});
 
-	describe("checkTemplateGeneration", () => {
-		it("should stop polling when grant sections exist", async () => {
-			const mockStop = vi.fn();
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
-				}),
-			});
+	describe("template generation state", () => {
+		it("should set template generation failed with error message", () => {
+			useWizardStore.getState().setTemplateGenerationFailed(true, "Test error message");
 
-			useApplicationStore.setState({
-				application,
-				getApplication: vi.fn().mockResolvedValue(undefined),
-			});
-
-			useWizardStore.setState({
-				polling: { intervalId: null, isActive: true, start: vi.fn(), stop: mockStop },
-			});
-
-			await useWizardStore.getState().checkTemplateGeneration();
-
-			expect(mockStop).toHaveBeenCalled();
-			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
+			expect(useWizardStore.getState().templateGenerationFailed).toBe(true);
+			expect(useWizardStore.getState().templateGenerationErrorMessage).toBe("Test error message");
 		});
 
-		it("should continue polling when no grant sections", async () => {
-			const mockStop = vi.fn();
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-				getApplication: vi.fn().mockResolvedValue(undefined),
-			});
-
+		it("should reset template generation failed state", () => {
 			useWizardStore.setState({
-				polling: { intervalId: null, isActive: true, start: vi.fn(), stop: mockStop },
+				templateGenerationErrorMessage: "Some error",
+				templateGenerationFailed: true,
 			});
 
-			await useWizardStore.getState().checkTemplateGeneration();
+			useWizardStore.getState().resetTemplateGenerationFailed();
 
-			expect(mockStop).not.toHaveBeenCalled();
+			expect(useWizardStore.getState().templateGenerationFailed).toBe(false);
+			expect(useWizardStore.getState().templateGenerationErrorMessage).toBe(null);
 		});
 	});
 
 	describe("toNextStep", () => {
-		it("should start template generation when entering PREVIEW_AND_APPROVE", () => {
+		it("should start template generation when entering APPLICATION_STRUCTURE", () => {
 			const mockGenerateTemplate = vi.fn();
-			const mockStart = vi.fn();
 
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -124,7 +98,6 @@ describe.sequential("wizard store", () => {
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				polling: { intervalId: null, isActive: false, start: mockStart, stop: vi.fn() },
 			});
 
 			useWizardStore.getState().toNextStep();
@@ -132,12 +105,10 @@ describe.sequential("wizard store", () => {
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 			expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id");
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(true);
-			expect(mockStart).toHaveBeenCalled();
 		});
 
 		it("should not start generation if grant sections already exist", () => {
 			const mockGenerateTemplate = vi.fn();
-			const mockStart = vi.fn();
 
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -152,13 +123,11 @@ describe.sequential("wizard store", () => {
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
-				polling: { intervalId: null, isActive: false, start: mockStart, stop: vi.fn() },
 			});
 
 			useWizardStore.getState().toNextStep();
 
 			expect(mockGenerateTemplate).not.toHaveBeenCalled();
-			expect(mockStart).not.toHaveBeenCalled();
 		});
 	});
 
@@ -519,157 +488,6 @@ describe.sequential("wizard store", () => {
 		});
 	});
 
-	describe.sequential("polling lifecycle management", () => {
-		beforeEach(() => {
-			const state = useWizardStore.getState();
-			useWizardStore.setState({
-				...state,
-				polling: {
-					...state.polling,
-					intervalId: null,
-					isActive: false,
-				},
-			});
-		});
-
-		it("should prevent starting polling when already active", () => {
-			const mockApiFunction = vi.fn();
-
-			const current = useWizardStore.getState();
-			useWizardStore.setState({
-				...current,
-				polling: {
-					...current.polling,
-					intervalId: null,
-					isActive: true,
-				},
-			});
-
-			const { polling } = useWizardStore.getState();
-			polling.start(mockApiFunction, 1000);
-
-			expect(mockApiFunction).not.toHaveBeenCalled();
-		});
-
-		it("should handle start/stop when callImmediately is true", () => {
-			const mockApiFunction = vi.fn();
-
-			const { polling } = useWizardStore.getState();
-			polling.start(mockApiFunction, 1000, true);
-			polling.stop();
-			expect(useWizardStore.getState().polling.isActive).toBe(false);
-			expect(useWizardStore.getState().polling.intervalId).toBeNull();
-		});
-
-		it("should not call API function immediately when callImmediately is false", () => {
-			const mockApiFunction = vi.fn();
-
-			const { polling } = useWizardStore.getState();
-			polling.start(mockApiFunction, 1000, false);
-
-			expect(mockApiFunction).not.toHaveBeenCalled();
-		});
-
-		it("should clear polling state on stop", () => {
-			const mockApiFunction = vi.fn();
-
-			const { polling } = useWizardStore.getState();
-			polling.start(mockApiFunction, 1000, false);
-			polling.stop();
-			expect(useWizardStore.getState().polling.isActive).toBe(false);
-			expect(useWizardStore.getState().polling.intervalId).toBeNull();
-		});
-	});
-
-	describe("RAG source polling", () => {
-		it("should stop polling when navigating away from APPLICATION_DETAILS", async () => {
-			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
-			const mockStop = vi.fn();
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "INDEXING" as const }],
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-				getApplication: mockGetApplication,
-			});
-
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
-			});
-
-			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
-
-			await useWizardStore.getState().checkRagSourcesStatus();
-
-			expect(mockStop).toHaveBeenCalled();
-			expect(mockGetApplication).not.toHaveBeenCalled();
-		});
-
-		it("should stop polling when all sources are processed", async () => {
-			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
-			const mockStop = vi.fn();
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" as const },
-						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" as const },
-					],
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-				getApplication: mockGetApplication,
-			});
-
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
-			});
-
-			await useWizardStore.getState().checkRagSourcesStatus();
-
-			useApplicationStore.setState({ application });
-
-			expect(mockStop).toHaveBeenCalled();
-		});
-
-		it("should continue polling when sources are still processing", async () => {
-			const mockGetApplication = vi.fn().mockResolvedValue(undefined);
-			const mockStop = vi.fn();
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" as const },
-						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" as const },
-					],
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-				getApplication: mockGetApplication,
-			});
-
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				polling: { intervalId: 123 as any, isActive: true, start: vi.fn(), stop: mockStop },
-			});
-
-			await useWizardStore.getState().checkRagSourcesStatus();
-
-			expect(mockStop).not.toHaveBeenCalled();
-			expect(mockGetApplication).toHaveBeenCalled();
-		});
-	});
-
 	describe("application generation flow", () => {
 		it("should skip generation when application already has text", async () => {
 			const mockGenerateApplication = vi.fn();
@@ -688,9 +506,8 @@ describe.sequential("wizard store", () => {
 			expect(useWizardStore.getState().isGeneratingApplication).toBe(false);
 		});
 
-		it("should start generation and polling when no text exists", async () => {
+		it("should start generation when no text exists", async () => {
 			const mockGenerateApplication = vi.fn().mockResolvedValue(true);
-			const mockStart = vi.fn();
 			const applicationWithoutText = ApplicationWithTemplateFactory.build({
 				text: undefined,
 			});
@@ -700,41 +517,23 @@ describe.sequential("wizard store", () => {
 				generateApplication: mockGenerateApplication,
 			});
 
-			useWizardStore.setState({
-				polling: {
-					intervalId: null,
-					isActive: false,
-					start: mockStart,
-					stop: vi.fn(),
-				},
-			});
-
 			await useWizardStore.getState().generateApplication();
 
 			expect(mockGenerateApplication).toHaveBeenCalled();
 			expect(useWizardStore.getState().isGeneratingApplication).toBe(true);
-			expect(mockStart).toHaveBeenCalled();
 		});
 	});
 
 	describe("step navigation side effects", () => {
-		it("should stop polling when leaving APPLICATION_STRUCTURE", () => {
-			const mockStop = vi.fn();
-
+		it("should reset template generation state when leaving APPLICATION_STRUCTURE", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 				isGeneratingTemplate: false,
-				polling: {
-					intervalId: null,
-					isActive: true,
-					start: vi.fn(),
-					stop: mockStop,
-				},
+				templateGenerationFailed: false,
 			});
 
 			useWizardStore.getState().toNextStep();
 
-			expect(mockStop).toHaveBeenCalled();
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
 		});
 
@@ -750,24 +549,19 @@ describe.sequential("wizard store", () => {
 			expect(useWizardStore.getState().currentStep).toBe(initialStep);
 		});
 
-		it("should allow going to previous step when not generating", () => {
-			const mockStop = vi.fn();
-
+		it("should allow going to previous step when not generating and clear error state", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 				isGeneratingTemplate: false,
-				polling: {
-					intervalId: null,
-					isActive: true,
-					start: vi.fn(),
-					stop: mockStop,
-				},
+				templateGenerationErrorMessage: "Some error",
+				templateGenerationFailed: true,
 			});
 
 			useWizardStore.getState().toPreviousStep();
 
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
-			expect(mockStop).toHaveBeenCalled();
+			expect(useWizardStore.getState().templateGenerationFailed).toBe(false);
+			expect(useWizardStore.getState().templateGenerationErrorMessage).toBe(null);
 		});
 	});
 

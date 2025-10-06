@@ -157,6 +157,7 @@ class WebsocketMessage[T](TypedDict):
     event: str
     data: T
     trace_id: str
+    application_data: NotRequired[dict[str, Any]]
 
 
 class EmailNotificationRequest(TypedDict):

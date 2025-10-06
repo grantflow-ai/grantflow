@@ -24,14 +24,7 @@ describe("ApplicationStructureStep", () => {
 		vi.clearAllMocks();
 
 		useWizardStore.setState({
-			checkTemplateGeneration: vi.fn(),
 			isGeneratingTemplate: false,
-			polling: {
-				intervalId: null,
-				isActive: false,
-				start: vi.fn(),
-				stop: vi.fn(),
-			},
 		});
 
 		useApplicationStore.setState({

@@ -6,13 +6,17 @@ from typing import Any
 from uuid import UUID
 
 from litestar import websocket_stream
-from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.query_helpers import update_active_by_id
 from packages.db.src.tables import GenerationNotification
+from packages.db.src.utils import retrieve_application
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import WebsocketMessage
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.src.api.routes.grant_applications import build_application_response
 
 logger = get_logger(__name__)
 
@@ -26,6 +30,27 @@ async def pull_notifications(
     notifications_to_send = []
 
     async with session_maker() as session, session.begin():
+        try:
+            application = await retrieve_application(
+                application_id=application_id,
+                session=session,
+            )
+            app_data = build_application_response(application)
+
+            logger.debug(
+                "Fetched fresh application data for notifications",
+                application_id=str(application_id),
+                status=app_data["status"].value,
+                updated_at=app_data["updated_at"],
+            )
+        except ValidationError as e:
+            logger.error(
+                "Failed to fetch application data for notifications",
+                application_id=str(application_id),
+                error=str(e),
+            )
+            return []
+
         result = await session.execute(
             select(GenerationNotification)
             .where(
@@ -54,7 +79,9 @@ async def pull_notifications(
                     "event": notification.event,
                     "data": notification.data if notification.data else {"message": notification.message},
                     "trace_id": "",
+                    "application_data": dict(app_data),
                 }
+
                 notifications_to_send.append(message)
 
     return notifications_to_send
@@ -63,7 +90,7 @@ async def pull_notifications(
 @websocket_stream(
     "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications",
     opt={"allowed_roles": [UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR]},
-    type_encoders={UUID: str, SourceIndexingStatusEnum: lambda x: x.value},
+    type_encoders={UUID: str, SourceIndexingStatusEnum: lambda x: x.value, ApplicationStatusEnum: lambda x: x.value},
 )
 async def handle_grant_application_notifications(
     organization_id: UUID,
@@ -108,6 +135,8 @@ async def handle_grant_application_notifications(
                             "Sending notification to WebSocket client",
                             notification_event=message.get("event"),
                             application_id=str(application_id),
+                            app_status=message["application_data"]["status"].value,
+                            app_updated_at=message["application_data"]["updated_at"],
                         )
                         yield message
                 else:

@@ -7,9 +7,12 @@ import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,
+	hasApplicationData,
 	isAutofillProgressMessage,
+	isRagProcessingErrorMessage,
 	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
+	type RagProcessingErrorMessage,
 	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
@@ -42,7 +45,8 @@ export function WizardClientComponent({
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
-	const getApplication = useApplicationStore((state) => state.getApplication);
+	const setApplication = useApplicationStore((state) => state.setApplication);
+
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
 
@@ -95,42 +99,68 @@ export function WizardClientComponent({
 		}
 	}, []);
 
-	const handleAutofillProgress = useCallback(
-		(notification: AutofillProgressMessage) => {
-			const { event } = notification;
-			const { autofill_type, data, message } = notification.data;
+	const handleAutofillProgress = useCallback((notification: AutofillProgressMessage) => {
+		const { event } = notification;
+		const { autofill_type, data, message } = notification.data;
 
-			switch (event) {
-				case "autofill_completed": {
-					toast.success("Autofill completed successfully!");
-					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-					void getApplication(organizationId, projectId, initialApplicationId);
+		switch (event) {
+			case "autofill_completed": {
+				toast.success("Autofill completed successfully!");
+				useWizardStore.getState().setAutofillLoading(autofill_type, false);
 
-					break;
-				}
-				case "autofill_error": {
-					toast.error(`Autofill failed: ${message}`);
-					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-
-					break;
-				}
-				case "autofill_progress": {
-					if (data?.field_name && typeof data.field_name === "string") {
-						toast.info(`Generating content for ${data.field_name}...`);
-					}
-
-					break;
-				}
-				case "autofill_started": {
-					toast.info(
-						`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
-					);
-
-					break;
-				}
+				break;
 			}
+			case "autofill_error": {
+				toast.error(`Autofill failed: ${message}`);
+				useWizardStore.getState().setAutofillLoading(autofill_type, false);
+
+				break;
+			}
+			case "autofill_progress": {
+				if (data?.field_name && typeof data.field_name === "string") {
+					toast.info(`Generating content for ${data.field_name}...`);
+				}
+
+				break;
+			}
+			case "autofill_started": {
+				toast.info(
+					`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
+				);
+
+				break;
+			}
+		}
+	}, []);
+
+	const handleRagProcessingError = useCallback(
+		(notification: RagProcessingErrorMessage) => {
+			const { event } = notification;
+			const { error_type, recoverable } = notification.data;
+
+			log.error("RAG processing error received", {
+				error_type,
+				event,
+				recoverable,
+			});
+
+			const errorMessages: Record<string, string> = {
+				indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
+				indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
+				insufficient_context_error:
+					"Not enough context to generate the template. Please add more sources or documents.",
+				internal_error: "An internal error occurred. Please try again or contact support.",
+				llm_timeout: "AI processing timed out. Please try again.",
+				pipeline_error: "An unexpected error occurred. Please try again or contact support.",
+			};
+
+			const message = errorMessages[event] ?? "Template generation failed. Please try again.";
+
+			setGeneratingTemplate(false);
+			useWizardStore.getState().setTemplateGenerationFailed(true, message);
+			toast.error(message);
 		},
-		[organizationId, projectId, initialApplicationId, getApplication],
+		[setGeneratingTemplate],
 	);
 
 	useEffect(() => {
@@ -139,21 +169,32 @@ export function WizardClientComponent({
 		}
 
 		const latestNotification = notifications.at(-1);
+		if (!latestNotification) {
+			return;
+		}
+
+		if (hasApplicationData(latestNotification)) {
+			setApplication(latestNotification.application_data);
+			log.info("[WebSocket] Updated application state from notification", {
+				event: latestNotification.event,
+				hasTemplate: !!latestNotification.application_data.grant_template,
+				templateRagSources: latestNotification.application_data.grant_template?.rag_sources.length ?? 0,
+			});
+		}
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
 			handleSourceProcessingNotification(latestNotification);
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
+		} else if (isRagProcessingErrorMessage(latestNotification)) {
+			handleRagProcessingError(latestNotification);
 		}
-		void getApplication(organizationId, projectId, initialApplicationId);
 	}, [
 		notifications,
+		setApplication,
 		handleSourceProcessingNotification,
 		handleAutofillProgress,
-		getApplication,
-		organizationId,
-		projectId,
-		initialApplicationId,
+		handleRagProcessingError,
 	]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
@@ -207,14 +248,13 @@ export function WizardClientComponent({
 
 		if (event === "grant_template_created") {
 			setGeneratingTemplate(false);
-			void getApplication(organizationId, projectId, initialApplicationId);
 		}
 
-		if (event === "pipeline_error") {
-			setGeneratingTemplate(false);
-			useWizardStore.getState().setTemplateGenerationFailed(true);
+		if (event === "grant_application_generation_completed") {
+			useWizardStore.getState().setGeneratingApplication(false);
+			useWizardStore.getState().resetApplicationGenerationComplete();
 		}
-	}, [latestRagNotification, setGeneratingTemplate, getApplication, organizationId, projectId, initialApplicationId]);
+	}, [latestRagNotification, setGeneratingTemplate]);
 
 	useEffect(() => {
 		if (isGeneratingTemplate && currentStep === WizardStep.APPLICATION_DETAILS) {
