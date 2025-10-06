@@ -34,17 +34,24 @@ SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_enrichment",
     template="""# Section Enrichment
 
-## Sources
+## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
+
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
 ## Sections
 <sections>${sections}</sections>
 
 ## Task
 
-For each section, add constraints by searching the ENTIRE CFP document.
+For each section, add constraints by searching the ENTIRE CFP document and organization guidelines.
 
-**Important**: Search the ENTIRE CFP for constraints. Some CFPs list constraints globally (apply to whole application), others list them per-section. Look everywhere in the CFP text for formatting requirements that apply to each section.
+**Important**:
+- If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for constraints
+- Search the ENTIRE CFP and guidelines for constraints
+- Some CFPs list constraints globally (apply to whole application), others list them per-section
+- Look everywhere in the CFP text and guidelines for formatting requirements that apply to each section
 
 ### Constraints
 Extract ALL formatting and length constraints mentioned in CFP for each section:
@@ -81,8 +88,11 @@ SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
     name="section_enrichment_validation",
     template="""# Section Enrichment Validation
 
-## Sources
+## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
+
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
 ## Enriched Sections
 <sections>${sections}</sections>
@@ -91,9 +101,11 @@ SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 
 Review and improve section enrichment.
 
+**IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY source for constraints.
+
 ### Actions
-1. **Find missing constraints**: Search CFP sources for ANY page/word/character limits, font, spacing, or margin requirements not yet captured
-2. Add missed formatting/length requirements with exact values from CFP
+1. **Find missing constraints**: Search CFP sources and organization guidelines for ANY page/word/character limits, font, spacing, or margin requirements not yet captured
+2. Add missed formatting/length requirements with exact values from CFP or guidelines
 
 ### Output
 Return complete updated sections with validated constraints.
@@ -153,11 +165,13 @@ def validate_section_enrichment(response: EnrichedSectionsResult, expected_ids: 
 async def enrich_sections(
     formatted_sources: str,
     sections: list[CFPSection],
+    organization_guidelines: str,
     *,
     trace_id: str,
 ) -> EnrichedSectionsResult:
     messages = SECTION_ENRICHMENT_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
         sections=serialize(sections).decode("utf-8"),
         constraint_types=", ".join(sorted(CONSTRAINT_TYPES)),
     )
@@ -181,11 +195,13 @@ async def enrich_sections(
 async def validate_and_refine_enrichment(
     formatted_sources: str,
     enriched_sections: list[CFPSection],
+    organization_guidelines: str,
     *,
     trace_id: str,
 ) -> EnrichedSectionsResult:
     messages = SECTION_ENRICHMENT_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
+        organization_guidelines=organization_guidelines,
         sections=serialize(enriched_sections).decode("utf-8"),
     )
 
