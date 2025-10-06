@@ -114,8 +114,11 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
         f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
     )
 
-    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
+    assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"
+    assert isinstance(cfp_analysis["deadlines"], list), "Deadlines should be a list"
+
+    assert "global_constraints" in cfp_analysis, "CFP analysis should contain global constraints"
+    assert isinstance(cfp_analysis["global_constraints"], list), "Global constraints should be a list"
 
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
@@ -124,15 +127,10 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
         assert "id" in section
         assert "title" in section
         assert "parent_id" in section
-        assert "subtitles" in section
-        assert "categories" in section
         assert "constraints" in section
 
         assert isinstance(section["id"], str)
         assert isinstance(section["title"], str)
-        assert isinstance(section["subtitles"], list)
-        assert len(section["subtitles"]) == 0
-        assert isinstance(section["categories"], list)
         assert isinstance(section["constraints"], list)
 
     performance_context.end_stage()
@@ -280,8 +278,11 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
         f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
     )
 
-    assert cfp_analysis["analysis_metadata"] is not None, "CFP analysis should contain analysis metadata"
-    assert "categories" in cfp_analysis["analysis_metadata"], "Analysis should contain categories"
+    assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"
+    assert isinstance(cfp_analysis["deadlines"], list), "Deadlines should be a list"
+
+    assert "global_constraints" in cfp_analysis, "CFP analysis should contain global constraints"
+    assert isinstance(cfp_analysis["global_constraints"], list), "Global constraints should be a list"
 
     assert isinstance(content_sections, list), "Content should be list of sections"
     assert len(content_sections) > 0, "Should extract at least one section"
@@ -290,15 +291,10 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
         assert "id" in section
         assert "title" in section
         assert "parent_id" in section
-        assert "subtitles" in section
-        assert "categories" in section
         assert "constraints" in section
 
         assert isinstance(section["id"], str)
         assert isinstance(section["title"], str)
-        assert isinstance(section["subtitles"], list)
-        assert len(section["subtitles"]) == 0
-        assert isinstance(section["categories"], list)
         assert isinstance(section["constraints"], list)
 
     performance_context.end_stage()
