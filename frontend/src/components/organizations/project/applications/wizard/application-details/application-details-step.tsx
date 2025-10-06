@@ -5,7 +5,6 @@ import AppTextArea from "@/components/app/fields/textarea-field";
 import { TemplateFileUploader } from "@/components/organizations/project/applications/wizard/template-file-uploader";
 import { UrlInput } from "@/components/organizations/project/applications/wizard/url-input";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
-import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -69,8 +68,6 @@ export function ApplicationDetailsStep({
 			setShowError(false);
 		}
 	};
-
-	usePollingCleanup();
 
 	return (
 		<div className="flex size-full" data-testid="application-details-step">

@@ -6,7 +6,6 @@ import { LinkPreviewItem } from "@/components/organizations/project/applications
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
 import { WizardBanner } from "@/components/organizations/project/applications/wizard/wizard-banner";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
-import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
@@ -161,8 +160,6 @@ export function ApplicationStructureLeftPane() {
 		[grantTemplate?.rag_sources],
 	);
 
-	usePollingCleanup();
-
 	if (!hasGrantSections) {
 		return (
 			<WizardLeftPane
@@ -222,6 +219,7 @@ export function ApplicationStructureSourcesPreview({
 
 function AnalyzingSteps() {
 	const templateGenerationEvent = useWizardStore((state) => state.templateGenerationEvent);
+	const templateGenerationErrorMessage = useWizardStore((state) => state.templateGenerationErrorMessage);
 	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
 	const [showStepsDetails, setShowStepsDetails] = useState(false);
 	const [hasError, setHasError] = useState(false);
@@ -257,7 +255,7 @@ function AnalyzingSteps() {
 								Template Generation Failed
 							</h4>
 							<p className="mt-1 text-sm text-red-700" data-testid="error-message">
-								Template generation failed
+								{templateGenerationErrorMessage ?? "Template generation failed. Please try again."}
 							</p>
 						</div>
 					</div>
