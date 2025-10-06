@@ -1,6 +1,6 @@
 from typing import TypeGuard
 
-from packages.db.src.json_objects import CFPSection, GrantElement, GrantLongFormSection
+from packages.db.src.json_objects import CFPConstraint, CFPSection, GrantElement, GrantLongFormSection
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.template_generation.content_metadata import ContentMetadata
@@ -103,7 +103,14 @@ def merge_and_transform(
             if length["length_source"] is not None:
                 long_form_section["length_source"] = length["length_source"]
             if length["other_limits"]:
-                long_form_section["other_limits"] = length["other_limits"]
+                long_form_section["other_limits"] = [
+                    CFPConstraint(
+                        constraint_type=c["type"],
+                        constraint_value=c["value"],
+                        source_quote=c["quote"],
+                    )
+                    for c in length["other_limits"]
+                ]
 
         llm_words = dep["max_words"]
         cfp_limit = length["length_limit"] if length else None

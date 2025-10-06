@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from packages.db.src.enums import GrantTemplateStageEnum
 
@@ -101,6 +101,10 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
 class CFPAnalysisConstraint(TypedDict):
     type: str
     value: str
+    quote: str
+
+
+CFPAnalysisCategory = Literal["research", "budget", "team", "compliance", "other"]
 
 
 class CFPSection(TypedDict):
@@ -108,6 +112,7 @@ class CFPSection(TypedDict):
     title: str
     parent_id: NotRequired[str | None]
     constraints: NotRequired[list[CFPAnalysisConstraint]]
+    categories: list[CFPAnalysisCategory]
 
 
 class CFPAnalysis(TypedDict):

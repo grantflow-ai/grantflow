@@ -78,8 +78,9 @@ length_extraction_schema: Final = {
                             "properties": {
                                 "type": {"type": "string"},
                                 "value": {"type": "string"},
+                                "quote": {"type": "string"},
                             },
-                            "required": ["type", "value"],
+                            "required": ["type", "value", "quote"],
                         },
                     },
                 },

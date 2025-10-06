@@ -73,7 +73,7 @@ async def test_template_job_manager_detects_cancelled_job(
         entity_type="grant_template",
         entity_id=grant_template_with_sections.id,
         grant_application_id=grant_template_with_sections.grant_application_id,
-        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        current_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
         pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
         session_maker=async_session_maker,
         trace_id="test-trace",
@@ -113,7 +113,7 @@ async def test_template_pipeline_stops_when_job_cancelled(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
             retry_count=0,
         )
         session.add(job)
@@ -198,7 +198,7 @@ async def test_concurrent_job_cancellation(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
             retry_count=0,
         )
         session.add(job)
@@ -208,7 +208,7 @@ async def test_concurrent_job_cancellation(
     manager: JobManager[Any] = JobManager(
         entity_type="grant_template",
         entity_id=grant_template_with_sections.id,
-        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        current_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
         grant_application_id=grant_template_with_sections.grant_application_id,
         pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
         session_maker=async_session_maker,
@@ -238,7 +238,7 @@ async def test_job_remains_active_when_not_cancelled(
         job = RagGenerationJob(
             grant_template_id=grant_template_with_sections.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            template_stage=GrantTemplateStageEnum.ANALYZE_CFP_CONTENT,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
             retry_count=0,
         )
         session.add(job)
@@ -248,7 +248,7 @@ async def test_job_remains_active_when_not_cancelled(
     manager: JobManager[Any] = JobManager(
         entity_type="grant_template",
         entity_id=grant_template_with_sections.id,
-        current_stage=GrantTemplateStageEnum.EXTRACT_CFP_CONTENT,
+        current_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
         grant_application_id=grant_template_with_sections.grant_application_id,
         pipeline_stages=list(GRANT_TEMPLATE_PIPELINE_STAGES),
         session_maker=async_session_maker,

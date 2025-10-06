@@ -11,6 +11,7 @@ from services.rag.src.grant_template.template_generation.merge_sections import m
 from services.rag.src.grant_template.template_generation.section_classification import classify_sections
 
 if TYPE_CHECKING:
+    from services.rag.src.grant_template.dto import TemplateGenerationStageDTO
     from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
@@ -20,7 +21,7 @@ async def handle_template_generation(
     *,
     cfp_analysis: CFPAnalysis,
     organization_guidelines: str,
-    job_manager: "JobManager[object]",
+    job_manager: "JobManager[TemplateGenerationStageDTO]",
     trace_id: str,
 ) -> list[GrantElement | GrantLongFormSection]:
     await job_manager.ensure_not_cancelled()
