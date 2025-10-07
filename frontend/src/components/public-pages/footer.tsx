@@ -44,14 +44,14 @@ export default function Footer() {
 				</nav>
 				<div className="mt-6 flex w-full items-center justify-between">
 					<Link aria-label="Go to homepage" href="/">
-						<Image alt="logo" height={40} src="/assets/logo-horizontal-text.svg" width={162} />
+						<Image alt="grantflow logo" height={40} src="/assets/logo-horizontal-text.svg" width={162} />
 					</Link>
 					<LinkedInLink />
 				</div>
 			</div>
 			<div className="px-7.5 hidden items-center justify-between py-6 md:flex">
 				<Link aria-label="Go to homepage" href="/">
-					<Image alt="logo" height={57} src="/assets/logo-horizontal.svg" width={56} />
+					<Image alt="grantflow logo" height={57} src="/assets/logo-horizontal.svg" width={56} />
 				</Link>
 				<nav aria-label="footer-navigation">
 					<FooterLinks links={links} />
