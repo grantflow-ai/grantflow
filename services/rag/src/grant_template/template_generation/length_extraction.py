@@ -157,6 +157,82 @@ def validate_length_extraction(response: LengthExtractionResult, *, input_sectio
             )
 
 
+def propagate_parent_constraints_to_children(
+    sections: list[CFPSection],
+    length_results: list[LengthConstraint],
+) -> list[LengthConstraint]:
+    """
+    Propagate parent section length constraints to child sections.
+
+    If a parent has a length_limit and children don't, we need to communicate
+    that the children share the parent's budget.
+    """
+    # Build maps for quick lookup
+    section_map = {s["id"]: s for s in sections}
+    length_map = {lc["id"]: lc for lc in length_results}
+
+    # Find parent-child relationships
+    children_by_parent: dict[str, list[str]] = {}
+    for section in sections:
+        parent_id = section.get("parent_id")
+        if parent_id:
+            if parent_id not in children_by_parent:
+                children_by_parent[parent_id] = []
+            children_by_parent[parent_id].append(section["id"])
+
+    updated_results = []
+
+    for length_constraint in length_results:
+        section_id = length_constraint["id"]
+        section = section_map.get(section_id)
+
+        if not section:
+            updated_results.append(length_constraint)
+            continue
+
+        # Check if this section has children and a length limit
+        has_children = section_id in children_by_parent
+        has_limit = length_constraint["length_limit"] is not None
+
+        if has_children and has_limit:
+            # Parent with constraint - mark it and propagate to children
+            parent_limit = length_constraint["length_limit"]
+            parent_source = length_constraint["length_source"]
+            child_ids = children_by_parent[section_id]
+
+            logger.info(
+                "Propagating parent constraint to children",
+                parent_id=section_id,
+                parent_limit=parent_limit,
+                children_count=len(child_ids),
+                trace_id="length_extraction",
+            )
+
+            # Update parent to note it has children sharing the limit
+            updated_constraint = dict(length_constraint)
+            updated_constraint["length_source"] = (
+                f"{parent_source} (shared across {len(child_ids)} subsections)"
+            )
+            updated_results.append(updated_constraint)
+
+            # Update all children to inherit parent's limit
+            for child_id in child_ids:
+                child_constraint = length_map.get(child_id)
+                if child_constraint and child_constraint["length_limit"] is None:
+                    # Child has no individual limit - inherit parent's shared budget
+                    updated_child = dict(child_constraint)
+                    updated_child["length_limit"] = parent_limit
+                    updated_child["length_source"] = (
+                        f"Shared budget with {len(child_ids)-1} sibling(s) under '{section_map[section_id]['title']}' "
+                        f"({parent_source})"
+                    )
+                    length_map[child_id] = updated_child
+        else:
+            updated_results.append(length_constraint)
+
+    return updated_results
+
+
 async def extract_length_constraints(
     *,
     organization_guidelines: str,
@@ -168,7 +244,7 @@ async def extract_length_constraints(
         sections=serialize(sections).decode("utf-8"),
     )
 
-    return await handle_completions_request(
+    result = await handle_completions_request(
         prompt_identifier="length_extraction",
         response_type=LengthExtractionResult,
         response_schema=length_extraction_schema,
@@ -181,3 +257,8 @@ async def extract_length_constraints(
         thinking_budget=DEFAULT_THINKING_BUDGET,
         trace_id=trace_id,
     )
+
+    # Propagate parent constraints to children
+    updated_sections = propagate_parent_constraints_to_children(sections, result["sections"])
+
+    return LengthExtractionResult(sections=updated_sections)

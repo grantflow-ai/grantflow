@@ -45,23 +45,38 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ### Word Counts
 
-    **CRITICAL**: If a section has a `length_limit` value, you MUST allocate max_words ≤ length_limit.
+    **CRITICAL CONSTRAINTS:**
 
-    Allocate realistic word counts based on:
-    1. **CFP length limits from section data**: MANDATORY - never exceed length_limit if provided
-    2. **Page conversions**: 415 words per page (e.g., "6 pages" = 2490 words maximum)
-    3. **Default allocations** (only if no length_limit):
+    1. **Individual limits**: If a section has `length_limit`, allocate max_words ≤ length_limit
+    2. **Shared limits**: Sections with identical length_source text share a TOTAL budget
+       - Example: 4 sections all say "Shared budget... (6 pages maximum)" = 2490 words TOTAL for all 4 combined
+       - You must split the budget among siblings, ensuring: sum(sibling max_words) ≤ shared length_limit
+
+    **Allocation Strategy:**
+
+    1. **Group sections by constraint**:
+       - Check if multiple sections have similar length_source (e.g., "Shared budget with 3 sibling(s)...")
+       - These sections SHARE the length_limit - split it among them
+
+    2. **For shared constraints**:
+       - Identify all sections in the group
+       - Allocate proportionally by importance
+       - Verify total: sum(max_words for all in group) ≤ length_limit
+
+    3. **For individual constraints**:
+       - Allocate max_words ≤ length_limit
+
+    4. **Default allocations** (only if no length_limit):
        - Project Summary: 300 words
        - Research Plan (is_plan=true): 2000-5000 words
        - Background/Significance: 800-1200 words
        - Methodology: 1000-2000 words
        - Budget Justification: 500-800 words
-       - Data Sharing: 200-400 words
        - Other sections: 300-600 words
-    4. **Section importance**: Research plan gets most words within its limit
-    5. **Total reasonableness**: 500-50000 words total
 
-    **Constraint Validation**: Verify each section's max_words ≤ its length_limit before returning.
+    **Pre-return Validation:**
+    - Check each section: max_words ≤ length_limit
+    - Check shared groups: sum(group max_words) ≤ shared length_limit
 
     ### Output
 
