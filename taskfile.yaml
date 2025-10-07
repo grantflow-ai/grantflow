@@ -369,9 +369,6 @@ tasks:
       - uv run uv-bump --pyproject-toml ./services/scraper/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./functions/pyproject.toml
-      - echo "Regenerating functions requirements.txt for deployment..."
-      - uv pip compile functions/pyproject.toml -o functions/requirements.txt
       - task: backend:install
 
   backend:test:
