@@ -180,7 +180,7 @@ export function EarlyAccessSection() {
 			<GradientBackground className="absolute inset-0 z-0" position="bottom-left" />
 			<div className="absolute bottom-0 left-0 z-0">
 				<Image
-					alt="background"
+					alt=""
 					aria-hidden="true"
 					height={0}
 					priority
