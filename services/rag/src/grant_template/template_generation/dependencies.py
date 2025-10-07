@@ -13,7 +13,9 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 DEPENDENCIES_SYSTEM_PROMPT: Final[str] = (
-    "You determine section dependencies and word count allocations for grant applications. Be logical and realistic."
+    "You determine section dependencies and word count allocations for grant applications. "
+    "CRITICAL: You must strictly respect CFP length constraints - never allocate more words than the length_limit allows. "
+    "Be logical and realistic within the given constraints."
 )
 
 DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -43,9 +45,12 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ### Word Counts
 
+    **CRITICAL**: If a section has a `length_limit` value, you MUST allocate max_words ≤ length_limit.
+
     Allocate realistic word counts based on:
-    1. **CFP length limits** (if provided): Use as primary guidance
-    2. **Default allocations**:
+    1. **CFP length limits from section data**: MANDATORY - never exceed length_limit if provided
+    2. **Page conversions**: 415 words per page (e.g., "6 pages" = 2490 words maximum)
+    3. **Default allocations** (only if no length_limit):
        - Project Summary: 300 words
        - Research Plan (is_plan=true): 2000-5000 words
        - Background/Significance: 800-1200 words
@@ -53,10 +58,10 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
        - Budget Justification: 500-800 words
        - Data Sharing: 200-400 words
        - Other sections: 300-600 words
-
-    3. **Page conversions**: Use 415 words/page
-    4. **Section importance**: Research plan gets most words
+    4. **Section importance**: Research plan gets most words within its limit
     5. **Total reasonableness**: 500-50000 words total
+
+    **Constraint Validation**: Verify each section's max_words ≤ its length_limit before returning.
 
     ### Output
 
