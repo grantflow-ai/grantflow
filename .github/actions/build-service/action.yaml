@@ -66,9 +66,11 @@ runs:
         if [[ "${{ inputs.image_tag }}" == staging-* ]]; then
           echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
           echo "environment=staging" >> $GITHUB_OUTPUT
+          REGISTRY_PROJECT="grantflow"
         else
           echo "env_latest=latest" >> $GITHUB_OUTPUT
           echo "environment=production" >> $GITHUB_OUTPUT
+          REGISTRY_PROJECT="grantflow-production"
         fi
 
         # Set Dockerfile path
@@ -87,8 +89,8 @@ runs:
         # Generate cache scope for better cache isolation
         echo "cache_scope=${{ inputs.service }}-${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
-        # Registry path
-        echo "registry=us-east1-docker.pkg.dev/grantflow/grantflow" >> $GITHUB_OUTPUT
+        # Registry path (branch-aware to push production images from main)
+        echo "registry=us-east1-docker.pkg.dev/${REGISTRY_PROJECT}/grantflow" >> $GITHUB_OUTPUT
 
     - name: Build and push Docker image
       id: build
