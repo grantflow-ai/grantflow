@@ -90,7 +90,8 @@ export function TestimonialsSection() {
 							whileInView="visible"
 						>
 							<MotionImage
-								alt={`${Image.name}'s photo`}
+								alt=""
+								aria-hidden="true"
 								className="size-24 rounded-full md:size-28 lg:size-32 xl:size-36"
 								data-testid="mock-motion-image"
 								height={100}
