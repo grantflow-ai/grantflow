@@ -54,16 +54,18 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     **Allocation Strategy:**
 
-    1. **Group sections by constraint**:
-       - Check if multiple sections have similar length_source (e.g., "Shared budget with 3 sibling(s)...")
-       - These sections SHARE the length_limit - split it among them
+    1. **Identify shared budgets by checking `length_source`**:
+       - If length_source contains "Shared budget with N sibling(s)", these sections collectively share length_limit
+       - Example: 4 sections each with length_limit=2490 and "Shared budget with 3 sibling(s)" = 2490 words TOTAL (not each!)
+       - You must split the shared budget: sum(max_words for all siblings) ≤ length_limit
 
     2. **For shared constraints**:
-       - Identify all sections in the group
-       - Allocate proportionally by importance
-       - Verify total: sum(max_words for all in group) ≤ length_limit
+       - Group sections with similar length_source messages
+       - Allocate proportionally by importance/complexity
+       - Verify total: sum(max_words for group) ≤ shared length_limit
+       - Critical: Each sibling gets a PORTION of the limit, not the full limit
 
-    3. **For individual constraints**:
+    3. **For individual constraints** (length_source without "Shared budget"):
        - Allocate max_words ≤ length_limit
 
     4. **Default allocations** (only if no length_limit):
@@ -119,6 +121,7 @@ class EnrichedSection(TypedDict):
     clinical: bool
     needs_writing: bool
     length_limit: int | None
+    length_source: str | None
 
 
 class DependencyWordCount(TypedDict):
@@ -234,6 +237,7 @@ async def generate_dependencies_word_counts(
                 clinical=cls["clinical"],
                 needs_writing=cls["needs_writing"],
                 length_limit=length["length_limit"] if length else None,
+                length_source=length["length_source"] if length else None,
             )
         )
 
