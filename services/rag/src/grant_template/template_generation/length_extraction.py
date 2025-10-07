@@ -180,14 +180,20 @@ def propagate_parent_constraints_to_children(
                 children_by_parent[parent_id] = []
             children_by_parent[parent_id].append(section["id"])
 
+    # Track which sections we've already processed
+    processed_ids = set()
     updated_results = []
 
     for length_constraint in length_results:
         section_id = length_constraint["id"]
         section = section_map.get(section_id)
 
+        if section_id in processed_ids:
+            continue
+
         if not section:
             updated_results.append(length_constraint)
+            processed_ids.add(section_id)
             continue
 
         # Check if this section has children and a length limit
@@ -214,21 +220,28 @@ def propagate_parent_constraints_to_children(
                 f"{parent_source} (shared across {len(child_ids)} subsections)"
             )
             updated_results.append(updated_constraint)
+            processed_ids.add(section_id)
 
             # Update all children to inherit parent's limit
             for child_id in child_ids:
                 child_constraint = length_map.get(child_id)
-                if child_constraint and child_constraint["length_limit"] is None:
-                    # Child has no individual limit - inherit parent's shared budget
-                    updated_child = dict(child_constraint)
-                    updated_child["length_limit"] = parent_limit
-                    updated_child["length_source"] = (
-                        f"Shared budget with {len(child_ids)-1} sibling(s) under '{section_map[section_id]['title']}' "
-                        f"({parent_source})"
-                    )
-                    length_map[child_id] = updated_child
+                if child_constraint:
+                    if child_constraint["length_limit"] is None:
+                        # Child has no individual limit - inherit parent's shared budget
+                        updated_child = dict(child_constraint)
+                        updated_child["length_limit"] = parent_limit
+                        updated_child["length_source"] = (
+                            f"Shared budget with {len(child_ids)-1} sibling(s) under '{section_map[section_id]['title']}' "
+                            f"({parent_source})"
+                        )
+                        updated_results.append(updated_child)
+                    else:
+                        # Child has its own limit - keep it
+                        updated_results.append(child_constraint)
+                    processed_ids.add(child_id)
         else:
             updated_results.append(length_constraint)
+            processed_ids.add(section_id)
 
     return updated_results
 
