@@ -356,7 +356,6 @@ module "app_hosting" {
     "NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID_STAGING",
     "NEXT_PUBLIC_FIREBASE_PROJECT_ID_STAGING",
     "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_STAGING",
-    "NEXT_PUBLIC_MAILGUN_API_KEY_STAGING",
     "RESEND_API_KEY_STAGING"
   ]
 }
@@ -370,4 +369,3 @@ output "app_hosting_backend_id" {
   description = "Firebase App Hosting backend ID"
   value       = module.app_hosting.backend_id
 }
-

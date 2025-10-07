@@ -86,24 +86,6 @@ resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   }
 }
 
-resource "google_secret_manager_secret" "crdt_url_staging" {
-  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL_STAGING"
-  project   = var.project_id
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret" "crdt_url_production" {
-  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL"
-  project   = var.project_id
-
-  replication {
-    auto {}
-  }
-}
-
 resource "google_kms_key_ring" "secrets_keyring" {
   name     = "secrets-keyring"
   location = "global"

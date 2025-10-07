@@ -77,6 +77,18 @@ variable "storage_retention_days" {
   default     = 365
 }
 
+variable "app_hosting_region" {
+  description = "Region for Firebase App Hosting backend"
+  type        = string
+  default     = "europe-west4"
+}
+
+variable "app_hosting_backend_id" {
+  description = "Existing Firebase App Hosting backend id"
+  type        = string
+  default     = "frontend-production"
+}
+
 variable "bigquery_location" {
   description = "BigQuery dataset location"
   type        = string
@@ -93,4 +105,16 @@ variable "image_tag" {
   description = "Docker image tag for deployments"
   type        = string
   default     = "latest"
+}
+
+variable "enable_scheduler" {
+  description = "Whether to provision Cloud Scheduler resources in production"
+  type        = bool
+  default     = false
+}
+
+variable "dlq_manager_function_uri" {
+  description = "DLQ manager Cloud Function URI (required when scheduler is enabled)"
+  type        = string
+  default     = ""
 }

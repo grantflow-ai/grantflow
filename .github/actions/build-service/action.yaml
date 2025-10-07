@@ -47,7 +47,7 @@ runs:
           image=moby/buildkit:master
           network=host
         buildkitd-flags: --debug
-        config-inline: |
+        buildkitd-config-inline: |
           [worker.oci]
             max-parallelism = 4
 

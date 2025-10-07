@@ -12,6 +12,13 @@ terraform {
   }
 }
 
+locals {
+  backend_id             = var.backend_id != "" ? var.backend_id : var.environment
+  service_account_base   = "${var.project_id}-${local.backend_id}-apphosting"
+  service_account_trunc  = substr(local.service_account_base, 0, 30)
+  service_account_id     = trim(local.service_account_trunc, "-")
+}
+
 resource "google_project_service" "firebase" {
   project = var.project_id
   service = "firebase.googleapis.com"
@@ -44,7 +51,7 @@ resource "google_firebase_app_hosting_backend" "frontend" {
   provider   = google-beta
   project    = var.project_id
   location   = var.region
-  backend_id = var.environment
+  backend_id = local.backend_id
 
   app_id = var.firebase_app_id
 
@@ -61,9 +68,10 @@ resource "google_firebase_app_hosting_backend" "frontend" {
 }
 
 resource "google_service_account" "app_hosting" {
-  project      = var.project_id
-  account_id   = "${var.project_id}-${var.environment}-apphosting"
-  display_name = "Firebase App Hosting Service Account (${var.environment})"
+  project    = var.project_id
+  account_id   = local.service_account_id
+  # account IDs max 30 chars; keep deterministic truncation across environments.
+  display_name = "Firebase App Hosting Service Account (${local.backend_id})"
 }
 
 resource "google_project_iam_member" "app_hosting_compute_viewer" {
@@ -98,7 +106,7 @@ resource "google_firebase_app_hosting_build" "frontend" {
   project  = google_firebase_app_hosting_backend.frontend.project
   location = google_firebase_app_hosting_backend.frontend.location
   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-  build_id = "${var.environment}-fix-traffic-${formatdate("MMDDhhmmss", timestamp())}"
+  build_id = substr("${local.backend_id}-${formatdate("MMDDhhmm", timestamp())}", 0, 30)
 
   source {
     container {

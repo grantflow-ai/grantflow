@@ -88,6 +88,7 @@ module "storage" {
   environment    = var.environment
   location       = var.region
   retention_days = var.storage_retention_days
+  backend_service_account_email = module.iam.backend_service_account_email
 
   enable_versioning     = true
   enable_lifecycle      = true
@@ -150,6 +151,7 @@ module "pubsub" {
 }
 
 module "scheduler" {
+  count                                   = var.enable_scheduler ? 1 : 0
   source                                  = "../../modules/scheduler"
   project_id                              = var.project_id
   region                                  = var.region
@@ -157,6 +159,7 @@ module "scheduler" {
   scraper_url                             = module.cloud_run.scraper_url
   backend_url                             = module.cloud_run.backend_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+  dlq_manager_function_uri                = var.dlq_manager_function_uri
   timezone                                = "Europe/Berlin"
 }
 
@@ -282,4 +285,38 @@ output "scraper_url" {
 output "storage_bucket_name" {
   description = "Production storage bucket name"
   value       = module.storage.uploads_bucket_name
+}
+
+module "app_hosting" {
+  source          = "../../modules/app_hosting"
+  project_id      = var.project_id
+  region          = var.app_hosting_region
+  environment     = var.environment
+  backend_id      = var.app_hosting_backend_id
+  firebase_app_id = "1:250940056615:web:920275fd38c2a98a325a02"
+  image_tag       = var.image_tag
+
+  secret_ids = [
+    "NEXT_PUBLIC_SITE_URL_PRODUCTION",
+    "NEXT_PUBLIC_BACKEND_API_BASE_URL_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_API_KEY_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_APP_ID_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID_PRODUCTION",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_PRODUCTION",
+    "RESEND_API_KEY_PRODUCTION"
+  ]
+}
+
+output "app_hosting_url" {
+  description = "Firebase App Hosting URL"
+  value       = module.app_hosting.url
+}
+
+output "app_hosting_backend_id" {
+  description = "Firebase App Hosting backend ID"
+  value       = module.app_hosting.backend_id
 }

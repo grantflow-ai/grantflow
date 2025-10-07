@@ -1,8 +1,8 @@
 {
 	"dependencies": {
 		"@google-cloud/pino-logging-gcp-config": "^1.2.0",
-		"@hocuspocus/extension-database": "^3.2.4",
-		"@hocuspocus/server": "^3.2.4",
+		"@hocuspocus/extension-database": "^3.2.5",
+		"@hocuspocus/server": "^3.2.5",
 		"dotenv": "^17.2.3",
 		"drizzle-orm": "^0.44.6",
 		"pg": "^8.16.3",

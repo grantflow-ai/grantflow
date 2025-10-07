@@ -18,6 +18,12 @@ variable "environment" {
   }
 }
 
+variable "backend_id" {
+  description = "Firebase App Hosting backend ID (defaults to environment)"
+  type        = string
+  default     = ""
+}
+
 variable "firebase_app_id" {
   description = "Firebase Web App ID"
   type        = string
@@ -34,4 +40,3 @@ variable "secret_ids" {
   type        = list(string)
   default     = []
 }
-
