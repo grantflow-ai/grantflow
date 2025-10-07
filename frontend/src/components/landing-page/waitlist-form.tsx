@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { log } from "@/utils/logger/client";
 import { analyticsIdentify } from "@/utils/segment";
@@ -183,6 +183,8 @@ function WaitListFormItem({
 							testId={testId}
 						/>
 					</FormControl>
+					<FormDescription className="sr-only" />
+					<FormMessage />
 				</FormItem>
 			)}
 		/>
