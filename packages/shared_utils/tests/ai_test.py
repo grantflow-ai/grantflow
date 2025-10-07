@@ -22,7 +22,7 @@ from packages.shared_utils.src.ai import (
 
 async def test_model_constants() -> None:
     assert os.environ.get("EVALUATION_MODEL", "gemini-2.5-flash") == EVALUATION_MODEL
-    assert os.environ.get("GENERATION_MODEL", "gemini-flash-latest") == GENERATION_MODEL
+    assert os.environ.get("GENERATION_MODEL", "gemini-2.5-flash") == GENERATION_MODEL
     assert (
         os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-sonnet-4-20250514")
         == ANTHROPIC_SONNET_MODEL
