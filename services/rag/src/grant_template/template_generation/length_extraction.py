@@ -167,11 +167,9 @@ def propagate_parent_constraints_to_children(
     If a parent has a length_limit and children don't, we need to communicate
     that the children share the parent's budget.
     """
-    # Build maps for quick lookup
     section_map = {s["id"]: s for s in sections}
     length_map = {lc["id"]: lc for lc in length_results}
 
-    # Find parent-child relationships
     children_by_parent: dict[str, list[str]] = {}
     for section in sections:
         parent_id = section.get("parent_id")
@@ -180,7 +178,6 @@ def propagate_parent_constraints_to_children(
                 children_by_parent[parent_id] = []
             children_by_parent[parent_id].append(section["id"])
 
-    # Track which sections we've already processed
     processed_ids: set[str] = set()
     updated_results: list[LengthConstraint] = []
     propagations_made = 0
@@ -197,19 +194,16 @@ def propagate_parent_constraints_to_children(
             processed_ids.add(section_id)
             continue
 
-        # Check if this section has children and a length limit
         has_children = section_id in children_by_parent
         has_limit = length_constraint["length_limit"] is not None
 
         if has_children and has_limit:
-            # Parent with constraint - mark it and propagate to children
             parent_limit = length_constraint["length_limit"]
             parent_source = length_constraint["length_source"]
             child_ids = children_by_parent[section_id]
 
             propagations_made += 1
 
-            # Update parent to note it has children sharing the limit
             updated_constraint: LengthConstraint = {
                 "id": length_constraint["id"],
                 "length_limit": length_constraint["length_limit"],
@@ -219,12 +213,10 @@ def propagate_parent_constraints_to_children(
             updated_results.append(updated_constraint)
             processed_ids.add(section_id)
 
-            # Update all children to inherit parent's limit
             for child_id in child_ids:
                 child_constraint = length_map.get(child_id)
                 if child_constraint:
                     if child_constraint["length_limit"] is None:
-                        # Child has no individual limit - inherit parent's shared budget
                         updated_child: LengthConstraint = {
                             "id": child_constraint["id"],
                             "length_limit": parent_limit,
@@ -236,7 +228,6 @@ def propagate_parent_constraints_to_children(
                         }
                         updated_results.append(updated_child)
                     else:
-                        # Child has its own limit - keep it
                         updated_results.append(child_constraint)
                     processed_ids.add(child_id)
         else:
