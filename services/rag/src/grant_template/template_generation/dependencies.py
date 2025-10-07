@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Final, TypedDict
 
-from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.ai import DEFAULT_THINKING_BUDGET, GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.serialization import serialize
 
@@ -231,5 +231,6 @@ async def generate_dependencies_word_counts(
         temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,
+        thinking_budget=DEFAULT_THINKING_BUDGET,
         trace_id=trace_id,
     )

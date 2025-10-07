@@ -2,7 +2,7 @@ from functools import partial
 from typing import Final, TypedDict
 
 from packages.db.src.json_objects import CFPSection
-from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
+from packages.shared_utils.src.ai import DEFAULT_THINKING_BUDGET, GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
@@ -169,5 +169,6 @@ async def classify_sections(
         temperature=TEMPERATURE,
         model=GEMINI_FLASH_MODEL,
         top_p=0.9,
+        thinking_budget=DEFAULT_THINKING_BUDGET,
         trace_id=trace_id,
     )

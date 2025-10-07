@@ -127,6 +127,7 @@ async def make_google_completions_request[T](
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    thinking_budget: int | None = None,
     trace_id: str,
     timeout: float = 300,
 ) -> T:
@@ -142,16 +143,16 @@ async def make_google_completions_request[T](
         else:
             message_parts.append(str(message))
 
-    config = genai.types.GenerateContentConfig(
-        response_mime_type=CONTENT_TYPE_JSON,
-        response_schema=response_schema,
-        temperature=temperature,
-        top_p=top_p,
-        top_k=top_k,
-        candidate_count=candidate_count,
-        max_output_tokens=32768,
-        system_instruction=system_prompt,
-        safety_settings=[
+    config_kwargs: dict[str, Any] = {
+        "response_mime_type": CONTENT_TYPE_JSON,
+        "response_schema": response_schema,
+        "temperature": temperature,
+        "top_p": top_p,
+        "top_k": top_k,
+        "candidate_count": candidate_count,
+        "max_output_tokens": 32768,
+        "system_instruction": system_prompt,
+        "safety_settings": [
             genai.types.SafetySetting(
                 category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
                 threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
@@ -169,7 +170,12 @@ async def make_google_completions_request[T](
                 threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
             ),
         ],
-    )
+    }
+
+    if thinking_budget is not None:
+        config_kwargs["thinking_config"] = genai.types.ThinkingConfig(thinking_budget=thinking_budget)
+
+    config = genai.types.GenerateContentConfig(**config_kwargs)
 
     content = "\n".join(message_parts)
     start_time = datetime.now(UTC)
@@ -423,6 +429,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
     top_p: float | None = None,
     top_k: int | None = None,
     candidate_count: int | None = None,
+    thinking_budget: int | None = None,
     timeout: float = 300,  # 5 minutes timeout for LLM API calls ~keep
     trace_id: str,
 ) -> T:
@@ -469,6 +476,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
                     top_p=top_p,
                     top_k=top_k,
                     candidate_count=candidate_count,
+                    thinking_budget=thinking_budget,
                     trace_id=trace_id,
                     timeout=timeout,
                 )
