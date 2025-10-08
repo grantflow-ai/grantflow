@@ -83,11 +83,11 @@ module "database" {
 }
 
 module "storage" {
-  source         = "../../modules/storage"
-  bucket_name    = "grantflow-production-uploads"
-  environment    = var.environment
-  location       = var.region
-  retention_days = var.storage_retention_days
+  source                        = "../../modules/storage"
+  bucket_name                   = "grantflow-production-uploads"
+  environment                   = var.environment
+  location                      = var.region
+  retention_days                = var.storage_retention_days
   backend_service_account_email = module.iam.backend_service_account_email
 
   enable_versioning     = true

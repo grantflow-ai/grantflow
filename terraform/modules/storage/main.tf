@@ -147,6 +147,13 @@ resource "google_storage_bucket" "scraper" {
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
 
+  dynamic "versioning" {
+    for_each = var.enable_versioning ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
   soft_delete_policy {
     retention_duration_seconds = 604800
   }
@@ -181,6 +188,13 @@ resource "google_storage_bucket" "logos" {
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
   public_access_prevention    = "inherited"
+
+  dynamic "versioning" {
+    for_each = var.enable_versioning ? [1] : []
+    content {
+      enabled = true
+    }
+  }
 
   cors {
     origin          = var.environment == "staging" ? ["http://localhost:*", "https://staging--grantflow-staging.us-central1.hosted.app", "https://staging.grantflow.ai"] : ["http://localhost:*", "https://grantflow.ai", "https://www.grantflow.ai"]
