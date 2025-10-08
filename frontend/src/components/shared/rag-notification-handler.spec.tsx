@@ -248,7 +248,7 @@ describe("RagNotificationHandler", () => {
 			render(<RagNotificationHandler notification={notification} />);
 
 			expect(toast.error).toHaveBeenCalledWith(
-				"❌ Error: Processing indexing failed",
+				"❌ Error: Indexing Failed",
 				expect.objectContaining({
 					description: "Please follow the instructions above to resolve this issue.",
 					duration: 10_000,
@@ -265,7 +265,7 @@ describe("RagNotificationHandler", () => {
 
 			render(<RagNotificationHandler notification={notification} />);
 
-			expect(toast.error).toHaveBeenCalledWith("❌ Error: Processing internal error", {
+			expect(toast.error).toHaveBeenCalledWith("❌ Error: Internal Error", {
 				description: undefined,
 				duration: 10_000,
 			});
@@ -280,7 +280,7 @@ describe("RagNotificationHandler", () => {
 
 			render(<RagNotificationHandler notification={notification} />);
 
-			expect(toast.error).toHaveBeenCalledWith("❌ Error: Processing pipeline error", {
+			expect(toast.error).toHaveBeenCalledWith("❌ Error: Pipeline Error", {
 				description: undefined,
 				duration: 10_000,
 			});
@@ -298,7 +298,7 @@ describe("RagNotificationHandler", () => {
 			render(<RagNotificationHandler notification={notification} />);
 
 			expect(toast.warning).toHaveBeenCalledWith(
-				"⚠️ Processing indexing timeout",
+				"⚠️ Indexing Timeout",
 				expect.objectContaining({
 					description: "Please wait a moment and try again.",
 					duration: 8000,
@@ -316,7 +316,7 @@ describe("RagNotificationHandler", () => {
 			render(<RagNotificationHandler notification={notification} />);
 
 			expect(toast.warning).toHaveBeenCalledWith(
-				"⚠️ Processing insufficient context error",
+				"⚠️ Insufficient Context Error",
 				expect.objectContaining({
 					description: "This operation will be automatically retried.",
 					duration: 8000,
@@ -334,9 +334,9 @@ describe("RagNotificationHandler", () => {
 			render(<RagNotificationHandler notification={notification} />);
 
 			expect(toast.warning).toHaveBeenCalledWith(
-				"⚠️ Processing llm timeout",
+				"⚠️ Llm Timeout",
 				expect.objectContaining({
-					description: expect.any(String),
+					description: "AI processing is taking longer than expected",
 					duration: 8000,
 				}),
 			);
@@ -352,7 +352,7 @@ describe("RagNotificationHandler", () => {
 			render(<RagNotificationHandler notification={notification} />);
 
 			expect(toast.warning).toHaveBeenCalledWith(
-				"⚠️ Processing job cancelled",
+				"⚠️ Job Cancelled",
 				expect.objectContaining({
 					description: undefined,
 					duration: 8000,

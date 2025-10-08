@@ -19,7 +19,15 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { isTemplateEvent, type NotificationEvent, type TemplateGenerationEvent } from "@/types/notification-events";
+import {
+	type ApplicationProgressEvent,
+	isApplicationProgressEvent,
+	isRagErrorEvent,
+	isTemplateEvent,
+	type NotificationEvent,
+	type RagErrorEvent,
+	type TemplateGenerationEvent,
+} from "@/types/notification-events";
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
@@ -30,16 +38,17 @@ import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-st
 import { ResearchPlanStep } from "./research-plan/research-plan-step";
 import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-const RAG_ERROR_MESSAGES: Record<string, string> = {
+const RAG_ERROR_MESSAGES: Record<RagErrorEvent, string> = {
 	indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
 	indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
 	insufficient_context_error: "Not enough context to generate the template. Please add more sources or documents.",
 	internal_error: "An internal error occurred. Please try again or contact support.",
+	job_cancelled: "Template generation was cancelled.",
 	llm_timeout: "AI processing timed out. Please try again.",
 	pipeline_error: "An unexpected error occurred. Please try again or contact support.",
 };
 
-const APPLICATION_GENERATION_PROGRESS: Record<string, number> = {
+const APPLICATION_GENERATION_PROGRESS: Record<ApplicationProgressEvent, number> = {
 	grant_application_generation_completed: 100,
 	objectives_enriched: 32,
 	relationships_extracted: 16,
@@ -162,7 +171,9 @@ export function WizardClientComponent({
 				recoverable,
 			});
 
-			const message = RAG_ERROR_MESSAGES[event] ?? "Template generation failed. Please try again.";
+			const message = isRagErrorEvent(event)
+				? RAG_ERROR_MESSAGES[event]
+				: "Template generation failed. Please try again.";
 
 			setGeneratingTemplate(false);
 			useWizardStore.getState().setTemplateGenerationFailed(true, message);
@@ -212,7 +223,7 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification;
 
-		if (event in APPLICATION_GENERATION_PROGRESS) {
+		if (isApplicationProgressEvent(event)) {
 			setGenerationProgress(APPLICATION_GENERATION_PROGRESS[event]);
 		}
 	}, [latestRagNotification]);
@@ -242,7 +253,7 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification;
 
-		if (isTemplateEvent(event as NotificationEvent) && event !== "grant_template_created") {
+		if (isTemplateEvent(event) && event !== "grant_template_created") {
 			setGeneratingTemplate(true);
 		}
 
