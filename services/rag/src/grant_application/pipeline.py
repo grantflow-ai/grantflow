@@ -38,9 +38,7 @@ from services.rag.src.utils.job_manager import JobManager
 
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import (
-        EnrichObjectivesStageDTO,
         EnrichTerminologyStageDTO,
-        ExtractRelationshipsStageDTO,
         GenerateResearchPlanStageDTO,
     )
 
@@ -388,119 +386,55 @@ async def handle_grant_application_pipeline(
         stage_start_time = time.perf_counter()
 
         match current_stage:
-            case GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS:
+            case GrantApplicationStageEnum.BLUEPRINT_PREP:
                 logger.info(
-                    "Starting EXTRACT_RELATIONSHIPS stage",
-                    application_id=str(application_id),
-                    trace_id=trace_id,
-                )
-
-                logger.debug(
-                    "Starting EXTRACT_RELATIONSHIPS as first stage",
+                    "Starting BLUEPRINT_PREP stage",
                     application_id=str(application_id),
                     trace_id=trace_id,
                 )
 
                 await job_manager.ensure_not_cancelled()
 
-                dto = await handle_extract_relationships_stage(
+                relationships_dto = await handle_extract_relationships_stage(
                     grant_application=grant_application,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
 
-                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
-                logger.info(
-                    "Completed EXTRACT_RELATIONSHIPS stage",
-                    application_id=str(application_id),
-                    relationships_extracted=len(dto["relationships"]),
-                    stage_elapsed_ms=stage_elapsed,
-                    trace_id=trace_id,
-                )
-
-                await job_manager.transition_to_next_stage(dto)
-                return
-
-            case GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES:
-                logger.info(
-                    "Starting ENRICH_RESEARCH_OBJECTIVES stage",
-                    application_id=str(application_id),
-                    trace_id=trace_id,
-                )
-
-                checkpoint_data = await job_manager.get_checkpoint_data()
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for stage")
-
-                logger.debug(
-                    "Retrieved checkpoint data for ENRICH_RESEARCH_OBJECTIVES",
-                    application_id=str(application_id),
-                    checkpoint_relationships=len(checkpoint_data.get("relationships", {})),
-                    trace_id=trace_id,
-                )
-
                 await job_manager.ensure_not_cancelled()
 
-                dto = await handle_enrich_objectives_stage(
+                objectives_dto = await handle_enrich_objectives_stage(
                     grant_application=grant_application,
-                    dto=cast("ExtractRelationshipsStageDTO", checkpoint_data),
+                    dto=relationships_dto,
                     job_manager=job_manager,
-                    trace_id=trace_id,
-                )
-
-                stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
-                logger.info(
-                    "Completed ENRICH_RESEARCH_OBJECTIVES stage",
-                    application_id=str(application_id),
-                    enrichments_processed=len(dto["enrichment_responses"]),
-                    stage_elapsed_ms=stage_elapsed,
-                    trace_id=trace_id,
-                )
-
-                await job_manager.transition_to_next_stage(dto)
-                return
-
-            case GrantApplicationStageEnum.ENRICH_TERMINOLOGY:
-                logger.info(
-                    "Starting ENRICH_TERMINOLOGY stage",
-                    application_id=str(application_id),
-                    trace_id=trace_id,
-                )
-
-                checkpoint_data = await job_manager.get_checkpoint_data()
-                if not checkpoint_data:
-                    raise ValidationError("Missing checkpoint data for stage")
-
-                logger.debug(
-                    "Retrieved checkpoint data for ENRICH_TERMINOLOGY",
-                    application_id=str(application_id),
-                    checkpoint_enrichments=len(checkpoint_data.get("enrichment_responses", [])),
                     trace_id=trace_id,
                 )
 
                 await job_manager.ensure_not_cancelled()
 
-                dto = await handle_enrich_terminology_stage(
-                    dto=cast("EnrichObjectivesStageDTO", checkpoint_data),
+                terminology_dto = await handle_enrich_terminology_stage(
+                    dto=objectives_dto,
                     job_manager=job_manager,
                     trace_id=trace_id,
                 )
 
                 stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(
-                    "Completed ENRICH_TERMINOLOGY stage",
+                    "Completed BLUEPRINT_PREP stage",
                     application_id=str(application_id),
-                    wikidata_enrichments=len(dto["wikidata_enrichments"]),
+                    relationships_extracted=len(relationships_dto["relationships"]),
+                    objectives_enriched=len(objectives_dto["enrichment_responses"]),
+                    wikidata_enrichments=len(terminology_dto["wikidata_enrichments"]),
                     stage_elapsed_ms=stage_elapsed,
                     trace_id=trace_id,
                 )
 
-                await job_manager.transition_to_next_stage(dto)
+                await job_manager.transition_to_next_stage(terminology_dto)
                 return
 
-            case GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN:
+            case GrantApplicationStageEnum.WORKPLAN_GENERATION:
                 logger.info(
-                    "Starting GENERATE_RESEARCH_PLAN stage",
+                    "Starting WORKPLAN_GENERATION stage",
                     application_id=str(application_id),
                     trace_id=trace_id,
                 )
@@ -510,7 +444,7 @@ async def handle_grant_application_pipeline(
                     raise ValidationError("Missing checkpoint data for stage")
 
                 logger.debug(
-                    "Retrieved checkpoint data for GENERATE_RESEARCH_PLAN",
+                    "Retrieved checkpoint data for WORKPLAN_GENERATION",
                     application_id=str(application_id),
                     checkpoint_wikidata=len(checkpoint_data.get("wikidata_enrichments", [])),
                     trace_id=trace_id,
@@ -527,7 +461,7 @@ async def handle_grant_application_pipeline(
 
                 stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(
-                    "Completed GENERATE_RESEARCH_PLAN stage",
+                    "Completed WORKPLAN_GENERATION stage",
                     application_id=str(application_id),
                     research_plan_words=len(dto["research_plan_text"].split()),
                     stage_elapsed_ms=stage_elapsed,
@@ -537,9 +471,9 @@ async def handle_grant_application_pipeline(
                 await job_manager.transition_to_next_stage(dto)
                 return
 
-            case GrantApplicationStageEnum.GENERATE_SECTIONS:
+            case GrantApplicationStageEnum.SECTION_SYNTHESIS:
                 logger.info(
-                    "Starting GENERATE_SECTIONS stage (final stage)",
+                    "Starting SECTION_SYNTHESIS stage (final stage)",
                     application_id=str(application_id),
                     trace_id=trace_id,
                 )
@@ -549,7 +483,7 @@ async def handle_grant_application_pipeline(
                     raise ValidationError("Missing checkpoint data for stage")
 
                 logger.debug(
-                    "Retrieved checkpoint data for GENERATE_SECTIONS",
+                    "Retrieved checkpoint data for SECTION_SYNTHESIS",
                     application_id=str(application_id),
                     checkpoint_research_plan_length=len(checkpoint_data.get("research_plan_text", "")),
                     trace_id=trace_id,
@@ -566,7 +500,7 @@ async def handle_grant_application_pipeline(
 
                 stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(
-                    "Completed GENERATE_SECTIONS stage, preparing to save application",
+                    "Completed SECTION_SYNTHESIS stage, preparing to save application",
                     application_id=str(application_id),
                     sections_generated=len(final_dto["section_texts"]),
                     stage_elapsed_ms=stage_elapsed,

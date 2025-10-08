@@ -122,7 +122,7 @@ async def test_retrieve_grant_application_job_success(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.PROCESSING,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             template_stage=None,
             checkpoint_data={
                 "generated_sections": {"intro": "Content"},
@@ -144,7 +144,7 @@ async def test_retrieve_grant_application_job_success(
     assert data["id"] == str(job.id)
     assert data["job_type"] == "grant_application_generation"
     assert data["status"] == RagGenerationStatusEnum.PROCESSING.value
-    assert data["current_stage"] == GrantApplicationStageEnum.GENERATE_SECTIONS.value
+    assert data["current_stage"] == GrantApplicationStageEnum.SECTION_SYNTHESIS.value
     assert data["grant_application_id"] == str(grant_application.id)
     assert data["generated_sections"] == {"intro": "Content"}
     assert data["validation_results"] == {"valid": True}
@@ -164,7 +164,7 @@ async def test_retrieve_job_with_error_details(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.FAILED,
-            application_stage=GrantApplicationStageEnum.ENRICH_TERMINOLOGY,
+            application_stage=GrantApplicationStageEnum.BLUEPRINT_PREP,
             template_stage=None,
             error_message="LLM API timeout",
             error_details={"error_code": "TIMEOUT", "retry_after": 60},
@@ -198,7 +198,7 @@ async def test_retrieve_job_with_parent_child_chain(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.COMPLETED,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             template_stage=None,
             completed_at=datetime.now(UTC),
             checkpoint_data={"sections": ["intro", "methods"]},
@@ -210,7 +210,7 @@ async def test_retrieve_job_with_parent_child_chain(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.PROCESSING,
-            application_stage=GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS,
+            application_stage=GrantApplicationStageEnum.BLUEPRINT_PREP,
             template_stage=None,
             parent_job_id=parent_job.id,
         )
@@ -224,7 +224,7 @@ async def test_retrieve_job_with_parent_child_chain(
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert data["current_stage"] == GrantApplicationStageEnum.EXTRACT_RELATIONSHIPS.value
+    assert data["current_stage"] == GrantApplicationStageEnum.BLUEPRINT_PREP.value
 
 
 async def test_retrieve_job_not_found(
@@ -267,7 +267,7 @@ async def test_retrieve_job_from_different_project(
             grant_application_id=other_app.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.PENDING,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             template_stage=None,
         )
         session.add(job)
@@ -293,7 +293,7 @@ async def test_cancel_job_success(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.PROCESSING,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             template_stage=None,
         )
         session.add(job)
@@ -329,7 +329,7 @@ async def test_cancel_already_completed_job(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.COMPLETED,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             template_stage=None,
             completed_at=datetime.now(UTC),
         )
@@ -360,7 +360,7 @@ async def test_cancel_already_cancelled_job(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.CANCELLED,
-            application_stage=GrantApplicationStageEnum.ENRICH_RESEARCH_OBJECTIVES,
+            application_stage=GrantApplicationStageEnum.BLUEPRINT_PREP,
             template_stage=None,
         )
         session.add(job)
@@ -477,7 +477,7 @@ async def test_job_without_checkpoint_data(
             grant_application_id=grant_application.id,
             grant_template_id=None,
             status=RagGenerationStatusEnum.PENDING,
-            application_stage=GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN,
+            application_stage=GrantApplicationStageEnum.WORKPLAN_GENERATION,
             template_stage=None,
             checkpoint_data=None,
         )

@@ -1,6 +1,18 @@
+import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
+
+import pytest
+
+if not os.environ.get("PUBSUB_EMULATOR_HOST"):
+    pytest.skip(
+        "Pub/Sub emulator not configured. Start it with "
+        "`docker compose --profile services up -d pubsub-emulator` "
+        "and run `PUBSUB_EMULATOR_HOST=localhost:8085 uv run python scripts/init-pubsub-emulator.py` "
+        "before executing this test.",
+        allow_module_level=True,
+    )
 
 from packages.db.src.enums import ApplicationStatusEnum, RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
@@ -219,9 +231,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                     application_stage=stage,
                     status=RagGenerationStatusEnum.COMPLETED,
                     retry_count=0,
-                    checkpoint_data=checkpoint_data
-                    if stage == GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN
-                    else None,
+                    checkpoint_data=checkpoint_data if stage == GrantApplicationStageEnum.WORKPLAN_GENERATION else None,
                 )
                 session.add(job)
             await session.commit()
@@ -248,7 +258,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
         result = await session.execute(
             select_active(RagGenerationJob).where(
                 RagGenerationJob.grant_application_id == test_application_with_template.id,
-                RagGenerationJob.application_stage == GrantApplicationStageEnum.GENERATE_RESEARCH_PLAN,
+                RagGenerationJob.application_stage == GrantApplicationStageEnum.SECTION_SYNTHESIS,
             )
         )
         final_job = result.scalar_one_or_none()
