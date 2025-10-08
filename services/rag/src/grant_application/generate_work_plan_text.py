@@ -134,6 +134,11 @@ ADJUST_WORK_COMPONENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ${relationships}
     </relationships>
 
+    ## Work Plan So Far
+    <work_plan>
+    ${work_plan_so_far}
+    </work_plan>
+
     ## Current Draft
     <draft>
     ${draft_text}
@@ -202,6 +207,7 @@ async def adjust_component_length(
     component_text: str,
     rag_results: list[str],
     form_inputs: ResearchDeepDive,
+    work_plan_text: str,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -232,6 +238,7 @@ async def adjust_component_length(
             guiding_questions="\n".join(component.get("guiding_questions", [])) or "None",
             relationships=_format_relationships(component),
             draft_text=adjusted_text,
+            work_plan_so_far=work_plan_text or "None",
         )
 
         adjusted_text = await with_evaluation(
@@ -257,7 +264,42 @@ async def adjust_component_length(
             return adjusted_text
 
     if word_count > max_words:
-        return _truncate_to_word_limit(adjusted_text, max_words)
+        truncated_text = _truncate_to_word_limit(adjusted_text, max_words)
+
+        async def _return_truncated(_prompt: str, **_kwargs: Any) -> str:
+            return truncated_text
+
+        final_prompt = ADJUST_WORK_COMPONENT_PROMPT.to_string(
+            object_type=component["type"],
+            component_number=component["number"],
+            component_title=component["title"],
+            direction="finalize within limits",
+            max_words=max_words,
+            min_words=min_words,
+            instructions=component["instructions"],
+            guiding_questions="\n".join(component.get("guiding_questions", [])) or "None",
+            relationships=_format_relationships(component),
+            draft_text=truncated_text,
+            work_plan_so_far=work_plan_text or "None",
+        )
+
+        return await with_evaluation(
+            prompt_identifier="adjust_work_component_length_truncate",
+            prompt_handler=_return_truncated,
+            prompt=final_prompt,
+            max_words=max_words,
+            min_words=min_words,
+            rag_results=rag_results,
+            user_input=form_inputs,
+            trace_id=trace_id,
+            **get_evaluation_kwargs(
+                "generate_work_plan",
+                job_manager,
+                section_config=None,
+                rag_context=rag_results,
+                research_objectives=form_inputs.get("research_objectives"),
+            ),
+        )
 
     return adjusted_text
 
@@ -376,6 +418,7 @@ async def generate_work_plan_component_text(
                 component_text=component_text,
                 rag_results=rag_results,
                 form_inputs=form_inputs,
+                work_plan_text=work_plan_text,
                 trace_id=trace_id,
                 job_manager=job_manager,
             )
