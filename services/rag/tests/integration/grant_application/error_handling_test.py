@@ -154,7 +154,7 @@ async def test_pipeline_backend_error_during_generation(
         grant_application_id=test_application_with_template.id,
         session_maker=async_session_maker,
         trace_id=trace_id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+        current_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
         pipeline_stages=[],
     )
 
