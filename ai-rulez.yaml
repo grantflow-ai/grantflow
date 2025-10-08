@@ -6,7 +6,7 @@ outputs:
   - path: .cursor/rules/
     type: rule
     naming_scheme: "{name}.mdc"
-  - path: .github/copilot-instructions.md
+  - path: AGENTS.md
   - path: .windsurf/
     type: rule
     naming_scheme: "{name}.md"
