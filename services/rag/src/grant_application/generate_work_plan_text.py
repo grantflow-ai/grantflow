@@ -1,3 +1,5 @@
+import math
+import re
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from packages.db.src.json_objects import ResearchDeepDive
@@ -25,6 +27,8 @@ MAX_SHARED_QUERIES: Final[int] = 15
 MAX_SHARED_TOKENS: Final[int] = 12000
 DEFAULT_BATCH_SIZE: Final[int] = 5
 COMPONENT_TIMEOUT: Final[float] = 480.0
+LENGTH_TOLERANCE_RATIO: Final[float] = 0.05
+MAX_LENGTH_ADJUST_ATTEMPTS: Final[int] = 2
 
 TASK_CONTENT_GUIDELINES: Final[str] = """For this task:
 - Be specific about the methodologies, protocols, and techniques that will be used
@@ -102,6 +106,160 @@ GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         </work_plan_text>
     """,
 )
+
+ADJUST_WORK_COMPONENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="adjust_work_component_length",
+    template="""
+    Revise the ${object_type} draft so that it meets the word constraints without losing essential content.
+
+    ## Component Context
+    - Identifier: ${component_number}
+    - Title: ${component_title}
+    - Direction: ${direction}
+    - Maximum words: ${max_words}
+    - Minimum words: ${min_words}
+
+    ## Instructions
+    <instructions>
+    ${instructions}
+    </instructions>
+
+    ## Guiding Questions
+    <guiding_questions>
+    ${guiding_questions}
+    </guiding_questions>
+
+    ## Relationships
+    <relationships>
+    ${relationships}
+    </relationships>
+
+    ## Current Draft
+    <draft>
+    ${draft_text}
+    </draft>
+
+    ## Requirements
+    1. Preserve factual commitments, dependencies, and sequencing signals.
+    2. Maintain markdown headings and logical flow.
+    3. Do not mention that this is a revision or discuss token counts.
+    4. Return the full revised text only.
+    """,
+)
+
+
+def _word_count(text: str) -> int:
+    return len(text.split())
+
+
+def _within_length_bounds(*, word_count: int, min_words: int, max_words: int) -> bool:
+    tolerance = max(5, math.ceil(max_words * LENGTH_TOLERANCE_RATIO))
+    upper_limit = max_words + tolerance
+    return min_words <= word_count <= upper_limit
+
+
+def _truncate_to_word_limit(text: str, max_words: int) -> str:
+    if max_words <= 0:
+        return ""
+
+    tokens = re.findall(r"\S+\s*", text)
+    truncated_tokens: list[str] = []
+    words_accumulated = 0
+
+    for token in tokens:
+        token_words = token.strip().split()
+        if not token_words:
+            truncated_tokens.append(token)
+            continue
+
+        if words_accumulated + len(token_words) <= max_words:
+            truncated_tokens.append(token)
+            words_accumulated += len(token_words)
+            continue
+
+        remaining = max_words - words_accumulated
+        if remaining <= 0:
+            break
+
+        partial_words = token_words[:remaining]
+        suffix = " " if token.endswith(" ") else ""
+        truncated_tokens.append(" ".join(partial_words) + suffix)
+        break
+
+    return "".join(truncated_tokens).rstrip()
+
+
+def _format_relationships(component: ResearchComponentGenerationDTO) -> str:
+    relationships = component.get("relationships", [])
+    if not relationships:
+        return "None"
+    return "\n".join(f"- {component['number']} -> {target}: {description}" for target, description in relationships)
+
+
+async def adjust_component_length(
+    *,
+    component: ResearchComponentGenerationDTO,
+    component_text: str,
+    rag_results: list[str],
+    form_inputs: ResearchDeepDive,
+    trace_id: str,
+    job_manager: "JobManager[StageDTO]",
+) -> str:
+    max_words = component.get("max_words")
+    if not max_words:
+        return component_text
+
+    min_words = max(1, int(max_words * MIN_WORDS_RATIO))
+    word_count = _word_count(component_text)
+
+    if _within_length_bounds(word_count=word_count, min_words=min_words, max_words=max_words):
+        return component_text
+
+    direction = "compress to meet the limit" if word_count > max_words else "expand to meet the minimum"
+    adjusted_text = component_text
+
+    for _attempt in range(MAX_LENGTH_ADJUST_ATTEMPTS):
+        await job_manager.ensure_not_cancelled()
+
+        adjust_prompt = ADJUST_WORK_COMPONENT_PROMPT.to_string(
+            object_type=component["type"],
+            component_number=component["number"],
+            component_title=component["title"],
+            direction=direction,
+            max_words=max_words,
+            min_words=min_words,
+            instructions=component["instructions"],
+            guiding_questions="\n".join(component.get("guiding_questions", [])) or "None",
+            relationships=_format_relationships(component),
+            draft_text=adjusted_text,
+        )
+
+        adjusted_text = await with_evaluation(
+            prompt_identifier="adjust_work_component_length",
+            prompt_handler=handle_work_plan_component_generation,
+            prompt=adjust_prompt,
+            max_words=max_words,
+            min_words=min_words,
+            rag_results=rag_results,
+            user_input=form_inputs,
+            trace_id=trace_id,
+            **get_evaluation_kwargs(
+                "generate_work_plan",
+                job_manager,
+                section_config=None,
+                rag_context=rag_results,
+                research_objectives=form_inputs.get("research_objectives"),
+            ),
+        )
+
+        word_count = _word_count(adjusted_text)
+        if _within_length_bounds(word_count=word_count, min_words=min_words, max_words=max_words):
+            return adjusted_text
+
+    if word_count > max_words:
+        return _truncate_to_word_limit(adjusted_text, max_words)
+
+    return adjusted_text
 
 
 async def handle_work_plan_component_generation(
@@ -195,7 +353,7 @@ async def generate_work_plan_component_text(
         return source_validation_error
 
     try:
-        return await with_evaluation(
+        component_text = await with_evaluation(
             max_words=component["max_words"],
             min_words=int(component["max_words"] * MIN_WORDS_RATIO),
             prompt=prompt,
@@ -212,6 +370,16 @@ async def generate_work_plan_component_text(
                 research_objectives=form_inputs.get("research_objectives"),
             ),
         )
+        if component_text and isinstance(component_text, str) and not component_text.lstrip().startswith("["):
+            component_text = await adjust_component_length(
+                component=component,
+                component_text=component_text,
+                rag_results=rag_results,
+                form_inputs=form_inputs,
+                trace_id=trace_id,
+                job_manager=job_manager,
+            )
+        return component_text
     except EvaluationError as e:
         logger.warning(
             "Component failed evaluation",
