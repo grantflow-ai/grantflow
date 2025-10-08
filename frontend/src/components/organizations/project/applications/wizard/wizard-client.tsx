@@ -19,7 +19,15 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { isTemplateEvent, type NotificationEvent, type TemplateGenerationEvent } from "@/types/notification-events";
+import {
+	type ApplicationProgressEvent,
+	isApplicationProgressEvent,
+	isRagErrorEvent,
+	isTemplateEvent,
+	type NotificationEvent,
+	type RagErrorEvent,
+	type TemplateGenerationEvent,
+} from "@/types/notification-events";
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
@@ -29,6 +37,25 @@ import { WizardDialog, type WizardDialogRef } from "./modal/wizard-dialog";
 import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-step";
 import { ResearchPlanStep } from "./research-plan/research-plan-step";
 import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
+
+const RAG_ERROR_MESSAGES: Record<RagErrorEvent, string> = {
+	indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
+	indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
+	insufficient_context_error: "Not enough context to generate the template. Please add more sources or documents.",
+	internal_error: "An internal error occurred. Please try again or contact support.",
+	job_cancelled: "Template generation was cancelled.",
+	llm_timeout: "AI processing timed out. Please try again.",
+	pipeline_error: "An unexpected error occurred. Please try again or contact support.",
+};
+
+const APPLICATION_GENERATION_PROGRESS: Record<ApplicationProgressEvent, number> = {
+	grant_application_generation_completed: 100,
+	objectives_enriched: 32,
+	relationships_extracted: 16,
+	research_plan_completed: 64,
+	section_texts_generated: 80,
+	wikidata_enhancement_complete: 48,
+};
 
 interface WizardClientComponentProps {
 	applicationId: API.RetrieveApplication.Http200.ResponseBody["id"];
@@ -144,17 +171,9 @@ export function WizardClientComponent({
 				recoverable,
 			});
 
-			const errorMessages: Record<string, string> = {
-				indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
-				indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
-				insufficient_context_error:
-					"Not enough context to generate the template. Please add more sources or documents.",
-				internal_error: "An internal error occurred. Please try again or contact support.",
-				llm_timeout: "AI processing timed out. Please try again.",
-				pipeline_error: "An unexpected error occurred. Please try again or contact support.",
-			};
-
-			const message = errorMessages[event] ?? "Template generation failed. Please try again.";
+			const message = isRagErrorEvent(event)
+				? RAG_ERROR_MESSAGES[event]
+				: "Template generation failed. Please try again.";
 
 			setGeneratingTemplate(false);
 			useWizardStore.getState().setTemplateGenerationFailed(true, message);
@@ -203,17 +222,9 @@ export function WizardClientComponent({
 		if (!latestRagNotification) return;
 
 		const { event } = latestRagNotification;
-		const progressMap: Record<string, number> = {
-			grant_application_generation_completed: 100,
-			objectives_enriched: 16,
-			relationships_extracted: 32,
-			research_plan_completed: 48,
-			section_texts_generated: 64,
-			wikidata_enhancement_complete: 80,
-		};
 
-		if (event in progressMap) {
-			setGenerationProgress(progressMap[event]);
+		if (isApplicationProgressEvent(event)) {
+			setGenerationProgress(APPLICATION_GENERATION_PROGRESS[event]);
 		}
 	}, [latestRagNotification]);
 
@@ -242,7 +253,7 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification;
 
-		if (event === "cfp_data_extracted" || event === "sections_extracted") {
+		if (isTemplateEvent(event) && event !== "grant_template_created") {
 			setGeneratingTemplate(true);
 		}
 

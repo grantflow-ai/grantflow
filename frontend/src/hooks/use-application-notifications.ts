@@ -5,8 +5,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { getOtp } from "@/actions/otp";
 import type { SourceIndexingStatus } from "@/enums";
 import type { API } from "@/types/api-types";
-import type { NotificationEvent } from "@/types/notification-events";
-import { isApplicationEvent, isTemplateEvent } from "@/types/notification-events";
+import { isApplicationProgressEvent, isTemplateEvent } from "@/types/notification-events";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 
@@ -63,8 +62,7 @@ export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusM
 		return false;
 	}
 
-	const event = value.event as NotificationEvent;
-	return isTemplateEvent(event) || isApplicationEvent(event);
+	return isTemplateEvent(value.event) || isApplicationProgressEvent(value.event);
 });
 
 export const isRagProcessingErrorMessage = createTypeGuard<RagProcessingErrorMessage>(

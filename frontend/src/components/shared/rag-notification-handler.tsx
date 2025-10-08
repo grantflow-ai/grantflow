@@ -5,14 +5,56 @@ import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 import {
 	ERROR_EVENTS,
+	isNotificationEvent,
+	isProgressEvent,
 	type NotificationEvent,
 	SUCCESS_EVENTS,
-	type TemplateGenerationEvent,
 	WARNING_EVENTS,
 } from "@/types/notification-events";
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
+}
+
+interface ProgressEventDataMap {
+	cfp_data_extracted: {
+		deadline: null | string;
+		organization: string;
+		sections_count: number;
+		subject: string;
+	};
+	grant_application_generation_completed: {
+		application_id: string;
+		word_count: number;
+	};
+	grant_template_created: {
+		organization: string;
+		sections_created: number;
+		template_id: string;
+	};
+	metadata_generated: {
+		organization: string;
+		sections_created: number;
+	};
+	objectives_enriched: {
+		objectives: number;
+		tasks: number;
+	};
+	relationships_extracted: {
+		relationships_count: number;
+	};
+	research_plan_completed: {
+		objectives: number;
+		tasks: number;
+		words: number;
+	};
+	section_texts_generated: {
+		sections_generated: number;
+		word_count: number;
+	};
+	wikidata_enhancement_complete: {
+		terms_added: number;
+	};
 }
 
 type ToastId = number | string | undefined;
@@ -38,6 +80,11 @@ export function RagNotificationHandler({ notification }: NotificationHandlerProp
 
 function displayNotification(notification: RagProcessingStatusMessage): ToastId {
 	const { data, event } = notification;
+
+	if (!isNotificationEvent(event)) {
+		return undefined;
+	}
+
 	const message = generateMessageFromEvent(event, data);
 
 	switch (notification.type) {
@@ -58,11 +105,11 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 			break;
 		}
 		default: {
-			if (ERROR_EVENTS.has(event as TemplateGenerationEvent)) {
+			if (ERROR_EVENTS.has(event)) {
 				showErrorToast(message, data, "error");
-			} else if (WARNING_EVENTS.has(event as TemplateGenerationEvent)) {
+			} else if (WARNING_EVENTS.has(event)) {
 				showWarningToast(message, data, "warning");
-			} else if (SUCCESS_EVENTS.has(event as TemplateGenerationEvent)) {
+			} else if (SUCCESS_EVENTS.has(event)) {
 				showSuccessToast(message, event, "success");
 			} else {
 				showInfoToast(message, data, "info");
@@ -73,43 +120,57 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 	return undefined;
 }
 
-function generateMessageFromEvent(event: string, data: Record<string, unknown>): string {
-	switch (event) {
-		case "cfp_data_extracted": {
-			const organization = data.organization as string;
-			const subject = data.subject as string;
-			if (organization && organization !== "Unknown" && subject) {
-				return `Extracted grant details from organization ${organization}: ${subject.slice(0, 60)}...`;
-			}
-			if (subject) {
-				return `Extracted grant details: ${subject.slice(0, 60)}...`;
-			}
-			return "Successfully extracted grant application details";
+const MESSAGE_GENERATORS: {
+	[K in keyof ProgressEventDataMap]: (data: ProgressEventDataMap[K]) => string;
+} = {
+	cfp_data_extracted: (d) => {
+		if (!isUnknownOrganization(d.organization) && d.subject) {
+			return `Extracted grant details from organization ${d.organization}: ${d.subject.slice(0, 60)}...`;
 		}
-		case "grant_template_created": {
-			const sections = data.sections as number;
-			const organization = data.organization as string;
-			return `Created template with ${sections} sections for ${organization && organization !== "Unknown" ? organization : "grant application"}`;
+		if (d.subject) {
+			return `Extracted grant details: ${d.subject.slice(0, 60)}...`;
 		}
-		case "metadata_generated": {
-			const sections = data.sections as number;
-			return `Generated metadata for ${sections} sections`;
-		}
-		case "sections_extracted": {
-			const categories = data.categories_found as number;
-			const sentences = data.total_sentences as number;
-			return `Extracted ${categories} sections with ${sentences} requirements`;
-		}
-		default: {
-			return `Processing ${event.replaceAll("_", " ")}`;
-		}
+		return "Successfully extracted grant application details";
+	},
+	grant_application_generation_completed: (d) => `Application complete with ${d.word_count.toLocaleString()} words`,
+	grant_template_created: (d) => {
+		const orgName = isUnknownOrganization(d.organization) ? "grant application" : d.organization;
+		return `Created template with ${d.sections_created} sections for ${orgName}`;
+	},
+	metadata_generated: (d) => `Generated metadata for ${d.sections_created} sections`,
+	objectives_enriched: (d) =>
+		`Enriched ${d.objectives} ${pluralize(d.objectives, "objective")} with ${d.tasks} research ${pluralize(d.tasks, "task")}`,
+	relationships_extracted: (d) =>
+		`Identified ${d.relationships_count} ${pluralize(d.relationships_count, "relationship")}`,
+	research_plan_completed: (d) =>
+		`Research plan ready with ${d.objectives} ${pluralize(d.objectives, "objective")}, ${d.tasks} ${pluralize(d.tasks, "task")} (${d.words} words)`,
+	section_texts_generated: (d) =>
+		`Generated content for ${d.sections_generated} ${pluralize(d.sections_generated, "section")}`,
+	wikidata_enhancement_complete: (d) =>
+		`Enhanced content with ${d.terms_added} additional ${pluralize(d.terms_added, "term")}`,
+};
+
+function generateMessageFromEvent(event: NotificationEvent, data: Record<string, unknown>): string {
+	if (isProgressEvent(event)) {
+		// TypeScript limitation: indexing MESSAGE_GENERATORS with union type creates intersection
+		// Safe to cast as never because isProgressEvent guarantees the data matches the event type at runtime
+		const generator = MESSAGE_GENERATORS[event as keyof typeof MESSAGE_GENERATORS];
+		return generator(data as never);
 	}
+	return formatEventName(event);
+}
+
+function isUnknownOrganization(organization: string | undefined): boolean {
+	return !organization || organization.toLowerCase() === "unknown";
+}
+
+function pluralize(count: number, singular: string, plural?: string): string {
+	return count === 1 ? singular : (plural ?? `${singular}s`);
 }
 
 function shouldDismissToast(event: string, _previousEvent: null | string, toastId: ToastId): boolean {
 	if (!toastId) return false;
-	const isCompleteEvent = ERROR_EVENTS.has(event as NotificationEvent);
-	return isCompleteEvent;
+	return ERROR_EVENTS.has(event as NotificationEvent);
 }
 
 function showErrorToast(message: string, data: Record<string, unknown> | undefined, type: string): void {
@@ -133,10 +194,19 @@ function showInfoToast(message: string, data: Record<string, unknown> | undefine
 	toast.info(`${prefix}${message}`, { description });
 }
 
+const formatEventName = (event: string): string => {
+	return event
+		.split("_")
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ");
+};
+
 function showSuccessToast(message: string, event: string, _type: string): void {
 	const isCompletion = event.includes("completed");
 	const prefix = isCompletion ? "✅ Completed: " : "✓ ";
-	toast.success(`${prefix}${message}`, {
+	const formattedEvent = formatEventName(event);
+	toast.success(`${prefix}${formattedEvent}`, {
+		description: message,
 		duration: isCompletion ? 8000 : 5000,
 	});
 }
