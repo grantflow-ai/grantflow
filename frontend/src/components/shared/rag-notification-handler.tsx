@@ -3,10 +3,58 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS, WARNING_EVENTS } from "@/types/notification-events";
+import {
+	ERROR_EVENTS,
+	isNotificationEvent,
+	isProgressEvent,
+	type NotificationEvent,
+	SUCCESS_EVENTS,
+	WARNING_EVENTS,
+} from "@/types/notification-events";
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
+}
+
+interface ProgressEventDataMap {
+	cfp_data_extracted: {
+		deadline: null | string;
+		organization: string;
+		sections_count: number;
+		subject: string;
+	};
+	grant_application_generation_completed: {
+		application_id: string;
+		word_count: number;
+	};
+	grant_template_created: {
+		organization: string;
+		sections_created: number;
+		template_id: string;
+	};
+	metadata_generated: {
+		organization: string;
+		sections_created: number;
+	};
+	objectives_enriched: {
+		objectives: number;
+		tasks: number;
+	};
+	relationships_extracted: {
+		relationships_count: number;
+	};
+	research_plan_completed: {
+		objectives: number;
+		tasks: number;
+		words: number;
+	};
+	section_texts_generated: {
+		sections_generated: number;
+		word_count: number;
+	};
+	wikidata_enhancement_complete: {
+		terms_added: number;
+	};
 }
 
 type ToastId = number | string | undefined;
@@ -72,72 +120,44 @@ function displayNotification(notification: RagProcessingStatusMessage): ToastId 
 	return undefined;
 }
 
-function formatCfpDataExtracted(data: Record<string, unknown>): string {
-	const organization = data.organization as string;
-	const subject = data.subject as string;
-
-	if (!isUnknownOrganization(organization) && subject) {
-		return `Extracted grant details from organization ${organization}: ${subject.slice(0, 60)}...`;
-	}
-	if (subject) {
-		return `Extracted grant details: ${subject.slice(0, 60)}...`;
-	}
-	return "Successfully extracted grant application details";
-}
-
-function formatGrantTemplateCreated(data: Record<string, unknown>): string {
-	const sections = data.sections_created as number;
-	const organization = data.organization as string;
-	const orgName = isUnknownOrganization(organization) ? "grant application" : organization;
-	return `Created template with ${sections} sections for ${orgName}`;
-}
-
-function formatObjectivesEnriched(data: Record<string, unknown>): string {
-	const objectives = data.objectives as number;
-	const tasks = data.tasks as number;
-	return `Enriched ${objectives} ${pluralize(objectives, "objective")} with ${tasks} research ${pluralize(tasks, "task")}`;
-}
-
-function formatResearchPlanCompleted(data: Record<string, unknown>): string {
-	const objectives = data.objectives as number;
-	const tasks = data.tasks as number;
-	const words = data.words as number;
-	return `Research plan ready with ${objectives} ${pluralize(objectives, "objective")}, ${tasks} ${pluralize(tasks, "task")} (${words} words)`;
-}
-
-function isNotificationEvent(event: string): event is NotificationEvent {
-	return (
-		ERROR_EVENTS.has(event as NotificationEvent) ||
-		WARNING_EVENTS.has(event as NotificationEvent) ||
-		SUCCESS_EVENTS.has(event as NotificationEvent)
-	);
-}
-
-const MESSAGE_GENERATORS: Partial<Record<NotificationEvent, (data: Record<string, unknown>) => string>> = {
-	cfp_data_extracted: formatCfpDataExtracted,
-	grant_application_generation_completed: (d) =>
-		`Application complete with ${(d.word_count as number).toLocaleString()} words`,
-	grant_template_created: formatGrantTemplateCreated,
-	metadata_generated: (d) => `Generated metadata for ${d.sections_created as number} sections`,
-	objectives_enriched: formatObjectivesEnriched,
-	relationships_extracted: (d) => {
-		const count = d.relationships_count as number;
-		return `Identified ${count} ${pluralize(count, "relationship")}`;
+const MESSAGE_GENERATORS: {
+	[K in keyof ProgressEventDataMap]: (data: ProgressEventDataMap[K]) => string;
+} = {
+	cfp_data_extracted: (d) => {
+		if (!isUnknownOrganization(d.organization) && d.subject) {
+			return `Extracted grant details from organization ${d.organization}: ${d.subject.slice(0, 60)}...`;
+		}
+		if (d.subject) {
+			return `Extracted grant details: ${d.subject.slice(0, 60)}...`;
+		}
+		return "Successfully extracted grant application details";
 	},
-	research_plan_completed: formatResearchPlanCompleted,
-	section_texts_generated: (d) => {
-		const sections = d.sections_generated as number;
-		return `Generated content for ${sections} ${pluralize(sections, "section")}`;
+	grant_application_generation_completed: (d) => `Application complete with ${d.word_count.toLocaleString()} words`,
+	grant_template_created: (d) => {
+		const orgName = isUnknownOrganization(d.organization) ? "grant application" : d.organization;
+		return `Created template with ${d.sections_created} sections for ${orgName}`;
 	},
-	wikidata_enhancement_complete: (d) => {
-		const terms = d.terms_added as number;
-		return `Enhanced content with ${terms} additional ${pluralize(terms, "term")}`;
-	},
+	metadata_generated: (d) => `Generated metadata for ${d.sections_created} sections`,
+	objectives_enriched: (d) =>
+		`Enriched ${d.objectives} ${pluralize(d.objectives, "objective")} with ${d.tasks} research ${pluralize(d.tasks, "task")}`,
+	relationships_extracted: (d) =>
+		`Identified ${d.relationships_count} ${pluralize(d.relationships_count, "relationship")}`,
+	research_plan_completed: (d) =>
+		`Research plan ready with ${d.objectives} ${pluralize(d.objectives, "objective")}, ${d.tasks} ${pluralize(d.tasks, "task")} (${d.words} words)`,
+	section_texts_generated: (d) =>
+		`Generated content for ${d.sections_generated} ${pluralize(d.sections_generated, "section")}`,
+	wikidata_enhancement_complete: (d) =>
+		`Enhanced content with ${d.terms_added} additional ${pluralize(d.terms_added, "term")}`,
 };
 
 function generateMessageFromEvent(event: NotificationEvent, data: Record<string, unknown>): string {
-	const generator = MESSAGE_GENERATORS[event];
-	return generator ? generator(data) : `Processing ${event.replaceAll("_", " ")}`;
+	if (isProgressEvent(event)) {
+		// TypeScript limitation: indexing MESSAGE_GENERATORS with union type creates intersection
+		// Safe to cast as never because isProgressEvent guarantees the data matches the event type at runtime
+		const generator = MESSAGE_GENERATORS[event as keyof typeof MESSAGE_GENERATORS];
+		return generator(data as never);
+	}
+	return formatEventName(event);
 }
 
 function isUnknownOrganization(organization: string | undefined): boolean {
