@@ -12,21 +12,28 @@ export function RagSourcesFooter({ onBackToUploads, onContinue }: RagSourcesFoot
 	const allSourcesFailed = ragSources.length > 0 && ragSources.every((source) => source.status === "FAILED");
 
 	const isContinueDisabled = hasNoSources || allSourcesFailed;
+	const isTemplateSource = !!onBackToUploads;
 
 	return (
-		<div className="flex w-full justify-between items-center" data-testid="rag-sources-footer">
-			<AppButton
-				data-testid="back-to-uploads-button"
-				onClick={onBackToUploads}
-				size="lg"
-				type="button"
-				variant="secondary"
-			>
-				Back to Uploads
-			</AppButton>
+		<div
+			className="flex w-full items-center"
+			data-testid="rag-sources-footer"
+			style={{ justifyContent: isTemplateSource ? "space-between" : "flex-end" }}
+		>
+			{isTemplateSource && (
+				<AppButton
+					data-testid="back-to-uploads-button"
+					onClick={onBackToUploads}
+					size="lg"
+					type="button"
+					variant="secondary"
+				>
+					Back to Uploads
+				</AppButton>
+			)}
 			<AppButton
 				data-testid="continue-button"
-				disabled={isContinueDisabled}
+				disabled={isTemplateSource && isContinueDisabled}
 				onClick={onContinue}
 				size="lg"
 				type="button"

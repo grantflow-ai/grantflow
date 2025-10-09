@@ -31,6 +31,7 @@ import { ApplicationDetailsStep } from "./application-details/application-detail
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
 import { GenerateCompleteStep } from "./generate-and-complete/generate-complete-step";
 import { KnowledgeBaseStep } from "./knowledge-base/knowledge-base-step";
+import { createRagSourcesDialog } from "./modal/rag-sources-dialog-utils";
 import { WizardDialog, type WizardDialogRef } from "./modal/wizard-dialog";
 import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-step";
 import { ResearchPlanStep } from "./research-plan/research-plan-step";
@@ -71,9 +72,11 @@ export function WizardClientComponent({
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const setApplication = useApplicationStore((state) => state.setApplication);
+	const appRagSources = useApplicationStore((state) => state.application?.rag_sources) ?? [];
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
+	const appRagFailureShownRef = useRef(false);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplicationId,
@@ -270,6 +273,43 @@ export function WizardClientComponent({
 			useWizardStore.getState().toNextStep();
 		}
 	}, [isGeneratingTemplate, currentStep]);
+
+	useEffect(() => {
+		const { application } = useApplicationStore.getState();
+
+		if (!application || appRagFailureShownRef.current) return;
+		if (appRagSources.length === 0) return;
+
+		const hasFailedAppSources = appRagSources.some((source) => source.status === "FAILED");
+		const hasIndexingSources = appRagSources.some((source) => source.status === "INDEXING");
+
+		if (hasFailedAppSources && !hasIndexingSources) {
+			appRagFailureShownRef.current = true;
+
+			const appRagDialog = createRagSourcesDialog({
+				onContinue: () => {
+					dialogRef.current?.close();
+				},
+				sourceType: "application",
+			});
+
+			dialogRef.current?.open({
+				content: appRagDialog.content,
+				description:
+					"We couldn't process one or more of your knowledge base files or links. This may impact the quality of your application generation.",
+				dismissOnOutsideClick: true,
+				footer: appRagDialog.footer,
+				minWidth: "min-w-4xl",
+				title: "Processing Issues Detected",
+			});
+
+			log.info("[App RAG Sources] Failure modal shown", {
+				applicationId: application.id,
+				failedCount: appRagSources.filter((s) => s.status === "FAILED").length,
+				totalCount: appRagSources.length,
+			});
+		}
+	}, [appRagSources]);
 
 	return (
 		<div className="bg-light flex h-screen w-full flex-col overflow-hidden" data-testid="wizard-page">

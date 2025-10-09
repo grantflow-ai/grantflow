@@ -4,14 +4,20 @@ import { RagSourcesFooter } from "./rag-sources-footer";
 interface RagSourcesDialogOptions {
 	onBackToUploads?: () => void;
 	onContinue?: () => void;
+	sourceType: "application" | "template";
 }
 
-export function createRagSourcesDialog(options: RagSourcesDialogOptions = {}) {
-	const { onBackToUploads, onContinue } = options;
+export function createRagSourcesDialog(options: RagSourcesDialogOptions) {
+	const { onBackToUploads, onContinue, sourceType } = options;
 
 	return {
-		content: <RagSourcesContent />,
-		footer: <RagSourcesFooter onBackToUploads={onBackToUploads} onContinue={onContinue} />,
+		content: <RagSourcesContent sourceType={sourceType} />,
+		footer: (
+			<RagSourcesFooter
+				onBackToUploads={sourceType === "template" ? onBackToUploads : undefined}
+				onContinue={onContinue}
+			/>
+		),
 	};
 }
 
