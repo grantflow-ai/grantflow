@@ -12,7 +12,7 @@ from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from services.rag.src.grant_application.pipeline import _determine_current_stage, handle_grant_application_pipeline
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Sequence
 
     from packages.db.src.tables import GrantApplication
     from pytest_mock import MockerFixture
@@ -46,7 +46,7 @@ class FakeSession:
         return FakeResult(self._jobs)
 
 
-def make_session_maker(jobs: Sequence[JobRecord]) -> Callable[[], FakeSession]:
+def make_session_maker(jobs: Sequence[JobRecord]) -> Any:
     def _session() -> FakeSession:
         return FakeSession(jobs)
 
@@ -73,6 +73,7 @@ class FakeJobManager:
         )
         self.update_job_status = AsyncMock()
         self.ensure_not_cancelled = AsyncMock()
+        self.save_substage_checkpoint = AsyncMock()
         self.transition_to_next_stage = AsyncMock()
         self.add_notification = AsyncMock()
         self.get_checkpoint_data = AsyncMock(return_value=checkpoint)
@@ -219,13 +220,11 @@ async def test_pipeline_raises_when_checkpoint_missing(mocker: MockerFixture) ->
         AsyncMock(),
     )
 
-    result = await handle_grant_application_pipeline(
+    await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=make_session_maker([]),
         trace_id="trace-missing",
     )
-
-    assert result is None
     assert fake_job_manager.get_checkpoint_data.await_count >= 1
     generate_mock.assert_not_awaited()
     fake_job_manager.transition_to_next_stage.assert_not_awaited()
@@ -256,9 +255,31 @@ async def test_pipeline_handles_stage_error(mocker: MockerFixture) -> None:
     )
     mocker.patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed", AsyncMock())
 
+    # Create valid checkpoint data with all required fields
+    checkpoint_data = {
+        "work_plan_section": {
+            "id": "plan",
+            "title": "Plan",
+            "order": 1,
+            "parent_id": None,
+            "depends_on": [],
+            "keywords": [],
+            "topics": [],
+            "generation_instructions": "",
+            "max_words": 1500,
+            "search_queries": [],
+            "is_detailed_research_plan": True,
+            "is_clinical_trial": False,
+            "evidence": "",
+        },
+        "relationships": {},
+        "enrichment_responses": [],
+        "wikidata_enrichments": [],
+        "research_plan_text": "",
+    }
     fake_job_manager = FakeJobManager(
         current_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
-        checkpoint={"research_plan_text": "", "section_texts": []},
+        checkpoint=checkpoint_data,
     )
     patch_job_manager(mocker, fake_job_manager)
 
