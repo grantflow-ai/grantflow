@@ -1,11 +1,15 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
-ENV MODEL_DIR="/app/hf"
+ENV MODEL_DIR="/app/hf" \
+    HF_HOME="/app/hf-cache" \
+    TRANSFORMERS_CACHE="/app/hf-cache" \
+    HUGGINGFACE_HUB_CACHE="/app/hf-cache" \
+    SENTENCE_TRANSFORMERS_HOME="/app/hf-cache"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
 FROM base AS model-download
-RUN mkdir -p "${MODEL_DIR}"
+RUN mkdir -p "${MODEL_DIR}" "${HF_HOME}"
 RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer && \
-    huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir ${MODEL_DIR}
+    huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir ${MODEL_DIR} --local-dir-use-symlinks False
 
 FROM base AS install
 WORKDIR /app/
@@ -31,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --chown=appuser:appuser --from=model-download ${MODEL_DIR} ${MODEL_DIR}
+COPY --chown=appuser:appuser --from=model-download ${HF_HOME} ${HF_HOME}
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/indexer/src/ /app/services/indexer/src/
 COPY --chown=appuser:appuser packages /app/packages

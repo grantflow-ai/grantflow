@@ -18,6 +18,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_email_notification
+from packages.shared_utils.src.serialization import to_builtins
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -227,6 +228,7 @@ async def _handle_pipeline_error(
 
     error_traceback = traceback.format_exc()
     error_context = getattr(error, "context", None)
+    serialized_error_context = to_builtins(error_context) if error_context is not None else None
 
     pipeline_context = {
         "current_stage": current_stage.value,
@@ -267,14 +269,14 @@ async def _handle_pipeline_error(
         trace_id=trace_id,
         stage=current_stage.value,
         pipeline_context=pipeline_context,
-        error_context=error_context,
+        error_context=serialized_error_context,
     )
 
     user_message, event_type = _get_error_details(error)
 
     detailed_error_message = f"{type(error).__name__}: {error!s}"
-    if error_context:
-        detailed_error_message += f"\nContext: {error_context}"
+    if serialized_error_context is not None:
+        detailed_error_message += f"\nContext: {serialized_error_context}"
 
     if event_type == NotificationEvents.PIPELINE_ERROR and not isinstance(
         error, (ValidationError, EvaluationError, DatabaseError, RagError, DeserializationError, LLMTimeoutError)
@@ -282,7 +284,7 @@ async def _handle_pipeline_error(
         logger.error(
             "Unexpected error in grant application pipeline",
             error=error,
-            context=error_context,
+            context=serialized_error_context,
             application_id=str(application_id),
             job_id=str(job_id) if job_id else None,
             trace_id=trace_id,
@@ -296,7 +298,7 @@ async def _handle_pipeline_error(
             error_details={
                 "error_type": error.__class__.__name__,
                 "error_message": str(error),
-                "context": error_context,
+                "context": serialized_error_context,
                 "traceback": error_traceback,
                 "stage": current_stage.value,
                 "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],
