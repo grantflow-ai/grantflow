@@ -3,7 +3,14 @@ import { toast } from "sonner";
 import { RagProcessingStatusMessageFactory } from "testing/factories";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import { ERROR_EVENTS, type NotificationEvent, SUCCESS_EVENTS, WARNING_EVENTS } from "@/types/notification-events";
+import {
+	ERROR_EVENTS,
+	type ProgressEvent as NotificationProgressEvent,
+	PROGRESS_EVENTS,
+	type RagEvent,
+	SUCCESS_EVENTS,
+	WARNING_EVENTS,
+} from "@/types/notification-events";
 import { RagNotificationHandler } from "./rag-notification-handler";
 
 vi.mock("sonner", () => ({
@@ -470,27 +477,44 @@ describe("RagNotificationHandler", () => {
 
 		SUCCESS_EVENTS.forEach((event) => {
 			it(`categorizes ${event} as success event`, () => {
-				const eventData: Partial<Record<NotificationEvent, Record<string, unknown>>> = {
-					cfp_data_extracted: { organization: "Test Org", subject: "Test" },
+				const eventData: Partial<Record<RagEvent, Record<string, unknown>>> = {
 					grant_application_generation_completed: { word_count: 2500 },
 					grant_template_created: { organization: "Test Org", sections_created: 5 },
-					metadata_generated: { sections_created: 5 },
-					objectives_enriched: { objectives: 3, tasks: 8 },
-					relationships_extracted: { relationships_count: 10 },
-					research_plan_completed: { objectives: 3, tasks: 10, words: 1000 },
-					section_texts_generated: { sections_generated: 5 },
-					wikidata_enhancement_complete: { terms_added: 15 },
 				};
 
 				const notification = RagProcessingStatusMessageFactory.build({
-					data: eventData[event],
-					event,
+					data: eventData[event as RagEvent],
+					event: event as RagEvent,
 					type: "success",
 				});
 
 				render(<RagNotificationHandler notification={notification} />);
 
 				expect(toast.success).toHaveBeenCalled();
+			});
+		});
+
+		PROGRESS_EVENTS.forEach((event) => {
+			it(`categorizes ${event} as progress event`, () => {
+				const eventData: Partial<Record<NotificationProgressEvent, Record<string, unknown>>> = {
+					cfp_data_extracted: { organization: "Test Org", subject: "Test" },
+					metadata_generated: { sections_created: 5 },
+					objectives_enriched: { objectives: 3, tasks: 8 },
+					relationships_extracted: { relationships_count: 10 },
+					research_plan_completed: { objectives: 3, tasks: 10, words: 1000 },
+					section_texts_generated: { sections_generated: 5 },
+					wikidata_enhancement_complete: { entities_enhanced: 15 },
+				};
+
+				const notification = RagProcessingStatusMessageFactory.build({
+					data: eventData[event as NotificationProgressEvent] ?? {},
+					event: event as RagEvent,
+					type: "info",
+				});
+
+				render(<RagNotificationHandler notification={notification} />);
+
+				expect(toast.info).toHaveBeenCalled();
 			});
 		});
 	});
