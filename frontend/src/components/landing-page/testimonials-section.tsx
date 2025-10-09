@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { MotionArticle, MotionBlockquote, MotionImage } from "./motion-components";
 import { ScrollFadeElement } from "./scroll-fade-element";
 
@@ -68,10 +67,11 @@ export function TestimonialsSection() {
 			aria-labelledby="testimonials-section"
 			className="relative w-full bg-gray-100 text-stone-800"
 			data-testid="testimonials-section"
+			id="testimonials-section"
 		>
 			<div className="xl:px-30 flex flex-col space-y-2 px-8 pb-20 pt-8 md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pb-4 xl:pt-20">
 				<ScrollFadeElement className="mx-auto w-full">
-					<h2 className="font-heading text-3xl font-medium md:text-4xl" id="testimonials-section">
+					<h2 className="font-heading text-3xl font-medium md:text-4xl" id="testimonials-heading">
 						{CONTENT.heading}
 					</h2>
 				</ScrollFadeElement>

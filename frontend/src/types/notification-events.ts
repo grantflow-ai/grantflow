@@ -1,129 +1,71 @@
-export type ApplicationGenerationEvent =
-	| "grant_application_generation_completed"
-	| "objectives_enriched"
-	| "relationships_extracted"
-	| "research_plan_completed"
-	| "section_texts_generated"
-	| "wikidata_enhancement_complete"
-	| ErrorEvent
-	| WarningEvent;
-
-export type ApplicationProgressEvent = Exclude<ApplicationGenerationEvent, RagErrorEvent>;
-
-export type ErrorEvent = "indexing_failed" | "internal_error" | "pipeline_error";
-
-export type NotificationEvent = ApplicationGenerationEvent | TemplateGenerationEvent;
-
-export type ProgressEvent = Exclude<NotificationEvent, RagErrorEvent>;
-
-export type RagErrorEvent = ErrorEvent | WarningEvent;
-
-export type TemplateGenerationEvent =
-	| "cfp_data_extracted"
-	| "grant_template_created"
-	| "metadata_generated"
-	| ErrorEvent
-	| WarningEvent;
-
-export type WarningEvent = "indexing_timeout" | "insufficient_context_error" | "job_cancelled" | "llm_timeout";
-
-export function isApplicationProgressEvent(event: unknown): event is ApplicationProgressEvent {
-	return (
-		typeof event === "string" &&
-		[
-			"grant_application_generation_completed",
-			"objectives_enriched",
-			"relationships_extracted",
-			"research_plan_completed",
-			"section_texts_generated",
-			"wikidata_enhancement_complete",
-		].includes(event)
-	);
-}
-
-export function isProgressEvent(event: unknown): event is ProgressEvent {
-	const successEvents = [
-		"cfp_data_extracted",
-		"grant_application_generation_completed",
-		"grant_template_created",
-		"metadata_generated",
-		"objectives_enriched",
-		"relationships_extracted",
-		"research_plan_completed",
-		"section_texts_generated",
-		"wikidata_enhancement_complete",
-	];
-	return typeof event === "string" && successEvents.includes(event);
-}
-
-export function isRagErrorEvent(event: unknown): event is RagErrorEvent {
-	const ragErrorEvents = [
-		"indexing_failed",
-		"indexing_timeout",
-		"insufficient_context_error",
-		"internal_error",
-		"job_cancelled",
-		"llm_timeout",
-		"pipeline_error",
-	];
-	return typeof event === "string" && ragErrorEvents.includes(event);
-}
-
-export function isTemplateEvent(event: unknown): event is TemplateGenerationEvent {
-	const templateEvents = [
-		"cfp_data_extracted",
-		"grant_template_created",
-		"indexing_failed",
-		"indexing_timeout",
-		"insufficient_context_error",
-		"internal_error",
-		"job_cancelled",
-		"llm_timeout",
-		"metadata_generated",
-		"pipeline_error",
-	];
-	return typeof event === "string" && templateEvents.includes(event);
-}
-
-export const ERROR_EVENTS = new Set<NotificationEvent>(["indexing_failed", "internal_error", "pipeline_error"]);
-
-export const WARNING_EVENTS = new Set<NotificationEvent>([
-	"indexing_timeout",
-	"insufficient_context_error",
-	"job_cancelled",
-	"llm_timeout",
-]);
-
-export const SUCCESS_EVENTS = new Set<NotificationEvent>([
-	"cfp_data_extracted",
-	"grant_application_generation_completed",
-	"grant_template_created",
-	"metadata_generated",
+const TEMPLATE_PROGRESS_EVENT_VALUES = ["cfp_data_extracted", "metadata_generated"] as const;
+const APPLICATION_PROGRESS_EVENT_VALUES = [
 	"objectives_enriched",
 	"relationships_extracted",
 	"research_plan_completed",
 	"section_texts_generated",
 	"wikidata_enhancement_complete",
-]);
+] as const;
+const PROGRESS_EVENT_VALUES = [...APPLICATION_PROGRESS_EVENT_VALUES, ...TEMPLATE_PROGRESS_EVENT_VALUES] as const;
 
-export function isNotificationEvent(event: unknown): event is NotificationEvent {
-	const notificationEvents = [
-		"indexing_failed",
-		"internal_error",
-		"pipeline_error",
-		"indexing_timeout",
-		"insufficient_context_error",
-		"job_cancelled",
-		"llm_timeout",
-		"cfp_data_extracted",
-		"grant_application_generation_completed",
-		"grant_template_created",
-		"metadata_generated",
-		"objectives_enriched",
-		"relationships_extracted",
-		"research_plan_completed",
-		"section_texts_generated",
-		"wikidata_enhancement_complete",
-	];
-	return typeof event === "string" && notificationEvents.includes(event);
+const TEMPLATE_SUCCESS_EVENT_VALUE = "grant_template_created";
+const APPLICATION_SUCCESS_EVENT_VALUE = "grant_application_generation_completed";
+const SUCCESS_EVENT_VALUES = [APPLICATION_SUCCESS_EVENT_VALUE, TEMPLATE_SUCCESS_EVENT_VALUE] as const;
+
+const ERROR_EVENT_VALUES = ["indexing_failed", "internal_error", "pipeline_error"] as const;
+const WARNING_EVENT_VALUES = [
+	"indexing_timeout",
+	"insufficient_context_error",
+	"job_cancelled",
+	"llm_timeout",
+] as const;
+const RAG_PIPELINE_ERROR_EVENT_VALUES = [...ERROR_EVENT_VALUES, ...WARNING_EVENT_VALUES] as const;
+
+const TEMPLATE_EVENT_VALUES = [
+	...TEMPLATE_PROGRESS_EVENT_VALUES,
+	TEMPLATE_SUCCESS_EVENT_VALUE,
+	...ERROR_EVENT_VALUES,
+	...WARNING_EVENT_VALUES,
+] as const;
+
+const APPLICATION_GENERATION_EVENT_VALUES = [
+	...APPLICATION_PROGRESS_EVENT_VALUES,
+	APPLICATION_SUCCESS_EVENT_VALUE,
+] as const;
+
+const GENERATION_EVENT_VALUES = [...PROGRESS_EVENT_VALUES, ...SUCCESS_EVENT_VALUES] as const;
+const RAG_EVENT_VALUES = [...APPLICATION_GENERATION_EVENT_VALUES, ...TEMPLATE_EVENT_VALUES] as const;
+
+export type ApplicationGenerationEvent = (typeof APPLICATION_GENERATION_EVENT_VALUES)[number];
+export type GenerationEvent = (typeof GENERATION_EVENT_VALUES)[number];
+export type ProgressEvent = (typeof PROGRESS_EVENT_VALUES)[number];
+export type RagEvent = (typeof RAG_EVENT_VALUES)[number];
+export type RagPipelineErrorEvent = (typeof RAG_PIPELINE_ERROR_EVENT_VALUES)[number];
+export type TemplateEvent = (typeof TEMPLATE_EVENT_VALUES)[number];
+
+const APPLICATION_GEN_EVENTS = new Set<string>(APPLICATION_GENERATION_EVENT_VALUES);
+const GENERATION_EVENTS = new Set<string>(GENERATION_EVENT_VALUES);
+const RAG_EVENTS = new Set<string>(RAG_EVENT_VALUES);
+const RAG_PIPELINE_ERROR_EVENTS = new Set<string>(RAG_PIPELINE_ERROR_EVENT_VALUES);
+const TEMPLATE_EVENTS = new Set<string>(TEMPLATE_EVENT_VALUES);
+
+export const ERROR_EVENTS = new Set<string>(ERROR_EVENT_VALUES);
+export const WARNING_EVENTS = new Set<string>(WARNING_EVENT_VALUES);
+export const PROGRESS_EVENTS = new Set<string>(PROGRESS_EVENT_VALUES);
+export const SUCCESS_EVENTS = new Set<string>(SUCCESS_EVENT_VALUES);
+
+export function isApplicationGenEvent(event: unknown): event is ApplicationGenerationEvent {
+	return typeof event === "string" && APPLICATION_GEN_EVENTS.has(event);
+}
+export function isGenerationEvent(event: unknown): event is GenerationEvent {
+	return typeof event === "string" && GENERATION_EVENTS.has(event);
+}
+export function isRagEvent(event: unknown): event is RagEvent {
+	return typeof event === "string" && RAG_EVENTS.has(event);
+}
+export function isRagPipelineErrorEvent(event: unknown): event is RagPipelineErrorEvent {
+	return typeof event === "string" && RAG_PIPELINE_ERROR_EVENTS.has(event);
+}
+export function isTemplateEvent(event: unknown): event is TemplateEvent {
+	return typeof event === "string" && TEMPLATE_EVENTS.has(event);
 }

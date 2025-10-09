@@ -155,7 +155,7 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationEvent: "pipeline_error",
+			templateEvent: "pipeline_error",
 		});
 
 		render(<ApplicationStructureLeftPane />);
@@ -170,7 +170,7 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationEvent: "cfp_data_extracted",
+			templateEvent: "cfp_data_extracted",
 		});
 
 		render(<ApplicationStructureLeftPane />);
@@ -185,7 +185,7 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationEvent: "metadata_generated",
+			templateEvent: "metadata_generated",
 		});
 
 		render(<ApplicationStructureLeftPane />);
@@ -201,7 +201,7 @@ describe("ApplicationStructureLeftPane", () => {
 		useApplicationStore.setState({ application: mockApplication });
 
 		useWizardStore.setState({
-			templateGenerationEvent: "metadata_generated",
+			templateEvent: "metadata_generated",
 		});
 
 		render(<ApplicationStructureLeftPane />);
