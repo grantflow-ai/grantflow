@@ -97,7 +97,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 has_auth_header=bool(auth_header),
             )
 
-            if get_env("PUBSUB_EMULATOR_HOST"):
+            if get_env("PUBSUB_EMULATOR_HOST", fallback="", raise_on_missing=False):
                 # bypass for local pubsub emulator ~keep
                 return AuthenticationResult(user=None, auth=None)
 
