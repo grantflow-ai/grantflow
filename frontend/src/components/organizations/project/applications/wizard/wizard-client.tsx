@@ -76,7 +76,7 @@ export function WizardClientComponent({
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
-	const appRagFailureShownRef = useRef(false);
+	const failedSourcesShownRef = useRef(0);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplicationId,
@@ -277,38 +277,40 @@ export function WizardClientComponent({
 	useEffect(() => {
 		const { application } = useApplicationStore.getState();
 
-		if (!application || appRagFailureShownRef.current) return;
-		if (appRagSources.length === 0) return;
+		if (!application || appRagSources.length === 0) return;
 
-		const hasFailedAppSources = appRagSources.some((source) => source.status === "FAILED");
-		const hasIndexingSources = appRagSources.some((source) => source.status === "INDEXING");
+		const failedAppSources = appRagSources.filter((source) => source.status === "FAILED");
+		if (failedAppSources.length === 0 || failedAppSources.length === failedSourcesShownRef.current) return;
 
-		if (hasFailedAppSources && !hasIndexingSources) {
-			appRagFailureShownRef.current = true;
+		const hasIndexingSources = appRagSources.some(
+			(source) => source.status === "INDEXING" || source.status === "CREATED",
+		);
+		if (hasIndexingSources) return;
 
-			const appRagDialog = createRagSourcesDialog({
-				onContinue: () => {
-					dialogRef.current?.close();
-				},
-				sourceType: "application",
-			});
+		const appRagDialog = createRagSourcesDialog({
+			onContinue: () => {
+				dialogRef.current?.close();
+			},
+			sourceType: "application",
+		});
 
-			dialogRef.current?.open({
-				content: appRagDialog.content,
-				description:
-					"We couldn't process one or more of your knowledge base files or links. This may impact the quality of your application generation.",
-				dismissOnOutsideClick: true,
-				footer: appRagDialog.footer,
-				minWidth: "min-w-4xl",
-				title: "Processing Issues Detected",
-			});
+		dialogRef.current?.open({
+			content: appRagDialog.content,
+			description:
+				"We couldn't process one or more of your knowledge base files or links. This may impact the quality of your application generation.",
+			dismissOnOutsideClick: true,
+			footer: appRagDialog.footer,
+			minWidth: "min-w-4xl",
+			title: "Processing Issues Detected",
+		});
 
-			log.info("[App RAG Sources] Failure modal shown", {
-				applicationId: application.id,
-				failedCount: appRagSources.filter((s) => s.status === "FAILED").length,
-				totalCount: appRagSources.length,
-			});
-		}
+		failedSourcesShownRef.current = failedAppSources.length;
+
+		log.info("[App RAG Sources] Failure modal shown", {
+			applicationId: application.id,
+			failedCount: failedAppSources.length,
+			totalCount: appRagSources.length,
+		});
 	}, [appRagSources]);
 
 	return (
