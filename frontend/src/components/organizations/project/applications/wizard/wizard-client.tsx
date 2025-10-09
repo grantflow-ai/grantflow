@@ -20,13 +20,11 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import {
-	type ApplicationProgressEvent,
-	isApplicationProgressEvent,
-	isRagErrorEvent,
+	type ApplicationGenerationEvent,
+	isApplicationGenEvent,
+	isRagPipelineErrorEvent,
 	isTemplateEvent,
-	type NotificationEvent,
-	type RagErrorEvent,
-	type TemplateGenerationEvent,
+	type RagPipelineErrorEvent,
 } from "@/types/notification-events";
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
@@ -38,7 +36,7 @@ import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-st
 import { ResearchPlanStep } from "./research-plan/research-plan-step";
 import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-const RAG_ERROR_MESSAGES: Record<RagErrorEvent, string> = {
+const RAG_PIPELINE_ERROR_MESSAGES: Record<RagPipelineErrorEvent, string> = {
 	indexing_failed: "Document indexing failed. Please update or upload new documents and try again.",
 	indexing_timeout: "Document indexing is taking longer than expected. Please wait and try again.",
 	insufficient_context_error: "Not enough context to generate the template. Please add more sources or documents.",
@@ -48,7 +46,7 @@ const RAG_ERROR_MESSAGES: Record<RagErrorEvent, string> = {
 	pipeline_error: "An unexpected error occurred. Please try again or contact support.",
 };
 
-const APPLICATION_GENERATION_PROGRESS: Record<ApplicationProgressEvent, number> = {
+const APPLICATION_GENERATION_PROGRESS: Record<ApplicationGenerationEvent, number> = {
 	grant_application_generation_completed: 100,
 	objectives_enriched: 32,
 	relationships_extracted: 16,
@@ -171,8 +169,8 @@ export function WizardClientComponent({
 				recoverable,
 			});
 
-			const message = isRagErrorEvent(event)
-				? RAG_ERROR_MESSAGES[event]
+			const message = isRagPipelineErrorEvent(event)
+				? RAG_PIPELINE_ERROR_MESSAGES[event]
 				: "Template generation failed. Please try again.";
 
 			setGeneratingTemplate(false);
@@ -223,7 +221,7 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification;
 
-		if (isApplicationProgressEvent(event)) {
+		if (isApplicationGenEvent(event)) {
 			setGenerationProgress(APPLICATION_GENERATION_PROGRESS[event]);
 		}
 	}, [latestRagNotification]);
@@ -236,8 +234,8 @@ export function WizardClientComponent({
 				"[useApplicationNotifications] Setting TemplateGenerationStatus with latestRagNotification event:",
 				{ event },
 			);
-			if (isTemplateEvent(event as NotificationEvent)) {
-				useWizardStore.getState().setTemplateGenerationEvent(event as TemplateGenerationEvent);
+			if (isTemplateEvent(event)) {
+				useWizardStore.getState().setTemplateEvent(event);
 			}
 		}
 	}, [latestRagNotification]);

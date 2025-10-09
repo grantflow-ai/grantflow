@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import {
-	ERROR_EVENTS,
-	isNotificationEvent,
-	isProgressEvent,
-	type NotificationEvent,
-	SUCCESS_EVENTS,
-	WARNING_EVENTS,
-} from "@/types/notification-events";
+import { isGenerationEvent, isRagEvent, isRagPipelineErrorEvent } from "@/types/notification-events";
 
 interface NotificationHandlerProps {
 	notification: RagProcessingStatusMessage;
@@ -81,49 +74,18 @@ export function RagNotificationHandler({ notification }: NotificationHandlerProp
 function displayNotification(notification: RagProcessingStatusMessage): ToastId {
 	const { data, event } = notification;
 
-	if (!isNotificationEvent(event)) {
+	if (!isRagEvent(event)) {
 		return undefined;
 	}
 
-	const message = generateMessageFromEvent(event, data);
-
-	switch (notification.type) {
-		case "error": {
-			showErrorToast(message, data, notification.type);
-			break;
-		}
-		case "info": {
-			showInfoToast(message, data, notification.type);
-			break;
-		}
-		case "success": {
-			showSuccessToast(message, event, notification.type);
-			break;
-		}
-		case "warning": {
-			showWarningToast(message, data, notification.type);
-			break;
-		}
-		default: {
-			if (ERROR_EVENTS.has(event)) {
-				showErrorToast(message, data, "error");
-			} else if (WARNING_EVENTS.has(event)) {
-				showWarningToast(message, data, "warning");
-			} else if (SUCCESS_EVENTS.has(event)) {
-				showSuccessToast(message, event, "success");
-			} else {
-				showInfoToast(message, data, "info");
-			}
-		}
-	}
+	const message = isGenerationEvent(event) ? MESSAGE_GENERATORS[event](data as never) : formatEventName(event);
+	showToast(notification.type, message, notification);
 
 	return undefined;
 }
 
-const MESSAGE_GENERATORS: {
-	[K in keyof ProgressEventDataMap]: (data: ProgressEventDataMap[K]) => string;
-} = {
-	cfp_data_extracted: (d) => {
+const MESSAGE_GENERATORS: { [K in keyof ProgressEventDataMap]: (data: ProgressEventDataMap[K]) => string } = {
+	cfp_data_extracted: (d: ProgressEventDataMap["cfp_data_extracted"]) => {
 		if (!isUnknownOrganization(d.organization) && d.subject) {
 			return `Extracted grant details from organization ${d.organization}: ${d.subject.slice(0, 60)}...`;
 		}
@@ -132,33 +94,25 @@ const MESSAGE_GENERATORS: {
 		}
 		return "Successfully extracted grant application details";
 	},
-	grant_application_generation_completed: (d) => `Application complete with ${d.word_count.toLocaleString()} words`,
-	grant_template_created: (d) => {
+	grant_application_generation_completed: (d: ProgressEventDataMap["grant_application_generation_completed"]) =>
+		`Application complete with ${d.word_count.toLocaleString()} words`,
+	grant_template_created: (d: ProgressEventDataMap["grant_template_created"]) => {
 		const orgName = isUnknownOrganization(d.organization) ? "grant application" : d.organization;
 		return `Created template with ${d.sections_created} sections for ${orgName}`;
 	},
-	metadata_generated: (d) => `Generated metadata for ${d.sections_created} sections`,
-	objectives_enriched: (d) =>
+	metadata_generated: (d: ProgressEventDataMap["metadata_generated"]) =>
+		`Generated metadata for ${d.sections_created} sections`,
+	objectives_enriched: (d: ProgressEventDataMap["objectives_enriched"]) =>
 		`Enriched ${d.objectives} ${pluralize(d.objectives, "objective")} with ${d.tasks} research ${pluralize(d.tasks, "task")}`,
-	relationships_extracted: (d) =>
+	relationships_extracted: (d: ProgressEventDataMap["relationships_extracted"]) =>
 		`Identified ${d.relationships_count} ${pluralize(d.relationships_count, "relationship")}`,
-	research_plan_completed: (d) =>
+	research_plan_completed: (d: ProgressEventDataMap["research_plan_completed"]) =>
 		`Research plan ready with ${d.objectives} ${pluralize(d.objectives, "objective")}, ${d.tasks} ${pluralize(d.tasks, "task")} (${d.words} words)`,
-	section_texts_generated: (d) =>
+	section_texts_generated: (d: ProgressEventDataMap["section_texts_generated"]) =>
 		`Generated content for ${d.sections_generated} ${pluralize(d.sections_generated, "section")}`,
-	wikidata_enhancement_complete: (d) =>
+	wikidata_enhancement_complete: (d: ProgressEventDataMap["wikidata_enhancement_complete"]) =>
 		`Enhanced content with ${d.terms_added} additional ${pluralize(d.terms_added, "term")}`,
-};
-
-function generateMessageFromEvent(event: NotificationEvent, data: Record<string, unknown>): string {
-	if (isProgressEvent(event)) {
-		// TypeScript limitation: indexing MESSAGE_GENERATORS with union type creates intersection
-		// Safe to cast as never because isProgressEvent guarantees the data matches the event type at runtime
-		const generator = MESSAGE_GENERATORS[event as keyof typeof MESSAGE_GENERATORS];
-		return generator(data as never);
-	}
-	return formatEventName(event);
-}
+} as const;
 
 function isUnknownOrganization(organization: string | undefined): boolean {
 	return !organization || organization.toLowerCase() === "unknown";
@@ -170,28 +124,7 @@ function pluralize(count: number, singular: string, plural?: string): string {
 
 function shouldDismissToast(event: string, _previousEvent: null | string, toastId: ToastId): boolean {
 	if (!toastId) return false;
-	return ERROR_EVENTS.has(event as NotificationEvent);
-}
-
-function showErrorToast(message: string, data: Record<string, unknown> | undefined, type: string): void {
-	const recoverable = data?.recoverable as boolean | undefined;
-	const prefix = type === "error" ? "❌ Error: " : "";
-	toast.error(`${prefix}${message}`, {
-		description: recoverable ? "Please follow the instructions above to resolve this issue." : undefined,
-		duration: 10_000,
-	});
-}
-
-function showInfoToast(message: string, data: Record<string, unknown> | undefined, type: string): void {
-	const description =
-		data && Object.keys(data).length > 0
-			? Object.entries(data)
-					.filter(([key]) => key !== "event" && key !== "message")
-					.map(([key, value]) => `${key}: ${value}`)
-					.join(", ")
-			: undefined;
-	const prefix = type === "info" ? "ℹ️ " : "";
-	toast.info(`${prefix}${message}`, { description });
+	return isRagPipelineErrorEvent(event);
 }
 
 const formatEventName = (event: string): string => {
@@ -201,24 +134,50 @@ const formatEventName = (event: string): string => {
 		.join(" ");
 };
 
-function showSuccessToast(message: string, event: string, _type: string): void {
-	const isCompletion = event.includes("completed");
-	const prefix = isCompletion ? "✅ Completed: " : "✓ ";
-	const formattedEvent = formatEventName(event);
-	toast.success(`${prefix}${formattedEvent}`, {
-		description: message,
-		duration: isCompletion ? 8000 : 5000,
-	});
-}
+function showToast(type: string, message: string, context: { data: Record<string, unknown>; event: string }) {
+	const { data, event } = context;
 
-function showWarningToast(message: string, data: Record<string, unknown> | undefined, _type: string): void {
-	const suggestion = data?.suggestion as string | undefined;
-	const isRetryable = data?.retryable !== false;
-
-	const description = suggestion ?? (isRetryable ? "This operation will be automatically retried." : undefined);
-
-	toast.warning(`⚠️ ${message}`, {
-		description,
-		duration: 8000,
-	});
+	switch (type) {
+		case "error": {
+			const recoverable = data.recoverable as boolean | undefined;
+			const prefix = "❌ Error: ";
+			toast.error(`${prefix}${message}`, {
+				description: recoverable ? "Please follow the instructions above to resolve this issue." : undefined,
+				duration: 10_000,
+			});
+			break;
+		}
+		case "success": {
+			const isCompletion = event.includes("completed");
+			const prefix = isCompletion ? "✅ Completed: " : "✓ ";
+			const formattedEvent = formatEventName(event);
+			toast.success(`${prefix}${formattedEvent}`, {
+				description: message,
+				duration: isCompletion ? 8000 : 5000,
+			});
+			break;
+		}
+		case "warning": {
+			const suggestion = data.suggestion as string | undefined;
+			const isRetryable = data.retryable !== false;
+			const description =
+				suggestion ?? (isRetryable ? "This operation will be automatically retried." : undefined);
+			toast.warning(`⚠️ ${message}`, {
+				description,
+				duration: 8000,
+			});
+			break;
+		}
+		default: {
+			const description =
+				Object.keys(data).length > 0
+					? Object.entries(data)
+							.filter(([key]) => key !== "event" && key !== "message")
+							.map(([key, value]) => `${key}: ${value}`)
+							.join(", ")
+					: undefined;
+			const prefix = type === "info" ? "ℹ️ " : "";
+			toast.info(`${prefix}${message}`, { description });
+		}
+	}
 }
