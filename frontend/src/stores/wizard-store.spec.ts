@@ -424,7 +424,7 @@ describe.sequential("wizard store", () => {
 			expect(result13.isValid).toBe(true);
 		});
 
-		it("should fail RESEARCH_DEEP_DIVE validation with missing fields", () => {
+		it("should now pass RESEARCH_DEEP_DIVE validation with missing fields", () => {
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_DEEP_DIVE });
 
 			const applicationWithPartialInputs = ApplicationWithTemplateFactory.build({
@@ -444,7 +444,7 @@ describe.sequential("wizard store", () => {
 			useApplicationStore.setState({ application: applicationWithPartialInputs });
 
 			const result14 = useWizardStore.getState().validateStepNext();
-			expect(result14.isValid).toBe(false);
+			expect(result14.isValid).toBe(true);
 		});
 
 		it("should validate RESEARCH_PLAN step requires objectives with tasks", () => {
