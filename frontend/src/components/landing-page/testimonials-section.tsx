@@ -71,7 +71,7 @@ export function TestimonialsSection() {
 		>
 			<div className="xl:px-30 flex flex-col space-y-2 px-8 pb-20 pt-8 md:px-10 md:pt-12 lg:px-20 lg:pt-16 xl:pb-4 xl:pt-20">
 				<ScrollFadeElement className="mx-auto w-full">
-					<h2 className="font-heading text-3xl font-medium md:text-4xl" id="testimonials-heading">
+					<h2 className="font-heading text-3xl font-medium md:text-4xl" id="testimonials-section">
 						{CONTENT.heading}
 					</h2>
 				</ScrollFadeElement>
@@ -90,7 +90,8 @@ export function TestimonialsSection() {
 							whileInView="visible"
 						>
 							<MotionImage
-								alt={`${Image.name}'s photo`}
+								alt=""
+								aria-hidden="true"
 								className="size-24 rounded-full md:size-28 lg:size-32 xl:size-36"
 								data-testid="mock-motion-image"
 								height={100}
