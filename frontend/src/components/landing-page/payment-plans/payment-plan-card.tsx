@@ -20,10 +20,7 @@ export function PaymentPlanCard({
 			<h3 className="text-2xl text-gray-600" id={`plan-title-${plan.name.replaceAll(/\s+/g, "-")}`}>
 				{plan.name}
 			</h3>
-			<p
-				aria-label={`Price: ${pricing.priceText}${pricing.priceSubtext ? ` per ${pricing.priceSubtext}` : ""}`}
-				className={cn("font-button text-app-black mt-2.5 whitespace-nowrap text-5xl", pricing.classNames)}
-			>
+			<p className={cn("font-button text-app-black mt-2.5 whitespace-nowrap text-5xl", pricing.classNames)}>
 				<span aria-hidden="true" data-testid="payment-card-price-text">
 					{pricing.priceText}
 				</span>{" "}
