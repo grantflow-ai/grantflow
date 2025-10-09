@@ -178,16 +178,24 @@ jobs:
           # Collect digests for each service
           for service in $(echo "$SERVICES" | tr ',' ' '); do
             service=$(echo "$service" | xargs) # trim whitespace
+            if [[ -z "$service" ]]; then
+              continue
+            fi
+
             if [[ "$service" == "frontend" ]]; then
               echo "Skipping frontend (not deployed via terraform)"
               continue
             fi
 
             echo "Getting digest for $service..."
-            if digest=$(gcloud container images describe "us-east1-docker.pkg.dev/grantflow/grantflow/${service}:staging-latest" --format="value(image_summary.digest)" 2>/dev/null); then
+            repo="us-east1-docker.pkg.dev/grantflow/grantflow/${service}"
+            tag="staging-latest"
+
+            if digest=$(gcloud container images describe "${repo}:${tag}" --format="value(image_summary.digest)" 2>/dev/null); then
               if [[ "$digest" =~ ^sha256: ]]; then
+                terraform_var="TF_VAR_${service}_image_digest"
                 echo "Found digest for $service: $digest"
-                echo "TF_VAR_${service}_image_digest=$digest" >> $GITHUB_ENV
+                echo "$terraform_var=$digest" >> $GITHUB_ENV
                 echo "digest_${service}=$digest" >> $GITHUB_OUTPUT
               else
                 echo "Warning: Invalid digest format for $service: $digest"
