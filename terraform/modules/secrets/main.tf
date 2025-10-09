@@ -12,6 +12,15 @@ data "google_project" "project" {
   project_id = var.project_id
 }
 
+data "google_secret_manager_secret" "crdt_url_staging" {
+  project   = var.project_id
+  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL_STAGING"
+}
+
+data "google_secret_manager_secret" "crdt_url_production" {
+  project   = var.project_id
+  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL"
+}
 
 resource "google_secret_manager_secret" "database_connection_string" {
   secret_id = "DATABASE_CONNECTION_STRING"
@@ -192,7 +201,7 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
 
 resource "google_secret_manager_secret_iam_binding" "crdt_url_staging_access" {
   project   = var.project_id
-  secret_id = google_secret_manager_secret.crdt_url_staging.secret_id
+  secret_id = data.google_secret_manager_secret.crdt_url_staging.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",
@@ -202,7 +211,7 @@ resource "google_secret_manager_secret_iam_binding" "crdt_url_staging_access" {
 
 resource "google_secret_manager_secret_iam_binding" "crdt_url_production_access" {
   project   = var.project_id
-  secret_id = google_secret_manager_secret.crdt_url_production.secret_id
+  secret_id = data.google_secret_manager_secret.crdt_url_production.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",
