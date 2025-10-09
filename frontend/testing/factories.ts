@@ -9,7 +9,7 @@ import type {
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
-import type { NotificationEvent } from "@/types/notification-events";
+import type { RagEvent } from "@/types/notification-events";
 
 type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
@@ -485,7 +485,7 @@ export const RagProcessingStatusFactory = new Factory<RagProcessingStatusType>((
 		"grant_template_created",
 		"job_cancelled",
 		"pipeline_error",
-	]) as NotificationEvent,
+	]) as RagEvent,
 	parent_id: factory.string.uuid(),
 	type: "info",
 }));
@@ -507,7 +507,7 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Re
 			"grant_template_created",
 			"job_cancelled",
 			"pipeline_error",
-		]) as NotificationEvent,
+		]) as RagEvent,
 		parent_id: factory.string.uuid(),
 		type: "info",
 	};

@@ -9,7 +9,7 @@ import { WizardLeftPane } from "@/components/organizations/project/applications/
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import type { TemplateGenerationEvent } from "@/types/notification-events";
+import type { TemplateEvent } from "@/types/notification-events";
 
 const ANALYZING_STEPS = [
 	{
@@ -112,7 +112,7 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 	return `${baseClasses} ${colorClasses}`;
 };
 
-const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
+const eventToVisualStepMap: Record<TemplateEvent, number> = {
 	cfp_data_extracted: 2,
 	grant_template_created: 4,
 	indexing_failed: -1,
@@ -218,7 +218,7 @@ export function ApplicationStructureSourcesPreview({
 }
 
 function AnalyzingSteps() {
-	const templateGenerationEvent = useWizardStore((state) => state.templateGenerationEvent);
+	const templateEvent = useWizardStore((state) => state.templateEvent);
 	const templateGenerationErrorMessage = useWizardStore((state) => state.templateGenerationErrorMessage);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
@@ -233,8 +233,8 @@ function AnalyzingSteps() {
 	}, [isGeneratingTemplate, maxVisibleSteps]);
 
 	useEffect(() => {
-		if (templateGenerationEvent) {
-			const stepGroup = eventToVisualStepMap[templateGenerationEvent];
+		if (templateEvent) {
+			const stepGroup = eventToVisualStepMap[templateEvent];
 
 			if (stepGroup === -1) {
 				setHasError(true);
@@ -248,9 +248,9 @@ function AnalyzingSteps() {
 				setMaxVisibleSteps((prev) => Math.max(prev, newVisibleSteps));
 			}
 		}
-	}, [templateGenerationEvent]);
+	}, [templateEvent]);
 
-	if (hasError && templateGenerationEvent) {
+	if (hasError && templateEvent) {
 		return (
 			<div className="relative space-y-6 mt-6">
 				<div className="rounded-lg border border-red-200 bg-red-50 p-4">
