@@ -12,6 +12,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import to_builtins
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_template.constants import GRANT_TEMPLATE_PIPELINE_STAGES
@@ -147,6 +148,7 @@ async def handle_grant_template_pipeline(
 
         error_traceback = traceback.format_exc()
         error_context = getattr(e, "context", None)
+        serialized_error_context = to_builtins(error_context) if error_context is not None else None
 
         logger.error(
             "Backend error in grant template generation pipeline",
@@ -176,8 +178,8 @@ async def handle_grant_template_pipeline(
             event_type = NotificationEvents.PIPELINE_ERROR
 
         detailed_error_message = f"{type(e).__name__}: {e!s}"
-        if error_context:
-            detailed_error_message += f"\nContext: {error_context}"
+        if serialized_error_context is not None:
+            detailed_error_message += f"\nContext: {serialized_error_context}"
 
         await job_manager.clear_checkpoint_data()
 
@@ -187,7 +189,7 @@ async def handle_grant_template_pipeline(
             error_details={
                 "error_type": e.__class__.__name__,
                 "error_message": str(e),
-                "context": error_context,
+                "context": serialized_error_context,
                 "traceback": error_traceback,
                 "stage": current_stage.value,
                 "recoverable": event_type not in [NotificationEvents.PIPELINE_ERROR],

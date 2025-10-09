@@ -32,6 +32,7 @@ from packages.shared_utils.src.exceptions import (
     InsufficientContextError,
     LLMTimeoutError,
     RagError,
+    SerializationError,
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -48,6 +49,61 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 USER_MESSAGE_ROLE: Final[str] = "user"
+
+
+def _dump_json_like(value: Any) -> str:
+    return serialize(value).decode()
+
+
+def _extract_candidate_payload(candidate: Any) -> str | None:
+    content = getattr(candidate, "content", None)
+    if not content:
+        return None
+
+    parts = getattr(content, "parts", None)
+    if not isinstance(parts, (list, tuple)):
+        return None
+
+    text_parts: list[str] = []
+    structured_payloads: list[str] = []
+    for part in parts:
+        text_value = getattr(part, "text", None)
+        if isinstance(text_value, str) and text_value.strip():
+            text_parts.append(text_value)
+            continue
+
+        function_call = getattr(part, "function_call", None)
+        if function_call is not None:
+            args = getattr(function_call, "args", None)
+            if args is not None:
+                try:
+                    serialized_args = _dump_json_like(args)
+                except SerializationError:
+                    serialized_args = None
+                if serialized_args and serialized_args != "null":
+                    structured_payloads.append(serialized_args)
+                    continue
+
+        function_response = getattr(part, "function_response", None)
+        if function_response is not None:
+            response_payload = getattr(function_response, "response", None)
+            if response_payload is not None:
+                try:
+                    serialized_response = _dump_json_like(response_payload)
+                except SerializationError:
+                    serialized_response = None
+                if serialized_response and serialized_response != "null":
+                    structured_payloads.append(serialized_response)
+                    continue
+
+    if text_parts:
+        return "\n".join(text_parts)
+
+    if structured_payloads:
+        return structured_payloads[0]
+
+    return None
+
 
 SELECT_BEST_RESPONSE_SYSTEM_PROMPT: Final[str] = """
 You are a specialist in selecting the best response from a list of generated responses.
@@ -223,24 +279,35 @@ async def make_google_completions_request[T](
             trace_id=trace_id,
         )
 
+    raw_candidates = getattr(response, "candidates", None)
+    candidates_list: list[Any] = []
+    if isinstance(raw_candidates, (list, tuple)):
+        candidates_list = list(raw_candidates)
+
     if not candidate_count:
+        primary_payload = None
+        if candidates_list:
+            primary_payload = _extract_candidate_payload(candidates_list[0])
+
+        payload_to_deserialize = primary_payload if primary_payload is not None else (response.text or "")
+
         try:
-            return deserialize(response.text or "", response_type)
+            return deserialize(payload_to_deserialize, response_type)
         except DeserializationError as e:
             if "JSON is malformed: trailing characters" in str(e):
-                first_json = extract_first_json_object(response.text or "")
+                first_json = extract_first_json_object(payload_to_deserialize or "")
                 if first_json:
                     logger.warning(
                         "Extracted first JSON object from concatenated response",
                         prompt_identifier=prompt_identifier,
-                        original_length=len(response.text or ""),
+                        original_length=len(payload_to_deserialize or ""),
                         extracted_length=len(first_json),
                         trace_id=trace_id,
                     )
                     return deserialize(first_json, response_type)
 
             try:
-                fixed_response = fix_string_json_values({"text": response.text or ""})
+                fixed_response = fix_string_json_values({"text": payload_to_deserialize or ""})
                 if isinstance(fixed_response, dict) and "text" in fixed_response:
                     return deserialize(serialize(fixed_response["text"]), response_type)
             except:
@@ -248,21 +315,35 @@ async def make_google_completions_request[T](
 
     prompt = "\n".join([message if isinstance(message, str) else str(message) for message in messages])
 
-    candidates_list = response.candidates or []
     candidates_dict = {}
     for index, candidate in enumerate(candidates_list):
-        candidate_text = ""
-        if candidate.content and candidate.content.parts:
-            for part in candidate.content.parts:
-                if hasattr(part, "text") and part.text:
-                    candidate_text += part.text
+        candidate_payload = _extract_candidate_payload(candidate)
+        candidate_text = candidate_payload or ""
         candidates_dict[index + 1] = deserialize(candidate_text, response_type)
 
-    return await select_best_response(
-        candidates=candidates_dict,
-        prompt=prompt,
-        trace_id=trace_id,
-    )
+    best_response_id: int | None = None
+    if response.text:
+        try:
+            selection = deserialize(response.text, BestResponseSelection)
+            best_response_id = selection.get("best_response")
+        except DeserializationError:
+            best_response_id = None
+
+    if best_response_id in candidates_dict:
+        return candidates_dict[best_response_id]
+
+    if len(candidates_dict) == 1:
+        return next(iter(candidates_dict.values()))
+
+    if candidates_dict:
+        return await select_best_response(
+            candidates=candidates_dict,
+            prompt=prompt,
+            trace_id=trace_id,
+        )
+
+    payload_to_deserialize = response.text or ""
+    return deserialize(payload_to_deserialize, response_type)
 
 
 @with_exponential_backoff_retry(

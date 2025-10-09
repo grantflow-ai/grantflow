@@ -27,6 +27,7 @@ def mock_google_api_response(mocker: MockerFixture) -> Mock:
     aio_client.models.generate_content.return_value = response
     client._aio = aio_client
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
+    response.candidates = []
     return response
 
 

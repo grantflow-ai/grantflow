@@ -307,8 +307,8 @@ class JobManager[DTOType]:
                 job.completed_at = datetime.now(UTC)
             elif status == RagGenerationStatusEnum.FAILED:
                 job.failed_at = datetime.now(UTC)
-                job.error_message = error_message
-                job.error_details = error_details
+                job.error_message = str(error_message) if error_message is not None else None
+                job.error_details = to_builtins(error_details) if error_details is not None else None
 
             logger.debug(
                 "Job status updated",

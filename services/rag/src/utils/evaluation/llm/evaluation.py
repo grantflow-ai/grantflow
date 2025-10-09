@@ -390,9 +390,11 @@ async def evaluate_prompt_output(
 
     criteria_text += """
 
-    ## Output Instructions:
-
-    Respond with a structured evaluation for each criterion.
+    ## Output Instructions
+    Respond with a JSON object that matches the provided schema.
+    - Include a top-level `criteria` object.
+    - For each criterion, provide `score` (0-100) and `instructions` (string).
+    Do not add any narrative text outside of the JSON response.
     """
 
     json_schema = {
