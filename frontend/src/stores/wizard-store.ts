@@ -297,7 +297,8 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 	};
 }
 
-function validateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
+/*
+function AdvancedvalidateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
 	const formInputs = application.form_inputs;
 	if (!formInputs) {
 		log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
@@ -334,6 +335,11 @@ function validateResearchDeepDive(application: API.RetrieveApplication.Http200.R
 	});
 
 	return { isValid: result, reason: "Not all fields are populated properly." };
+}
+	*/
+
+function validateResearchDeepDive(): ValidationResult {
+	return { isValid: true, reason: "Validation skipped" };
 }
 
 function validateResearchPlan(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
@@ -853,7 +859,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return { isValid: !!application.rag_sources.length, reason: "There are no RAG sources." };
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
-					return validateResearchDeepDive(application);
+					return validateResearchDeepDive();
 				}
 				case WizardStep.RESEARCH_PLAN: {
 					return validateResearchPlan(application);
