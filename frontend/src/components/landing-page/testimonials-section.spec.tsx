@@ -60,6 +60,7 @@ describe.sequential("TestimonialsSection", () => {
 
 		const section = document.querySelector("section");
 		expect(section).toBeInTheDocument();
+		expect(section).toHaveAttribute("id", "testimonials-section");
 		expect(section).toHaveAttribute("aria-labelledby", "testimonials-section");
 		expect(section).toHaveClass("relative w-full text-stone-800 bg-gray-100");
 
