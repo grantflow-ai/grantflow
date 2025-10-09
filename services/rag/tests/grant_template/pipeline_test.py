@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
@@ -12,6 +12,8 @@ from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from services.rag.src.grant_template.pipeline import _determine_current_stage, handle_grant_template_pipeline
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from packages.db.src.tables import GrantTemplate
     from pytest_mock import MockerFixture
 
@@ -23,7 +25,7 @@ class FakeResult:
     def __init__(self, jobs: Sequence[JobRecord]) -> None:
         self._jobs = jobs
 
-    def scalars(self) -> "FakeResult":
+    def scalars(self) -> FakeResult:
         return self
 
     def all(self) -> list[JobRecord]:
@@ -34,7 +36,7 @@ class FakeSession:
     def __init__(self, jobs: Sequence[JobRecord]) -> None:
         self._jobs = jobs
 
-    async def __aenter__(self) -> "FakeSession":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, *exc_info: object) -> None:
@@ -44,19 +46,19 @@ class FakeSession:
         return FakeResult(self._jobs)
 
 
-def make_session_maker(jobs: Sequence[JobRecord]) -> Callable[[], FakeSession]:
+def make_session_maker(jobs: Sequence[JobRecord]) -> Any:
     def factory() -> FakeSession:
         return FakeSession(jobs)
 
     return factory
 
 
-def patch_job_manager(mocker: "MockerFixture", fake_manager: FakeJobManager) -> None:
+def patch_job_manager(mocker: MockerFixture, fake_manager: FakeJobManager) -> None:
     job_manager_cls = mocker.patch(
         "services.rag.src.grant_template.pipeline.JobManager",
         return_value=fake_manager,
     )
-    setattr(job_manager_cls, "__class_getitem__", MagicMock(return_value=job_manager_cls))
+    job_manager_cls.__class_getitem__ = MagicMock(return_value=job_manager_cls)
 
 
 class FakeJobManager:
