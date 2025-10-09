@@ -21,214 +21,359 @@ const meta: Meta<typeof Toaster> = {
 export default meta;
 type Story = StoryObj<typeof Toaster>;
 
-export const Success: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<AppButton
-					onClick={() => toast.success("Thank you! You've successfully joined the waitlist.")}
-					variant="primary"
-				>
-					Show Success Toast
-				</AppButton>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const ErrorToast: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<AppButton
-					onClick={() => toast.error("Something went wrong on our end. Please try again later.")}
-					variant="primary"
-				>
-					Show Error Toast
-				</AppButton>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const Warning: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<AppButton
-					onClick={() => toast.warning("Please check your information and try again.")}
-					variant="primary"
-				>
-					Show Warning Toast
-				</AppButton>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const Info: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<AppButton onClick={() => toast.info("Your application is being processed.")} variant="primary">
-					Show Info Toast
-				</AppButton>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const AllTypes: Story = {
+export const SuccessEvents: Story = {
 	decorators: [
 		(Story) => (
 			<>
 				<div className="space-y-4">
-					<h2 className="text-2xl font-bold text-gray-800 mb-6">Toast Notifications</h2>
-					<div className="grid grid-cols-2 gap-4 max-w-md">
+					<h2 className="text-2xl font-bold text-gray-800 mb-6">Success Event Notifications</h2>
+					<div className="grid grid-cols-2 gap-4 max-w-4xl">
 						<AppButton
-							onClick={() => toast.success("Thank you! You've successfully joined the waitlist.")}
+							onClick={() =>
+								toast.success("✅ Completed: Grant Application Generation Completed", {
+									description: "Application complete with 5,234 words",
+									duration: 8000,
+								})
+							}
 							variant="primary"
 						>
-							Success
+							Application Generation Completed
 						</AppButton>
 						<AppButton
-							onClick={() => toast.error("Something went wrong on our end. Please try again later.")}
+							onClick={() =>
+								toast.success("✅ Completed: Grant Template Created", {
+									description: "Created template with 8 sections for National Science Foundation",
+									duration: 8000,
+								})
+							}
 							variant="primary"
 						>
-							Error
+							Grant Template Created
 						</AppButton>
 						<AppButton
-							onClick={() => toast.warning("Please check your information and try again.")}
+							onClick={() =>
+								toast.success("✓ Cfp Data Extracted", {
+									description:
+										"Extracted grant details from organization National Institutes of Health: Research Project Grant Application...",
+									duration: 5000,
+								})
+							}
 							variant="primary"
 						>
-							Warning
+							CFP Data Extracted
 						</AppButton>
-						<AppButton onClick={() => toast.info("Your application is being processed.")} variant="primary">
-							Info
+						<AppButton
+							onClick={() =>
+								toast.success("✓ Metadata Generated", {
+									description: "Generated metadata for 8 sections",
+									duration: 5000,
+								})
+							}
+							variant="primary"
+						>
+							Metadata Generated
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.success("✓ Objectives Enriched", {
+									description: "Enriched 5 objectives with 12 research tasks",
+									duration: 5000,
+								})
+							}
+							variant="primary"
+						>
+							Objectives Enriched
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.success("✓ Relationships Extracted", {
+									description: "Identified 23 relationships",
+									duration: 5000,
+								})
+							}
+							variant="primary"
+						>
+							Relationships Extracted
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.success("✅ Completed: Research Plan Completed", {
+									description: "Research plan ready with 5 objectives, 12 tasks (3,456 words)",
+									duration: 8000,
+								})
+							}
+							variant="primary"
+						>
+							Research Plan Completed
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.success("✓ Section Texts Generated", {
+									description: "Generated content for 8 sections",
+									duration: 5000,
+								})
+							}
+							variant="primary"
+						>
+							Section Texts Generated
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.success("✓ Wikidata Enhancement Complete", {
+									description: "Enhanced content with 34 additional terms",
+									duration: 5000,
+								})
+							}
+							variant="primary"
+						>
+							Wikidata Enhancement Complete
 						</AppButton>
 					</div>
-					<div className="mt-8">
+				</div>
+				<Story />
+			</>
+		),
+	],
+};
+
+export const ErrorEvents: Story = {
+	decorators: [
+		(Story) => (
+			<>
+				<div className="space-y-4">
+					<h2 className="text-2xl font-bold text-gray-800 mb-6">Error Event Notifications</h2>
+					<div className="grid grid-cols-2 gap-4 max-w-3xl">
+						<AppButton
+							onClick={() =>
+								toast.error("❌ Error: Indexing Failed", {
+									description: "Please follow the instructions above to resolve this issue.",
+									duration: 10_000,
+								})
+							}
+							variant="primary"
+						>
+							Indexing Failed
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.error("❌ Error: Internal Error", {
+									duration: 10_000,
+								})
+							}
+							variant="primary"
+						>
+							Internal Error
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.error("❌ Error: Pipeline Error", {
+									description: "Please follow the instructions above to resolve this issue.",
+									duration: 10_000,
+								})
+							}
+							variant="primary"
+						>
+							Pipeline Error
+						</AppButton>
+					</div>
+				</div>
+				<Story />
+			</>
+		),
+	],
+};
+
+export const WarningEvents: Story = {
+	decorators: [
+		(Story) => (
+			<>
+				<div className="space-y-4">
+					<h2 className="text-2xl font-bold text-gray-800 mb-6">Warning Event Notifications</h2>
+					<div className="grid grid-cols-2 gap-4 max-w-3xl">
+						<AppButton
+							onClick={() =>
+								toast.warning("⚠️ Indexing Timeout", {
+									description: "This operation will be automatically retried.",
+									duration: 8000,
+								})
+							}
+							variant="primary"
+						>
+							Indexing Timeout
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.warning("⚠️ Insufficient Context Error", {
+									description: "This operation will be automatically retried.",
+									duration: 8000,
+								})
+							}
+							variant="primary"
+						>
+							Insufficient Context Error
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.warning("⚠️ Job Cancelled", {
+									description: "This operation will be automatically retried.",
+									duration: 8000,
+								})
+							}
+							variant="primary"
+						>
+							Job Cancelled
+						</AppButton>
+						<AppButton
+							onClick={() =>
+								toast.warning("⚠️ Llm Timeout", {
+									description: "This operation will be automatically retried.",
+									duration: 8000,
+								})
+							}
+							variant="primary"
+						>
+							LLM Timeout
+						</AppButton>
+					</div>
+				</div>
+				<Story />
+			</>
+		),
+	],
+};
+
+export const AllEventTypes: Story = {
+	decorators: [
+		(Story) => (
+			<>
+				<div className="space-y-4">
+					<h2 className="text-2xl font-bold text-gray-800 mb-6">RAG Processing Event Notifications</h2>
+					<div className="space-y-4 max-w-md">
 						<AppButton
 							onClick={() => {
-								toast.success("Success: Operation completed successfully!");
-								setTimeout(() => toast.error("Error: Something went wrong!"), 500);
-								setTimeout(() => toast.warning("Warning: Please review your input!"), 1000);
-								setTimeout(() => toast.info("Info: Processing your request..."), 1500);
+								toast.success("✓ Cfp Data Extracted", {
+									description:
+										"Extracted grant details from organization National Science Foundation: Collaborative Research Grant...",
+									duration: 5000,
+								});
+								setTimeout(
+									() =>
+										toast.success("✓ Metadata Generated", {
+											description: "Generated metadata for 8 sections",
+											duration: 5000,
+										}),
+									800,
+								);
+								setTimeout(
+									() =>
+										toast.success("✅ Completed: Grant Template Created", {
+											description:
+												"Created template with 8 sections for National Science Foundation",
+											duration: 8000,
+										}),
+									1600,
+								);
+								setTimeout(
+									() =>
+										toast.success("✓ Relationships Extracted", {
+											description: "Identified 23 relationships",
+											duration: 5000,
+										}),
+									2400,
+								);
+								setTimeout(
+									() =>
+										toast.success("✓ Objectives Enriched", {
+											description: "Enriched 5 objectives with 12 research tasks",
+											duration: 5000,
+										}),
+									3200,
+								);
+								setTimeout(
+									() =>
+										toast.success("✅ Completed: Research Plan Completed", {
+											description:
+												"Research plan ready with 5 objectives, 12 tasks (3,456 words)",
+											duration: 8000,
+										}),
+									4000,
+								);
+								setTimeout(
+									() =>
+										toast.success("✓ Section Texts Generated", {
+											description: "Generated content for 8 sections",
+											duration: 5000,
+										}),
+									4800,
+								);
+								setTimeout(
+									() =>
+										toast.success("✓ Wikidata Enhancement Complete", {
+											description: "Enhanced content with 34 additional terms",
+											duration: 5000,
+										}),
+									5600,
+								);
+								setTimeout(
+									() =>
+										toast.success("✅ Completed: Grant Application Generation Completed", {
+											description: "Application complete with 5,234 words",
+											duration: 8000,
+										}),
+									6400,
+								);
 							}}
 							variant="secondary"
 						>
-							Show All Types
+							Simulate Full Application Generation Flow
+						</AppButton>
+						<AppButton
+							onClick={() => {
+								toast.success("✓ Cfp Data Extracted", {
+									description: "Extracted grant details: Innovation Research Grant Application...",
+									duration: 5000,
+								});
+								setTimeout(
+									() =>
+										toast.warning("⚠️ Indexing Timeout", {
+											description: "This operation will be automatically retried.",
+											duration: 8000,
+										}),
+									1500,
+								);
+								setTimeout(
+									() =>
+										toast.success("✓ Metadata Generated", {
+											description: "Generated metadata for 6 sections",
+											duration: 5000,
+										}),
+									3500,
+								);
+							}}
+							variant="secondary"
+						>
+							Simulate Flow with Warning
+						</AppButton>
+						<AppButton
+							onClick={() => {
+								toast.success("✓ Cfp Data Extracted", {
+									description: "Extracted grant details: Small Business Innovation Research...",
+									duration: 5000,
+								});
+								setTimeout(
+									() =>
+										toast.error("❌ Error: Pipeline Error", {
+											description: "Please follow the instructions above to resolve this issue.",
+											duration: 10_000,
+										}),
+									1500,
+								);
+							}}
+							variant="secondary"
+						>
+							Simulate Flow with Error
 						</AppButton>
 					</div>
-				</div>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const LongMessages: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<div className="space-y-4 max-w-md">
-					<AppButton
-						onClick={() =>
-							toast.success(
-								"Congratulations! Your application has been successfully submitted and is now under review. You will receive email notifications about any updates to your application status. Thank you for your patience during the review process.",
-							)
-						}
-						variant="primary"
-					>
-						Long Success Message
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.error(
-								"We encountered an unexpected error while processing your request. Our technical team has been notified and is working to resolve this issue. Please try again in a few minutes or contact support if the problem persists.",
-							)
-						}
-						variant="primary"
-					>
-						Long Error Message
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.warning(
-								"Your session will expire soon due to inactivity. Please save any unsaved work and refresh the page to continue working on your application.",
-							)
-						}
-						variant="primary"
-					>
-						Long Warning Message
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.info(
-								"Your application is currently being processed by our review team. This comprehensive evaluation includes checking all submitted documents, verifying eligibility criteria, and conducting preliminary assessments. The review process typically takes 2-3 business days, and you will receive detailed updates via email.",
-							)
-						}
-						variant="primary"
-					>
-						Long Info Message
-					</AppButton>
-				</div>
-				<Story />
-			</>
-		),
-	],
-};
-
-export const WithDescriptions: Story = {
-	decorators: [
-		(Story) => (
-			<>
-				<div className="space-y-4 max-w-md">
-					<AppButton
-						onClick={() =>
-							toast.success("Application submitted", {
-								description:
-									"Your grant application has been successfully submitted and is now under review.",
-							})
-						}
-						variant="primary"
-					>
-						Success with Description
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.error("Upload failed", {
-								description: "The file could not be uploaded. Please check the file size and format.",
-							})
-						}
-						variant="primary"
-					>
-						Error with Description
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.warning("Session expiring", {
-								description: "Your session will expire in 5 minutes. Please save your work.",
-							})
-						}
-						variant="primary"
-					>
-						Warning with Description
-					</AppButton>
-					<AppButton
-						onClick={() =>
-							toast.info("Processing update", {
-								description: "Your profile information is being updated. This may take a few moments.",
-							})
-						}
-						variant="primary"
-					>
-						Info with Description
-					</AppButton>
 				</div>
 				<Story />
 			</>

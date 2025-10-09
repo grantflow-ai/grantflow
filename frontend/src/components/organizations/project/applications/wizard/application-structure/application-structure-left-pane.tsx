@@ -113,7 +113,7 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 };
 
 const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
-	cfp_data_extracted: 1,
+	cfp_data_extracted: 2,
 	grant_template_created: 4,
 	indexing_failed: -1,
 	indexing_timeout: -1,
@@ -220,9 +220,17 @@ export function ApplicationStructureSourcesPreview({
 function AnalyzingSteps() {
 	const templateGenerationEvent = useWizardStore((state) => state.templateGenerationEvent);
 	const templateGenerationErrorMessage = useWizardStore((state) => state.templateGenerationErrorMessage);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
 	const [showStepsDetails, setShowStepsDetails] = useState(false);
 	const [hasError, setHasError] = useState(false);
+
+	useEffect(() => {
+		if (isGeneratingTemplate && maxVisibleSteps === 0) {
+			setMaxVisibleSteps(2);
+			setShowStepsDetails(true);
+		}
+	}, [isGeneratingTemplate, maxVisibleSteps]);
 
 	useEffect(() => {
 		if (templateGenerationEvent) {
