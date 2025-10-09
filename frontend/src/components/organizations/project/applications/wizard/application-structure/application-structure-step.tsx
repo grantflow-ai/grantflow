@@ -74,6 +74,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 						useWizardStore.getState().startTemplateGeneration();
 					}
 				},
+				sourceType: "template",
 			});
 
 			dialogRef.current?.open({

@@ -26,22 +26,38 @@ const statusIcons = {
 	INDEXING: <Image alt="Processing" className="animate-spin" height={20} src="/icons/generating.svg" width={20} />,
 };
 
-export function RagSourcesContent() {
+interface RagSourcesContentProps {
+	sourceType: "application" | "template";
+}
+
+export function RagSourcesContent({ sourceType }: RagSourcesContentProps) {
+	const appRagSources = useApplicationStore((state) => state.application?.rag_sources) ?? [];
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 
-	const ragSources = grantTemplate?.rag_sources ?? [];
+	const ragSources = sourceType === "application" ? appRagSources : (grantTemplate?.rag_sources ?? []);
 
-	if (!grantTemplate) {
+	const isTemplate = sourceType === "template";
+	const testIdPrefix = isTemplate ? "rag-sources" : "app-rag-sources";
+
+	if (sourceType === "template" && !grantTemplate) {
 		return (
-			<div className="space-y-4" data-testid="rag-sources-no-template">
+			<div className="space-y-4" data-testid={`${testIdPrefix}-no-template`}>
 				<p className="text-sm text-gray-600">No template found. Please create or reload the application.</p>
+			</div>
+		);
+	}
+
+	if (sourceType === "application" && !useApplicationStore.getState().application) {
+		return (
+			<div className="space-y-4" data-testid={`${testIdPrefix}-no-application`}>
+				<p className="text-sm text-gray-600">No application found. Please create or reload the application.</p>
 			</div>
 		);
 	}
 
 	if (ragSources.length === 0) {
 		return (
-			<div className="space-y-4" data-testid="rag-sources-empty">
+			<div className="space-y-4" data-testid={`${testIdPrefix}-empty`}>
 				<p className="text-sm text-gray-600">No documents or URLs have been added to the knowledge base yet.</p>
 			</div>
 		);
@@ -55,7 +71,7 @@ export function RagSourcesContent() {
 		return (
 			<div
 				className={cn("flex items-center py-2", !isLast && "border-b border-gray-200")}
-				data-testid={`rag-source-${source.sourceId}`}
+				data-testid={`${testIdPrefix}-item-${source.sourceId}`}
 				key={source.sourceId}
 			>
 				<div className="p-2 flex justify-center items-center">
@@ -104,8 +120,8 @@ export function RagSourcesContent() {
 	};
 
 	return (
-		<div className="space-y-4" data-testid="rag-sources-content">
-			<div className="max-h-96 overflow-y-auto" data-testid="rag-sources-list">
+		<div className="space-y-4" data-testid={`${testIdPrefix}-content`}>
+			<div className="max-h-96 overflow-y-auto" data-testid={`${testIdPrefix}-list`}>
 				{ragSources.map((source, index) => renderSourceItem(source, index))}
 			</div>
 		</div>

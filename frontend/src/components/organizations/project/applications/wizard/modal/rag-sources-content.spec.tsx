@@ -20,7 +20,7 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
 		expect(container.querySelector('[data-testid="rag-sources-no-template"]')).toBeInTheDocument();
 	});
@@ -34,7 +34,7 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
 		expect(container.querySelector('[data-testid="rag-sources-empty"]')).toBeInTheDocument();
 	});
@@ -61,10 +61,10 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-file-2"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-2"]')).toBeInTheDocument();
 	});
 
 	it("displays URL sources with correct icons and statuses", () => {
@@ -89,10 +89,10 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-url-2"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-url-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-url-2"]')).toBeInTheDocument();
 	});
 
 	it("displays mixed file and URL sources", () => {
@@ -117,10 +117,10 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-url-1"]')).toBeInTheDocument();
 	});
 
 	it("displays all sources in list", () => {
@@ -151,11 +151,11 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-file-2"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-2"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-url-1"]')).toBeInTheDocument();
 	});
 
 	it("displays single source correctly", () => {
@@ -174,9 +174,9 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
 	});
 
 	it("displays all possible statuses correctly", () => {
@@ -213,12 +213,12 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-file-2"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-file-3"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-source-file-4"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-2"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-3"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-4"]')).toBeInTheDocument();
 	});
 
 	it("handles sources with both filename and URL", () => {
@@ -237,9 +237,9 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-file-1"]')).toBeInTheDocument();
 	});
 
 	it("handles unknown source types gracefully", () => {
@@ -258,9 +258,9 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
-		expect(container.querySelector('[data-testid="rag-source-unknown-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-sources-item-unknown-1"]')).toBeInTheDocument();
 	});
 
 	it("renders within scrollable container", () => {
@@ -279,7 +279,7 @@ describe.sequential("RagSourcesContent", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<RagSourcesContent />);
+		const { container } = render(<RagSourcesContent sourceType="template" />);
 
 		const listContainer = container.querySelector('[data-testid="rag-sources-list"]');
 		expect(listContainer).toBeInTheDocument();

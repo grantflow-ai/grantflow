@@ -24,14 +24,14 @@ describe.sequential("createRagSourcesDialog", () => {
 		cleanup();
 	});
 	it("returns dialog with content and footer", () => {
-		const dialog = createRagSourcesDialog();
+		const dialog = createRagSourcesDialog({ sourceType: "template" });
 
 		expect(dialog).toHaveProperty("content");
 		expect(dialog).toHaveProperty("footer");
 	});
 
 	it("renders content component", () => {
-		const dialog = createRagSourcesDialog();
+		const dialog = createRagSourcesDialog({ sourceType: "template" });
 
 		const { container } = render(<div>{dialog.content}</div>);
 
@@ -45,6 +45,7 @@ describe.sequential("createRagSourcesDialog", () => {
 		const dialog = createRagSourcesDialog({
 			onBackToUploads: mockOnBackToUploads,
 			onContinue: mockOnContinue,
+			sourceType: "template",
 		});
 
 		const { container } = render(<div>{dialog.footer}</div>);
@@ -53,15 +54,15 @@ describe.sequential("createRagSourcesDialog", () => {
 		expect(container.querySelector('button[type="button"]')).toBeInTheDocument();
 	});
 
-	it("creates dialog without options", () => {
-		const dialog = createRagSourcesDialog();
+	it("creates dialog for template source type", () => {
+		const dialog = createRagSourcesDialog({ sourceType: "template" });
 
 		expect(dialog.content).toBeDefined();
 		expect(dialog.footer).toBeDefined();
 	});
 
-	it("creates dialog with empty options", () => {
-		const dialog = createRagSourcesDialog({});
+	it("creates dialog for application source type", () => {
+		const dialog = createRagSourcesDialog({ sourceType: "application" });
 
 		expect(dialog.content).toBeDefined();
 		expect(dialog.footer).toBeDefined();
@@ -72,6 +73,7 @@ describe.sequential("createRagSourcesDialog", () => {
 
 		const dialog = createRagSourcesDialog({
 			onBackToUploads: mockOnBackToUploads,
+			sourceType: "template",
 		});
 
 		const { container } = render(<div>{dialog.footer}</div>);
@@ -85,6 +87,7 @@ describe.sequential("createRagSourcesDialog", () => {
 
 		const dialog = createRagSourcesDialog({
 			onContinue: mockOnContinue,
+			sourceType: "application",
 		});
 
 		const { container } = render(<div>{dialog.footer}</div>);
@@ -100,6 +103,7 @@ describe.sequential("createRagSourcesDialog", () => {
 		const dialog = createRagSourcesDialog({
 			onBackToUploads: mockOnBackToUploads,
 			onContinue: mockOnContinue,
+			sourceType: "template",
 		});
 
 		const { container } = render(<div>{dialog.footer}</div>);
