@@ -229,6 +229,7 @@ function getValidationErrorMessage(
 	currentStep: WizardStep,
 	title: string | undefined,
 	ragSources: { status: string }[] | undefined,
+	appRagSources?: { status: string }[],
 ): string {
 	switch (currentStep) {
 		case WizardStep.APPLICATION_DETAILS: {
@@ -244,7 +245,10 @@ function getValidationErrorMessage(
 			return "Research plan is missing.";
 		}
 		case WizardStep.KNOWLEDGE_BASE: {
-			return "Please add at least one knowledge source";
+			if (!appRagSources || appRagSources.length === 0) {
+				return "Please add at least one knowledge source";
+			}
+			return "All knowledge sources have failed to process. Please remove failed sources and upload new ones.";
 		}
 		case WizardStep.RESEARCH_DEEP_DIVE: {
 			return "Please fill in all required fields before proceeding";
@@ -332,6 +336,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const title = useApplicationStore((state) => state.application?.title);
 	const applicationText = useApplicationStore((state) => state.application?.text);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
+	const appRagSources = useApplicationStore((state) => state.application?.rag_sources);
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 
 	const { trackEvent, trackNavigation } = useWizardAnalytics();
@@ -397,7 +402,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		const currentValidation = validateStepNext();
 		if (!currentValidation.isValid) {
 			await handleValidationError(currentValidation);
-			const errorMessage = getValidationErrorMessage(currentStep, title, ragSources);
+			const errorMessage = getValidationErrorMessage(currentStep, title, ragSources, appRagSources);
 			toast.error(errorMessage);
 			return;
 		}
@@ -421,6 +426,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 			}
 		}
 	}, [
+		appRagSources,
 		currentStep,
 		handleValidationError,
 		handleStructureStep,

@@ -308,6 +308,117 @@ describe.sequential("wizard store", () => {
 			const result12 = useWizardStore.getState().validateStepNext();
 			expect(result12.isValid).toBe(true);
 		});
+
+		it("should require at least one RAG source for KNOWLEDGE_BASE", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithoutSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [],
+			});
+
+			useApplicationStore.setState({ application: applicationWithoutSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(false);
+			expect(result.reason).toBe("There are no RAG sources.");
+		});
+
+		it("should fail KNOWLEDGE_BASE validation when all RAG sources have FAILED status", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithAllFailedSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: applicationWithAllFailedSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(false);
+			expect(result.reason).toBe("All RAG sources have failed.");
+		});
+
+		it("should pass KNOWLEDGE_BASE validation with mixed FAILED and FINISHED sources", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: applicationWithMixedSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(true);
+			expect(result.reason).toBe("Valid");
+		});
+
+		it("should pass KNOWLEDGE_BASE validation with mixed FAILED and INDEXING sources", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "test2.pdf", sourceId: "2", status: "INDEXING" },
+				],
+			});
+
+			useApplicationStore.setState({ application: applicationWithMixedSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(true);
+			expect(result.reason).toBe("Valid");
+		});
+
+		it("should pass KNOWLEDGE_BASE validation with mixed FAILED and CREATED sources", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: applicationWithMixedSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(true);
+			expect(result.reason).toBe("Valid");
+		});
+
+		it("should pass KNOWLEDGE_BASE validation with all FINISHED sources", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithFinishedSources = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+					{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: applicationWithFinishedSources });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(true);
+			expect(result.reason).toBe("Valid");
+		});
+
+		it("should pass KNOWLEDGE_BASE validation with single FINISHED source", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithSingleSource = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+			});
+
+			useApplicationStore.setState({ application: applicationWithSingleSource });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(true);
+			expect(result.reason).toBe("Valid");
+		});
+
+		it("should fail KNOWLEDGE_BASE validation with single FAILED source", () => {
+			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
+			const applicationWithSingleFailedSource = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application: applicationWithSingleFailedSource });
+			const result = useWizardStore.getState().validateStepNext();
+			expect(result.isValid).toBe(false);
+			expect(result.reason).toBe("All RAG sources have failed.");
+		});
 	});
 
 	describe("hasTemplateSourcesWithStatuses", () => {
