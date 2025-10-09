@@ -1,13 +1,7 @@
 from time import time
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import (
-    CUSTOM_MODEL_REASON,
-    GEMINI_FLASH_LITE_MODEL,
-    GEMINI_FLASH_MODEL,
-    GENERATION_MODEL,
-    MODEL_SELECTION_REASON,
-)
+from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.text import concatenate_segments_with_spacy_coherence, count_words, normalize_markdown
 
@@ -20,13 +14,6 @@ logger = get_logger(__name__)
 
 
 MAX_API_CALLS: Final[int] = 5
-
-
-def select_optimal_model_for_length(max_words: int) -> str:
-    if max_words <= 600:
-        return GEMINI_FLASH_MODEL
-    return GEMINI_FLASH_LITE_MODEL
-
 
 LONG_FORM_GENERATION_SYSTEM_PROMPT: Final[str] = """
 Generate scientifically accurate, well-structured text for STEM grant applications.
@@ -207,9 +194,6 @@ async def generate_long_form_text(
     buffered_min_words = min_words + buffer_words
     buffered_max_words = max_words + buffer_words
 
-    optimal_model = select_optimal_model_for_length(max_words)
-    selected_model = optimal_model if model == GENERATION_MODEL else model
-
     logger.info(
         "Starting long-form text generation",
         prompt_identifier=prompt_identifier,
@@ -218,8 +202,7 @@ async def generate_long_form_text(
         buffer_words=buffer_words,
         buffered_min_words=buffered_min_words,
         buffered_max_words=buffered_max_words,
-        selected_model=selected_model,
-        model_selection_reason=MODEL_SELECTION_REASON if selected_model == GENERATION_MODEL else CUSTOM_MODEL_REASON,
+        selected_model=model,
         trace_id=trace_id,
     )
 
@@ -229,7 +212,7 @@ async def generate_long_form_text(
         prompt_identifier=prompt_identifier,
         task_description=task_description,
         max_api_calls=max_api_calls,
-        model=selected_model,
+        model=model,
         timeout=timeout,
         trace_id=trace_id,
         **sources,
@@ -256,7 +239,7 @@ async def generate_long_form_text(
             min_words=buffered_min_words,
             prompt_identifier=f"{prompt_identifier}_shorten_{attempts}",
             task_description=SHORTEN_TEXT_PROMPT.to_string(text=compressed_text, words_overflow=words_overflow),
-            model=selected_model,
+            model=model,
             timeout=timeout,
             trace_id=trace_id,
         )

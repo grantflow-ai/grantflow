@@ -129,6 +129,7 @@ async def make_google_completions_request[T](
     candidate_count: int | None = None,
     trace_id: str,
     timeout: float = 300,
+    thinking_budget: int | None = None,
 ) -> T:
     client = get_google_ai_client()
 
@@ -142,6 +143,29 @@ async def make_google_completions_request[T](
         else:
             message_parts.append(str(message))
 
+    safety_settings = [
+        genai.types.SafetySetting(
+            category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+        ),
+        genai.types.SafetySetting(
+            category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+        ),
+        genai.types.SafetySetting(
+            category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+        ),
+        genai.types.SafetySetting(
+            category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+        ),
+    ]
+
+    thinking_config = (
+        genai.types.ThinkingConfig(thinking_budget=thinking_budget) if thinking_budget is not None else None
+    )
+
     config = genai.types.GenerateContentConfig(
         response_mime_type=CONTENT_TYPE_JSON,
         response_schema=response_schema,
@@ -151,24 +175,8 @@ async def make_google_completions_request[T](
         candidate_count=candidate_count,
         max_output_tokens=32768,
         system_instruction=system_prompt,
-        safety_settings=[
-            genai.types.SafetySetting(
-                category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            genai.types.SafetySetting(
-                category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            genai.types.SafetySetting(
-                category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            genai.types.SafetySetting(
-                category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-        ],
+        safety_settings=safety_settings,
+        thinking_config=thinking_config,
     )
 
     content = "\n".join(message_parts)
@@ -425,6 +433,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
     candidate_count: int | None = None,
     timeout: float = 300,  # 5 minutes timeout for LLM API calls ~keep
     trace_id: str,
+    thinking_budget: int | None = 4500,
 ) -> T:
     attempts = 0
 
@@ -471,6 +480,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
                     candidate_count=candidate_count,
                     trace_id=trace_id,
                     timeout=timeout,
+                    thinking_budget=thinking_budget,
                 )
 
             if validator:
