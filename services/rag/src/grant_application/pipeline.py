@@ -32,13 +32,13 @@ from services.rag.src.grant_application.handlers import (
     handle_generate_research_plan_stage,
     handle_generate_sections_stage,
 )
-from services.rag.src.grant_application.type_guards import (
+from services.rag.src.grant_application.utils import (
+    generate_application_text,
     is_enrich_objectives_dto,
     is_enrich_terminology_dto,
     is_extract_relationships_dto,
     is_generate_research_plan_dto,
 )
-from services.rag.src.grant_application.utils import generate_application_text
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
 
