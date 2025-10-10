@@ -228,13 +228,17 @@ class JobManager[DTOType]:
 
             serialized_data = _serialize_checkpoint_data(dto)
 
-            existing_data = job.checkpoint_data or {}
-            completed_substages = existing_data.get("completed_substages", [])
+            existing_raw = job.checkpoint_data
+            existing_dict = existing_raw if isinstance(existing_raw, dict) else {}
+            merged_data: dict[str, Any] = dict(existing_dict)
+            completed_substages = list(merged_data.get("completed_substages", []))
 
             if substage_name not in completed_substages:
                 completed_substages.append(substage_name)
 
-            merged_data = {**existing_data, **serialized_data}
+            if isinstance(serialized_data, dict):
+                merged_data.update(serialized_data)
+
             merged_data["current_substage"] = substage_name
             merged_data["completed_substages"] = completed_substages
 

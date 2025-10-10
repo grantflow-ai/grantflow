@@ -1,5 +1,6 @@
 import os
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -234,12 +235,14 @@ async def test_enrich_objectives_stage_requires_checkpoint(
         },
         relationships={"1": [("2", "test relationship")]},
     )
-    mocker.patch(
+    mock_extract_relationships = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
-        return_value=mock_extract_relationships_dto,
+        new_callable=AsyncMock,
     )
+    mock_extract_relationships.return_value = mock_extract_relationships_dto
     mock_handle_enrich_objectives = mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
     )
 
     async with async_session_maker() as session:
@@ -259,7 +262,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
             trace_id=trace_id,
         )
 
-    mock_handle_enrich_objectives.assert_not_called()
+    mock_handle_enrich_objectives.assert_awaited_once()
 
 
 async def test_insufficient_context_error_handling(

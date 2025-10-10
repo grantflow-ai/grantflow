@@ -333,7 +333,7 @@ async def _handle_pipeline_error(
         raise DatabaseError("Failed to record pipeline error in database") from e
 
 
-async def handle_grant_application_pipeline(
+async def handle_grant_application_pipeline(  # noqa: PLR0912
     grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
@@ -394,123 +394,141 @@ async def handle_grant_application_pipeline(
                 )
 
                 checkpoint_data = await job_manager.get_checkpoint_data()
-                completed_substages = checkpoint_data.get("completed_substages", []) if checkpoint_data else []
+                stage_completed = existing_job.status == RagGenerationStatusEnum.COMPLETED
 
-                logger.info(
-                    "BLUEPRINT_PREP resumption check",
-                    application_id=str(application_id),
-                    completed_substages=completed_substages,
-                    trace_id=trace_id,
-                )
-
-                if "extract_relationships" not in completed_substages:
-                    await job_manager.ensure_not_cancelled()
-
-                    logger.info(
-                        "Executing sub-stage: extract_relationships",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
-
-                    relationships_dto = await handle_extract_relationships_stage(
-                        grant_application=grant_application,
-                        job_manager=job_manager,
-                        trace_id=trace_id,
-                    )
-
-                    await job_manager.save_substage_checkpoint("extract_relationships", relationships_dto)
-
-                    logger.info(
-                        "Completed sub-stage: extract_relationships",
-                        application_id=str(application_id),
-                        relationships_count=len(relationships_dto["relationships"]),
-                        trace_id=trace_id,
-                    )
-                else:
-                    logger.info(
-                        "Skipping sub-stage: extract_relationships (already completed)",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
-                    if not is_extract_relationships_dto(checkpoint_data):
-                        raise ValidationError(
-                            "Invalid checkpoint data for extract_relationships sub-stage",
-                            context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
-                        )
-                    relationships_dto = checkpoint_data
-
-                if "enrich_objectives" not in completed_substages:
-                    await job_manager.ensure_not_cancelled()
-
-                    logger.info(
-                        "Executing sub-stage: enrich_objectives",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
-
-                    objectives_dto = await handle_enrich_objectives_stage(
-                        grant_application=grant_application,
-                        dto=relationships_dto,
-                        job_manager=job_manager,
-                        trace_id=trace_id,
-                    )
-
-                    await job_manager.save_substage_checkpoint("enrich_objectives", objectives_dto)
-
-                    logger.info(
-                        "Completed sub-stage: enrich_objectives",
-                        application_id=str(application_id),
-                        objectives_count=len(objectives_dto["enrichment_responses"]),
-                        trace_id=trace_id,
-                    )
-                else:
-                    logger.info(
-                        "Skipping sub-stage: enrich_objectives (already completed)",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
-                    if not is_enrich_objectives_dto(checkpoint_data):
-                        raise ValidationError(
-                            "Invalid checkpoint data for enrich_objectives sub-stage",
-                            context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
-                        )
-                    objectives_dto = checkpoint_data
-
-                if "enrich_terminology" not in completed_substages:
-                    await job_manager.ensure_not_cancelled()
-
-                    logger.info(
-                        "Executing sub-stage: enrich_terminology",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
-
-                    terminology_dto = await handle_enrich_terminology_stage(
-                        dto=objectives_dto,
-                        job_manager=job_manager,
-                        trace_id=trace_id,
-                    )
-
-                    await job_manager.save_substage_checkpoint("enrich_terminology", terminology_dto)
-
-                    logger.info(
-                        "Completed sub-stage: enrich_terminology",
-                        application_id=str(application_id),
-                        wikidata_count=len(terminology_dto["wikidata_enrichments"]),
-                        trace_id=trace_id,
-                    )
-                else:
-                    logger.info(
-                        "Skipping sub-stage: enrich_terminology (already completed)",
-                        application_id=str(application_id),
-                        trace_id=trace_id,
-                    )
+                if stage_completed:
+                    if not checkpoint_data:
+                        raise ValidationError("Missing checkpoint data for completed BLUEPRINT_PREP stage")
                     if not is_enrich_terminology_dto(checkpoint_data):
                         raise ValidationError(
-                            "Invalid checkpoint data for enrich_terminology sub-stage",
-                            context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
+                            "Invalid checkpoint data for completed BLUEPRINT_PREP stage",
+                            context={"checkpoint_keys": list(checkpoint_data.keys())},
                         )
                     terminology_dto = checkpoint_data
+
+                    logger.info(
+                        "Skipping BLUEPRINT_PREP sub-stages (stage already completed)",
+                        application_id=str(application_id),
+                        trace_id=trace_id,
+                    )
+                else:
+                    completed_substages = checkpoint_data.get("completed_substages", []) if checkpoint_data else []
+
+                    logger.info(
+                        "BLUEPRINT_PREP resumption check",
+                        application_id=str(application_id),
+                        completed_substages=completed_substages,
+                        trace_id=trace_id,
+                    )
+
+                    if "extract_relationships" not in completed_substages:
+                        await job_manager.ensure_not_cancelled()
+
+                        logger.info(
+                            "Executing sub-stage: extract_relationships",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+
+                        relationships_dto = await handle_extract_relationships_stage(
+                            grant_application=grant_application,
+                            job_manager=job_manager,
+                            trace_id=trace_id,
+                        )
+
+                        await job_manager.save_substage_checkpoint("extract_relationships", relationships_dto)
+
+                        logger.info(
+                            "Completed sub-stage: extract_relationships",
+                            application_id=str(application_id),
+                            relationships_count=len(relationships_dto["relationships"]),
+                            trace_id=trace_id,
+                        )
+                    else:
+                        logger.info(
+                            "Skipping sub-stage: extract_relationships (already completed)",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+                        if not is_extract_relationships_dto(checkpoint_data):
+                            raise ValidationError(
+                                "Invalid checkpoint data for extract_relationships sub-stage",
+                                context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
+                            )
+                        relationships_dto = checkpoint_data
+
+                    if "enrich_objectives" not in completed_substages:
+                        await job_manager.ensure_not_cancelled()
+
+                        logger.info(
+                            "Executing sub-stage: enrich_objectives",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+
+                        objectives_dto = await handle_enrich_objectives_stage(
+                            grant_application=grant_application,
+                            dto=relationships_dto,
+                            job_manager=job_manager,
+                            trace_id=trace_id,
+                        )
+
+                        await job_manager.save_substage_checkpoint("enrich_objectives", objectives_dto)
+
+                        logger.info(
+                            "Completed sub-stage: enrich_objectives",
+                            application_id=str(application_id),
+                            objectives_count=len(objectives_dto["enrichment_responses"]),
+                            trace_id=trace_id,
+                        )
+                    else:
+                        logger.info(
+                            "Skipping sub-stage: enrich_objectives (already completed)",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+                        if not is_enrich_objectives_dto(checkpoint_data):
+                            raise ValidationError(
+                                "Invalid checkpoint data for enrich_objectives sub-stage",
+                                context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
+                            )
+                        objectives_dto = checkpoint_data
+
+                    if "enrich_terminology" not in completed_substages:
+                        await job_manager.ensure_not_cancelled()
+
+                        logger.info(
+                            "Executing sub-stage: enrich_terminology",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+
+                        terminology_dto = await handle_enrich_terminology_stage(
+                            dto=objectives_dto,
+                            job_manager=job_manager,
+                            trace_id=trace_id,
+                        )
+
+                        await job_manager.save_substage_checkpoint("enrich_terminology", terminology_dto)
+
+                        logger.info(
+                            "Completed sub-stage: enrich_terminology",
+                            application_id=str(application_id),
+                            wikidata_count=len(terminology_dto["wikidata_enrichments"]),
+                            trace_id=trace_id,
+                        )
+                    else:
+                        logger.info(
+                            "Skipping sub-stage: enrich_terminology (already completed)",
+                            application_id=str(application_id),
+                            trace_id=trace_id,
+                        )
+                        if not is_enrich_terminology_dto(checkpoint_data):
+                            raise ValidationError(
+                                "Invalid checkpoint data for enrich_terminology sub-stage",
+                                context={"checkpoint_keys": list(checkpoint_data.keys()) if checkpoint_data else []},
+                            )
+                        terminology_dto = checkpoint_data
 
                 stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(
@@ -537,27 +555,41 @@ async def handle_grant_application_pipeline(
                 if not checkpoint_data:
                     raise ValidationError("Missing checkpoint data for stage")
 
-                if not is_enrich_terminology_dto(checkpoint_data):
-                    raise ValidationError(
-                        "Invalid checkpoint data for WORKPLAN_GENERATION stage",
-                        context={"checkpoint_keys": list(checkpoint_data.keys())},
+                if existing_job.status == RagGenerationStatusEnum.COMPLETED:
+                    if not is_generate_research_plan_dto(checkpoint_data):
+                        raise ValidationError(
+                            "Invalid checkpoint data for completed WORKPLAN_GENERATION stage",
+                            context={"checkpoint_keys": list(checkpoint_data.keys())},
+                        )
+
+                    logger.info(
+                        "Skipping WORKPLAN_GENERATION (stage already completed)",
+                        application_id=str(application_id),
+                        trace_id=trace_id,
+                    )
+                    dto = checkpoint_data
+                else:
+                    if not is_enrich_terminology_dto(checkpoint_data):
+                        raise ValidationError(
+                            "Invalid checkpoint data for WORKPLAN_GENERATION stage",
+                            context={"checkpoint_keys": list(checkpoint_data.keys())},
+                        )
+
+                    logger.debug(
+                        "Retrieved checkpoint data for WORKPLAN_GENERATION",
+                        application_id=str(application_id),
+                        checkpoint_wikidata=len(checkpoint_data.get("wikidata_enrichments", [])),
+                        trace_id=trace_id,
                     )
 
-                logger.debug(
-                    "Retrieved checkpoint data for WORKPLAN_GENERATION",
-                    application_id=str(application_id),
-                    checkpoint_wikidata=len(checkpoint_data.get("wikidata_enrichments", [])),
-                    trace_id=trace_id,
-                )
+                    await job_manager.ensure_not_cancelled()
 
-                await job_manager.ensure_not_cancelled()
-
-                dto = await handle_generate_research_plan_stage(
-                    grant_application=grant_application,
-                    dto=checkpoint_data,
-                    job_manager=job_manager,
-                    trace_id=trace_id,
-                )
+                    dto = await handle_generate_research_plan_stage(
+                        grant_application=grant_application,
+                        dto=checkpoint_data,
+                        job_manager=job_manager,
+                        trace_id=trace_id,
+                    )
 
                 stage_elapsed = round((time.perf_counter() - stage_start_time) * 1000, 2)
                 logger.info(

@@ -192,9 +192,56 @@ async def test_pipeline_backend_error_during_generation(
         )
         assert app
 
-        with patch(
-            "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-            side_effect=BackendError("LLM error"),
+        relationships_dto = {
+            "work_plan_section": checkpoint_data["work_plan_section"],
+            "relationships": checkpoint_data["relationships"],
+        }
+        enrich_objectives_dto = {
+            **relationships_dto,
+            "enrichment_responses": checkpoint_data["enrichment_responses"],
+        }
+        enrich_terminology_dto = {
+            **enrich_objectives_dto,
+            "wikidata_enrichments": checkpoint_data["wikidata_enrichments"],
+        }
+        research_plan_dto = {
+            **enrich_terminology_dto,
+            "research_plan_text": checkpoint_data["research_plan_text"],
+        }
+
+        with (
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+                side_effect=BackendError("LLM error"),
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
+                return_value=relationships_dto,
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+                return_value=enrich_objectives_dto,
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_enrich_terminology_stage",
+                return_value=enrich_terminology_dto,
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_generate_research_plan_stage",
+                return_value=research_plan_dto,
+            ),
+            patch(
+                "services.rag.src.utils.checks.verify_rag_sources_indexed",
+                return_value=None,
+            ),
+            patch(
+                "packages.shared_utils.src.pubsub.publish_email_notification",
+                return_value=None,
+            ),
+            patch(
+                "packages.shared_utils.src.pubsub.publish_notification",
+                return_value=None,
+            ),
         ):
             await handle_grant_application_pipeline(
                 grant_application=app,
