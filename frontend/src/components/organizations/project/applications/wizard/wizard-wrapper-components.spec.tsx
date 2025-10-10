@@ -158,10 +158,10 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
-					grant_template: {
-						...ApplicationFactory.build().grant_template!,
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
 						rag_sources: [],
-					},
+					}),
 					title: "Short",
 				},
 				areAppOperationsInProgress: false,

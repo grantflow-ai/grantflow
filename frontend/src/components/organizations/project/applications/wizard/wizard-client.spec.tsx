@@ -623,12 +623,10 @@ describe.sequential("WizardClientComponent", () => {
 				expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
 			});
 
-			// Update with same section count
 			useApplicationStore.setState({ application });
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Should still be called only once
 			expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
 		});
 

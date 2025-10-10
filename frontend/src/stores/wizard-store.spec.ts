@@ -80,7 +80,7 @@ describe.sequential("wizard store", () => {
 	});
 
 	describe("toNextStep", () => {
-		it("should start template generation when entering APPLICATION_STRUCTURE", () => {
+		it("should start template generation when entering APPLICATION_STRUCTURE", async () => {
 			const mockGenerateTemplate = vi.fn();
 
 			const application = ApplicationWithTemplateFactory.build({
@@ -102,9 +102,10 @@ describe.sequential("wizard store", () => {
 
 			useWizardStore.getState().toNextStep();
 
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 			expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id");
-			expect(useWizardStore.getState().isGeneratingTemplate).toBe(true);
 		});
 
 		it("should not start generation if grant sections already exist", () => {
@@ -1380,6 +1381,460 @@ describe.sequential("wizard store", () => {
 
 				const result = determineAppropriateStep("app-123");
 				expect(result).toBe(WizardStep.APPLICATION_DETAILS);
+			});
+		});
+	});
+
+	describe("Template Regeneration Detection", () => {
+		describe("captureTempSourcesSnapshot", () => {
+			it("should capture source IDs from application's grant_template.rag_sources", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.getState().captureTempSourcesSnapshot();
+
+				const snapshot = useWizardStore.getState().templateRagSourceIdsSnapshot;
+				expect(snapshot.size).toBe(2);
+				expect(snapshot.has("source-1")).toBe(true);
+				expect(snapshot.has("source-2")).toBe(true);
+			});
+
+			it("should return early when no application exists", () => {
+				useApplicationStore.setState({ application: null });
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set(["old-id"]) });
+
+				useWizardStore.getState().captureTempSourcesSnapshot();
+
+				expect(useWizardStore.getState().templateRagSourceIdsSnapshot.size).toBe(1);
+				expect(useWizardStore.getState().templateRagSourceIdsSnapshot.has("old-id")).toBe(true);
+			});
+
+			it("should create empty Set when grant_template is null", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: null,
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set(["old-id"]) });
+
+				useWizardStore.getState().captureTempSourcesSnapshot();
+
+				expect(useWizardStore.getState().templateRagSourceIdsSnapshot.size).toBe(0);
+			});
+
+			it("should handle empty rag_sources array", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.getState().captureTempSourcesSnapshot();
+
+				const snapshot = useWizardStore.getState().templateRagSourceIdsSnapshot;
+				expect(snapshot.size).toBe(0);
+			});
+
+			it("should handle undefined rag_sources", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: undefined,
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.getState().captureTempSourcesSnapshot();
+
+				const snapshot = useWizardStore.getState().templateRagSourceIdsSnapshot;
+				expect(snapshot.size).toBe(0);
+			});
+		});
+
+		describe("hasTemplateRagSourcesChanged", () => {
+			it("should return false when snapshot is empty", () => {
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set() });
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(false);
+			});
+
+			it("should return true when source count changes (sources added)", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set(["source-1"]) });
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+
+			it("should return true when source count changes (sources removed)", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" }],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1", "source-2"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+
+			it("should return true when source IDs change (different sources, same count)", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1", "source-3"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+
+			it("should return false when sources are identical", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1", "source-2"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(false);
+			});
+
+			it("should handle empty current sources", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: [],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1", "source-2"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+
+			it("should handle null grant_template", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: null,
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+
+			it("should handle undefined rag_sources", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						rag_sources: undefined,
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1"]),
+				});
+
+				const result = useWizardStore.getState().hasTemplateRagSourcesChanged();
+
+				expect(result).toBe(true);
+			});
+		});
+
+		describe("shouldTriggerTemplateGeneration", () => {
+			it("should return false when no grant_template exists", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: null,
+				});
+
+				useApplicationStore.setState({ application });
+
+				const result = useWizardStore.getState().shouldTriggerTemplateGeneration();
+
+				expect(result).toBe(false);
+			});
+
+			it("should return true when grant_sections is empty", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set() });
+
+				const result = useWizardStore.getState().shouldTriggerTemplateGeneration();
+
+				expect(result).toBe(true);
+			});
+
+			it("should return true when sections exist but RAG sources changed", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1"]),
+				});
+
+				const result = useWizardStore.getState().shouldTriggerTemplateGeneration();
+
+				expect(result).toBe(true);
+			});
+
+			it("should return false when sections exist and sources unchanged", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						rag_sources: [
+							{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" },
+							{ filename: "file2.pdf", sourceId: "source-2", status: "FINISHED" },
+						],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({
+					templateRagSourceIdsSnapshot: new Set(["source-1", "source-2"]),
+				});
+
+				const result = useWizardStore.getState().shouldTriggerTemplateGeneration();
+
+				expect(result).toBe(false);
+			});
+
+			it("should return true when sections exist but snapshot is empty", () => {
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						rag_sources: [{ filename: "file1.pdf", sourceId: "source-1", status: "FINISHED" }],
+					}),
+				});
+
+				useApplicationStore.setState({ application });
+				useWizardStore.setState({ templateRagSourceIdsSnapshot: new Set() });
+
+				const result = useWizardStore.getState().shouldTriggerTemplateGeneration();
+
+				expect(result).toBe(false);
+			});
+		});
+
+		describe("startTemplateGeneration", () => {
+			it("should return early when no template ID exists", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn();
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: null,
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockGenerateTemplate).not.toHaveBeenCalled();
+				expect(mockUpdateGrantSections).not.toHaveBeenCalled();
+			});
+
+			it("should clear grant sections before regeneration when they exist", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						id: "template-id",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockUpdateGrantSections).toHaveBeenCalledWith([]);
+				expect(mockUpdateGrantSections).toHaveBeenCalledBefore(mockGenerateTemplate);
+			});
+
+			it("should call generateTemplate with correct template ID", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						id: "template-id-123",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id-123");
+			});
+
+			it("should set isGeneratingTemplate to true after generation starts", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						id: "template-id",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(useWizardStore.getState().isGeneratingTemplate).toBe(true);
+				expect(useWizardStore.getState().templateGenerationFailed).toBe(false);
+			});
+
+			it("should handle errors from updateGrantSections with toast and log", async () => {
+				const { toast } = await import("sonner");
+				const { log } = await import("@/utils/logger/client");
+
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn().mockRejectedValue(new Error("Update failed"));
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						id: "template-id",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockUpdateGrantSections).toHaveBeenCalledWith([]);
+				expect(log.error).toHaveBeenCalledWith(
+					"Failed to clear grant sections before regeneration",
+					expect.objectContaining({ error: expect.any(Error) }),
+				);
+				expect(toast.error).toHaveBeenCalledWith("Failed to prepare for regeneration. Please try again.");
+				expect(mockGenerateTemplate).not.toHaveBeenCalled();
+			});
+
+			it("should not call generateTemplate when section clearing fails", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn().mockRejectedValue(new Error("Update failed"));
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+						id: "template-id",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockGenerateTemplate).not.toHaveBeenCalled();
+			});
+
+			it("should not call updateGrantSections when no sections exist", async () => {
+				const mockGenerateTemplate = vi.fn();
+				const mockUpdateGrantSections = vi.fn();
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						id: "template-id",
+					}),
+				});
+
+				useApplicationStore.setState({
+					application,
+					generateTemplate: mockGenerateTemplate,
+					updateGrantSections: mockUpdateGrantSections,
+				});
+
+				await useWizardStore.getState().startTemplateGeneration();
+
+				expect(mockUpdateGrantSections).not.toHaveBeenCalled();
+				expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id");
 			});
 		});
 	});

@@ -188,7 +188,7 @@ function generateFooterRightButtonProps(
 			if (isApproveStep) {
 				return <Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />;
 			}
-			if (shouldShowGenerate || shouldShowRegenerate) {
+			if (shouldShowGenerate) {
 				return <Image alt="Generate" height={16} src="/icons/button-logo-white.svg" width={16} />;
 			}
 			return undefined;
