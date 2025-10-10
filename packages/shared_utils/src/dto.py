@@ -1,6 +1,11 @@
 from typing import NotRequired, TypedDict
 
-from packages.db.src.json_objects import CFPAnalysisRequirementWithQuote, CFPContentSection, Chunk, LengthConstraint
+from packages.db.src.json_objects import (
+    CFPAnalysisRequirementWithQuote,
+    CFPContentSection,
+    Chunk,
+    LengthConstraint,
+)
 
 
 class VectorDTO(TypedDict):

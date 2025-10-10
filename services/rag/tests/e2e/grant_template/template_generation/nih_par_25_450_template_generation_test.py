@@ -46,37 +46,31 @@ async def test_nih_par_25_450_template_generation_end_to_end(
                 id="clinical_trial_readiness",
                 title="Urgent Need for Clinical Trial Readiness",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="biomarkers_context_of_use",
                 title="Biomarkers and Context of Use",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="specific_aims",
                 title="Specific Aims",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="significance",
                 title="Significance",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="innovation",
                 title="Innovation",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="approach",
                 title="Approach",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="budget_justification",

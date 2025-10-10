@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection, LengthConstraint
+from packages.db.src.json_objects import CFPAnalysis, LengthConstraint
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantingInstitutionSource,
@@ -32,14 +32,13 @@ from testing.factories import (
 from services.rag.src.utils.lengths import (
     DEFAULT_SECTION_MAX_WORDS,
     constraint_to_word_limit,
-    create_word_constraint,
 )
+
 
 def _section_max_words(section: dict[str, Any]) -> int:
     length_constraint = cast("LengthConstraint | None", section.get("length_constraint"))
     value = constraint_to_word_limit(length_constraint)
     return value if value is not None else DEFAULT_SECTION_MAX_WORDS
-
 
 
 @pytest.fixture

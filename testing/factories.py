@@ -249,7 +249,6 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
 
     keywords = Use(lambda: ["methodology", "design", "analysis"])
     topics = Use(lambda: ["background_context", "methodology"])
-    max_words = 3000
     search_queries = Use(lambda: ["query1", "query2", "query3"])
     depends_on: list[str] = Use(list)  # type: ignore[assignment]
 

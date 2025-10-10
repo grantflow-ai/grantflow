@@ -130,11 +130,12 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
         assert "id" in section
         assert "title" in section
         assert "parent_id" in section
-        assert "constraints" in section
 
         assert isinstance(section["id"], str)
         assert isinstance(section["title"], str)
-        assert isinstance(section["constraints"], list)
+        constraint = section.get("length_constraint")
+        if constraint is not None:
+            assert isinstance(constraint, dict)
 
     performance_context.end_stage()
 
