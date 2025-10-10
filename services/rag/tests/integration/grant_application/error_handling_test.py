@@ -12,7 +12,6 @@ from sqlalchemy.orm import selectinload
 from services.rag.src.grant_application.pipeline import (
     handle_grant_application_pipeline,
 )
-from services.rag.src.utils.job_manager import JobManager
 
 TraceId = str
 
@@ -148,15 +147,45 @@ async def test_pipeline_backend_error_during_generation(
     trace_id: TraceId,
     create_pubsub_topics: None,
 ) -> None:
-    JobManager(
-        entity_type="grant_application",
-        entity_id=test_application_with_template.id,
-        grant_application_id=test_application_with_template.id,
-        session_maker=async_session_maker,
-        trace_id=trace_id,
-        current_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
-        pipeline_stages=[],
-    )
+    # Create completed jobs for earlier stages so pipeline starts at SECTION_SYNTHESIS
+    from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
+
+    async with async_session_maker() as session:
+        checkpoint_data = {
+            "section_texts": [],
+            "work_plan_section": {
+                "id": "research_plan",
+                "title": "Research Plan",
+                "order": 2,
+                "parent_id": None,
+                "evidence": "CFP evidence for Research Plan",
+                "keywords": ["methodology"],
+                "topics": ["methods"],
+                "generation_instructions": "Describe methodology",
+                "depends_on": [],
+                "max_words": 1500,
+                "search_queries": ["methodology"],
+                "is_detailed_research_plan": True,
+                "is_clinical_trial": False,
+            },
+            "relationships": {},
+            "enrichment_responses": [],
+            "wikidata_enrichments": [],
+            "research_plan_text": "Generated research plan text",
+        }
+
+        # Create completed jobs for all stages except the final one
+        # Only WORKPLAN_GENERATION stage needs checkpoint data
+        for stage in GRANT_APPLICATION_STAGES_ORDER[:-1]:
+            job = RagGenerationJob(
+                grant_application_id=test_application_with_template.id,
+                application_stage=stage,
+                status=RagGenerationStatusEnum.COMPLETED,
+                retry_count=0,
+                checkpoint_data=checkpoint_data if stage == GrantApplicationStageEnum.WORKPLAN_GENERATION else None,
+            )
+            session.add(job)
+        await session.commit()
 
     async with async_session_maker() as session:
         app = await session.get(
@@ -166,53 +195,9 @@ async def test_pipeline_backend_error_during_generation(
         )
         assert app
 
-        with (
-            patch(
-                "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
-                return_value=None,
-            ),
-            patch(
-                "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
-                return_value={
-                    "section_texts": [],
-                    "work_plan_section": {},
-                    "relationships": [],
-                },
-            ),
-            patch(
-                "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
-                return_value={
-                    "section_texts": [],
-                    "work_plan_section": {},
-                    "relationships": [],
-                    "enrichment_responses": [],
-                },
-            ),
-            patch(
-                "services.rag.src.grant_application.pipeline.handle_enrich_terminology_stage",
-                return_value={
-                    "section_texts": [],
-                    "work_plan_section": {},
-                    "relationships": [],
-                    "enrichment_responses": [],
-                    "wikidata_enrichments": [],
-                },
-            ),
-            patch(
-                "services.rag.src.grant_application.pipeline.handle_generate_research_plan_stage",
-                return_value={
-                    "section_texts": [],
-                    "work_plan_section": {},
-                    "relationships": [],
-                    "enrichment_responses": [],
-                    "wikidata_enrichments": [],
-                    "research_plan_text": "Mocked research plan",
-                },
-            ),
-            patch(
-                "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-                side_effect=BackendError("LLM error"),
-            ),
+        with patch(
+            "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+            side_effect=BackendError("LLM error"),
         ):
             await handle_grant_application_pipeline(
                 grant_application=app,
@@ -223,7 +208,8 @@ async def test_pipeline_backend_error_during_generation(
     async with async_session_maker() as session:
         result = await session.execute(
             select_active(RagGenerationJob).where(
-                RagGenerationJob.grant_application_id == test_application_with_template.id
+                RagGenerationJob.grant_application_id == test_application_with_template.id,
+                RagGenerationJob.application_stage == GrantApplicationStageEnum.SECTION_SYNTHESIS,
             )
         )
         job = result.scalar_one_or_none()
