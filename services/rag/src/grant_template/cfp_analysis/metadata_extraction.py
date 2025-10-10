@@ -26,40 +26,40 @@ CFP_METADATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_metadata",
     template="""# CFP Metadata Extraction
 
-    ## Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Organizations
-    <organizations>${organizations}</organizations>
+## Organizations
+<organizations>${organizations}</organizations>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Task
+## Task
 
-    Extract metadata from CFP.
+Extract metadata from CFP.
 
-    ### Fields
-    1. **org_id**: Match organization from list or null
-    2. **deadlines**: List of submission deadlines (YYYY-MM-DD format). Extract all deadlines mentioned (e.g., LOI deadline, full application deadline, different award type deadlines)
-    3. **subject**: One-sentence funding opportunity summary
-    4. **constraints**: Application-wide formatting/length requirements ONLY
+### Fields
+1. **org_id**: Match organization from list or null
+2. **deadlines**: List of submission deadlines (YYYY-MM-DD format). Extract all deadlines mentioned (e.g., LOI deadline, full application deadline, different award type deadlines)
+3. **subject**: One-sentence funding opportunity summary
+4. **constraints**: Application-wide formatting/length requirements ONLY
 
-    ### Constraints
-    Extract ONLY formatting and length constraints that apply to the entire application:
-    - Overall page limits (e.g., "15 pages total")
-    - Font requirements (e.g., "Arial 11pt or Times New Roman 12pt")
-    - Margin requirements (e.g., "at least ½ inch margins")
-    - Character/word limits for abstracts or summaries (e.g., "2000 characters including spaces")
-    - Reference limits (e.g., "up to 30 references")
+### Constraints
+Extract ONLY formatting and length constraints that apply to the entire application:
+- Overall page limits (e.g., "15 pages total")
+- Font requirements (e.g., "Arial 11pt or Times New Roman 12pt")
+- Margin requirements (e.g., "at least ½ inch margins")
+- Character/word limits for abstracts or summaries (e.g., "2000 characters including spaces")
+- Reference limits (e.g., "up to 30 references")
 
-    Each constraint: {type: string, value: string}
-    Types: page_limit, word_limit, char_limit, font, spacing, margin, length, size, format
+Each constraint: {type: string, value: string}
+Types: page_limit, word_limit, char_limit, font, spacing, margin, length, size, format
 
-    DO NOT include eligibility requirements, PI requirements, or submission rules - these are not formatting constraints.
+DO NOT include eligibility requirements, PI requirements, or submission rules - these are not formatting constraints.
 
-    ### Output
-    Return metadata in JSON format.
+### Output
+Return metadata in JSON format.
 """,
 )
 
@@ -71,27 +71,27 @@ CFP_METADATA_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_metadata_validation",
     template="""# CFP Metadata Validation
 
-    ## Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Extracted Metadata
-    <metadata>${metadata}</metadata>
+## Extracted Metadata
+<metadata>${metadata}</metadata>
 
-    ## Task
+## Task
 
-    Review and improve extracted metadata.
+Review and improve extracted metadata.
 
-    ### Actions
-    1. Validate subject summary accuracy
-    2. Verify all deadlines are in YYYY-MM-DD format and find any missing deadlines
-    3. Confirm organization identification
-    4. Find missing formatting constraints (search entire CFP for application-wide formatting requirements like page limits, font, margins, spacing)
+### Actions
+1. Validate subject summary accuracy
+2. Verify all deadlines are in YYYY-MM-DD format and find any missing deadlines
+3. Confirm organization identification
+4. Find missing formatting constraints (search entire CFP for application-wide formatting requirements like page limits, font, margins, spacing)
 
-    ### Output
-    Return validated/corrected metadata with complete deadlines and formatting constraints.
+### Output
+Return validated/corrected metadata with complete deadlines and formatting constraints.
 """,
 )
 

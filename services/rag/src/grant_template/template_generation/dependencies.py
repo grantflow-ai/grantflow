@@ -3,7 +3,6 @@ from typing import Final, TypedDict
 
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.grant_template.template_generation.length_extraction import LengthConstraint
@@ -20,47 +19,48 @@ DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="dependencies_word_counts",
     template="""# Generate Section Dependencies and Word Counts
 
-    ## Enriched Sections
-    ${sections}
+## Enriched Sections
 
-    ## Task
+${sections}
 
-    For each section, determine dependencies and allocate word counts.
+## Task
 
-    ### Dependencies
+For each section, determine dependencies and allocate word counts.
 
-    List section IDs that this section logically depends on (must be written first):
-    - Project Summary depends on: [] (written first)
-    - Background depends on: ["project_summary"]
-    - Methodology depends on: ["background", "specific_aims"]
-    - Budget Justification depends on: ["methodology"]
+### Dependencies
 
-    Rules:
-    - NO circular dependencies (A→B→A)
-    - NO self-dependencies (section depends on itself)
-    - Use actual section IDs from input
-    - Empty array if no dependencies
+List section IDs that this section logically depends on (must be written first):
+- Project Summary depends on: [] (written first)
+- Background depends on: ["project_summary"]
+- Methodology depends on: ["background", "specific_aims"]
+- Budget Justification depends on: ["methodology"]
 
-    ### Word Counts
+Rules:
+- NO circular dependencies (A→B→A)
+- NO self-dependencies (section depends on itself)
+- Use actual section IDs from input
+- Empty array if no dependencies
 
-    Allocate realistic word counts based on:
-    1. **CFP length limits** (if provided): Use as primary guidance
-    2. **Default allocations**:
-       - Project Summary: 300 words
-       - Research Plan (is_plan=true): 2000-5000 words
-       - Background/Significance: 800-1200 words
-       - Methodology: 1000-2000 words
-       - Budget Justification: 500-800 words
-       - Data Sharing: 200-400 words
-       - Other sections: 300-600 words
+### Word Counts
 
-    3. **Page conversions**: Use 415 words/page
-    4. **Section importance**: Research plan gets most words
-    5. **Total reasonableness**: 500-50000 words total
+Allocate realistic word counts based on:
+1. **CFP length limits** (if provided): Use as primary guidance
+2. **Default allocations**:
+   - Project Summary: 300 words
+   - Research Plan (is_plan=true): 2000-5000 words
+   - Background/Significance: 800-1200 words
+   - Methodology: 1000-2000 words
+   - Budget Justification: 500-800 words
+   - Data Sharing: 200-400 words
+   - Other sections: 300-600 words
 
-    ### Output
+3. **Page conversions**: Use 415 words/page
+4. **Section importance**: Research plan gets most words
+5. **Total reasonableness**: 500-50000 words total
 
-    Return all sections with depends_on and max_words.
+### Output
+
+Return all sections with depends_on and max_words.
 """,
 )
 
@@ -218,7 +218,7 @@ async def generate_dependencies_word_counts(
         )
 
     messages = DEPENDENCIES_USER_PROMPT.to_string(
-        sections=serialize(enriched).decode("utf-8"),
+        sections=enriched,
     )
 
     return await handle_completions_request(

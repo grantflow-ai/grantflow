@@ -4,7 +4,6 @@ from typing import Final, TypedDict
 from packages.db.src.json_objects import CFPSection
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.grant_template.utils.category_extraction import (
@@ -38,60 +37,60 @@ SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_enrichment",
     template="""# Section Enrichment
 
-    ## CFP Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## CFP Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Organization Guidelines
-    <organization_guidelines>${organization_guidelines}</organization_guidelines>
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Sections
-    <sections>${sections}</sections>
+## Sections
+<sections>${sections}</sections>
 
-    ## Task
+## Task
 
-    For each section, add constraints and categories by searching the ENTIRE CFP document and organization guidelines.
+For each section, add constraints and categories by searching the ENTIRE CFP document and organization guidelines.
 
-    **Important**:
-    - If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for constraints
-    - Search the ENTIRE CFP and guidelines for constraints
-    - Some CFPs list constraints globally (apply to whole application), others list them per-section
-    - Look everywhere in the CFP text and guidelines for formatting requirements that apply to each section
+**Important**:
+- If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for constraints
+- Search the ENTIRE CFP and guidelines for constraints
+- Some CFPs list constraints globally (apply to whole application), others list them per-section
+- Look everywhere in the CFP text and guidelines for formatting requirements that apply to each section
 
-    ### Constraints
-    Extract ALL formatting and length constraints mentioned in CFP for each section:
-    - **Page limits**: "5 pages maximum", "not to exceed 10 pages"
-    - **Word limits**: "500 words", "maximum 1000 words"
-    - **Character limits**: "2000 characters including spaces"
-    - **Font requirements**: "Arial 11pt", "Times New Roman 12pt"
-    - **Spacing**: "single-spaced", "double-spaced", "1.5 line spacing"
-    - **Margins**: "1 inch margins", "at least ½ inch margins"
-    - **Format requirements**: "PDF only", "include page numbers"
+### Constraints
+Extract ALL formatting and length constraints mentioned in CFP for each section:
+- **Page limits**: "5 pages maximum", "not to exceed 10 pages"
+- **Word limits**: "500 words", "maximum 1000 words"
+- **Character limits**: "2000 characters including spaces"
+- **Font requirements**: "Arial 11pt", "Times New Roman 12pt"
+- **Spacing**: "single-spaced", "double-spaced", "1.5 line spacing"
+- **Margins**: "1 inch margins", "at least ½ inch margins"
+- **Format requirements**: "PDF only", "include page numbers"
 
-    For each constraint found:
-    - type: One of [${constraint_types}]
-    - value: Exact requirement from CFP
-    - quote: Direct quote from source showing where constraint was found
+For each constraint found:
+- type: One of [${constraint_types}]
+- value: Exact requirement from CFP
+- quote: Direct quote from source showing where constraint was found
 
-    **Examples of constraint matching**:
-    - "Project description should be 5 pages maximum" → {type: "page_limit", value: "5 pages maximum", quote: "Project description should be 5 pages maximum"}
-    - "Arial 11-point or Times New Roman 12-point font" → {type: "font", value: "Arial 11pt or Times New Roman 12pt", quote: "Arial 11-point or Times New Roman 12-point font"}
-    - "2,000 characters, including spaces, maximum" → {type: "char_limit", value: "2000 characters including spaces", quote: "2,000 characters, including spaces, maximum"}
-    - "no less than ½ inch margins" → {type: "margin", value: "at least ½ inch margins", quote: "no less than ½ inch margins"}
-    - "Up to 30 references" → {type: "length", value: "up to 30 references", quote: "Up to 30 references"}
+**Examples of constraint matching**:
+- "Project description should be 5 pages maximum" → {type: "page_limit", value: "5 pages maximum", quote: "Project description should be 5 pages maximum"}
+- "Arial 11-point or Times New Roman 12-point font" → {type: "font", value: "Arial 11pt or Times New Roman 12pt", quote: "Arial 11-point or Times New Roman 12-point font"}
+- "2,000 characters, including spaces, maximum" → {type: "char_limit", value: "2000 characters including spaces", quote: "2,000 characters, including spaces, maximum"}
+- "no less than ½ inch margins" → {type: "margin", value: "at least ½ inch margins", quote: "no less than ½ inch margins"}
+- "Up to 30 references" → {type: "length", value: "up to 30 references", quote: "Up to 30 references"}
 
-    ### Categories
-    Verify and refine categories for each section from: research, budget, team, compliance, other
-    - **research**: Scientific aims, methodology, data, hypotheses, innovation
-    - **budget**: Costs, funding, justifications, resources
-    - **team**: Personnel, qualifications, collaboration, organization
-    - **compliance**: Ethics, regulations, data sharing, protocols
-    - **other**: Anything not fitting above categories
+### Categories
+Verify and refine categories for each section from: research, budget, team, compliance, other
+- **research**: Scientific aims, methodology, data, hypotheses, innovation
+- **budget**: Costs, funding, justifications, resources
+- **team**: Personnel, qualifications, collaboration, organization
+- **compliance**: Ethics, regulations, data sharing, protocols
+- **other**: Anything not fitting above categories
 
-    ### Output
-    Return all sections with constraints and categories fields.
+### Output
+Return all sections with constraints and categories fields.
 """,
 )
 
@@ -104,31 +103,31 @@ SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
     name="section_enrichment_validation",
     template="""# Section Enrichment Validation
 
-    ## CFP Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## CFP Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Organization Guidelines
-    <organization_guidelines>${organization_guidelines}</organization_guidelines>
+## Organization Guidelines
+<organization_guidelines>${organization_guidelines}</organization_guidelines>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Enriched Sections
-    <sections>${sections}</sections>
+## Enriched Sections
+<sections>${sections}</sections>
 
-    ## Task
+## Task
 
-    Review and improve section enrichment.
+Review and improve section enrichment.
 
-    **IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY source for constraints.
+**IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY source for constraints.
 
-    ### Actions
-    1. **Find missing constraints**: Search CFP sources and organization guidelines for ANY page/word/character limits, font, spacing, or margin requirements not yet captured
-    2. Add missed formatting/length requirements with exact values from CFP or guidelines
-    3. **Verify categories**: Ensure each section has appropriate categories assigned
+### Actions
+1. **Find missing constraints**: Search CFP sources and organization guidelines for ANY page/word/character limits, font, spacing, or margin requirements not yet captured
+2. Add missed formatting/length requirements with exact values from CFP or guidelines
+3. **Verify categories**: Ensure each section has appropriate categories assigned
 
-    ### Output
-    Return complete updated sections with validated constraints and categories.
+### Output
+Return complete updated sections with validated constraints and categories.
 """,
 )
 
@@ -202,7 +201,7 @@ async def enrich_sections(
     messages = SECTION_ENRICHMENT_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
-        sections=serialize(sections).decode("utf-8"),
+        sections=sections,
         constraint_types=", ".join(sorted(CONSTRAINT_TYPES)),
         category_hints=category_hints,
     )
@@ -235,7 +234,7 @@ async def validate_and_refine_enrichment(
     messages = SECTION_ENRICHMENT_VALIDATION_USER_PROMPT.to_string(
         rag_sources=formatted_sources,
         organization_guidelines=organization_guidelines,
-        sections=serialize(enriched_sections).decode("utf-8"),
+        sections=enriched_sections,
         category_hints=category_hints,
     )
 

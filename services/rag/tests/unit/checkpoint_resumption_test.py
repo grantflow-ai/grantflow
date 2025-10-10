@@ -1,5 +1,3 @@
-"""Tests for sub-stage checkpoint resumption in pipelines."""
-
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -83,7 +81,6 @@ class FakeJobManager:
 
 @pytest.mark.asyncio
 async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerFixture) -> None:
-    """Test that BLUEPRINT_PREP resumes correctly after extract_relationships completes."""
     grant_template = SimpleNamespace(
         id=UUID(int=1),
         grant_application_id=UUID(int=2),
@@ -107,7 +104,6 @@ async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerF
     )
     mocker.patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed", AsyncMock())
 
-    # Mock checkpoint data with completed extract_relationships
     checkpoint_data = {
         "completed_substages": ["extract_relationships"],
         "work_plan_section": {
@@ -133,7 +129,6 @@ async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerF
     )
     patch_job_manager(mocker, fake_job_manager)
 
-    # Mock stage handlers
     extract_mock = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         AsyncMock(),
@@ -151,21 +146,17 @@ async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerF
         AsyncMock(return_value=terminology_dto),
     )
 
-    # Execute pipeline
     await handle_grant_application_pipeline(
         grant_application=grant_application,
         session_maker=make_session_maker([]),
         trace_id="test-trace",
     )
 
-    # Verify extract_relationships was NOT called (should be skipped)
     extract_mock.assert_not_called()
 
-    # Verify enrich_objectives and enrich_terminology WERE called
     enrich_objectives_mock.assert_awaited_once()
     enrich_terminology_mock.assert_awaited_once()
 
-    # Verify checkpoints were saved for the executed sub-stages
     assert fake_job_manager.save_substage_checkpoint.await_count == 2
     fake_job_manager.save_substage_checkpoint.assert_has_awaits(
         [
@@ -177,7 +168,6 @@ async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerF
 
 @pytest.mark.asyncio
 async def test_blueprint_prep_resumes_from_enrich_objectives(mocker: MockerFixture) -> None:
-    """Test that BLUEPRINT_PREP resumes correctly after enrich_objectives completes."""
     grant_template = SimpleNamespace(
         id=UUID(int=1),
         grant_application_id=UUID(int=2),
@@ -201,7 +191,6 @@ async def test_blueprint_prep_resumes_from_enrich_objectives(mocker: MockerFixtu
     )
     mocker.patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed", AsyncMock())
 
-    # Mock checkpoint data with both extract_relationships and enrich_objectives completed
     enrichment_data = {
         "enriched": "test",
         "queries": ["query1"],
@@ -259,21 +248,17 @@ async def test_blueprint_prep_resumes_from_enrich_objectives(mocker: MockerFixtu
         trace_id="test-trace",
     )
 
-    # Verify first two sub-stages were skipped
     extract_mock.assert_not_called()
     enrich_objectives_mock.assert_not_called()
 
-    # Verify only enrich_terminology was called
     enrich_terminology_mock.assert_awaited_once()
 
-    # Verify only one checkpoint was saved (for terminology)
     assert fake_job_manager.save_substage_checkpoint.await_count == 1
     fake_job_manager.save_substage_checkpoint.assert_awaited_once_with("enrich_terminology", mocker.ANY)
 
 
 @pytest.mark.asyncio
 async def test_blueprint_prep_executes_all_substages_when_no_checkpoint(mocker: MockerFixture) -> None:
-    """Test that BLUEPRINT_PREP executes all sub-stages when there's no checkpoint data."""
     grant_template = SimpleNamespace(
         id=UUID(int=1),
         grant_application_id=UUID(int=2),
@@ -297,7 +282,6 @@ async def test_blueprint_prep_executes_all_substages_when_no_checkpoint(mocker: 
     )
     mocker.patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed", AsyncMock())
 
-    # No checkpoint data
     fake_job_manager = FakeJobManager(current_stage=GrantApplicationStageEnum.BLUEPRINT_PREP, checkpoint=None)
     patch_job_manager(mocker, fake_job_manager)
 
@@ -342,12 +326,10 @@ async def test_blueprint_prep_executes_all_substages_when_no_checkpoint(mocker: 
         trace_id="test-trace",
     )
 
-    # Verify all three sub-stages were called
     extract_mock.assert_awaited_once()
     enrich_objectives_mock.assert_awaited_once()
     enrich_terminology_mock.assert_awaited_once()
 
-    # Verify all three checkpoints were saved
     assert fake_job_manager.save_substage_checkpoint.await_count == 3
     fake_job_manager.save_substage_checkpoint.assert_has_awaits(
         [
