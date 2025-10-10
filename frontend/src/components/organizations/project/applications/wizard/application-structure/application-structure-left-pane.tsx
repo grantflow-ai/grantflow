@@ -130,8 +130,8 @@ export function ApplicationStructureLeftPane() {
 
 	const [isInfoBannerVisible, setIsInfoBannerVisible] = useState(true);
 
-	const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
 	const parentId = grantTemplate?.id;
+	const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
 
 	const templateFiles: FileWithSource[] = useMemo(
 		() =>
