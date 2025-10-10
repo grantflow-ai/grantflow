@@ -42,6 +42,8 @@ const reassignParentFallbackChain = (section: GrantSection): null | string => {
 	return section.parent_id;
 };
 
+const wordConstraint = (value: number) => ({ source: null, type: "words" as const, value });
+
 const createTestSections = () => ({
 	main1: GrantSectionDetailedFactory.build({ id: "main-1", order: 0, parent_id: null }),
 	main2: GrantSectionDetailedFactory.build({ id: "main-2", order: 3, parent_id: null }),
@@ -737,7 +739,7 @@ describe("grant-sections utilities", () => {
 					is_clinical_trial: true,
 					is_detailed_research_plan: false,
 					keywords: ["test", "section"],
-					max_words: 3000,
+					length_constraint: wordConstraint(3000),
 					order: 99,
 					parent_id: "original-parent",
 					search_queries: ["test query"],
@@ -751,7 +753,7 @@ describe("grant-sections utilities", () => {
 			const [updated] = result;
 			expect(updated.id).toBe("test-section");
 			expect(updated.title).toBe("Test Title");
-			expect((updated as any).max_words).toBe(3000);
+			expect((updated as any).length_constraint?.value).toBe(3000);
 			expect((updated as any).keywords).toEqual(["test", "section"]);
 			expect((updated as any).topics).toEqual(["research"]);
 			expect((updated as any).is_clinical_trial).toBe(true);
@@ -1027,7 +1029,7 @@ describe("grant-sections utilities", () => {
 				GrantSectionDetailedFactory.build({
 					id: "section-1",
 					keywords: ["test"],
-					max_words: 5000,
+					length_constraint: wordConstraint(5000),
 					order: 999,
 					parent_id: "original-parent",
 					title: "Test Title",
@@ -1042,7 +1044,7 @@ describe("grant-sections utilities", () => {
 
 			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
 			expect(calledWith[0].title).toBe("Test Title");
-			expect(calledWith[0].max_words).toBe(5000);
+			expect(calledWith[0].length_constraint?.value).toBe(5000);
 			expect(calledWith[0].keywords).toEqual(["test"]);
 			expect(calledWith[0].order).toBe(0);
 			expect(calledWith[0].parent_id).toBe("original-parent");

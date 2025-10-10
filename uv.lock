@@ -4044,14 +4044,14 @@ wheels = [
 
 [[package]]
 name = "uncomment"
-version = "2.7.0"
+version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/a8/91f1df4a325d11ef0c490dacf3e73978267d9445e89e26e36ca9c61f73a4/uncomment-2.7.0.tar.gz", hash = "sha256:28bfb96fa32e9992402fa1002e6675b8d34c4eb864a973a6d4489d8d52a01659", size = 4757, upload-time = "2025-09-11T06:54:14.038Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/28/a31efa19a5c4476a8f7c0e39fca72b1accbe3458192f3ab7129588308951/uncomment-2.8.0.tar.gz", hash = "sha256:376e608a12716a2eed9a3831cd4d77870d196dc4fd0572bd497c285deff2a2d0", size = 4746, upload-time = "2025-10-10T07:50:45.519Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/ec/2d3cda82d97e582e0bd3cb5dbbaeb8c9cff95ab168787c2cb299b968844a/uncomment-2.7.0-py3-none-any.whl", hash = "sha256:f3138c6a5820f7c73789c4ef4675128cc6946f14c64627f00c91eb9ba1e1cd6c", size = 5215, upload-time = "2025-09-11T06:54:12.938Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/8d/085a44245326c6ea862374f06cb301bd5f369f149bbece117c4bdc09f1de/uncomment-2.8.0-py3-none-any.whl", hash = "sha256:28c9a00b528307b09244a36a32a783076052a3f1d44c993be786a5000c942637", size = 5214, upload-time = "2025-10-10T07:50:44.311Z" },
 ]
 
 [[package]]
