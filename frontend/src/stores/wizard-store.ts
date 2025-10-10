@@ -41,10 +41,12 @@ type RagSourceStatus = NonNullable<
 >["rag_sources"][0]["status"];
 
 interface WizardActions {
+	captureTempSourcesSnapshot: () => void;
 	createObjective: (objective: ResearchObjective) => Promise<void>;
 	generateApplication: () => Promise<boolean>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleTitleChange: (title: string) => void;
+	hasTemplateRagSourcesChanged: () => boolean;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
 	refreshApplicationData: () => Promise<void>;
 	removeObjective: (objectiveNumber: number) => Promise<void>;
@@ -60,7 +62,8 @@ interface WizardActions {
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateEvent: (event: null | TemplateEvent) => void;
 	setTemplateGenerationFailed: (failed: boolean, errorMessage?: string) => void;
-	startTemplateGeneration: () => void;
+	shouldTriggerTemplateGeneration: () => boolean;
+	startTemplateGeneration: () => Promise<void>;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (
@@ -91,6 +94,7 @@ interface WizardState {
 	templateEvent: null | TemplateEvent;
 	templateGenerationErrorMessage: null | string;
 	templateGenerationFailed: boolean;
+	templateRagSourceIdsSnapshot: Set<string>;
 }
 
 export function determineAppropriateStep(applicationId: string): null | WizardStep {
@@ -146,6 +150,7 @@ const initialWizardState: WizardState = {
 	templateEvent: null,
 	templateGenerationErrorMessage: null,
 	templateGenerationFailed: false,
+	templateRagSourceIdsSnapshot: new Set(),
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -359,6 +364,18 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 	return {
 		...initialWizardState,
 
+		captureTempSourcesSnapshot: () => {
+			const { application } = useApplicationStore.getState();
+			if (!application) return;
+
+			const sourceIds = new Set((application.grant_template?.rag_sources ?? []).map((s) => s.sourceId));
+
+			set((state) => ({
+				...state,
+				templateRagSourceIdsSnapshot: sourceIds,
+			}));
+		},
+
 		createObjective: async (objective: ResearchObjective): Promise<void> => {
 			return withErrorHandling(async () => {
 				if (!objective.title.trim()) {
@@ -468,6 +485,35 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}
 		},
 
+		hasTemplateRagSourcesChanged: (): boolean => {
+			const { templateRagSourceIdsSnapshot } = get();
+
+			if (templateRagSourceIdsSnapshot.size === 0) return false;
+
+			const { application } = useApplicationStore.getState();
+			const currentSourceIds = new Set((application?.grant_template?.rag_sources ?? []).map((s) => s.sourceId));
+
+			if (currentSourceIds.size !== templateRagSourceIdsSnapshot.size) {
+				log.info("[Regeneration] RAG sources changed (count)", {
+					current: currentSourceIds.size,
+					snapshot: templateRagSourceIdsSnapshot.size,
+				});
+				return true;
+			}
+
+			for (const id of currentSourceIds) {
+				if (!templateRagSourceIdsSnapshot.has(id)) {
+					log.info("[Regeneration] RAG sources changed (content)", {
+						current: currentSourceIds.size,
+						snapshot: templateRagSourceIdsSnapshot.size,
+					});
+					return true;
+				}
+			}
+
+			return false;
+		},
+
 		hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => {
 			const { application } = useApplicationStore.getState();
 
@@ -522,6 +568,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				templateEvent: initialWizardState.templateEvent,
 				templateGenerationErrorMessage: initialWizardState.templateGenerationErrorMessage,
 				templateGenerationFailed: initialWizardState.templateGenerationFailed,
+				templateRagSourceIdsSnapshot: new Set(),
 			});
 		},
 
@@ -600,22 +647,48 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}));
 		},
 
-		startTemplateGeneration: () => {
-			const { application, generateTemplate } = useApplicationStore.getState();
+		shouldTriggerTemplateGeneration: (): boolean => {
+			const { application } = useApplicationStore.getState();
+			const { hasTemplateRagSourcesChanged } = get();
 
-			if (application?.grant_template?.id) {
-				void generateTemplate(application.grant_template.id);
+			if (!application?.grant_template) return false;
 
-				set((state) => ({
-					...state,
-					isGeneratingTemplate: true,
-					templateGenerationFailed: false,
-				}));
+			return !application.grant_template.grant_sections.length || hasTemplateRagSourcesChanged();
+		},
+
+		startTemplateGeneration: async () => {
+			const { application, generateTemplate, updateGrantSections } = useApplicationStore.getState();
+
+			if (!application?.grant_template?.id) return;
+
+			const hasSections = application.grant_template.grant_sections.length > 0;
+
+			if (hasSections) {
+				try {
+					await updateGrantSections([]);
+				} catch (error) {
+					log.error("Failed to clear grant sections before regeneration", { error });
+					toast.error("Failed to prepare for regeneration. Please try again.");
+					return;
+				}
 			}
+
+			await generateTemplate(application.grant_template.id);
+
+			set((state) => ({
+				...state,
+				isGeneratingTemplate: true,
+				templateGenerationFailed: false,
+			}));
 		},
 
 		toNextStep: () => {
-			const { currentStep, hasTemplateSourcesWithStatuses, startTemplateGeneration } = get();
+			const {
+				currentStep,
+				hasTemplateSourcesWithStatuses,
+				shouldTriggerTemplateGeneration,
+				startTemplateGeneration,
+			} = get();
 
 			if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 				return;
@@ -639,12 +712,12 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			if (
 				nextStep === WizardStep.APPLICATION_STRUCTURE &&
 				application?.grant_template &&
-				!application.grant_template.grant_sections.length
+				shouldTriggerTemplateGeneration()
 			) {
 				const ragSources = application.grant_template.rag_sources;
 
 				if (ragSources.length === 0 || !hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])) {
-					startTemplateGeneration();
+					void startTemplateGeneration();
 				}
 			}
 		},

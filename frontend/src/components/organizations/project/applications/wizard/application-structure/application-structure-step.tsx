@@ -28,23 +28,25 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const templateGenerationFailed = useWizardStore((state) => state.templateGenerationFailed);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
 
 	const templateRagSources = grantTemplate?.rag_sources ?? [];
 	const dialogDismissedRef = useRef(false);
 
 	const canStartTemplateGeneration = useCallback(() => {
 		if (!grantTemplate) return false;
-		if (grantTemplate.grant_sections.length > 0) return false;
 		if (isGeneratingTemplate) return false;
-		return !templateGenerationFailed;
-	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed]);
+		if (templateGenerationFailed) return false;
+
+		return shouldTriggerTemplateGeneration();
+	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed, shouldTriggerTemplateGeneration]);
 
 	useEffect(() => {
 		if (templateRagSources.length === 0) return;
 
 		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
 		if (allFinished && canStartTemplateGeneration()) {
-			useWizardStore.getState().startTemplateGeneration();
+			void useWizardStore.getState().startTemplateGeneration();
 			return;
 		}
 
@@ -56,7 +58,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
 
 		if (!hasFailedSources && canStartTemplateGeneration()) {
-			useWizardStore.getState().startTemplateGeneration();
+			void useWizardStore.getState().startTemplateGeneration();
 			return;
 		}
 
@@ -71,7 +73,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 					dialogDismissedRef.current = true;
 					dialogRef.current?.close();
 					if (canStartTemplateGeneration()) {
-						useWizardStore.getState().startTemplateGeneration();
+						void useWizardStore.getState().startTemplateGeneration();
 					}
 				},
 				sourceType: "template",

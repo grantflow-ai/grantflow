@@ -73,6 +73,7 @@ export function WizardClientComponent({
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const setApplication = useApplicationStore((state) => state.setApplication);
 	const appRagSources = useApplicationStore((state) => state.application?.rag_sources) ?? [];
+	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
 	const [generationProgress, setGenerationProgress] = useState(0);
@@ -273,6 +274,13 @@ export function WizardClientComponent({
 			useWizardStore.getState().toNextStep();
 		}
 	}, [isGeneratingTemplate, currentStep]);
+
+	useEffect(() => {
+		const hasSections = (grantSections?.length ?? 0) > 0;
+		if (hasSections) {
+			useWizardStore.getState().captureTempSourcesSnapshot();
+		}
+	}, [grantSections?.length]);
 
 	useEffect(() => {
 		const { application } = useApplicationStore.getState();

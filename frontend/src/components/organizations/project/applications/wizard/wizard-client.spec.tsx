@@ -1,5 +1,5 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationWithTemplateFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, GrantSectionBaseFactory, GrantTemplateFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -505,6 +505,208 @@ describe.sequential("WizardClientComponent", () => {
 
 			await waitFor(() => {
 				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
+		});
+	});
+
+	describe("RAG Sources Snapshot Capture", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("captures snapshot when grant sections are created", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const applicationWithoutSections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					id: "template-1",
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWithoutSections });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+			expect(captureTempSourcesSnapshot).not.toHaveBeenCalled();
+
+			const applicationWithSections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					id: "template-1",
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWithSections });
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
+			});
+		});
+
+		it("does not capture snapshot when sections are empty", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					id: "template-1",
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(captureTempSourcesSnapshot).not.toHaveBeenCalled();
+		});
+
+		it("captures snapshot when sections length changes from 1 to 2", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const applicationWith1Section = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWith1Section });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledTimes(1);
+			});
+
+			const applicationWith2Sections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [
+						GrantSectionBaseFactory.build({ id: "section-1", order: 0, title: "Section 1" }),
+						GrantSectionBaseFactory.build({ id: "section-2", order: 1, title: "Section 2" }),
+					],
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWith2Sections });
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledTimes(2);
+			});
+		});
+
+		it("does not capture snapshot when sections length stays the same", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
+			});
+
+			useApplicationStore.setState({ application });
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
+		});
+
+		it("captures snapshot when sections are deleted (length changes)", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const applicationWith2Sections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [
+						GrantSectionBaseFactory.build({ id: "section-1", order: 0, title: "Section 1" }),
+						GrantSectionBaseFactory.build({ id: "section-2", order: 1, title: "Section 2" }),
+					],
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWith2Sections });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
+			});
+
+			const applicationWith1Section = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application: applicationWith1Section });
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledTimes(2);
+			});
+		});
+
+		it("does not capture snapshot when grant_sections is undefined", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: undefined,
+					id: "template-1",
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(captureTempSourcesSnapshot).not.toHaveBeenCalled();
+		});
+
+		it("captures snapshot immediately on mount when sections exist", async () => {
+			const captureTempSourcesSnapshot = vi.fn();
+			useWizardStore.setState({ captureTempSourcesSnapshot });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [
+						GrantSectionBaseFactory.build({ id: "section-1", order: 0, title: "Section 1" }),
+						GrantSectionBaseFactory.build({ id: "section-2", order: 1, title: "Section 2" }),
+					],
+					id: "template-1",
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(captureTempSourcesSnapshot).toHaveBeenCalledOnce();
 			});
 		});
 	});

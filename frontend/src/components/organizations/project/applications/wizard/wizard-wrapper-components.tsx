@@ -170,12 +170,18 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 	);
 }
 
-function generateFooterRightButtonProps(currentStep: WizardStep, hasApplicationText?: boolean) {
+function generateFooterRightButtonProps(
+	currentStep: WizardStep,
+	hasApplicationText?: boolean,
+	shouldRegenerate?: boolean,
+) {
+	const isStep1 = currentStep === WizardStep.APPLICATION_DETAILS;
 	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
 	const isResearchDeepDiveStep = currentStep === WizardStep.RESEARCH_DEEP_DIVE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	const shouldShowGenerate = isResearchDeepDiveStep && !hasApplicationText;
+	const shouldShowRegenerate = isStep1 && shouldRegenerate;
 
 	return {
 		leftIcon: (() => {
@@ -188,6 +194,9 @@ function generateFooterRightButtonProps(currentStep: WizardStep, hasApplicationT
 			return undefined;
 		})(),
 		rightButtonText: (() => {
+			if (shouldShowRegenerate) {
+				return "Regenerate";
+			}
 			if (isApproveStep) {
 				return "Approve and Continue";
 			}
@@ -199,9 +208,10 @@ function generateFooterRightButtonProps(currentStep: WizardStep, hasApplicationT
 			}
 			return "Next";
 		})(),
-		rightIcon: shouldShowGenerate ? undefined : (
-			<Image alt="Go ahead" height={15} src="/icons/go-ahead-white.svg" width={15} />
-		),
+		rightIcon:
+			shouldShowGenerate || shouldShowRegenerate ? undefined : (
+				<Image alt="Go ahead" height={15} src="/icons/go-ahead-white.svg" width={15} />
+			),
 	};
 }
 
@@ -332,6 +342,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const router = useRouter();
 
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
+	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
 
 	const title = useApplicationStore((state) => state.application?.title);
 	const applicationText = useApplicationStore((state) => state.application?.text);
@@ -342,10 +353,12 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const { trackEvent, trackNavigation } = useWizardAnalytics();
 
 	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
+	const hasSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
+	const shouldRegenerate = hasSections && shouldTriggerTemplateGeneration();
 
 	const { leftIcon, rightButtonText, rightIcon } = useMemo(
-		() => generateFooterRightButtonProps(currentStep, hasApplicationText),
-		[currentStep, hasApplicationText],
+		() => generateFooterRightButtonProps(currentStep, hasApplicationText, shouldRegenerate),
+		[currentStep, hasApplicationText, shouldRegenerate],
 	);
 
 	const validation = validateStepNext();
