@@ -147,7 +147,6 @@ async def test_pipeline_backend_error_during_generation(
     trace_id: TraceId,
     create_pubsub_topics: None,
 ) -> None:
-    # Create completed jobs for earlier stages so pipeline starts at SECTION_SYNTHESIS
     from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 
     async with async_session_maker() as session:
@@ -174,8 +173,6 @@ async def test_pipeline_backend_error_during_generation(
             "research_plan_text": "Generated research plan text",
         }
 
-        # Create completed jobs for all stages except the final one
-        # Only WORKPLAN_GENERATION stage needs checkpoint data
         for stage in GRANT_APPLICATION_STAGES_ORDER[:-1]:
             job = RagGenerationJob(
                 grant_application_id=test_application_with_template.id,

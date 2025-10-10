@@ -5,6 +5,7 @@
     "grant_sections": [
         {
             "id": "abstract_section",
+            "length_constraint": null,
             "order": 1,
             "parent_id": null,
             "title": "Abstracts"
@@ -112,6 +113,7 @@
         },
         {
             "id": "project_description_section",
+            "length_constraint": null,
             "order": 4,
             "parent_id": null,
             "title": "Project Description"
@@ -395,6 +397,7 @@
         },
         {
             "id": "clinical_trial_section",
+            "length_constraint": null,
             "order": 10,
             "parent_id": null,
             "title": "Clinical Trial Documentation"

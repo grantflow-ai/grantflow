@@ -50,6 +50,7 @@
         },
         {
             "id": "section_1a",
+            "length_constraint": null,
             "order": 2,
             "parent_id": null,
             "title": "Section 1a: The idea \u2013 Breakthrough Innovation potential"
@@ -213,6 +214,7 @@
         },
         {
             "id": "section_1b",
+            "length_constraint": null,
             "order": 6,
             "parent_id": null,
             "title": "Section 1b: Approach and Methodology"
@@ -322,6 +324,7 @@
         },
         {
             "id": "proof_of_concept_plan",
+            "length_constraint": null,
             "order": 9,
             "parent_id": "section_1b",
             "title": "1b.iii. Plan of the proof of concept - Description of the Action"
