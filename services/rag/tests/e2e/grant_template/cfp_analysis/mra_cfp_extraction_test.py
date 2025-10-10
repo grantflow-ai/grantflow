@@ -140,21 +140,20 @@ async def test_mra_cfp_extraction_end_to_end(
         assert "id" in section
         assert "title" in section
         assert "parent_id" in section
-        assert "constraints" in section
 
         assert isinstance(section["id"], str)
         assert isinstance(section["title"], str)
-        assert isinstance(section["constraints"], list)
+        constraint = section.get("length_constraint")
+        if constraint is not None:
+            assert isinstance(constraint, dict)
 
     extracted_titles = [section["title"].lower() for section in content_sections]
 
     logger.info("Extracted %d sections:", len(content_sections))
     for section in content_sections:
-        logger.info(
-            "  - %s (constraints: %d)",
-            section["title"],
-            len(section.get("constraints", [])),
-        )
+        constraint = section.get("length_constraint")
+        constraint_summary = "none" if constraint is None else f"{constraint['type']}={constraint['value']}"
+        logger.info("  - %s (length_constraint: %s)", section["title"], constraint_summary)
 
     research_or_award_found = any(
         "research" in title or "award" in title or "proposal" in title for title in extracted_titles

@@ -77,10 +77,7 @@ def _get_section_length_requirements(section: GrantLongFormSection) -> str:
     if length_constraint := section.get("length_constraint"):
         min_words, max_words = compute_word_bounds(length_constraint)
         if length_constraint["type"] == "characters":
-            return (
-                f"Target length: {min_words}-{max_words} words "
-                f"(~{length_constraint['value']} characters from CFP)"
-            )
+            return f"Target length: {min_words}-{max_words} words (~{length_constraint['value']} characters from CFP)"
         source = length_constraint.get("source") or "CFP-specified"
         return f"Target length: {min_words}-{max_words} words ({source})"
 

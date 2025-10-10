@@ -151,18 +151,17 @@ async def generate_section_dependencies(
     classification: list[SectionClassification],
     trace_id: str,
 ) -> SectionDependencyResult:
-    enriched: list[EnrichedSection] = []
-    for cls in classification:
-        enriched.append(
-            EnrichedSection(
-                id=cls["id"],
-                title="",
-                long_form=cls["long_form"],
-                is_plan=cls["is_plan"],
-                clinical=cls["clinical"],
-                needs_writing=cls["needs_writing"],
-            )
+    enriched = [
+        EnrichedSection(
+            id=cls["id"],
+            title="",
+            long_form=cls["long_form"],
+            is_plan=cls["is_plan"],
+            clinical=cls["clinical"],
+            needs_writing=cls["needs_writing"],
         )
+        for cls in classification
+    ]
 
     messages = DEPENDENCIES_USER_PROMPT.to_string(
         sections=enriched,

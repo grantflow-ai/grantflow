@@ -4,14 +4,15 @@ from unittest.mock import AsyncMock
 import pytest
 from packages.db.src.json_objects import (
     CFPAnalysis,
-    CFPAnalysisConstraint,
     CFPSection,
     GrantLongFormSection,
+    LengthConstraint,
     OrganizationNamespace,
 )
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.template_generation import handle_template_generation, is_long_form_section
+from services.rag.src.utils.lengths import WORDS_PER_PAGE, constraint_to_word_limit
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -34,47 +35,46 @@ async def test_mra_template_generation_end_to_end(
                 id="research_proposal",
                 title="Research Proposal",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="10 pages maximum", quote=""),
-                ],
+                length_constraint=LengthConstraint(
+                    type="words",
+                    value=10 * WORDS_PER_PAGE,
+                    source="10 pages maximum",
+                ),
             ),
             CFPSection(
                 id="specific_aims",
                 title="Specific Aims",
                 parent_id="research_proposal",
-                constraints=[],
             ),
             CFPSection(
                 id="background",
                 title="Background and Significance",
                 parent_id="research_proposal",
-                constraints=[],
             ),
             CFPSection(
                 id="research_design",
                 title="Research Design and Methods",
                 parent_id="research_proposal",
-                constraints=[],
             ),
             CFPSection(
                 id="timeline",
                 title="Project Timeline",
                 parent_id="research_proposal",
-                constraints=[],
             ),
             CFPSection(
                 id="budget_justification",
                 title="Budget and Budget Justification",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="2 pages", quote=""),
-                ],
+                length_constraint=LengthConstraint(
+                    type="words",
+                    value=2 * WORDS_PER_PAGE,
+                    source="2 pages",
+                ),
             ),
             CFPSection(
                 id="facilities",
                 title="Facilities and Resources",
                 parent_id=None,
-                constraints=[],
             ),
         ],
         deadlines=["2024-12-15"],
@@ -133,7 +133,7 @@ async def test_mra_template_generation_end_to_end(
 
     performance_context.end_stage()
 
-    total_words = sum(s.get("max_words", 0) for s in long_form_sections)
+    total_words = sum(constraint_to_word_limit(section.get("length_constraint")) or 0 for section in long_form_sections)
     performance_context.set_metadata("total_sections", len(grant_sections))
     performance_context.set_metadata("total_word_count", total_words)
 

@@ -23,6 +23,8 @@ from testing.factories import GrantSectionFactory
 from testing.scenarios.base import BaseScenario, list_available_scenarios, load_scenario
 from testing.utils import create_grant_application_data, process_granting_institution
 
+from services.rag.src.utils.lengths import create_word_constraint
+
 load_dotenv()
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin", "testing.pubsub_test_plugin"]

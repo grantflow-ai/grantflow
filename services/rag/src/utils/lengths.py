@@ -76,8 +76,7 @@ def get_word_bounds_from_section(
     *,
     default_max_words: int = DEFAULT_SECTION_MAX_WORDS,
     min_ratio: float = MIN_WORDS_RATIO,
-) -> tuple[int, int]:
-    ...
+) -> tuple[int, int]: ...
 
 
 @overload
@@ -86,8 +85,7 @@ def get_word_bounds_from_section(
     *,
     default_max_words: int = DEFAULT_SECTION_MAX_WORDS,
     min_ratio: float = MIN_WORDS_RATIO,
-) -> tuple[int, int]:
-    ...
+) -> tuple[int, int]: ...
 
 
 def get_word_bounds_from_section(
@@ -106,8 +104,7 @@ def get_max_words_from_section(
     section: GrantLongFormSection,
     *,
     default_max_words: int = DEFAULT_SECTION_MAX_WORDS,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
@@ -115,8 +112,7 @@ def get_max_words_from_section(
     section: ResearchComponentGenerationDTO,
     *,
     default_max_words: int = DEFAULT_SECTION_MAX_WORDS,
-) -> int:
-    ...
+) -> int: ...
 
 
 def get_max_words_from_section(

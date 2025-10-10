@@ -12,24 +12,23 @@ from services.rag.src.utils.evaluation.text.structure import (
     evaluate_word_count_compliance,
 )
 
+WORD_LIMIT = 10
+
 
 class TestWordCountCompliance:
     def test_evaluate_word_count_compliance_within_limit(self) -> None:
         content = "This is a test content with exactly ten words total."
-        length_constraint={"type": "words", "value": 15, "source": None}
-        score = evaluate_word_count_compliance(content, max_words)
+        score = evaluate_word_count_compliance(content, WORD_LIMIT)
         assert score > 0.6, f"Expected high compliance score, got {score}"
 
     def test_evaluate_word_count_compliance_at_limit(self) -> None:
         content = "This content has exactly ten words in total here."
-        length_constraint={"type": "words", "value": 10, "source": None}
-        score = evaluate_word_count_compliance(content, max_words)
+        score = evaluate_word_count_compliance(content, WORD_LIMIT)
         assert score >= 0.9, f"Content at limit should score high, got {score}"
 
     def test_evaluate_word_count_compliance_over_limit(self) -> None:
         content = " ".join(["word"] * 20)
-        length_constraint={"type": "words", "value": 10, "source": None}
-        score = evaluate_word_count_compliance(content, max_words)
+        score = evaluate_word_count_compliance(content, WORD_LIMIT)
         assert score < 0.5, f"Expected low compliance score for excess, got {score}"
 
     def test_evaluate_word_count_compliance_no_limit(self) -> None:
@@ -40,8 +39,7 @@ class TestWordCountCompliance:
 
     def test_evaluate_word_count_compliance_empty_content(self) -> None:
         content = ""
-        length_constraint={"type": "words", "value": 100, "source": None}
-        score = evaluate_word_count_compliance(content, max_words)
+        score = evaluate_word_count_compliance(content, WORD_LIMIT)
         assert score == 0.0, f"Empty content should score 0.0, got {score}"
 
 
