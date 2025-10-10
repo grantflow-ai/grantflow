@@ -45,10 +45,10 @@ class CFPAnalysisRequirementWithQuote(TypedDict):
     category: str
 
 
-class CFPConstraint(TypedDict):
-    constraint_type: str
-    constraint_value: str
-    source_quote: str
+class LengthConstraint(TypedDict):
+    type: Literal["words", "characters"]
+    value: int
+    source: str | None
 
 
 class GrantElement(TypedDict):
@@ -66,14 +66,11 @@ class GrantLongFormSection(GrantElement):
     is_clinical_trial: bool | None
     is_detailed_research_plan: bool | None
     keywords: list[str]
-    max_words: int
     search_queries: list[str]
     topics: list[str]
     requirements: NotRequired[list["CFPAnalysisRequirementWithQuote"]]
     guidelines: NotRequired[list[str]]
-    length_limit: NotRequired[int | None]
-    length_source: NotRequired[str | None]
-    other_limits: NotRequired[list[CFPConstraint]]
+    length_constraint: NotRequired[LengthConstraint | None]
     definition: NotRequired[str | None]
 
 
@@ -98,12 +95,6 @@ class GrantTemplateRagJobCheckpoint(TypedDict):
     submission_date: NotRequired[str | None]
 
 
-class CFPAnalysisConstraint(TypedDict):
-    type: str
-    value: str
-    quote: str
-
-
 CFPAnalysisCategory = Literal["research", "budget", "team", "compliance", "other"]
 
 
@@ -111,7 +102,7 @@ class CFPSection(TypedDict):
     id: str
     title: str
     parent_id: NotRequired[str | None]
-    constraints: NotRequired[list[CFPAnalysisConstraint]]
+    length_constraint: NotRequired[LengthConstraint | None]
     categories: NotRequired[list[CFPAnalysisCategory]]
 
 
@@ -119,5 +110,5 @@ class CFPAnalysis(TypedDict):
     subject: str
     sections: list[CFPSection]
     deadlines: list[str]
-    global_constraints: list[CFPAnalysisConstraint]
+    global_constraints: list[LengthConstraint]
     organization: NotRequired[OrganizationNamespace | None]

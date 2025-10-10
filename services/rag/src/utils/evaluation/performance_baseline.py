@@ -8,6 +8,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.evaluation.pipeline import evaluate_scientific_content
 from services.rag.src.utils.evaluation.quality_standards import ContentType, assess_content_quality
+from services.rag.src.utils.lengths import create_word_constraint
 
 logger = get_logger(__name__)
 
@@ -112,7 +113,7 @@ BASELINE_CONFIGS: dict[ContentType, GrantLongFormSection] = {
         is_clinical_trial=True,
         is_detailed_research_plan=False,
         keywords=["clinical trial", "efficacy", "safety", "biomarker"],
-        max_words=500,
+        length_constraint=create_word_constraint(500, "Baseline"),
         search_queries=["clinical trial results", "biomarker efficacy"],
         topics=["clinical outcomes"],
     ),
@@ -127,7 +128,7 @@ BASELINE_CONFIGS: dict[ContentType, GrantLongFormSection] = {
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "proteomics", "validation"],
-        max_words=400,
+        length_constraint=create_word_constraint(400, "Baseline"),
         search_queries=["biomarker discovery", "proteomics analysis"],
         topics=["biomedical research"],
     ),
@@ -142,7 +143,7 @@ BASELINE_CONFIGS: dict[ContentType, GrantLongFormSection] = {
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["methodology", "statistical analysis", "study design"],
-        max_words=350,
+        length_constraint=create_word_constraint(350, "Baseline"),
         search_queries=["research methodology", "statistical methods"],
         topics=["research methods"],
     ),
@@ -157,7 +158,7 @@ BASELINE_CONFIGS: dict[ContentType, GrantLongFormSection] = {
         is_clinical_trial=False,
         is_detailed_research_plan=False,
         keywords=["literature review", "meta-analysis", "systematic review"],
-        max_words=400,
+        length_constraint=create_word_constraint(400, "Baseline"),
         search_queries=["systematic review", "meta-analysis"],
         topics=["literature synthesis"],
     ),
@@ -172,7 +173,7 @@ BASELINE_CONFIGS: dict[ContentType, GrantLongFormSection] = {
         is_clinical_trial=False,
         is_detailed_research_plan=False,
         keywords=["preliminary data", "pilot study"],
-        max_words=200,
+        length_constraint=create_word_constraint(200, "Baseline"),
         search_queries=["pilot study results"],
         topics=["preliminary findings"],
     ),

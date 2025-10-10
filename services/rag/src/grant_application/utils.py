@@ -74,7 +74,6 @@ def is_grant_long_form_section(value: Any) -> bool:
         "is_clinical_trial",
         "is_detailed_research_plan",
         "keywords",
-        "max_words",
         "search_queries",
         "topics",
     }

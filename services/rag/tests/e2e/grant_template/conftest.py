@@ -29,6 +29,8 @@ from testing.factories import (
     RagFileFactory,
 )
 
+from services.rag.src.utils.lengths import get_max_words_from_section
+
 
 @pytest.fixture
 def cfp_files_dir() -> Path:
@@ -819,11 +821,11 @@ def validate_metadata_quality(
         f"(expected {min_queries}-{max_queries})"
     )
 
-    max_words = section.get("max_words", 0)
+    max_words = get_max_words_from_section(section)
     min_words = quality_metrics["max_words_range"]["min"]
     max_words_limit = quality_metrics["max_words_range"]["max"]
     assert min_words <= max_words <= max_words_limit, (
-        f"Unexpected max_words for {section_title}: {max_words} (expected {min_words}-{max_words_limit})"
+        f"Unexpected word allocation for {section_title}: {max_words} (expected {min_words}-{max_words_limit})"
     )
 
 
@@ -833,8 +835,8 @@ def validate_dual_field_preservation(
 ) -> None:
     section_title = section.get("title", "Unknown")
 
-    assert "max_words" in section, f"max_words missing for {section_title}"
-    assert section["max_words"] > 0, f"max_words invalid for {section_title}: {section['max_words']}"
+    max_words = get_max_words_from_section(section)
+    assert max_words > 0, f"Invalid computed word limit for {section_title}: {max_words}"
 
     if has_cfp_constraint:
         assert "length_limit" in section, f"length_limit missing for {section_title}"

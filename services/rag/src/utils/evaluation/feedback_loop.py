@@ -19,6 +19,7 @@ from services.rag.src.utils.evaluation.quality_standards import (
     evaluate_missing_information,
     get_target_threshold,
 )
+from services.rag.src.utils.lengths import get_max_words_from_section
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
@@ -241,7 +242,7 @@ async def _generate_missing_info_error(
         missing_info_suffix=MISSING_INFO_SUFFIX,
         section_title=section_config["title"],
         content_type=content_type.value,
-        target_words=section_config.get("max_words", 500),
+        target_words=get_max_words_from_section(section_config, default_max_words=500),
         keywords=keywords_text if keywords_text else "None specified",
     )
 
@@ -293,7 +294,7 @@ async def _improve_content_with_llm(
         improvement_instructions=formatted_instructions,
         content_type=content_type.value,
         missing_info_format=MISSING_INFO_FORMAT,
-        target_words=section_config.get("max_words", 500),
+        target_words=get_max_words_from_section(section_config, default_max_words=500),
         section_title=section_config["title"],
         rag_context=rag_text if rag_context else "No additional context provided",
         research_objectives=objectives_text if research_objectives else "No specific objectives provided",

@@ -2,16 +2,16 @@ import math
 import re
 from typing import TYPE_CHECKING, Any, Final, cast
 
-from packages.db.src.json_objects import ResearchDeepDive
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
 from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
-from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.evaluation import with_evaluation
+from services.rag.src.utils.lengths import compute_word_bounds
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -29,6 +29,8 @@ DEFAULT_BATCH_SIZE: Final[int] = 5
 COMPONENT_TIMEOUT: Final[float] = 480.0
 LENGTH_TOLERANCE_RATIO: Final[float] = 0.05
 MAX_LENGTH_ADJUST_ATTEMPTS: Final[int] = 2
+DEFAULT_OBJECTIVE_MAX_WORDS: Final[int] = 700
+DEFAULT_TASK_MAX_WORDS: Final[int] = 400
 
 TASK_CONTENT_GUIDELINES: Final[str] = """For this task:
 - Be specific about the methodologies, protocols, and techniques that will be used
@@ -165,6 +167,11 @@ def _word_count(text: str) -> int:
     return len(text.split())
 
 
+def _component_word_bounds(component: ResearchComponentGenerationDTO) -> tuple[int, int]:
+    default_max = DEFAULT_OBJECTIVE_MAX_WORDS if component["type"] == "objective" else DEFAULT_TASK_MAX_WORDS
+    return compute_word_bounds(component.get("length_constraint"), default_max_words=default_max)
+
+
 def _within_length_bounds(*, word_count: int, min_words: int, max_words: int) -> bool:
     tolerance = max(5, math.ceil(max_words * LENGTH_TOLERANCE_RATIO))
     upper_limit = max_words + tolerance
@@ -219,11 +226,26 @@ async def adjust_component_length(
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
-    max_words = component.get("max_words")
-    if not max_words:
-        return component_text
+    min_words, max_words = _component_word_bounds(component)
+    component_section = cast(
+        "GrantLongFormSection",
+        {
+            "id": component["number"],
+            "order": 0,
+            "title": component["title"],
+            "evidence": "",
+            "parent_id": None,
+            "depends_on": [],
+            "generation_instructions": component["instructions"],
+            "is_clinical_trial": False,
+            "is_detailed_research_plan": component["type"] == "objective",
+            "keywords": [],
+            "search_queries": component.get("search_queries", []),
+            "topics": [],
+            "length_constraint": component.get("length_constraint"),
+        },
+    )
 
-    min_words = max(1, int(max_words * MIN_WORDS_RATIO))
     word_count = _word_count(component_text)
 
     if _within_length_bounds(word_count=word_count, min_words=min_words, max_words=max_words):
@@ -261,7 +283,7 @@ async def adjust_component_length(
             **get_evaluation_kwargs(
                 "generate_work_plan",
                 job_manager,
-                section_config=None,
+                section_config=component_section,
                 rag_context=rag_results,
                 research_objectives=form_inputs.get("research_objectives"),
             ),
@@ -303,7 +325,7 @@ async def adjust_component_length(
             **get_evaluation_kwargs(
                 "generate_work_plan",
                 job_manager,
-                section_config=None,
+                section_config=component_section,
                 rag_context=rag_results,
                 research_objectives=form_inputs.get("research_objectives"),
             ),
@@ -347,6 +369,8 @@ async def generate_work_plan_component_text(
     relationship_guidance = (
         TASK_RELATIONSHIP_GUIDELINES if component["type"] == "task" else OBJECTIVE_RELATIONSHIP_GUIDELINES
     )
+
+    min_words, max_words = _component_word_bounds(component)
 
     prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
         description=component.get("description", "none given"),
@@ -397,15 +421,15 @@ async def generate_work_plan_component_text(
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
         sources={"rag_results": rag_results, "form_inputs": form_inputs},
-        max_length=component["max_words"],
+        max_length=max_words,
         trace_id=trace_id,
     ):
         return source_validation_error
 
     try:
         component_text = await with_evaluation(
-            max_words=component["max_words"],
-            min_words=int(component["max_words"] * MIN_WORDS_RATIO),
+            max_words=max_words,
+            min_words=min_words,
             prompt=prompt,
             prompt_handler=handle_work_plan_component_generation,
             prompt_identifier="generate_work_component",

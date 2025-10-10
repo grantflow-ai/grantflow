@@ -19,6 +19,8 @@ from packages.shared_utils.src.serialization import serialize
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.utils.lengths import create_word_constraint
+
 TraceId = str
 
 
@@ -437,7 +439,7 @@ async def test_grant_application_missing_cfp_analysis(
                     "topics": ["test"],
                     "generation_instructions": "Test instructions",
                     "depends_on": [],
-                    "max_words": 100,
+                    "length_constraint": create_word_constraint(100, "Test"),
                     "queries": ["test"],
                     "is_plan": False,
                     "clinical": False,

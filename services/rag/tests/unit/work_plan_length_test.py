@@ -10,6 +10,7 @@ from services.rag.src.grant_application.generate_work_plan_text import (
     _truncate_to_word_limit,
     adjust_component_length,
 )
+from services.rag.src.utils.lengths import constraint_to_word_limit
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -27,7 +28,7 @@ async def test_adjust_component_length_includes_work_plan_context(mocker: Mocker
         "guiding_questions": ["Q1", "Q2"],
         "search_queries": ["test query"],
         "relationships": [("1.0", "Relies on objective output")],
-        "max_words": 50,
+        "length_constraint": {"type": "words", "value": 50, "source": None},
         "type": "task",
     }
 
@@ -55,7 +56,9 @@ async def test_adjust_component_length_includes_work_plan_context(mocker: Mocker
     called_prompt = mock_with_evaluation.await_args_list[0].kwargs["prompt"]
     assert "Work Plan So Far" in called_prompt, "Adjustment prompt should include work plan context header."
     assert work_plan_so_far in called_prompt, "Adjustment prompt should embed the existing work plan text."
-    assert _truncate_to_word_limit(result, component["max_words"]) == result, "Result must respect max words."
+    max_words = constraint_to_word_limit(component["length_constraint"])
+    assert max_words is not None
+    assert _truncate_to_word_limit(result, max_words) == result, "Result must respect max words."
 
 
 @pytest.mark.asyncio
@@ -68,12 +71,14 @@ async def test_adjust_component_length_fallback_truncation_evaluated(mocker: Moc
         "guiding_questions": ["Q1", "Q2"],
         "search_queries": ["long query"],
         "relationships": [],
-        "max_words": 60,
+        "length_constraint": {"type": "words", "value": 60, "source": None},
         "type": "objective",
     }
 
     long_text = " ".join(["content"] * 150)
-    truncated_expected = _truncate_to_word_limit(long_text, component["max_words"])
+    max_words = constraint_to_word_limit(component["length_constraint"])
+    assert max_words is not None
+    truncated_expected = _truncate_to_word_limit(long_text, max_words)
 
     job_manager = AsyncMock()
     evaluation_mock = mocker.patch(
