@@ -46,9 +46,25 @@ vi.mock("./wizard-wrapper-components", () => ({
 	WizardHeader: () => <div data-testid="wizard-header">Header</div>,
 }));
 
-vi.mock("./modal/wizard-dialog", () => ({
-	WizardDialog: () => <div data-testid="wizard-dialog">Dialog</div>,
-}));
+const mockDialogOpen = vi.fn();
+const mockDialogClose = vi.fn();
+
+vi.mock("./modal/wizard-dialog", async () => {
+	const { forwardRef } = await import("react");
+	return {
+		WizardDialog: forwardRef((_: any, ref: any) => {
+			if (ref) {
+				Object.assign(ref, {
+					current: {
+						close: mockDialogClose,
+						open: mockDialogOpen,
+					},
+				});
+			}
+			return <div data-testid="wizard-dialog">Dialog</div>;
+		}),
+	};
+});
 
 vi.mock("@/components/shared/notification-handler", () => ({
 	NotificationHandler: ({ notification }: any) => (
@@ -57,9 +73,6 @@ vi.mock("@/components/shared/notification-handler", () => ({
 }));
 
 vi.mock("@/hooks/use-application-notifications", () => ({
-	isAutofillProgressMessage: () => false,
-	isRagProcessingStatusMessage: () => false,
-	isSourceProcessingNotificationMessage: () => false,
 	useApplicationNotifications: () => ({
 		connectionStatus: "connected",
 		connectionStatusColor: "green",
@@ -292,6 +305,207 @@ describe.sequential("WizardClientComponent", () => {
 			});
 
 			expect(screen.getByTestId("wizard-page")).toBeInTheDocument();
+		});
+	});
+
+	describe("Application RAG Sources Failure Modal", () => {
+		beforeEach(() => {
+			mockDialogOpen.mockClear();
+			mockDialogClose.mockClear();
+		});
+
+		it("shows modal when first failed source appears", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
+		});
+
+		it("does not show modal when failed count stays the same", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application });
+			const { rerender } = renderWizardClient();
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
+
+			// Update with same failed count
+			useApplicationStore.setState({ application });
+			rerender(
+				<WizardClientComponent
+					applicationId={application.id}
+					organizationId="org-123"
+					projectId="project-456"
+				/>,
+			);
+
+			// Should still be called only once
+			expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+		});
+
+		it("shows modal again when failed count increases", async () => {
+			const application1 = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application: application1 });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
+
+			// Add second failed source
+			const application2 = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted2.pdf", sourceId: "2", status: "FAILED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: application2 });
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(2);
+			});
+		});
+
+		it("does not show modal when there are INDEXING sources", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "processing.pdf", sourceId: "2", status: "INDEXING" },
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockDialogOpen).not.toHaveBeenCalled();
+		});
+
+		it("does not show modal when there are CREATED sources", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "new.pdf", sourceId: "2", status: "CREATED" },
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockDialogOpen).not.toHaveBeenCalled();
+		});
+
+		it("does not show modal when there are no sources", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [],
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockDialogOpen).not.toHaveBeenCalled();
+		});
+
+		it("does not show modal when there are no failed sources", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "success.pdf", sourceId: "1", status: "FINISHED" },
+					{ filename: "success2.pdf", sourceId: "2", status: "FINISHED" },
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockDialogOpen).not.toHaveBeenCalled();
+		});
+
+		it("shows modal when failed count decreases then increases", async () => {
+			// Start with 2 failed
+			const application1 = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted2.pdf", sourceId: "2", status: "FAILED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: application1 });
+			renderWizardClient();
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
+
+			// Decrease to 1 failed (user deleted one)
+			const application2 = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application: application2 });
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(2);
+			});
+
+			// Increase back to 2 failed
+			const application3 = ApplicationWithTemplateFactory.build({
+				rag_sources: [
+					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted3.pdf", sourceId: "3", status: "FAILED" },
+				],
+			});
+
+			useApplicationStore.setState({ application: application3 });
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(3);
+			});
+		});
+
+		it("shows modal only after INDEXING completes and failure detected", async () => {
+			// Start with INDEXING
+			const application1 = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "INDEXING" }],
+			});
+
+			useApplicationStore.setState({ application: application1 });
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockDialogOpen).not.toHaveBeenCalled();
+
+			// Update to FAILED
+			const application2 = ApplicationWithTemplateFactory.build({
+				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "FAILED" }],
+			});
+
+			useApplicationStore.setState({ application: application2 });
+
+			await waitFor(() => {
+				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
+			});
 		});
 	});
 });
