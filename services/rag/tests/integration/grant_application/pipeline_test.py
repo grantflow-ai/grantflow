@@ -98,24 +98,24 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
                 return_value=None,
             ),
             patch(
-                "services.rag.src.grant_application.handlers.handle_generate_sections_stage",
-                return_value=generate_sections_dto,
-            ),
-            patch(
-                "services.rag.src.grant_application.handlers.handle_extract_relationships_stage",
+                "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
                 return_value=extract_relationships_dto,
             ),
             patch(
-                "services.rag.src.grant_application.handlers.handle_enrich_objectives_stage",
+                "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
                 return_value=enrich_objectives_dto,
             ),
             patch(
-                "services.rag.src.grant_application.handlers.handle_enrich_terminology_stage",
+                "services.rag.src.grant_application.pipeline.handle_enrich_terminology_stage",
                 return_value=enrich_terminology_dto,
             ),
             patch(
-                "services.rag.src.grant_application.handlers.handle_generate_research_plan_stage",
+                "services.rag.src.grant_application.pipeline.handle_generate_research_plan_stage",
                 return_value=final_dto,
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+                return_value=generate_sections_dto,
             ),
             patch(
                 "packages.shared_utils.src.pubsub.publish_email_notification",
@@ -160,7 +160,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
 
     with (
         patch("services.rag.src.utils.checks.verify_rag_sources_indexed", return_value=None),
-        patch("services.rag.src.grant_application.handlers.handle_generate_sections_stage") as mock_final_stage,
+        patch("services.rag.src.grant_application.pipeline.handle_generate_sections_stage") as mock_final_stage,
         patch("packages.shared_utils.src.pubsub.publish_email_notification", return_value=None),
         patch("packages.shared_utils.src.pubsub.publish_notification", return_value=None),
     ):

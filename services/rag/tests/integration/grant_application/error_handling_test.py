@@ -166,9 +166,53 @@ async def test_pipeline_backend_error_during_generation(
         )
         assert app
 
-        with patch(
-            "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
-            side_effect=BackendError("LLM error"),
+        with (
+            patch(
+                "services.rag.src.grant_application.pipeline.verify_rag_sources_indexed",
+                return_value=None,
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
+                return_value={
+                    "section_texts": [],
+                    "work_plan_section": {},
+                    "relationships": [],
+                },
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+                return_value={
+                    "section_texts": [],
+                    "work_plan_section": {},
+                    "relationships": [],
+                    "enrichment_responses": [],
+                },
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_enrich_terminology_stage",
+                return_value={
+                    "section_texts": [],
+                    "work_plan_section": {},
+                    "relationships": [],
+                    "enrichment_responses": [],
+                    "wikidata_enrichments": [],
+                },
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_generate_research_plan_stage",
+                return_value={
+                    "section_texts": [],
+                    "work_plan_section": {},
+                    "relationships": [],
+                    "enrichment_responses": [],
+                    "wikidata_enrichments": [],
+                    "research_plan_text": "Mocked research plan",
+                },
+            ),
+            patch(
+                "services.rag.src.grant_application.pipeline.handle_generate_sections_stage",
+                side_effect=BackendError("LLM error"),
+            ),
         ):
             await handle_grant_application_pipeline(
                 grant_application=app,
@@ -186,4 +230,4 @@ async def test_pipeline_backend_error_during_generation(
         assert job
         assert job.status == RagGenerationStatusEnum.FAILED
         assert job.error_message is not None
-        assert "ValidationError" in job.error_message
+        assert "BackendError" in job.error_message
