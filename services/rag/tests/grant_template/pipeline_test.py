@@ -42,7 +42,6 @@ async def test_handle_grant_template_pipeline_template_generation_requires_check
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    # Set cfp_analysis to trigger template generation stage
     from sqlalchemy import update
 
     async with async_session_maker() as session:
@@ -62,7 +61,6 @@ async def test_handle_grant_template_pipeline_template_generation_requires_check
     )
 
     assert result is None
-    # Should not call generation because there's no checkpoint data from cfp_analysis stage
     generation_mock.assert_not_called()
 
 
@@ -72,18 +70,15 @@ async def test_handle_grant_template_pipeline_propagates_backend_error(
     async_session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> None:
-    # Create a completed CFP_ANALYSIS job so pipeline will try TEMPLATE_GENERATION
     from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
     from packages.db.src.tables import RagGenerationJob
     from sqlalchemy import update
 
     async with async_session_maker() as session:
-        # Update template with cfp_analysis
         await session.execute(
             update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(cfp_analysis={"sections": []})
         )
 
-        # Create completed CFP_ANALYSIS job
         cfp_job = RagGenerationJob(
             grant_template_id=grant_template.id,
             template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
@@ -104,5 +99,4 @@ async def test_handle_grant_template_pipeline_propagates_backend_error(
         trace_id=trace_id,
     )
 
-    # Verify handler was called and error was handled
     generation_mock.assert_called()

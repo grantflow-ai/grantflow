@@ -63,7 +63,6 @@ def distribute_constraint_among_components(
 
     total_words = constraint_to_word_limit(constraint)
     if total_words is None:
-        # No constraint means each component inherits an unconstrained section
         return None
 
     per_component = max(minimum_words, ceil(total_words / component_count))
