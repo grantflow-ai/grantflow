@@ -5,7 +5,6 @@ from packages.db.src.json_objects import CFPAnalysisConstraint, CFPSection
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
@@ -22,41 +21,43 @@ LENGTH_EXTRACTION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="length_extraction",
     template="""# Extract Section Length Constraints
 
-    ## Organization Guidelines
-    ${organization_guidelines}
+## Organization Guidelines
 
-    ## Sections with Constraints
-    ${sections}
+${organization_guidelines}
 
-    ## Task
+## Sections with Constraints
 
-    For each section, extract length constraints and other formatting requirements.
+${sections}
 
-    ### Length Constraints
+## Task
 
-    Parse the "constraints" field and extract length limits:
-    - **Page limits**: "5 pages maximum" -> 2075 words (5 * 415)
-    - **Word limits**: "500 words" -> 500 words
-    - **Character limits**: "2000 characters" -> ~300 words (/ 6.5)
-    - Use 415 words/page conversion factor
+For each section, extract length constraints and other formatting requirements.
 
-    ### Fields
+### Length Constraints
 
-    1. **length_limit**: Total words allowed (integer or null if no limit)
-    2. **length_source**: Human-readable source from CFP (e.g., "5 pages maximum per CFP section 3.2")
-    3. **other_limits**: Non-length constraints (font, spacing, margins, format)
+Parse the "constraints" field and extract length limits:
+- **Page limits**: "5 pages maximum" -> 2075 words (5 * 415)
+- **Word limits**: "500 words" -> 500 words
+- **Character limits**: "2000 characters" -> ~300 words (/ 6.5)
+- Use 415 words/page conversion factor
 
-    ### Guidelines
+### Fields
 
-    - If section has no constraints, set length_limit=null, length_source=null, other_limits=[]
-    - For page limits, convert to words: pages * 415
-    - For character limits, convert to words: chars / 6.5
-    - Preserve exact CFP language in length_source
-    - Move non-length constraints to other_limits
+1. **length_limit**: Total words allowed (integer or null if no limit)
+2. **length_source**: Human-readable source from CFP (e.g., "5 pages maximum per CFP section 3.2")
+3. **other_limits**: Non-length constraints (font, spacing, margins, format)
 
-    ### Output
+### Guidelines
 
-    Return all sections with parsed length information.
+- If section has no constraints, set length_limit=null, length_source=null, other_limits=[]
+- For page limits, convert to words: pages * 415
+- For character limits, convert to words: chars / 6.5
+- Preserve exact CFP language in length_source
+- Move non-length constraints to other_limits
+
+### Output
+
+Return all sections with parsed length information.
 """,
 )
 
@@ -165,7 +166,7 @@ async def extract_length_constraints(
 ) -> LengthExtractionResult:
     messages = LENGTH_EXTRACTION_USER_PROMPT.to_string(
         organization_guidelines=organization_guidelines or "No organization guidelines provided.",
-        sections=serialize(sections).decode("utf-8"),
+        sections=sections,
     )
 
     return await handle_completions_request(

@@ -393,7 +393,6 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
-                # Check if we have existing checkpoint data to resume from
                 checkpoint_data = await job_manager.get_checkpoint_data()
                 completed_substages = checkpoint_data.get("completed_substages", []) if checkpoint_data else []
 
@@ -404,7 +403,6 @@ async def handle_grant_application_pipeline(
                     trace_id=trace_id,
                 )
 
-                # Sub-stage 1: Extract relationships
                 if "extract_relationships" not in completed_substages:
                     await job_manager.ensure_not_cancelled()
 
@@ -441,7 +439,6 @@ async def handle_grant_application_pipeline(
                         )
                     relationships_dto = checkpoint_data
 
-                # Sub-stage 2: Enrich objectives
                 if "enrich_objectives" not in completed_substages:
                     await job_manager.ensure_not_cancelled()
 
@@ -479,7 +476,6 @@ async def handle_grant_application_pipeline(
                         )
                     objectives_dto = checkpoint_data
 
-                # Sub-stage 3: Enrich terminology
                 if "enrich_terminology" not in completed_substages:
                     await job_manager.ensure_not_cancelled()
 

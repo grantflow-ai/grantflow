@@ -255,7 +255,6 @@ async def test_pipeline_handles_stage_error(mocker: MockerFixture) -> None:
     )
     mocker.patch("services.rag.src.grant_application.pipeline.verify_rag_sources_indexed", AsyncMock())
 
-    # Create valid checkpoint data with all required fields
     checkpoint_data = {
         "work_plan_section": {
             "id": "plan",

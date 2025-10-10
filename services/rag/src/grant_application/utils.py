@@ -59,11 +59,7 @@ def generate_application_text(
     return "\n\n".join([f"# {title}", *[create_text_recursively(node) for node in tree]])
 
 
-# Type guards for validating checkpoint DTO structures
-
-
 def is_grant_long_form_section(value: Any) -> bool:
-    """Validate GrantLongFormSection structure."""
     if not isinstance(value, dict):
         return False
 
@@ -87,19 +83,15 @@ def is_grant_long_form_section(value: Any) -> bool:
 
 
 def is_extract_relationships_dto(checkpoint: Any) -> TypeGuard[ExtractRelationshipsStageDTO]:
-    """Validate ExtractRelationshipsStageDTO structure."""
     if not isinstance(checkpoint, dict):
         return False
 
-    # Check required fields
     if "work_plan_section" not in checkpoint or "relationships" not in checkpoint:
         return False
 
-    # Validate work_plan_section structure
     if not is_grant_long_form_section(checkpoint["work_plan_section"]):
         return False
 
-    # Validate relationships structure (dict mapping str to list of tuples)
     relationships = checkpoint["relationships"]
     if not isinstance(relationships, dict):
         return False
@@ -119,7 +111,6 @@ def is_extract_relationships_dto(checkpoint: Any) -> TypeGuard[ExtractRelationsh
 
 
 def is_enrichment_data_dto(value: Any) -> bool:
-    """Validate EnrichmentDataDTO structure."""
     if not isinstance(value, dict):
         return False
 
@@ -136,14 +127,12 @@ def is_enrichment_data_dto(value: Any) -> bool:
     if not all(field in value for field in required_fields):
         return False
 
-    # Validate list fields
     for list_field in ["queries", "terms", "questions"]:
         if not isinstance(value[list_field], list):
             return False
         if not all(isinstance(item, str) for item in value[list_field]):
             return False
 
-    # Validate string fields
     for str_field in ["enriched", "context", "instructions", "description"]:
         if not isinstance(value[str_field], str):
             return False
@@ -152,7 +141,6 @@ def is_enrichment_data_dto(value: Any) -> bool:
 
 
 def is_objective_enrichment_response(value: Any) -> bool:
-    """Validate ObjectiveEnrichmentResponse structure."""
     if not isinstance(value, dict):
         return False
 
@@ -169,15 +157,12 @@ def is_objective_enrichment_response(value: Any) -> bool:
 
 
 def is_enrich_objectives_dto(checkpoint: Any) -> TypeGuard[EnrichObjectivesStageDTO]:
-    """Validate EnrichObjectivesStageDTO structure."""
     if not isinstance(checkpoint, dict):
         return False
 
-    # First check if it's a valid ExtractRelationshipsStageDTO
     if not is_extract_relationships_dto(checkpoint):
         return False
 
-    # Check for enrichment_responses field
     if "enrichment_responses" not in checkpoint:
         return False
 
@@ -189,15 +174,12 @@ def is_enrich_objectives_dto(checkpoint: Any) -> TypeGuard[EnrichObjectivesStage
 
 
 def is_enrich_terminology_dto(checkpoint: Any) -> TypeGuard[EnrichTerminologyStageDTO]:
-    """Validate EnrichTerminologyStageDTO structure."""
     if not isinstance(checkpoint, dict):
         return False
 
-    # First check if it's a valid EnrichObjectivesStageDTO
     if not is_enrich_objectives_dto(checkpoint):
         return False
 
-    # Check for wikidata_enrichments field
     if "wikidata_enrichments" not in checkpoint:
         return False
 
@@ -209,15 +191,12 @@ def is_enrich_terminology_dto(checkpoint: Any) -> TypeGuard[EnrichTerminologySta
 
 
 def is_generate_research_plan_dto(checkpoint: Any) -> TypeGuard[GenerateResearchPlanStageDTO]:
-    """Validate GenerateResearchPlanStageDTO structure."""
     if not isinstance(checkpoint, dict):
         return False
 
-    # First check if it's a valid EnrichTerminologyStageDTO
     if not is_enrich_terminology_dto(checkpoint):
         return False
 
-    # Check for research_plan_text field
     if "research_plan_text" not in checkpoint:
         return False
 
@@ -225,7 +204,6 @@ def is_generate_research_plan_dto(checkpoint: Any) -> TypeGuard[GenerateResearch
 
 
 def is_section_text(value: Any) -> bool:
-    """Validate SectionText structure."""
     if not isinstance(value, dict):
         return False
 
@@ -236,15 +214,12 @@ def is_section_text(value: Any) -> bool:
 
 
 def is_generate_sections_dto(checkpoint: Any) -> TypeGuard[GenerateSectionsStageDTO]:
-    """Validate GenerateSectionsStageDTO structure."""
     if not isinstance(checkpoint, dict):
         return False
 
-    # First check if it's a valid GenerateResearchPlanStageDTO
     if not is_generate_research_plan_dto(checkpoint):
         return False
 
-    # Check for section_texts field
     if "section_texts" not in checkpoint:
         return False
 

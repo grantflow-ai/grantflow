@@ -1,16 +1,7 @@
-"""stage-consolidation
-
-Revision ID: 13b87034ef39
-Revises: 2043449645e2
-Create Date: 2025-10-08 14:41:09.216422
-
-"""
-
 from collections.abc import Sequence
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision: str = "13b87034ef39"
 down_revision: str | None = "2043449645e2"
 branch_labels: str | Sequence[str] | None = None
@@ -18,7 +9,6 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
     op.execute("ALTER TYPE grantapplicationstageenum RENAME TO grantapplicationstageenum_old")
     op.execute(
         "CREATE TYPE grantapplicationstageenum AS ENUM ('BLUEPRINT_PREP', 'WORKPLAN_GENERATION', 'SECTION_SYNTHESIS')"
@@ -46,7 +36,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
     op.execute("ALTER TYPE grantapplicationstageenum RENAME TO grantapplicationstageenum_new")
     op.execute(
         "CREATE TYPE grantapplicationstageenum AS ENUM "

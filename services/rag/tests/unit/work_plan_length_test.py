@@ -31,7 +31,6 @@ async def test_adjust_component_length_includes_work_plan_context(mocker: Mocker
         "type": "task",
     }
 
-    # Create text slightly above the limit to force an adjustment pass.
     component_text = " ".join(["word"] * 70)
     work_plan_so_far = "# Existing Work Plan\n\nPrevious content."
 
