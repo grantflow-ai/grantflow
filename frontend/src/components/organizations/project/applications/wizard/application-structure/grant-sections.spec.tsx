@@ -6,7 +6,8 @@ import {
 	hasDetailedResearchPlan,
 	hasDetailedResearchPlanUpdate,
 	hasGenerationInstructions,
-	hasMaxWords,
+	hasLengthConstraint,
+	sectionWordLimit,
 } from "@/types/grant-sections";
 import { SortableSection } from "./grant-sections";
 
@@ -106,23 +107,23 @@ describe("SortableSection", () => {
 		expect(screen.getByTestId("section-title")).toHaveTextContent("Introduction");
 	});
 
-	it("renders section with max words display", () => {
+	it("renders section with length constraint display", () => {
 		const section = GrantSectionDetailedFactory.build({
-			max_words: 3000,
+			length_constraint: { source: null, type: "words", value: 3000 },
 			title: "Methods",
 		});
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
-		expect(screen.getByTestId("max-words-display")).toHaveTextContent("3,000 Max words");
+		expect(screen.getByTestId("length-constraint-display")).toHaveTextContent("3,000 words");
 	});
 
-	it("does not show max words for sections without max_words", () => {
+	it("does not show length constraint for sections without constraint", () => {
 		const section = GrantSectionFactory.build();
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
-		expect(screen.queryByTestId("max-words-display")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("length-constraint-display")).not.toBeInTheDocument();
 	});
 
 	it("shows edit form when expanded", () => {
@@ -201,7 +202,9 @@ describe("SortableSection", () => {
 	});
 
 	it("updates form data when max count is changed", async () => {
-		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+		const section = GrantSectionDetailedFactory.build({
+			length_constraint: { source: null, type: "words", value: 3000 },
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -213,7 +216,9 @@ describe("SortableSection", () => {
 	});
 
 	it("displays count type tag in max count input field", () => {
-		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+		const section = GrantSectionDetailedFactory.build({
+			length_constraint: { source: null, type: "words", value: 3000 },
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -223,7 +228,9 @@ describe("SortableSection", () => {
 	});
 
 	it("renders tooltip with info icon next to Words/Characters count label", () => {
-		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+		const section = GrantSectionDetailedFactory.build({
+			length_constraint: { source: null, type: "words", value: 3000 },
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -237,7 +244,9 @@ describe("SortableSection", () => {
 	});
 
 	it("limits max count input to 7 digits", async () => {
-		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+		const section = GrantSectionDetailedFactory.build({
+			length_constraint: { source: null, type: "words", value: 3000 },
+		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -264,7 +273,7 @@ describe("SortableSection", () => {
 		const section = GrantSectionDetailedFactory.build({
 			generation_instructions: "Original prompt",
 			is_detailed_research_plan: false,
-			max_words: 3000,
+			length_constraint: { source: null, type: "words", value: 3000 },
 			title: "Test Section",
 		});
 
@@ -280,7 +289,7 @@ describe("SortableSection", () => {
 				expect(mockOnUpdate).toHaveBeenLastCalledWith({
 					generation_instructions: "New custom AI prompt",
 					is_detailed_research_plan: false,
-					max_words: 3000,
+					length_constraint: { source: null, type: "words", value: 3000 },
 					title: "Test Section",
 				});
 			},
@@ -305,7 +314,7 @@ describe("SortableSection", () => {
 	it("calls onUpdate with correct data automatically after 5 seconds", async () => {
 		const section = GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
-			max_words: 3000,
+			length_constraint: { source: null, type: "words", value: 3000 },
 			title: "Original",
 		});
 
@@ -325,7 +334,7 @@ describe("SortableSection", () => {
 		expect(mockOnUpdate).toHaveBeenCalledWith({
 			generation_instructions: section.generation_instructions,
 			is_detailed_research_plan: true,
-			max_words: 5000,
+			length_constraint: { source: null, type: "words", value: 5000 },
 			title: "Updated Title",
 		});
 	});
@@ -484,7 +493,7 @@ describe("SortableSection", () => {
 		} as any);
 	});
 
-	it("handles sections without max_words property", () => {
+	it("defaults word limit input when section has no constraint", () => {
 		const section = GrantSectionFactory.build();
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
@@ -637,24 +646,27 @@ describe("Utility Functions", () => {
 		});
 	});
 
-	describe("hasMaxWords", () => {
-		it("returns true for detailed sections with max_words", () => {
+	describe("hasLengthConstraint", () => {
+		it("returns true for sections with length constraints", () => {
 			const section = GrantSectionDetailedFactory.build();
-			expect(hasMaxWords(section)).toBe(true);
+			expect(hasLengthConstraint(section)).toBe(true);
 		});
 
-		it("returns false for basic sections without max_words", () => {
+		it("returns false for sections without length constraints", () => {
 			const section = GrantSectionBaseFactory.build();
-			expect(hasMaxWords(section)).toBe(false);
+			expect(hasLengthConstraint(section)).toBe(false);
 		});
 
-		it("provides proper type narrowing for detailed sections", () => {
-			const section = GrantSectionDetailedFactory.build({ max_words: 5000 });
+		it("narrows section type to include constraint", () => {
+			const section = GrantSectionDetailedFactory.build({
+				length_constraint: { source: null, type: "words", value: 5000 },
+			});
 
-			if (hasMaxWords(section)) {
-				expect(section.max_words).toBe(5000);
+			if (hasLengthConstraint(section)) {
+				expect(section.length_constraint.value).toBe(5000);
+				expect(sectionWordLimit(section)).toBe(5000);
 			} else {
-				throw new Error("Should have max words property");
+				throw new Error("Should have length constraint");
 			}
 		});
 	});
@@ -666,7 +678,7 @@ describe("Utility Functions", () => {
 		});
 
 		it("returns false for partial sections without is_detailed_research_plan", () => {
-			const updates = { max_words: 5000, title: "New Title" };
+			const updates = { length_constraint: { source: null, type: "words", value: 5000 }, title: "New Title" };
 			expect(hasDetailedResearchPlanUpdate(updates)).toBe(false);
 		});
 

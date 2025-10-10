@@ -209,6 +209,7 @@ type GrantSectionDetailed = Extract<GrantSections[0], { depends_on: string[] }>;
 type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["grant_sections"];
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
+	evidence: factory.lorem.sentence(),
 	id: factory.string.uuid(),
 	order: factory.number.int({ max: 20, min: 0 }),
 	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
@@ -219,6 +220,7 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 	depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
 		count: { max: 3, min: 0 },
 	}),
+	evidence: factory.lorem.sentence(),
 	generation_instructions: factory.lorem.paragraph(),
 	id: factory.string.uuid(),
 	is_clinical_trial: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
@@ -226,7 +228,11 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), {
 		count: { max: 5, min: 1 },
 	}),
-	max_words: factory.number.int({ max: 5000, min: 100 }),
+	length_constraint: {
+		source: null,
+		type: "words",
+		value: factory.number.int({ max: 5000, min: 100 }),
+	},
 	order: factory.number.int({ max: 20, min: 0 }),
 	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
 	search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), {
@@ -310,6 +316,7 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 }));
 
 export const GrantSectionFactory = new Factory<GrantSection>((factory) => ({
+	evidence: factory.lorem.sentence(),
 	id: factory.string.uuid(),
 	order: factory.number.int({ max: 20, min: 0 }),
 	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
@@ -399,46 +406,51 @@ export const UpdateInvitationRoleRequestFactory = RoleRequestFactory;
 export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemplate.RequestBody>((factory) => {
 	const sectionCount = factory.number.int({ max: 10, min: 1 });
 	return {
-		grant_sections: Array.from({ length: sectionCount }, (_, index) => ({
-			depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
-				count: { max: 2, min: 0 },
-			}),
-			generation_instructions: factory.lorem.paragraph(),
-			id: factory.string.uuid(),
-			is_clinical_trial: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
-			is_detailed_research_plan: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
-			keywords: factory.helpers.multiple(() => factory.lorem.word(), {
-				count: { max: 5, min: 1 },
-			}),
-			max_words: factory.number.int({ max: 5000, min: 100 }),
-			order: index,
-			parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
-			search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), { count: { max: 3, min: 0 } }),
-			title: factory.lorem.sentence(),
-			topics: factory.helpers.multiple(() => factory.lorem.word(), {
-				count: { max: 5, min: 1 },
-			}),
-		})),
+		grant_sections: Array.from(
+			{ length: sectionCount },
+			(_, index) =>
+				GrantSectionDetailedFactory.build({
+					depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
+						count: { max: 2, min: 0 },
+					}),
+					id: factory.string.uuid(),
+					length_constraint: {
+						source: null,
+						type: "words",
+						value: factory.number.int({ max: 5000, min: 100 }),
+					},
+					order: index,
+					parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
+					title: factory.lorem.sentence(),
+				}) as GrantSectionUpdateRequest,
+		),
 		submission_date: factory.date.future().toISOString(),
 	};
 });
 
 type GrantSectionUpdateRequest = NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0];
 
-export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(() => ({
-	depends_on: [],
-	generation_instructions: "",
-	id: `section-${crypto.randomUUID()}`,
-	is_clinical_trial: null,
-	is_detailed_research_plan: null,
-	keywords: [],
-	max_words: 3000,
-	order: 0,
-	parent_id: null,
-	search_queries: [],
-	title: "Category Name",
-	topics: [],
-}));
+export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRequest>(
+	() =>
+		GrantSectionDetailedFactory.build({
+			depends_on: [],
+			generation_instructions: "",
+			id: `section-${crypto.randomUUID()}`,
+			is_clinical_trial: null,
+			is_detailed_research_plan: null,
+			keywords: [],
+			length_constraint: {
+				source: null,
+				type: "words",
+				value: 3000,
+			},
+			order: 0,
+			parent_id: null,
+			search_queries: [],
+			title: "Category Name",
+			topics: [],
+		}) as GrantSectionUpdateRequest,
+);
 
 export const SourceProcessingNotificationFactory = new Factory<SourceProcessingNotification>((factory) => ({
 	identifier: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,

@@ -1,4 +1,5 @@
 import type { API } from "@/types/api-types";
+import { constraintToWordLimit, hasLengthConstraint as hasConstraint } from "@/utils/length-constraint";
 
 export type GrantSection = NonNullable<
 	NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>
@@ -18,12 +19,13 @@ export const hasGenerationInstructions = (
 	return Object.hasOwn(section, "generation_instructions");
 };
 
-export const hasMaxWords = (section: GrantSection): section is { max_words: number } & GrantSection => {
-	return Object.hasOwn(section, "max_words");
-};
-
 export const hasDetailedResearchPlanUpdate = (
 	updates: Partial<GrantSection>,
 ): updates is { is_detailed_research_plan: boolean | null } & Partial<GrantSection> => {
 	return Object.hasOwn(updates, "is_detailed_research_plan");
 };
+
+export const hasLengthConstraint = (section: GrantSection) => hasConstraint(section);
+
+export const sectionWordLimit = (section: GrantSection | UpdateGrantSection) =>
+	hasConstraint(section) ? constraintToWordLimit(section.length_constraint) : null;

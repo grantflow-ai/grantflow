@@ -22,6 +22,8 @@ const createMockFileWithId = (name: string, id?: string): FileWithId => {
 	const file = new File(["test content"], name, { type: "application/pdf" });
 	return Object.assign(file, { id: id ?? crypto.randomUUID() });
 };
+
+const wordConstraint = (value: number) => ({ source: null, type: "words" as const, value });
 const { toastSuccessMock } = vi.hoisted(() => {
 	return { toastSuccessMock: vi.fn() };
 });
@@ -273,7 +275,7 @@ describe("Application Store", () => {
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
-					max_words: 500,
+					length_constraint: wordConstraint(500),
 					order: 0,
 					title: "Introduction",
 				}),
@@ -323,27 +325,27 @@ describe("Application Store", () => {
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
-					max_words: 500,
+					length_constraint: wordConstraint(500),
 					order: 0,
 					title: "Introduction",
 				}),
 				GrantSectionDetailedFactory.build({
 					id: "2",
-					max_words: 400,
+					length_constraint: wordConstraint(400),
 					order: 1,
 					parent_id: "1",
 					title: "child 1",
 				}),
 				GrantSectionDetailedFactory.build({
 					id: "3",
-					max_words: 300,
+					length_constraint: wordConstraint(300),
 					order: 2,
 					parent_id: "1",
 					title: "child 2",
 				}),
 			];
 			const wordCountFixedSections = structuredClone(sections);
-			wordCountFixedSections[0].max_words = 700;
+			wordCountFixedSections[0].length_constraint = wordConstraint(700);
 
 			const application: API.RetrieveApplication.Http200.ResponseBody = {
 				completed_at: undefined,
@@ -391,20 +393,20 @@ describe("Application Store", () => {
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
-					max_words: 500,
+					length_constraint: wordConstraint(500),
 					order: 0,
 					title: "Introduction",
 				}),
 				GrantSectionDetailedFactory.build({
 					id: "2",
-					max_words: 100,
+					length_constraint: wordConstraint(100),
 					order: 1,
 					parent_id: "1",
 					title: "child 1",
 				}),
 				GrantSectionDetailedFactory.build({
 					id: "3",
-					max_words: 300,
+					length_constraint: wordConstraint(300),
 					order: 2,
 					parent_id: "1",
 					title: "child 2",
