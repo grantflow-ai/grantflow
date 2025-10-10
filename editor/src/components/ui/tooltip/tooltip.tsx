@@ -155,6 +155,7 @@ export const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>
 
 		return React.cloneElement(
 			children,
+			// eslint-disable-next-line react-hooks/refs -- shadcn component uses floating-ui refs pattern
 			context.getReferenceProps({
 				ref,
 				...props,
