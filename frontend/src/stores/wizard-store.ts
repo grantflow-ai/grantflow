@@ -297,47 +297,6 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 	};
 }
 
-/*
-function AdvancedvalidateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
-	const formInputs = application.form_inputs;
-	if (!formInputs) {
-		log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-			reason: "No form inputs",
-			result: false,
-		});
-		return { isValid: false, reason: "There are no form inputs to validate." };
-	}
-
-	const requiredFields = [
-		"background_context",
-		"hypothesis",
-		"rationale",
-		"novelty_and_innovation",
-		"impact",
-		"team_excellence",
-		"research_feasibility",
-		"preliminary_data",
-	] as const;
-
-	const fieldStatus = requiredFields.map((field) => {
-		const value = formInputs[field];
-		const valid = Boolean(value && value.trim().length > 0);
-		return { field, length: value ? value.length : 0, valid };
-	});
-
-	const result = fieldStatus.every((status) => status.valid);
-
-	log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-		fieldStatus,
-		filledFields: fieldStatus.filter((s) => s.valid).length,
-		result,
-		totalFields: requiredFields.length,
-	});
-
-	return { isValid: result, reason: "Not all fields are populated properly." };
-}
-	*/
-
 function validateResearchDeepDive(): ValidationResult {
 	return { isValid: true, reason: "Validation skipped" };
 }

@@ -3,7 +3,6 @@ from typing import Final, TypedDict
 
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.grant_template.template_generation.section_classification import SectionClassification
@@ -19,51 +18,53 @@ CONTENT_METADATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="content_metadata",
     template="""# Generate Content Metadata
 
-    ## Organization Guidelines
-    ${organization_guidelines}
+## Organization Guidelines
 
-    ## Enriched Sections
-    ${sections}
+${organization_guidelines}
 
-    ## Task
+## Enriched Sections
 
-    For each section requiring writing (needs_writing=true), generate content metadata.
+${sections}
 
-    ### Fields
+## Task
 
-    1. **keywords**: 5-15 specific domain terms
-       - Research plan sections: 10-15 keywords
-       - Other sections: 5-10 keywords
-       - Be specific: "preliminary data analysis" not "data"
+For each section requiring writing (needs_writing=true), generate content metadata.
 
-    2. **topics**: 3-8 key areas to address
-       - Research plan sections: 5-8 topics
-       - Other sections: 3-5 topics
-       - Focus on what content must cover
+### Fields
 
-    3. **generation_instructions**: 100-500 words
-       - Purpose of this section
-       - Key content to include
-       - Writing style and tone
-       - Common pitfalls to avoid
-       - Be specific and actionable
+1. **keywords**: 5-15 specific domain terms
+   - Research plan sections: 10-15 keywords
+   - Other sections: 5-10 keywords
+   - Be specific: "preliminary data analysis" not "data"
 
-    4. **search_queries**: 3-10 queries for RAG retrieval
-       - Research plan sections: 7-10 queries
-       - Other sections: 3-5 queries
-       - Diverse queries covering different aspects
-       - Specific to section's focus
+2. **topics**: 3-8 key areas to address
+   - Research plan sections: 5-8 topics
+   - Other sections: 3-5 topics
+   - Focus on what content must cover
 
-    ### Guidelines
+3. **generation_instructions**: 100-500 words
+   - Purpose of this section
+   - Key content to include
+   - Writing style and tone
+   - Common pitfalls to avoid
+   - Be specific and actionable
 
-    - For sections with needs_writing=false, provide minimal metadata (empty keywords/topics, basic instructions)
-    - Use section guidelines and definition to inform metadata
-    - Research plan (is_plan=true) gets most detailed metadata
-    - Clinical sections focus on trial-specific terms
+4. **search_queries**: 3-10 queries for RAG retrieval
+   - Research plan sections: 7-10 queries
+   - Other sections: 3-5 queries
+   - Diverse queries covering different aspects
+   - Specific to section's focus
 
-    ### Output
+### Guidelines
 
-    Return all sections with content metadata.
+- For sections with needs_writing=false, provide minimal metadata (empty keywords/topics, basic instructions)
+- Use section guidelines and definition to inform metadata
+- Research plan (is_plan=true) gets most detailed metadata
+- Clinical sections focus on trial-specific terms
+
+### Output
+
+Return all sections with content metadata.
 """,
 )
 
@@ -208,7 +209,7 @@ async def generate_content_metadata(
 ) -> ContentMetadataResult:
     messages = CONTENT_METADATA_USER_PROMPT.to_string(
         organization_guidelines=organization_guidelines or "No organization guidelines provided.",
-        sections=serialize(sections).decode("utf-8"),
+        sections=sections,
     )
 
     return await handle_completions_request(

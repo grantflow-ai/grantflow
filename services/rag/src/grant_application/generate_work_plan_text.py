@@ -64,92 +64,100 @@ OBJECTIVE_RELATIONSHIP_GUIDELINES: Final[str] = """When addressing relationships
 GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="work_component_generation",
     template="""
-    Your task is to write the text for a ${object_type} in a grant application work plan.
+Your task is to write the text for a ${object_type} in a grant application work plan.
 
-    An ${object_type} is ${object_type_description}. This component must be scientifically accurate, methodologically sound, and demonstrate a clear scientific contribution to the field. The text will be evaluated by scientific experts and must balance technical precision with clarity.
+An ${object_type} is ${object_type_description}. This component must be scientifically accurate, methodologically sound, and demonstrate a clear scientific contribution to the field. The text will be evaluated by scientific experts and must balance technical precision with clarity.
 
-    The title of this ${object_type} is ${object_title} and the user provided the following description for it:
+The title of this ${object_type} is ${object_title} and the user provided the following description for it:
 
-    <description>
-    ${description}
-    </description>
+<description>
+${description}
+</description>
 
-    ## Generation Instructions
+## Generation Instructions
 
-    Adhere to these instructions to generate the text:
-        <instructions>
-        ${instructions}
-        </instructions>
+Adhere to these instructions to generate the text:
+<instructions>
+${instructions}
+</instructions>
 
-    ## Relationships
-    These are the relationships this ${object_type} has with other components:
-        <relationships>
-        ${relationships}
-        </relationships>
+## Relationships
 
-    ${relationship_guidance}
+These are the relationships this ${object_type} has with other components:
+<relationships>
+${relationships}
+</relationships>
 
-    Use these relationships to ensure that the generated text is consistent with the context and information provided in the previous sections.
+${relationship_guidance}
 
-    ## Content Guidance
+Use these relationships to ensure that the generated text is consistent with the context and information provided in the previous sections.
 
-    ${object_type_specific_guidance}
+## Content Guidance
 
-    The generated text should address (implicitly) the following guiding questions:
-        <guiding_questions>
-        ${guiding_questions}
-        </guiding_questions>
+${object_type_specific_guidance}
 
-    Use the part of the work plan that has already been written to ensure that the generated text is consistent with the context and information provided in the previous sections:
-        <work_plan_text>
-        ${work_plan_text}
-        </work_plan_text>
-    """,
+The generated text should address (implicitly) the following guiding questions:
+<guiding_questions>
+${guiding_questions}
+</guiding_questions>
+
+Use the part of the work plan that has already been written to ensure that the generated text is consistent with the context and information provided in the previous sections:
+<work_plan_text>
+${work_plan_text}
+</work_plan_text>
+""",
 )
 
 ADJUST_WORK_COMPONENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="adjust_work_component_length",
     template="""
-    Revise the ${object_type} draft so that it meets the word constraints without losing essential content.
+Revise the ${object_type} draft so that it meets the word constraints without losing essential content.
 
-    ## Component Context
-    - Identifier: ${component_number}
-    - Title: ${component_title}
-    - Direction: ${direction}
-    - Maximum words: ${max_words}
-    - Minimum words: ${min_words}
+## Component Context
 
-    ## Instructions
-    <instructions>
-    ${instructions}
-    </instructions>
+- Identifier: ${component_number}
+- Title: ${component_title}
+- Direction: ${direction}
+- Maximum words: ${max_words}
+- Minimum words: ${min_words}
 
-    ## Guiding Questions
-    <guiding_questions>
-    ${guiding_questions}
-    </guiding_questions>
+## Instructions
 
-    ## Relationships
-    <relationships>
-    ${relationships}
-    </relationships>
+<instructions>
+${instructions}
+</instructions>
 
-    ## Work Plan So Far
-    <work_plan>
-    ${work_plan_so_far}
-    </work_plan>
+## Guiding Questions
 
-    ## Current Draft
-    <draft>
-    ${draft_text}
-    </draft>
+<guiding_questions>
+${guiding_questions}
+</guiding_questions>
 
-    ## Requirements
-    1. Preserve factual commitments, dependencies, and sequencing signals.
-    2. Maintain markdown headings and logical flow.
-    3. Do not mention that this is a revision or discuss token counts.
-    4. Return the full revised text only.
-    """,
+## Relationships
+
+<relationships>
+${relationships}
+</relationships>
+
+## Work Plan So Far
+
+<work_plan>
+${work_plan_so_far}
+</work_plan>
+
+## Current Draft
+
+<draft>
+${draft_text}
+</draft>
+
+## Requirements
+
+1. Preserve factual commitments, dependencies, and sequencing signals.
+2. Maintain markdown headings and logical flow.
+3. Do not mention that this is a revision or discuss token counts.
+4. Return the full revised text only.
+""",
 )
 
 
