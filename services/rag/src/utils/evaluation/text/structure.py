@@ -5,6 +5,7 @@ from packages.db.src.json_objects import GrantLongFormSection
 from packages.shared_utils.src.nlp import get_spacy_model, get_word_count
 
 from services.rag.src.utils.evaluation.dto import StructuralMetrics
+from services.rag.src.utils.lengths import get_max_words_from_section
 
 HEADING_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(#{1,6})\s+(.+)", re.MULTILINE)
 LIST_ITEM_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(?:[*+-]|\d+\.)\s+\S+", re.MULTILINE)
@@ -220,7 +221,8 @@ def evaluate_header_structure(content: str) -> float:
 
 
 async def evaluate_structure(content: str, section_config: GrantLongFormSection) -> StructuralMetrics:
-    word_count_compliance = evaluate_word_count_compliance(content, section_config["max_words"])
+    max_words = get_max_words_from_section(section_config)
+    word_count_compliance = evaluate_word_count_compliance(content, max_words)
     paragraph_distribution = analyze_paragraph_structure(content)
     section_organization = check_section_organization(content)
     academic_formatting = assess_academic_formatting(content)

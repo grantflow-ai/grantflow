@@ -1,6 +1,6 @@
 from typing import Literal, NotRequired, TypedDict
 
-from packages.db.src.json_objects import TableContext
+from packages.db.src.json_objects import LengthConstraint, TableContext
 
 
 class DocumentDTO(TypedDict):
@@ -27,7 +27,7 @@ class ResearchComponentGenerationDTO(TypedDict):
     guiding_questions: list[str]
     search_queries: list[str]
     relationships: list[tuple[str, str]]
-    max_words: NotRequired[int]
+    length_constraint: NotRequired[LengthConstraint | None]
     type: Literal["task", "objective"]
 
 

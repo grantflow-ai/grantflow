@@ -5,19 +5,16 @@ from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
-from services.rag.src.grant_template.template_generation.length_extraction import LengthConstraint
 from services.rag.src.grant_template.template_generation.section_classification import SectionClassification
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
-DEPENDENCIES_SYSTEM_PROMPT: Final[str] = (
-    "You determine section dependencies and word count allocations for grant applications. Be logical and realistic."
-)
+DEPENDENCIES_SYSTEM_PROMPT: Final[str] = "You determine logical dependencies between grant application sections."
 
 DEPENDENCIES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="dependencies_word_counts",
-    template="""# Generate Section Dependencies and Word Counts
+    name="section_dependencies",
+    template="""# Generate Section Dependencies
 
 ## Enriched Sections
 
@@ -25,7 +22,7 @@ ${sections}
 
 ## Task
 
-For each section, determine dependencies and allocate word counts.
+For each section, determine which other sections must be written first.
 
 ### Dependencies
 
@@ -41,26 +38,9 @@ Rules:
 - Use actual section IDs from input
 - Empty array if no dependencies
 
-### Word Counts
-
-Allocate realistic word counts based on:
-1. **CFP length limits** (if provided): Use as primary guidance
-2. **Default allocations**:
-   - Project Summary: 300 words
-   - Research Plan (is_plan=true): 2000-5000 words
-   - Background/Significance: 800-1200 words
-   - Methodology: 1000-2000 words
-   - Budget Justification: 500-800 words
-   - Data Sharing: 200-400 words
-   - Other sections: 300-600 words
-
-3. **Page conversions**: Use 415 words/page
-4. **Section importance**: Research plan gets most words
-5. **Total reasonableness**: 500-50000 words total
-
 ### Output
 
-Return all sections with depends_on and max_words.
+Return all sections with depends_on arrays.
 """,
 )
 
@@ -77,13 +57,8 @@ dependencies_schema: Final = {
                         "type": "array",
                         "items": {"type": "string"},
                     },
-                    "max_words": {
-                        "type": "integer",
-                        "minimum": 50,
-                        "maximum": 50000,
-                    },
                 },
-                "required": ["id", "depends_on", "max_words"],
+                "required": ["id", "depends_on"],
             },
         },
     },
@@ -98,26 +73,24 @@ class EnrichedSection(TypedDict):
     is_plan: bool
     clinical: bool
     needs_writing: bool
-    length_limit: int | None
 
 
-class DependencyWordCount(TypedDict):
+class SectionDependency(TypedDict):
     id: str
     depends_on: list[str]
-    max_words: int
 
 
-class DependencyWordCountResult(TypedDict):
-    sections: list[DependencyWordCount]
+class SectionDependencyResult(TypedDict):
+    sections: list[SectionDependency]
 
 
-def validate_dependencies_word_counts(
-    response: DependencyWordCountResult,
+def validate_section_dependencies(
+    response: SectionDependencyResult,
     *,
     input_sections: list[EnrichedSection],
 ) -> None:
     if not response.get("sections"):
-        raise ValidationError("No sections in dependency/word count result")
+        raise ValidationError("No sections in dependency result")
 
     input_ids = {s["id"] for s in input_sections}
     output_ids = {s["id"] for s in response["sections"]}
@@ -172,39 +145,14 @@ def validate_dependencies_word_counts(
                 },
             )
 
-    total_words = sum(s["max_words"] for s in response["sections"])
-    if total_words < 500:
-        raise ValidationError(
-            "Total word count too low",
-            context={
-                "total_words": total_words,
-                "min_required": 500,
-                "recovery_instruction": "Increase word allocations to reach at least 500 words total",
-            },
-        )
 
-    if total_words > 50000:
-        raise ValidationError(
-            "Total word count exceeds reasonable limit",
-            context={
-                "total_words": total_words,
-                "max_allowed": 50000,
-                "recovery_instruction": "Reduce word allocations to stay under 50000 words",
-            },
-        )
-
-
-async def generate_dependencies_word_counts(
+async def generate_section_dependencies(
     *,
     classification: list[SectionClassification],
-    length_constraints: list[LengthConstraint],
     trace_id: str,
-) -> DependencyWordCountResult:
-    length_by_id = {lc["id"]: lc for lc in length_constraints}
-
+) -> SectionDependencyResult:
     enriched: list[EnrichedSection] = []
     for cls in classification:
-        length = length_by_id.get(cls["id"])
         enriched.append(
             EnrichedSection(
                 id=cls["id"],
@@ -213,7 +161,6 @@ async def generate_dependencies_word_counts(
                 is_plan=cls["is_plan"],
                 clinical=cls["clinical"],
                 needs_writing=cls["needs_writing"],
-                length_limit=length["length_limit"] if length else None,
             )
         )
 
@@ -222,10 +169,10 @@ async def generate_dependencies_word_counts(
     )
 
     return await handle_completions_request(
-        prompt_identifier="dependencies_word_counts",
-        response_type=DependencyWordCountResult,
+        prompt_identifier="section_dependencies",
+        response_type=SectionDependencyResult,
         response_schema=dependencies_schema,
-        validator=partial(validate_dependencies_word_counts, input_sections=enriched),
+        validator=partial(validate_section_dependencies, input_sections=enriched),
         messages=messages,
         system_prompt=DEPENDENCIES_SYSTEM_PROMPT,
         temperature=TEMPERATURE,

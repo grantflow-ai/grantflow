@@ -9,7 +9,14 @@ from packages.db.src.constants import (
     RAG_URL,
 )
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import (
+    Chunk,
+    GrantElement,
+    GrantLongFormSection,
+    LengthConstraint,
+    ResearchObjective,
+    ResearchTask,
+)
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -56,7 +63,12 @@ class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
     order = 1
     keywords = Use(lambda: ["methodology", "design", "analysis"])
     topics = Use(lambda: ["background_context", "methodology"])
-    max_words = 3000
+    length_constraint = Use(
+        lambda: cast(
+            "LengthConstraint",
+            {"type": "words", "value": 3000, "source": "Factory default"},
+        )
+    )
     search_queries = Use(lambda: ["query1", "query2", "query3"])
     depends_on: list[str] = Use(list)  # type: ignore[assignment]
 
