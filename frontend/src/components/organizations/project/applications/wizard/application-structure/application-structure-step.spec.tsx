@@ -1,4 +1,4 @@
-import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, GrantSectionBaseFactory, GrantTemplateFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
@@ -61,14 +61,7 @@ describe("ApplicationStructureStep", () => {
 	it("shows section editor when application exists and not generating", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				grant_sections: [
-					{
-						id: "section-1",
-						order: 0,
-						parent_id: null,
-						title: "Test Section",
-					},
-				],
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Test Section" })],
 			}),
 		});
 
@@ -78,5 +71,225 @@ describe("ApplicationStructureStep", () => {
 		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
+	});
+
+	describe("Template Generation Triggers", () => {
+		const mockDialogRef = {
+			current: {
+				close: vi.fn(),
+				open: vi.fn(),
+			},
+		};
+
+		beforeEach(() => {
+			vi.clearAllMocks();
+			useWizardStore.setState({
+				isGeneratingTemplate: false,
+				shouldTriggerTemplateGeneration: vi.fn(() => true),
+				startTemplateGeneration: vi.fn().mockResolvedValue(undefined),
+				templateGenerationFailed: false,
+			});
+		});
+
+		it("triggers generation when all RAG sources are FINISHED", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", sourceId: "2", status: "FINISHED" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+		});
+
+		it("does not trigger generation when RAG sources are INDEXING", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", sourceId: "2", status: "INDEXING" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger generation when isGeneratingTemplate is true", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({
+				isGeneratingTemplate: true,
+				startTemplateGeneration,
+			});
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger generation when templateGenerationFailed is true", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({
+				startTemplateGeneration,
+				templateGenerationFailed: true,
+			});
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger generation when shouldTriggerTemplateGeneration returns false", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const shouldTriggerTemplateGeneration = vi.fn(() => false);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({
+				shouldTriggerTemplateGeneration,
+				startTemplateGeneration,
+			});
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(shouldTriggerTemplateGeneration).toHaveBeenCalled();
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("triggers generation when no sources are INDEXING and no FAILED sources exist", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", sourceId: "2", status: "CREATED" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+		});
+
+		it("does not trigger generation when RAG sources are empty", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("opens dialog when FAILED sources exist and no grant sections", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", sourceId: "2", status: "FAILED" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(mockDialogRef.current.open).toHaveBeenCalledOnce();
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("does not open dialog when FAILED sources exist but grant sections already exist", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", sourceId: "2", status: "FAILED" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(mockDialogRef.current.open).not.toHaveBeenCalled();
+			expect(startTemplateGeneration).not.toHaveBeenCalled();
+		});
+
+		it("triggers generation when all sources are FINISHED even with mix of file and URL sources", () => {
+			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+					rag_sources: [
+						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
+						{ sourceId: "2", status: "FINISHED", url: "https://example.com" },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+			useWizardStore.setState({ startTemplateGeneration });
+
+			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
+
+			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+		});
 	});
 });

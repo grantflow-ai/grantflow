@@ -1,6 +1,12 @@
-import { ApplicationFactory, GrantTemplateFactory, RagSourceFactory } from "::testing/factories";
+import {
+	ApplicationFactory,
+	GrantSectionBaseFactory,
+	GrantTemplateFactory,
+	RagSourceFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
@@ -47,6 +53,17 @@ vi.mock("@/components/organizations/project/applications/wizard/wizard-right-pan
 	WizardRightPane: vi.fn(({ children, padding }) => (
 		<div className={padding} data-testid="wizard-right-pane">
 			{children}
+		</div>
+	)),
+}));
+
+vi.mock("@/components/organizations/project/applications/wizard/wizard-banner", () => ({
+	WizardBanner: vi.fn(({ children, onClose, variant }) => (
+		<div data-testid="wizard-banner" data-variant={variant}>
+			{children}
+			<button aria-label="close banner" onClick={onClose} type="button">
+				Close
+			</button>
 		</div>
 	)),
 }));
@@ -533,6 +550,147 @@ describe("ApplicationPreview", () => {
 
 			expect(uploadedCards).toHaveLength(1);
 			expect(pendingCards).toHaveLength(1);
+		});
+	});
+
+	describe("Warning Banner", () => {
+		it("shows banner when grant sections exist", () => {
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
+		});
+
+		it("does not show banner when grant sections are empty", () => {
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.queryByTestId("wizard-banner")).not.toBeInTheDocument();
+		});
+
+		it("does not show banner when grant sections is undefined", () => {
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: undefined,
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.queryByTestId("wizard-banner")).not.toBeInTheDocument();
+		});
+
+		it("hides banner after user dismisses it", async () => {
+			const user = userEvent.setup();
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
+
+			const closeButton = screen.getByRole("button", { name: /close/i });
+			await user.click(closeButton);
+
+			expect(screen.queryByTestId("wizard-banner")).not.toBeInTheDocument();
+		});
+
+		it("banner reappears on remount after dismissal", async () => {
+			const user = userEvent.setup();
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			const { unmount } = render(<ApplicationPreview draftTitle="Test App" />);
+
+			const closeButton = screen.getByRole("button", { name: /close/i });
+			await user.click(closeButton);
+
+			expect(screen.queryByTestId("wizard-banner")).not.toBeInTheDocument();
+
+			unmount();
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
+		});
+
+		it("shows banner with multiple grant sections", () => {
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [
+					GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" }),
+					GrantSectionBaseFactory.build({ id: "section-2", title: "Section 2" }),
+					GrantSectionBaseFactory.build({ id: "section-3", title: "Section 3" }),
+				],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
+		});
+
+		it("shows banner when sections exist even without RAG sources", () => {
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+				rag_sources: [],
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
+		});
+
+		it("shows banner when sections exist with RAG sources present", () => {
+			const mockSources = [
+				RagSourceFactory.build({
+					filename: "test.pdf",
+					status: SourceIndexingStatus.FINISHED,
+					url: undefined,
+				}),
+			];
+			const mockTemplate = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+				rag_sources: mockSources,
+			});
+			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+
+			useApplicationStore.setState({ application: mockApplication });
+
+			render(<ApplicationPreview draftTitle="Test App" />);
+
+			expect(screen.getByTestId("wizard-banner")).toBeInTheDocument();
 		});
 	});
 });

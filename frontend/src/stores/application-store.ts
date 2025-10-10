@@ -1067,7 +1067,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			}) as NonNullable<ApplicationType>;
 
-		const { message, sections: processedSections } = syncSectionCharacterCount(sections ?? []);
+		const { message, sections: processedSections } = sections?.length
+			? syncSectionCharacterCount(sections)
+			: { message: null, sections };
+
 		if (message) {
 			toast.success(message);
 			log.info("updateGrantSections: Section character count synced", { message });
