@@ -20,13 +20,14 @@ export function CookieConsentModal({
 				<DialogOverlay />
 				<DialogPrimitive.Content
 					className={cn(
-						"fixed bottom-6 right-6 z-[101] w-full max-w-md",
+						"fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] z-[101] max-w-md",
+						"md:left-auto md:right-6 md:w-full md:translate-x-0",
 						"bg-white rounded-md p-6 shadow-lg outline-1 outline-offset-[-1px] outline-primary",
 						"data-[state=open]:animate-in data-[state=closed]:animate-out",
 						"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 						"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-						"data-[state=closed]:slide-out-to-bottom-6 data-[state=closed]:slide-out-to-right-6",
-						"data-[state=open]:slide-in-from-bottom-6 data-[state=open]:slide-in-from-right-6",
+						"data-[state=closed]:slide-out-to-bottom-full md:slide-out-to-bottom-6 md:slide-out-to-right-6",
+						"data-[state=open]:slide-in-from-bottom-full md:slide-in-from-bottom-6 md:slide-in-from-right-6",
 					)}
 					data-testid="cookie-consent-modal"
 					onEscapeKeyDown={(e) => {
