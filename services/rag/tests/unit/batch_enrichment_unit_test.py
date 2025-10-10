@@ -39,7 +39,7 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
         "keywords": ["test", "keywords"],
         "topics": ["test topics"],
         "search_queries": ["test query"],
-        "max_words": 1000,
+        "length_constraint": {"type": "words", "value": 1000, "source": None},
         "generation_instructions": "Test instructions",
         "is_clinical_trial": False,
         "is_detailed_research_plan": False,

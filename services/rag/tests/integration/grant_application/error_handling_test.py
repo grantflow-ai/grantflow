@@ -163,7 +163,7 @@ async def test_pipeline_backend_error_during_generation(
                 "topics": ["methods"],
                 "generation_instructions": "Describe methodology",
                 "depends_on": [],
-                "max_words": 1500,
+                "length_constraint": {"type": "words", "value": 1500, "source": None},
                 "search_queries": ["methodology"],
                 "is_detailed_research_plan": True,
                 "is_clinical_trial": False,

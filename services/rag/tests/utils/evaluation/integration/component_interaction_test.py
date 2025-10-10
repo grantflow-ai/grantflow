@@ -56,7 +56,7 @@ async def test_coherence_quality_correlation() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "analysis", "statistical"],
-        max_words=400,
+        length_constraint={"type": "words", "value": 400, "source": None},
         search_queries=["biomarker analysis"],
         topics=["methodology"],
     )
@@ -132,7 +132,7 @@ async def test_structure_coherence_interaction() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["methodology", "analysis"],
-        max_words=500,
+        length_constraint={"type": "words", "value": 500, "source": None},
         search_queries=["research methodology"],
         topics=["methods"],
     )
@@ -207,7 +207,7 @@ async def test_source_grounding_quality_interaction() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "analysis", "evidence"],
-        max_words=400,
+        length_constraint={"type": "words", "value": 400, "source": None},
         search_queries=["biomarker analysis", "clinical validation"],
         topics=["research evidence"],
     )
@@ -250,7 +250,7 @@ async def test_keyword_coverage_across_components() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "protein", "analysis", "statistical", "clinical"],
-        max_words=300,
+        length_constraint={"type": "words", "value": 300, "source": None},
         search_queries=["biomarker protein analysis", "statistical methods"],
         topics=["biomarker research"],
     )
@@ -323,7 +323,7 @@ async def test_clinical_trial_weighting_consistency() -> None:
         is_clinical_trial=True,
         is_detailed_research_plan=False,
         keywords=["clinical", "trial", "efficacy", "safety"],
-        max_words=300,
+        length_constraint={"type": "words", "value": 300, "source": None},
         search_queries=["clinical trial results"],
         topics=["clinical outcomes"],
     )
@@ -339,7 +339,7 @@ async def test_clinical_trial_weighting_consistency() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["clinical", "trial", "efficacy", "safety"],
-        max_words=300,
+        length_constraint={"type": "words", "value": 300, "source": None},
         search_queries=["clinical trial results"],
         topics=["clinical outcomes"],
     )
