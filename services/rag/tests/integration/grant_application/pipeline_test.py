@@ -161,7 +161,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
     with (
         patch("services.rag.src.utils.checks.verify_rag_sources_indexed", return_value=None),
         patch("services.rag.src.grant_application.pipeline.handle_generate_sections_stage") as mock_final_stage,
-        patch("packages.shared_utils.src.pubsub.publish_email_notification", return_value=None),
+        patch("services.rag.src.grant_application.pipeline.publish_email_notification", return_value=None),
         patch("packages.shared_utils.src.pubsub.publish_notification", return_value=None),
     ):
         mock_final_stage.return_value = {
@@ -174,6 +174,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                 "title": "Research Plan",
                 "order": 2,
                 "parent_id": None,
+                "evidence": "CFP evidence for Research Plan",
                 "keywords": ["methodology"],
                 "topics": ["methods"],
                 "generation_instructions": "Describe methodology",
@@ -183,7 +184,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                 "is_detailed_research_plan": True,
                 "is_clinical_trial": False,
             },
-            "relationships": {"1": ["Task 1.1 depends on Objective 1"]},
+            "relationships": {"1": [("objective_1.1", "Task 1.1 depends on Objective 1")]},
             "enrichment_responses": [],
             "wikidata_enrichments": [],
             "research_plan_text": "Generated comprehensive research plan text.",
@@ -210,6 +211,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                     "title": "Research Plan",
                     "order": 2,
                     "parent_id": None,
+                    "evidence": "CFP evidence for Research Plan",
                     "keywords": ["methodology"],
                     "topics": ["methods"],
                     "generation_instructions": "Describe methodology",
@@ -219,7 +221,7 @@ async def test_complete_pipeline_updates_application_status_to_working_draft(
                     "is_detailed_research_plan": True,
                     "is_clinical_trial": False,
                 },
-                "relationships": {"1": ["Task 1.1 depends on Objective 1"]},
+                "relationships": {"1": [("objective_1.1", "Task 1.1 depends on Objective 1")]},
                 "enrichment_responses": [],
                 "wikidata_enrichments": [],
                 "research_plan_text": "Generated comprehensive research plan text.",

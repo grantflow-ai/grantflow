@@ -49,8 +49,21 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
     mock_form_inputs: ResearchDeepDive = {}
 
     def mock_enrich_side_effect(*args: Any, **kwargs: Any) -> dict[str, Any]:
-        input_obj = kwargs.get("input_objective")
-        if input_obj and input_obj.get("number") == 1:
+        input_payload = args[0]
+        objective_number = input_payload["research_objective"]["number"]
+        task_payloads = input_payload["research_objective"].get("research_tasks", [])
+
+        task_results = [
+            {
+                "instructions": f"Test instructions for task {objective_number}.{task['number']}",
+                "description": f"Test description for task {objective_number}.{task['number']}",
+                "questions": ["Q1", "Q2", "Q3"],
+                "queries": ["query1", "query2", "query3"],
+            }
+            for task in task_payloads
+        ]
+
+        if int(objective_number) == 1:
             return {
                 "research_objective": {
                     "instructions": "Test instructions for objective 1",
@@ -58,44 +71,27 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
                     "questions": ["Q1", "Q2", "Q3"],
                     "queries": ["query1", "query2", "query3"],
                 },
-                "research_tasks": [
-                    {
-                        "instructions": "Test instructions for task 1.1",
-                        "description": "Test description for task 1.1",
-                        "questions": ["Q1", "Q2", "Q3"],
-                        "queries": ["query1", "query2", "query3"],
-                    },
-                    {
-                        "instructions": "Test instructions for task 1.2",
-                        "description": "Test description for task 1.2",
-                        "questions": ["Q1", "Q2", "Q3"],
-                        "queries": ["query1", "query2", "query3"],
-                    },
-                ],
+                "research_tasks": task_results,
             }
         return {
             "research_objective": {
-                "instructions": "Test instructions for objective 2",
-                "description": "Test description for objective 2",
+                "instructions": f"Test instructions for objective {objective_number}",
+                "description": f"Test description for objective {objective_number}",
                 "questions": ["Q1", "Q2", "Q3"],
                 "queries": ["query1", "query2", "query3"],
             },
-            "research_tasks": [
-                {
-                    "instructions": "Test instructions for task 2.1",
-                    "description": "Test description for task 2.1",
-                    "questions": ["Q1", "Q2", "Q3"],
-                    "queries": ["query1", "query2", "query3"],
-                }
-            ],
+            "research_tasks": task_results,
         }
 
     with (
         patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve,
-        patch("services.rag.src.grant_application.enrich_research_objective.with_evaluation") as mock_evaluation,
+        patch(
+            "services.rag.src.grant_application.batch_enrich_objectives.handle_enrich_objective",
+            new_callable=AsyncMock,
+        ) as mock_handle_enrich,
     ):
         mock_retrieve.return_value = "Mock retrieval results"
-        mock_evaluation.side_effect = mock_enrich_side_effect
+        mock_handle_enrich.side_effect = mock_enrich_side_effect
 
         result = await handle_batch_enrich_objectives(
             application_id="test-app-id",
@@ -107,7 +103,7 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
         )
 
         assert mock_retrieve.call_count == 1, "Should make exactly one retrieval call"
-        assert mock_evaluation.call_count >= 1, "Should make at least one LLM evaluation call"
+        assert mock_handle_enrich.await_count >= 1, "Should make at least one enrichment call"
 
         logger.info("Actual result structure", result=result)
         logger.info("Result length", length=len(result))
