@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from typing import Any, TypedDict, cast
 from uuid import UUID
 
@@ -142,6 +143,17 @@ async def handle_email_notification_webhook(data: PubSubEvent, session_maker: as
                 )
                 raise ValidationError("Application not found.", context=str(application_id))
 
+            if application.completion_email_sent_at is not None:
+                logger.info(
+                    "Completion email already sent, skipping duplicate",
+                    application_id=str(application_id),
+                    sent_at=application.completion_email_sent_at.isoformat(),
+                )
+                return EmailResponse(
+                    status="success",
+                    message="Email notification already sent for this application",
+                )
+
         project_id = str(application.project.id)
         application_title = application.title
         application_text = application.text or ""
@@ -194,6 +206,17 @@ async def handle_email_notification_webhook(data: PubSubEvent, session_maker: as
                 exception_count=len(exceptions),
                 first_exception=str(exceptions[0]) if exceptions else None,
             )
+
+        async with session_maker() as session:
+            app = await session.get(GrantApplication, application_id)
+            if app:
+                app.completion_email_sent_at = datetime.now(UTC)
+                await session.commit()
+                logger.info(
+                    "Updated completion_email_sent_at timestamp",
+                    application_id=str(application_id),
+                    timestamp=app.completion_email_sent_at.isoformat(),
+                )
 
         logger.info(
             "Email notification batch completed",
