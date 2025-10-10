@@ -76,10 +76,10 @@ async def test_handle_grant_application_pipeline_with_mocked_llm(
     extract_relationships_dto["relationships"] = []
 
     enrich_objectives_dto = extract_relationships_dto.copy()
-    enrich_objectives_dto["enriched_objectives"] = []
+    enrich_objectives_dto["enrichment_responses"] = []
 
     enrich_terminology_dto = enrich_objectives_dto.copy()
-    enrich_terminology_dto["enriched_terminology"] = {}
+    enrich_terminology_dto["wikidata_enrichments"] = []
 
     final_dto = enrich_terminology_dto.copy()
     final_dto["research_plan_text"] = "Generated research plan text"

@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 import pytest
@@ -19,6 +20,8 @@ from services.rag.src.grant_application.dto import (
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
 
 pytest_plugins = ["testing.pubsub_test_plugin"]
+
+pytestmark = pytest.mark.skipif(not os.getenv("PUBSUB_EMULATOR_HOST"), reason="PUBSUB_EMULATOR_HOST not set")
 
 
 @pytest.fixture
