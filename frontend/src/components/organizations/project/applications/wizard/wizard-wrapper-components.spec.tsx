@@ -1346,6 +1346,60 @@ describe("WizardFooter - Analytics Tracking", () => {
 			expect(continueButton).toBeDisabled();
 		});
 
+		it("disables button for step 3 when all RAG sources have FAILED status", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: false,
+				reason: "All RAG sources have failed.",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FAILED", url: undefined },
+						{ filename: "test2.pdf", sourceId: "2", status: "FAILED", url: undefined },
+					],
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+		});
+
+		it("enables button for step 3 when some RAG sources are FINISHED", async () => {
+			const validateStepNextSpy = vi.fn(() => ({
+				isValid: true,
+				reason: "Valid",
+			}));
+
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+				validateStepNext: validateStepNextSpy,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application!,
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FAILED", url: undefined },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED", url: undefined },
+					],
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+		});
+
 		it("disables button for step 4 when validation fails", async () => {
 			const validateStepNextSpy = vi.fn(() => ({
 				isValid: false,

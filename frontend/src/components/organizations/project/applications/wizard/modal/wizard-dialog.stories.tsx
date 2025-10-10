@@ -80,7 +80,7 @@ export const RagSourcesSuccess: Story = {
 	render: () => (
 		<DialogOpener
 			content={{
-				content: <RagSourcesContent />,
+				content: <RagSourcesContent sourceType="template" />,
 				description: "All documents have been successfully processed and indexed.",
 				footer: (
 					<RagSourcesFooter
@@ -146,7 +146,7 @@ export const RagSourcesWithFailures: Story = {
 	render: () => (
 		<DialogOpener
 			content={{
-				content: <RagSourcesContent />,
+				content: <RagSourcesContent sourceType="template" />,
 				description:
 					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
 				dismissOnOutsideClick: false,
@@ -191,7 +191,7 @@ export const RagSourcesEmpty: Story = {
 	render: () => (
 		<DialogOpener
 			content={{
-				content: <RagSourcesContent />,
+				content: <RagSourcesContent sourceType="template" />,
 				description: "Upload documents and add URLs to build your knowledge base.",
 				footer: (
 					<RagSourcesFooter
@@ -357,7 +357,7 @@ export const RagSourcesManyItems: Story = {
 	render: () => (
 		<DialogOpener
 			content={{
-				content: <RagSourcesContent />,
+				content: <RagSourcesContent sourceType="template" />,
 				description:
 					"Review all uploaded documents and URLs. The list below shows the processing status for each item.",
 				footer: (

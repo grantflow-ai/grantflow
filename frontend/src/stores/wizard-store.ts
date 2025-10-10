@@ -856,7 +856,16 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return { isValid: true, reason: "No validation needed" };
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					return { isValid: !!application.rag_sources.length, reason: "There are no RAG sources." };
+					if (!application.rag_sources.length) {
+						return { isValid: false, reason: "There are no RAG sources." };
+					}
+
+					const allSourcesFailed = application.rag_sources.every((source) => source.status === "FAILED");
+					if (allSourcesFailed) {
+						return { isValid: false, reason: "All RAG sources have failed." };
+					}
+
+					return { isValid: true, reason: "Valid" };
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
 					return validateResearchDeepDive();
