@@ -5,7 +5,6 @@ from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
 
@@ -287,18 +286,16 @@ async def refine_objective_enrichment(
     draft: ObjectiveEnrichmentDTO,
     dto: EnrichObjectiveInputDTO,
 ) -> ObjectiveEnrichmentDTO:
-    objective_summary = serialize(
-        {
-            "number": dto["research_objective"]["number"],
-            "title": dto["research_objective"]["title"],
-            "keywords": dto.get("keywords", []),
-            "topics": dto.get("topics", []),
-        }
-    ).decode("utf-8")
+    objective_summary = {
+        "number": dto["research_objective"]["number"],
+        "title": dto["research_objective"]["title"],
+        "keywords": dto.get("keywords", []),
+        "topics": dto.get("topics", []),
+    }
 
     refinement_prompt = ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT.to_string(
         objective=objective_summary,
-        draft=serialize(draft).decode("utf-8"),
+        draft=draft,
     )
 
     return await handle_completions_request(

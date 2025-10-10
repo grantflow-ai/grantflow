@@ -6,7 +6,6 @@ from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive,
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
@@ -253,26 +252,24 @@ async def refine_relationships(
     if not research_objectives:
         return draft
 
-    research_payload = serialize(
-        [
-            {
-                "number": str(obj["number"]),
-                "title": obj["title"],
-                "tasks": [
-                    {
-                        "number": f"{obj['number']}.{task['number']}",
-                        "title": task["title"],
-                    }
-                    for task in obj.get("research_tasks", [])
-                ],
-            }
-            for obj in research_objectives
-        ]
-    ).decode("utf-8")
+    research_payload = [
+        {
+            "number": str(obj["number"]),
+            "title": obj["title"],
+            "tasks": [
+                {
+                    "number": f"{obj['number']}.{task['number']}",
+                    "title": task["title"],
+                }
+                for task in obj.get("research_tasks", [])
+            ],
+        }
+        for obj in research_objectives
+    ]
 
     refinement_prompt = RELATIONSHIPS_REFINEMENT_PROMPT.to_string(
         research_objectives=research_payload,
-        draft_relationships=serialize(draft).decode("utf-8"),
+        draft_relationships=draft,
     )
 
     return await handle_completions_request(
