@@ -302,6 +302,19 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 	};
 }
 
+function validateKnowledgeBase(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
+	if (!application.rag_sources.length) {
+		return { isValid: false, reason: "There are no RAG sources." };
+	}
+
+	const allSourcesFailed = application.rag_sources.every((source) => source.status === "FAILED");
+	if (allSourcesFailed) {
+		return { isValid: false, reason: "All RAG sources have failed." };
+	}
+
+	return { isValid: true, reason: "Valid" };
+}
+
 function validateResearchDeepDive(): ValidationResult {
 	return { isValid: true, reason: "Validation skipped" };
 }
@@ -888,16 +901,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return { isValid: true, reason: "No validation needed" };
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					if (!application.rag_sources.length) {
-						return { isValid: false, reason: "There are no RAG sources." };
-					}
-
-					const allSourcesFailed = application.rag_sources.every((source) => source.status === "FAILED");
-					if (allSourcesFailed) {
-						return { isValid: false, reason: "All RAG sources have failed." };
-					}
-
-					return { isValid: true, reason: "Valid" };
+					return validateKnowledgeBase(application);
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
 					return validateResearchDeepDive();
