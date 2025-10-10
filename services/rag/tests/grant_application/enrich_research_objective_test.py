@@ -119,7 +119,7 @@ def sample_dto_input() -> EnrichObjectiveInputDTO:
             is_clinical_trial=None,
             is_detailed_research_plan=True,
             keywords=["work plan"],
-            max_words=2000,
+            length_constraint={"type": "words", "value": 2000, "source": None},
             search_queries=["work plan"],
             topics=["research methodology"],
         ),
