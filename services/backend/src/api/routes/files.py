@@ -1,5 +1,6 @@
 from typing import Literal, TypedDict
 
+from html_to_markdown import PreprocessingOptions
 from html_to_markdown import convert as convert_to_markdown
 from litestar import Response, post
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
@@ -48,6 +49,7 @@ async def handle_convert_file(
             content_type = "text/markdown"
             file_content = convert_to_markdown(
                 html_content,
+                preprocessing=PreprocessingOptions(enabled=True),
             ).encode()
 
         return Response[bytes](

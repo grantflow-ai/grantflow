@@ -5,6 +5,7 @@ from typing import TypedDict
 from docx import Document
 from docx.document import Document as DocumentObject
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from html_to_markdown import PreprocessingOptions
 from html_to_markdown import convert as convert_to_markdown
 from markdown import markdown
 
@@ -145,5 +146,6 @@ def _get_paragraph_alignment(alignment: str) -> WD_PARAGRAPH_ALIGNMENT:
 def html_to_docx(html_content: str) -> bytes:
     markdown_content = convert_to_markdown(
         html_content,
+        preprocessing=PreprocessingOptions(enabled=True),
     )
     return markdown_to_docx(markdown_content)
