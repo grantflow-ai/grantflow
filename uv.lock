@@ -3493,7 +3493,7 @@ requires-dist = [
     { name = "google-cloud-pubsub", marker = "extra == 'pubsub'", specifier = ">=2.30" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
     { name = "google-genai", marker = "extra == 'ai'", specifier = ">=0.1" },
-    { name = "kreuzberg", extras = ["chunking", "langdetect", "entity-extraction", "document-classification"], marker = "extra == 'extraction'", specifier = ">=3.20.1" },
+    { name = "kreuzberg", extras = ["chunking", "document-classification", "entity-extraction", "langdetect"], marker = "extra == 'extraction'", specifier = ">=3.20.1" },
     { name = "litestar", extras = ["opentelemetry"], marker = "extra == 'server'", specifier = ">=2.16" },
     { name = "msgspec", specifier = ">=0.19" },
     { name = "opentelemetry-exporter-gcp-monitoring", marker = "extra == 'server'", specifier = ">=1.6" },

@@ -19,16 +19,12 @@ logger = get_logger(__name__)
 
 
 class OptimizedTask(TypedDict):
-    """Optimized task structure with short property names"""
-
     num: int
     title: str
     desc: str
 
 
 class OptimizedObjective(TypedDict):
-    """Optimized objective structure with short property names"""
-
     num: int
     title: str
     desc: str
@@ -36,8 +32,6 @@ class OptimizedObjective(TypedDict):
 
 
 class ResearchPlanResponseOptimized(TypedDict):
-    """Optimized response with short property names for token efficiency"""
-
     objectives: list[OptimizedObjective]
 
 
@@ -72,11 +66,10 @@ RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
-# Optimized schema with short property names (50-70% token savings)
 research_plan_schema_optimized = {
     "type": "object",
     "properties": {
-        "objectives": {  # Was: research_objectives (50% shorter)
+        "objectives": {
             "type": "array",
             "description": "Research objectives with tasks",
             "minItems": 2,
@@ -84,19 +77,19 @@ research_plan_schema_optimized = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "num": {"type": "integer", "minimum": 1, "maximum": 3},  # Was: number
+                    "num": {"type": "integer", "minimum": 1, "maximum": 3},
                     "title": {"type": "string", "minLength": 10, "maxLength": 200},
-                    "desc": {"type": "string", "minLength": 50, "maxLength": 500},  # Was: description (30% shorter)
-                    "tasks": {  # Was: research_tasks (40% shorter)
+                    "desc": {"type": "string", "minLength": 50, "maxLength": 500},
+                    "tasks": {
                         "type": "array",
                         "minItems": 2,
                         "maxItems": 5,
                         "items": {
                             "type": "object",
                             "properties": {
-                                "num": {"type": "integer", "minimum": 1, "maximum": 5},  # Was: number
+                                "num": {"type": "integer", "minimum": 1, "maximum": 5},
                                 "title": {"type": "string", "minLength": 10, "maxLength": 200},
-                                "desc": {"type": "string", "minLength": 50, "maxLength": 500},  # Was: description
+                                "desc": {"type": "string", "minLength": 50, "maxLength": 500},
                             },
                             "required": ["num", "title", "desc"],
                         },
@@ -109,7 +102,6 @@ research_plan_schema_optimized = {
     "required": ["objectives"],
 }
 
-# Keep old schema for reference/backwards compatibility
 research_plan_schema = {
     "type": "object",
     "properties": {
@@ -179,7 +171,6 @@ research_plan_schema = {
 
 
 def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) -> list[ResearchObjective]:
-    """Transform optimized schema with short names back to DB format"""
     objectives: list[ResearchObjective] = []
 
     for obj in optimized["objectives"]:
@@ -205,7 +196,6 @@ def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) 
 
 
 def _validate_research_plan_response_optimized(response: ResearchPlanResponseOptimized) -> None:
-    """Validate optimized schema response"""
     objectives = response["objectives"]
 
     if len(objectives) < 2 or len(objectives) > 3:
@@ -362,7 +352,6 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
 
     full_prompt = prompt_with_title.to_string(context=compressed_context)
 
-    # Use optimized schema with short property names (50-70% token savings)
     response_optimized: ResearchPlanResponseOptimized = await handle_completions_request(
         prompt_identifier="research_plan_generation",
         messages=full_prompt,
@@ -374,5 +363,4 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         trace_id=trace_id,
     )
 
-    # Transform optimized response back to DB format
     return _transform_optimized_to_db_format(response_optimized)

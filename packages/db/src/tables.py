@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID, uuid4
 
 if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
+    from packages.shared_utils.src.extraction import DocumentMetadata
 else:
     DocumentMetadata = dict
 

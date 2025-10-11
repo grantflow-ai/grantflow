@@ -14,13 +14,13 @@ from sentence_transformers import util
 from sqlalchemy import func, or_
 from sqlalchemy.orm import selectinload
 
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
-
 from services.rag.src.dto import DocumentDTO
 from services.rag.src.utils.post_processing import post_process_documents
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.search_queries import handle_create_search_queries
+
+if TYPE_CHECKING:
+    from packages.shared_utils.src.extraction import DocumentMetadata
 
 logger = get_logger(__name__)
 

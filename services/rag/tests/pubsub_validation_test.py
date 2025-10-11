@@ -20,7 +20,9 @@ from services.rag.src.main import handle_pubsub_message, handle_request
 handle_request_fn = handle_request.fn
 
 
-def create_pubsub_event_from_request(request: object) -> PubSubEvent:
+def create_pubsub_event_from_request(
+    request: GrantTemplateRagRequest | GrantApplicationRagRequest | ResearchPlanAutofillRequest,
+) -> PubSubEvent:
     serialized_data = serialize(request)
     encoded_data = base64.b64encode(serialized_data).decode()
     return PubSubEvent(

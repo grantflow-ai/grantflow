@@ -49,7 +49,6 @@ async def test_wikidata_context_generation_performance(
         "statistical learning",
     ]
 
-    # Create search responses for each term
     search_responses = []
     for i, term in enumerate(test_terms):
         search_response = MagicMock()
@@ -59,7 +58,6 @@ async def test_wikidata_context_generation_performance(
         search_response.raise_for_status = MagicMock()
         search_responses.append(search_response)
 
-    # Create batch details response
     details_response = MagicMock()
     details_response.json.return_value = {
         "entities": {
@@ -72,7 +70,6 @@ async def test_wikidata_context_generation_performance(
     }
     details_response.raise_for_status = MagicMock()
 
-    # 10 search calls + 1 batch details call
     mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     with pytest.MonkeyPatch().context() as m:
@@ -208,7 +205,6 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
 async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
     test_terms = [f"term_{i}" for i in range(15)]
 
-    # Create search responses for each term (15 search calls)
     search_responses = []
     for i in range(15):
         search_response = MagicMock()
@@ -218,7 +214,6 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
         search_response.raise_for_status = MagicMock()
         search_responses.append(search_response)
 
-    # Create batch details response (1 call for all 15 entities)
     details_response = MagicMock()
     details_response.json.return_value = {
         "entities": {
@@ -231,7 +226,6 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
     }
     details_response.raise_for_status = MagicMock()
 
-    # 15 search calls + 1 batch details call = 16 total
     mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     with pytest.MonkeyPatch().context() as m:
@@ -246,7 +240,6 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
 
         processing_time_ms = (end_time - start_time) * 1000
 
-        # With new API: 15 search calls + 1 batch details call = 16 total
         assert mock_httpx_client.get.call_count == 16, (
             f"Expected 16 calls (15 searches + 1 batch), got {mock_httpx_client.get.call_count} calls"
         )

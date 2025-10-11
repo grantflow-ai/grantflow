@@ -28,7 +28,6 @@ def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
 
 
 async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    # First call: wbsearchentities
     search_response = MagicMock()
     search_response.json.return_value = {
         "search": [
@@ -41,7 +40,6 @@ async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock
     }
     search_response.raise_for_status = MagicMock()
 
-    # Second call: wbgetentities
     details_response = MagicMock()
     details_response.json.return_value = {
         "entities": {
@@ -98,7 +96,6 @@ async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock
 
 
 async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    # Create search responses for each term (6 terms = 6 search calls)
     search_responses = []
     for i in range(1, 7):
         search_response = MagicMock()
@@ -114,7 +111,6 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
         search_response.raise_for_status = MagicMock()
         search_responses.append(search_response)
 
-    # Create one batch details response (all 6 entities in one batch)
     details_response = MagicMock()
     details_response.json.return_value = {
         "entities": {
@@ -127,7 +123,6 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
     }
     details_response.raise_for_status = MagicMock()
 
-    # 6 search calls + 1 batch details call = 7 total
     mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     terms = ["term1", "term2", "term3", "term4", "term5", "term6"]
@@ -138,12 +133,10 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
     ):
         await get_scientific_context(terms, "test-trace")
 
-    # Should be 6 search calls + 1 batch details call
     assert mock_httpx_client.get.call_count == 7
 
 
 async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    # First call: wbsearchentities
     search_response = MagicMock()
     search_response.json.return_value = {
         "search": [
@@ -156,7 +149,6 @@ async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, moc
     }
     search_response.raise_for_status = MagicMock()
 
-    # Second call: wbgetentities
     details_response = MagicMock()
     details_response.json.return_value = {
         "entities": {
@@ -178,7 +170,7 @@ async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, moc
 
     assert len(result) == 1
     assert result[0]["label"] == "test"
-    assert result[0]["scientific_field"] == ""  # No longer using scientific_field filter
+    assert result[0]["scientific_field"] == ""
 
 
 async def test_expand_scientific_terms_empty() -> None:

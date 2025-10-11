@@ -1,21 +1,15 @@
 import re
-from typing import TYPE_CHECKING, Any, Final, TypedDict
+from typing import Any, Final, TypedDict, cast
 
 from kreuzberg import (
-    KreuzbergError,
-    extract_bytes,
     ExtractionConfig,
     ExtractionResult,
-    TokenReductionConfig,
-    TesseractConfig,
+    KreuzbergError,
     PSMMode,
+    TesseractConfig,
+    TokenReductionConfig,
+    extract_bytes,
 )
-
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
-else:
-    DocumentMetadata = dict
-
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.stopwords import ACADEMIC_STOP_WORDS
@@ -31,6 +25,31 @@ class Entity(TypedDict):
 class Keyword(TypedDict):
     keyword: str
     score: float
+
+
+class DocumentMetadata(TypedDict, total=False):
+    entities: list[Entity]
+    keywords: list[Keyword]
+    abstract: str
+    authors: list[str]
+    categories: list[str]
+    citations: list[str]
+    comments: str
+    copyright: str
+    description: str
+    identifier: str
+    languages: list[str]
+    publisher: str
+    references: list[str]
+    subject: str
+    subtitle: str
+    summary: str
+    title: str
+    notes: list[str]
+    note: str
+    attributes: dict[str, Any]
+    document_type: str
+    quality_score: float
 
 
 _TITLE_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -70,7 +89,7 @@ def filter_keywords_by_score(
 def enrich_metadata_with_entities_keywords(
     *,
     extraction_result: ExtractionResult,
-    metadata: dict[str, Any],
+    metadata: DocumentMetadata,
     context: str,
 ) -> tuple[int, int]:
     entities_count = 0
@@ -277,9 +296,19 @@ async def extract_file_content(
 
         extraction_duration = time.time() - start_time
         chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
-        metadata = (
-            result.metadata if hasattr(result, "metadata") and result.metadata else None
+        metadata = cast(
+            "DocumentMetadata",
+            result.metadata if hasattr(result, "metadata") and result.metadata else {},
         )
+
+        if enable_entity_extraction or enable_keyword_extraction:
+            entities_count, keywords_count = enrich_metadata_with_entities_keywords(
+                extraction_result=result,
+                metadata=metadata,
+                context=f"extract_file_content:{mime_type}",
+            )
+        else:
+            entities_count, keywords_count = 0, 0
 
         logger.debug(
             "File content extraction successful",
@@ -289,6 +318,8 @@ async def extract_file_content(
             extracted_length=len(result.content),
             chunks_count=len(chunks) if chunks else 0,
             metadata_fields=len(metadata) if metadata else 0,
+            entities_count=entities_count,
+            keywords_count=keywords_count,
             token_reduction_enabled=enable_token_reduction,
             extraction_duration_ms=round(extraction_duration * 1000, 2),
         )
