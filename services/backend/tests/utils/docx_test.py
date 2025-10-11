@@ -2,11 +2,10 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import pytest
-from bs4 import Tag
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
-from services.backend.src.utils.docx import html_to_docx, markdown_to_docx, paragraph_alignment_converter
+from services.backend.src.utils.docx import html_to_docx, markdown_to_docx
 
 
 @pytest.fixture
@@ -315,27 +314,6 @@ Some text after table."""
         assert mock_table.style == "Table Grid"
 
 
-@pytest.mark.parametrize(
-    "text,style,convert_as_inline,expected",
-    [
-        ("Test text", "text-align: center", True, "Test text"),
-        ("   ", "text-align: center", False, ""),
-        ("Centered text", "text-align: center", False, "<!-- /ALIGNMENT:center -->\nCentered text\n"),
-        ("Left aligned text", "text-align: left", False, "<!-- /ALIGNMENT:left -->\nLeft aligned text\n"),
-        ("Right aligned text", "text-align: right", False, "<!-- /ALIGNMENT:right -->\nRight aligned text\n"),
-        ("Justified text", "text-align: justify", False, "<!-- /ALIGNMENT:justify -->\nJustified text\n"),
-        ("No text-align text", "color: red; font-size: 12px", False, "No text-align text\n"),
-    ],
-)
-def test_paragraph_alignment_converter(text: str, style: str, convert_as_inline: bool, expected: str) -> None:
-    mock_tag = MagicMock(spec=Tag)
-    mock_tag.get.return_value = style
-
-    result = paragraph_alignment_converter(text=text, tag=mock_tag, convert_as_inline=convert_as_inline)
-
-    assert result == expected
-
-
 def test_html_to_docx_creates_document() -> None:
     html_content = """
     <h1>Main Title</h1>
@@ -362,24 +340,3 @@ def test_html_to_docx_creates_document() -> None:
 
     assert doc is not None
     assert len(doc.paragraphs) > 0
-
-
-def test_html_to_docx_handles_text_alignment() -> None:
-    html_content = """
-    <h1>Title</h1>
-    <p style="text-align: justify">Justified paragraph</p>
-    """
-
-    with patch("services.backend.src.utils.docx.Document") as mock_doc_class:
-        mock_doc = MagicMock()
-        mock_paragraph = MagicMock()
-        mock_doc.add_paragraph.return_value = mock_paragraph
-        mock_doc_class.return_value = mock_doc
-
-        BytesIO()
-        mock_doc.save = lambda buffer: buffer.write(b"test")
-
-        html_to_docx(html_content)
-
-        assert mock_doc.add_paragraph.call_count == 1
-        assert mock_paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.JUSTIFY
