@@ -1,6 +1,6 @@
 from typing import Any, Final, TypedDict
 
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
@@ -182,7 +182,7 @@ async def handle_source_validation(
         response_schema=source_validation_schema,
         validator=validate_source_validation_response,
         system_prompt=VALIDATE_SOURCES_SYSTEM_PROMPT,
-        model=ANTHROPIC_SONNET_MODEL,
+        model=GEMINI_FLASH_MODEL,
         trace_id=trace_id,
     )
 
