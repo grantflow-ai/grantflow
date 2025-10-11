@@ -28,19 +28,32 @@ def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
 
 
 async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    mock_httpx_response.json.return_value = {
-        "results": {
-            "bindings": [
-                {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "machine learning"},
-                    "description": {"value": "Field of AI"},
-                    "scientific_field": {"value": "Computer Science"},
-                }
-            ]
+    # First call: wbsearchentities
+    search_response = MagicMock()
+    search_response.json.return_value = {
+        "search": [
+            {
+                "id": "Q2539",
+                "label": "machine learning",
+                "description": "Field of AI",
+            }
+        ]
+    }
+    search_response.raise_for_status = MagicMock()
+
+    # Second call: wbgetentities
+    details_response = MagicMock()
+    details_response.json.return_value = {
+        "entities": {
+            "Q2539": {
+                "labels": {"en": {"value": "machine learning"}},
+                "descriptions": {"en": {"value": "Field of AI"}},
+            }
         }
     }
-    mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
+    details_response.raise_for_status = MagicMock()
+
+    mock_httpx_client.get = AsyncMock(side_effect=[search_response, details_response])
 
     with patch(
         "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
@@ -49,7 +62,7 @@ async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock
         result = await get_scientific_context(["machine learning"], "test-trace")
 
     assert "machine learning" in result
-    assert "Computer Science" in result
+    assert "Field of AI" in result
 
 
 async def test_get_scientific_context_empty_terms() -> None:
@@ -85,19 +98,37 @@ async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock
 
 
 async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    mock_httpx_response.json.return_value = {
-        "results": {
-            "bindings": [
+    # Create search responses for each term (6 terms = 6 search calls)
+    search_responses = []
+    for i in range(1, 7):
+        search_response = MagicMock()
+        search_response.json.return_value = {
+            "search": [
                 {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "term1"},
-                    "description": {"value": "description1"},
-                    "scientific_field": {"value": "Science"},
+                    "id": f"Q{100 + i}",
+                    "label": f"term{i}",
+                    "description": f"description{i}",
                 }
             ]
         }
+        search_response.raise_for_status = MagicMock()
+        search_responses.append(search_response)
+
+    # Create one batch details response (all 6 entities in one batch)
+    details_response = MagicMock()
+    details_response.json.return_value = {
+        "entities": {
+            f"Q{100 + i}": {
+                "labels": {"en": {"value": f"term{i}"}},
+                "descriptions": {"en": {"value": f"description{i}"}},
+            }
+            for i in range(1, 7)
+        }
     }
-    mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
+    details_response.raise_for_status = MagicMock()
+
+    # 6 search calls + 1 batch details call = 7 total
+    mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     terms = ["term1", "term2", "term3", "term4", "term5", "term6"]
 
@@ -107,23 +138,37 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
     ):
         await get_scientific_context(terms, "test-trace")
 
-    assert mock_httpx_client.get.call_count > 1
+    # Should be 6 search calls + 1 batch details call
+    assert mock_httpx_client.get.call_count == 7
 
 
 async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    mock_httpx_response.json.return_value = {
-        "results": {
-            "bindings": [
-                {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "test"},
-                    "description": {"value": "test description"},
-                    "scientific_field": {"value": "Test Science"},
-                }
-            ]
+    # First call: wbsearchentities
+    search_response = MagicMock()
+    search_response.json.return_value = {
+        "search": [
+            {
+                "id": "Q123",
+                "label": "test",
+                "description": "test description",
+            }
+        ]
+    }
+    search_response.raise_for_status = MagicMock()
+
+    # Second call: wbgetentities
+    details_response = MagicMock()
+    details_response.json.return_value = {
+        "entities": {
+            "Q123": {
+                "labels": {"en": {"value": "test"}},
+                "descriptions": {"en": {"value": "test description"}},
+            }
         }
     }
-    mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
+    details_response.raise_for_status = MagicMock()
+
+    mock_httpx_client.get = AsyncMock(side_effect=[search_response, details_response])
 
     with patch(
         "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
@@ -133,7 +178,7 @@ async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, moc
 
     assert len(result) == 1
     assert result[0]["label"] == "test"
-    assert result[0]["scientific_field"] == "Test Science"
+    assert result[0]["scientific_field"] == ""  # No longer using scientific_field filter
 
 
 async def test_expand_scientific_terms_empty() -> None:
