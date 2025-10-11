@@ -150,6 +150,7 @@ function GeneratingLoader() {
 				className="size-96 object-contain"
 				height={96}
 				src="/animations/analyzing-loader.gif"
+				unoptimized
 				width={96}
 			/>
 		</div>
