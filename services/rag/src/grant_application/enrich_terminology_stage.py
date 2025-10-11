@@ -1,5 +1,3 @@
-from collections import defaultdict
-from functools import lru_cache
 from typing import Any, Final, TypedDict, cast
 
 import httpx
@@ -13,10 +11,11 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
 
-WIKIDATA_BASE_URL: Final[str] = "https://query.wikidata.org/sparql"
-WIKIDATA_BATCH_SIZE: Final[int] = 5
-WIKIDATA_TIMEOUT: Final[int] = 30
+WIKIDATA_API_URL: Final[str] = "https://www.wikidata.org/w/api.php"
+WIKIDATA_BATCH_SIZE: Final[int] = 10
+WIKIDATA_TIMEOUT: Final[int] = 10
 WIKIDATA_MAX_RETRIES: Final[int] = 3
+WIKIDATA_SEARCH_LIMIT: Final[int] = 3
 
 _client_ref = Ref[httpx.AsyncClient]()
 
@@ -46,55 +45,67 @@ This context provides foundational scientific concepts and terminology relevant 
 )
 
 
-@lru_cache
-def _build_sparql_query(terms: tuple[str, ...]) -> str:
-    quoted_terms = [f'"{term}"' for term in terms]
-    terms_filter = " || ".join([f"?label = {term}" for term in quoted_terms])
+async def _search_entity_by_label(client: httpx.AsyncClient, term: str, trace_id: str) -> list[dict[str, Any]]:
+    """Search for Wikidata entities by label using modern wbsearchentities API (2025)"""
+    with start_span_with_trace_id("wikidata_search_entity", trace_id=trace_id) as span:
+        span.set_attribute("search_term", term)
 
-    return f"""
-    SELECT DISTINCT ?item ?label ?description ?scientific_field
-    WHERE {{
-        ?item rdfs:label ?label .
-        FILTER({terms_filter})
-        FILTER(LANG(?label) = "en")
-
-        OPTIONAL {{
-            ?item schema:description ?description .
-            FILTER(LANG(?description) = "en")
-        }}
-
-        OPTIONAL {{
-            ?item wdt:P31 ?type .
-            ?type rdfs:label ?scientific_field .
-            FILTER(LANG(?scientific_field) = "en")
-            FILTER(CONTAINS(LCASE(?scientific_field), "scientific") ||
-                   CONTAINS(LCASE(?scientific_field), "research") ||
-                   CONTAINS(LCASE(?scientific_field), "study"))
-        }}
-    }}
-    LIMIT 100
-    """
-
-
-@with_exponential_backoff_retry(httpx.HTTPError, httpx.TimeoutException, max_retries=WIKIDATA_MAX_RETRIES)
-async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_id: str) -> dict[str, Any]:
-    with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
-        span.set_attribute("query", query)
-
-        params = {
-            "query": query,
+        params: dict[str, str | int] = {
+            "action": "wbsearchentities",
+            "search": term,
+            "language": "en",
+            "type": "item",
+            "limit": WIKIDATA_SEARCH_LIMIT,
             "format": "json",
         }
 
         try:
-            response = await client.get(WIKIDATA_BASE_URL, params=params)
+            response = await client.get(WIKIDATA_API_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            results = data.get("search", [])
+            logger.debug(
+                "Wikidata entity search successful",
+                term=term,
+                results_count=len(results),
+                trace_id=trace_id,
+            )
+
+            return cast("list[dict[str, Any]]", results)
+
+        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.warning(
+                "Wikidata entity search failed",
+                term=term,
+                error=str(e),
+                trace_id=trace_id,
+            )
+            return []
+
+
+@with_exponential_backoff_retry(httpx.HTTPError, httpx.TimeoutException, max_retries=WIKIDATA_MAX_RETRIES)
+async def _get_entity_details(client: httpx.AsyncClient, entity_ids: list[str], trace_id: str) -> dict[str, Any]:
+    """Get detailed information for entities using wbgetentities API"""
+    with start_span_with_trace_id("wikidata_get_entities", trace_id=trace_id) as span:
+        span.set_attribute("entity_count", len(entity_ids))
+
+        params: dict[str, str] = {
+            "action": "wbgetentities",
+            "ids": "|".join(entity_ids[:50]),  # Max 50 per request
+            "props": "descriptions|labels",
+            "languages": "en",
+            "format": "json",
+        }
+
+        try:
+            response = await client.get(WIKIDATA_API_URL, params=params)
             response.raise_for_status()
             data = response.json()
 
             logger.info(
-                "Wikidata query successful",
-                query_length=len(query),
-                response_size=len(str(data)),
+                "Wikidata entity details retrieved",
+                entity_count=len(entity_ids),
                 trace_id=trace_id,
             )
 
@@ -106,7 +117,7 @@ async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_
                     status_code=e.response.status_code,
                     trace_id=trace_id,
                 )
-                return {"results": {"bindings": []}}
+                return {"entities": {}}
             raise
         except (httpx.TimeoutException, httpx.NetworkError) as e:
             logger.warning(
@@ -114,19 +125,24 @@ async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_
                 error=str(e),
                 trace_id=trace_id,
             )
-            return {"results": {"bindings": []}}
+            return {"entities": {}}
 
 
-def _parse_wikidata_response(data: dict[str, Any]) -> list[WikidataItem]:
+def _parse_entity_details(data: dict[str, Any]) -> list[WikidataItem]:
+    """Parse entity details from wbgetentities response"""
     results: list[WikidataItem] = []
 
-    if "results" in data and "bindings" in data["results"]:
-        for binding in data["results"]["bindings"]:
+    entities = data.get("entities", {})
+    for entity_id, entity in entities.items():
+        label = entity.get("labels", {}).get("en", {}).get("value", "")
+        description = entity.get("descriptions", {}).get("en", {}).get("value", "")
+
+        if label and description:
             result = WikidataItem(
-                item_id=binding.get("item", {}).get("value", ""),
-                label=binding.get("label", {}).get("value", ""),
-                description=binding.get("description", {}).get("value", ""),
-                scientific_field=binding.get("scientific_field", {}).get("value", ""),
+                item_id=entity_id,
+                label=label,
+                description=description,
+                scientific_field="",  # No longer using scientific_field filter
             )
             results.append(result)
 
@@ -134,28 +150,52 @@ def _parse_wikidata_response(data: dict[str, Any]) -> list[WikidataItem]:
 
 
 async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[WikidataItem]:
+    """Expand scientific terms using modern Wikidata API (2025)"""
     if not terms:
         return []
 
     client = get_wikimedia_client()
-    all_results: list[WikidataItem] = []
-    for i in range(0, len(terms), WIKIDATA_BATCH_SIZE):
-        batch = terms[i : i + WIKIDATA_BATCH_SIZE]
 
-        with start_span_with_trace_id("wikidata_batch_expansion", trace_id=trace_id) as span:
+    # Step 1: Search for entities by label (fast, indexed)
+    entity_ids: list[str] = []
+    for term in terms:
+        try:
+            search_results = await _search_entity_by_label(client, term, trace_id)
+            # Take top 2 results per term
+            for result in search_results[:2]:
+                entity_id = result.get("id")
+                if entity_id:
+                    entity_ids.append(entity_id)
+        except (httpx.HTTPError, httpx.TimeoutException) as e:
+            logger.warning(
+                "Entity search failed for term - continuing",
+                term=term,
+                error=str(e),
+                trace_id=trace_id,
+            )
+            continue
+
+    if not entity_ids:
+        return []
+
+    # Step 2: Get detailed information in batches (max 50 per request)
+    all_results: list[WikidataItem] = []
+    for i in range(0, len(entity_ids), 50):
+        batch = entity_ids[i : i + 50]
+
+        with start_span_with_trace_id("wikidata_batch_details", trace_id=trace_id) as span:
             span.set_attribute("batch_size", len(batch))
-            span.set_attribute("batch_index", i // WIKIDATA_BATCH_SIZE)
+            span.set_attribute("batch_index", i // 50)
 
             try:
-                query = _build_sparql_query(tuple(batch))
-                response_data = await _make_request_with_retry(client, query, trace_id)
-                batch_results = _parse_wikidata_response(response_data)
+                details_data = await _get_entity_details(client, batch, trace_id)
+                batch_results = _parse_entity_details(details_data)
                 all_results.extend(batch_results)
 
             except (httpx.HTTPError, httpx.TimeoutException) as e:
                 logger.warning(
-                    "Batch expansion failed - continuing with next batch",
-                    batch=batch,
+                    "Batch details retrieval failed - continuing with next batch",
+                    batch_size=len(batch),
                     error=str(e),
                     trace_id=trace_id,
                 )
@@ -165,6 +205,7 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
 
 
 async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
+    """Get scientific context from Wikidata using modern API (2025)"""
     if not terms:
         return ""
 
@@ -173,16 +214,12 @@ async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
     if not expanded_data:
         return ""
 
-    field_groups: defaultdict[str, list[str]] = defaultdict(list)
-    for item in expanded_data:
-        field = item["scientific_field"] or "General Science"
-        label = item["label"]
-        if label:
-            field_groups[field].append(label)
-
     context_parts = []
-    for field, labels in field_groups.items():
-        context_parts.append(f"**{field}:** {', '.join(labels)}")
+    for item in expanded_data:
+        label = item["label"]
+        description = item["description"]
+        if label and description:
+            context_parts.append(f"**{label}**: {description}")
 
     return "\n".join(context_parts)
 
