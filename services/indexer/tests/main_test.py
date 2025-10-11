@@ -385,8 +385,42 @@ async def test_handle_file_indexing_download_error(
     mock_download_blob: AsyncMock,
     mock_parse_object_uri: MagicMock,
     grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     source_id = UUID("550e8400-e29b-41d4-a716-446655440000")
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": source_id,
+                    "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                    "parent_id": None,
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": source_id,
+                    "filename": "document.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 0,
+                    "bucket_name": "test-bucket",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/document.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
+                }
+            )
+        )
 
     mock_parse_object_uri.return_value = {
         "entity_type": "grant_application",
@@ -594,8 +628,93 @@ async def test_handle_file_indexing_existing_file(
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
     assert response.status_code == HTTPStatus.CREATED, response.text
 
-    mock_download_blob.assert_awaited_once_with(object_path)
+    mock_download_blob.assert_not_called()
     mock_process_source.assert_not_called()
+
+
+async def test_handle_file_indexing_marks_failed_source_as_indexing_before_processing(
+    test_client: AsyncTestClient[Any],
+    mock_download_blob: AsyncMock,
+    mock_process_source: AsyncMock,
+    mock_parse_object_uri: MagicMock,
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+) -> None:
+    source_id = UUID("123e4567-e89b-12d3-a456-426614174001")
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": source_id,
+                    "indexing_status": SourceIndexingStatusEnum.FAILED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                    "parent_id": None,
+                    "error_type": "ExtractionError",
+                    "error_message": "previous failure",
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": source_id,
+                    "filename": "retry.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 0,
+                    "bucket_name": "test-bucket",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/retry.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
+                }
+            )
+        )
+
+    mock_parse_object_uri.return_value = {
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
+        "source_id": source_id,
+        "blob_name": "retry.pdf",
+    }
+
+    async def assert_indexing_status(**kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
+        async with async_session_maker() as session:
+            source = await session.scalar(select(RagSource).where(RagSource.id == source_id))
+            assert source is not None
+            assert source.indexing_status == SourceIndexingStatusEnum.INDEXING
+            assert source.error_type is None
+            assert source.error_message is None
+
+        embedding = [0.2] * 384
+        vectors = [
+            {"chunk": {"content": "retry", "metadata": {}}, "embedding": embedding, "rag_source_id": str(source_id)}
+        ]
+        return vectors, "Recovered content", None
+
+    mock_process_source.side_effect = assert_indexing_status
+
+    file_path = f"grant_application/{grant_application.id}/{source_id}/retry.pdf"
+    pubsub_event = create_pubsub_event(file_path)
+
+    response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    async with async_session_maker() as session:
+        source = await session.scalar(select(RagSource).where(RagSource.id == source_id))
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
+        assert source.error_type is None
+        assert source.error_message is None
+
+    mock_download_blob.assert_awaited_once_with(file_path)
+    mock_process_source.assert_awaited_once()
 
 
 async def test_handle_file_indexing_file_parsing_error(
