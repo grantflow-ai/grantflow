@@ -227,10 +227,14 @@ async def test_retriable_error_skips_failure_notification(
     with patch("services.crawler.src.main.crawl_url") as mock_crawl:
         mock_crawl.side_effect = RetriableCrawlError("Temporary failure")
 
-        with patch("services.crawler.src.main.update_source_indexing_status") as mock_update_status:
+        with patch(
+            "services.crawler.src.main.update_source_indexing_status"
+        ) as mock_update_status:
             response = await test_client.post(
                 "/",
-                json={"message": {"data": encode_crawling_request(str(source_id), url)}},
+                json={
+                    "message": {"data": encode_crawling_request(str(source_id), url)}
+                },
             )
 
     assert response.status_code == HTTPStatus.CREATED

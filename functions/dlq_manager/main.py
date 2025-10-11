@@ -2,17 +2,25 @@ import asyncio
 import os
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
 import functions_framework
 import structlog
 from flask import Request
 from google.cloud import pubsub_v1
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
-from packages.db.src.tables import RagFile, RagGenerationJob, RagSource, RagUrl
+from packages.db.src.tables import (
+    GrantApplicationSource,
+    GrantingInstitutionSource,
+    GrantTemplateSource,
+    RagFile,
+    RagGenerationJob,
+    RagSource,
+    RagUrl,
+)
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import with_polymorphic
 
 structlog.configure(
     processors=[
@@ -134,38 +142,96 @@ def check_dlq_message_count(subscriber: pubsub_v1.SubscriberClient, subscription
         return 0
 
 
-def republish_source_to_indexing(publisher: pubsub_v1.PublisherClient, source: RagSource) -> None:
-    topic_name = TOPIC_FILE_INDEXING if isinstance(source, RagFile) else TOPIC_URL_CRAWLING
-    topic_path = publisher.topic_path(PROJECT_ID, topic_name)
+async def republish_source_to_indexing(
+    publisher: pubsub_v1.PublisherClient, session_maker: async_sessionmaker[AsyncSession], source: RagSource
+) -> None:
+    """Republish stuck source to indexing/crawling topic.
 
-    message_data: dict[str, Any]
+    For RagFile: Publishes GCS-style notification with attributes.
+    For RagUrl: Publishes CrawlingRequest with serialized message body after querying entity info.
+    """
     if isinstance(source, RagFile):
+        # Indexer expects GCS notification attributes, not serialized body
+        topic_name = TOPIC_FILE_INDEXING
+        topic_path = publisher.topic_path(PROJECT_ID, topic_name)
+
+        # GCS notifications use attributes, empty body
+        attributes = {
+            "bucketId": source.bucket_name,
+            "objectId": source.object_path,
+            "eventType": "OBJECT_FINALIZE",
+        }
+
+        future = publisher.publish(topic_path, b"", **attributes)
+        future.result()
+
+        logger.info(
+            "Republished stuck file source",
+            source_id=str(source.id),
+            bucket=source.bucket_name,
+            object_path=source.object_path,
+            topic=topic_name,
+        )
+
+    elif isinstance(source, RagUrl):
+        # Crawler expects CrawlingRequest with source_id, url, entity_type, entity_id, trace_id
+        # Query join tables to find actual entity
+        async with session_maker() as session:
+            # Check GrantApplicationSource
+            if app_id := await session.scalar(
+                select(GrantApplicationSource.grant_application_id).where(
+                    GrantApplicationSource.rag_source_id == source.id
+                )
+            ):
+                entity_type = "grant_application"
+                entity_id = str(app_id)
+            # Check GrantTemplateSource
+            elif template_id := await session.scalar(
+                select(GrantTemplateSource.grant_template_id).where(GrantTemplateSource.rag_source_id == source.id)
+            ):
+                entity_type = "grant_template"
+                entity_id = str(template_id)
+            # Check GrantingInstitutionSource
+            elif institution_id := await session.scalar(
+                select(GrantingInstitutionSource.granting_institution_id).where(
+                    GrantingInstitutionSource.rag_source_id == source.id
+                )
+            ):
+                entity_type = "granting_institution"
+                entity_id = str(institution_id)
+            else:
+                logger.error(
+                    "No entity found for RagUrl source",
+                    source_id=str(source.id),
+                    url=source.url,
+                )
+                return
+
+        topic_name = TOPIC_URL_CRAWLING
+        topic_path = publisher.topic_path(PROJECT_ID, topic_name)
+
         message_data = {
             "source_id": str(source.id),
-            "bucket_name": source.bucket_name,
-            "blob_name": source.object_path,
+            "url": source.url,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "trace_id": "",
         }
+
+        message_bytes = serialize(message_data)
+        future = publisher.publish(topic_path, message_bytes)
+        future.result()
+
+        logger.info(
+            "Republished stuck URL source",
+            source_id=str(source.id),
+            url=source.url,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            topic=topic_name,
+        )
     else:
-        rag_url = source if isinstance(source, RagUrl) else None
-        if not rag_url:
-            logger.error("Source is neither RagFile nor RagUrl", source_id=str(source.id))
-            return
-        message_data = {
-            "source_id": str(source.id),
-            "url": rag_url.url,
-        }
-
-    message_bytes = serialize(message_data)
-
-    future = publisher.publish(topic_path, message_bytes)
-    future.result()
-
-    logger.info(
-        "Republished stuck source",
-        source_id=str(source.id),
-        topic=topic_name,
-        status=source.indexing_status.value,
-    )
+        logger.error("Unknown source type", source_id=str(source.id), source_type=type(source).__name__)
 
 
 def republish_job_to_rag_processing(publisher: pubsub_v1.PublisherClient, job: RagGenerationJob) -> None:
@@ -214,26 +280,44 @@ async def reconcile_stuck_jobs() -> str:
         "dlq_alerts": 0,
     }
 
+    # Get IDs of stuck items
     async with session_maker() as session, session.begin():
-        stuck_indexing = await check_stuck_indexing_sources(session, now)
-        for source in stuck_indexing:
-            republish_source_to_indexing(publisher, source)
-            stats["stuck_indexing"] += 1
+        # Get stuck source IDs
+        stuck_indexing_ids = [s.id for s in await check_stuck_indexing_sources(session, now)]
+        stuck_created_ids = [s.id for s in await check_stuck_created_sources(session, now)]
+        stuck_processing_ids = [j.id for j in await check_stuck_processing_jobs(session, now)]
+        stuck_pending_ids = [j.id for j in await check_stuck_pending_jobs(session, now)]
 
-        stuck_created = await check_stuck_created_sources(session, now)
-        for source in stuck_created:
-            republish_source_to_indexing(publisher, source)
-            stats["stuck_created"] += 1
+    # Republish stuck sources
+    poly_source = with_polymorphic(RagSource, "*")
+    for source_id in stuck_indexing_ids:
+        async with session_maker() as session:
+            # Use with_polymorphic to eagerly load all subclass attributes
+            result = await session.execute(select(poly_source).where(poly_source.id == source_id))
+            if source := result.scalar_one_or_none():
+                await republish_source_to_indexing(publisher, session_maker, source)
+                stats["stuck_indexing"] += 1
 
-        stuck_processing = await check_stuck_processing_jobs(session, now)
-        for job in stuck_processing:
-            republish_job_to_rag_processing(publisher, job)
-            stats["stuck_processing_jobs"] += 1
+    for source_id in stuck_created_ids:
+        async with session_maker() as session:
+            # Use with_polymorphic to eagerly load all subclass attributes
+            result = await session.execute(select(poly_source).where(poly_source.id == source_id))
+            if source := result.scalar_one_or_none():
+                await republish_source_to_indexing(publisher, session_maker, source)
+                stats["stuck_created"] += 1
 
-        stuck_pending = await check_stuck_pending_jobs(session, now)
-        for job in stuck_pending:
-            republish_job_to_rag_processing(publisher, job)
-            stats["stuck_pending_jobs"] += 1
+    # Republish stuck jobs
+    for job_id in stuck_processing_ids:
+        async with session_maker() as session:
+            if job := await session.get(RagGenerationJob, job_id):
+                republish_job_to_rag_processing(publisher, job)
+                stats["stuck_processing_jobs"] += 1
+
+    for job_id in stuck_pending_ids:
+        async with session_maker() as session:
+            if job := await session.get(RagGenerationJob, job_id):
+                republish_job_to_rag_processing(publisher, job)
+                stats["stuck_pending_jobs"] += 1
 
     for dlq_sub in [DLQ_FILE_INDEXING, DLQ_URL_CRAWLING, DLQ_RAG_PROCESSING]:
         count = check_dlq_message_count(subscriber, dlq_sub)
