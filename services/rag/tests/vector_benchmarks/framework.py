@@ -1,4 +1,5 @@
 import time
+import types
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -43,7 +44,9 @@ class PerformanceMetrics:
         logger.debug("Starting performance measurement", test_name=self.test_name)
         return self
 
-    async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None
+    ) -> None:
         self.end_time = time.time()
         self.memory_after = self.process.memory_info().rss / 1024 / 1024
 

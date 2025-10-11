@@ -46,7 +46,6 @@ This context provides foundational scientific concepts and terminology relevant 
 
 
 async def _search_entity_by_label(client: httpx.AsyncClient, term: str, trace_id: str) -> list[dict[str, Any]]:
-    """Search for Wikidata entities by label using modern wbsearchentities API (2025)"""
     with start_span_with_trace_id("wikidata_search_entity", trace_id=trace_id) as span:
         span.set_attribute("search_term", term)
 
@@ -86,13 +85,12 @@ async def _search_entity_by_label(client: httpx.AsyncClient, term: str, trace_id
 
 @with_exponential_backoff_retry(httpx.HTTPError, httpx.TimeoutException, max_retries=WIKIDATA_MAX_RETRIES)
 async def _get_entity_details(client: httpx.AsyncClient, entity_ids: list[str], trace_id: str) -> dict[str, Any]:
-    """Get detailed information for entities using wbgetentities API"""
     with start_span_with_trace_id("wikidata_get_entities", trace_id=trace_id) as span:
         span.set_attribute("entity_count", len(entity_ids))
 
         params: dict[str, str] = {
             "action": "wbgetentities",
-            "ids": "|".join(entity_ids[:50]),  # Max 50 per request
+            "ids": "|".join(entity_ids[:50]),
             "props": "descriptions|labels",
             "languages": "en",
             "format": "json",
@@ -129,7 +127,6 @@ async def _get_entity_details(client: httpx.AsyncClient, entity_ids: list[str], 
 
 
 def _parse_entity_details(data: dict[str, Any]) -> list[WikidataItem]:
-    """Parse entity details from wbgetentities response"""
     results: list[WikidataItem] = []
 
     entities = data.get("entities", {})
@@ -142,7 +139,7 @@ def _parse_entity_details(data: dict[str, Any]) -> list[WikidataItem]:
                 item_id=entity_id,
                 label=label,
                 description=description,
-                scientific_field="",  # No longer using scientific_field filter
+                scientific_field="",
             )
             results.append(result)
 
@@ -150,18 +147,15 @@ def _parse_entity_details(data: dict[str, Any]) -> list[WikidataItem]:
 
 
 async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[WikidataItem]:
-    """Expand scientific terms using modern Wikidata API (2025)"""
     if not terms:
         return []
 
     client = get_wikimedia_client()
 
-    # Step 1: Search for entities by label (fast, indexed)
     entity_ids: list[str] = []
     for term in terms:
         try:
             search_results = await _search_entity_by_label(client, term, trace_id)
-            # Take top 2 results per term
             for result in search_results[:2]:
                 entity_id = result.get("id")
                 if entity_id:
@@ -178,7 +172,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
     if not entity_ids:
         return []
 
-    # Step 2: Get detailed information in batches (max 50 per request)
     all_results: list[WikidataItem] = []
     for i in range(0, len(entity_ids), 50):
         batch = entity_ids[i : i + 50]
@@ -205,7 +198,6 @@ async def _expand_scientific_terms(terms: list[str], trace_id: str) -> list[Wiki
 
 
 async def _get_scientific_context(terms: list[str], trace_id: str) -> str:
-    """Get scientific context from Wikidata using modern API (2025)"""
     if not terms:
         return ""
 

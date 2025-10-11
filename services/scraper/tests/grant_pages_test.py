@@ -23,7 +23,6 @@ async def test_save_markdown_page() -> None:
     ):
         await save_markdown_page(html=html, result_name=result_name)
 
-        # Verify the function was called (kwargs will include preprocessing options with defaults)
         assert mock_convert.call_count == 1
         call_args = mock_convert.call_args
         assert call_args[0][0] == html

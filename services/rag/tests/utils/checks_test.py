@@ -12,7 +12,7 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.exceptions import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
-    RagSourceFactory,
+    RagFileFactory,
 )
 
 from services.rag.src.utils.checks import verify_rag_sources_indexed
@@ -22,7 +22,7 @@ async def create_rag_source_with_status(
     session: Any,
     indexing_status: SourceIndexingStatusEnum = SourceIndexingStatusEnum.FINISHED,
 ) -> RagSource:
-    source = RagSourceFactory.build(indexing_status=indexing_status)
+    source = RagFileFactory.build(indexing_status=indexing_status)
     session.add(source)
     await session.flush()
     return source

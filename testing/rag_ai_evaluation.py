@@ -146,7 +146,7 @@ async def evaluate_grant_application_quality(application_content: str) -> dict[s
     5. Professional tone and style
 
     Respond with a JSON object containing:
-    - "scores": object with scores for each criterion
+    - "scores": dict[str, Any] with scores for each criterion
     - "overall_score": average of all scores
     - "strengths": array of identified strengths
     - "weaknesses": array of identified weaknesses
@@ -209,7 +209,7 @@ async def evaluate_cfp_extraction_accuracy(
     4. Organization identification - was the funding organization correctly identified?
 
     Respond with a JSON object containing:
-    - "scores": object with scores for each criterion
+    - "scores": dict[str, Any] with scores for each criterion
     - "overall_score": average of all scores
     - "missing_information": array of important information that was missed
     - "extraction_errors": array of any errors in the extracted data
@@ -272,7 +272,7 @@ async def evaluate_query_generation_quality(
     4. Likely effectiveness for information retrieval
 
     Respond with a JSON object containing:
-    - "scores": object with scores for each criterion
+    - "scores": dict[str, Any] with scores for each criterion
     - "overall_score": average of all scores
     - "best_queries": array of the most effective queries
     - "suggested_improvements": array of ways to improve the queries

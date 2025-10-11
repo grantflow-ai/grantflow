@@ -12,7 +12,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.factories import RagSourceFactory
+from testing.factories import RagFileFactory
 
 from services.rag.src.grant_application.dto import (
     GenerateSectionsStageDTO,
@@ -30,9 +30,9 @@ async def sample_rag_sources(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> list[RagSource]:
     async with async_session_maker() as session:
-        sources = [
-            RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
-            RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
+        sources: list[RagSource] = [
+            RagFileFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
+            RagFileFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
         ]
         session.add_all(sources)
         await session.flush()
@@ -116,6 +116,10 @@ async def test_extract_relationships_stage_first(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         return_value=mock_extract_relationships_dto,
     )
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
+    )
 
     async with async_session_maker() as session:
         from packages.db.src.query_helpers import select_active
@@ -176,6 +180,10 @@ async def test_generate_sections_stage_requires_checkpoint(
     mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         return_value=mock_extract_relationships_dto,
+    )
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
     )
     mock_handle_generate_sections = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage"

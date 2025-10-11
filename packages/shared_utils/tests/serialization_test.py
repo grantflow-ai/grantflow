@@ -126,7 +126,7 @@ def test_serialize_encode_error(mocker: MockFixture) -> None:
     with (
         pytest.raises(SerializationError),
     ):
-        serialize({"key": object()})
+        serialize({"key": dict()})
 
 
 def test_encoder_decoder_integration() -> None:

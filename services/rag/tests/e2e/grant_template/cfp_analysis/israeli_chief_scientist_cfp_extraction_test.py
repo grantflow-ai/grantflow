@@ -63,7 +63,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
         chunks = [
             "Israeli Ministry of Health Chief Scientist Grant Proposal Template",
             "Project Information: Title, Principal Investigator, Institution",
-            "Research Plan: Objectives, Background, Methodology",
+            "Research Plan: dict[str, Any]ives, Background, Methodology",
             "Budget and Funding: Total Budget, Breakdown, Justification",
             "Team and Collaboration: Research Team, Institutional Support",
             "Innovation and Impact: Expected Outcomes, Significance",

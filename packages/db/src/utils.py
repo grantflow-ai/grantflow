@@ -23,8 +23,9 @@ from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.exceptions import ValidationError
 
 if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
     from structlog.typing import FilteringBoundLogger
+
+    from packages.shared_utils.src.extraction import DocumentMetadata
 else:
     DocumentMetadata = dict
 
