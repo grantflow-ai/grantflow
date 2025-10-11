@@ -1,13 +1,12 @@
 from typing import Final, TypedDict
 
-from packages.db.src.json_objects import CFPAnalysisConstraint, OrganizationNamespace
+from packages.db.src.json_objects import LengthConstraint, OrganizationNamespace
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.cfp_analysis.constants import TEMPERATURE
 from services.rag.src.grant_template.cfp_analysis.identify_organization import identify_granting_institution
-from services.rag.src.grant_template.cfp_analysis.section_enrichment import CONSTRAINT_TYPES
 from services.rag.src.grant_template.utils.category_extraction import (
     CategorizationAnalysisResult,
     format_nlp_hints_for_extraction,
@@ -26,40 +25,35 @@ CFP_METADATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_metadata",
     template="""# CFP Metadata Extraction
 
-    ## Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Organizations
-    <organizations>${organizations}</organizations>
+## Organizations
+<organizations>${organizations}</organizations>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Task
+## Task
 
-    Extract metadata from CFP.
+Extract metadata from CFP.
 
-    ### Fields
-    1. **org_id**: Match organization from list or null
-    2. **deadlines**: List of submission deadlines (YYYY-MM-DD format). Extract all deadlines mentioned (e.g., LOI deadline, full application deadline, different award type deadlines)
-    3. **subject**: One-sentence funding opportunity summary
-    4. **constraints**: Application-wide formatting/length requirements ONLY
+### Fields
+1. **org_id**: Match organization from list or null
+2. **deadlines**: List of submission deadlines (YYYY-MM-DD format). Extract all deadlines mentioned (e.g., LOI deadline, full application deadline, different award type deadlines)
+3. **subject**: One-sentence funding opportunity summary
+4. **constraints**: Application-wide length requirements ONLY (single constraint for the entire narrative)
 
-    ### Constraints
-    Extract ONLY formatting and length constraints that apply to the entire application:
-    - Overall page limits (e.g., "15 pages total")
-    - Font requirements (e.g., "Arial 11pt or Times New Roman 12pt")
-    - Margin requirements (e.g., "at least ½ inch margins")
-    - Character/word limits for abstracts or summaries (e.g., "2000 characters including spaces")
-    - Reference limits (e.g., "up to 30 references")
+### Length Constraint Rules
+- Convert page limits to words using 415 words/page
+- Character limits remain characters; word limits remain words
+- Keep the most restrictive limit if multiple are stated
+- Capture a short source quote/citation explaining the limit
+- Return `null` if no global length requirement exists
+Structure: {type: "words"/"characters", value: integer, source: string|null}
 
-    Each constraint: {type: string, value: string}
-    Types: page_limit, word_limit, char_limit, font, spacing, margin, length, size, format
-
-    DO NOT include eligibility requirements, PI requirements, or submission rules - these are not formatting constraints.
-
-    ### Output
-    Return metadata in JSON format.
+### Output
+Return metadata in JSON format.
 """,
 )
 
@@ -71,27 +65,27 @@ CFP_METADATA_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="cfp_metadata_validation",
     template="""# CFP Metadata Validation
 
-    ## Sources
-    <rag_sources>${rag_sources}</rag_sources>
+## Sources
+<rag_sources>${rag_sources}</rag_sources>
 
-    ## Category Hints
-    <category_hints>${category_hints}</category_hints>
+## Category Hints
+<category_hints>${category_hints}</category_hints>
 
-    ## Extracted Metadata
-    <metadata>${metadata}</metadata>
+## Extracted Metadata
+<metadata>${metadata}</metadata>
 
-    ## Task
+## Task
 
-    Review and improve extracted metadata.
+Review and improve extracted metadata.
 
-    ### Actions
-    1. Validate subject summary accuracy
-    2. Verify all deadlines are in YYYY-MM-DD format and find any missing deadlines
-    3. Confirm organization identification
-    4. Find missing formatting constraints (search entire CFP for application-wide formatting requirements like page limits, font, margins, spacing)
+### Actions
+1. Validate subject summary accuracy
+2. Verify all deadlines are in YYYY-MM-DD format and find any missing deadlines
+3. Confirm organization identification
+4. Ensure the global length constraint is correct and normalized (convert pages to words, choose strictest limit, provide source)
 
-    ### Output
-    Return validated/corrected metadata with complete deadlines and formatting constraints.
+### Output
+Return validated/corrected metadata with complete deadlines and a normalized length constraint.
 """,
 )
 
@@ -106,14 +100,15 @@ cfp_metadata_schema = {
         },
         "constraints": {
             "type": "array",
+            "maxItems": 1,
             "items": {
                 "type": "object",
                 "properties": {
-                    "type": {"type": "string", "enum": sorted(CONSTRAINT_TYPES)},
-                    "value": {"type": "string"},
-                    "quote": {"type": "string"},
+                    "type": {"type": "string", "enum": ["words", "characters"]},
+                    "value": {"type": "integer", "minimum": 1},
+                    "source": {"type": "string", "nullable": True},
                 },
-                "required": ["type", "value", "quote"],
+                "required": ["type", "value", "source"],
             },
         },
     },
@@ -125,12 +120,14 @@ class CFPMetadataResult(TypedDict):
     org_id: str | None
     subject: str
     deadlines: list[str]
-    constraints: list[CFPAnalysisConstraint]
+    constraints: list[LengthConstraint]
 
 
 def validate_cfp_metadata(response: CFPMetadataResult) -> None:
     if not response.get("subject"):
         raise ValidationError("Missing CFP subject")
+    if any(constraint["value"] <= 0 for constraint in response.get("constraints", [])):
+        raise ValidationError("Global constraint values must be positive", context=response.get("constraints"))
 
 
 async def extract_cfp_metadata(

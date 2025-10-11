@@ -217,6 +217,45 @@ class JobManager[DTOType]:
 
         return parent_job.id if parent_job else None
 
+    async def save_substage_checkpoint(self, substage_name: str, dto: DTOType) -> None:
+        if not self.current_job:
+            raise RuntimeError("No current job set. Create a job first.")
+
+        async with self.session_maker() as session, session.begin():
+            job = await session.get(RagGenerationJob, self.current_job.id)
+            if not job:
+                raise RuntimeError(f"Job {self.current_job.id} not found")
+
+            serialized_data = _serialize_checkpoint_data(dto)
+
+            existing_raw = job.checkpoint_data
+            existing_dict = existing_raw if isinstance(existing_raw, dict) else {}
+            merged_data: dict[str, Any] = dict(existing_dict)
+            completed_substages = list(merged_data.get("completed_substages", []))
+
+            if substage_name not in completed_substages:
+                completed_substages.append(substage_name)
+
+            if isinstance(serialized_data, dict):
+                merged_data.update(serialized_data)
+
+            merged_data["current_substage"] = substage_name
+            merged_data["completed_substages"] = completed_substages
+
+            job.checkpoint_data = merged_data
+
+            logger.info(
+                "Saved sub-stage checkpoint",
+                entity_type=self.entity_type,
+                entity_id=str(self.entity_id),
+                job_id=str(job.id),
+                stage=self.current_stage,
+                substage=substage_name,
+                completed_substages=completed_substages,
+                checkpoint_keys=list(merged_data.keys()) if isinstance(merged_data, dict) else "not a dict",
+                trace_id=self.trace_id,
+            )
+
     async def transition_to_next_stage(self, dto: DTOType) -> None:
         if not self.current_job:
             raise RuntimeError("No current job set. Create a job first.")
@@ -243,6 +282,11 @@ class JobManager[DTOType]:
             job.status = RagGenerationStatusEnum.COMPLETED
             job.completed_at = datetime.now(UTC)
             serialized_data = _serialize_checkpoint_data(dto)
+
+            if "current_substage" in serialized_data:
+                del serialized_data["current_substage"]
+            if "completed_substages" in serialized_data:
+                del serialized_data["completed_substages"]
 
             logger.info(
                 "Saving checkpoint data",

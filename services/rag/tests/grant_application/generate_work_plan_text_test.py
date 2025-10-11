@@ -21,7 +21,7 @@ def sample_objective() -> ResearchComponentGenerationDTO:
         ],
         search_queries=["cancer biomarkers", "proteomics mass spectrometry"],
         relationships=[("2", "provides_data_for")],
-        max_words=300,
+        length_constraint={"type": "words", "value": 300, "source": None},
         type="objective",
     )
 
@@ -37,7 +37,7 @@ def sample_tasks() -> list[ResearchComponentGenerationDTO]:
             guiding_questions=["Which proteins are consistently dysregulated?"],
             search_queries=["protein expression cancer", "LC-MS proteomics"],
             relationships=[("1.2", "precedes")],
-            max_words=200,
+            length_constraint={"type": "words", "value": 200, "source": None},
             type="task",
         ),
         ResearchComponentGenerationDTO(
@@ -48,7 +48,7 @@ def sample_tasks() -> list[ResearchComponentGenerationDTO]:
             guiding_questions=["What is the diagnostic accuracy?"],
             search_queries=["biomarker validation", "diagnostic accuracy"],
             relationships=[("2.1", "informs")],
-            max_words=200,
+            length_constraint={"type": "words", "value": 200, "source": None},
             type="task",
         ),
     ]

@@ -302,46 +302,18 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 	};
 }
 
-/*
-function AdvancedvalidateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
-	const formInputs = application.form_inputs;
-	if (!formInputs) {
-		log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-			reason: "No form inputs",
-			result: false,
-		});
-		return { isValid: false, reason: "There are no form inputs to validate." };
+function validateKnowledgeBase(application: API.RetrieveApplication.Http200.ResponseBody): ValidationResult {
+	if (!application.rag_sources.length) {
+		return { isValid: false, reason: "There are no RAG sources." };
 	}
 
-	const requiredFields = [
-		"background_context",
-		"hypothesis",
-		"rationale",
-		"novelty_and_innovation",
-		"impact",
-		"team_excellence",
-		"research_feasibility",
-		"preliminary_data",
-	] as const;
+	const allSourcesFailed = application.rag_sources.every((source) => source.status === "FAILED");
+	if (allSourcesFailed) {
+		return { isValid: false, reason: "All RAG sources have failed." };
+	}
 
-	const fieldStatus = requiredFields.map((field) => {
-		const value = formInputs[field];
-		const valid = Boolean(value && value.trim().length > 0);
-		return { field, length: value ? value.length : 0, valid };
-	});
-
-	const result = fieldStatus.every((status) => status.valid);
-
-	log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-		fieldStatus,
-		filledFields: fieldStatus.filter((s) => s.valid).length,
-		result,
-		totalFields: requiredFields.length,
-	});
-
-	return { isValid: result, reason: "Not all fields are populated properly." };
+	return { isValid: true, reason: "Valid" };
 }
-	*/
 
 function validateResearchDeepDive(): ValidationResult {
 	return { isValid: true, reason: "Validation skipped" };
@@ -929,16 +901,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return { isValid: true, reason: "No validation needed" };
 				}
 				case WizardStep.KNOWLEDGE_BASE: {
-					if (!application.rag_sources.length) {
-						return { isValid: false, reason: "There are no RAG sources." };
-					}
-
-					const allSourcesFailed = application.rag_sources.every((source) => source.status === "FAILED");
-					if (allSourcesFailed) {
-						return { isValid: false, reason: "All RAG sources have failed." };
-					}
-
-					return { isValid: true, reason: "Valid" };
+					return validateKnowledgeBase(application);
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {
 					return validateResearchDeepDive();

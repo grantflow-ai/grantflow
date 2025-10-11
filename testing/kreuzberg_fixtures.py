@@ -1,14 +1,8 @@
 import hashlib
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-from packages.shared_utils.src.extraction import extract_file_content
-
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
-else:
-    DocumentMetadata = dict
+from packages.shared_utils.src.extraction import DocumentMetadata, extract_file_content
 
 CACHE_DIR = Path(__file__).parent / ".cache" / "kreuzberg"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)

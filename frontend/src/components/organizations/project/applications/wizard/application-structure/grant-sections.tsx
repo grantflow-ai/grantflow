@@ -14,8 +14,14 @@ import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
+import {
+	hasDetailedResearchPlan,
+	hasGenerationInstructions,
+	hasLengthConstraint,
+	sectionWordLimit,
+} from "@/types/grant-sections";
 import { useDebounce } from "@/utils/debounce";
+import { charactersToWords, createLengthConstraint, wordsToCharacters } from "@/utils/length-constraint";
 import { SectionWithDropIndicators } from "./section-drop-indicator";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -35,9 +41,9 @@ interface SectionEditFormProps {
 interface SectionFormData {
 	aiPrompt: string;
 	isResearchPlan?: boolean;
-	max_words: number;
+	lengthLimit: number;
+	limitType: "characters" | "words";
 	title: string;
-	useWords: boolean;
 }
 
 interface SectionHeaderProps {
@@ -45,13 +51,16 @@ interface SectionHeaderProps {
 	isDragDisabled?: boolean;
 	isExpanded: boolean;
 	isSubsection: boolean;
+	limitType: "characters" | "words";
+	limitValue: null | number;
 	listeners: ReturnType<typeof useSortable>["listeners"];
 	onAddSubsection?: (parentId: string) => void;
 	onDelete: () => void;
 	onHeaderClick: (e: React.MouseEvent) => void;
 	onToggleExpand: () => void;
 	section: GrantSection;
-	sectionHasMaxWords: boolean;
+	sectionHasLengthConstraint: boolean;
+	wordLimit: null | number;
 }
 
 interface SortableSectionProps {
@@ -69,17 +78,20 @@ interface SortableSectionProps {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }
 
+const DEFAULT_WORD_LIMIT = 3000;
+
 const createInitialFormData = (section: GrantSection): SectionFormData => {
 	const generatedAiPrompt = aiPrompt(section.title);
 	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
 	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
+	const constraint = hasLengthConstraint(section) ? section.length_constraint : null;
 
 	return {
 		aiPrompt: effectiveAiPrompt,
 		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
-		max_words: hasMaxWords(section) ? section.max_words : 3000,
+		lengthLimit: constraint?.value ?? DEFAULT_WORD_LIMIT,
+		limitType: constraint?.type ?? "words",
 		title: section.title,
-		useWords: true,
 	};
 };
 
@@ -113,11 +125,11 @@ export function SortableSection({
 		id: section.id,
 	});
 
-	const [formData, setFormData] = useState<SectionFormData>(() => createInitialFormData(section));
+	const [formData, setInternalFormData] = useState<SectionFormData>(() => createInitialFormData(section));
 	const debouncedUpdate = useDebounce(onUpdate, 3000);
 
 	useEffect(() => {
-		setFormData(createInitialFormData(section));
+		setInternalFormData(createInitialFormData(section));
 	}, [section]);
 
 	const style = {
@@ -129,7 +141,28 @@ export function SortableSection({
 			: (transition ?? "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)"),
 	};
 
-	const sectionHasMaxWords = hasMaxWords(section) && Boolean(section.max_words);
+	const sectionConstraint = hasLengthConstraint(section) ? section.length_constraint : null;
+	const sectionHasLengthConstraint = sectionConstraint != null;
+	const sectionWordLimitValue = sectionWordLimit(section);
+	const limitType = sectionConstraint?.type ?? "words";
+	const limitValue = sectionConstraint?.value ?? null;
+	const constraintSource = sectionConstraint?.source ?? null;
+
+	const handleFormDataChange = useCallback(
+		(data: SectionFormData) => {
+			setInternalFormData(data);
+			const nextConstraint = createLengthConstraint(data.lengthLimit, data.limitType, constraintSource);
+			debouncedUpdate({
+				generation_instructions: data.aiPrompt,
+				length_constraint: nextConstraint,
+				title: data.title,
+				...(data.isResearchPlan !== undefined && {
+					is_detailed_research_plan: data.isResearchPlan,
+				}),
+			});
+		},
+		[constraintSource, debouncedUpdate],
+	);
 
 	const handleHeaderClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -171,13 +204,16 @@ export function SortableSection({
 						isDragDisabled={isDragDisabled}
 						isExpanded={isExpanded}
 						isSubsection={isSubsection}
+						limitType={limitType}
+						limitValue={limitValue}
 						listeners={listeners}
 						onAddSubsection={onAddSubsection}
 						onDelete={_onDelete}
 						onHeaderClick={handleHeaderClick}
 						onToggleExpand={onToggleExpand}
 						section={section}
-						sectionHasMaxWords={sectionHasMaxWords}
+						sectionHasLengthConstraint={sectionHasLengthConstraint}
+						wordLimit={sectionWordLimitValue}
 					/>
 
 					{isExpanded && (
@@ -190,17 +226,7 @@ export function SortableSection({
 								isSubsection={isSubsection}
 								onDelete={_onDelete}
 								section={section}
-								setFormData={(data) => {
-									setFormData(data);
-									debouncedUpdate({
-										generation_instructions: data.aiPrompt,
-										max_words: data.max_words,
-										title: data.title,
-										...(data.isResearchPlan !== undefined && {
-											is_detailed_research_plan: data.isResearchPlan,
-										}),
-									});
-								}}
+								setFormData={handleFormDataChange}
 							/>
 						</div>
 					)}
@@ -223,6 +249,26 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 			isResearchPlan: newValue,
 		});
 	}, [formData, setFormData]);
+
+	const handleLimitTypeChange = useCallback(
+		(newType: "characters" | "words") => {
+			if (newType === formData.limitType) {
+				return;
+			}
+
+			const newValue =
+				newType === "characters"
+					? wordsToCharacters(formData.lengthLimit)
+					: charactersToWords(formData.lengthLimit);
+
+			setFormData({
+				...formData,
+				lengthLimit: newValue,
+				limitType: newType,
+			});
+		},
+		[formData, setFormData],
+	);
 
 	return (
 		<div className="px-6 py-3">
@@ -280,22 +326,51 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
 
+					<div className="flex items-center gap-2 pt-2">
+						<AppButton
+							data-testid="length-type-words"
+							onClick={() => {
+								handleLimitTypeChange("words");
+							}}
+							type="button"
+							variant={formData.limitType === "words" ? "secondary" : "ghost"}
+						>
+							Words
+						</AppButton>
+						<AppButton
+							data-testid="length-type-characters"
+							onClick={() => {
+								handleLimitTypeChange("characters");
+							}}
+							type="button"
+							variant={formData.limitType === "characters" ? "secondary" : "ghost"}
+						>
+							Characters
+						</AppButton>
+					</div>
+
 					<div className="gap-4 h-12 2xl:mt-4">
 						<div className="w-64">
 							<InputField
-								label="Max words/characters"
+								label={`Max ${formData.limitType === "words" ? "words" : "characters"}`}
 								onChange={(e) => {
+									const parsedValue = Number.parseInt(e.target.value, 10);
 									setFormData({
 										...formData,
-										max_words: Number.parseInt(e.target.value, 10) || 0,
+										lengthLimit: Number.isNaN(parsedValue) ? 0 : parsedValue,
 									});
 								}}
-								placeholder="3,000"
+								placeholder={formData.limitType === "words" ? "3,000" : "20,000"}
 								showCountTypeTag
 								testId={`max-count-${section.id}`}
 								type="number"
-								value={formData.max_words}
+								value={formData.lengthLimit}
 							/>
+							<p className="mt-1 text-xs font-normal text-app-gray-500">
+								{formData.limitType === "words"
+									? `≈ ${wordsToCharacters(formData.lengthLimit).toLocaleString()} characters`
+									: `≈ ${charactersToWords(formData.lengthLimit).toLocaleString()} words`}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -398,14 +473,31 @@ function SectionHeader({
 	isDragDisabled = false,
 	isExpanded,
 	isSubsection,
+	limitType,
+	limitValue,
 	listeners,
 	onAddSubsection,
 	onDelete,
 	onHeaderClick,
 	onToggleExpand,
 	section,
-	sectionHasMaxWords,
+	sectionHasLengthConstraint,
+	wordLimit,
 }: SectionHeaderProps) {
+	const lengthLabel = (() => {
+		if (sectionHasLengthConstraint && limitValue != null) {
+			if (limitType === "words") {
+				return `${limitValue.toLocaleString()} words`;
+			}
+
+			const approximateWords = wordLimit ?? charactersToWords(limitValue);
+			const approxLabel = approximateWords ? ` (~${approximateWords.toLocaleString()} words)` : "";
+			return `${limitValue.toLocaleString()} characters${approxLabel}`;
+		}
+
+		return null;
+	})();
+
 	return (
 		<div
 			aria-expanded={isExpanded}
@@ -443,12 +535,12 @@ function SectionHeader({
 						>
 							{section.title}
 						</h3>
-						{sectionHasMaxWords && hasMaxWords(section) && (
+						{lengthLabel && (
 							<span
 								className="text-xs font-normal leading-none text-dark-gray"
-								data-testid="max-words-display"
+								data-testid="length-constraint-display"
 							>
-								{section.max_words.toLocaleString()} Max words
+								{lengthLabel}
 							</span>
 						)}
 						{hasDetailedResearchPlan(section) && section.is_detailed_research_plan && (

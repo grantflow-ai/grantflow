@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
@@ -313,3 +314,33 @@ async def test_email_notification_webhook_oidc_authentication_failure(
         "invalid-oidc-jwt-token",
         "https://testserver.local/webhooks/pubsub/email-notifications",
     )
+
+
+async def test_completion_email_timestamp_field_exists_and_nullable(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        assert app
+        assert hasattr(app, "completion_email_sent_at")
+        assert app.completion_email_sent_at is None
+
+
+async def test_completion_email_timestamp_persists_across_sessions(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    timestamp = datetime.now(UTC)
+
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        assert app
+        app.completion_email_sent_at = timestamp
+        await session.commit()
+
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        assert app
+        assert app.completion_email_sent_at is not None
+        assert abs((app.completion_email_sent_at - timestamp).total_seconds()) < 1

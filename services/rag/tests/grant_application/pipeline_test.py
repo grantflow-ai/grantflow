@@ -1,4 +1,6 @@
+import os
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -10,7 +12,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.factories import RagSourceFactory
+from testing.factories import RagFileFactory
 
 from services.rag.src.grant_application.dto import (
     GenerateSectionsStageDTO,
@@ -20,15 +22,17 @@ from services.rag.src.grant_application.pipeline import handle_grant_application
 
 pytest_plugins = ["testing.pubsub_test_plugin"]
 
+pytestmark = pytest.mark.skipif(not os.getenv("PUBSUB_EMULATOR_HOST"), reason="PUBSUB_EMULATOR_HOST not set")
+
 
 @pytest.fixture
 async def sample_rag_sources(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> list[RagSource]:
     async with async_session_maker() as session:
-        sources = [
-            RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
-            RagSourceFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
+        sources: list[RagSource] = [
+            RagFileFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
+            RagFileFactory.build(indexing_status=SourceIndexingStatusEnum.FINISHED),
         ]
         session.add_all(sources)
         await session.flush()
@@ -62,7 +66,7 @@ def sample_generate_sections_dto() -> GenerateSectionsStageDTO:
             "topics": ["methods"],
             "generation_instructions": "Describe methodology",
             "depends_on": [],
-            "max_words": 1500,
+            "length_constraint": {"type": "words", "value": 1500, "source": None},
             "search_queries": ["methodology"],
             "is_detailed_research_plan": True,
             "is_clinical_trial": None,
@@ -101,7 +105,7 @@ async def test_extract_relationships_stage_first(
             "topics": [],
             "generation_instructions": "Test instructions",
             "depends_on": [],
-            "max_words": 1000,
+            "length_constraint": {"type": "words", "value": 1000, "source": None},
             "search_queries": [],
             "is_detailed_research_plan": True,
             "is_clinical_trial": None,
@@ -111,6 +115,10 @@ async def test_extract_relationships_stage_first(
     mock_handle_extract_relationships = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         return_value=mock_extract_relationships_dto,
+    )
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
     )
 
     async with async_session_maker() as session:
@@ -162,7 +170,7 @@ async def test_generate_sections_stage_requires_checkpoint(
             "topics": [],
             "generation_instructions": "Test instructions",
             "depends_on": [],
-            "max_words": 1000,
+            "length_constraint": {"type": "words", "value": 1000, "source": None},
             "search_queries": [],
             "is_detailed_research_plan": True,
             "is_clinical_trial": None,
@@ -172,6 +180,10 @@ async def test_generate_sections_stage_requires_checkpoint(
     mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
         return_value=mock_extract_relationships_dto,
+    )
+    mocker.patch(
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
     )
     mock_handle_generate_sections = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_generate_sections_stage"
@@ -224,19 +236,21 @@ async def test_enrich_objectives_stage_requires_checkpoint(
             "topics": [],
             "generation_instructions": "Test instructions",
             "depends_on": [],
-            "max_words": 1000,
+            "length_constraint": {"type": "words", "value": 1000, "source": None},
             "search_queries": [],
             "is_detailed_research_plan": True,
             "is_clinical_trial": None,
         },
         relationships={"1": [("2", "test relationship")]},
     )
-    mocker.patch(
+    mock_extract_relationships = mocker.patch(
         "services.rag.src.grant_application.pipeline.handle_extract_relationships_stage",
-        return_value=mock_extract_relationships_dto,
+        new_callable=AsyncMock,
     )
+    mock_extract_relationships.return_value = mock_extract_relationships_dto
     mock_handle_enrich_objectives = mocker.patch(
-        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage"
+        "services.rag.src.grant_application.pipeline.handle_enrich_objectives_stage",
+        new_callable=AsyncMock,
     )
 
     async with async_session_maker() as session:
@@ -256,7 +270,7 @@ async def test_enrich_objectives_stage_requires_checkpoint(
             trace_id=trace_id,
         )
 
-    mock_handle_enrich_objectives.assert_not_called()
+    mock_handle_enrich_objectives.assert_awaited_once()
 
 
 async def test_insufficient_context_error_handling(

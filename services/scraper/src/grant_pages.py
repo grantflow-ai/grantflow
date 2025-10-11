@@ -1,7 +1,7 @@
 from asyncio import gather
 
-from bs4 import BeautifulSoup
-from html_to_markdown import convert_to_markdown
+from html_to_markdown import PreprocessingOptions
+from html_to_markdown import convert as convert_to_markdown
 from mdformat import text
 from packages.shared_utils.src.logger import get_logger
 from services.scraper.src.db_utils import save_grant_page_content
@@ -17,17 +17,20 @@ async def download_and_save_pages(*, urls: list[str]) -> None:
 
     save_tasks = []
     for result, url in zip(html_pages, urls, strict=False):
-        soup = BeautifulSoup(result, features="lxml")
-
         result_name = get_identifier_from_nih_url(url=url)
-        save_tasks.append(save_markdown_page(soup=soup, result_name=result_name))
+        save_tasks.append(save_markdown_page(html=result, result_name=result_name))
 
     await gather(*save_tasks)
     logger.info("Finished processing %d pages", len(urls))
 
 
-async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
-    markdown = convert_to_markdown(soup)
+async def save_markdown_page(*, html: str, result_name: str) -> None:
+    markdown = convert_to_markdown(
+        html,
+        preprocessing=PreprocessingOptions(
+            enabled=True,
+        ),
+    )
     formatted_markdown = text(markdown)
 
     await save_grant_page_content(result_name, formatted_markdown)

@@ -44,7 +44,7 @@ async def create_and_cancel_template_job(
 async def create_and_cancel_application_job(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    stage: GrantApplicationStageEnum = GrantApplicationStageEnum.GENERATE_SECTIONS,
+    stage: GrantApplicationStageEnum = GrantApplicationStageEnum.SECTION_SYNTHESIS,
 ) -> RagGenerationJob:
     async with async_session_maker() as session, session.begin():
         job = RagGenerationJob(
@@ -94,8 +94,8 @@ async def test_application_job_manager_detects_cancelled_job(
         entity_type="grant_application",
         entity_id=test_application_with_template.id,
         grant_application_id=test_application_with_template.id,
-        current_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
-        pipeline_stages=[GrantApplicationStageEnum.GENERATE_SECTIONS],
+        current_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
+        pipeline_stages=[GrantApplicationStageEnum.SECTION_SYNTHESIS],
         session_maker=async_session_maker,
         trace_id="test-trace",
     )
@@ -159,7 +159,7 @@ async def test_application_pipeline_stops_when_job_cancelled(
         job = RagGenerationJob(
             grant_application_id=test_application_with_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
-            application_stage=GrantApplicationStageEnum.GENERATE_SECTIONS,
+            application_stage=GrantApplicationStageEnum.SECTION_SYNTHESIS,
             retry_count=0,
         )
         session.add(job)

@@ -3,13 +3,11 @@ from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -64,6 +62,27 @@ Description should explain:
 - Significance for research plan
 
 Focus on meaningful relationships (quality over quantity).
+""",
+)
+
+RELATIONSHIPS_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="refine_relationships",
+    template="""
+Review the draft relationships and produce an improved version that strictly follows the schema.
+
+## Research Objectives
+${research_objectives}
+
+## Draft Relationships
+${draft_relationships}
+
+## Requirements
+1. Remove duplicate (source, target) pairs and any self-relationships.
+2. Ensure each relationship description stays within 100-200 words and remains specific.
+3. Cover at least 70% of research objectives; add concise relationships when coverage is lacking.
+4. Preserve valid insights from the draft while improving clarity and structure.
+
+Return the full relationship list using the exact schema.
 """,
 )
 
@@ -216,10 +235,52 @@ async def extract_relationships_generation(
         messages=task_description,
         response_type=RelationshipsDTO,
         response_schema=relationships_schema,
-        model=ANTHROPIC_SONNET_MODEL,
+        model=GEMINI_FLASH_MODEL,
         system_prompt=EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT,
         validator=partial(validate_relationships_response, research_objectives=research_objectives),
         max_attempts=5,
+        trace_id=trace_id,
+    )
+
+
+async def refine_relationships(
+    *,
+    draft: RelationshipsDTO,
+    research_objectives: list[ResearchObjective],
+    trace_id: str,
+) -> RelationshipsDTO:
+    if not research_objectives:
+        return draft
+
+    research_payload = [
+        {
+            "number": str(obj["number"]),
+            "title": obj["title"],
+            "tasks": [
+                {
+                    "number": f"{obj['number']}.{task['number']}",
+                    "title": task["title"],
+                }
+                for task in obj.get("research_tasks", [])
+            ],
+        }
+        for obj in research_objectives
+    ]
+
+    refinement_prompt = RELATIONSHIPS_REFINEMENT_PROMPT.to_string(
+        research_objectives=research_payload,
+        draft_relationships=draft,
+    )
+
+    return await handle_completions_request(
+        prompt_identifier="refine_relationships",
+        messages=refinement_prompt,
+        response_type=RelationshipsDTO,
+        response_schema=relationships_schema,
+        model=GEMINI_FLASH_MODEL,
+        system_prompt=EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT,
+        validator=partial(validate_relationships_response, research_objectives=research_objectives),
+        max_attempts=3,
         trace_id=trace_id,
     )
 
@@ -271,21 +332,22 @@ async def handle_extract_relationships(
 
     full_prompt = prompt.to_string(rag_results=compressed_rag_results)
 
-    result = await with_evaluation(
-        prompt_identifier="extract_relationships",
-        prompt=full_prompt,
-        prompt_handler=extract_relationships_generation,
+    draft_result = await extract_relationships_generation(
+        full_prompt,
+        trace_id=trace_id,
+        research_objectives=research_objectives,
+    )
+
+    await job_manager.ensure_not_cancelled()
+
+    refined_result = await refine_relationships(
+        draft=draft_result,
         research_objectives=research_objectives,
         trace_id=trace_id,
-        **get_evaluation_kwargs(
-            "extract_relationships",
-            job_manager,
-            section_config=grant_section,
-            rag_context=rag_results,
-            research_objectives=research_objectives,
-            is_json_content=True,
-        ),
     )
+
+    result = refined_result or draft_result
+
     ret: ResearchRelationships = defaultdict(list)
     for relationship in result["relationships"]:
         ret[relationship["source"]].append((relationship["target"], relationship["desc"]))

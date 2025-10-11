@@ -17,48 +17,50 @@ SECTION_CLASSIFICATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_classification",
     template="""# Classify Application Sections
 
-    ## Organization Guidelines
-    ${organization_guidelines}
+## Organization Guidelines
 
-    ## Sections to Classify
-    ${sections}
+${organization_guidelines}
 
-    ## Task
+## Sections to Classify
 
-    For each section, provide classification and guidelines.
+${sections}
 
-    ### Classifications
+## Task
 
-    1. **long_form**: Does this section require substantial narrative writing? (true/false)
-       - True: Research plans, methodology, background, justifications, protocols
-       - False: Budget tables, biosketches, letters, cover pages, forms
+For each section, provide classification and guidelines.
 
-    2. **is_plan**: Is this the main detailed research plan section? (true/false)
-       - Exactly ONE section should be true (typically "Research Plan", "Project Description", or "Research Strategy")
+### Classifications
 
-    3. **clinical**: Is this specifically for clinical trial information? (true/false)
-       - True: Protocol synopsis, clinical trial design, intervention protocols
-       - False: All other sections
+1. **long_form**: Does this section require substantial narrative writing? (true/false)
+   - True: Research plans, methodology, background, justifications, protocols
+   - False: Budget tables, biosketches, letters, cover pages, forms
 
-    4. **title_only**: Is this just a structural header with no content? (true/false)
-       - True: Section groupings like "Application Components", "Required Documents"
-       - False: Sections that need content
+2. **is_plan**: Is this the main detailed research plan section? (true/false)
+   - Exactly ONE section should be true (typically "Research Plan", "Project Description", or "Research Strategy")
 
-    5. **needs_writing**: Does this require original applicant writing? (true/false)
-       - True: Narrative sections, justifications, descriptions
-       - False: Pre-filled forms, budget tables, biosketches, letters from others
+3. **clinical**: Is this specifically for clinical trial information? (true/false)
+   - True: Protocol synopsis, clinical trial design, intervention protocols
+   - False: All other sections
 
-    ### Guidelines
+4. **title_only**: Is this just a structural header with no content? (true/false)
+   - True: Section groupings like "Application Components", "Required Documents"
+   - False: Sections that need content
 
-    Extract 2-5 specific writing guidelines for each section from CFP/organization guidelines:
-    - Length requirements already handled separately
-    - Focus on: content requirements, style, formatting, what to include/avoid
-    - Be specific and actionable
-    - Empty list if no specific guidelines
+5. **needs_writing**: Does this require original applicant writing? (true/false)
+   - True: Narrative sections, justifications, descriptions
+   - False: Pre-filled forms, budget tables, biosketches, letters from others
 
-    ### Output
+### Guidelines
 
-    Return all sections with classifications and guidelines.
+Extract 2-5 specific writing guidelines for each section from CFP/organization guidelines:
+- Length requirements already handled separately
+- Focus on: content requirements, style, formatting, what to include/avoid
+- Be specific and actionable
+- Empty list if no specific guidelines
+
+### Output
+
+Return all sections with classifications and guidelines.
 """,
 )
 

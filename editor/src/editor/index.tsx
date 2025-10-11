@@ -149,6 +149,7 @@ export const Editor = React.forwardRef(function Editor(
 	const windowSize = useWindowSize();
 	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
+	const [toolbarHeight, setToolbarHeight] = React.useState(0);
 
 	const provider = React.useMemo(() => {
 		return new HocuspocusProvider({
@@ -257,7 +258,7 @@ export const Editor = React.forwardRef(function Editor(
 
 	const bodyRect = useCursorVisibility({
 		editor,
-		overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
+		overlayHeight: toolbarHeight,
 	});
 
 	React.useEffect(() => {
@@ -265,6 +266,13 @@ export const Editor = React.forwardRef(function Editor(
 			setMobileView("main");
 		}
 	}, [isMobile, mobileView]);
+
+	React.useEffect(() => {
+		if (toolbarRef.current) {
+			const height = toolbarRef.current.getBoundingClientRect().height;
+			setToolbarHeight(height);
+		}
+	}, []);
 
 	return (
 		<div className="simple-editor-wrapper">

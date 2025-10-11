@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import cast
 from uuid import uuid4
 
 from packages.db.src.enums import (
@@ -10,6 +11,7 @@ from packages.db.src.enums import (
 from packages.db.src.json_objects import (
     GrantElement,
     GrantLongFormSection,
+    LengthConstraint,
     ResearchDeepDive,
     ResearchObjective,
 )
@@ -122,8 +124,15 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
     depends_on: list[str] = []
 
     @classmethod
-    def max_words(cls) -> int:
-        return faker.pyint(min_value=200, max_value=2000)
+    def length_constraint(cls) -> LengthConstraint:
+        return cast(
+            "LengthConstraint",
+            {
+                "type": "words",
+                "value": faker.pyint(min_value=200, max_value=2000),
+                "source": "Factory generated",
+            },
+        )
 
     @classmethod
     def search_queries(cls) -> list[str]:

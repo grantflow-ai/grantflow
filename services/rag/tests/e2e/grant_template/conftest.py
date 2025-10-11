@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.json_objects import CFPAnalysis
+from packages.db.src.json_objects import CFPAnalysis, LengthConstraint
 from packages.db.src.tables import (
     GrantingInstitution,
     GrantingInstitutionSource,
@@ -28,6 +28,14 @@ from testing.factories import (
     ProjectFactory,
     RagFileFactory,
 )
+
+from services.rag.src.utils.lengths import DEFAULT_SECTION_MAX_WORDS, constraint_to_word_limit, create_word_constraint
+
+
+def _section_max_words(section: dict[str, Any]) -> int:
+    length_constraint = cast("LengthConstraint | None", section.get("length_constraint"))
+    value = constraint_to_word_limit(length_constraint)
+    return value if value is not None else DEFAULT_SECTION_MAX_WORDS
 
 
 @pytest.fixture
@@ -691,32 +699,31 @@ async def create_test_grant_template(
         return template
 
 
+def _word_constraint(value: int, source: str | None = None) -> LengthConstraint:
+    return create_word_constraint(value=value, source=source)
+
+
 @pytest.fixture
 def expected_nih_par_25_450_constraints() -> dict[str, dict[str, Any]]:
     return {
         "Specific Aims": {
-            "length_limit": 250,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(250),
             "source_keywords": ["one page", "1 page"],
         },
         "Research Strategy": {
-            "length_limit": 3000,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(3000),
             "source_keywords": ["12 pages", "twelve pages"],
         },
         "Significance": {
-            "length_limit": 750,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(750),
             "source_keywords": ["research strategy"],
         },
         "Innovation": {
-            "length_limit": 500,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(500),
             "source_keywords": ["research strategy"],
         },
         "Approach": {
-            "length_limit": 1750,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(1750),
             "source_keywords": ["research strategy"],
         },
     }
@@ -726,13 +733,11 @@ def expected_nih_par_25_450_constraints() -> dict[str, dict[str, Any]]:
 def expected_mra_constraints() -> dict[str, dict[str, Any]]:
     return {
         "Research Plan": {
-            "length_limit": 1500,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(1500),
             "source_keywords": ["6 pages", "six pages"],
         },
         "Budget Justification": {
-            "length_limit": 500,
-            "constraint_type": "page_limit",
+            "length_constraint": _word_constraint(500),
             "source_keywords": ["2 pages", "two pages"],
         },
     }
@@ -764,7 +769,7 @@ def expected_conflict_sections() -> list[dict[str, Any]]:
         {
             "title": "Specific Aims",
             "expected_max_words_range": (200, 400),
-            "expected_length_limit": 250,
+            "expected_length_constraint": _word_constraint(250),
             "conflict_reason": "CFP more restrictive than typical LLM recommendation",
         },
     ]
@@ -775,20 +780,32 @@ def validate_constraint_match(
     expected_constraint: dict[str, Any],
     tolerance: float = 0.15,
 ) -> None:
-    assert "length_limit" in section, f"Section missing length_limit: {section.get('title', 'Unknown')}"
+    constraint = cast("LengthConstraint | None", section.get("length_constraint"))
+    assert constraint is not None, f"Section missing length_constraint: {section.get('title', 'Unknown')}"
 
-    actual_limit = section["length_limit"]
-    expected_limit = expected_constraint["length_limit"]
+    expected_length_constraint = cast("LengthConstraint", expected_constraint["length_constraint"])
+    actual_value = constraint_to_word_limit(constraint)
+    expected_value = constraint_to_word_limit(expected_length_constraint)
 
-    lower_bound = expected_limit * (1 - tolerance)
-    upper_bound = expected_limit * (1 + tolerance)
+    assert actual_value is not None, f"Invalid length_constraint for {section.get('title', 'Unknown')}"
+    assert expected_value is not None, "Expected constraint must resolve to word limit"
 
-    assert lower_bound <= actual_limit <= upper_bound, (
+    lower_bound = expected_value * (1 - tolerance)
+    upper_bound = expected_value * (1 + tolerance)
+
+    assert lower_bound <= actual_value <= upper_bound, (
         f"Constraint mismatch for {section.get('title', 'Unknown')}: "
-        f"expected {expected_limit} (±{tolerance * 100}%), got {actual_limit}"
+        f"expected {expected_value} (±{tolerance * 100}%), got {actual_value}"
     )
 
-    assert section.get("length_source"), f"Section missing length_source: {section.get('title', 'Unknown')}"
+    expected_source_keywords = expected_constraint.get("source_keywords", [])
+    if expected_source_keywords:
+        source = constraint.get("source") or ""
+        normalized_source = source.lower()
+        assert any(keyword.lower() in normalized_source for keyword in expected_source_keywords), (
+            f"Constraint source missing expected keywords for {section.get('title', 'Unknown')}: "
+            f"{expected_source_keywords}"
+        )
 
 
 def validate_metadata_quality(
@@ -819,11 +836,11 @@ def validate_metadata_quality(
         f"(expected {min_queries}-{max_queries})"
     )
 
-    max_words = section.get("max_words", 0)
+    max_words = _section_max_words(section)
     min_words = quality_metrics["max_words_range"]["min"]
     max_words_limit = quality_metrics["max_words_range"]["max"]
     assert min_words <= max_words <= max_words_limit, (
-        f"Unexpected max_words for {section_title}: {max_words} (expected {min_words}-{max_words_limit})"
+        f"Unexpected word allocation for {section_title}: {max_words} (expected {min_words}-{max_words_limit})"
     )
 
 
@@ -833,18 +850,18 @@ def validate_dual_field_preservation(
 ) -> None:
     section_title = section.get("title", "Unknown")
 
-    assert "max_words" in section, f"max_words missing for {section_title}"
-    assert section["max_words"] > 0, f"max_words invalid for {section_title}: {section['max_words']}"
+    max_words = _section_max_words(section)
+    assert max_words > 0, f"Invalid computed word limit for {section_title}: {max_words}"
 
+    constraint = cast("LengthConstraint | None", section.get("length_constraint"))
     if has_cfp_constraint:
-        assert "length_limit" in section, f"length_limit missing for {section_title}"
-        assert section["length_limit"], (
-            f"length_limit must be truthy for {section_title}: {section.get('length_limit')}"
+        assert constraint is not None, f"length_constraint missing for {section_title}"
+        resolved_limit = constraint_to_word_limit(constraint)
+        assert resolved_limit is not None, (
+            f"length_constraint must resolve to a numeric value for {section_title}: {constraint}"
         )
-        assert section["length_limit"] > 0, (
-            f"length_limit must be positive for {section_title}: {section.get('length_limit')}"
-        )
-        assert section.get("length_source"), f"length_source missing for {section_title}"
+        assert resolved_limit > 0, f"length_constraint must resolve to positive words for {section_title}: {constraint}"
+        assert constraint.get("source"), f"length_constraint.source missing for {section_title}"
 
 
 def validate_guidelines_extraction(

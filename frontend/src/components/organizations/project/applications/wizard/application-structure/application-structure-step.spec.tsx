@@ -1,4 +1,4 @@
-import { ApplicationWithTemplateFactory, GrantSectionBaseFactory, GrantTemplateFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, GrantSectionDetailedFactory, GrantTemplateFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
@@ -61,7 +61,14 @@ describe("ApplicationStructureStep", () => {
 	it("shows section editor when application exists and not generating", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Test Section" })],
+				grant_sections: [
+					GrantSectionDetailedFactory.build({
+						id: "section-1",
+						order: 0,
+						parent_id: null,
+						title: "Test Section",
+					}),
+				],
 			}),
 		});
 
@@ -255,7 +262,14 @@ describe("ApplicationStructureStep", () => {
 			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
+					grant_sections: [
+						GrantSectionDetailedFactory.build({
+							id: "section-1",
+							order: 0,
+							parent_id: null,
+							title: "Section 1",
+						}),
+					],
 					rag_sources: [
 						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
 						{ filename: "file2.pdf", sourceId: "2", status: "FAILED" },

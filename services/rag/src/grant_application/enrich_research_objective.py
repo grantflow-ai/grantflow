@@ -2,18 +2,16 @@ from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
 from packages.db.src.json_objects import ResearchObjective
-from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
+from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
 
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 
@@ -119,6 +117,27 @@ research_objective_enrichment_schema = {
     },
     "required": ["research_objective", "research_tasks"],
 }
+
+ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="refine_enrich_research_objective",
+    template="""
+Review the enrichment draft and improve it while preserving the schema.
+
+## Objective Summary
+<objective>${objective}</objective>
+
+## Draft Enrichment
+<draft>${draft}</draft>
+
+## Requirements
+1. Ensure every required field is present and satisfies minimum length constraints.
+2. Keep exactly five scientific terms and between three and ten questions/queries per item.
+3. Reinforce alignment with the provided keywords/topics and the CFP requirements.
+4. Strengthen scientific rationale and methodological clarity without unnecessary verbosity.
+
+Return the updated enrichment payload using the exact same schema.
+""",
+)
 
 
 class ObjectiveEnrichmentDTO(TypedDict):
@@ -255,16 +274,47 @@ async def enrich_objective_generation(
         messages=task_description,
         response_type=ObjectiveEnrichmentDTO,
         response_schema=research_objective_enrichment_schema,
-        model=ANTHROPIC_SONNET_MODEL,
+        model=GEMINI_FLASH_MODEL,
         system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
         validator=partial(validate_enrichment_response, input_objective=input_objective),
         trace_id=trace_id,
     )
 
 
+async def refine_objective_enrichment(
+    *,
+    draft: ObjectiveEnrichmentDTO,
+    dto: EnrichObjectiveInputDTO,
+) -> ObjectiveEnrichmentDTO:
+    objective_summary = {
+        "number": dto["research_objective"]["number"],
+        "title": dto["research_objective"]["title"],
+        "keywords": dto.get("keywords", []),
+        "topics": dto.get("topics", []),
+    }
+
+    refinement_prompt = ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT.to_string(
+        objective=objective_summary,
+        draft=draft,
+    )
+
+    return await handle_completions_request(
+        prompt_identifier="refine_enrich_objective",
+        messages=refinement_prompt,
+        response_type=ObjectiveEnrichmentDTO,
+        response_schema=research_objective_enrichment_schema,
+        model=GEMINI_FLASH_MODEL,
+        system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
+        validator=partial(validate_enrichment_response, input_objective=dto["research_objective"]),
+        trace_id=dto["trace_id"],
+    )
+
+
 async def handle_enrich_objective(
     dto: EnrichObjectiveInputDTO, *, job_manager: "JobManager[StageDTO]"
 ) -> ObjectiveEnrichmentDTO:
+    await job_manager.ensure_not_cancelled()
+
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
         objective_and_tasks=dto["research_objective"],
         keywords=dto["keywords"],
@@ -284,20 +334,14 @@ async def handle_enrich_objective(
 
     full_prompt = enrichment_prompt.to_string(rag_results=compressed_context)
 
-    return await with_evaluation(
-        prompt_identifier="enrich_objective",
-        prompt_handler=enrich_objective_generation,
-        prompt=full_prompt,
-        input_objective=dto["research_objective"],
+    draft = await enrich_objective_generation(
+        full_prompt,
         trace_id=dto["trace_id"],
-        **get_evaluation_kwargs(
-            "enrich_objectives",
-            job_manager,
-            section_config=dto.get("grant_section"),
-            rag_context=dto.get("retrieval_context"),
-            research_objectives=[dto["research_objective"]],
-            keywords=dto.get("keywords"),
-            topics=dto.get("topics"),
-            is_json_content=True,
-        ),
+        input_objective=dto["research_objective"],
     )
+
+    await job_manager.ensure_not_cancelled()
+
+    refined = await refine_objective_enrichment(draft=draft, dto=dto)
+
+    return refined or draft

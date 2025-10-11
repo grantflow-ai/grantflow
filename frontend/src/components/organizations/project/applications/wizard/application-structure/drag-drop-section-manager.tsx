@@ -27,6 +27,8 @@ import {
 	type GrantSection,
 	hasDetailedResearchPlan,
 	hasDetailedResearchPlanUpdate,
+	hasLengthConstraint,
+	sectionWordLimit,
 	type UpdateGrantSection,
 } from "@/types/grant-sections";
 import {
@@ -39,6 +41,7 @@ import {
 	updateBackendWithReorderedSections,
 	updateReorder,
 } from "@/utils/grant-sections";
+import type { SectionLengthConstraint } from "@/utils/length-constraint";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
 import { createDeleteDialogConfig, openConfirmationDialog, SECTION_MOVE_DIALOG_CONFIG } from "./confirmation-dialogs";
 import { DragDropContext, type ZoneType } from "./drag-drop-context";
@@ -58,6 +61,20 @@ interface SectionListProps {
 	subsectionsByParent: Record<string, GrantSection[]>;
 	toggleSectionExpanded: (sectionId: string) => void;
 }
+
+const DEFAULT_WORD_LIMIT = 3000;
+
+const computeLengthLabel = (constraint: null | SectionLengthConstraint, wordLimit: null | number): string => {
+	if (constraint) {
+		if (constraint.type === "words") {
+			return `${constraint.value.toLocaleString()} words`;
+		}
+		const approxWords = wordLimit ? ` (~${wordLimit.toLocaleString()} words)` : "";
+		return `${constraint.value.toLocaleString()} characters${approxWords}`;
+	}
+	const defaultWords = wordLimit ?? DEFAULT_WORD_LIMIT;
+	return `${defaultWords.toLocaleString()} words (default)`;
+};
 
 const handleMainToSubReorder = async (
 	sections: GrantSection[],
@@ -323,14 +340,22 @@ export function DragDropSectionManager({
 				return section as UpdateGrantSection;
 			}
 
+			const defaultConstraint: SectionLengthConstraint = {
+				source: null,
+				type: "words",
+				value: DEFAULT_WORD_LIMIT,
+			};
+			const baseConstraint = hasLengthConstraint(section) ? section.length_constraint : defaultConstraint;
+
 			return {
 				depends_on: [],
+				evidence: "evidence" in section ? section.evidence : "",
 				generation_instructions: "",
 				id: section.id,
 				is_clinical_trial: null,
 				is_detailed_research_plan: null,
 				keywords: [],
-				max_words: 3000,
+				length_constraint: baseConstraint,
 				order: section.order,
 				parent_id: section.parent_id,
 				search_queries: [],
@@ -430,12 +455,17 @@ export function DragDropSectionManager({
 			const newSectionId = `section-${crypto.randomUUID()}`;
 			const newSection: UpdateGrantSection = {
 				depends_on: [],
+				evidence: "",
 				generation_instructions: "",
 				id: newSectionId,
 				is_clinical_trial: null,
 				is_detailed_research_plan: null,
 				keywords: [],
-				max_words: 3000,
+				length_constraint: {
+					source: null,
+					type: "words",
+					value: DEFAULT_WORD_LIMIT,
+				},
 				order: 0,
 				parent_id: parentId,
 				search_queries: [],
@@ -768,7 +798,9 @@ export function DragDropSectionManager({
 
 function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) {
 	const isSubsection = activeSection.parent_id !== null;
-	const hasMaxWords = "max_words" in activeSection && Boolean(activeSection.max_words);
+	const constraint = hasLengthConstraint(activeSection) ? activeSection.length_constraint : null;
+	const wordLimit = sectionWordLimit(activeSection);
+	const lengthLabel = computeLengthLabel(constraint, wordLimit);
 
 	return (
 		<div
@@ -790,10 +822,8 @@ function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) 
 							>
 								{activeSection.title}
 							</h3>
-							{hasMaxWords && "max_words" in activeSection && (
-								<span className="text-xs font-normal leading-none text-dark-gray">
-									{activeSection.max_words.toLocaleString()} Max words
-								</span>
+							{lengthLabel && (
+								<span className="text-xs font-normal leading-none text-dark-gray">{lengthLabel}</span>
 							)}
 						</div>
 					</div>

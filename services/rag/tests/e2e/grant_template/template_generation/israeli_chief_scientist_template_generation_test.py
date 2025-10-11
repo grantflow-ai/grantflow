@@ -4,14 +4,15 @@ from unittest.mock import AsyncMock
 import pytest
 from packages.db.src.json_objects import (
     CFPAnalysis,
-    CFPAnalysisConstraint,
     CFPSection,
     GrantLongFormSection,
+    LengthConstraint,
     OrganizationNamespace,
 )
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.template_generation import handle_template_generation, is_long_form_section
+from services.rag.src.utils.lengths import WORDS_PER_PAGE, constraint_to_word_limit
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -34,49 +35,51 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
                 id="executive_summary",
                 title="Executive Summary",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="2 pages", quote=""),
-                ],
+                length_constraint=LengthConstraint(
+                    type="words",
+                    value=2 * WORDS_PER_PAGE,
+                    source="2 pages",
+                ),
             ),
             CFPSection(
                 id="technology_description",
                 title="Technology and Innovation Description",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="5 pages", quote=""),
-                ],
+                length_constraint=LengthConstraint(
+                    type="words",
+                    value=5 * WORDS_PER_PAGE,
+                    source="5 pages",
+                ),
             ),
             CFPSection(
                 id="market_analysis",
                 title="Market Analysis and Commercialization Strategy",
                 parent_id=None,
-                constraints=[],
             ),
             CFPSection(
                 id="work_plan",
                 title="Detailed Work Plan and Milestones",
                 parent_id=None,
-                constraints=[],
             ),
             CFPSection(
                 id="budget",
                 title="Budget and Financial Projections",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="3 pages", quote=""),
-                ],
+                length_constraint=LengthConstraint(
+                    type="words",
+                    value=3 * WORDS_PER_PAGE,
+                    source="3 pages",
+                ),
             ),
             CFPSection(
                 id="company_background",
                 title="Company Background and Capabilities",
                 parent_id=None,
-                constraints=[],
             ),
             CFPSection(
                 id="team",
                 title="Team Qualifications and Experience",
                 parent_id=None,
-                constraints=[],
             ),
         ],
         deadlines=["2025-06-30"],
@@ -137,7 +140,7 @@ async def test_israeli_chief_scientist_template_generation_end_to_end(
 
     performance_context.end_stage()
 
-    total_words = sum(s.get("max_words", 0) for s in long_form_sections)
+    total_words = sum(constraint_to_word_limit(section.get("length_constraint")) or 0 for section in long_form_sections)
     performance_context.set_metadata("total_sections", len(grant_sections))
     performance_context.set_metadata("total_word_count", total_words)
 

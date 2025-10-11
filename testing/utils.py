@@ -5,7 +5,7 @@ from typing import Any
 from anyio import Path as AsyncPath
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import LengthConstraint, ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
@@ -25,6 +25,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from testing import FIXTURES_FOLDER, SOURCES_FOLDER
+
+
+def _word_constraint(value: int, source: str | None = None) -> LengthConstraint:
+    return {"type": "words", "value": value, "source": source}
 
 
 async def get_granting_institution(
@@ -367,7 +371,7 @@ async def create_grant_template_for_application(
             "topics": ["project_summary", "technical_abstract"],
             "generation_instructions": "Provide a concise summary of the proposed research project, including the project's goals, objectives, and significance. The abstract should be written in a clear and accessible style, as it will be read by a broad audience of scientists and administrators.",
             "depends_on": ["research_strategy"],
-            "max_words": 285,
+            "length_constraint": _word_constraint(285),
             "search_queries": [
                 "melanoma research objectives methodology impact",
                 "project goals innovation significance melanoma",
@@ -404,7 +408,7 @@ async def create_grant_template_for_application(
             ],
             "generation_instructions": "Describe the overall research strategy, methodology, and analyses to be used to accomplish the specific aims of the project. Discuss potential problems and alternative strategies.",
             "depends_on": [],
-            "max_words": 1806,
+            "length_constraint": _word_constraint(1806),
             "search_queries": [
                 "melanoma research methodology experimental design protocols",
                 "data collection analysis methods melanoma",
@@ -434,7 +438,7 @@ async def create_grant_template_for_application(
             "topics": ["preliminary_data", "research_feasibility"],
             "generation_instructions": "Present any preliminary data that is relevant to the proposed research project. Discuss the significance of the data and how it supports the feasibility of the project.",
             "depends_on": ["research_strategy"],
-            "max_words": 361,
+            "length_constraint": _word_constraint(361),
             "search_queries": [
                 "melanoma preliminary data results analysis",
                 "research feasibility interpretation melanoma",
@@ -460,7 +464,7 @@ async def create_grant_template_for_application(
             "topics": ["risks_and_mitigations", "research_feasibility"],
             "generation_instructions": "Describe potential risks associated with the proposed research project, and explain the proposed mitigation strategies to address these risks.",
             "depends_on": ["research_strategy"],
-            "max_words": 361,
+            "length_constraint": _word_constraint(361),
             "search_queries": [
                 "melanoma research risks assessment",
                 "contingency planning research melanoma",
@@ -487,7 +491,7 @@ async def create_grant_template_for_application(
             "topics": ["impact", "knowledge_translation"],
             "generation_instructions": "Describe the potential clinical and translational impact of the proposed research project. Explain how the project could improve the lives of patients with melanoma.",
             "depends_on": ["research_strategy"],
-            "max_words": 361,
+            "length_constraint": _word_constraint(361),
             "search_queries": [
                 "melanoma clinical impact research",
                 "translational research in melanoma",

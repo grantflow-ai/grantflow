@@ -175,8 +175,16 @@ section = ExtractedSectionDTO(
 {
     "is_plan": {"type": "boolean"},
     "needs_writing": {"type": "boolean"},
-    "max_words": {"type": "integer", "nullable": True},
-    "source": {"type": "string", "nullable": True}
+    "length_constraint": {
+        "type": "object",
+        "nullable": True,
+        "properties": {
+            "type": {"type": "string", "enum": ["words", "characters"]},
+            "value": {"type": "integer", "minimum": 1},
+            "source": {"type": "string", "nullable": True},
+        },
+        "required": ["type", "value", "source"],
+    }
 }
 ```
 

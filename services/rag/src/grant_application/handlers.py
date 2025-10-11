@@ -22,7 +22,9 @@ from services.rag.src.grant_application.enrich_terminology_stage import enrich_o
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import handle_generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_workplan_section
+from services.rag.src.grant_application.utils import is_grant_long_form_section
 from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.utils.lengths import distribute_constraint_among_components
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
@@ -55,7 +57,7 @@ async def handle_generate_sections_stage(
         raise ValidationError("Grant template not found")
 
     for section in grant_application.grant_template.grant_sections:
-        if "max_words" in section and "generation_instructions" in section:
+        if is_grant_long_form_section(section):
             long_form_section = cast("GrantLongFormSection", section)
             if not long_form_section.get("is_detailed_research_plan"):
                 long_form_sections.append(long_form_section)
@@ -182,7 +184,7 @@ async def handle_extract_relationships_stage(
         raise ValidationError("Grant template not found")
 
     for section in grant_application.grant_template.grant_sections:
-        if "max_words" in section and "generation_instructions" in section:
+        if is_grant_long_form_section(section):
             long_form_section = cast("GrantLongFormSection", section)
             if long_form_section.get("is_detailed_research_plan"):
                 work_plan_section = long_form_section
@@ -323,8 +325,11 @@ async def handle_generate_research_plan_stage(
     research_objectives = grant_application.research_objectives or []
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
     total_components = len(research_objectives) + total_tasks
-    words_per_component = (
-        abs(round(dto["work_plan_section"]["max_words"] / total_components)) if total_components > 0 else 500
+    work_plan_constraint = dto["work_plan_section"].get("length_constraint")
+    component_constraint = (
+        distribute_constraint_among_components(constraint=work_plan_constraint, component_count=total_components)
+        if total_components > 0
+        else None
     )
     for research_objective, enrichment_response in zip(research_objectives, dto["enrichment_responses"], strict=True):
         objective_enrichment = enrichment_response["research_objective"]
@@ -339,7 +344,7 @@ async def handle_generate_research_plan_stage(
                 guiding_questions=objective_enrichment["questions"],
                 search_queries=objective_enrichment["queries"],
                 relationships=dto["relationships"].get(str(research_objective["number"]), []),
-                max_words=words_per_component,
+                length_constraint=component_constraint,
                 type="objective",
             )
         )
@@ -355,7 +360,7 @@ async def handle_generate_research_plan_stage(
                     relationships=dto["relationships"].get(
                         f"{research_objective['number']}.{research_task['number']}", []
                     ),
-                    max_words=words_per_component,
+                    length_constraint=component_constraint,
                     type="task",
                 )
                 for research_task, task_enrichment in zip(research_tasks, tasks_enrichment, strict=True)

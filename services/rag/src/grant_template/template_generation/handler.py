@@ -1,7 +1,7 @@
 import asyncio
 from typing import TYPE_CHECKING, TypeGuard
 
-from packages.db.src.json_objects import CFPAnalysis, CFPConstraint, CFPSection, GrantElement, GrantLongFormSection
+from packages.db.src.json_objects import CFPAnalysis, CFPSection, GrantElement, GrantLongFormSection, LengthConstraint
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.template_generation.content_metadata import (
@@ -9,12 +9,8 @@ from services.rag.src.grant_template.template_generation.content_metadata import
     generate_content_metadata,
 )
 from services.rag.src.grant_template.template_generation.dependencies import (
-    DependencyWordCount,
-    generate_dependencies_word_counts,
-)
-from services.rag.src.grant_template.template_generation.length_extraction import (
-    LengthConstraint,
-    extract_length_constraints,
+    SectionDependency,
+    generate_section_dependencies,
 )
 from services.rag.src.grant_template.template_generation.section_classification import (
     SectionClassification,
@@ -30,7 +26,7 @@ logger = get_logger(__name__)
 
 
 def is_long_form_section(section: GrantElement | GrantLongFormSection) -> TypeGuard[GrantLongFormSection]:
-    return "max_words" in section
+    return "generation_instructions" in section and "search_queries" in section
 
 
 def merge_and_transform(
@@ -38,13 +34,12 @@ def merge_and_transform(
     cfp_sections: list[CFPSection],
     classifications: list[SectionClassification],
     content_metadata: list[ContentMetadata],
-    dependencies: list[DependencyWordCount],
-    length_constraints: list[LengthConstraint],
+    dependencies: list[SectionDependency],
 ) -> list[GrantElement | GrantLongFormSection]:
     classification_by_id = {c["id"]: c for c in classifications}
-    length_by_id = {lc["id"]: lc for lc in length_constraints}
     content_by_id = {cm["id"]: cm for cm in content_metadata}
     dependency_by_id = {d["id"]: d for d in dependencies}
+    length_by_id = {section["id"]: section.get("length_constraint") for section in cfp_sections}
 
     grant_sections: list[GrantElement | GrantLongFormSection] = []
 
@@ -52,7 +47,7 @@ def merge_and_transform(
         section_id = cfp_section["id"]
 
         cls = classification_by_id.get(section_id)
-        length = length_by_id.get(section_id)
+        length_constraint: LengthConstraint | None = length_by_id.get(section_id)
         content = content_by_id.get(section_id)
         dep = dependency_by_id.get(section_id)
 
@@ -105,7 +100,6 @@ def merge_and_transform(
             is_clinical_trial=cls["clinical"],
             is_detailed_research_plan=cls["is_plan"],
             keywords=content["keywords"],
-            max_words=dep["max_words"],
             search_queries=content["search_queries"],
             topics=content["topics"],
         )
@@ -116,32 +110,8 @@ def merge_and_transform(
         if cls["definition"]:
             long_form_section["definition"] = cls["definition"]
 
-        if length:
-            if length["length_limit"] is not None:
-                long_form_section["length_limit"] = length["length_limit"]
-            if length["length_source"] is not None:
-                long_form_section["length_source"] = length["length_source"]
-            if length["other_limits"]:
-                long_form_section["other_limits"] = [
-                    CFPConstraint(
-                        constraint_type=c["type"],
-                        constraint_value=c["value"],
-                        source_quote=c["quote"],
-                    )
-                    for c in length["other_limits"]
-                ]
-
-        llm_words = dep["max_words"]
-        cfp_limit = length["length_limit"] if length else None
-        if cfp_limit is not None and (cfp_limit < llm_words * 0.7 or cfp_limit > llm_words * 1.5):
-            logger.warning(
-                "Length constraint mismatch between LLM and CFP",
-                section_id=section_id,
-                section_title=cfp_section["title"],
-                llm_recommendation=llm_words,
-                cfp_constraint=cfp_limit,
-                difference_pct=int(abs(cfp_limit - llm_words) / llm_words * 100),
-            )
+        if length_constraint:
+            long_form_section["length_constraint"] = length_constraint
 
         grant_sections.append(long_form_section)
 
@@ -175,19 +145,16 @@ async def handle_template_generation(
         trace_id=trace_id,
     )
 
-    logger.info("Step 1: Parallel section enrichment (classification || length extraction)", trace_id=trace_id)
+    logger.info("Step 1: Classifying sections", trace_id=trace_id)
 
-    classification_result, length_result = await asyncio.gather(
-        classify_sections(sections=cfp_sections, organization_guidelines=organization_guidelines, trace_id=trace_id),
-        extract_length_constraints(
-            sections=cfp_sections, organization_guidelines=organization_guidelines, trace_id=trace_id
-        ),
+    classification_result = await classify_sections(
+        sections=cfp_sections, organization_guidelines=organization_guidelines, trace_id=trace_id
     )
 
     logger.info(
-        "Step 1 completed",
+        "Section classification completed",
         classified_sections=len(classification_result["sections"]),
-        sections_with_length_limits=sum(1 for s in length_result["sections"] if s["length_limit"] is not None),
+        sections_with_length_constraints=sum(1 for s in cfp_sections if s.get("length_constraint") is not None),
         trace_id=trace_id,
     )
 
@@ -201,11 +168,7 @@ async def handle_template_generation(
             organization_guidelines=organization_guidelines,
             trace_id=trace_id,
         ),
-        generate_dependencies_word_counts(
-            classification=classification_result["sections"],
-            length_constraints=length_result["sections"],
-            trace_id=trace_id,
-        ),
+        generate_section_dependencies(classification=classification_result["sections"], trace_id=trace_id),
     )
 
     logger.info(
@@ -222,7 +185,6 @@ async def handle_template_generation(
     grant_sections = merge_and_transform(
         cfp_sections=cfp_sections,
         classifications=classification_result["sections"],
-        length_constraints=length_result["sections"],
         content_metadata=content_result["sections"],
         dependencies=dependency_result["sections"],
     )
@@ -230,7 +192,7 @@ async def handle_template_generation(
     logger.info(
         "Template generation completed",
         grant_sections_count=len(grant_sections),
-        long_form_count=sum(1 for s in grant_sections if "max_words" in s),
+        long_form_count=sum(1 for s in grant_sections if is_long_form_section(s)),
         trace_id=trace_id,
     )
 

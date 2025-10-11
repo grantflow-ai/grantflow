@@ -1,6 +1,6 @@
 from datetime import date
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
@@ -16,6 +16,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import LengthConstraint
 
 
 async def test_update_grant_template_success(
@@ -55,7 +58,7 @@ async def test_update_grant_template_success(
                 "is_clinical_trial": False,
                 "is_detailed_research_plan": False,
                 "keywords": ["intro", "background"],
-                "max_words": 500,
+                "length_constraint": cast("LengthConstraint", {"type": "words", "value": 500, "source": None}),
                 "search_queries": ["introduction research"],
                 "topics": ["research background"],
             }
@@ -86,7 +89,7 @@ async def test_update_grant_template_success(
         assert section["is_clinical_trial"] is False
         assert section["is_detailed_research_plan"] is False
         assert section["keywords"] == ["intro", "background"]
-        assert section["max_words"] == 500
+        assert section["length_constraint"] == cast("LengthConstraint", {"type": "words", "value": 500, "source": None})
         assert section["search_queries"] == ["introduction research"]
         assert section["topics"] == ["research background"]
         assert updated_template.submission_date == date(2024, 12, 31)

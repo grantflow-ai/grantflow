@@ -213,7 +213,7 @@ class TestScientificQualityAdvanced:
             is_clinical_trial=False,
             is_detailed_research_plan=True,
             keywords=["biomarker", "methodology", "analysis"],
-            max_words=500,
+            length_constraint={"type": "words", "value": 500, "source": None},
             search_queries=["biomarker analysis"],
             topics=["research methods"],
         )
@@ -250,7 +250,7 @@ class TestScientificQualityAdvanced:
             is_clinical_trial=True,
             is_detailed_research_plan=False,
             keywords=["clinical", "trial", "results"],
-            max_words=300,
+            length_constraint={"type": "words", "value": 300, "source": None},
             search_queries=["clinical trial results"],
             topics=["clinical outcomes"],
         )
@@ -280,7 +280,7 @@ class TestScientificQualityAdvanced:
             is_clinical_trial=False,
             is_detailed_research_plan=False,
             keywords=[],
-            max_words=100,
+            length_constraint={"type": "words", "value": 100, "source": None},
             search_queries=[],
             topics=[],
         )

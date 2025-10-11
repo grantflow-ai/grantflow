@@ -16,7 +16,7 @@ import { DragDropSectionManager } from "./drag-drop-section-manager";
 const isDetailedSection = (
 	section: GrantSection,
 ): section is NonNullable<API.UpdateGrantTemplate.RequestBody["grant_sections"]>[0] => {
-	return "max_words" in section;
+	return Object.hasOwn(section, "generation_instructions");
 };
 
 interface ApplicationStructureStepProps {
@@ -150,6 +150,7 @@ function GeneratingLoader() {
 				className="size-96 object-contain"
 				height={96}
 				src="/animations/analyzing-loader.gif"
+				unoptimized
 				width={96}
 			/>
 		</div>

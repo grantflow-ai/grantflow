@@ -63,7 +63,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
         chunks = [
             "Israeli Ministry of Health Chief Scientist Grant Proposal Template",
             "Project Information: Title, Principal Investigator, Institution",
-            "Research Plan: Objectives, Background, Methodology",
+            "Research Plan: dict[str, Any]ives, Background, Methodology",
             "Budget and Funding: Total Budget, Breakdown, Justification",
             "Team and Collaboration: Research Team, Institutional Support",
             "Innovation and Impact: Expected Outcomes, Significance",
@@ -130,11 +130,12 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
         assert "id" in section
         assert "title" in section
         assert "parent_id" in section
-        assert "constraints" in section
 
         assert isinstance(section["id"], str)
         assert isinstance(section["title"], str)
-        assert isinstance(section["constraints"], list)
+        constraint = section.get("length_constraint")
+        if constraint is not None:
+            assert isinstance(constraint, dict)
 
     performance_context.end_stage()
 

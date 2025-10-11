@@ -47,7 +47,7 @@ export async function createOrganizationLogoUploadUrl(organizationId: string, co
 				headers: await createAuthHeaders(),
 				searchParams: { content_type: contentType },
 			})
-			.json<API.CreateOrganizationLogoUploadUrl.Http200.ResponseBody>(),
+			.json<API.OrganizationsOrganizationIdLogoUploadUrlHandleCreateLogoUploadUrl.Http201.ResponseBody>(),
 	);
 }
 
@@ -203,6 +203,6 @@ export async function uploadOrganizationLogo(organizationId: string, file: File)
 				body: formData,
 				headers: await createAuthHeaders(),
 			})
-			.json<API.UploadOrganizationLogo.Http200.ResponseBody>(),
+			.json<API.OrganizationsOrganizationIdLogoHandleUploadOrganizationLogo.Http201.ResponseBody>(),
 	);
 }
