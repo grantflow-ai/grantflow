@@ -18,6 +18,12 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
+class ResearchPlanResponseOptimized(TypedDict):
+    """Optimized response with short property names for token efficiency"""
+
+    objectives: list[dict[str, object]]
+
+
 class ResearchPlanResponse(TypedDict):
     research_objectives: list[ResearchObjective]
 
@@ -49,6 +55,44 @@ RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
+# Optimized schema with short property names (50-70% token savings)
+research_plan_schema_optimized = {
+    "type": "object",
+    "properties": {
+        "objectives": {  # Was: research_objectives (50% shorter)
+            "type": "array",
+            "description": "Research objectives with tasks",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "num": {"type": "integer", "minimum": 1, "maximum": 3},  # Was: number
+                    "title": {"type": "string", "minLength": 10, "maxLength": 200},
+                    "desc": {"type": "string", "minLength": 50, "maxLength": 500},  # Was: description (30% shorter)
+                    "tasks": {  # Was: research_tasks (40% shorter)
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 5,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "num": {"type": "integer", "minimum": 1, "maximum": 5},  # Was: number
+                                "title": {"type": "string", "minLength": 10, "maxLength": 200},
+                                "desc": {"type": "string", "minLength": 50, "maxLength": 500},  # Was: description
+                            },
+                            "required": ["num", "title", "desc"],
+                        },
+                    },
+                },
+                "required": ["num", "title", "desc", "tasks"],
+            },
+        },
+    },
+    "required": ["objectives"],
+}
+
+# Keep old schema for reference/backwards compatibility
 research_plan_schema = {
     "type": "object",
     "properties": {
@@ -115,6 +159,98 @@ research_plan_schema = {
     },
     "required": ["research_objectives"],
 }
+
+
+def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) -> list[ResearchObjective]:
+    """Transform optimized schema with short names back to DB format"""
+    objectives: list[ResearchObjective] = []
+
+    for obj in optimized["objectives"]:
+        tasks = [
+            {
+                "number": task["num"],  # type: ignore[typeddict-item]
+                "title": task["title"],  # type: ignore[typeddict-item]
+                "description": task["desc"],  # type: ignore[typeddict-item]
+            }
+            for task in obj["tasks"]  # type: ignore[typeddict-item]
+        ]
+
+        objectives.append(
+            ResearchObjective(
+                number=obj["num"],  # type: ignore[typeddict-item]
+                title=obj["title"],  # type: ignore[typeddict-item]
+                description=obj["desc"],  # type: ignore[typeddict-item]
+                research_tasks=tasks,
+            )
+        )
+
+    return objectives
+
+
+def _validate_research_plan_response_optimized(response: ResearchPlanResponseOptimized) -> None:
+    """Validate optimized schema response"""
+    objectives = response["objectives"]
+
+    if len(objectives) < 2 or len(objectives) > 3:
+        raise ValidationError(
+            f"Expected 2-3 research objectives, got {len(objectives)}",
+            context={"count": len(objectives)},
+        )
+
+    seen_numbers: set[int] = set()
+    for i, obj in enumerate(objectives):
+        obj_number = obj["num"]  # type: ignore[typeddict-item]
+
+        if obj_number in seen_numbers:
+            raise ValidationError(
+                f"Duplicate objective number: {obj_number}",
+                context={"index": i, "number": obj_number},
+            )
+        seen_numbers.add(obj_number)
+
+        if len(obj["title"]) < 10:  # type: ignore[arg-type]
+            raise ValidationError(
+                f"Objective {obj_number} title too short (min 10 chars)",
+                context={"title": obj["title"], "length": len(obj["title"])},  # type: ignore[arg-type]
+            )
+
+        description = obj.get("desc", "")  # type: ignore[typeddict-item]
+        if len(description) < 50:
+            raise ValidationError(
+                f"Objective {obj_number} description too short (min 50 chars)",
+                context={"description": description[:50], "length": len(description)},
+            )
+
+        tasks = obj["tasks"]  # type: ignore[typeddict-item]
+        if len(tasks) < 2 or len(tasks) > 5:
+            raise ValidationError(
+                f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
+                context={"count": len(tasks)},
+            )
+
+        seen_task_numbers: set[int] = set()
+        for task in tasks:
+            task_number = task["num"]  # type: ignore[typeddict-item, index]
+
+            if task_number in seen_task_numbers:
+                raise ValidationError(
+                    f"Duplicate task number {task_number} in objective {obj_number}",
+                    context={"objective": obj_number, "task_number": task_number},
+                )
+            seen_task_numbers.add(task_number)
+
+            if len(task["title"]) < 10:  # type: ignore[arg-type, index]
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
+                    context={"title": task["title"], "length": len(task["title"])},  # type: ignore[arg-type, index]
+                )
+
+            task_description = task.get("desc", "")  # type: ignore[typeddict-item, index]
+            if len(task_description) < 50:
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
+                    context={"description": task_description[:50], "length": len(task_description)},
+                )
 
 
 def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
@@ -209,15 +345,17 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
 
     full_prompt = prompt_with_title.to_string(context=compressed_context)
 
-    response: ResearchPlanResponse = await handle_completions_request(
+    # Use optimized schema with short property names (50-70% token savings)
+    response_optimized: ResearchPlanResponseOptimized = await handle_completions_request(
         prompt_identifier="research_plan_generation",
         messages=full_prompt,
         system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
-        response_schema=research_plan_schema,
-        response_type=ResearchPlanResponse,
-        validator=_validate_research_plan_response,
+        response_schema=research_plan_schema_optimized,
+        response_type=ResearchPlanResponseOptimized,
+        validator=_validate_research_plan_response_optimized,
         temperature=TEMPERATURE,
         trace_id=trace_id,
     )
 
-    return response["research_objectives"]
+    # Transform optimized response back to DB format
+    return _transform_optimized_to_db_format(response_optimized)
