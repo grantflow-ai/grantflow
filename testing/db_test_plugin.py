@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 import signal
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse, urlunparse
 
@@ -30,6 +30,7 @@ from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
 from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from testcontainers.postgres import PostgresContainer
 
 from testing.factories import (
     GrantApplicationFactory,
@@ -170,10 +171,41 @@ async def cleanup_orphaned_test_databases(connection_string: str) -> None:
 
 
 @pytest.fixture(scope="session")
-async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    base_connection_string = (
-        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql+asyncpg://local:local@localhost:5432"
-    )
+def postgres_container() -> Generator[PostgresContainer | None]:
+    """PostgreSQL testcontainer with pgvector extension."""
+    # Check if DATABASE_URL is set (for local dev with existing DB)
+    if os.getenv("DATABASE_URL"):
+        logger.info("DATABASE_URL is set, skipping testcontainer")
+        yield None
+        return
+
+    logger.info("Starting PostgreSQL testcontainer with pgvector (random port)...")
+    # Use pgvector image with PostgreSQL 17, testcontainers will assign random port
+    container = PostgresContainer("pgvector/pgvector:pg17", driver="asyncpg")
+    container.start()
+
+    logger.info("Testcontainer started on port %s", container.get_exposed_port(5432))
+
+    yield container
+
+    logger.info("Stopping PostgreSQL testcontainer...")
+    container.stop()
+
+
+@pytest.fixture(scope="session")
+async def db_connection_string(worker_id: str, postgres_container: PostgresContainer | None) -> AsyncGenerator[str]:
+    # Use DATABASE_URL if provided, otherwise use testcontainer
+    if os.getenv("DATABASE_URL"):
+        base_connection_string = os.getenv("DATABASE_URL")
+        logger.info("Using local database from DATABASE_URL")
+    else:
+        if not postgres_container:
+            msg = "No DATABASE_URL set and testcontainer failed to start"
+            raise RuntimeError(msg)
+        base_connection_string = postgres_container.get_connection_url().replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
+        logger.info("Using PostgreSQL testcontainer at %s", base_connection_string)
 
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"
@@ -269,9 +301,8 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
     f"test_snapshot_{os.getpid()}"
 
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    base_path = urlparse(
-        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql://local:local@localhost:5432/local"
-    ).path
+    # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
+    base_path = urlparse(os.getenv("DATABASE_URL")).path if os.getenv("DATABASE_URL") else "/postgres"
     admin_connection_string = urlunparse(parsed._replace(path=base_path))
 
     admin_conn = await connect(admin_connection_string)
@@ -322,9 +353,8 @@ async def restore_database_snapshot(
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    base_path = urlparse(
-        os.getenv("DATABASE_CONNECTION_STRING") or "postgresql://local:local@localhost:5432/local"
-    ).path
+    # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
+    base_path = urlparse(os.getenv("DATABASE_URL")).path if os.getenv("DATABASE_URL") else "/postgres"
     admin_connection_string = urlunparse(parsed._replace(path=base_path))
     db_name = parsed.path.lstrip("/")
 

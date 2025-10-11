@@ -412,7 +412,11 @@ async def handle_url_crawling(
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
-        is_retriable = getattr(e, "category", None) == "retriable" if hasattr(e, "category") else False
+        is_retriable = (
+            getattr(e, "category", None) == "retriable"
+            if hasattr(e, "category")
+            else False
+        )
 
         logger.exception(
             "Error during URL crawling",
