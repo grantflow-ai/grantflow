@@ -379,14 +379,17 @@ async def test_enrich_objective_generation_success(
     mock_handle_completions_request.assert_called_once()
 
 
+@patch("services.rag.src.grant_application.enrich_research_objective.refine_objective_enrichment")
 @patch("services.rag.src.grant_application.enrich_research_objective.enrich_objective_generation")
 async def test_handle_enrich_objective_success(
     mock_enrich_objective_generation: AsyncMock,
+    mock_refine_objective_enrichment: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_dto_input: EnrichObjectiveInputDTO,
     valid_enrichment_response: ObjectiveEnrichmentDTO,
 ) -> None:
     mock_enrich_objective_generation.return_value = valid_enrichment_response
+    mock_refine_objective_enrichment.return_value = valid_enrichment_response
 
     result = await handle_enrich_objective(sample_dto_input, job_manager=mock_job_manager)
 
@@ -394,6 +397,7 @@ async def test_handle_enrich_objective_success(
     assert "research_objective" in result
     assert "research_tasks" in result
     mock_enrich_objective_generation.assert_called_once()
+    mock_refine_objective_enrichment.assert_called_once()
 
 
 @patch("services.rag.src.grant_application.enrich_research_objective.enrich_objective_generation")

@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.json_objects import Chunk
-from packages.db.src.tables import GrantApplication, GrantApplicationSource, RagSource, TextVector
+from packages.db.src.tables import GrantApplication, GrantApplicationSource, RagUrl, TextVector
 from packages.shared_utils.src.embeddings import generate_embeddings
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.kreuzberg_fixtures import extract_with_cache
@@ -16,7 +16,7 @@ from services.rag.src.utils.retrieval import MetadataFilterParams, retrieve_vect
 async def nih_research_paper_source(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-) -> RagSource:
+) -> RagUrl:
     paper_content = b"""
     Melanoma Brain Metastases: Current Understanding and Novel Therapeutic Approaches
 
@@ -70,9 +70,8 @@ async def nih_research_paper_source(
     assert "keywords" in metadata, "Keywords not extracted"
 
     async with async_session_maker() as session:
-        source = RagSource(
+        source = RagUrl(
             id=UUID("11111111-1111-1111-1111-111111111111"),
-            source_type="url",
             url="https://pubmed.ncbi.nlm.nih.gov/test-paper",
             text_content=content,
             document_metadata=metadata,
@@ -108,7 +107,7 @@ async def nih_research_paper_source(
 async def generic_cancer_research_source(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-) -> RagSource:
+) -> RagUrl:
     paper_content = b"""
     Advances in Cancer Immunotherapy: A Comprehensive Review
 
@@ -147,9 +146,8 @@ async def generic_cancer_research_source(
     assert metadata is not None, "Kreuzberg metadata extraction failed"
 
     async with async_session_maker() as session:
-        source = RagSource(
+        source = RagUrl(
             id=UUID("22222222-2222-2222-2222-222222222222"),
-            source_type="url",
             url="https://example.com/generic-cancer-review",
             text_content=content,
             document_metadata=metadata,
@@ -184,8 +182,8 @@ async def generic_cancer_research_source(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_retrieval_without_metadata_filter(
-    nih_research_paper_source: RagSource,
-    generic_cancer_research_source: RagSource,
+    nih_research_paper_source: RagUrl,
+    generic_cancer_research_source: RagUrl,
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
@@ -212,8 +210,8 @@ async def test_retrieval_without_metadata_filter(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_retrieval_with_organization_entity_filter(
-    nih_research_paper_source: RagSource,
-    generic_cancer_research_source: RagSource,
+    nih_research_paper_source: RagUrl,
+    generic_cancer_research_source: RagUrl,
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
@@ -253,8 +251,8 @@ async def test_retrieval_with_organization_entity_filter(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_retrieval_with_category_filter(
-    nih_research_paper_source: RagSource,
-    generic_cancer_research_source: RagSource,
+    nih_research_paper_source: RagUrl,
+    generic_cancer_research_source: RagUrl,
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
@@ -289,8 +287,8 @@ async def test_retrieval_with_category_filter(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_retrieval_with_quality_score_filter(
-    nih_research_paper_source: RagSource,
-    generic_cancer_research_source: RagSource,
+    nih_research_paper_source: RagUrl,
+    generic_cancer_research_source: RagUrl,
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
@@ -325,8 +323,8 @@ async def test_retrieval_with_quality_score_filter(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_retrieval_with_combined_filters(
-    nih_research_paper_source: RagSource,
-    generic_cancer_research_source: RagSource,
+    nih_research_paper_source: RagUrl,
+    generic_cancer_research_source: RagUrl,
     grant_application: GrantApplication,
     logger: logging.Logger,
 ) -> None:
@@ -368,7 +366,7 @@ async def test_retrieval_with_combined_filters(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_metadata_extraction_completeness(
-    nih_research_paper_source: RagSource,
+    nih_research_paper_source: RagUrl,
     logger: logging.Logger,
 ) -> None:
     metadata = nih_research_paper_source.document_metadata
