@@ -594,6 +594,36 @@ tasks:
       - grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp && mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
       - echo "✅ Requirements.txt generated successfully for Cloud Functions deployment!"
 
+  cloud-functions:prepare:
+    desc: Prepare Cloud Functions for deployment (copy packages, generate requirements)
+    cmds:
+      - task: cloud-functions:generate-requirements
+      - echo "📦 Copying workspace packages to dlq_manager function directory..."
+      - cp -r packages functions/dlq_manager/
+      - echo "✅ Cloud Functions prepared for deployment!"
+
+  cloud-functions:cleanup:
+    desc: Clean up temporary files from Cloud Functions directory
+    cmds:
+      - echo "🧹 Cleaning up Cloud Functions temporary files..."
+      - rm -rf functions/dlq_manager/packages
+      - echo "✅ Cleanup complete!"
+
+  cloud-functions:deploy:
+    desc: Deploy Cloud Functions to staging environment via Terraform
+    cmds:
+      - task: cloud-functions:prepare
+      - echo "🚀 Deploying Cloud Functions via Terraform..."
+      - cd terraform/environments/staging && tofu init -upgrade
+      - cd terraform/environments/staging && tofu apply -target=module.cloud_functions -auto-approve
+      - task: cloud-functions:cleanup
+      - echo "✅ Cloud Functions deployed successfully!"
+
+  cloud-functions:deploy:staging:
+    desc: Deploy Cloud Functions to staging (alias for cloud-functions:deploy)
+    cmds:
+      - task: cloud-functions:deploy
+
 
   _dev:check:
     internal: true
