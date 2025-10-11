@@ -31,7 +31,7 @@ optional-dependencies.embeddings = [
 ]
 optional-dependencies.extraction = [
   "en-core-web-sm",
-  "kreuzberg[chunking,langdetect,entity-extraction,document-classification]>=3.1.7",
+  "kreuzberg[chunking,document-classification,entity-extraction,langdetect]>=3.20.1",
 ]
 optional-dependencies.gcs = [
   "google-cloud-storage>=2.19",
@@ -66,8 +66,8 @@ packages = [ "src" ]
 [tool.hatch.build.targets.sdist]
 packages = [ "src" ]
 
-[tool.ruff]
-lint.ignore = [ "PLC0415" ]
-
 [tool.uv.sources]
 en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
+
+[tool.ruff]
+lint.ignore = [ "PLC0415" ]

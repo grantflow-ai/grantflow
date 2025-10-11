@@ -140,18 +140,18 @@ requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
     { name = "google-auth", specifier = ">=2.40.3" },
-    { name = "html-to-markdown", specifier = ">=2.1.0" },
+    { name = "html-to-markdown", specifier = ">=2.1" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "markdown", specifier = ">=3.5" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "python-docx", specifier = ">=1.1" },
-    { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["gcs", "pubsub", "server"], editable = "packages/shared_utils" },
     { name = "weasyprint", specifier = ">=66" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "shared-utils", extras = ["server", "gcs", "pubsub", "ai", "embeddings", "extraction"], editable = "packages/shared_utils" }]
+dev = [{ name = "shared-utils", extras = ["ai", "embeddings", "extraction", "gcs", "pubsub", "server"], editable = "packages/shared_utils" }]
 
 [[package]]
 name = "beautifulsoup4"
@@ -1548,7 +1548,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.19.1"
+version = "3.20.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1566,8 +1566,9 @@ dependencies = [
     { name = "python-pptx" },
     { name = "transformers" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/0d/0a/1482533947a0509f5f2333fe71500e1d269db5a460d56624c87f5c2699d7/kreuzberg-3.20.1.tar.gz", hash = "sha256:91721fdbd2b7cd7d65ca96e5a4970efc121fbaa5df7580079c6f5097f7cd1ae0", size = 193689, upload-time = "2025-10-11T12:01:59.218Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/57/6d5fdd9d062685781d683a4ab150a6547e8bc8ae0e01acc42fab48a19b59/kreuzberg-3.19.1-py3-none-any.whl", hash = "sha256:d874f0c41bc5c7bc64e41825cfc76da0402b4a9d816fa6334aedc8a19b0913bb", size = 223610, upload-time = "2025-09-30T06:57:18.858Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/cc/3fd0b14af0b51cb8df304b1a0c065d16676ad287f7bb055e769ed0ba84a4/kreuzberg-3.20.1-py3-none-any.whl", hash = "sha256:810c6e527c938c1cbcd0cdbce468445262c0ed3ccb498ff6c70eb9f4b5a6005f", size = 225815, upload-time = "2025-10-11T12:01:57.402Z" },
 ]
 
 [package.optional-dependencies]
@@ -3375,7 +3376,7 @@ dependencies = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.6.2.post1" },
     { name = "db", editable = "packages/db" },
-    { name = "html-to-markdown", specifier = ">=2.1.0" },
+    { name = "html-to-markdown", specifier = ">=2.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mdformat", specifier = ">=0.7.20" },
     { name = "pandas", specifier = ">=2.2.3" },
@@ -3492,7 +3493,7 @@ requires-dist = [
     { name = "google-cloud-pubsub", marker = "extra == 'pubsub'", specifier = ">=2.30" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.19" },
     { name = "google-genai", marker = "extra == 'ai'", specifier = ">=0.1" },
-    { name = "kreuzberg", extras = ["chunking", "langdetect", "entity-extraction", "document-classification"], marker = "extra == 'extraction'", specifier = ">=3.1.7" },
+    { name = "kreuzberg", extras = ["chunking", "langdetect", "entity-extraction", "document-classification"], marker = "extra == 'extraction'", specifier = ">=3.20.1" },
     { name = "litestar", extras = ["opentelemetry"], marker = "extra == 'server'", specifier = ">=2.16" },
     { name = "msgspec", specifier = ">=0.19" },
     { name = "opentelemetry-exporter-gcp-monitoring", marker = "extra == 'server'", specifier = ">=1.6" },
