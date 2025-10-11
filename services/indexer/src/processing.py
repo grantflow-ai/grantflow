@@ -1,19 +1,17 @@
 import time
-from typing import TYPE_CHECKING, Any, cast
+from typing import cast
 
 from kreuzberg import extract_bytes
 from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.extraction import (
+    DocumentMetadata,
     enrich_metadata_with_entities_keywords,
     get_scientific_extraction_config,
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import serialize
-
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
 
 logger = get_logger(__name__)
 
@@ -53,7 +51,10 @@ async def process_source(
     processed_mime_type = result.mime_type
     chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
 
-    metadata: dict[str, Any] = dict(result.metadata) if hasattr(result, "metadata") and result.metadata else {}
+    metadata = cast(
+        "DocumentMetadata",
+        dict(result.metadata) if hasattr(result, "metadata") and result.metadata else {},
+    )
 
     entities_count, keywords_count = enrich_metadata_with_entities_keywords(
         extraction_result=result,
@@ -115,4 +116,4 @@ async def process_source(
         token_reduction_savings="~35%" if enable_token_reduction else "0%",
     )
 
-    return vectors, text_content, cast("DocumentMetadata", metadata)
+    return vectors, text_content, metadata

@@ -4,14 +4,15 @@ from unittest.mock import AsyncMock
 import pytest
 from packages.db.src.json_objects import (
     CFPAnalysis,
-    CFPAnalysisConstraint,
     CFPSection,
     GrantLongFormSection,
+    LengthConstraint,
     OrganizationNamespace,
 )
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.template_generation import handle_template_generation, is_long_form_section
+from services.rag.src.utils.lengths import get_max_words_from_section
 
 
 @performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.GRANT_TEMPLATE, timeout=1800)
@@ -34,70 +35,56 @@ async def test_nih_par_25_450_template_generation_end_to_end(
                 id="research_strategy",
                 title="Research Strategy",
                 parent_id=None,
-                constraints=[
-                    CFPAnalysisConstraint(type="page_limit", value="6 pages maximum", quote=""),
-                    CFPAnalysisConstraint(type="font", value="Arial 11pt or Times New Roman 12pt", quote=""),
-                ],
+                length_constraint=LengthConstraint(type="words", value=6 * 415, source="Research Strategy page limit"),
             ),
             CFPSection(
                 id="rare_disease_classification",
                 title="Evidence Supporting Rare Disease Classification",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="clinical_trial_readiness",
                 title="Urgent Need for Clinical Trial Readiness",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="biomarkers_context_of_use",
                 title="Biomarkers and Context of Use",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="specific_aims",
                 title="Specific Aims",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="significance",
                 title="Significance",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="innovation",
                 title="Innovation",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="approach",
                 title="Approach",
                 parent_id="research_strategy",
-                constraints=[],
             ),
             CFPSection(
                 id="budget_justification",
                 title="Budget Justification",
                 parent_id=None,
-                constraints=[],
             ),
             CFPSection(
                 id="facilities_resources",
                 title="Facilities & Other Resources",
                 parent_id=None,
-                constraints=[],
             ),
         ],
         deadlines=["2025-09-07", "2026-01-07", "2026-05-07"],
-        global_constraints=[
-            CFPAnalysisConstraint(type="margin", value="At least ½ inch margins", quote=""),
-        ],
+        global_constraints=[LengthConstraint(type="words", value=2490, source="Research Strategy limited to 6 pages")],
         organization=OrganizationNamespace(
             id="nih-org-id",
             full_name="National Institutes of Health",
@@ -164,10 +151,8 @@ async def test_nih_par_25_450_template_generation_end_to_end(
         f"Research plan should have 3+ queries, has {len(research_plan['search_queries'])}"
     )
 
-    assert "max_words" in research_plan, "Research plan should have word count"
-    assert research_plan["max_words"] >= 500, (
-        f"Research plan should have substantial word count, has {research_plan['max_words']}"
-    )
+    plan_max_words = get_max_words_from_section(research_plan)
+    assert plan_max_words >= 500, f"Research plan should have substantial word count, has {plan_max_words}"
 
     assert "depends_on" in research_plan, "Research plan should have dependencies"
     assert isinstance(research_plan["depends_on"], list), "Dependencies should be a list"
@@ -176,7 +161,7 @@ async def test_nih_par_25_450_template_generation_end_to_end(
 
     performance_context.start_stage("validate_word_count_allocation")
 
-    total_words = sum(s.get("max_words", 0) for s in long_form_sections)
+    total_words = sum(get_max_words_from_section(s) for s in long_form_sections)
 
     expected_range = (1000, 5000)
     assert expected_range[0] <= total_words <= expected_range[1], (

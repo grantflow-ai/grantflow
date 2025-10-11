@@ -2,15 +2,9 @@ import re
 import time
 from asyncio import gather
 from itertools import chain
-from typing import TYPE_CHECKING, Any, TypedDict, cast
+from typing import TypedDict, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
-
-if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
-else:
-    DocumentMetadata = dict
-
 from anyio import Path, TemporaryDirectory
 from bs4 import BeautifulSoup, Tag
 from kreuzberg import KreuzbergError, extract_bytes
@@ -39,6 +33,7 @@ from services.crawler.src.utils import (
     download_page_html,
     safe_filename_from_url,
 )
+from packages.shared_utils.src.extraction import DocumentMetadata
 
 logger = get_logger(__name__)
 
@@ -163,7 +158,7 @@ async def extract_and_process_content(
         raw_html, output_format="html", include_comments=False, include_formatting=True
     )
 
-    metadata: dict[str, Any] = {}
+    metadata = cast("DocumentMetadata", {})
     if clean_html:
         config = get_scientific_extraction_config(
             chunk_content=False,
@@ -182,10 +177,11 @@ async def extract_and_process_content(
             else str(extraction_result.content)
         )
 
-        metadata = (
+        metadata = cast(
+            "DocumentMetadata",
             dict(extraction_result.metadata)
             if hasattr(extraction_result, "metadata") and extraction_result.metadata
-            else {}
+            else {},
         )
 
         enrich_metadata_with_entities_keywords(
@@ -216,7 +212,7 @@ async def extract_and_process_content(
         keywords_extracted=len(metadata.get("keywords", [])),
     )
 
-    return md_out, page_text, main_embeddings, cast("DocumentMetadata", metadata)
+    return md_out, page_text, main_embeddings, metadata
 
 
 async def save_page_content(url: str, temp_dir: Path, markdown_content: str) -> Path:
@@ -659,7 +655,7 @@ async def crawl_url(
     )
 
     chunking_start = time.time()
-    combined_metadata: dict[str, Any] = {}
+    combined_metadata = cast("DocumentMetadata", {})
     try:
         config = get_scientific_extraction_config(
             chunk_content=True,
@@ -678,10 +674,11 @@ async def crawl_url(
             else None
         )
 
-        combined_metadata = (
+        combined_metadata = cast(
+            "DocumentMetadata",
             dict(extraction_result.metadata)
             if hasattr(extraction_result, "metadata") and extraction_result.metadata
-            else {}
+            else {},
         )
 
         enrich_metadata_with_entities_keywords(
@@ -734,4 +731,4 @@ async def crawl_url(
         total_duration_ms=round(total_duration * 1000, 2),
     )
 
-    return vectors, content, files, cast("DocumentMetadata", combined_metadata)
+    return vectors, content, files, combined_metadata

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID, uuid4
 
 if TYPE_CHECKING:
-    from kreuzberg._types import Metadata as DocumentMetadata
+    from packages.shared_utils.src.extraction import DocumentMetadata
 else:
     DocumentMetadata = dict
 
@@ -404,6 +404,7 @@ class GrantApplication(BaseWithUUIDPK):
     __tablename__ = "grant_applications"
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    completion_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     form_inputs: Mapped[ResearchDeepDive | None] = mapped_column(JSON, nullable=True)
     research_objectives: Mapped[list[ResearchObjective] | None] = mapped_column(JSON, nullable=True)
     status: Mapped[ApplicationStatusEnum] = mapped_column(

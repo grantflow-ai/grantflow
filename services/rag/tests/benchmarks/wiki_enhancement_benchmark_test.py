@@ -49,28 +49,34 @@ async def test_wikidata_context_generation_performance(
         "statistical learning",
     ]
 
-    mock_httpx_response.json.return_value = {
-        "results": {
-            "bindings": [
-                {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "machine learning"},
-                    "description": {"value": "Field of AI"},
-                    "scientific_field": {"value": "Computer Science"},
-                },
-                {
-                    "item": {"value": "Q456"},
-                    "label": {"value": "artificial intelligence"},
-                    "description": {"value": "Intelligence demonstrated by machines"},
-                    "scientific_field": {"value": "Computer Science"},
-                },
-            ]
+    search_responses = []
+    for i, term in enumerate(test_terms):
+        search_response = MagicMock()
+        search_response.json.return_value = {
+            "search": [{"id": f"Q{100 + i}", "label": term, "description": f"Description for {term}"}]
+        }
+        search_response.raise_for_status = MagicMock()
+        search_responses.append(search_response)
+
+    details_response = MagicMock()
+    details_response.json.return_value = {
+        "entities": {
+            f"Q{100 + i}": {
+                "labels": {"en": {"value": term}},
+                "descriptions": {"en": {"value": f"Description for {term}"}},
+            }
+            for i, term in enumerate(test_terms)
         }
     }
-    mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
+    details_response.raise_for_status = MagicMock()
+
+    mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     with pytest.MonkeyPatch().context() as m:
-        m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
+        m.setattr(
+            "services.rag.src.grant_application.enrich_terminology_stage.get_wikimedia_client",
+            lambda: mock_httpx_client,
+        )
 
         start_time = time.time()
         context = await get_scientific_context(test_terms, "benchmark-trace")
@@ -199,19 +205,28 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
 async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
     test_terms = [f"term_{i}" for i in range(15)]
 
-    mock_httpx_response.json.return_value = {
-        "results": {
-            "bindings": [
-                {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "test"},
-                    "description": {"value": "test description"},
-                    "scientific_field": {"value": "Test Science"},
-                }
-            ]
+    search_responses = []
+    for i in range(15):
+        search_response = MagicMock()
+        search_response.json.return_value = {
+            "search": [{"id": f"Q{200 + i}", "label": f"term_{i}", "description": f"Description for term {i}"}]
+        }
+        search_response.raise_for_status = MagicMock()
+        search_responses.append(search_response)
+
+    details_response = MagicMock()
+    details_response.json.return_value = {
+        "entities": {
+            f"Q{200 + i}": {
+                "labels": {"en": {"value": f"term_{i}"}},
+                "descriptions": {"en": {"value": f"Description for term {i}"}},
+            }
+            for i in range(15)
         }
     }
-    mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
+    details_response.raise_for_status = MagicMock()
+
+    mock_httpx_client.get = AsyncMock(side_effect=[*search_responses, details_response])
 
     with pytest.MonkeyPatch().context() as m:
         m.setattr(
@@ -225,7 +240,7 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
 
         processing_time_ms = (end_time - start_time) * 1000
 
-        assert mock_httpx_client.get.call_count == 3, (
-            f"Expected 3 batches, got {mock_httpx_client.get.call_count} calls"
+        assert mock_httpx_client.get.call_count == 16, (
+            f"Expected 16 calls (15 searches + 1 batch), got {mock_httpx_client.get.call_count} calls"
         )
         assert processing_time_ms < 1500, f"Batch processing too slow: {processing_time_ms:.2f}ms"

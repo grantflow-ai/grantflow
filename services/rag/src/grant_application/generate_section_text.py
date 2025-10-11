@@ -7,6 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.evaluation import with_evaluation
+from services.rag.src.utils.lengths import compute_word_bounds, constraint_to_word_limit
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -32,17 +33,19 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection) -> str:
             cfp_text += f'  > *CFP Quote: "{req["quote_from_source"]}"*\n'
             cfp_text += f"  > *Category: {req['category']}*\n\n"
 
-    if length_limit := section.get("length_limit"):
-        length_source = section.get("length_source", "Not specified")
+    if length_constraint := section.get("length_constraint"):
         cfp_text += "## Length Requirements\n\n"
-        cfp_text += f"- **Word Limit:** {length_limit} words\n"
-        cfp_text += f"  > *Source: {length_source}*\n\n"
+        if length_constraint["type"] == "characters":
+            cfp_text += f"- **Character Limit:** {length_constraint['value']} characters\n"
+            approx_words = constraint_to_word_limit(length_constraint)
+            if approx_words:
+                cfp_text += f"  > Approx. {approx_words} words\n"
+        else:
+            cfp_text += f"- **Word Limit:** {length_constraint['value']} words\n"
 
-    if other_limits := section.get("other_limits"):
-        cfp_text += "## Additional Constraints\n\n"
-        for limit in other_limits:
-            cfp_text += f"- **{limit['constraint_type']}:** {limit['constraint_value']}\n"
-            cfp_text += f'  > *CFP Quote: "{limit["source_quote"]}"*\n\n'
+        if source := length_constraint.get("source"):
+            cfp_text += f"  > *Source: {source}*\n"
+        cfp_text += "\n"
 
     if evidence := section.get("evidence"):
         cfp_text += f"## CFP Source Reference\n\n{evidence}\n\n"
@@ -50,33 +53,36 @@ def _format_cfp_requirements_for_section(section: GrantLongFormSection) -> str:
     return cfp_text
 
 
+def _fallback_length_bounds(section: GrantLongFormSection) -> tuple[int, int]:
+    section_title_lower = section["title"].lower()
+
+    if "abstract" in section_title_lower:
+        return (250, 500)
+    if "research strategy" in section_title_lower or "approach" in section_title_lower:
+        return (800, 1200)
+    if "preliminary" in section_title_lower or "pilot" in section_title_lower:
+        return (600, 900)
+    if "aims" in section_title_lower or "objectives" in section_title_lower:
+        return (400, 700)
+    if "background" in section_title_lower or "significance" in section_title_lower:
+        return (700, 1000)
+    if "methods" in section_title_lower or "methodology" in section_title_lower:
+        return (600, 1000)
+    if "timeline" in section_title_lower or "plan" in section_title_lower:
+        return (400, 600)
+    return (600, 1000)
+
+
 def _get_section_length_requirements(section: GrantLongFormSection) -> str:
-    section_title = section["title"]
-    section_title_lower = section_title.lower()
+    if length_constraint := section.get("length_constraint"):
+        min_words, max_words = compute_word_bounds(length_constraint)
+        if length_constraint["type"] == "characters":
+            return f"Target length: {min_words}-{max_words} words (~{length_constraint['value']} characters from CFP)"
+        source = length_constraint.get("source") or "CFP-specified"
+        return f"Target length: {min_words}-{max_words} words ({source})"
 
-    if length_limit := section.get("length_limit"):
-        length_source = section.get("length_source", "CFP-specified")
-        min_words = int(length_limit * 0.85)
-        max_words = length_limit
-        return f"Target length: {min_words}-{max_words} words ({length_source})"
-
-    match True:
-        case _ if "abstract" in section_title_lower:
-            return "Target length: 250-500 words for comprehensive yet concise overview"
-        case _ if "research strategy" in section_title_lower or "approach" in section_title_lower:
-            return "Target length: 800-1200 words for detailed methodology and experimental design"
-        case _ if "preliminary" in section_title_lower or "pilot" in section_title_lower:
-            return "Target length: 600-900 words for demonstrating feasibility and initial findings"
-        case _ if "aims" in section_title_lower or "objectives" in section_title_lower:
-            return "Target length: 400-700 words per aim for clear, specific, and measurable goals"
-        case _ if "background" in section_title_lower or "significance" in section_title_lower:
-            return "Target length: 700-1000 words for comprehensive context and rationale"
-        case _ if "methods" in section_title_lower or "methodology" in section_title_lower:
-            return "Target length: 600-1000 words for detailed experimental procedures"
-        case _ if "timeline" in section_title_lower or "plan" in section_title_lower:
-            return "Target length: 400-600 words for clear milestones and deliverables"
-        case _:
-            return "Target length: 600-1000 words for comprehensive section coverage"
+    min_words, max_words = _fallback_length_bounds(section)
+    return f"Target length: {min_words}-{max_words} words for comprehensive section coverage"
 
 
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -117,11 +123,11 @@ ${research_plan_context}
 )
 
 
-async def generate_section_text(task_description: str, *, trace_id: str, section: GrantLongFormSection) -> str:
+async def generate_section_text(task_description: str, *, trace_id: str, min_words: int, max_words: int) -> str:
     return await generate_long_form_text(
         task_description=task_description,
-        max_words=section["max_words"],
-        min_words=int(section["max_words"] * MIN_WORDS_RATIO),
+        max_words=max_words,
+        min_words=min_words,
         prompt_identifier="section_generation",
         trace_id=trace_id,
     )
@@ -138,13 +144,19 @@ async def handle_generate_section_text(
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
+    length_constraint = section.get("length_constraint")
+    if length_constraint is not None:
+        min_words, max_words = compute_word_bounds(length_constraint)
+    else:
+        min_words, max_words = _fallback_length_bounds(section)
+
     section_title = section["title"]
 
     logger.debug(
         "Starting section text generation",
         section_id=section["id"],
         section_title=section_title,
-        max_words=section["max_words"],
+        max_words=max_words,
         shared_context_chars=len(shared_context),
         research_objectives_count=len(research_deep_dives),
         trace_id=trace_id,
@@ -202,7 +214,7 @@ async def handle_generate_section_text(
     task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
         task_description=task_description,
-        max_length=section["max_words"],
+        max_length=max_words,
         minimum_percentage=MIN_WORDS_RATIO * 100,
         retrieval_context=shared_context,
         research_context=research_context,
@@ -255,9 +267,10 @@ async def handle_generate_section_text(
 
     result = await with_evaluation(
         prompt_identifier="section_generation",
-        prompt_handler=partial(generate_section_text, section=section),
+        prompt_handler=partial(generate_section_text, min_words=min_words, max_words=max_words),
         prompt=full_prompt,
         trace_id=trace_id,
+        max_words=max_words,
         **get_evaluation_kwargs(
             "generate_section_text",
             job_manager,
@@ -280,7 +293,7 @@ async def handle_generate_section_text(
         section_title=section_title,
         generated_words=word_count,
         generated_chars=char_count,
-        target_max_words=section["max_words"],
+        target_max_words=max_words,
         trace_id=trace_id,
     )
 

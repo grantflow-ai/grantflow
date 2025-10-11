@@ -1,6 +1,6 @@
 /* eslint-disable vitest/expect-expect */
 import { setupAnalyticsMocks } from "::testing/analytics-test-utils";
-import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
+import { ApplicationFactory, GrantSectionDetailedFactory, GrantTemplateFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -348,7 +348,14 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 				application: {
 					...ApplicationFactory.build(),
 					grant_template: GrantTemplateFactory.build({
-						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
+						grant_sections: [
+							GrantSectionDetailedFactory.build({
+								id: "1",
+								order: 0,
+								parent_id: null,
+								title: "Test Section",
+							}),
+						],
 						rag_sources: [
 							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
 							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
@@ -517,10 +524,16 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
-					grant_template: {
-						...ApplicationFactory.build().grant_template!,
-						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
-					},
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [
+							GrantSectionDetailedFactory.build({
+								id: "1",
+								order: 0,
+								parent_id: null,
+								title: "Section 1",
+							}),
+						],
+					}),
 				},
 				areAppOperationsInProgress: false,
 			});
@@ -967,8 +980,18 @@ describe("WizardFooter - Analytics Tracking", () => {
 		const application = ApplicationFactory.build({
 			grant_template: GrantTemplateFactory.build({
 				grant_sections: [
-					{ id: "section-1", order: 1, parent_id: null, title: "Section 1" },
-					{ id: "section-2", order: 2, parent_id: null, title: "Section 2" },
+					GrantSectionDetailedFactory.build({
+						id: "section-1",
+						order: 1,
+						parent_id: null,
+						title: "Section 1",
+					}),
+					GrantSectionDetailedFactory.build({
+						id: "section-2",
+						order: 2,
+						parent_id: null,
+						title: "Section 2",
+					}),
 				],
 				id: "template-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],

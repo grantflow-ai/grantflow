@@ -234,7 +234,7 @@ class TestSourceGroundingAdvanced:
             is_clinical_trial=False,
             is_detailed_research_plan=True,
             keywords=["biomarker", "analysis", "methodology", "protein"],
-            max_words=500,
+            length_constraint={"type": "words", "value": 500, "source": None},
             search_queries=["biomarker analysis", "protein expression", "clinical research"],
             topics=["research methods"],
         )
@@ -265,7 +265,7 @@ class TestSourceGroundingAdvanced:
             is_clinical_trial=False,
             is_detailed_research_plan=False,
             keywords=["biomarker"],
-            max_words=100,
+            length_constraint={"type": "words", "value": 100, "source": None},
             search_queries=["biomarker analysis"],
             topics=["research"],
         )
@@ -295,7 +295,7 @@ class TestSourceGroundingAdvanced:
             is_clinical_trial=False,
             is_detailed_research_plan=False,
             keywords=[],
-            max_words=100,
+            length_constraint={"type": "words", "value": 100, "source": None},
             search_queries=[],
             topics=[],
         )

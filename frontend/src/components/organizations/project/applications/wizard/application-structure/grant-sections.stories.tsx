@@ -55,7 +55,7 @@ const defaultProps = {
 		is_clinical_trial: null,
 		is_detailed_research_plan: null,
 		keywords: [],
-		max_words: 1000,
+		length_constraint: { source: null, type: "words", value: 1000 },
 		search_queries: [],
 		topics: [],
 		...section,
@@ -67,7 +67,7 @@ export const BasicSection: Story = {
 		...defaultProps,
 		section: GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
-			max_words: 1500,
+			length_constraint: { source: null, type: "words", value: 1500 },
 			title: "Project Overview",
 		}),
 	},
@@ -79,7 +79,7 @@ export const ExpandedSection: Story = {
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
-			max_words: 3000,
+			length_constraint: { source: null, type: "words", value: 3000 },
 			title: "Research Methodology",
 		}),
 	},
@@ -91,7 +91,7 @@ export const ResearchPlanSection: Story = {
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: true,
-			max_words: 5000,
+			length_constraint: { source: null, type: "words", value: 5000 },
 			title: "Detailed Research Plan",
 		}),
 	},
@@ -102,7 +102,7 @@ export const SubsectionBasic: Story = {
 		...defaultProps,
 		isSubsection: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 800,
+			length_constraint: { source: null, type: "words", value: 800 },
 			parent_id: "parent-section-id",
 			title: "Literature Review",
 		}),
@@ -115,19 +115,19 @@ export const SubsectionExpanded: Story = {
 		isExpanded: true,
 		isSubsection: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 1200,
+			length_constraint: { source: null, type: "words", value: 1200 },
 			parent_id: "parent-section-id",
 			title: "Data Collection Methods",
 		}),
 	},
 };
 
-export const NoMaxWords: Story = {
+export const ZeroLengthLimit: Story = {
 	args: {
 		...defaultProps,
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 0,
+			length_constraint: { source: null, type: "words", value: 0 },
 			title: "Project Timeline",
 		}),
 	},
@@ -137,7 +137,7 @@ export const LongTitle: Story = {
 	args: {
 		...defaultProps,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 4000,
+			length_constraint: { source: null, type: "words", value: 4000 },
 			title: "Comprehensive Analysis of Environmental Impact and Sustainability Measures for Large-Scale Renewable Energy Implementation",
 		}),
 	},
@@ -148,7 +148,7 @@ export const MinimalWords: Story = {
 		...defaultProps,
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 100,
+			length_constraint: { source: null, type: "words", value: 100 },
 			title: "Executive Summary",
 		}),
 	},
@@ -159,7 +159,7 @@ export const MaximumWords: Story = {
 		...defaultProps,
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 10_000,
+			length_constraint: { source: null, type: "words", value: 10_000 },
 			title: "Comprehensive Technical Documentation",
 		}),
 	},
@@ -170,7 +170,7 @@ function InteractiveDemoComponent() {
 	const [section, setSection] = useState(() =>
 		GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
-			max_words: 2500,
+			length_constraint: { source: null, type: "words", value: 2500 },
 			title: "Interactive Section Demo",
 		}),
 	);
@@ -228,26 +228,26 @@ function SectionHierarchyComponent() {
 	const parentSection = GrantSectionDetailedFactory.build({
 		id: "parent-1",
 		is_detailed_research_plan: true,
-		max_words: 4000,
+		length_constraint: { source: null, type: "words", value: 4000 },
 		title: "Research Design and Methodology",
 	});
 
 	const subsections = [
 		GrantSectionDetailedFactory.build({
 			id: "sub-1",
-			max_words: 800,
+			length_constraint: { source: null, type: "words", value: 800 },
 			parent_id: parentSection.id,
 			title: "Participant Recruitment",
 		}),
 		GrantSectionDetailedFactory.build({
 			id: "sub-2",
-			max_words: 1200,
+			length_constraint: { source: null, type: "words", value: 1200 },
 			parent_id: parentSection.id,
 			title: "Data Collection Procedures",
 		}),
 		GrantSectionDetailedFactory.build({
 			id: "sub-3",
-			max_words: 1000,
+			length_constraint: { source: null, type: "words", value: 1000 },
 			parent_id: parentSection.id,
 			title: "Statistical Analysis Plan",
 		}),
@@ -300,8 +300,9 @@ function FormValidationStatesComponent() {
 		longPrompt: "A".repeat(1000),
 	});
 
+	const constraintValue = Math.abs(formStates.invalidWordCount) || 1000;
 	const section = GrantSectionDetailedFactory.build({
-		max_words: Math.abs(formStates.invalidWordCount) || 1000,
+		length_constraint: { source: null, type: "words", value: constraintValue },
 		title: formStates.emptyTitle || "Section with Form Issues",
 	});
 
@@ -346,7 +347,7 @@ export const AccessibilityFocus: Story = {
 		...defaultProps,
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 2000,
+			length_constraint: { source: null, type: "words", value: 2000 },
 			title: "Accessibility Testing Section",
 		}),
 	},

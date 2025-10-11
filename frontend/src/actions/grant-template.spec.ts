@@ -96,7 +96,11 @@ describe("Grant Template Actions", () => {
 						is_clinical_trial: false,
 						is_detailed_research_plan: false,
 						keywords: ["intro", "background"],
-						max_words: 500,
+						length_constraint: {
+							source: null,
+							type: "words",
+							value: 500,
+						},
 						order: 1,
 						parent_id: null,
 						search_queries: ["introduction research"],

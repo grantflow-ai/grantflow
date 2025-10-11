@@ -23,7 +23,9 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
+import { sectionWordLimit } from "@/types/grant-sections";
 import { getEnv } from "@/utils/env";
+import { setLengthConstraintWordLimit } from "@/utils/length-constraint";
 import { log } from "@/utils/logger/client";
 import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
@@ -169,32 +171,53 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 		};
 	}
 
-	const subsectionsByParent = getSubsectionsByParent(sections);
-	const updatedSectionMaxWords: Record<string, number> = {};
+	const subsectionsByParent = sections.reduce<Partial<Record<string, (typeof sections)[number][]>>>(
+		(acc, section) => {
+			if (!section.parent_id) {
+				return acc;
+			}
+			const existingGroup = acc[section.parent_id];
+			if (existingGroup) {
+				existingGroup.push(section);
+				return acc;
+			}
+			acc[section.parent_id] = [section];
+			return acc;
+		},
+		{},
+	);
+
+	const updatedSectionTargets: Record<string, number> = {};
 
 	for (const parentId in subsectionsByParent) {
 		const subsections = subsectionsByParent[parentId];
+		if (!subsections) {
+			continue;
+		}
 		const subsectionsTotalWords = subsections.reduce(
-			(acc, activeSection) =>
-				acc +
-				("max_words" in activeSection && typeof activeSection.max_words === "number"
-					? activeSection.max_words
-					: 0),
+			(acc, subsection) => acc + (sectionWordLimit(subsection) ?? 0),
 			0,
 		);
 
 		const parent = sections.find((section) => section.id === parentId);
-		if (parent?.max_words && parent.max_words < subsectionsTotalWords) {
-			updatedSectionMaxWords[parentId] = subsectionsTotalWords;
+		const parentWordLimit = parent ? sectionWordLimit(parent) : null;
+		if (parentWordLimit === null || parentWordLimit < subsectionsTotalWords) {
+			updatedSectionTargets[parentId] = subsectionsTotalWords;
 		}
 	}
 
-	if (Object.keys(updatedSectionMaxWords).length > 0) {
+	if (Object.keys(updatedSectionTargets).length > 0) {
 		return {
-			message: "Main section total updated automatically to reflect changes in sub-section limits.",
+			message: "Main section length target updated automatically to reflect changes in sub-sections.",
 			sections: sections.map((section) =>
-				section.id in updatedSectionMaxWords
-					? { ...section, max_words: updatedSectionMaxWords[section.id] }
+				section.id in updatedSectionTargets
+					? {
+							...section,
+							length_constraint: setLengthConstraintWordLimit(
+								section.length_constraint ?? null,
+								updatedSectionTargets[section.id],
+							),
+						}
 					: section,
 			),
 		};

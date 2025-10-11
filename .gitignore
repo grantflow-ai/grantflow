@@ -88,3 +88,4 @@ terraform.rc
 testing/test_data/results/
 tfplan
 venv/
+.kreuzberg/

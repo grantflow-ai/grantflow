@@ -74,7 +74,7 @@ vi.mock("@/utils/debounce", () => ({
 }));
 
 const mockUpdateGrantSections = vi.fn();
-const mockIsDetailedSection = vi.fn((section: GrantSection) => "max_words" in section);
+const mockIsDetailedSection = vi.fn((section: GrantSection) => "generation_instructions" in section);
 
 const dialogRef: RefObject<WizardDialogRef> = {
 	current: {

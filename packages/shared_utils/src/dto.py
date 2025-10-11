@@ -2,9 +2,9 @@ from typing import NotRequired, TypedDict
 
 from packages.db.src.json_objects import (
     CFPAnalysisRequirementWithQuote,
-    CFPConstraint,
     CFPContentSection,
     Chunk,
+    LengthConstraint,
 )
 
 
@@ -34,9 +34,7 @@ class ExtractedSectionDTO(TypedDict):
     long_form: bool
     needs_writing: NotRequired[bool | None]
     guidelines: NotRequired[list[str]]
-    length_limit: NotRequired[int | None]
-    length_source: NotRequired[str | None]
-    other_limits: NotRequired[list[CFPConstraint]]
+    length_constraint: NotRequired[LengthConstraint | None]
     definition: NotRequired[str | None]
 
 
@@ -52,9 +50,7 @@ class ProcessedSectionDTO(TypedDict):
     long_form: bool
     requirements: NotRequired[list[CFPAnalysisRequirementWithQuote]]
     guidelines: NotRequired[list[str]]
-    length_limit: NotRequired[int | None]
-    length_source: NotRequired[str | None]
-    other_limits: NotRequired[list[CFPConstraint]]
+    length_constraint: NotRequired[LengthConstraint | None]
     definition: NotRequired[str | None]
     needs_writing: NotRequired[bool | None]
 
@@ -65,5 +61,4 @@ class SectionMetadata(TypedDict):
     topics: list[str]
     generation_instructions: str
     depends_on: list[str]
-    max_words: int
     search_queries: list[str]

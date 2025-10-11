@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+import types
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -24,7 +25,9 @@ class StageTimer:
         self.context.start_stage(self.stage_name)
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None
+    ) -> None:
         self.context.end_stage()
 
 
@@ -226,7 +229,9 @@ class PerformanceTestContext:
         )
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None
+    ) -> None:
         self.end_time = time.time()
         if self.current_stage:
             self.end_stage()

@@ -68,9 +68,8 @@ resource "google_firebase_app_hosting_backend" "frontend" {
 }
 
 resource "google_service_account" "app_hosting" {
-  project    = var.project_id
-  account_id = local.service_account_id
-  # account IDs max 30 chars; keep deterministic truncation across environments.
+  project      = var.project_id
+  account_id   = local.service_account_id
   display_name = "Firebase App Hosting Service Account (${local.backend_id})"
 }
 

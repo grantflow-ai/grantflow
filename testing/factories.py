@@ -9,7 +9,14 @@ from packages.db.src.constants import (
     RAG_URL,
 )
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
-from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import (
+    Chunk,
+    GrantElement,
+    GrantLongFormSection,
+    LengthConstraint,
+    ResearchObjective,
+    ResearchTask,
+)
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -56,7 +63,12 @@ class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
     order = 1
     keywords = Use(lambda: ["methodology", "design", "analysis"])
     topics = Use(lambda: ["background_context", "methodology"])
-    max_words = 3000
+    length_constraint = Use(
+        lambda: cast(
+            "LengthConstraint",
+            {"type": "words", "value": 3000, "source": "Factory default"},
+        )
+    )
     search_queries = Use(lambda: ["query1", "query2", "query3"])
     depends_on: list[str] = Use(list)  # type: ignore[assignment]
 
@@ -232,6 +244,19 @@ class GenerationNotificationFactory(SQLAlchemyFactory[GenerationNotification]):
     notification_type = "info"
 
 
+class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
+    __model__ = ResearchTask
+
+    keywords = Use(lambda: ["methodology", "design", "analysis"])
+    topics = Use(lambda: ["background_context", "methodology"])
+    search_queries = Use(lambda: ["query1", "query2", "query3"])
+    depends_on: list[str] = Use(list)  # type: ignore[assignment]
+
+
+class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
+    __model__ = ResearchObjective
+
+
 class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __model__ = GrantApplication
 
@@ -239,6 +264,25 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __set_association_proxy__ = False
     deleted_at = None
     parent_id = None
+    research_objectives = Use(
+        lambda: [
+            ResearchObjectiveFactory.build(
+                number=1,
+                title="Research Objective 1",
+                research_tasks=[
+                    ResearchTaskFactory.build(number=1, title="Task 1.1"),
+                    ResearchTaskFactory.build(number=2, title="Task 1.2"),
+                ],
+            ),
+            ResearchObjectiveFactory.build(
+                number=2,
+                title="Research Objective 2",
+                research_tasks=[
+                    ResearchTaskFactory.build(number=1, title="Task 2.1"),
+                ],
+            ),
+        ]
+    )
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):
@@ -248,20 +292,6 @@ class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
     deleted_at = None
-
-
-class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
-    __model__ = ResearchObjective
-
-
-class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
-    __model__ = ResearchTask
-
-    keywords = Use(lambda: ["methodology", "design", "analysis"])
-    topics = Use(lambda: ["background_context", "methodology"])
-    max_words = 3000
-    search_queries = Use(lambda: ["query1", "query2", "query3"])
-    depends_on: list[str] = Use(list)  # type: ignore[assignment]
 
 
 class ChunkFactory(TypedDictFactory[Chunk]):

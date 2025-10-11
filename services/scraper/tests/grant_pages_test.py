@@ -1,8 +1,6 @@
 from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, patch
 
-from bs4 import BeautifulSoup
-
 if TYPE_CHECKING:
     from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.grant_pages import (
@@ -13,7 +11,7 @@ from services.scraper.src.grant_pages import (
 
 
 async def test_save_markdown_page() -> None:
-    soup = BeautifulSoup("<h1>Test Grant</h1><p>Grant description</p>", "html.parser")
+    html = "<h1>Test Grant</h1><p>Grant description</p>"
     result_name = "PA-24-123"
 
     with (
@@ -23,9 +21,13 @@ async def test_save_markdown_page() -> None:
         patch("services.scraper.src.grant_pages.text", return_value="# Test Grant\n\nGrant description") as mock_format,
         patch("services.scraper.src.grant_pages.save_grant_page_content", new_callable=AsyncMock) as mock_save,
     ):
-        await save_markdown_page(soup=soup, result_name=result_name)
+        await save_markdown_page(html=html, result_name=result_name)
 
-        mock_convert.assert_called_once_with(soup)
+        assert mock_convert.call_count == 1
+        call_args = mock_convert.call_args
+        assert call_args[0][0] == html
+        assert "preprocessing" in call_args[1]
+
         mock_format.assert_called_once_with("# Test Grant\n\nGrant description")
         mock_save.assert_called_once_with("PA-24-123", "# Test Grant\n\nGrant description")
 

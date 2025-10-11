@@ -1,4 +1,4 @@
-import { ApplicationWithTemplateFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, GrantSectionDetailedFactory, GrantTemplateFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
@@ -112,29 +112,28 @@ export const PartiallyCompleted: Story = {
 		(Story) => {
 			useEffect(() => {
 				const application = ApplicationWithTemplateFactory.build({
-					grant_template: {
-						...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: [
-							{
+							GrantSectionDetailedFactory.build({
 								id: "section-1",
 								order: 0,
 								parent_id: null,
 								title: "Project Summary",
-							},
-							{
+							}),
+							GrantSectionDetailedFactory.build({
 								id: "section-2",
 								order: 1,
 								parent_id: null,
 								title: "Research Methodology",
-							},
-							{
+							}),
+							GrantSectionDetailedFactory.build({
 								id: "section-3",
 								order: 2,
 								parent_id: null,
 								title: "Budget Justification",
-							},
+							}),
 						],
-					},
+					}),
 					title: "Medical Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -156,35 +155,34 @@ export const AllSectionsCompleted: Story = {
 		(Story) => {
 			useEffect(() => {
 				const application = ApplicationWithTemplateFactory.build({
-					grant_template: {
-						...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: [
-							{
+							GrantSectionDetailedFactory.build({
 								id: "section-1",
 								order: 0,
 								parent_id: null,
 								title: "Executive Summary",
-							},
-							{
+							}),
+							GrantSectionDetailedFactory.build({
 								id: "section-2",
 								order: 1,
 								parent_id: null,
 								title: "Technical Approach",
-							},
-							{
+							}),
+							GrantSectionDetailedFactory.build({
 								id: "section-3",
 								order: 2,
 								parent_id: null,
 								title: "Market Impact",
-							},
-							{
+							}),
+							GrantSectionDetailedFactory.build({
 								id: "section-4",
 								order: 3,
 								parent_id: null,
 								title: "Risk Assessment",
-							},
+							}),
 						],
-					},
+					}),
 					title: "Renewable Energy Innovation Grant",
 				});
 				useApplicationStore.setState({
@@ -206,17 +204,16 @@ export const MinimalSingleSection: Story = {
 		(Story) => {
 			useEffect(() => {
 				const application = ApplicationWithTemplateFactory.build({
-					grant_template: {
-						...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: [
-							{
+							GrantSectionDetailedFactory.build({
 								id: "section-1",
 								order: 0,
 								parent_id: null,
 								title: "Business Plan",
-							},
+							}),
 						],
-					},
+					}),
 					title: "Small Business Innovation Grant",
 				});
 				useApplicationStore.setState({
@@ -237,27 +234,29 @@ export const Manysections: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const sections = Array.from({ length: 8 }, (_, i) => ({
-					id: `section-${i + 1}`,
-					order: i,
-					parent_id: null,
-					title: [
-						"Project Overview",
-						"Literature Review",
-						"Research Methodology",
-						"Data Collection Plan",
-						"Analysis Framework",
-						"Timeline and Milestones",
-						"Budget and Resources",
-						"Risk Management",
-					][i],
-				}));
+				const sectionTitles = [
+					"Project Overview",
+					"Literature Review",
+					"Research Methodology",
+					"Data Collection Plan",
+					"Analysis Framework",
+					"Timeline and Milestones",
+					"Budget and Resources",
+					"Risk Management",
+				];
+				const sections = sectionTitles.map((title, index) =>
+					GrantSectionDetailedFactory.build({
+						id: `section-${index + 1}`,
+						order: index,
+						parent_id: null,
+						title,
+					}),
+				);
 
 				const application = ApplicationWithTemplateFactory.build({
-					grant_template: {
-						...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: sections,
-					},
+					}),
 					title: "Comprehensive Research Grant Application",
 				});
 				useApplicationStore.setState({

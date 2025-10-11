@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
 from packages.db.src.enums import ApplicationStatusEnum
@@ -13,6 +13,9 @@ from packages.db.src.tables import (
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import LengthConstraint
 
 
 async def test_duplicate_application_success(
@@ -127,7 +130,7 @@ async def test_duplicate_with_grant_template(
                 "description": "Test description",
                 "type": "section",
                 "order": 1,
-                "max_words": 100,
+                "length_constraint": cast("LengthConstraint", {"type": "words", "value": 100, "source": None}),
             }
         ]
 

@@ -18,6 +18,23 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
+class OptimizedTask(TypedDict):
+    num: int
+    title: str
+    desc: str
+
+
+class OptimizedObjective(TypedDict):
+    num: int
+    title: str
+    desc: str
+    tasks: list[OptimizedTask]
+
+
+class ResearchPlanResponseOptimized(TypedDict):
+    objectives: list[OptimizedObjective]
+
+
 class ResearchPlanResponse(TypedDict):
     research_objectives: list[ResearchObjective]
 
@@ -48,6 +65,42 @@ RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         - Focus on grant-appropriate research activities
     """,
 )
+
+research_plan_schema_optimized = {
+    "type": "object",
+    "properties": {
+        "objectives": {
+            "type": "array",
+            "description": "Research objectives with tasks",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "num": {"type": "integer", "minimum": 1, "maximum": 3},
+                    "title": {"type": "string", "minLength": 10, "maxLength": 200},
+                    "desc": {"type": "string", "minLength": 50, "maxLength": 500},
+                    "tasks": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 5,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "num": {"type": "integer", "minimum": 1, "maximum": 5},
+                                "title": {"type": "string", "minLength": 10, "maxLength": 200},
+                                "desc": {"type": "string", "minLength": 50, "maxLength": 500},
+                            },
+                            "required": ["num", "title", "desc"],
+                        },
+                    },
+                },
+                "required": ["num", "title", "desc", "tasks"],
+            },
+        },
+    },
+    "required": ["objectives"],
+}
 
 research_plan_schema = {
     "type": "object",
@@ -115,6 +168,96 @@ research_plan_schema = {
     },
     "required": ["research_objectives"],
 }
+
+
+def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) -> list[ResearchObjective]:
+    objectives: list[ResearchObjective] = []
+
+    for obj in optimized["objectives"]:
+        tasks = [
+            {
+                "number": task["num"],
+                "title": task["title"],
+                "description": task["desc"],
+            }
+            for task in obj["tasks"]
+        ]
+
+        objectives.append(
+            ResearchObjective(
+                number=obj["num"],
+                title=obj["title"],
+                description=obj["desc"],
+                research_tasks=tasks,  # type: ignore[typeddict-item]
+            )
+        )
+
+    return objectives
+
+
+def _validate_research_plan_response_optimized(response: ResearchPlanResponseOptimized) -> None:
+    objectives = response["objectives"]
+
+    if len(objectives) < 2 or len(objectives) > 3:
+        raise ValidationError(
+            f"Expected 2-3 research objectives, got {len(objectives)}",
+            context={"count": len(objectives)},
+        )
+
+    seen_numbers: set[int] = set()
+    for i, obj in enumerate(objectives):
+        obj_number = obj["num"]
+
+        if obj_number in seen_numbers:
+            raise ValidationError(
+                f"Duplicate objective number: {obj_number}",
+                context={"index": i, "number": obj_number},
+            )
+        seen_numbers.add(obj_number)
+
+        if len(obj["title"]) < 10:
+            raise ValidationError(
+                f"Objective {obj_number} title too short (min 10 chars)",
+                context={"title": obj["title"], "length": len(obj["title"])},
+            )
+
+        description = obj["desc"]
+        if len(description) < 50:
+            raise ValidationError(
+                f"Objective {obj_number} description too short (min 50 chars)",
+                context={"description": description[:50], "length": len(description)},
+            )
+
+        tasks = obj["tasks"]
+        if len(tasks) < 2 or len(tasks) > 5:
+            raise ValidationError(
+                f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
+                context={"count": len(tasks)},
+            )
+
+        seen_task_numbers: set[int] = set()
+        for task in tasks:
+            task_number = task["num"]
+
+            if task_number in seen_task_numbers:
+                raise ValidationError(
+                    f"Duplicate task number {task_number} in objective {obj_number}",
+                    context={"objective": obj_number, "task_number": task_number},
+                )
+            seen_task_numbers.add(task_number)
+
+            if len(task["title"]) < 10:
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
+                    context={"title": task["title"], "length": len(task["title"])},
+                )
+
+            task_description = task["desc"]
+            if len(task_description) < 50:
+                raise ValidationError(
+                    f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
+                    context={"description": task_description[:50], "length": len(task_description)},
+                )
 
 
 def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
@@ -209,15 +352,15 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
 
     full_prompt = prompt_with_title.to_string(context=compressed_context)
 
-    response: ResearchPlanResponse = await handle_completions_request(
+    response_optimized: ResearchPlanResponseOptimized = await handle_completions_request(
         prompt_identifier="research_plan_generation",
         messages=full_prompt,
         system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
-        response_schema=research_plan_schema,
-        response_type=ResearchPlanResponse,
-        validator=_validate_research_plan_response,
+        response_schema=research_plan_schema_optimized,
+        response_type=ResearchPlanResponseOptimized,
+        validator=_validate_research_plan_response_optimized,
         temperature=TEMPERATURE,
         trace_id=trace_id,
     )
 
-    return response["research_objectives"]
+    return _transform_optimized_to_db_format(response_optimized)

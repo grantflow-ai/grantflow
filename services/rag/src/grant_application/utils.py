@@ -1,6 +1,14 @@
-from typing import TypedDict
+from typing import Any, TypedDict, TypeGuard
 
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+
+from services.rag.src.grant_application.dto import (
+    EnrichObjectivesStageDTO,
+    EnrichTerminologyStageDTO,
+    ExtractRelationshipsStageDTO,
+    GenerateResearchPlanStageDTO,
+    GenerateSectionsStageDTO,
+)
 
 
 class TreeNode(TypedDict):
@@ -49,3 +57,173 @@ def generate_application_text(
 ) -> str:
     tree = map_to_tree(sections=grant_sections, section_texts=section_texts)
     return "\n\n".join([f"# {title}", *[create_text_recursively(node) for node in tree]])
+
+
+def is_grant_long_form_section(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    required_fields = {
+        "id",
+        "order",
+        "title",
+        "evidence",
+        "parent_id",
+        "depends_on",
+        "generation_instructions",
+        "is_clinical_trial",
+        "is_detailed_research_plan",
+        "keywords",
+        "search_queries",
+        "topics",
+    }
+
+    return all(field in value for field in required_fields)
+
+
+def is_extract_relationships_dto(checkpoint: Any) -> TypeGuard[ExtractRelationshipsStageDTO]:
+    if not isinstance(checkpoint, dict):
+        return False
+
+    if "work_plan_section" not in checkpoint or "relationships" not in checkpoint:
+        return False
+
+    if not is_grant_long_form_section(checkpoint["work_plan_section"]):
+        return False
+
+    relationships = checkpoint["relationships"]
+    if not isinstance(relationships, dict):
+        return False
+
+    for key, value in relationships.items():
+        if not isinstance(key, str):
+            return False
+        if not isinstance(value, list):
+            return False
+        for item in value:
+            if not isinstance(item, (list, tuple)) or len(item) != 2:
+                return False
+            if not isinstance(item[0], str) or not isinstance(item[1], str):
+                return False
+
+    return True
+
+
+def is_enrichment_data_dto(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    required_fields = {
+        "enriched",
+        "queries",
+        "terms",
+        "context",
+        "instructions",
+        "description",
+        "questions",
+    }
+
+    if not all(field in value for field in required_fields):
+        return False
+
+    for list_field in ["queries", "terms", "questions"]:
+        if not isinstance(value[list_field], list):
+            return False
+        if not all(isinstance(item, str) for item in value[list_field]):
+            return False
+
+    for str_field in ["enriched", "context", "instructions", "description"]:
+        if not isinstance(value[str_field], str):
+            return False
+
+    return True
+
+
+def is_objective_enrichment_response(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    if "research_objective" not in value or "research_tasks" not in value:
+        return False
+
+    if not is_enrichment_data_dto(value["research_objective"]):
+        return False
+
+    if not isinstance(value["research_tasks"], list):
+        return False
+
+    return all(is_enrichment_data_dto(task) for task in value["research_tasks"])
+
+
+def is_enrich_objectives_dto(checkpoint: Any) -> TypeGuard[EnrichObjectivesStageDTO]:
+    if not isinstance(checkpoint, dict):
+        return False
+
+    if not is_extract_relationships_dto(checkpoint):
+        return False
+
+    if "enrichment_responses" not in checkpoint:
+        return False
+
+    enrichment_responses = checkpoint["enrichment_responses"]  # type: ignore[typeddict-item]
+    if not isinstance(enrichment_responses, list):
+        return False
+
+    return all(is_objective_enrichment_response(resp) for resp in enrichment_responses)
+
+
+def is_enrich_terminology_dto(checkpoint: Any) -> TypeGuard[EnrichTerminologyStageDTO]:
+    if not isinstance(checkpoint, dict):
+        return False
+
+    if not is_enrich_objectives_dto(checkpoint):
+        return False
+
+    if "wikidata_enrichments" not in checkpoint:
+        return False
+
+    wikidata_enrichments = checkpoint["wikidata_enrichments"]  # type: ignore[typeddict-item]
+    if not isinstance(wikidata_enrichments, list):
+        return False
+
+    return all(is_enrichment_data_dto(enrichment) for enrichment in wikidata_enrichments)
+
+
+def is_generate_research_plan_dto(checkpoint: Any) -> TypeGuard[GenerateResearchPlanStageDTO]:
+    if not isinstance(checkpoint, dict):
+        return False
+
+    if not is_enrich_terminology_dto(checkpoint):
+        return False
+
+    if "research_plan_text" not in checkpoint:
+        return False
+
+    return isinstance(checkpoint["research_plan_text"], str)  # type: ignore[typeddict-item]
+
+
+def is_section_text(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    if "section_id" not in value or "text" not in value:
+        return False
+
+    return isinstance(value["section_id"], str) and isinstance(value["text"], str)
+
+
+def is_generate_sections_dto(checkpoint: Any) -> TypeGuard[GenerateSectionsStageDTO]:
+    if not isinstance(checkpoint, dict):
+        return False
+
+    if not is_generate_research_plan_dto(checkpoint):
+        return False
+
+    if "section_texts" not in checkpoint:
+        return False
+
+    section_texts = checkpoint["section_texts"]  # type: ignore[typeddict-item]
+    if not isinstance(section_texts, list):
+        return False
+
+    return all(is_section_text(section) for section in section_texts)

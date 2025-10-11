@@ -146,7 +146,7 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
             "statistical analysis",
             "risk prediction",
         ],
-        max_words=800,
+        length_constraint={"type": "words", "value": 800, "source": None},
         search_queries=["cardiovascular biomarker discovery", "proteomics risk prediction", "cohort study methodology"],
         topics=["biomedical research", "cardiovascular disease", "biomarker validation"],
     )
@@ -257,7 +257,7 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
             "safety",
             "statistical analysis",
         ],
-        max_words=700,
+        length_constraint={"type": "words", "value": 700, "source": None},
         search_queries=["cardiovascular clinical trial results", "biomarker-guided therapy efficacy"],
         topics=["clinical trials", "cardiovascular intervention", "precision medicine"],
     )
@@ -317,7 +317,7 @@ async def test_complete_evaluation_workflow_poor_content() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "research", "methodology", "analysis"],
-        max_words=300,
+        length_constraint={"type": "words", "value": 300, "source": None},
         search_queries=["biomarker research methodology"],
         topics=["research quality"],
     )
@@ -363,7 +363,7 @@ async def test_evaluation_workflow_with_word_limit_violation() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=True,
         keywords=["biomarker", "analysis", "research"],
-        max_words=200,
+        length_constraint={"type": "words", "value": 200, "source": None},
         search_queries=["biomarker research"],
         topics=["research methodology"],
     )
@@ -401,7 +401,7 @@ async def test_evaluation_workflow_edge_case_empty_content() -> None:
         is_clinical_trial=False,
         is_detailed_research_plan=False,
         keywords=["research"],
-        max_words=500,
+        length_constraint={"type": "words", "value": 500, "source": None},
         search_queries=["research methodology"],
         topics=["research"],
     )

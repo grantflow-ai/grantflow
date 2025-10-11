@@ -1,5 +1,10 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationWithTemplateFactory, GrantTemplateFactory, ProjectFactory } from "::testing/factories";
+import {
+	ApplicationWithTemplateFactory,
+	GrantSectionDetailedFactory,
+	GrantTemplateFactory,
+	ProjectFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,8 +13,12 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 
 import { ApplicationWizardPageClient } from "./application-wizard-page-client";
+
+const buildRetrieveApplication = (overrides?: Parameters<typeof ApplicationWithTemplateFactory.build>[0]) =>
+	ApplicationWithTemplateFactory.build(overrides as any) as unknown as API.RetrieveApplication.Http200.ResponseBody;
 
 vi.mock("@/components/organizations/project/applications/wizard/wizard-client", () => ({
 	WizardClientComponent: vi.fn(({ applicationId, organizationId, projectId }) => (
@@ -56,7 +65,7 @@ describe("ApplicationWizardPageClient", () => {
 		});
 
 		it("should return null when no project or organization", () => {
-			const application = ApplicationWithTemplateFactory.build();
+			const application = buildRetrieveApplication();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: null });
 			useProjectStore.setState({ project: null });
@@ -69,7 +78,7 @@ describe("ApplicationWizardPageClient", () => {
 
 	describe("cleanup effects", () => {
 		it("should reset stores on unmount", () => {
-			const application = ApplicationWithTemplateFactory.build();
+			const application = buildRetrieveApplication();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
 			useProjectStore.setState({
@@ -93,7 +102,7 @@ describe("ApplicationWizardPageClient", () => {
 
 	describe("step determination", () => {
 		it("should determine appropriate step based on application state", async () => {
-			const application = ApplicationWithTemplateFactory.build({
+			const application = buildRetrieveApplication({
 				form_inputs: {
 					background_context: "Some content",
 					hypothesis: "Some hypothesis",
@@ -106,7 +115,14 @@ describe("ApplicationWizardPageClient", () => {
 					team_excellence: "",
 				},
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+					grant_sections: [
+						GrantSectionDetailedFactory.build({
+							id: "section-1",
+							order: 0,
+							parent_id: null,
+							title: "Section 1",
+						}),
+					],
 				}),
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
@@ -143,7 +159,7 @@ describe("ApplicationWizardPageClient", () => {
 		});
 
 		it("should fall back to APPLICATION_DETAILS for basic application", async () => {
-			const application = ApplicationWithTemplateFactory.build({
+			const application = buildRetrieveApplication({
 				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
@@ -175,7 +191,7 @@ describe("ApplicationWizardPageClient", () => {
 		});
 
 		it("should not determine step when already set by user", async () => {
-			const application = ApplicationWithTemplateFactory.build({
+			const application = buildRetrieveApplication({
 				form_inputs: {
 					background_context: "Some content",
 					hypothesis: "Some hypothesis",
@@ -188,7 +204,14 @@ describe("ApplicationWizardPageClient", () => {
 					team_excellence: "",
 				},
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+					grant_sections: [
+						GrantSectionDetailedFactory.build({
+							id: "section-1",
+							order: 0,
+							parent_id: null,
+							title: "Section 1",
+						}),
+					],
 				}),
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
@@ -235,8 +258,8 @@ describe("ApplicationWizardPageClient", () => {
 
 	describe("store management", () => {
 		it("should call reset and softReset when application ID changes", async () => {
-			const application1 = ApplicationWithTemplateFactory.build({ id: "app-123" });
-			const application2 = ApplicationWithTemplateFactory.build({ id: "app-456" });
+			const application1 = buildRetrieveApplication({ id: "app-123" });
+			const application2 = buildRetrieveApplication({ id: "app-456" });
 
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
 			useProjectStore.setState({
@@ -272,7 +295,7 @@ describe("ApplicationWizardPageClient", () => {
 
 	describe("wizard client rendering", () => {
 		it("should render WizardClientComponent with correct props", () => {
-			const application = ApplicationWithTemplateFactory.build({ id: "app-123" });
+			const application = buildRetrieveApplication({ id: "app-123" });
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
 			useProjectStore.setState({
@@ -291,7 +314,7 @@ describe("ApplicationWizardPageClient", () => {
 
 	describe("edge cases", () => {
 		it("should handle application ID becoming null", () => {
-			const application = ApplicationWithTemplateFactory.build();
+			const application = buildRetrieveApplication();
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
 			useProjectStore.setState({
@@ -313,7 +336,7 @@ describe("ApplicationWizardPageClient", () => {
 		});
 
 		it("should handle when no step determination is needed", async () => {
-			const application = ApplicationWithTemplateFactory.build({ id: "app-123" });
+			const application = buildRetrieveApplication({ id: "app-123" });
 			useApplicationStore.setState({ application });
 			useOrganizationStore.setState({ selectedOrganizationId: "org-123" });
 			useProjectStore.setState({

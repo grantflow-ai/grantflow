@@ -119,7 +119,7 @@ def sample_dto_input() -> EnrichObjectiveInputDTO:
             is_clinical_trial=None,
             is_detailed_research_plan=True,
             keywords=["work plan"],
-            max_words=2000,
+            length_constraint={"type": "words", "value": 2000, "source": None},
             search_queries=["work plan"],
             topics=["research methodology"],
         ),
@@ -379,39 +379,35 @@ async def test_enrich_objective_generation_success(
     mock_handle_completions_request.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.enrich_research_objective.with_evaluation")
+@patch("services.rag.src.grant_application.enrich_research_objective.enrich_objective_generation")
 async def test_handle_enrich_objective_success(
-    mock_with_evaluation: AsyncMock,
+    mock_enrich_objective_generation: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_dto_input: EnrichObjectiveInputDTO,
     valid_enrichment_response: ObjectiveEnrichmentDTO,
 ) -> None:
-    mock_with_evaluation.return_value = valid_enrichment_response
+    mock_enrich_objective_generation.return_value = valid_enrichment_response
 
     result = await handle_enrich_objective(sample_dto_input, job_manager=mock_job_manager)
 
-    assert result == valid_enrichment_response
-
-    mock_with_evaluation.assert_called_once()
-    call_args = mock_with_evaluation.call_args
-    assert call_args.kwargs["prompt_identifier"] == "enrich_objective"
-    assert call_args.kwargs["passing_score"] == 60
-    assert call_args.kwargs["increment"] == 10
-    assert "criteria" in call_args.kwargs
+    assert result is not None
+    assert "research_objective" in result
+    assert "research_tasks" in result
+    mock_enrich_objective_generation.assert_called_once()
 
 
-@patch("services.rag.src.grant_application.enrich_research_objective.with_evaluation")
+@patch("services.rag.src.grant_application.enrich_research_objective.enrich_objective_generation")
 async def test_handle_enrich_objective_error_handling(
-    mock_with_evaluation: AsyncMock,
+    mock_enrich_objective_generation: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_dto_input: EnrichObjectiveInputDTO,
 ) -> None:
-    mock_with_evaluation.side_effect = Exception("Enrichment service error")
+    mock_enrich_objective_generation.side_effect = Exception("Enrichment service error")
 
     with pytest.raises(Exception, match="Enrichment service error"):
         await handle_enrich_objective(sample_dto_input, job_manager=mock_job_manager)
 
-    mock_with_evaluation.assert_called_once()
+    mock_enrich_objective_generation.assert_called_once()
 
 
 async def test_validation_with_empty_research_objective() -> None:

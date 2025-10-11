@@ -5,7 +5,7 @@ import logging
 import os
 import signal
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse, urlunparse
 
 import pytest
@@ -44,6 +44,9 @@ from testing.factories import (
     RagFileFactory,
     RagUrlFactory,
 )
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import LengthConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -561,7 +564,10 @@ async def grant_template(
                         "rationale for improved imaging",
                         "potential impact on patient care",
                     ],
-                    "max_words": 400,
+                    "length_constraint": cast(
+                        "LengthConstraint",
+                        {"type": "words", "value": 400, "source": None},
+                    ),
                     "type": "section",
                     "is_research_plan": False,
                     "order": 1,
@@ -581,7 +587,10 @@ async def grant_template(
                         "current unmet needs in diagnosis and treatment",
                         "clinical justification",
                     ],
-                    "max_words": 600,
+                    "length_constraint": cast(
+                        "LengthConstraint",
+                        {"type": "words", "value": 600, "source": None},
+                    ),
                     "type": "section",
                     "is_research_plan": False,
                     "order": 2,
@@ -601,7 +610,10 @@ async def grant_template(
                         "comparison to existing methods",
                         "technological advancements in imaging",
                     ],
-                    "max_words": 600,
+                    "length_constraint": cast(
+                        "LengthConstraint",
+                        {"type": "words", "value": 600, "source": None},
+                    ),
                     "type": "section",
                     "is_research_plan": False,
                     "order": 3,
@@ -622,7 +634,10 @@ async def grant_template(
                         "alternative paths for clinical use",
                         "risk assessment in imaging technology",
                     ],
-                    "max_words": 1000,
+                    "length_constraint": cast(
+                        "LengthConstraint",
+                        {"type": "words", "value": 1000, "source": None},
+                    ),
                     "type": "section",
                     "is_research_plan": True,
                     "order": 4,
@@ -638,7 +653,10 @@ async def grant_template(
                         "treatments enabled by improved diagnosis",
                         "benefits of increased imaging resolution",
                     ],
-                    "max_words": 500,
+                    "length_constraint": cast(
+                        "LengthConstraint",
+                        {"type": "words", "value": 500, "source": None},
+                    ),
                     "type": "section",
                     "is_research_plan": False,
                     "order": 5,

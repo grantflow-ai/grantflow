@@ -5,6 +5,7 @@ from packages.db.src.json_objects import GrantLongFormSection
 from packages.shared_utils.src.nlp import get_spacy_model, get_word_count
 
 from services.rag.src.utils.evaluation.dto import StructuralMetrics
+from services.rag.src.utils.lengths import get_max_words_from_section
 
 HEADING_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(#{1,6})\s+(.+)", re.MULTILINE)
 LIST_ITEM_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\s*(?:[*+-]|\d+\.)\s+\S+", re.MULTILINE)
@@ -128,10 +129,16 @@ def check_section_organization(content: str) -> float:
     if not header_levels:
         return 0.0
 
-    hierarchy_score = 0.5
+    hierarchy_score = 0.1
 
     if header_levels and min(header_levels) <= 2:
         hierarchy_score += 0.2
+
+    header_count = len(headers)
+    if header_count >= 4:
+        hierarchy_score += 0.2
+    elif header_count >= 2:
+        hierarchy_score += 0.05
 
     academic_ratio = academic_headers / len(headers)
     hierarchy_score += academic_ratio * 0.3
@@ -186,24 +193,32 @@ def evaluate_header_structure(content: str) -> float:
     if not header_levels:
         return 0.0
 
-    structure_score = 0.0
+    structure_score = 0.1
 
-    if len(set(header_levels)) > 1:
-        sorted_levels = sorted(set(header_levels))
-        consecutive = all(sorted_levels[i] + 1 == sorted_levels[i + 1] for i in range(len(sorted_levels) - 1))
-        if consecutive:
-            structure_score += 0.4
+    unique_levels = sorted(set(header_levels))
+    if len(unique_levels) > 1:
+        level_transitions = [header_levels[i + 1] - header_levels[i] for i in range(len(header_levels) - 1)]
+        large_jumps = sum(1 for diff in level_transitions if abs(diff) > 1)
+
+        if large_jumps == 0:
+            structure_score += 0.25
+        elif large_jumps == 1:
+            structure_score += 0.15
         else:
-            structure_score += 0.2
+            structure_score += 0.05
+
+        consecutive = all(unique_levels[i] + 1 == unique_levels[i + 1] for i in range(len(unique_levels) - 1))
+        if consecutive:
+            structure_score += 0.1
 
     content_length = len(content.split())
     expected_headers = max(1, content_length // 200)
     header_ratio = len(headers) / expected_headers
 
     if 0.5 <= header_ratio <= 2.0:
-        structure_score += 0.3
-    elif 0.3 <= header_ratio <= 3.0:
         structure_score += 0.2
+    elif 0.3 <= header_ratio <= 3.0:
+        structure_score += 0.1
 
     descriptive_headers = 0
     for header_match in headers:
@@ -214,13 +229,14 @@ def evaluate_header_structure(content: str) -> float:
 
     if descriptive_headers > 0:
         descriptive_ratio = descriptive_headers / len(headers)
-        structure_score += descriptive_ratio * 0.3
+        structure_score += descriptive_ratio * 0.15
 
     return min(1.0, structure_score)
 
 
 async def evaluate_structure(content: str, section_config: GrantLongFormSection) -> StructuralMetrics:
-    word_count_compliance = evaluate_word_count_compliance(content, section_config["max_words"])
+    max_words = get_max_words_from_section(section_config)
+    word_count_compliance = evaluate_word_count_compliance(content, max_words)
     paragraph_distribution = analyze_paragraph_structure(content)
     section_organization = check_section_organization(content)
     academic_formatting = assess_academic_formatting(content)

@@ -49,7 +49,7 @@ def sample_grant_section() -> dict[str, Any]:
         "topics": ["methods"],
         "generation_instructions": "Describe methodology",
         "depends_on": [],
-        "max_words": 1500,
+        "length_constraint": {"type": "words", "value": 1500, "source": None},
         "search_queries": ["methodology"],
         "is_detailed_research_plan": True,
         "is_clinical_trial": None,
@@ -66,9 +66,11 @@ def sample_form_inputs() -> dict[str, Any]:
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_success(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
@@ -90,7 +92,8 @@ async def test_handle_extract_relationships_success(
             {"source": "2.2", "target": "3.1", "desc": "Trained model guides patient recruitment strategy"},
         ]
     }
-    mock_with_evaluation.return_value = mock_relationships_response
+    mock_extract_relationships_generation.return_value = mock_relationships_response
+    mock_refine_relationships.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = ["Retrieved context document 1", "Retrieved context document 2"]
 
     test_app_id = str(uuid4())
@@ -120,27 +123,27 @@ async def test_handle_extract_relationships_success(
     )
     assert result["1"][1] == ("3", "Validated biomarkers are needed for clinical validation")
 
-    mock_with_evaluation.assert_called_once()
+    mock_extract_relationships_generation.assert_called_once()
+    mock_refine_relationships.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
     retrieval_call = mock_retrieve_documents.call_args
     assert retrieval_call.kwargs["application_id"] == test_app_id
 
-    eval_call = mock_with_evaluation.call_args
-    assert eval_call.kwargs["prompt_identifier"] == "extract_relationships"
-    assert eval_call.kwargs["research_objectives"] == sample_research_objectives
-
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_empty_objectives(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    mock_with_evaluation.return_value = {"relationships": []}
+    mock_extract_relationships_generation.return_value = {"relationships": []}
+    mock_refine_relationships.return_value = {"relationships": []}
     mock_retrieve_documents.return_value = []
 
     result = await handle_extract_relationships(
@@ -155,14 +158,17 @@ async def test_handle_extract_relationships_empty_objectives(
     assert isinstance(result, dict)
     assert len(result) == 0
 
-    mock_with_evaluation.assert_called_once()
+    mock_extract_relationships_generation.assert_called_once()
+    mock_refine_relationships.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_single_objective(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_grant_section: GrantLongFormSection,
@@ -179,7 +185,8 @@ async def test_handle_extract_relationships_single_objective(
     ]
 
     mock_relationships_response: dict[str, list[Any]] = {"relationships": []}
-    mock_with_evaluation.return_value = mock_relationships_response
+    mock_extract_relationships_generation.return_value = mock_relationships_response
+    mock_refine_relationships.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
     result = await handle_extract_relationships(
@@ -194,14 +201,17 @@ async def test_handle_extract_relationships_single_objective(
     assert isinstance(result, dict)
     assert len(result) == 0
 
-    mock_with_evaluation.assert_called_once()
+    mock_extract_relationships_generation.assert_called_once()
+    mock_refine_relationships.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_complex_dependencies(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
@@ -224,7 +234,8 @@ async def test_handle_extract_relationships_complex_dependencies(
             {"source": "2.1", "target": "3.2", "desc": "Algorithm design defines data collection requirements"},
         ]
     }
-    mock_with_evaluation.return_value = mock_relationships_response
+    mock_extract_relationships_generation.return_value = mock_relationships_response
+    mock_refine_relationships.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
     result = await handle_extract_relationships(
@@ -248,9 +259,11 @@ async def test_handle_extract_relationships_complex_dependencies(
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_no_form_inputs(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
@@ -261,7 +274,8 @@ async def test_handle_extract_relationships_no_form_inputs(
             {"source": "1", "target": "2", "desc": "Basic relationship without context"},
         ]
     }
-    mock_with_evaluation.return_value = mock_relationships_response
+    mock_extract_relationships_generation.return_value = mock_relationships_response
+    mock_refine_relationships.return_value = mock_relationships_response
     mock_retrieve_documents.return_value = []
 
     result = await handle_extract_relationships(
@@ -277,21 +291,24 @@ async def test_handle_extract_relationships_no_form_inputs(
     assert len(result["1"]) == 1
     assert result["1"][0] == ("2", "Basic relationship without context")
 
-    mock_with_evaluation.assert_called_once()
+    mock_extract_relationships_generation.assert_called_once()
+    mock_refine_relationships.assert_called_once()
     mock_retrieve_documents.assert_called_once()
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
-@patch("services.rag.src.grant_application.extract_relationships.with_evaluation")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
 async def test_handle_extract_relationships_error_handling(
-    mock_with_evaluation: AsyncMock,
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
     mock_retrieve_documents: AsyncMock,
     mock_job_manager: AsyncMock,
     sample_research_objectives: list[ResearchObjective],
     sample_grant_section: GrantLongFormSection,
     sample_form_inputs: ResearchDeepDive,
 ) -> None:
-    mock_with_evaluation.side_effect = Exception("Relationship extraction service error")
+    mock_extract_relationships_generation.side_effect = Exception("Relationship extraction service error")
     mock_retrieve_documents.return_value = []
 
     with pytest.raises(Exception, match="Relationship extraction service error"):
@@ -304,5 +321,5 @@ async def test_handle_extract_relationships_error_handling(
             job_manager=mock_job_manager,
         )
 
-    mock_with_evaluation.assert_called_once()
+    mock_extract_relationships_generation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
