@@ -222,9 +222,10 @@ describe("SortableSection", () => {
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
-		const tag = screen.getByText("Characters");
-		expect(tag).toBeInTheDocument();
-		expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
+		const tags = screen.getAllByText("Characters");
+		const inputFieldTag = tags.find((el) => el.parentElement?.hasAttribute("data-type"));
+		expect(inputFieldTag).toBeInTheDocument();
+		expect(inputFieldTag?.parentElement).toHaveAttribute("data-type", "Characters");
 	});
 
 	it("renders tooltip with info icon next to Words/Characters count label", () => {
