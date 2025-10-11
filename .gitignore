@@ -89,3 +89,5 @@ testing/test_data/results/
 tfplan
 venv/
 .kreuzberg/
+# Cloud Functions - temporary deployment files
+functions/*/packages/
