@@ -20,10 +20,12 @@ import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consen
 import { IconGoAhead } from "@/components/icons";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
+import PostLogin from "@/components/onboarding/post-login";
 import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
@@ -31,8 +33,6 @@ import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { checkProfileAndRedirect } from "@/utils/onboarding";
-import { useIsMobile } from "@/hooks/use-mobile";
-import PostLogin from "@/components/onboarding/post-login";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -46,14 +46,12 @@ export default function Login() {
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
 	const { hasConsent } = useCookieConsent();
-	const [showMobileWarming, setShowMobileWarming] = useState(false)
-	const isMobile = useIsMobile()
+	const [showMobileWarming, setShowMobileWarming] = useState(false);
+	const isMobile = useIsMobile();
 
-	if(showMobileWarming){
-		return <PostLogin/>
+	if (showMobileWarming) {
+		return <PostLogin />;
 	}
-
-
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
@@ -75,10 +73,9 @@ export default function Login() {
 				setUser(convertFirebaseUser(user));
 				await login(idToken);
 
-
-				if(isMobile){
-					setShowMobileWarming(true)
-					return
+				if (isMobile) {
+					setShowMobileWarming(true);
+					return;
 				}
 
 				checkProfileAndRedirect(user.displayName);
