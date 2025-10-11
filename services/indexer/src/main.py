@@ -1,4 +1,5 @@
 import time
+from datetime import UTC, datetime, timedelta
 from typing import Any, TypedDict
 
 from litestar import post
@@ -26,6 +27,8 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.indexer.src.processing import process_source
+
+INDEXING_STALE_THRESHOLD = timedelta(minutes=10)
 
 configure_otel("indexer")
 
@@ -125,12 +128,7 @@ async def handle_file_indexing(
     logger.info("Starting file indexing request")
     parse_result, object_path, trace_id = await handle_pubsub_message(data)
 
-    content = await download_blob(object_path)
-    logger.debug(
-        "Downloaded blob content",
-        content_size=len(content),
-        trace_id=trace_id,
-    )
+    claim_timestamp = datetime.now(UTC)
 
     grant_application_id = None
     if parse_result["entity_type"] == "grant_template":
@@ -146,58 +144,136 @@ async def handle_file_indexing(
     elif parse_result["entity_type"] == "grant_application":
         grant_application_id = parse_result["entity_id"]
 
-    async with session_maker() as session:
+    claimed_for_processing = False
+    async with session_maker() as session, session.begin():
+        result = await session.execute(
+            update(RagSource)
+            .where(
+                RagSource.id == parse_result["source_id"],
+                RagSource.indexing_status.in_(
+                    [SourceIndexingStatusEnum.CREATED, SourceIndexingStatusEnum.FAILED],
+                ),
+            )
+            .values(
+                indexing_status=SourceIndexingStatusEnum.INDEXING,
+                indexing_started_at=claim_timestamp,
+                last_retry_at=claim_timestamp,
+                error_type=None,
+                error_message=None,
+            )
+            .returning(RagSource.id)
+        )
+        claimed_for_processing = result.scalar_one_or_none() is not None
+
+    if claimed_for_processing:
         logger.debug(
-            "Querying database for file and source records",
+            "Claimed rag source for indexing",
             source_id=str(parse_result["source_id"]),
             trace_id=trace_id,
         )
-        rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
-        rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
-    if not rag_file:
-        logger.error("Rag file not found", source_id=parse_result["source_id"], trace_id=trace_id)
-        raise ValidationError("Rag file not found", context={"source_id": parse_result["source_id"]})
+    async with session_maker() as session:
+        rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
     if not rag_source:
         logger.error("Rag source not found", source_id=parse_result["source_id"], trace_id=trace_id)
         raise ValidationError("Rag source not found", context={"source_id": parse_result["source_id"]})
 
-    if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
-        logger.info(
-            "File already processed, skipping",
-            filename=parse_result["blob_name"],
-            source_id=parse_result["source_id"],
-            current_status=rag_source.indexing_status.value,
-            trace_id=trace_id,
-        )
+    should_process = claimed_for_processing
 
-        if grant_application_id:
-            await update_source_indexing_status(
-                logger=logger,
-                session_maker=session_maker,
+    if not should_process:
+        if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
+            logger.info(
+                "File already processed successfully",
+                filename=parse_result["blob_name"],
                 source_id=parse_result["source_id"],
-                grant_application_id=grant_application_id,
-                identifier=parse_result["blob_name"],
-                text_content=rag_source.text_content,
-                vectors=None,
-                indexing_status=SourceIndexingStatusEnum.FINISHED,
                 trace_id=trace_id,
-                document_metadata=rag_source.document_metadata,
             )
-        else:
-            async with session_maker() as session, session.begin():
-                await session.execute(
-                    update(RagSource)
-                    .where(RagSource.id == parse_result["source_id"])
-                    .values(indexing_status=SourceIndexingStatusEnum.FINISHED)
+
+            if grant_application_id:
+                await update_source_indexing_status(
+                    logger=logger,
+                    session_maker=session_maker,
+                    source_id=parse_result["source_id"],
+                    grant_application_id=grant_application_id,
+                    identifier=parse_result["blob_name"],
+                    text_content=rag_source.text_content,
+                    vectors=None,
+                    indexing_status=SourceIndexingStatusEnum.FINISHED,
+                    trace_id=trace_id,
+                    document_metadata=rag_source.document_metadata,
                 )
-        logger.info(
-            "File indexing completed (already processed)",
-            total_duration_ms=round((time.time() - start_time) * 1000, 2),
-            trace_id=trace_id,
-        )
-        return
+            else:
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == parse_result["source_id"])
+                        .values(indexing_status=SourceIndexingStatusEnum.FINISHED)
+                    )
+
+            logger.info(
+                "File indexing completed (already processed)",
+                total_duration_ms=round((time.time() - start_time) * 1000, 2),
+                trace_id=trace_id,
+            )
+            return
+
+        if rag_source.indexing_status == SourceIndexingStatusEnum.INDEXING:
+            is_stuck = (
+                rag_source.indexing_started_at is not None
+                and rag_source.indexing_started_at < claim_timestamp - INDEXING_STALE_THRESHOLD
+            )
+
+            if is_stuck:
+                logger.warning(
+                    "Found stuck indexing job, reclaiming",
+                    source_id=parse_result["source_id"],
+                    started_at=rag_source.indexing_started_at.isoformat() if rag_source.indexing_started_at else None,
+                    trace_id=trace_id,
+                )
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == parse_result["source_id"])
+                        .values(
+                            indexing_started_at=claim_timestamp,
+                            last_retry_at=claim_timestamp,
+                            error_type=None,
+                            error_message=None,
+                        )
+                    )
+                should_process = True
+            else:
+                logger.info(
+                    "File already being processed by another container",
+                    filename=parse_result["blob_name"],
+                    source_id=parse_result["source_id"],
+                    trace_id=trace_id,
+                )
+                return
+
+        if not should_process:
+            logger.info(
+                "Skipping indexing for source due to status",
+                status=rag_source.indexing_status.value,
+                source_id=parse_result["source_id"],
+                trace_id=trace_id,
+            )
+            return
+
+    async with session_maker() as session:
+        rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
+
+    if not rag_file:
+        logger.error("Rag file not found", source_id=parse_result["source_id"], trace_id=trace_id)
+        raise ValidationError("Rag file not found", context={"source_id": parse_result["source_id"]})
+
+    content = await download_blob(object_path)
+    logger.debug(
+        "Downloaded blob content",
+        content_size=len(content),
+        trace_id=trace_id,
+    )
 
     logger.debug(
         "Starting file processing",
