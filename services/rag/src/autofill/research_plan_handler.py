@@ -18,10 +18,27 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
+class OptimizedTask(TypedDict):
+    """Optimized task structure with short property names"""
+
+    num: int
+    title: str
+    desc: str
+
+
+class OptimizedObjective(TypedDict):
+    """Optimized objective structure with short property names"""
+
+    num: int
+    title: str
+    desc: str
+    tasks: list[OptimizedTask]
+
+
 class ResearchPlanResponseOptimized(TypedDict):
     """Optimized response with short property names for token efficiency"""
 
-    objectives: list[dict[str, object]]
+    objectives: list[OptimizedObjective]
 
 
 class ResearchPlanResponse(TypedDict):
@@ -168,19 +185,19 @@ def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) 
     for obj in optimized["objectives"]:
         tasks = [
             {
-                "number": task["num"],  # type: ignore[typeddict-item]
-                "title": task["title"],  # type: ignore[typeddict-item]
-                "description": task["desc"],  # type: ignore[typeddict-item]
+                "number": task["num"],
+                "title": task["title"],
+                "description": task["desc"],
             }
-            for task in obj["tasks"]  # type: ignore[typeddict-item]
+            for task in obj["tasks"]
         ]
 
         objectives.append(
             ResearchObjective(
-                number=obj["num"],  # type: ignore[typeddict-item]
-                title=obj["title"],  # type: ignore[typeddict-item]
-                description=obj["desc"],  # type: ignore[typeddict-item]
-                research_tasks=tasks,
+                number=obj["num"],
+                title=obj["title"],
+                description=obj["desc"],
+                research_tasks=tasks,  # type: ignore[typeddict-item]
             )
         )
 
@@ -199,7 +216,7 @@ def _validate_research_plan_response_optimized(response: ResearchPlanResponseOpt
 
     seen_numbers: set[int] = set()
     for i, obj in enumerate(objectives):
-        obj_number = obj["num"]  # type: ignore[typeddict-item]
+        obj_number = obj["num"]
 
         if obj_number in seen_numbers:
             raise ValidationError(
@@ -208,20 +225,20 @@ def _validate_research_plan_response_optimized(response: ResearchPlanResponseOpt
             )
         seen_numbers.add(obj_number)
 
-        if len(obj["title"]) < 10:  # type: ignore[arg-type]
+        if len(obj["title"]) < 10:
             raise ValidationError(
                 f"Objective {obj_number} title too short (min 10 chars)",
-                context={"title": obj["title"], "length": len(obj["title"])},  # type: ignore[arg-type]
+                context={"title": obj["title"], "length": len(obj["title"])},
             )
 
-        description = obj.get("desc", "")  # type: ignore[typeddict-item]
+        description = obj["desc"]
         if len(description) < 50:
             raise ValidationError(
                 f"Objective {obj_number} description too short (min 50 chars)",
                 context={"description": description[:50], "length": len(description)},
             )
 
-        tasks = obj["tasks"]  # type: ignore[typeddict-item]
+        tasks = obj["tasks"]
         if len(tasks) < 2 or len(tasks) > 5:
             raise ValidationError(
                 f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
@@ -230,7 +247,7 @@ def _validate_research_plan_response_optimized(response: ResearchPlanResponseOpt
 
         seen_task_numbers: set[int] = set()
         for task in tasks:
-            task_number = task["num"]  # type: ignore[typeddict-item, index]
+            task_number = task["num"]
 
             if task_number in seen_task_numbers:
                 raise ValidationError(
@@ -239,13 +256,13 @@ def _validate_research_plan_response_optimized(response: ResearchPlanResponseOpt
                 )
             seen_task_numbers.add(task_number)
 
-            if len(task["title"]) < 10:  # type: ignore[arg-type, index]
+            if len(task["title"]) < 10:
                 raise ValidationError(
                     f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
-                    context={"title": task["title"], "length": len(task["title"])},  # type: ignore[arg-type, index]
+                    context={"title": task["title"], "length": len(task["title"])},
                 )
 
-            task_description = task.get("desc", "")  # type: ignore[typeddict-item, index]
+            task_description = task["desc"]
             if len(task_description) < 50:
                 raise ValidationError(
                     f"Objective {obj_number} task {task_number} description too short (min 50 chars)",

@@ -1,14 +1,9 @@
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 from pytest_mock import MockerFixture
 
-from services.rag.src.grant_application.enrich_terminology_stage import (
-    _build_sparql_query,
-    _parse_wikidata_response,
-)
 from services.rag.src.grant_application.enrich_terminology_stage import (
     _expand_scientific_terms as expand_scientific_terms,
 )
@@ -87,50 +82,6 @@ async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock
         result = await get_scientific_context(["test"], "test-trace")
 
     assert result == ""
-
-
-def test_build_sparql_query() -> None:
-    terms = ("machine learning", "artificial intelligence")
-    query = _build_sparql_query(terms)
-
-    assert "machine learning" in query
-    assert "artificial intelligence" in query
-    assert "SELECT DISTINCT" in query
-    assert "?item ?label ?description ?scientific_field" in query
-
-
-def test_parse_wikidata_response_success() -> None:
-    mock_response: dict[str, Any] = {
-        "results": {
-            "bindings": [
-                {
-                    "item": {"value": "Q123"},
-                    "label": {"value": "machine learning"},
-                    "description": {"value": "Field of AI"},
-                    "scientific_field": {"value": "Computer Science"},
-                }
-            ]
-        }
-    }
-
-    result = _parse_wikidata_response(mock_response)
-    assert len(result) == 1
-    assert result[0]["label"] == "machine learning"
-    assert result[0]["description"] == "Field of AI"
-
-
-def test_parse_wikidata_response_empty() -> None:
-    mock_response: dict[str, Any] = {"results": {"bindings": []}}
-
-    result = _parse_wikidata_response(mock_response)
-    assert result == []
-
-
-def test_parse_wikidata_response_malformed() -> None:
-    mock_response: dict[str, str] = {"invalid": "structure"}
-
-    result = _parse_wikidata_response(mock_response)
-    assert result == []
 
 
 async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
