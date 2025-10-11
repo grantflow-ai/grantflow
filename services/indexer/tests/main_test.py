@@ -504,6 +504,79 @@ async def test_handle_file_indexing_processing_error(
         assert source.indexing_status == SourceIndexingStatusEnum.FAILED
 
 
+class RetriableProcessingError(Exception):
+    category = "retriable"
+
+
+async def test_handle_file_indexing_retriable_processing_error(
+    test_client: AsyncTestClient[Any],
+    mock_download_blob: AsyncMock,
+    mock_process_source: AsyncMock,
+    mock_parse_object_uri: MagicMock,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    source_id = UUID("333e4567-e89b-12d3-a456-426614174000")
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(RagSource).values(
+                {
+                    "id": source_id,
+                    "indexing_status": SourceIndexingStatusEnum.CREATED,
+                    "text_content": "",
+                    "source_type": RAG_FILE,
+                    "parent_id": None,
+                }
+            )
+        )
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": source_id,
+                    "filename": "retryable.pdf",
+                    "mime_type": "application/pdf",
+                    "size": 0,
+                    "bucket_name": "test-bucket",
+                    "object_path": f"grant_application/{grant_application.id}/{source_id}/retryable.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
+                }
+            )
+        )
+
+    mock_parse_object_uri.return_value = {
+        "entity_type": "grant_application",
+        "entity_id": grant_application.id,
+        "source_id": source_id,
+        "blob_name": "retryable.pdf",
+    }
+
+    mock_process_source.side_effect = RetriableProcessingError("Temporary failure")
+
+    file_path = f"grant_application/{grant_application.id}/{source_id}/retryable.pdf"
+    pubsub_event = create_pubsub_event(file_path)
+
+    with patch("services.indexer.src.main.update_source_indexing_status") as mock_update_status:
+        response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    mock_update_status.assert_not_called()
+
+    async with async_session_maker() as session:
+        source = await session.scalar(select(RagSource).where(RagSource.id == source_id))
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.FAILED
+        assert source.error_type == "RetriableProcessingError"
+        assert source.error_message == "Temporary failure"
+
+
 async def test_handle_database_error(
     test_client: AsyncTestClient[Any],
     mock_download_blob: AsyncMock,

@@ -412,6 +412,7 @@ async def handle_url_crawling(
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
+        is_retriable = getattr(e, "category", None) == "retriable" if hasattr(e, "category") else False
 
         logger.exception(
             "Error during URL crawling",
@@ -424,19 +425,32 @@ async def handle_url_crawling(
         )
 
         if grant_application_id:
-            await update_source_indexing_status(
-                logger=logger,
-                session_maker=session_maker,
-                source_id=crawling_request["source_id"],
-                grant_application_id=grant_application_id,
-                identifier=crawling_request["url"],
-                text_content="",
-                vectors=None,
-                indexing_status=SourceIndexingStatusEnum.FAILED,
-                trace_id=trace_id,
-                error_type=error_type,
-                error_message=error_message,
-            )
+            if is_retriable:
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == crawling_request["source_id"])
+                        .values(
+                            indexing_status=SourceIndexingStatusEnum.FAILED,
+                            text_content="",
+                            error_type=error_type,
+                            error_message=error_message,
+                        )
+                    )
+            else:
+                await update_source_indexing_status(
+                    logger=logger,
+                    session_maker=session_maker,
+                    source_id=crawling_request["source_id"],
+                    grant_application_id=grant_application_id,
+                    identifier=crawling_request["url"],
+                    text_content="",
+                    vectors=None,
+                    indexing_status=SourceIndexingStatusEnum.FAILED,
+                    trace_id=trace_id,
+                    error_type=error_type,
+                    error_message=error_message,
+                )
         else:
             async with session_maker() as session, session.begin():
                 await session.execute(

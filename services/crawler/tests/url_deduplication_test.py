@@ -201,3 +201,44 @@ async def test_failed_source_can_be_retried(
         source = await session.get(RagSource, source_id)
         assert source.indexing_status == SourceIndexingStatusEnum.INDEXING
         assert source.indexing_started_at > datetime.now(UTC) - timedelta(minutes=1)
+
+
+class RetriableCrawlError(Exception):
+    category = "retriable"
+
+
+@pytest.mark.asyncio
+async def test_retriable_error_skips_failure_notification(
+    async_session_maker: async_sessionmaker[Any],
+    test_client: AsyncTestClient[Any],
+) -> None:
+    source_id = uuid4()
+    url = "https://example.com/retry"
+
+    async with async_session_maker() as session, session.begin():
+        source = RagSource(
+            id=source_id,
+            source_type="rag_url",
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+            text_content="",
+        )
+        session.add(source)
+
+    with patch("services.crawler.src.main.crawl_url") as mock_crawl:
+        mock_crawl.side_effect = RetriableCrawlError("Temporary failure")
+
+        with patch("services.crawler.src.main.update_source_indexing_status") as mock_update_status:
+            response = await test_client.post(
+                "/",
+                json={"message": {"data": encode_crawling_request(str(source_id), url)}},
+            )
+
+    assert response.status_code == HTTPStatus.CREATED
+    mock_update_status.assert_not_called()
+
+    async with async_session_maker() as session:
+        source = await session.get(RagSource, source_id)
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.FAILED
+        assert source.error_type == "RetriableCrawlError"
+        assert source.error_message == "Temporary failure"
