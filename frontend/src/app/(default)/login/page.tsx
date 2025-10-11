@@ -31,6 +31,8 @@ import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { checkProfileAndRedirect } from "@/utils/onboarding";
+import { useIsMobile } from "@/hooks/use-mobile";
+import PostLogin from "@/components/onboarding/post-login";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -44,6 +46,14 @@ export default function Login() {
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
 	const { hasConsent } = useCookieConsent();
+	const [showMobileWarming, setShowMobileWarming] = useState(false)
+	const isMobile = useIsMobile()
+
+	if(showMobileWarming){
+		return <PostLogin/>
+	}
+
+
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
@@ -64,6 +74,12 @@ export default function Login() {
 			if (!isNewUser) {
 				setUser(convertFirebaseUser(user));
 				await login(idToken);
+
+
+				if(isMobile){
+					setShowMobileWarming(true)
+					return
+				}
 
 				checkProfileAndRedirect(user.displayName);
 				return;
