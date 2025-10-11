@@ -1,16 +1,12 @@
 import re
 from io import BytesIO
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TypedDict
 
-from bs4.element import Tag
 from docx import Document
 from docx.document import Document as DocumentObject
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from html_to_markdown import convert_to_markdown
+from html_to_markdown import convert as convert_to_markdown
 from markdown import markdown
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class TableRow(TypedDict):
@@ -146,30 +142,8 @@ def _get_paragraph_alignment(alignment: str) -> WD_PARAGRAPH_ALIGNMENT:
     return alignment_map[alignment]
 
 
-def paragraph_alignment_converter(*, text: str, tag: Tag, convert_as_inline: bool) -> str:
-    if convert_as_inline:
-        return text
-
-    if not text.strip():
-        return ""
-
-    style = tag.get("style", "")
-    if isinstance(style, str) and "text-align" in style:
-        align_match = re.search(r"text-align:\s*(\w+)", style)
-        if align_match:
-            alignment = align_match.group(1)
-            return f"<!-- /ALIGNMENT:{alignment} -->\n{text}\n"
-    return f"{text}\n"
-
-
 def html_to_docx(html_content: str) -> bytes:
     markdown_content = convert_to_markdown(
         html_content,
-        escape_asterisks=False,
-        escape_misc=False,
-        escape_underscores=False,
-        heading_style="atx",
-        strip=["colgroup", "col"],
-        custom_converters={"p": cast("Callable[[str, Tag], str]", paragraph_alignment_converter)},
     )
     return markdown_to_docx(markdown_content)

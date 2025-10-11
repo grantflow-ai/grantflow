@@ -495,8 +495,7 @@ function SectionHeader({
 			return `${limitValue.toLocaleString()} characters${approxLabel}`;
 		}
 
-		const defaultWords = wordLimit ?? DEFAULT_WORD_LIMIT;
-		return `${defaultWords.toLocaleString()} words (default)`;
+		return null;
 	})();
 
 	return (

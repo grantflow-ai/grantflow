@@ -119,7 +119,7 @@ describe("SortableSection", () => {
 	});
 
 	it("does not show length constraint for sections without constraint", () => {
-		const section = GrantSectionFactory.build();
+		const section = GrantSectionBaseFactory.build();
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
