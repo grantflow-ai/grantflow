@@ -199,7 +199,6 @@ async def llm_identify_organization(
 
     prompt = IDENTIFY_ORG_USER_PROMPT.to_string(
         organizations=organizations,
-        preview_length=PREVIEW_LENGTH,
         cfp_preview=cfp_preview,
     )
 
