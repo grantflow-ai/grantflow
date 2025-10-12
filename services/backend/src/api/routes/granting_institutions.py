@@ -29,7 +29,7 @@ class GrantingInstitutionResponse(TypedDict):
     abbreviation: str | None
 
 
-@post("/granting-institutions", operation_id="CreateGrantingInstitution")
+@post("/granting-institutions", requires_backoffice_admin=True, operation_id="CreateGrantingInstitution")
 async def handle_create_organization(
     data: CreateOrganizationRequestBody, session_maker: async_sessionmaker[Any]
 ) -> GrantingInstitutionResponse:
@@ -67,7 +67,11 @@ async def handle_retrieve_organizations(
         ]
 
 
-@patch("/granting-institutions/{organization_id:uuid}", operation_id="UpdateGrantingInstitution")
+@patch(
+    "/granting-institutions/{organization_id:uuid}",
+    requires_backoffice_admin=True,
+    operation_id="UpdateGrantingInstitution",
+)
 async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     organization_id: UUID,
@@ -96,7 +100,11 @@ async def handle_update_organization(
     )
 
 
-@delete("/granting-institutions/{organization_id:uuid}", operation_id="DeleteGrantingInstitution")
+@delete(
+    "/granting-institutions/{organization_id:uuid}",
+    requires_backoffice_admin=True,
+    operation_id="DeleteGrantingInstitution",
+)
 async def handle_delete_organization(organization_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:
