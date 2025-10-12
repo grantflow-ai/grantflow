@@ -18,6 +18,7 @@ from packages.db.src.json_objects import (
     ResearchTask,
 )
 from packages.db.src.tables import (
+    BackofficeAdmin,
     GenerationNotification,
     GrantApplication,
     GrantApplicationSource,
@@ -163,6 +164,18 @@ class GrantingInstitutionSourceFactory(SQLAlchemyFactory[GrantingInstitutionSour
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
     deleted_at = None
+
+
+class BackofficeAdminFactory(SQLAlchemyFactory[BackofficeAdmin]):
+    __model__ = BackofficeAdmin
+
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+    deleted_at = None
+
+    firebase_uid = Use(lambda: faker.uuid4()[:128])
+    email = Use(lambda: faker.email())
+    granted_by_firebase_uid = None
 
 
 class OrganizationFactory(SQLAlchemyFactory[Organization]):

@@ -308,6 +308,7 @@ async def _create_junction_table_entry(
         "/granting-institutions/{granting_institution_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    requires_backoffice_admin=True,
     operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
 )
 async def handle_retrieve_rag_sources(
@@ -399,6 +400,7 @@ async def handle_retrieve_rag_sources(
         "/granting-institutions/{granting_institution_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    requires_backoffice_admin=True,
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
@@ -561,6 +563,7 @@ async def handle_delete_rag_source(
         "/granting-institutions/{granting_institution_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    requires_backoffice_admin=True,
     operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
 )
 async def handle_create_upload_url(
@@ -628,6 +631,7 @@ async def handle_create_upload_url(
         "/granting-institutions/{granting_institution_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    requires_backoffice_admin=True,
     operation_id=_create_operation_id_creator("Crawl{value}Url"),
 )
 async def handle_crawl_url(

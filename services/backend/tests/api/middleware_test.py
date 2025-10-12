@@ -9,7 +9,6 @@ from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
 
 from services.backend.src.api.middleware import (
-    ADMIN_PATHS,
     PUBLIC_PATHS,
     AuthMiddleware,
     TraceIdMiddleware,
@@ -87,28 +86,6 @@ async def test_authenticate_public_path(app: MagicMock) -> None:
 
         assert result.user is None
         assert result.auth is None
-
-
-async def test_authenticate_admin_path_with_valid_code(app: MagicMock, mock_get_env: MagicMock) -> None:
-    middleware = AuthMiddleware(app=app)
-
-    for path in ADMIN_PATHS:
-        connection = MockASGIConnection(url_path=f"/{path}", headers={"Authorization": "test-admin-code"}, app=app)
-
-        result: AuthenticationResult = await middleware.authenticate_request(connection)
-
-        assert result.user is None
-        assert result.auth is None
-
-
-async def test_authenticate_admin_path_with_invalid_code(app: MagicMock, mock_get_env: MagicMock) -> None:
-    middleware = AuthMiddleware(app=app)
-
-    for path in ADMIN_PATHS:
-        connection = MockASGIConnection(url_path=f"/{path}", headers={"Authorization": "invalid-code"}, app=app)
-
-        with pytest.raises(NotAuthorizedException):
-            await middleware.authenticate_request(connection)
 
 
 async def test_authenticate_with_bearer_token(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
@@ -263,30 +240,6 @@ async def test_authenticate_options_method(app: MagicMock) -> None:
 
     assert result.user is None
     assert result.auth is None
-
-
-async def test_authenticate_admin_source_patterns(app: MagicMock, mock_get_env: MagicMock) -> None:
-    middleware = AuthMiddleware(app=app)
-
-    test_paths = [
-        "/granting-institutions/123/sources",
-        "/granting-institutions/456/sources/789",
-        "/granting-institutions/abc/sources/upload-url",
-        "/granting-institutions/def/sources/crawl-url",
-    ]
-
-    for path in test_paths:
-        connection = MockASGIConnection(url_path=path, headers={"Authorization": "test-admin-code"}, app=app)
-
-        result: AuthenticationResult = await middleware.authenticate_request(connection)
-
-        assert result.user is None
-        assert result.auth is None
-
-        connection_invalid = MockASGIConnection(url_path=path, headers={"Authorization": "invalid-code"}, app=app)
-
-        with pytest.raises(NotAuthorizedException):
-            await middleware.authenticate_request(connection_invalid)
 
 
 async def test_authenticate_schema_endpoints(app: MagicMock) -> None:

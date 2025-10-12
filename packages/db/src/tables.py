@@ -384,6 +384,14 @@ class GrantMatchingSubscription(BaseWithUUIDPK):
     )
 
 
+class BackofficeAdmin(BaseWithUUIDPK):
+    __tablename__ = "backoffice_admins"
+
+    firebase_uid: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    granted_by_firebase_uid: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+
 class GrantingInstitutionSource(Base):
     __tablename__ = "granting_institution_sources"
 

@@ -11,7 +11,7 @@ from litestar.middleware import (
 )
 from litestar.types import ASGIApp, Receive, Scope, Send
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationUser, ProjectAccess
+from packages.db.src.tables import BackofficeAdmin, OrganizationUser, ProjectAccess
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.tracing import start_span_with_trace_id
@@ -25,31 +25,11 @@ logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema", "grants"}
 PUBLIC_PATH_PREFIXES: set[str] = set()
-ADMIN_PATHS = {"granting-institutions"}
 WEBHOOK_PATHS = {
     "/webhooks/pubsub/email-notifications",
     "/webhooks/scheduler/grant-matcher",
     "/webhooks/scheduler/entity-cleanup",
 }
-ADMIN_SOURCES_PATTERNS = [
-    "/granting-institutions/{granting_institution_id}/sources",
-    "/granting-institutions/{granting_institution_id}/sources/{source_id}",
-    "/granting-institutions/{granting_institution_id}/sources/upload-url",
-    "/granting-institutions/{granting_institution_id}/sources/crawl-url",
-]
-
-
-def _matches_source_pattern(path: str, pattern: str) -> bool:
-    pattern_parts = pattern.split("/")
-    path_parts = path.split("/")
-
-    if len(pattern_parts) != len(path_parts):
-        return False
-
-    return all(
-        pattern_part == path_part or (pattern_part.startswith("{") and pattern_part.endswith("}"))
-        for pattern_part, path_part in zip(pattern_parts, path_parts, strict=False)
-    )
 
 
 def _is_public_path(path: str) -> bool:
@@ -58,16 +38,6 @@ def _is_public_path(path: str) -> bool:
     if path.startswith("/grants"):
         return True
     return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
-
-
-def _is_admin_path(path: str) -> bool:
-    if any(
-        path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
-        for admin_path in ADMIN_PATHS
-    ):
-        return True
-
-    return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
 
 
 def _is_webhook_path(path: str) -> bool:
@@ -138,12 +108,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             )
             raise NotAuthorizedException("Invalid OIDC token")
 
-        if _is_admin_path(path):
-            access_code = get_env("ADMIN_ACCESS_CODE")
-            if auth_header and auth_header == access_code:
-                return AuthenticationResult(user=None, auth=None)
-            raise NotAuthorizedException
-
         firebase_uid: str | None = None
         if bearer_token := (auth_header.removeprefix("Bearer").strip() if auth_header.startswith("Bearer") else None):
             firebase_uid = verify_jwt_token(bearer_token)
@@ -154,47 +118,72 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
             organization_id = connection.path_params.get("organization_id")
             project_id = connection.path_params.get("project_id")
+            granting_institution_id = connection.path_params.get("granting_institution_id")
 
-            if not organization_id:
-                logger.error("Organization context required", path=path)
-                raise NotAuthorizedException("Organization context required")
+            # If granting institution path without organization, skip to requires_backoffice_admin check
+            if not organization_id and granting_institution_id:
+                pass  # Let requires_backoffice_admin handle authentication
+            else:
+                if not organization_id:
+                    logger.error("Organization context required", path=path)
+                    raise NotAuthorizedException("Organization context required")
 
+                if not firebase_uid:
+                    logger.error("Firebase UID required", path=path)
+                    raise NotAuthorizedException("Firebase UID required")
+
+                async with connection.app.state.session_maker() as session:
+                    stmt = select(OrganizationUser).where(
+                        OrganizationUser.firebase_uid == firebase_uid,
+                        OrganizationUser.organization_id == organization_id,
+                        OrganizationUser.deleted_at.is_(None),
+                    )
+                    if allowed_roles is not None:
+                        stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
+
+                    result = await session.execute(stmt)
+                    organization_user = result.scalar_one_or_none()
+
+                    if organization_user:
+                        if (
+                            organization_user.role == UserRoleEnum.COLLABORATOR
+                            and not organization_user.has_all_projects_access
+                            and project_id
+                        ):
+                            project_access = await session.scalar(
+                                select(ProjectAccess).where(
+                                    ProjectAccess.firebase_uid == firebase_uid,
+                                    ProjectAccess.organization_id == organization_id,
+                                    ProjectAccess.project_id == project_id,
+                                )
+                            )
+                            if not project_access:
+                                logger.error("Project access required", path=path)
+                                raise NotAuthorizedException("Project access required")
+
+                        return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
+
+                raise NotAuthorizedException
+
+        if connection.route_handler.opt.get("requires_backoffice_admin"):
             if not firebase_uid:
-                logger.error("Firebase UID required", path=path)
+                logger.error("Firebase UID required for backoffice admin", path=path)
                 raise NotAuthorizedException("Firebase UID required")
 
             async with connection.app.state.session_maker() as session:
-                stmt = select(OrganizationUser).where(
-                    OrganizationUser.firebase_uid == firebase_uid,
-                    OrganizationUser.organization_id == organization_id,
-                    OrganizationUser.deleted_at.is_(None),
+                admin_stmt = select(BackofficeAdmin).where(
+                    BackofficeAdmin.firebase_uid == firebase_uid,
+                    BackofficeAdmin.deleted_at.is_(None),
                 )
-                if allowed_roles is not None:
-                    stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
 
-                result = await session.execute(stmt)
-                organization_user = result.scalar_one_or_none()
+                result = await session.execute(admin_stmt)
+                backoffice_admin = result.scalar_one_or_none()
 
-                if organization_user:
-                    if (
-                        organization_user.role == UserRoleEnum.COLLABORATOR
-                        and not organization_user.has_all_projects_access
-                        and project_id
-                    ):
-                        project_access = await session.scalar(
-                            select(ProjectAccess).where(
-                                ProjectAccess.firebase_uid == firebase_uid,
-                                ProjectAccess.organization_id == organization_id,
-                                ProjectAccess.project_id == project_id,
-                            )
-                        )
-                        if not project_access:
-                            logger.error("Project access required", path=path)
-                            raise NotAuthorizedException("Project access required")
+                if backoffice_admin:
+                    return AuthenticationResult(user="backoffice_admin", auth=firebase_uid)
 
-                    return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
-
-            raise NotAuthorizedException
+            logger.error("Backoffice admin access denied", path=path, firebase_uid=firebase_uid)
+            raise NotAuthorizedException("Backoffice admin access required")
 
         if firebase_uid:
             return AuthenticationResult(user=None, auth=firebase_uid)
