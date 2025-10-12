@@ -11,7 +11,7 @@ from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
 from sentence_transformers import util
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
 from services.rag.src.dto import DocumentDTO
@@ -155,7 +155,7 @@ async def retrieve_vectors_for_embedding(
                 )
                 .where(or_(*similarity_conditions))
             )
-            total_vectors_count = await session.scalar(func.count().select_from(base_query.subquery()))
+            total_vectors_count = await session.scalar(select(func.count()).select_from(base_query.subquery()))
 
         query = (
             select_active(TextVector)

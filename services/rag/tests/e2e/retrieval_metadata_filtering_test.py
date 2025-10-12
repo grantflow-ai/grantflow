@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.json_objects import Chunk
 from packages.db.src.tables import GrantApplication, GrantApplicationSource, RagUrl, TextVector
 from packages.shared_utils.src.embeddings import generate_embeddings
@@ -75,7 +76,7 @@ async def nih_research_paper_source(
             url="https://pubmed.ncbi.nlm.nih.gov/test-paper",
             text_content=content,
             document_metadata=metadata,
-            indexing_status="completed",
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
         session.add(source)
         await session.flush()
@@ -89,11 +90,10 @@ async def nih_research_paper_source(
 
         if chunks:
             embeddings = await generate_embeddings(chunks[:5])
-            for i, (chunk_content, embedding) in enumerate(zip(chunks[:5], embeddings, strict=False)):
+            for chunk_content, embedding in zip(chunks[:5], embeddings, strict=False):
                 vector = TextVector(
                     rag_source_id=source.id,
                     chunk=Chunk(content=chunk_content),
-                    chunk_index=i,
                     embedding=embedding,
                 )
                 session.add(vector)
@@ -151,7 +151,7 @@ async def generic_cancer_research_source(
             url="https://example.com/generic-cancer-review",
             text_content=content,
             document_metadata=metadata,
-            indexing_status="completed",
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
         session.add(source)
         await session.flush()
@@ -165,11 +165,10 @@ async def generic_cancer_research_source(
 
         if chunks:
             embeddings = await generate_embeddings(chunks[:5])
-            for i, (chunk_content, embedding) in enumerate(zip(chunks[:5], embeddings, strict=False)):
+            for chunk_content, embedding in zip(chunks[:5], embeddings, strict=False):
                 vector = TextVector(
                     rag_source_id=source.id,
                     chunk=Chunk(content=chunk_content),
-                    chunk_index=i,
                     embedding=embedding,
                 )
                 session.add(vector)
