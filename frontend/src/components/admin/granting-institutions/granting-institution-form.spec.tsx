@@ -356,7 +356,10 @@ describe("GrantingInstitutionForm", () => {
 		it("disables all buttons while submitting", async () => {
 			let resolveCreate: ((value: any) => void) | undefined;
 			mockCreateGrantingInstitution.mockImplementationOnce(
-				() => new Promise((resolve) => (resolveCreate = resolve)),
+				() =>
+					new Promise((resolve) => {
+						resolveCreate = resolve;
+					}),
 			);
 
 			render(<GrantingInstitutionForm mode="create" />);
@@ -383,7 +386,10 @@ describe("GrantingInstitutionForm", () => {
 		it("disables delete button while deleting", async () => {
 			let resolveDelete: (() => void) | undefined;
 			mockDeleteGrantingInstitution.mockImplementationOnce(
-				() => new Promise((resolve) => (resolveDelete = resolve)),
+				() =>
+					new Promise((resolve) => {
+						resolveDelete = resolve;
+					}),
 			);
 
 			const mockInstitution: API.ListGrantingInstitutions.Http200.ResponseBody[0] = {

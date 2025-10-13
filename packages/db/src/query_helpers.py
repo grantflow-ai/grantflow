@@ -1,7 +1,7 @@
 from typing import Any, TypeVar
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, Select, String, Update, and_, cast, func, or_, select, update
+from sqlalchemy import ColumnElement, Select, Update, and_, cast, func, or_, select, update
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -40,9 +40,7 @@ def metadata_has_entity_type(
     metadata_column: InstrumentedAttribute[dict[str, Any] | None],
     entity_type: str,
 ) -> ColumnElement[bool]:
-    return metadata_column["entities"].astext.op("@>")(  # type: ignore[no-any-return]
-        func.jsonb_build_array(func.jsonb_build_object("type", entity_type)).cast(String)
-    )
+    return metadata_column["entities"].op("@>")(func.jsonb_build_array(func.jsonb_build_object("type", entity_type)))
 
 
 def metadata_has_categories(
@@ -53,12 +51,14 @@ def metadata_has_categories(
     categories_json = func.jsonb_build_array(*[func.to_jsonb(cat) for cat in categories])
 
     if match_mode == "all":
-        return metadata_column["categories"].astext.op("@>")(  # type: ignore[no-any-return]
-            categories_json.cast(String)
-        )
-    return metadata_column["categories"].astext.op("&&")(  # type: ignore[no-any-return]
-        categories_json.cast(String)
-    )
+        return metadata_column["categories"].op("@>")(categories_json)
+    # For "any" match mode, check if categories JSONB array has any overlap with our list
+    # Use ?| operator which checks if any of the provided keys/values exist
+    # We need to check each category individually with OR
+    conditions = [
+        metadata_column["categories"].op("@>")(func.jsonb_build_array(func.to_jsonb(cat))) for cat in categories
+    ]
+    return or_(*conditions)
 
 
 def metadata_has_keyword(
@@ -67,9 +67,7 @@ def metadata_has_keyword(
     min_confidence: float = 0.0,
 ) -> ColumnElement[bool]:
     keyword_json = func.jsonb_build_array(keyword, min_confidence)
-    return metadata_column["keywords"].astext.op("@>")(  # type: ignore[no-any-return]
-        func.jsonb_build_array(keyword_json).cast(String)
-    )
+    return metadata_column["keywords"].op("@>")(func.jsonb_build_array(keyword_json))
 
 
 def build_metadata_filter(
