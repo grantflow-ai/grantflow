@@ -4,7 +4,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
-import { AiAutofillButton } from "../ai-autofill-button.";
+import { AiAutofillButton } from "../ai-autofill-button";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
 type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
@@ -44,6 +44,7 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 	const isDevelopment = process.env.NODE_ENV === "development";
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
+	const cancelAutofill = useWizardStore((state) => state.cancelAutofill);
 
 	return (
 		<div className="flex items-center justify-between 2xl:mt-5 px-17 gap-4">
@@ -75,8 +76,10 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 				)}
 				{
 					<AiAutofillButton
-						disabled={isAutofillLoading}
 						isLoading={isAutofillLoading}
+						onCancel={() => {
+							cancelAutofill("research_deep_dive");
+						}}
 						onClick={() => triggerAutofill("research_deep_dive")}
 					/>
 				}
