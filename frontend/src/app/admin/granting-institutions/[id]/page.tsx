@@ -60,6 +60,27 @@ export default function GrantingInstitutionDetailPage() {
 		}
 	}, [id, loadData]);
 
+	// Poll for source status updates when there are indexing sources
+	useEffect(() => {
+		const hasIndexingSources = sources.some(
+			(source) =>
+				(source.indexing_status as SourceIndexingStatus) === SourceIndexingStatus.CREATED ||
+				(source.indexing_status as SourceIndexingStatus) === SourceIndexingStatus.INDEXING,
+		);
+
+		if (!hasIndexingSources) {
+			return;
+		}
+
+		const pollInterval = setInterval(() => {
+			void loadData();
+		}, 3000); // Poll every 3 seconds
+
+		return () => {
+			clearInterval(pollInterval);
+		};
+	}, [sources, loadData]);
+
 	const handleFileAdd = useCallback(
 		async (file: FileWithId) => {
 			// Add to pending uploads for optimistic UI
@@ -146,7 +167,6 @@ export default function GrantingInstitutionDetailPage() {
 
 	const files: FileWithSource[] = sources
 		.filter((source): source is Extract<typeof source, { filename: string }> => "filename" in source)
-		.filter((source) => (source.indexing_status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED)
 		.map((source) => {
 			const file = new File([], source.filename, { type: source.mime_type });
 			return Object.assign(file, {
@@ -158,7 +178,6 @@ export default function GrantingInstitutionDetailPage() {
 
 	const urls: UrlWithSource[] = sources
 		.filter((source): source is Extract<typeof source, { url: string }> => "url" in source)
-		.filter((source) => (source.indexing_status as SourceIndexingStatus) !== SourceIndexingStatus.FAILED)
 		.map((source) => ({
 			sourceId: source.id,
 			sourceStatus: source.indexing_status,
