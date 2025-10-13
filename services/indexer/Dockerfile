@@ -1,15 +1,15 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
-ENV MODEL_DIR="/app/hf" \
-    HF_HOME="/app/hf-cache" \
+ENV HF_HOME="/app/hf-cache" \
     TRANSFORMERS_CACHE="/app/hf-cache" \
     HUGGINGFACE_HUB_CACHE="/app/hf-cache" \
     SENTENCE_TRANSFORMERS_HOME="/app/hf-cache"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
 FROM base AS model-download
-RUN mkdir -p "${MODEL_DIR}" "${HF_HOME}"
-RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer && \
-    huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir ${MODEL_DIR} --local-dir-use-symlinks False
+RUN mkdir -p "${HF_HOME}"
+RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer sentence-transformers keybert && \
+    python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')" && \
+    python3 -c "from keybert import KeyBERT; KeyBERT()"
 
 FROM base AS install
 WORKDIR /app/
@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY --chown=appuser:appuser --from=model-download ${MODEL_DIR} ${MODEL_DIR}
 COPY --chown=appuser:appuser --from=model-download ${HF_HOME} ${HF_HOME}
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/indexer/src/ /app/services/indexer/src/
