@@ -36,7 +36,9 @@ COPY --chown=appuser:appuser packages /app/packages
 
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
-    APP="services.rag.src.main:app"
+    APP="services.rag.src.main:app" \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1
 
 USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]

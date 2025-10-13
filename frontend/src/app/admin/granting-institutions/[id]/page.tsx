@@ -3,15 +3,7 @@
 import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-import {
-	crawlGrantingInstitutionUrl,
-	createGrantingInstitutionUploadUrl,
-	deleteGrantingInstitutionSource,
-	getGrantingInstitution,
-	getGrantingInstitutionSources,
-} from "@/actions/granting-institutions";
+import { useEffect } from "react";
 import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
 import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
 import { PendingFilePreviewCard } from "@/components/organizations/project/applications/wizard/pending-file-preview-card";
@@ -24,41 +16,39 @@ import { Button } from "@/components/ui/button";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
-import type { API } from "@/types/api-types";
+import { useGrantingInstitutionStore } from "@/stores/granting-institution-store";
 import type { FileWithId, FileWithSource, UrlWithSource } from "@/types/files";
-import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 export default function GrantingInstitutionDetailPage() {
 	const params = useParams();
 	const id = params.id as string;
 
-	const [institution, setInstitution] = useState<API.GetGrantingInstitution.Http200.ResponseBody | null>(null);
-	const [sources, setSources] = useState<API.RetrieveGrantingInstitutionRagSources.Http200.ResponseBody>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [pendingUploads, setPendingUploads] = useState<FileWithId[]>([]);
+	const {
+		addFile,
+		addUrl,
+		deleteSource,
+		institution,
+		isLoading,
+		loadData,
+		pendingUploads,
+		removePendingUpload,
+		reset,
+		setInstitutionId,
+		sources,
+	} = useGrantingInstitutionStore();
 
-	const loadData = useCallback(async () => {
-		try {
-			const [institutionData, sourcesData] = await Promise.all([
-				getGrantingInstitution(id),
-				getGrantingInstitutionSources(id),
-			]);
-			setInstitution(institutionData);
-			setSources(sourcesData);
-		} catch (error) {
-			log.error("Failed to load granting institution data", { error, id });
-			toast.error("Failed to load granting institution");
-		} finally {
-			setIsLoading(false);
-		}
-	}, [id]);
-
+	// Initialize store with institution ID
 	useEffect(() => {
 		if (id) {
+			setInstitutionId(id);
 			void loadData();
 		}
-	}, [id, loadData]);
+
+		return () => {
+			reset();
+		};
+	}, [id, setInstitutionId, loadData, reset]);
 
 	// Poll for source status updates when there are indexing sources
 	useEffect(() => {
@@ -81,78 +71,25 @@ export default function GrantingInstitutionDetailPage() {
 		};
 	}, [sources, loadData]);
 
-	const handleFileAdd = useCallback(
-		async (file: FileWithId) => {
-			// Add to pending uploads for optimistic UI
-			setPendingUploads((prev) => [...prev, file]);
+	const handleFileAdd = async (file: FileWithId) => {
+		await addFile(file);
+	};
 
-			try {
-				log.info("Starting file upload", { filename: file.name, size: file.size });
+	const handleUrlAdd = async (url: string) => {
+		await addUrl(url);
+	};
 
-				const { source_id, url: uploadUrl } = await createGrantingInstitutionUploadUrl(id, file.name);
-
-				await fetch(uploadUrl, {
-					body: file,
-					headers: {
-						"Content-Type": file.type,
-					},
-					method: "PUT",
-				});
-
-				log.info("File uploaded successfully", { filename: file.name, source_id });
-				toast.success(`File ${file.name} uploaded successfully`);
-
-				// Remove from pending and reload sources
-				setPendingUploads((prev) => prev.filter((f) => f.id !== file.id));
-				await loadData();
-			} catch (error) {
-				// Remove from pending on error
-				setPendingUploads((prev) => prev.filter((f) => f.id !== file.id));
-				log.error("Failed to upload file", { error, filename: file.name });
-				toast.error(`Failed to upload ${file.name}`);
-				throw error;
-			}
-		},
-		[id, loadData],
-	);
-
-	const handleFileRemove = useCallback((fileId: string) => {
-		setPendingUploads((prev) => prev.filter((f) => f.id !== fileId));
-	}, []);
-
-	const handleUrlAdd = useCallback(
-		async (url: string) => {
-			try {
-				await crawlGrantingInstitutionUrl(id, url);
-				toast.success("URL added successfully");
-				await loadData();
-			} catch (error) {
-				log.error("Failed to add URL", { error, url });
-				toast.error("Failed to add URL");
-				throw error;
-			}
-		},
-		[id, loadData],
-	);
-
-	const handleDeleteSource = useCallback(
-		async (sourceId: string) => {
-			try {
-				await deleteGrantingInstitutionSource(id, sourceId);
-				toast.success("Source deleted successfully");
-				await loadData();
-			} catch (error) {
-				log.error("Failed to delete source", { error, sourceId });
-				toast.error("Failed to delete source");
-			}
-		},
-		[id, loadData],
-	);
+	const handleDeleteSource = async (sourceId: string) => {
+		await deleteSource(sourceId);
+	};
 
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center h-screen bg-preview-bg">
-				<p className="text-app-gray-600">Loading...</p>
+				<div className="flex flex-col items-center gap-4">
+					<div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+					<p className="text-app-gray-600">Loading granting institution...</p>
+				</div>
 			</div>
 		);
 	}
@@ -185,8 +122,9 @@ export default function GrantingInstitutionDetailPage() {
 		}));
 
 	const existingUrls = urls.map((u) => u.url);
-	const hasFilesOrUrls = files.length > 0 || urls.length > 0 || pendingUploads.length > 0;
-	const hasBothFilesAndUrls = (files.length > 0 || pendingUploads.length > 0) && urls.length > 0;
+	const pendingUploadsArray = [...pendingUploads];
+	const hasFilesOrUrls = files.length > 0 || urls.length > 0 || pendingUploadsArray.length > 0;
+	const hasBothFilesAndUrls = (files.length > 0 || pendingUploadsArray.length > 0) && urls.length > 0;
 
 	return (
 		<div className="flex flex-col h-full">
@@ -232,7 +170,7 @@ export default function GrantingInstitutionDetailPage() {
 							<h3 className="font-heading mb-5 text-base font-semibold leading-snug">Documents</h3>
 							<RagSourceFileUploader
 								onFileAdd={handleFileAdd}
-								onFileRemove={handleFileRemove}
+								onFileRemove={removePendingUpload}
 								testId="granting-institution-file-upload"
 							/>
 						</div>
@@ -257,7 +195,7 @@ export default function GrantingInstitutionDetailPage() {
 						<div className="flex-1 min-h-0 overflow-y-auto h-full">
 							<div className="space-y-5">
 								<PreviewCard data-testid="granting-institution-sources-container">
-									{(files.length > 0 || pendingUploads.length > 0) && (
+									{(files.length > 0 || pendingUploadsArray.length > 0) && (
 										<>
 											<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
 												Documents
@@ -277,7 +215,7 @@ export default function GrantingInstitutionDetailPage() {
 														sourceStatus={file.sourceStatus}
 													/>
 												))}
-												{pendingUploads.map((file) => (
+												{pendingUploadsArray.map((file) => (
 													<PendingFilePreviewCard file={file} key={`pending-${file.id}`} />
 												))}
 											</div>

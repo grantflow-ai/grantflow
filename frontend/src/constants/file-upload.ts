@@ -1,6 +1,6 @@
 export const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
-	"application/latex": [".latex"],
+	"application/latex": [".latex", ".tex"],
 	"application/msword": [".doc"],
 	"application/pdf": [".pdf"],
 	"application/rtf": [".rtf"],
@@ -10,7 +10,7 @@ export const FILE_ACCEPTS = {
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
 	"text/csv": [".csv"],
-	"text/latex": [".latex"],
+	"text/latex": [".latex", ".tex"],
 	"text/markdown": [".md"],
 	"text/plain": [".txt"],
 	"text/rst": [".rst"],
