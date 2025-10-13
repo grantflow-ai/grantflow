@@ -13,6 +13,11 @@ const nextConfig = {
 				pathname: "/**",
 				protocol: "https",
 			},
+			{
+				hostname: "storage.googleapis.com",
+				pathname: "/**",
+				protocol: "https",
+			},
 		],
 	},
 	output: "standalone",
