@@ -155,9 +155,19 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 											);
 										}}
 									>
-										<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
-											<Plus className="size-3 shrink-0 text-gray-600" />
-										</div>
+										{organization?.logo_url ? (
+											<Image
+												alt={organization.name || "Organization logo"}
+												className="size-4 rounded object-cover group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px] "
+												height={27}
+												src={organization.logo_url}
+												width={27}
+											/>
+										) : (
+											<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
+												<Plus className="size-3 shrink-0 text-gray-600" />
+											</div>
+										)}
 										<span className="group-data-[collapsible=icon]:hidden ">
 											{organization?.name ?? "Organisation name"}
 										</span>
