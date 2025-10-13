@@ -20,10 +20,12 @@ import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consen
 import { IconGoAhead } from "@/components/icons";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
+import PostLogin from "@/components/onboarding/post-login";
 import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
@@ -44,6 +46,12 @@ export default function Login() {
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setBackofficeAdmin, setUser } = useUserStore();
 	const { hasConsent } = useCookieConsent();
+	const [showMobileWarning, setShowMobileWarning] = useState(false);
+	const isMobile = useIsMobile();
+
+	if (showMobileWarning) {
+		return <PostLogin />;
+	}
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
@@ -72,6 +80,11 @@ export default function Login() {
 				});
 
 				setBackofficeAdmin(loginResult.is_backoffice_admin);
+
+				if (isMobile) {
+					setShowMobileWarning(true);
+					return;
+				}
 
 				checkProfileAndRedirect(user.displayName);
 				return;

@@ -41,6 +41,7 @@ type RagSourceStatus = NonNullable<
 >["rag_sources"][0]["status"];
 
 interface WizardActions {
+	cancelAutofill: (type: "research_deep_dive" | "research_plan") => void;
 	captureTempSourcesSnapshot: () => void;
 	createObjective: (objective: ResearchObjective) => Promise<void>;
 	generateApplication: () => Promise<boolean>;
@@ -335,6 +336,16 @@ function validateResearchPlan(application: API.RetrieveApplication.Http200.Respo
 export const useWizardStore = create<WizardActions & WizardState>()((set, get) => {
 	return {
 		...initialWizardState,
+
+		cancelAutofill: (type: "research_deep_dive" | "research_plan") => {
+			set((state) => ({
+				...state,
+				isAutofillLoading: {
+					...state.isAutofillLoading,
+					[type]: false,
+				},
+			}));
+		},
 
 		captureTempSourcesSnapshot: () => {
 			const { application } = useApplicationStore.getState();
@@ -778,7 +789,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				handleAutofillError(error, type, fieldName);
 			}
 		},
-
 		updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
 			const { application, updateApplication } = useApplicationStore.getState();
 
