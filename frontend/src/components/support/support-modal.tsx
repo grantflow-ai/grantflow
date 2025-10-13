@@ -2,11 +2,12 @@
 
 import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { Label } from "../ui/label";
 
@@ -24,6 +25,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 	const [email, setEmail] = useState("");
 	const [subject, setSubject] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const { user } = useUserStore();
 	const [errors, setErrors] = useState<{ email?: string[]; subject?: string[] }>({});
 	const handleClose = () => {
 		setEmail("");
@@ -69,6 +71,11 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 			setIsLoading(false);
 		}
 	};
+	useEffect(() => {
+		if (isOpen && user?.email) {
+			setEmail(user.email);
+		}
+	}, [isOpen, user]);
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
