@@ -135,13 +135,16 @@ async def handle_email_notification_webhook(data: PubSubEvent, session_maker: as
                 GrantApplication, application_id, options=[selectinload(GrantApplication.project)]
             )
             if not application or application.deleted_at is not None:
-                logger.error(
-                    "Application not found or deleted",
+                logger.warning(
+                    "Email webhook application missing",
                     application_id=str(application_id),
                     found=application is not None,
                     deleted=application.deleted_at is not None if application else None,
                 )
-                raise ValidationError("Application not found.", context=str(application_id))
+                return EmailResponse(
+                    status="success",
+                    message="Application no longer exists; email notification skipped",
+                )
 
             if application.completion_email_sent_at is not None:
                 logger.info(
