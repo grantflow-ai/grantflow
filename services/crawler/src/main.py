@@ -473,13 +473,13 @@ async def handle_url_crawling(
                 )
         if is_retriable:
             logger.info(
-                "Retrying URL crawling after retriable error",
+                "Recorded retriable crawling error, acknowledging message",
                 url=crawling_request["url"],
                 source_id=str(crawling_request["source_id"]),
                 error_type=error_type,
                 trace_id=trace_id,
             )
-            raise
+            return
 
         logger.warning(
             "Acknowledged non-retriable crawling failure",

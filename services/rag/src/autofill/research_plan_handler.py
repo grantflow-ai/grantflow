@@ -4,6 +4,7 @@ from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.autofill.constants import (
     RESEARCH_PLAN_MAX_TOKENS,
@@ -18,21 +19,21 @@ from services.rag.src.utils.search_queries import handle_create_search_queries
 logger = get_logger(__name__)
 
 
-class OptimizedTask(TypedDict):
+class ResearchPlanDraftTask(TypedDict):
     num: int
     title: str
     desc: str
 
 
-class OptimizedObjective(TypedDict):
+class ResearchPlanDraftObjective(TypedDict):
     num: int
     title: str
     desc: str
-    tasks: list[OptimizedTask]
+    tasks: list[ResearchPlanDraftTask]
 
 
-class ResearchPlanResponseOptimized(TypedDict):
-    objectives: list[OptimizedObjective]
+class ResearchPlanDraft(TypedDict):
+    objectives: list[ResearchPlanDraftObjective]
 
 
 class ResearchPlanResponse(TypedDict):
@@ -44,14 +45,17 @@ You are a specialist in creating research plans for grant applications. Your tas
 research objectives and tasks based on the provided context and uploaded research materials.
 """
 
-RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
-    name="research_plan_generation",
+RESEARCH_PLAN_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_plan_draft_generation",
     template="""
     Based on the following context, your task is to generate 2-3 research objectives.
     Each objective should include between 2-5 specific research tasks that are concrete and actionable.
 
     ## Application Title
     ${application_title}
+
+    ## Existing Research Objectives
+    ${existing_objectives}
 
     ## Research Context
     ${context}
@@ -66,7 +70,30 @@ RESEARCH_PLAN_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     """,
 )
 
-research_plan_schema_optimized = {
+
+RESEARCH_PLAN_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_plan_refinement",
+    template="""
+    You are reviewing a draft research plan for the grant application titled "${application_title}".
+
+    ## Draft Research Plan (JSON)
+    ${draft}
+
+    ## Research Context
+    ${context}
+
+    ## Refinement Requirements
+    1. Validate numbering, structure, and coverage of objectives and tasks.
+    2. Strengthen clarity, cohesion, and scientific grounding using the context where possible.
+    3. Keep 2-3 objectives, each with 2-5 tasks.
+    4. Ensure objective descriptions are 100-300 words and task descriptions are 60-200 words.
+    5. Adjust titles so they are specific, actionable, and free of fluff.
+
+    Return the final research plan as JSON that matches the required schema exactly.
+    """,
+)
+
+research_plan_draft_schema = {
     "type": "object",
     "properties": {
         "objectives": {
@@ -102,7 +129,7 @@ research_plan_schema_optimized = {
     "required": ["objectives"],
 }
 
-research_plan_schema = {
+research_plan_refinement_schema = {
     "type": "object",
     "properties": {
         "research_objectives": {
@@ -127,8 +154,8 @@ research_plan_schema = {
                     },
                     "description": {
                         "type": "string",
-                        "minLength": 50,
-                        "maxLength": 500,
+                        "minLength": 200,
+                        "maxLength": 2000,
                         "description": "Detailed description of what this objective aims to achieve",
                     },
                     "research_tasks": {
@@ -153,8 +180,8 @@ research_plan_schema = {
                                 },
                                 "description": {
                                     "type": "string",
-                                    "minLength": 50,
-                                    "maxLength": 500,
+                                    "minLength": 120,
+                                    "maxLength": 1500,
                                     "description": "Detailed description of the task methodology and deliverables",
                                 },
                             },
@@ -170,24 +197,41 @@ research_plan_schema = {
 }
 
 
-def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) -> list[ResearchObjective]:
+def _format_existing_objectives(objectives: list[ResearchObjective] | None) -> str:
+    if not objectives:
+        return "No existing objectives provided."
+
+    lines: list[str] = []
+    for objective in objectives:
+        title = objective["title"]
+        description = objective.get("description", "")
+        lines.append(f"- Objective {objective['number']}: {title}")
+        if description:
+            lines.append(f"  Description: {description}")
+
+        lines.extend(f"    * Task {task['number']}: {task['title']}" for task in objective.get("research_tasks", []))
+
+    return "\n".join(lines)
+
+
+def _transform_refined_to_db_format(response: ResearchPlanResponse) -> list[ResearchObjective]:
     objectives: list[ResearchObjective] = []
 
-    for obj in optimized["objectives"]:
+    for obj in response["research_objectives"]:
         tasks = [
             {
-                "number": task["num"],
+                "number": task["number"],
                 "title": task["title"],
-                "description": task["desc"],
+                "description": task["description"],
             }
-            for task in obj["tasks"]
+            for task in obj["research_tasks"]
         ]
 
         objectives.append(
             ResearchObjective(
-                number=obj["num"],
+                number=obj["number"],
                 title=obj["title"],
-                description=obj["desc"],
+                description=obj["description"],
                 research_tasks=tasks,  # type: ignore[typeddict-item]
             )
         )
@@ -195,7 +239,7 @@ def _transform_optimized_to_db_format(optimized: ResearchPlanResponseOptimized) 
     return objectives
 
 
-def _validate_research_plan_response_optimized(response: ResearchPlanResponseOptimized) -> None:
+def _validate_research_plan_draft(response: ResearchPlanDraft) -> None:
     objectives = response["objectives"]
 
     if len(objectives) < 2 or len(objectives) > 3:
@@ -260,7 +304,7 @@ def _validate_research_plan_response_optimized(response: ResearchPlanResponseOpt
                 )
 
 
-def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
+def _validate_research_plan_refinement(response: ResearchPlanResponse) -> None:
     objectives = response["research_objectives"]
 
     if len(objectives) < 2 or len(objectives) > 3:
@@ -286,11 +330,16 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                 context={"title": obj["title"], "length": len(obj["title"])},
             )
 
-        description = obj.get("description", "")
-        if len(description) < 50:
+        description = obj.get("description", "").strip()
+        objective_word_count = len(description.split())
+        if objective_word_count < 100 or objective_word_count > 300:
             raise ValidationError(
-                f"Objective {obj_number} description too short (min 50 chars)",
-                context={"description": description[:50], "length": len(description)},
+                f"Objective {obj_number} description should be 100-300 words",
+                context={
+                    "objective_number": obj_number,
+                    "word_count": objective_word_count,
+                    "description_preview": description[:100],
+                },
             )
 
         tasks = obj["research_tasks"]
@@ -317,25 +366,35 @@ def _validate_research_plan_response(response: ResearchPlanResponse) -> None:
                     context={"title": task["title"], "length": len(task["title"])},
                 )
 
-            task_description = task.get("description", "")
-            if len(task_description) < 50:
+            task_description = task.get("description", "").strip()
+            task_word_count = len(task_description.split())
+            if task_word_count < 60 or task_word_count > 200:
                 raise ValidationError(
-                    f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
-                    context={"description": task_description[:50], "length": len(task_description)},
+                    f"Objective {obj_number} task {task_number} description should be 60-200 words",
+                    context={
+                        "objective_number": obj_number,
+                        "task_number": task_number,
+                        "word_count": task_word_count,
+                        "description_preview": task_description[:100],
+                    },
                 )
 
 
 async def generate_research_plan_content(application: GrantApplication, trace_id: str) -> list[ResearchObjective]:
-    prompt_with_title = RESEARCH_PLAN_USER_PROMPT.substitute(application_title=application.title)
+    existing_objectives_text = _format_existing_objectives(application.research_objectives)
+    draft_prompt = RESEARCH_PLAN_DRAFT_PROMPT.substitute(
+        application_title=application.title,
+        existing_objectives=existing_objectives_text,
+    )
 
     search_queries = await handle_create_search_queries(
-        user_prompt=str(prompt_with_title), research_objectives=application.research_objectives or None
+        user_prompt=str(draft_prompt), research_objectives=application.research_objectives or None
     )
 
     retrieval_results = await retrieve_documents(
         application_id=str(application.id),
         search_queries=search_queries,
-        task_description=str(prompt_with_title),
+        task_description=str(draft_prompt),
         max_tokens=RESEARCH_PLAN_MAX_TOKENS,
         trace_id=trace_id,
     )
@@ -347,20 +406,50 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
         "Prepared and compressed context for research plan generation",
         original_context_chars=len(raw_context),
         compressed_context_chars=len(compressed_context),
+        existing_objectives_provided=bool(application.research_objectives),
         trace_id=trace_id,
     )
 
-    full_prompt = prompt_with_title.to_string(context=compressed_context)
+    full_draft_prompt = draft_prompt.to_string(context=compressed_context)
 
-    response_optimized: ResearchPlanResponseOptimized = await handle_completions_request(
-        prompt_identifier="research_plan_generation",
-        messages=full_prompt,
+    draft_response: ResearchPlanDraft = await handle_completions_request(
+        prompt_identifier="research_plan_draft_generation",
+        messages=full_draft_prompt,
         system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
-        response_schema=research_plan_schema_optimized,
-        response_type=ResearchPlanResponseOptimized,
-        validator=_validate_research_plan_response_optimized,
+        response_schema=research_plan_draft_schema,
+        response_type=ResearchPlanDraft,
+        validator=_validate_research_plan_draft,
         temperature=TEMPERATURE,
         trace_id=trace_id,
     )
 
-    return _transform_optimized_to_db_format(response_optimized)
+    logger.info(
+        "Draft research plan generated",
+        objectives_count=len(draft_response["objectives"]),
+        trace_id=trace_id,
+    )
+
+    refinement_prompt = RESEARCH_PLAN_REFINEMENT_PROMPT.to_string(
+        application_title=application.title,
+        context=compressed_context,
+        draft=serialize(draft_response).decode(),
+    )
+
+    refined_response: ResearchPlanResponse = await handle_completions_request(
+        prompt_identifier="research_plan_refinement",
+        messages=refinement_prompt,
+        system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
+        response_schema=research_plan_refinement_schema,
+        response_type=ResearchPlanResponse,
+        validator=_validate_research_plan_refinement,
+        temperature=0.4,
+        trace_id=trace_id,
+    )
+
+    logger.info(
+        "Refined research plan generated",
+        objectives_count=len(refined_response["research_objectives"]),
+        trace_id=trace_id,
+    )
+
+    return _transform_refined_to_db_format(refined_response)

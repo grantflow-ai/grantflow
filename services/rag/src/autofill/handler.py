@@ -8,7 +8,6 @@ from packages.shared_utils.src.exceptions import (
     BackendError,
     DatabaseError,
     DeserializationError,
-    EvaluationError,
     InsufficientContextError,
     LLMTimeoutError,
     RagError,
@@ -46,11 +45,6 @@ def _get_autofill_error_details(error: BackendError) -> tuple[str, str]:
         return (
             "Document indexing failed. Please upload new documents and try again.",
             NotificationEvents.INDEXING_FAILED,
-        )
-    if isinstance(error, EvaluationError):
-        return (
-            "Quality evaluation failed during autofill generation. Please try again or contact support.",
-            NotificationEvents.PIPELINE_ERROR,
         )
     if isinstance(error, LLMTimeoutError):
         return (

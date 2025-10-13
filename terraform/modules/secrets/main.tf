@@ -202,11 +202,7 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
 resource "google_secret_manager_secret_iam_binding" "crdt_url_staging_access" {
   count     = var.environment == "staging" ? 1 : 0
   project   = var.project_id
-<<<<<<< Updated upstream
   secret_id = data.google_secret_manager_secret.crdt_url_staging.secret_id
-=======
-  secret_id = "projects/${var.project_id}/secrets/NEXT_PUBLIC_CRDT_SERVER_URL_STAGING"
->>>>>>> Stashed changes
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",
@@ -217,11 +213,7 @@ resource "google_secret_manager_secret_iam_binding" "crdt_url_staging_access" {
 resource "google_secret_manager_secret_iam_binding" "crdt_url_production_access" {
   count     = var.environment == "production" ? 1 : 0
   project   = var.project_id
-<<<<<<< Updated upstream
   secret_id = data.google_secret_manager_secret.crdt_url_production.secret_id
-=======
-  secret_id = "projects/${var.project_id}/secrets/NEXT_PUBLIC_CRDT_SERVER_URL"
->>>>>>> Stashed changes
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",

@@ -1,5 +1,4 @@
 import math
-import os
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -7,9 +6,6 @@ import pytest
 from packages.shared_utils.src.ai import (
     ANTHROPIC_SONNET_MODEL,
     CHARS_PER_TOKEN,
-    EVALUATION_MODEL,
-    GENERATION_MODEL,
-    REASONING_MODEL,
     anthropic_client,
     count_tokens,
     estimate_token_count,
@@ -18,16 +14,6 @@ from packages.shared_utils.src.ai import (
     init_llm_connection,
     init_ref,
 )
-
-
-async def test_model_constants() -> None:
-    assert os.environ.get("EVALUATION_MODEL", "gemini-2.5-flash") == EVALUATION_MODEL
-    assert os.environ.get("GENERATION_MODEL", "gemini-flash-latest") == GENERATION_MODEL
-    assert (
-        os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-sonnet-4-20250514")
-        == ANTHROPIC_SONNET_MODEL
-    )
-    assert os.environ.get("REASONING_MODEL", "gemini-2.5-flash") == REASONING_MODEL
 
 
 async def test_init_llm_connection_first_call() -> None:
