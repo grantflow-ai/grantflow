@@ -7,6 +7,13 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
+interface OrganizationActions {
+	clearOrganization: () => void;
+	clearOrganizationCookie: () => void;
+	selectOrganization: (id: string) => void;
+	setOrganizationCookie: (id: string) => void;
+}
+
 export function useOrganizationValidation(
 	organizations: API.ListOrganizations.Http200.ResponseBody,
 	organizationsLoading?: boolean,
@@ -33,42 +40,27 @@ export function useOrganizationValidation(
 			return;
 		}
 
+		const actions: OrganizationActions = {
+			clearOrganization,
+			clearOrganizationCookie,
+			selectOrganization,
+			setOrganizationCookie,
+		};
+
 		if (organizations.length === 0) {
-			log.info("No organizations available, clearing organization state");
-			// Only clear if there's actually something to clear (prevent infinite loop)
-			if (!organizationsSet && storeOrgId !== null) {
-				clearOrganization();
-			}
-			if (selectedOrganizationId !== null) {
-				clearOrganizationCookie();
-			}
+			handleNoOrganizations(actions, selectedOrganizationId, storeOrgId, organizationsSet);
 			return;
 		}
 
 		if (!selectedOrganizationId) {
-			const firstOrgId = organizations[0].id;
-			log.info("No organization selected, setting first available", {
-				organization_id: firstOrgId,
-			});
-			setOrganizationCookie(firstOrgId);
-			selectOrganization(firstOrgId);
+			handleNoSelectedOrganization(organizations, actions);
 			return;
 		}
 
 		const isValidOrganization = organizations.some((org) => org.id === selectedOrganizationId);
 
 		if (!isValidOrganization) {
-			log.warn("Invalid organization ID in cookie, switching to first available", {
-				available_orgs: organizations.map((org) => org.id),
-				invalid_org_id: selectedOrganizationId,
-			});
-
-			clearOrganizationCookie();
-			const firstOrgId = organizations[0].id;
-			setOrganizationCookie(firstOrgId);
-			selectOrganization(firstOrgId);
-
-			toast.info("Organization not found. Switched to available organization.");
+			handleInvalidOrganization(organizations, selectedOrganizationId, actions);
 			return;
 		}
 
@@ -91,4 +83,49 @@ export function useOrganizationValidation(
 	]);
 
 	return organizations.length > 0 ? selectedOrganizationId : null;
+}
+
+function handleInvalidOrganization(
+	organizations: API.ListOrganizations.Http200.ResponseBody,
+	selectedOrganizationId: string,
+	actions: OrganizationActions,
+) {
+	log.warn("Invalid organization ID in cookie, switching to first available", {
+		available_orgs: organizations.map((org) => org.id),
+		invalid_org_id: selectedOrganizationId,
+	});
+
+	actions.clearOrganizationCookie();
+	const firstOrgId = organizations[0].id;
+	actions.setOrganizationCookie(firstOrgId);
+	actions.selectOrganization(firstOrgId);
+
+	toast.info("Organization not found. Switched to available organization.");
+}
+
+function handleNoOrganizations(
+	actions: OrganizationActions,
+	selectedOrganizationId: null | string,
+	storeOrgId: null | string,
+	organizationsSet?: boolean,
+) {
+	log.info("No organizations available, clearing organization state");
+	if (!organizationsSet && storeOrgId !== null) {
+		actions.clearOrganization();
+	}
+	if (selectedOrganizationId !== null) {
+		actions.clearOrganizationCookie();
+	}
+}
+
+function handleNoSelectedOrganization(
+	organizations: API.ListOrganizations.Http200.ResponseBody,
+	actions: OrganizationActions,
+) {
+	const firstOrgId = organizations[0].id;
+	log.info("No organization selected, setting first available", {
+		organization_id: firstOrgId,
+	});
+	actions.setOrganizationCookie(firstOrgId);
+	actions.selectOrganization(firstOrgId);
 }

@@ -86,6 +86,52 @@ def filter_keywords_by_score(
     return [kw for kw in keywords if kw["score"] >= min_score]
 
 
+def normalize_spacy_entity_type(spacy_type: str) -> str:
+    """Normalize spaCy entity types to consistent schema."""
+    type_mapping = {
+        "ORG": "ORGANIZATION",
+        "PERSON": "PERSON",
+        "GPE": "LOCATION",
+        "LOC": "LOCATION",
+        "DATE": "DATE",
+        "TIME": "TIME",
+        "MONEY": "MONEY",
+        "PERCENT": "PERCENT",
+        "PRODUCT": "PRODUCT",
+        "EVENT": "EVENT",
+        "WORK_OF_ART": "WORK_OF_ART",
+        "LAW": "LAW",
+        "LANGUAGE": "LANGUAGE",
+        "NORP": "GROUP",
+        "FAC": "FACILITY",
+        "CARDINAL": "CARDINAL",
+        "ORDINAL": "ORDINAL",
+        "QUANTITY": "QUANTITY",
+    }
+    return type_mapping.get(spacy_type, spacy_type)
+
+
+def extract_entities_with_spacy(text: str) -> list[Entity]:
+    """Extract entities using spaCy NER model."""
+    from packages.shared_utils.src.nlp import get_spacy_model
+
+    try:
+        nlp = get_spacy_model()
+        doc = nlp(text)
+        entities: list[Entity] = [
+            Entity(type=normalize_spacy_entity_type(ent.label_), text=ent.text)
+            for ent in doc.ents
+        ]
+        return entities
+    except Exception as e:
+        logger.warning(
+            "spaCy entity extraction failed",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        return []
+
+
 def enrich_metadata_with_entities_keywords(
     *,
     extraction_result: ExtractionResult,
@@ -94,10 +140,19 @@ def enrich_metadata_with_entities_keywords(
 ) -> tuple[int, int]:
     entities_count = 0
     try:
-        entities = extraction_result.entities if extraction_result.entities else []
+        # First try to get entities from Kreuzberg
+        kreuzberg_entities = (
+            extraction_result.entities if extraction_result.entities else []
+        )
         raw_entities: list[Entity] = [
-            Entity(type=entity.type, text=entity.text) for entity in entities
+            Entity(type=entity.type, text=entity.text) for entity in kreuzberg_entities
         ]
+
+        # If we have the extracted text content, also extract entities using spaCy for better coverage
+        if hasattr(extraction_result, "content") and extraction_result.content:
+            spacy_entities = extract_entities_with_spacy(extraction_result.content)
+            raw_entities.extend(spacy_entities)
+
         deduplicated_entities = deduplicate_entities(raw_entities)
         metadata["entities"] = deduplicated_entities
         entities_count = len(deduplicated_entities)
@@ -250,6 +305,55 @@ def _extract_chunks_from_result(result: ExtractionResult) -> list[str] | None:
     return result.chunks if result.chunks else None
 
 
+def classify_document_content(
+    content: str, keywords: list[Keyword]
+) -> tuple[str | None, list[str]]:
+    """Classify document type and categories based on content and keywords."""
+    content_lower = content.lower()
+    keyword_texts = [kw["keyword"].lower() for kw in keywords]
+
+    # Check for scientific/research papers
+    research_indicators = [
+        "abstract",
+        "introduction",
+        "methods",
+        "results",
+        "discussion",
+        "conclusion",
+        "references",
+        "study",
+        "research",
+        "analysis",
+    ]
+    research_keywords = [
+        "research",
+        "study",
+        "analysis",
+        "methodology",
+        "experimental",
+        "clinical",
+        "trial",
+        "hypothesis",
+        "findings",
+    ]
+
+    has_research_structure = (
+        sum(1 for indicator in research_indicators if indicator in content_lower) >= 3
+    )
+    has_research_keywords = (
+        sum(1 for kw in research_keywords if kw in keyword_texts) >= 2
+    )
+
+    categories: list[str] = []
+    document_type: str | None = None
+
+    if has_research_structure or has_research_keywords:
+        document_type = "research"
+        categories.extend(["research", "scientific", "academic"])
+
+    return document_type, categories
+
+
 async def extract_file_content(
     *,
     content: bytes,
@@ -309,6 +413,18 @@ async def extract_file_content(
             )
         else:
             entities_count, keywords_count = 0, 0
+
+        # Add document classification if enabled and not already present
+        if enable_document_classification:
+            # Use Kreuzberg's document_type if available, otherwise classify ourselves
+            if not metadata.get("document_type") and not metadata.get("categories"):
+                doc_type, categories = classify_document_content(
+                    result.content, metadata.get("keywords", [])
+                )
+                if doc_type:
+                    metadata["document_type"] = doc_type
+                if categories:
+                    metadata["categories"] = categories
 
         logger.debug(
             "File content extraction successful",
