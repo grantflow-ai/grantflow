@@ -2,14 +2,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, it, vi } from "vitest";
 import PostLogin from "./post-login";
 
-// Mock the clipboard API
-Object.defineProperty(navigator, "clipboard", {
-	value: {
-		writeText: vi.fn().mockResolvedValue(undefined),
-	},
-	writable: true,
-});
-
 describe.sequential("PostLogin", () => {
 	afterEach(() => {
 		vi.clearAllMocks();
