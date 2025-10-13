@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { deleteGrantingInstitution } from "@/actions/granting-institutions";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
+import { DeleteGrantingInstitutionModal } from "./delete-granting-institution-modal";
 import { GrantingInstitutionList } from "./granting-institution-list";
 
 interface GrantingInstitutionListWrapperProps {
@@ -14,20 +16,27 @@ interface GrantingInstitutionListWrapperProps {
 export function GrantingInstitutionListWrapper({ institutions }: GrantingInstitutionListWrapperProps) {
 	const router = useRouter();
 	const [deletingId, setDeletingId] = useState<null | string>(null);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [institutionToDelete, setInstitutionToDelete] = useState<null | string>(null);
 
-	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this granting institution?")) {
-			return;
-		}
+	const handleDeleteClick = (id: string) => {
+		setInstitutionToDelete(id);
+		setShowDeleteModal(true);
+	};
 
-		setDeletingId(id);
+	const confirmDelete = async () => {
+		if (!institutionToDelete) return;
+
+		setDeletingId(institutionToDelete);
 		try {
-			await deleteGrantingInstitution(id);
+			await deleteGrantingInstitution(institutionToDelete);
+			toast.success("Granting institution deleted successfully");
 			router.refresh();
 		} catch {
-			alert("Failed to delete granting institution. Please try again.");
+			toast.error("Failed to delete granting institution. Please try again.");
 		} finally {
 			setDeletingId(null);
+			setInstitutionToDelete(null);
 		}
 	};
 
@@ -38,5 +47,21 @@ export function GrantingInstitutionListWrapper({ institutions }: GrantingInstitu
 	// Filter out the institution being deleted for optimistic UI
 	const visibleInstitutions = deletingId ? institutions.filter((inst) => inst.id !== deletingId) : institutions;
 
-	return <GrantingInstitutionList institutions={visibleInstitutions} onDelete={handleDelete} onView={handleView} />;
+	return (
+		<>
+			<GrantingInstitutionList
+				institutions={visibleInstitutions}
+				onDelete={handleDeleteClick}
+				onView={handleView}
+			/>
+			<DeleteGrantingInstitutionModal
+				isOpen={showDeleteModal}
+				onClose={() => {
+					setShowDeleteModal(false);
+					setInstitutionToDelete(null);
+				}}
+				onConfirm={confirmDelete}
+			/>
+		</>
+	);
 }
