@@ -46,10 +46,10 @@ export default function Login() {
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
 	const { hasConsent } = useCookieConsent();
-	const [showMobileWarming, setShowMobileWarming] = useState(false);
+	const [showMobileWarning, setShowMobileWarning] = useState(false);
 	const isMobile = useIsMobile();
 
-	if (showMobileWarming) {
+	if (showMobileWarning) {
 		return <PostLogin />;
 	}
 
@@ -74,7 +74,7 @@ export default function Login() {
 				await login(idToken);
 
 				if (isMobile) {
-					setShowMobileWarming(true);
+					setShowMobileWarning(true);
 					return;
 				}
 
