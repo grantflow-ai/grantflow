@@ -348,8 +348,11 @@ export namespace API {
 	export namespace Http201 {
 	export type ResponseBody = {
 	abbreviation: null | string;
+	created_at: string;
 	full_name: string;
 	id: string;
+	source_count: number;
+	updated_at: string;
 };
 };
 
@@ -1018,6 +1021,31 @@ export namespace API {
 };
 };
 
+	export namespace GetGrantingInstitution {
+	export namespace Http200 {
+	export type ResponseBody = {
+	abbreviation: null | string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	source_count: number;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+};
+
 	export namespace GetOrganization {
 	export namespace Http200 {
 	export type ResponseBody = {
@@ -1253,8 +1281,11 @@ export namespace API {
 	export namespace Http200 {
 	export type ResponseBody = {
 	abbreviation: null | string;
+	created_at: string;
 	full_name: string;
 	id: string;
+	source_count: number;
+	updated_at: string;
 }[];
 };
 };
@@ -1474,6 +1505,7 @@ export namespace API {
 	export namespace Login {
 	export namespace Http201 {
 	export type ResponseBody = {
+	is_backoffice_admin: boolean;
 	jwt_token: string;
 };
 };
@@ -2141,8 +2173,11 @@ export namespace API {
 	export namespace Http200 {
 	export type ResponseBody = {
 	abbreviation: null | string;
+	created_at: string;
 	full_name: string;
 	id: string;
+	source_count: number;
+	updated_at: string;
 };
 };
 

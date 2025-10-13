@@ -68,7 +68,7 @@ describe.sequential("UrlInput", () => {
 
 			const input = screen.getByLabelText("URL");
 			expect(input).toHaveAttribute("type", "url");
-			expect(input).toHaveAttribute("id", "url-input");
+			expect(input).toHaveAttribute("id", "url-input-url-input");
 			expect(input).toHaveAttribute("placeholder", "Paste a link and press Enter to add");
 		});
 

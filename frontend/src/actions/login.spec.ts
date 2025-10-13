@@ -63,6 +63,22 @@ describe("login", () => {
 		});
 	});
 
+	it("should return backoffice admin status as false by default", async () => {
+		const result = await login(loginRequest.id_token);
+
+		expect(result).toEqual({ is_backoffice_admin: false });
+	});
+
+	it("should return backoffice admin status as true when user is admin", async () => {
+		mockPost.mockReturnValue({
+			json: vi.fn().mockResolvedValue({ ...jwtResponse, is_backoffice_admin: true }),
+		});
+
+		const result = await login(loginRequest.id_token);
+
+		expect(result).toEqual({ is_backoffice_admin: true });
+	});
+
 	it("should set secure=false when site URL is not HTTPS", async () => {
 		mockGetEnv.mockReturnValue({
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.example.com",
@@ -116,6 +132,7 @@ describe("login", () => {
 
 		expect(mockDeleteCookie).toHaveBeenCalledWith(SESSION_COOKIE);
 		expect(mockDeleteCookie).toHaveBeenCalledWith(SELECTED_ORGANIZATION_COOKIE);
+		expect(mockDeleteCookie).toHaveBeenCalledTimes(2);
 	});
 
 	it("should allow NEXT_REDIRECT errors to bubble up", async () => {

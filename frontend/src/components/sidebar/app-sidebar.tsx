@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { CustomSidebarTrigger } from "./customer-trigger";
@@ -33,7 +34,15 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
+	const isBackofficeAdmin = useUserStore((state) => state.isBackofficeAdmin);
+	const user = useUserStore((state) => state.user);
 	const organization = useOrganizationStore((state) => state.organization);
+
+	log.info("AppSidebar rendering with admin status", {
+		component: "AppSidebar",
+		is_backoffice_admin: isBackofficeAdmin,
+		user_uid: user?.uid,
+	});
 	const { openModal } = useNewApplicationModalStore();
 	const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 	const { isMobile, state } = useSidebar();
@@ -127,7 +136,11 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 				</SidebarHeader>
 
 				<SidebarContent className="flex-grow gap-0 ">
-					<NavMain data-testid="nav-main" userRole={organization?.role} />
+					<NavMain
+						data-testid="nav-main"
+						isBackofficeAdmin={isBackofficeAdmin}
+						userRole={organization?.role}
+					/>
 				</SidebarContent>
 
 				<SidebarFooter className="flex flex-col mb-10 group-data-[collapsible=icon]:p-0">

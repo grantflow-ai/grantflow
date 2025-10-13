@@ -42,7 +42,7 @@ export default function Login() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
-	const { setUser } = useUserStore();
+	const { setBackofficeAdmin, setUser } = useUserStore();
 	const { hasConsent } = useCookieConsent();
 
 	const handleSocialSignIn = async (
@@ -63,7 +63,15 @@ export default function Login() {
 
 			if (!isNewUser) {
 				setUser(convertFirebaseUser(user));
-				await login(idToken);
+				const loginResult = await login(idToken);
+
+				log.info("Login completed - setting admin status", {
+					component: "LoginPage",
+					is_backoffice_admin: loginResult.is_backoffice_admin,
+					uid: user.uid,
+				});
+
+				setBackofficeAdmin(loginResult.is_backoffice_admin);
 
 				checkProfileAndRedirect(user.displayName);
 				return;

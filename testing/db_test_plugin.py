@@ -210,11 +210,11 @@ async def db_connection_string(worker_id: str, postgres_container: PostgresConta
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"
 
-    parsed = urlparse(base_connection_string)
+    parsed = urlparse(str(base_connection_string))
     if parsed.scheme == "postgresql+asyncpg":
         parsed = parsed._replace(scheme="postgresql")
 
-    admin_connection_string = urlunparse(parsed)
+    admin_connection_string = str(urlunparse(parsed))
 
     if worker_id == "master":
         await cleanup_orphaned_test_databases(admin_connection_string)
@@ -230,7 +230,7 @@ async def db_connection_string(worker_id: str, postgres_container: PostgresConta
         await admin_conn.execute(f'CREATE DATABASE "{test_db_name}"')
         await admin_conn.close()
 
-        test_connection_string = urlunparse(parsed._replace(path=f"/{test_db_name}"))
+        test_connection_string = str(urlunparse(parsed._replace(path=f"/{test_db_name}")))
 
         test_conn = await connect(test_connection_string, timeout=10)
 
@@ -247,7 +247,7 @@ async def db_connection_string(worker_id: str, postgres_container: PostgresConta
 
         await test_conn.close()
 
-        yield test_connection_string.replace("postgresql://", "postgresql+asyncpg://")
+        yield str(test_connection_string.replace("postgresql://", "postgresql+asyncpg://"))
 
     finally:
         cleanup_successful = False
@@ -302,8 +302,8 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
 
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
-    base_path = urlparse(os.getenv("DATABASE_URL")).path if os.getenv("DATABASE_URL") else "/postgres"
-    admin_connection_string = urlunparse(parsed._replace(path=base_path))
+    base_path = str(urlparse(str(os.getenv("DATABASE_URL", ""))).path if os.getenv("DATABASE_URL") else "/postgres")
+    admin_connection_string = str(urlunparse(parsed._replace(path=base_path)))
 
     admin_conn = await connect(admin_connection_string)
 
@@ -354,8 +354,8 @@ async def restore_database_snapshot(
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
-    base_path = urlparse(os.getenv("DATABASE_URL")).path if os.getenv("DATABASE_URL") else "/postgres"
-    admin_connection_string = urlunparse(parsed._replace(path=base_path))
+    base_path = str(urlparse(str(os.getenv("DATABASE_URL", ""))).path if os.getenv("DATABASE_URL") else "/postgres")
+    admin_connection_string = str(urlunparse(parsed._replace(path=base_path)))
     db_name = parsed.path.lstrip("/")
 
     logger.info("Starting snapshot restoration for database: %s", db_name)

@@ -86,7 +86,23 @@ describe("useOrganizationValidation", () => {
 	});
 
 	describe("Empty organizations handling", () => {
-		it("should clear organization state and cookies when organizations array is empty", () => {
+		it("should clear organization state and cookies when organizations array is empty", async () => {
+			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			const { useOrganizationStore } = await import("@/stores/organization-store");
+
+			vi.mocked(useOrgCookie).mockReturnValue({
+				clearOrganizationCookie: mockClearOrganizationCookie,
+				selectedOrganizationId: "some-org-id",
+				setOrganizationCookie: mockSetOrganizationCookie,
+			});
+
+			vi.mocked(useOrganizationStore).mockReturnValue({
+				clearOrganization: mockClearOrganization,
+				selectedOrganizationId: "some-org-id",
+				selectOrganization: mockSelectOrganization,
+				setOrganizations: mockSetOrganizations,
+			});
+
 			renderHook(() => useOrganizationValidation([]));
 
 			expect(mockSetOrganizations).toHaveBeenCalledWith([]);
@@ -313,11 +329,19 @@ describe("useOrganizationValidation", () => {
 
 		it("should handle user with no organizations available", async () => {
 			const { useOrgCookie } = await import("@/hooks/use-org-cookie");
+			const { useOrganizationStore } = await import("@/stores/organization-store");
 
 			vi.mocked(useOrgCookie).mockReturnValue({
 				clearOrganizationCookie: mockClearOrganizationCookie,
 				selectedOrganizationId: "some-org-id",
 				setOrganizationCookie: mockSetOrganizationCookie,
+			});
+
+			vi.mocked(useOrganizationStore).mockReturnValue({
+				clearOrganization: mockClearOrganization,
+				selectedOrganizationId: "some-org-id",
+				selectOrganization: mockSelectOrganization,
+				setOrganizations: mockSetOrganizations,
 			});
 
 			renderHook(() => useOrganizationValidation([]));

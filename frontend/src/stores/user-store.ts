@@ -11,6 +11,8 @@ interface UserStore {
 	dismissWelcomeModal: () => void;
 	hasSeenWelcomeModal: boolean;
 	isAuthenticated: boolean;
+	isBackofficeAdmin: boolean;
+	setBackofficeAdmin: (isAdmin: boolean) => void;
 	setUser: (user: null | UserInfo) => void;
 	updateDisplayName: (displayName: string) => Promise<void>;
 	updateEmail: (email: string) => Promise<void>;
@@ -21,119 +23,139 @@ interface UserStore {
 export const useUserStore = create<UserStore>()(
 	devtools(
 		persist(
-			(set, get) => ({
-				clearUser: () => {
-					set({
-						hasSeenWelcomeModal: false,
-						isAuthenticated: false,
-						user: null,
-					});
-				},
-				deleteProfilePhoto: async () => {
-					const auth = getFirebaseAuth();
-					const { currentUser } = auth;
-					const { user } = get();
+			(set, get) => {
+				// Log initial state on store creation
+				log.info("UserStore initialized", {
+					component: "UserStore",
+					initial_is_backoffice_admin: false,
+				});
 
-					if (!(currentUser && user)) {
-						throw new Error("No authenticated user");
-					}
-
-					try {
-						await deleteProfilePhoto(currentUser);
-						set({
-							user: {
-								...user,
-								photoURL: null,
-							},
+				return {
+					clearUser: () => {
+						log.info("Clearing user data including admin status", {
+							component: "UserStore",
 						});
-						log.info("Profile photo deleted successfully");
-					} catch (error) {
-						log.error("Error deleting profile photo", error);
-						throw error;
-					}
-				},
-				dismissWelcomeModal: () => {
-					set({ hasSeenWelcomeModal: true });
-				},
-				hasSeenWelcomeModal: false,
-				isAuthenticated: false,
-				setUser: (user) => {
-					set({
-						isAuthenticated: !!user,
-						user,
-					});
-				},
-				updateDisplayName: async (displayName: string) => {
-					const auth = getFirebaseAuth();
-					const { currentUser } = auth;
-					const { user } = get();
-
-					if (!(currentUser && user)) {
-						throw new Error("No authenticated user");
-					}
-
-					try {
-						await updateProfile(currentUser, { displayName });
 						set({
-							user: {
-								...user,
-								displayName,
-							},
+							hasSeenWelcomeModal: false,
+							isAuthenticated: false,
+							isBackofficeAdmin: false,
+							user: null,
 						});
-						log.info("Display name updated successfully", { displayName });
-					} catch (error) {
-						log.error("Error updating display name", error);
-						throw error;
-					}
-				},
-				updateEmail: async (email: string) => {
-					const auth = getFirebaseAuth();
-					const { currentUser } = auth;
-					const { user } = get();
+					},
+					deleteProfilePhoto: async () => {
+						const auth = getFirebaseAuth();
+						const { currentUser } = auth;
+						const { user } = get();
 
-					if (!(currentUser && user)) {
-						throw new Error("No authenticated user");
-					}
+						if (!(currentUser && user)) {
+							throw new Error("No authenticated user");
+						}
 
-					try {
-						await updateEmail(currentUser, email);
+						try {
+							await deleteProfilePhoto(currentUser);
+							set({
+								user: {
+									...user,
+									photoURL: null,
+								},
+							});
+							log.info("Profile photo deleted successfully");
+						} catch (error) {
+							log.error("Error deleting profile photo", error);
+							throw error;
+						}
+					},
+					dismissWelcomeModal: () => {
+						set({ hasSeenWelcomeModal: true });
+					},
+					hasSeenWelcomeModal: false,
+					isAuthenticated: false,
+					isBackofficeAdmin: false,
+					setBackofficeAdmin: (isAdmin: boolean) => {
+						log.info("Setting backoffice admin status in store", {
+							component: "UserStore",
+							is_admin: isAdmin,
+						});
+						set({ isBackofficeAdmin: isAdmin });
+					},
+					setUser: (user) => {
 						set({
-							user: {
-								...user,
-								email,
-							},
+							isAuthenticated: !!user,
+							user,
 						});
-						log.info("Email updated successfully", { email });
-					} catch (error) {
-						log.error("Error updating email", error);
-						throw error;
-					}
-				},
-				updateProfilePhoto: async (file: File) => {
-					const auth = getFirebaseAuth();
-					const { currentUser } = auth;
-					const { user } = get();
+					},
+					updateDisplayName: async (displayName: string) => {
+						const auth = getFirebaseAuth();
+						const { currentUser } = auth;
+						const { user } = get();
 
-					if (!(currentUser && user)) {
-						throw new Error("No authenticated user");
-					}
+						if (!(currentUser && user)) {
+							throw new Error("No authenticated user");
+						}
 
-					try {
-						const photoURL = await uploadProfilePhoto(currentUser, file);
-						set({
-							user: {
-								...user,
-								photoURL,
-							},
-						});
-						log.info("Profile photo updated successfully", { photoURL });
-					} catch (error) {
-						log.error("Error updating profile photo", error);
-						throw error;
-					}
-				},
-				user: null,
-			}),
+						try {
+							await updateProfile(currentUser, { displayName });
+							set({
+								user: {
+									...user,
+									displayName,
+								},
+							});
+							log.info("Display name updated successfully", { displayName });
+						} catch (error) {
+							log.error("Error updating display name", error);
+							throw error;
+						}
+					},
+					updateEmail: async (email: string) => {
+						const auth = getFirebaseAuth();
+						const { currentUser } = auth;
+						const { user } = get();
+
+						if (!(currentUser && user)) {
+							throw new Error("No authenticated user");
+						}
+
+						try {
+							await updateEmail(currentUser, email);
+							set({
+								user: {
+									...user,
+									email,
+								},
+							});
+							log.info("Email updated successfully", { email });
+						} catch (error) {
+							log.error("Error updating email", error);
+							throw error;
+						}
+					},
+					updateProfilePhoto: async (file: File) => {
+						const auth = getFirebaseAuth();
+						const { currentUser } = auth;
+						const { user } = get();
+
+						if (!(currentUser && user)) {
+							throw new Error("No authenticated user");
+						}
+
+						try {
+							const photoURL = await uploadProfilePhoto(currentUser, file);
+							set({
+								user: {
+									...user,
+									photoURL,
+								},
+							});
+							log.info("Profile photo updated successfully", { photoURL });
+						} catch (error) {
+							log.error("Error updating profile photo", error);
+							throw error;
+						}
+					},
+					user: null,
+				};
+			},
 			{
 				name: "user-storage",
 			},

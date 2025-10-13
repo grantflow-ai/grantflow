@@ -390,11 +390,13 @@ describe("Application Store", () => {
 
 		it("should not not change parent word count if child total is less", async () => {
 			useApplicationStore.getState().reset();
+			toastSuccessMock.mockClear();
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
 					length_constraint: wordConstraint(500),
 					order: 0,
+					parent_id: null,
 					title: "Introduction",
 				}),
 				GrantSectionDetailedFactory.build({

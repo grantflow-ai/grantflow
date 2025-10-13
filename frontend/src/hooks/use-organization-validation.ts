@@ -35,10 +35,13 @@ export function useOrganizationValidation(
 
 		if (organizations.length === 0) {
 			log.info("No organizations available, clearing organization state");
-			if (!organizationsSet) {
+			// Only clear if there's actually something to clear (prevent infinite loop)
+			if (!organizationsSet && storeOrgId !== null) {
 				clearOrganization();
 			}
-			clearOrganizationCookie();
+			if (selectedOrganizationId !== null) {
+				clearOrganizationCookie();
+			}
 			return;
 		}
 

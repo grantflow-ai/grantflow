@@ -18,11 +18,13 @@ import { log } from "@/utils/logger/client";
 export function FilePreviewCard({
 	disableRemove = false,
 	file,
+	onDelete,
 	parentId,
 	sourceStatus,
 }: {
 	disableRemove?: boolean;
 	file: FileWithId;
+	onDelete?: () => Promise<void> | void;
 	parentId?: string;
 	sourceStatus?: string;
 }) {
@@ -53,8 +55,13 @@ export function FilePreviewCard({
 	};
 
 	const handleRemove = async () => {
-		if (!(parentId && canRemove)) return;
-		await removeFile(file, parentId);
+		if (!canRemove) return;
+
+		if (onDelete) {
+			await onDelete();
+		} else if (parentId) {
+			await removeFile(file, parentId);
+		}
 		setDropdownOpen(false);
 	};
 

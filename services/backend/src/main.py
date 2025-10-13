@@ -31,6 +31,9 @@ from services.backend.src.api.routes.granting_institutions import (
     handle_delete_organization as handle_delete_granting_institution,
 )
 from services.backend.src.api.routes.granting_institutions import (
+    handle_get_organization as handle_get_granting_institution,
+)
+from services.backend.src.api.routes.granting_institutions import (
     handle_retrieve_organizations as handle_retrieve_granting_institutions,
 )
 from services.backend.src.api.routes.granting_institutions import (
@@ -99,7 +102,11 @@ from services.backend.src.api.routes.sources import (
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
 )
-from services.backend.src.api.routes.user import delete_user, get_sole_owned_organizations, get_sole_owned_projects
+from services.backend.src.api.routes.user import (
+    delete_user,
+    get_sole_owned_organizations,
+    get_sole_owned_projects,
+)
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
@@ -164,6 +171,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_grant_template,
     handle_create_granting_institution,
     handle_retrieve_granting_institutions,
+    handle_get_granting_institution,
     handle_update_granting_institution,
     handle_delete_granting_institution,
     handle_create_upload_url,

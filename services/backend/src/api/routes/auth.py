@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from litestar import get, post
 from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Organization, OrganizationInvitation, OrganizationUser, Project
+from packages.db.src.tables import BackofficeAdmin, Organization, OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import desc, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -26,6 +26,7 @@ class LoginRequestBody(TypedDict):
 
 class LoginResponse(TypedDict):
     jwt_token: str
+    is_backoffice_admin: bool
 
 
 def _get_role_priority(role: UserRoleEnum) -> int:
@@ -186,8 +187,54 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             default_organization_id = default_org_user.organization_id
             default_role = default_org_user.role
 
-    jwt = create_jwt(firebase_uid, default_organization_id, default_role)
-    return LoginResponse(jwt_token=jwt)
+        # Check if user is a backoffice admin (by firebase_uid or email)
+        firebase_user = await get_user(firebase_uid)
+        user_email = firebase_user.get("email") if firebase_user else None
+
+        logger.info(
+            "Checking backoffice admin status",
+            firebase_uid=firebase_uid,
+            user_email=user_email,
+        )
+
+        admin = await session.scalar(
+            select(BackofficeAdmin).where(
+                ((BackofficeAdmin.firebase_uid == firebase_uid) | (BackofficeAdmin.email == user_email)),
+                BackofficeAdmin.deleted_at.is_(None),
+            )
+        )
+        is_backoffice_admin = admin is not None
+
+        logger.info(
+            "Backoffice admin check result",
+            is_backoffice_admin=is_backoffice_admin,
+            found_admin=admin is not None,
+            admin_email=admin.email if admin else None,
+        )
+
+        # Update the firebase_uid if admin found by email
+        if is_backoffice_admin and admin and not admin.firebase_uid:
+            logger.info("Updating firebase_uid for backoffice admin", email=admin.email, firebase_uid=firebase_uid)
+            admin.firebase_uid = firebase_uid
+            session.add(admin)
+
+    logger.info(
+        "Creating JWT token",
+        firebase_uid=firebase_uid,
+        organization_id=str(default_organization_id),
+        role=default_role.value if default_role else None,
+        is_backoffice_admin=is_backoffice_admin,
+    )
+
+    jwt = create_jwt(firebase_uid, default_organization_id, default_role, is_backoffice_admin)
+
+    logger.info(
+        "Login response prepared",
+        jwt_length=len(jwt),
+        is_backoffice_admin=is_backoffice_admin,
+    )
+
+    return LoginResponse(jwt_token=jwt, is_backoffice_admin=is_backoffice_admin)
 
 
 @get("/otp", operation_id="GenerateOtp")
