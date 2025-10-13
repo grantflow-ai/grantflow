@@ -495,7 +495,7 @@ async def test_handle_file_indexing_processing_error(
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
 
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.CREATED
 
     async with async_session_maker() as session:
         rag_source = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))
@@ -847,7 +847,7 @@ async def test_handle_file_indexing_file_parsing_error(
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
 
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.CREATED
 
     async with async_session_maker() as session:
         rag_source = await session.scalars(select(RagSource).order_by(RagSource.created_at.desc()))

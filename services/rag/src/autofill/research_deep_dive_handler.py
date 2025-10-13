@@ -4,26 +4,16 @@ from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.sync import batched_gather
+from packages.shared_utils.src.serialization import serialize
 
-from services.rag.src.autofill.constants import (
-    MAX_RETRIEVAL_TOKENS,
-    MIN_ANSWER_LENGTH,
-    TEMPERATURE,
-)
+from services.rag.src.autofill.constants import MAX_RETRIEVAL_TOKENS, TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
 
-RESEARCH_FIELD_BATCH_SIZE: Final[int] = 4
-
 logger = get_logger(__name__)
-
-
-class AnswerResponse(TypedDict):
-    answer: str
 
 
 ResearchDeepDiveKey = Literal[
@@ -54,67 +44,124 @@ detailed, well-structured answers to research questions based on the provided co
 """
 
 
-RESEARCH_DEEP_DIVE_USER_PROMPT = PromptTemplate(
-    name="research_deep_dive_generation",
+class ResearchDeepDiveDraft(TypedDict):
+    background_context: str
+    hypothesis: str
+    rationale: str
+    novelty_and_innovation: str
+    impact: str
+    team_excellence: str
+    research_feasibility: str
+    preliminary_data: str
+
+
+RESEARCH_DEEP_DIVE_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_deep_dive_draft",
     template="""
-    Answer the following question for a grant application titled: "${application_title}"
-    Based on the research context below.
-
-    ## Question
-    ${question}
-
-    ## Research Context
-    ${context}
+    Create draft answers for each research deep dive question for the grant application titled "${application_title}".
 
     ## Research Objectives
     ${objectives_text}
 
-    ## Content Requirements
-    Provide a comprehensive, well-structured answer that:
-        1. Directly addresses the question
-        2. Uses insights from the research context
-        3. Aligns with the stated research objectives
-        4. Is appropriate for a grant application
-        5. Is 200-500 words in length
-        6. Uses professional academic tone
-        7. Includes specific details and examples where relevant
+    ## Research Context
+    ${context}
+
+    ## Drafting Guidelines
+    - Provide evidence-backed answers for every question.
+    - Aim for 150-250 words per answer; concise but complete.
+    - Note gaps if context lacks supporting evidence.
+
+    Return a JSON object with one string per question using the provided keys.
     """,
 )
 
-answer_response_schema = {
+
+RESEARCH_DEEP_DIVE_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
+    name="research_deep_dive_refinement",
+    template="""
+    Refine the draft answers for the grant application titled "${application_title}".
+
+    ## Draft Answers (JSON)
+    ${draft}
+
+    ## Research Objectives
+    ${objectives_text}
+
+    ## Research Context
+    ${context}
+
+    ## Refinement Tasks
+    1. Validate accuracy, coherence, and tone for each answer.
+    2. Expand or tighten content to reach 220-380 words per answer.
+    3. Add specific data points, citations to context, or examples when available.
+    4. Flag any missing evidence clearly within the answer.
+
+    Return the refined answers as JSON using the same keys.
+    """,
+)
+
+
+research_deep_dive_draft_schema = {
     "type": "object",
     "properties": {
-        "answer": {
+        key: {
             "type": "string",
             "minLength": 200,
-            "maxLength": 2000,
-            "description": "Comprehensive answer to the research question (200-500 words)",
-        },
+            "maxLength": 1200,
+            "description": question,
+        }
+        for key, question in RESEARCH_DEEP_DIVE_FIELD_MAPPING.items()
     },
-    "required": ["answer"],
+    "required": list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys()),
 }
 
 
-def _validate_answer_response(response: AnswerResponse) -> None:
-    answer = response["answer"].strip()
-    if len(answer) < MIN_ANSWER_LENGTH:
-        raise ValidationError(
-            f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})",
-            context={"length": len(answer), "min_length": MIN_ANSWER_LENGTH, "content_preview": answer[:100]},
-        )
+research_deep_dive_refinement_schema = {
+    "type": "object",
+    "properties": {
+        key: {
+            "type": "string",
+            "minLength": 400,
+            "maxLength": 1800,
+            "description": question,
+        }
+        for key, question in RESEARCH_DEEP_DIVE_FIELD_MAPPING.items()
+    },
+    "required": list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys()),
+}
 
-    word_count = len(answer.split())
-    if word_count < 150:
-        raise ValidationError(
-            f"Answer has too few words: {word_count} (target: 200-500)",
-            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
-        )
 
-    if word_count > 600:
-        raise ValidationError(
-            f"Answer has too many words: {word_count} (target: 200-500)",
-            context={"word_count": word_count, "target_range": "200-500", "content_preview": answer[:100]},
-        )
+def _validate_research_deep_dive_draft(response: ResearchDeepDiveDraft) -> None:
+    for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING:
+        answer = response[key]
+        word_count = len(answer.split())
+        if word_count < 130:
+            raise ValidationError(
+                f"{key} draft too short: expected >=130 words",
+                context={"field": key, "word_count": word_count, "preview": answer[:100]},
+            )
+        if word_count > 320:
+            raise ValidationError(
+                f"{key} draft too long: expected <=320 words",
+                context={"field": key, "word_count": word_count, "preview": answer[:100]},
+            )
+
+
+def _validate_research_deep_dive_refined(response: ResearchDeepDive) -> None:
+    for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING:
+        answer = response[key]
+        normalized = answer.strip()
+        if not normalized:
+            raise ValidationError(
+                f"{key} answer empty after refinement",
+                context={"field": key},
+            )
+        word_count = len(normalized.split())
+        if word_count < 200 or word_count > 420:
+            raise ValidationError(
+                f"{key} answer should be 200-420 words",
+                context={"field": key, "word_count": word_count, "preview": normalized[:120]},
+            )
 
 
 def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
@@ -129,105 +176,83 @@ def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
     return "\n".join(formatted)
 
 
-async def _generate_field_answer(
-    application: GrantApplication, field_name: ResearchDeepDiveKey, objectives_text: str, trace_id: str
-) -> str:
-    prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
-        application_title=application.title,
-        objectives_text=objectives_text,
-        question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
-    )
-    search_queries = await handle_create_search_queries(
-        user_prompt=str(prompt_with_title), research_objectives=application.research_objectives or None
-    )
-
-    retrieval_results = await retrieve_documents(
-        application_id=str(application.id),
-        search_queries=search_queries,
-        task_description=str(prompt_with_title),
-        max_tokens=MAX_RETRIEVAL_TOKENS,
-        trace_id=trace_id,
-    )
-
-    raw_context = "\n".join(retrieval_results)
-    compressed_context = compress_prompt_text(raw_context, aggressive=True)
-
-    logger.debug(
-        "Prepared and compressed context for research deep dive field",
-        field_name=field_name,
-        original_context_chars=len(raw_context),
-        compressed_context_chars=len(compressed_context),
-        trace_id=trace_id,
-    )
-
-    full_prompt = prompt_with_title.to_string(context=compressed_context)
-
-    response: AnswerResponse = await handle_completions_request(
-        prompt_identifier="research_deep_dive_generation",
-        messages=full_prompt,
-        system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
-        response_schema=answer_response_schema,
-        response_type=AnswerResponse,
-        validator=_validate_answer_response,
-        temperature=TEMPERATURE,
-        trace_id=trace_id,
-    )
-
-    return response["answer"].strip()
-
-
-async def _generate_field_answer_with_context(
-    field_name: ResearchDeepDiveKey,
+async def _generate_research_deep_dive_draft(
+    *,
     application: GrantApplication,
+    compressed_context: str,
     objectives_text: str,
-    shared_context: str,
     trace_id: str,
-) -> str:
-    prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
+) -> ResearchDeepDiveDraft:
+    prompt = RESEARCH_DEEP_DIVE_DRAFT_PROMPT.to_string(
         application_title=application.title,
+        context=compressed_context,
         objectives_text=objectives_text,
-        question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
     )
 
-    compressed_context = compress_prompt_text(shared_context, aggressive=True)
-
-    logger.debug(
-        "Prepared and compressed shared context for research deep dive field",
-        field_name=field_name,
-        original_context_chars=len(shared_context),
-        compressed_context_chars=len(compressed_context),
-        trace_id=trace_id,
-    )
-
-    full_prompt = prompt_with_title.to_string(context=compressed_context)
-
-    response: AnswerResponse = await handle_completions_request(
-        prompt_identifier="research_deep_dive_generation",
-        messages=full_prompt,
+    draft = await handle_completions_request(
+        prompt_identifier="research_deep_dive_draft",
+        messages=prompt,
         system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
-        response_schema=answer_response_schema,
-        response_type=AnswerResponse,
-        validator=_validate_answer_response,
+        response_schema=research_deep_dive_draft_schema,
+        response_type=ResearchDeepDiveDraft,
+        validator=_validate_research_deep_dive_draft,
         temperature=TEMPERATURE,
         trace_id=trace_id,
     )
 
-    return response["answer"].strip()
+    logger.info(
+        "Generated research deep dive draft answers",
+        fields=len(draft),
+        trace_id=trace_id,
+    )
+
+    return draft
+
+
+async def _refine_research_deep_dive_answers(
+    *,
+    application: GrantApplication,
+    compressed_context: str,
+    objectives_text: str,
+    draft: ResearchDeepDiveDraft,
+    trace_id: str,
+) -> ResearchDeepDive:
+    prompt = RESEARCH_DEEP_DIVE_REFINEMENT_PROMPT.to_string(
+        application_title=application.title,
+        context=compressed_context,
+        objectives_text=objectives_text,
+        draft=serialize(draft).decode(),
+    )
+
+    refined = await handle_completions_request(
+        prompt_identifier="research_deep_dive_refinement",
+        messages=prompt,
+        system_prompt=RESEARCH_DEEP_DIVE_SYSTEM_PROMPT,
+        response_schema=research_deep_dive_refinement_schema,
+        response_type=ResearchDeepDive,
+        validator=_validate_research_deep_dive_refined,
+        temperature=0.4,
+        trace_id=trace_id,
+    )
+
+    logger.info(
+        "Refined research deep dive answers",
+        fields=len(refined),
+        trace_id=trace_id,
+    )
+
+    return refined
 
 
 async def generate_research_deep_dive_content(application: GrantApplication, trace_id: str) -> ResearchDeepDive:
     objectives_text = _format_research_objectives(application.research_objectives or [])
-
-    all_questions = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.values())
-    comprehensive_prompt = f"""
-    Answer the following research questions for a grant application titled: "{application.title}"
-
-    Research Questions:
-    {chr(10).join(f"{i + 1}. {q}" for i, q in enumerate(all_questions))}
-
-    Research Objectives:
-    {objectives_text}
-    """
+    questions_list = "\n".join(
+        f"{i + 1}. {question}" for i, question in enumerate(RESEARCH_DEEP_DIVE_FIELD_MAPPING.values())
+    )
+    comprehensive_prompt = (
+        f'Answer the following research questions for a grant application titled: "{application.title}"\n\n'
+        f"Research Questions:\n{questions_list}\n\nResearch Objectives:\n{objectives_text}"
+    )
 
     logger.info("Generating shared search queries for all research deep dive fields", trace_id=trace_id)
     search_queries = await handle_create_search_queries(
@@ -244,46 +269,30 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
     )
     shared_context_text = "\n".join(shared_context)
 
-    field_names = list(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
+    compressed_context = compress_prompt_text(shared_context_text, aggressive=True)
 
-    results = await batched_gather(
-        *[
-            _generate_field_answer_with_context(
-                field_name=key,
-                application=application,
-                objectives_text=objectives_text,
-                shared_context=shared_context_text,
-                trace_id=trace_id,
-            )
-            for key in field_names
-        ],
-        batch_size=RESEARCH_FIELD_BATCH_SIZE,
-        return_exceptions=True,
+    logger.debug(
+        "Prepared shared context for deep dive generation",
+        original_context_chars=len(shared_context_text),
+        compressed_context_chars=len(compressed_context),
+        trace_id=trace_id,
     )
 
-    field_values = {}
-    failed_fields = []
+    draft_answers = await _generate_research_deep_dive_draft(
+        application=application,
+        compressed_context=compressed_context,
+        objectives_text=objectives_text,
+        trace_id=trace_id,
+    )
 
-    for field_name, result in zip(field_names, results, strict=True):
-        if isinstance(result, Exception):
-            logger.warning(
-                "Research deep dive field generation failed",
-                field_name=field_name,
-                error=str(result),
-                trace_id=trace_id,
-            )
-            field_values[field_name] = f"[Failed to generate {field_name}. Manual completion required.]"
-            failed_fields.append(field_name)
-        else:
-            field_values[field_name] = cast("str", result)
+    refined_answers = await _refine_research_deep_dive_answers(
+        application=application,
+        compressed_context=compressed_context,
+        objectives_text=objectives_text,
+        draft=draft_answers,
+        trace_id=trace_id,
+    )
 
-    if failed_fields:
-        logger.warning(
-            "Some research deep dive fields failed",
-            total_fields=len(field_names),
-            successful_fields=len(field_names) - len(failed_fields),
-            failed_fields=failed_fields,
-            trace_id=trace_id,
-        )
+    cleaned_answers = {key: refined_answers[key].strip() for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING}
 
-    return cast("ResearchDeepDive", ResearchDeepDive(**field_values))  # type: ignore[typeddict-item]
+    return cast("ResearchDeepDive", cleaned_answers)

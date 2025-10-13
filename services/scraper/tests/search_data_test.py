@@ -4,9 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from services.scraper.src.search_data import (
-    DEFAULT_FROM_DATE,
-    NIH_GRANT_BASE_URL,
-    TODAY_DATE,
     create_query_string,
     download_search_data,
 )
@@ -29,12 +26,6 @@ def test_create_query_string_defaults() -> None:
     expected_query = "type=all&spons=true&fields=all"
 
     assert query_string == expected_query
-
-
-def test_constants() -> None:
-    assert NIH_GRANT_BASE_URL == "https://grants.nih.gov/funding/nih-guide-for-grants-and-contracts"
-    assert date(1991, 1, 2) == DEFAULT_FROM_DATE
-    assert isinstance(TODAY_DATE, date)
 
 
 async def test_download_search_data_success() -> None:

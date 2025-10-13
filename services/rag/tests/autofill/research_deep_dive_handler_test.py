@@ -1,15 +1,20 @@
-import types
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from packages.shared_utils.src.exceptions import ValidationError
-from packages.shared_utils.src.pubsub import ResearchDeepDiveAutofillRequest
 
-from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
+from services.rag.src.autofill.research_deep_dive_handler import (
+    RESEARCH_DEEP_DIVE_FIELD_MAPPING,
+    ResearchDeepDiveDraft,
+    _format_research_objectives,
+    _validate_research_deep_dive_draft,
+    _validate_research_deep_dive_refined,
+    generate_research_deep_dive_content,
+)
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import ResearchObjective
+    from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 
 
 @pytest.fixture
@@ -17,122 +22,11 @@ def mock_logger() -> MagicMock:
     return MagicMock()
 
 
-@pytest.fixture
-def mock_session_maker() -> MagicMock:
-    session_maker = MagicMock()
-    session = AsyncMock()
-
-    class AsyncContextManager:
-        async def __aenter__(self) -> Any:
-            return session
-
-        async def __aexit__(
-            self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: types.TracebackType | None
-        ) -> None:
-            return None
-
-    session_maker.return_value = AsyncContextManager()
-    return session_maker
-
-
-@pytest.fixture
-def sample_request(trace_id: str) -> ResearchDeepDiveAutofillRequest:
-    from uuid import UUID
-
-    return ResearchDeepDiveAutofillRequest(
-        application_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-        trace_id=trace_id,
-    )
-
-
-@pytest.fixture
-def sample_application() -> dict[str, Any]:
-    return {
-        "title": "AI-Powered Medical Diagnosis",
-        "research_objectives": [
-            {
-                "number": 1,
-                "title": "Develop ML Models",
-                "description": "Create machine learning models for medical diagnosis",
-            }
-        ],
-        "form_inputs": {},
-    }
-
-
-async def test_generate_field_answer(mock_logger: MagicMock, trace_id: str) -> None:
-    from packages.db.src.tables import GrantApplication
-
-    from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer
-
-    with (
-        patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion,
-        patch("services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries") as mock_search,
-        patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve,
-    ):
-        mock_search.return_value = ["search query 1"]
-        mock_retrieve.return_value = ["Document content about medical research"]
-        mock_completion.return_value = {
-            "answer": "This is a generated answer about research background that provides comprehensive details about the context and motivation for this important medical research project. "
-            * 5
-        }
-
-        app = GrantApplication(id="test-id", title="Test Application")
-        result = await _generate_field_answer(
-            application=app,
-            field_name="background_context",
-            objectives_text="Test objectives",
-            trace_id=trace_id,
-        )
-
-        assert len(result) >= 50
-        mock_completion.assert_called_once()
-
-
-async def test_generate_field_answer_with_context(mock_logger: MagicMock, trace_id: str) -> None:
-    from packages.db.src.tables import GrantApplication
-
-    from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer_with_context
-
-    with patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion:
-        mock_completion.return_value = {
-            "answer": "This is a generated answer using shared context that provides comprehensive details about the research background based on the provided documents. "
-            * 5
-        }
-
-        app = GrantApplication(id="test-id", title="Test Application")
-        shared_context = "Document content 1\nDocument content 2\nDocument content 3"
-
-        result = await _generate_field_answer_with_context(
-            field_name="background_context",
-            application=app,
-            objectives_text="Test objectives",
-            shared_context=shared_context,
-            trace_id=trace_id,
-        )
-
-        assert len(result) >= 50
-        mock_completion.assert_called_once()
-
-        _args, kwargs = mock_completion.call_args
-        assert "messages" in kwargs
-
-
-def test_function_import_deep_dive() -> None:
-    import inspect
-
-    from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
-
-    sig = inspect.signature(generate_research_deep_dive_content)
-    params = list(sig.parameters.keys())
-
-    assert "application" in params
-    assert inspect.iscoroutinefunction(generate_research_deep_dive_content)
+def _make_text(prefix: str, words: int) -> str:
+    return " ".join(f"{prefix}_{i}" for i in range(words))
 
 
 def test_field_mapping_keys() -> None:
-    from services.rag.src.autofill.research_deep_dive_handler import RESEARCH_DEEP_DIVE_FIELD_MAPPING
-
     expected_fields = {
         "background_context",
         "hypothesis",
@@ -148,15 +42,11 @@ def test_field_mapping_keys() -> None:
     assert actual_fields == expected_fields
 
     for description in RESEARCH_DEEP_DIVE_FIELD_MAPPING.values():
-        assert len(description.strip()) > 0
-        assert "?" in description
+        assert description.strip()
+        assert description.endswith("?")
 
 
 def test_format_research_objectives(mock_logger: MagicMock) -> None:
-    from typing import cast
-
-    from services.rag.src.autofill.research_deep_dive_handler import _format_research_objectives
-
     objectives_data = [
         {
             "number": 1,
@@ -175,81 +65,77 @@ def test_format_research_objectives(mock_logger: MagicMock) -> None:
     assert "2. Second Objective" in result
 
     empty_objectives = cast("list[ResearchObjective]", [])
-    result = _format_research_objectives(empty_objectives)
-    assert result == ""
+    assert _format_research_objectives(empty_objectives) == ""
 
 
-def test_validate_answer_response(mock_logger: MagicMock) -> None:
-    from services.rag.src.autofill.research_deep_dive_handler import AnswerResponse, _validate_answer_response
+def test_validate_research_deep_dive_draft() -> None:
+    valid_draft = cast(
+        "ResearchDeepDiveDraft",
+        {key: _make_text("draft", 150) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
+    )
+    _validate_research_deep_dive_draft(valid_draft)
 
-    valid_response = AnswerResponse(answer="This is a valid answer that meets the minimum length requirement. " * 30)
-    _validate_answer_response(valid_response)
+    invalid_draft = valid_draft.copy()
+    invalid_draft["hypothesis"] = _make_text("short", 40)
 
-    with pytest.raises(KeyError):
-        _validate_answer_response({"something_else": "value"})  # type: ignore[typeddict-item]
-
-    with pytest.raises(AttributeError):
-        _validate_answer_response({"answer": 123})  # type: ignore[typeddict-item]
-
-    with pytest.raises(ValidationError, match="Answer too short"):
-        _validate_answer_response(AnswerResponse(answer="x" * 49))
-
-    with pytest.raises(ValidationError, match="Answer has too few words"):
-        _validate_answer_response(AnswerResponse(answer="word " * 50))
-
-    with pytest.raises(ValidationError, match="Answer has too many words"):
-        _validate_answer_response(AnswerResponse(answer="word " * 700))
+    with pytest.raises(ValidationError, match="hypothesis draft too short"):
+        _validate_research_deep_dive_draft(invalid_draft)
 
 
-def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
-    from services.rag.src.autofill.research_deep_dive_handler import RESEARCH_DEEP_DIVE_FIELD_MAPPING
+def test_validate_research_deep_dive_refined() -> None:
+    refined = cast(
+        "ResearchDeepDive",
+        {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
+    )
+    _validate_research_deep_dive_refined(refined)
 
-    expected_fields = [
-        "background_context",
-        "hypothesis",
-        "rationale",
-        "novelty_and_innovation",
-        "impact",
-        "team_excellence",
-        "research_feasibility",
-        "preliminary_data",
-    ]
+    too_long: ResearchDeepDive = refined.copy()
+    too_long["impact"] = _make_text("long", 480)
 
-    from typing import cast
+    with pytest.raises(ValidationError, match="impact answer should be 200-420 words"):
+        _validate_research_deep_dive_refined(too_long)
 
-    from services.rag.src.autofill.research_deep_dive_handler import ResearchDeepDiveKey
+    empty_answer: ResearchDeepDive = refined.copy()
+    empty_answer["impact"] = " "
 
-    for field in expected_fields:
-        field_key = cast("ResearchDeepDiveKey", field)
-        assert field_key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
-        assert len(RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_key]) > 10
+    with pytest.raises(ValidationError, match="impact answer empty after refinement"):
+        _validate_research_deep_dive_refined(empty_answer)
 
 
 async def test_generate_research_deep_dive_content_with_mocks(
     mock_logger: MagicMock,
-    mock_session_maker: AsyncMock,
-    sample_application: dict[str, Any],
     trace_id: str,
 ) -> None:
     from packages.db.src.tables import GrantApplication
 
-    app = GrantApplication(id="test-id", title="Test Application", research_objectives=[])
+    draft_response = cast(
+        "ResearchDeepDiveDraft",
+        {key: _make_text("draft", 150) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
+    )
+    refined_response = cast(
+        "ResearchDeepDive",
+        {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
+    )
 
     with (
         patch(
-            "services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries", new_callable=AsyncMock
+            "services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries",
+            new_callable=AsyncMock,
         ) as mock_search,
         patch(
-            "services.rag.src.autofill.research_deep_dive_handler.retrieve_documents", new_callable=AsyncMock
+            "services.rag.src.autofill.research_deep_dive_handler.retrieve_documents",
+            new_callable=AsyncMock,
         ) as mock_retrieve,
         patch(
-            "services.rag.src.autofill.research_deep_dive_handler._generate_field_answer_with_context",
+            "services.rag.src.autofill.research_deep_dive_handler.handle_completions_request",
             new_callable=AsyncMock,
-        ) as mock_generate,
+        ) as mock_completion,
     ):
         mock_search.return_value = ["search query 1", "search query 2"]
         mock_retrieve.return_value = ["Document content 1", "Document content 2"]
-        mock_generate.return_value = "Generated answer text " * 30
+        mock_completion.side_effect = [draft_response, refined_response]
+
+        app = GrantApplication(id="test-id", title="Test Application", research_objectives=[])
 
         result = await generate_research_deep_dive_content(
             application=app,
@@ -258,7 +144,14 @@ async def test_generate_research_deep_dive_content_with_mocks(
 
         assert isinstance(result, dict)
         assert "background_context" in result
+        assert result["hypothesis"].startswith("refined_")
+
+        assert mock_completion.call_count == 2
+        first_call_kwargs = mock_completion.await_args_list[0].kwargs
+        second_call_kwargs = mock_completion.await_args_list[1].kwargs
+
+        assert first_call_kwargs["prompt_identifier"] == "research_deep_dive_draft"
+        assert second_call_kwargs["prompt_identifier"] == "research_deep_dive_refinement"
 
         mock_search.assert_called_once()
         mock_retrieve.assert_called_once()
-        assert mock_generate.call_count == 8
