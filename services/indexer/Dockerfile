@@ -1,6 +1,5 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
 ENV HF_HOME="/app/hf-cache" \
-    TRANSFORMERS_CACHE="/app/hf-cache" \
     HUGGINGFACE_HUB_CACHE="/app/hf-cache" \
     SENTENCE_TRANSFORMERS_HOME="/app/hf-cache"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
