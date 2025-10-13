@@ -7,7 +7,7 @@ import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 export async function crawlGrantingInstitutionUrl(id: string, url: string) {
 	return withAuthRedirect(
 		getClient()
-			.post(`granting-institutions/${id}/urls`, {
+			.post(`granting-institutions/${id}/sources/crawl-url`, {
 				headers: await createAuthHeaders(),
 				json: { url },
 			})
@@ -29,7 +29,7 @@ export async function createGrantingInstitution(data: API.CreateGrantingInstitut
 export async function createGrantingInstitutionUploadUrl(id: string, blobName: string) {
 	return withAuthRedirect(
 		getClient()
-			.post(`granting-institutions/${id}/upload-url?blob_name=${encodeURIComponent(blobName)}`, {
+			.post(`granting-institutions/${id}/sources/upload-url?blob_name=${encodeURIComponent(blobName)}`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.CreateGrantingInstitutionRagSourceUploadUrl.Http201.ResponseBody>(),
