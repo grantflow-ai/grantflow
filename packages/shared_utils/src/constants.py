@@ -15,6 +15,7 @@ SUPPORTED_FILE_EXTENSIONS = {
     "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "rst": "text/rst",
     "rtf": "text/rtf",
+    "tex": "text/latex",
     "txt": "text/plain",
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }

@@ -45,7 +45,9 @@ RUN mkdir -p /app/.cache && chown -R appuser:appuser /app/.cache
 
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
-    APP="services.indexer.src.main:app"
+    APP="services.indexer.src.main:app" \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_OFFLINE=1
 
 USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]
