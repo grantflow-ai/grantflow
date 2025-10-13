@@ -74,6 +74,7 @@ describe("useUserStore", () => {
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
 		expect(result.current.hasSeenWelcomeModal).toBe(false);
+		expect(result.current.isBackofficeAdmin).toBe(false);
 	});
 
 	it("sets user and authentication state", () => {
@@ -93,12 +94,14 @@ describe("useUserStore", () => {
 
 		act(() => {
 			result.current.setUser(mockUser);
+			result.current.setBackofficeAdmin(true);
 			result.current.dismissWelcomeModal();
 		});
 
 		expect(result.current.user).toEqual(mockUser);
 		expect(result.current.isAuthenticated).toBe(true);
 		expect(result.current.hasSeenWelcomeModal).toBe(true);
+		expect(result.current.isBackofficeAdmin).toBe(true);
 
 		act(() => {
 			result.current.clearUser();
@@ -107,6 +110,7 @@ describe("useUserStore", () => {
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
 		expect(result.current.hasSeenWelcomeModal).toBe(false);
+		expect(result.current.isBackofficeAdmin).toBe(false);
 	});
 
 	it("handles null user when setting", () => {
@@ -206,18 +210,57 @@ describe("useUserStore", () => {
 		expect(result.current.isAuthenticated).toBe(false);
 	});
 
+	it("sets and clears backoffice admin status", () => {
+		const { result } = renderHook(() => useUserStore());
+
+		expect(result.current.isBackofficeAdmin).toBe(false);
+
+		act(() => {
+			result.current.setBackofficeAdmin(true);
+		});
+
+		expect(result.current.isBackofficeAdmin).toBe(true);
+
+		act(() => {
+			result.current.setBackofficeAdmin(false);
+		});
+
+		expect(result.current.isBackofficeAdmin).toBe(false);
+	});
+
+	it("backoffice admin status is independent of user state", () => {
+		const { result } = renderHook(() => useUserStore());
+
+		act(() => {
+			result.current.setBackofficeAdmin(true);
+		});
+
+		expect(result.current.isBackofficeAdmin).toBe(true);
+		expect(result.current.isAuthenticated).toBe(false);
+		expect(result.current.user).toBeNull();
+
+		act(() => {
+			result.current.setUser(mockUser);
+		});
+
+		expect(result.current.isBackofficeAdmin).toBe(true);
+		expect(result.current.isAuthenticated).toBe(true);
+		expect(result.current.user).toEqual(mockUser);
+	});
+
 	it("multiple actions can be performed in sequence", () => {
 		const { result } = renderHook(() => useUserStore());
 
 		act(() => {
 			result.current.setUser(mockUser);
-
+			result.current.setBackofficeAdmin(true);
 			result.current.dismissWelcomeModal();
 		});
 
 		expect(result.current.user).toEqual(mockUser);
 		expect(result.current.isAuthenticated).toBe(true);
 		expect(result.current.hasSeenWelcomeModal).toBe(true);
+		expect(result.current.isBackofficeAdmin).toBe(true);
 
 		act(() => {
 			result.current.setUser({ ...mockUser, displayName: "Jane Smith" });
@@ -226,6 +269,7 @@ describe("useUserStore", () => {
 		expect(result.current.user?.displayName).toBe("Jane Smith");
 		expect(result.current.isAuthenticated).toBe(true);
 		expect(result.current.hasSeenWelcomeModal).toBe(true);
+		expect(result.current.isBackofficeAdmin).toBe(true);
 
 		act(() => {
 			result.current.clearUser();
@@ -234,6 +278,7 @@ describe("useUserStore", () => {
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
 		expect(result.current.hasSeenWelcomeModal).toBe(false);
+		expect(result.current.isBackofficeAdmin).toBe(false);
 	});
 
 	describe("Profile update methods", () => {

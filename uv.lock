@@ -16,16 +16,16 @@ members = [
 
 [[package]]
 name = "alembic"
-version = "1.16.5"
+version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mako" },
     { name = "sqlalchemy" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9a/ca/4dc52902cf3491892d464f5265a81e9dff094692c8a049a3ed6a05fe7ee8/alembic-1.16.5.tar.gz", hash = "sha256:a88bb7f6e513bd4301ecf4c7f2206fe93f9913f9b48dac3b78babde2d6fe765e", size = 1969868, upload-time = "2025-08-27T18:02:05.668Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/45/6f4555f2039f364c3ce31399529dcf48dd60726ff3715ad67f547d87dfd2/alembic-1.17.0.tar.gz", hash = "sha256:4652a0b3e19616b57d652b82bfa5e38bf5dbea0813eed971612671cb9e90c0fe", size = 1975526, upload-time = "2025-10-11T18:40:13.585Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/4a/4c61d4c84cfd9befb6fa08a702535b27b21fff08c946bc2f6139decbf7f7/alembic-1.16.5-py3-none-any.whl", hash = "sha256:e845dfe090c5ffa7b92593ae6687c5cb1a101e91fa53868497dbd79847f9dbe3", size = 247355, upload-time = "2025-08-27T18:02:07.37Z" },
+    { url = "https://files.pythonhosted.org/packages/44/1f/38e29b06bfed7818ebba1f84904afdc8153ef7b6c7e0d8f3bc6643f5989c/alembic-1.17.0-py3-none-any.whl", hash = "sha256:80523bc437d41b35c5db7e525ad9d908f79de65c27d6a5a5eab6df348a352d99", size = 247449, upload-time = "2025-10-11T18:40:16.288Z" },
 ]
 
 [[package]]
@@ -1288,13 +1288,13 @@ wheels = [
 
 [[package]]
 name = "html-to-markdown"
-version = "2.1.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/44/05/de4e8cd57394e9bce6bbf50a2f284a00557a00d315892e6d1e9540eb4c59/html_to_markdown-2.1.0.tar.gz", hash = "sha256:f6d23ff2c5c011b01918f406d2f21c1aa542cfe861ff14896c4da3ccafdc8093", size = 90226, upload-time = "2025-10-11T11:09:47.848Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/f9/54b616cf3660a3a16ad8c154ac783c6cb7933230f103d61242327da12068/html_to_markdown-2.2.0.tar.gz", hash = "sha256:e29b51945b7137a1e389673b0c449c266fe681352ac2b02c01b0c810f36958d0", size = 95236, upload-time = "2025-10-12T10:05:47.651Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/df/82b2b971925018a1e06b3ffff014b6dff6c9d978d031fd1943cc200d8637/html_to_markdown-2.1.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:b6520e79d6fc866b80d368052cbcaad397c67729e3670ff2a009fe7a26a9141f", size = 4753615, upload-time = "2025-10-11T11:09:43.176Z" },
-    { url = "https://files.pythonhosted.org/packages/09/c2/02b60cc5c2ed17c5ddb91d16972d247bc0de52e246edd251ccd18f123668/html_to_markdown-2.1.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:eadf401d363d270e9798e2553eed27a1a2b548fc4bf26fbb25ee2159767bd02c", size = 5266082, upload-time = "2025-10-11T11:09:44.811Z" },
-    { url = "https://files.pythonhosted.org/packages/84/f1/8eb6e85e50bc6f80cb5428ff55b36196622441b474677cfd32beca260c36/html_to_markdown-2.1.0-cp310-abi3-win_amd64.whl", hash = "sha256:3c880ef4e0559c45c5b988a554c0b2a2f953bc365caa37e1410057259ec26cbb", size = 5009392, upload-time = "2025-10-11T11:09:46.364Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/5f/de58c20a6ab445bd2747eb89ffa4654facef072b18ad81d2c40dd96b64d0/html_to_markdown-2.2.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:5d3d085dc3f6eb4412250ae11feadee44dd194492629a766085311d519d6768c", size = 4794691, upload-time = "2025-10-12T10:05:41.304Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/39/a1ba7b10102480cc66e3d145fbd3da88229977801d2bfcbef54b8418a543/html_to_markdown-2.2.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:a022c34570f28ba6b921c9261adbea7423075f2615d0ea72cdbce58230ba2078", size = 5321437, upload-time = "2025-10-12T10:05:43.413Z" },
+    { url = "https://files.pythonhosted.org/packages/76/87/7258c4fed3fb79abb0197537dd240cf29eb07ba034a444a3e0eb159bb83e/html_to_markdown-2.2.0-cp310-abi3-win_amd64.whl", hash = "sha256:74c80014ab5a72e65f2175d5a8dc5c2f306ca6cd0d672c34f9a439fdd15dc97b", size = 5069037, upload-time = "2025-10-12T10:05:45.68Z" },
 ]
 
 [[package]]
@@ -1564,7 +1564,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.20.1"
+version = "3.20.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1582,9 +1582,9 @@ dependencies = [
     { name = "python-pptx" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0d/0a/1482533947a0509f5f2333fe71500e1d269db5a460d56624c87f5c2699d7/kreuzberg-3.20.1.tar.gz", hash = "sha256:91721fdbd2b7cd7d65ca96e5a4970efc121fbaa5df7580079c6f5097f7cd1ae0", size = 193689, upload-time = "2025-10-11T12:01:59.218Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/d9/ece4e204193991634fa2942c9809809717ee2b9a4be94a53ef6211ef505a/kreuzberg-3.20.2.tar.gz", hash = "sha256:220c9dbb297ee6878dfc270063d3128476714bdd8132e34e836a5a43397456e9", size = 193941, upload-time = "2025-10-11T18:34:25.687Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/cc/3fd0b14af0b51cb8df304b1a0c065d16676ad287f7bb055e769ed0ba84a4/kreuzberg-3.20.1-py3-none-any.whl", hash = "sha256:810c6e527c938c1cbcd0cdbce468445262c0ed3ccb498ff6c70eb9f4b5a6005f", size = 225815, upload-time = "2025-10-11T12:01:57.402Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/ce/b6cfd0c3c2bddf6fbaf66627062d8048900e9961c323f132a6ee413ab58f/kreuzberg-3.20.2-py3-none-any.whl", hash = "sha256:2fe4c700bcf54dc57711f35b32ef5f2827c134808e903a21f93758a5242f27bd", size = 226064, upload-time = "2025-10-11T18:34:24.321Z" },
 ]
 
 [package.optional-dependencies]

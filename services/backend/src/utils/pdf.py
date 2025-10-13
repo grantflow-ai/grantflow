@@ -2,8 +2,6 @@ from typing import Final
 
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
-from weasyprint import CSS, HTML
-from weasyprint.text.fonts import FontConfiguration
 
 logger = get_logger(__name__)
 
@@ -132,6 +130,10 @@ DEFAULT_CSS: Final[str] = """
 
 async def html_to_pdf(html_content: str) -> bytes:
     try:
+        # Lazy import to avoid loading weasyprint dependencies at module import time
+        from weasyprint import CSS, HTML  # noqa: PLC0415
+        from weasyprint.text.fonts import FontConfiguration  # noqa: PLC0415
+
         html_content = DEFAULT_HTML_TEMPLATE.format(html_content=html_content)
         font_config = FontConfiguration()
         css = CSS(

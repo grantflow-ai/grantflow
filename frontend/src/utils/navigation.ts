@@ -8,6 +8,16 @@ export const routes = {
 		const queryString = params.toString();
 		return queryString ? `/accept-invitation?${queryString}` : "/accept-invitation";
 	},
+
+	admin: {
+		grantingInstitutions: {
+			detail: (id: string) => `/admin/granting-institutions/${id}`,
+			edit: (id: string) => `/admin/granting-institutions/${id}/edit`,
+			list: () => "/admin/granting-institutions",
+			new: () => "/admin/granting-institutions/new",
+		},
+		root: () => "/admin",
+	},
 	finishEmailSignin: () => "/signup/email",
 
 	home: () => "/",

@@ -5,11 +5,13 @@ import { useApplicationStore } from "@/stores/application-store";
 
 export function LinkPreviewItem({
 	disableRemove = false,
+	onDelete,
 	parentId,
 	sourceStatus,
 	url,
 }: {
 	disableRemove?: boolean;
+	onDelete?: () => Promise<void> | void;
 	parentId?: string;
 	sourceStatus?: string;
 	url: string;
@@ -20,8 +22,13 @@ export function LinkPreviewItem({
 	const showRemoveIcon = !disableRemove;
 
 	const handleRemove = async () => {
-		if (!parentId || isIndexing || disableRemove) return;
-		await removeUrl(url, parentId);
+		if (isIndexing || disableRemove) return;
+
+		if (onDelete) {
+			await onDelete();
+		} else if (parentId) {
+			await removeUrl(url, parentId);
+		}
 	};
 
 	return (

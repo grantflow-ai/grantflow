@@ -77,15 +77,15 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		expect(screen.getByTestId("template-file-container")).toBeInTheDocument();
-		expect(screen.getByTestId("upload-files-button")).toBeInTheDocument();
+		expect(screen.getByTestId("template-file-button")).toBeInTheDocument();
 		expect(screen.getByText("Upload Documents")).toBeInTheDocument();
-		expect(screen.getByTestId("file-input")).toBeInTheDocument();
+		expect(screen.getByTestId("template-file-input")).toBeInTheDocument();
 	});
 
 	it("accepts correct file types", () => {
 		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 		const acceptAttribute = fileInput.getAttribute("accept");
 
 		expect(acceptAttribute).toContain("application/pdf");
@@ -99,7 +99,7 @@ describe("TemplateFileUploader", () => {
 	it("allows multiple file selection", () => {
 		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 		expect(fileInput).toHaveAttribute("multiple");
 	});
 
@@ -107,7 +107,7 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 
 		await user.upload(fileInput, file);
 
@@ -132,7 +132,7 @@ describe("TemplateFileUploader", () => {
 				type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 			}),
 		];
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 
 		await user.upload(fileInput, files);
 
@@ -151,7 +151,7 @@ describe("TemplateFileUploader", () => {
 		const largeFile = new File(["test"], "large.pdf", { type: "application/pdf" });
 		Object.defineProperty(largeFile, "size", { value: largeSize });
 
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 		await user.upload(fileInput, largeFile);
 
 		await waitFor(() => {
@@ -164,7 +164,7 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader parentId={undefined} sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 
 		await user.upload(fileInput, file);
 
@@ -177,7 +177,7 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 
 		await user.upload(fileInput, file);
 
@@ -195,7 +195,7 @@ describe("TemplateFileUploader", () => {
 
 		const files = [validFile, largeFile];
 
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 		await user.upload(fileInput, files);
 
 		await waitFor(() => {
@@ -217,7 +217,7 @@ describe("TemplateFileUploader", () => {
 			new File(["content 2"], "doc2.pdf", { type: "application/pdf" }),
 		];
 
-		const fileInput = screen.getByTestId("file-input");
+		const fileInput = screen.getByTestId("template-file-input");
 		await user.upload(fileInput, files);
 
 		await waitFor(() => {
@@ -231,7 +231,7 @@ describe("TemplateFileUploader", () => {
 
 		const label = screen.getByText("Upload Documents");
 		expect(label.tagName).toBe("LABEL");
-		expect(label).toHaveAttribute("for", "file-upload-template-files");
+		expect(label).toHaveAttribute("for", "template-file-file-input");
 		expect(label).toHaveClass("cursor-pointer");
 	});
 
@@ -240,7 +240,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -260,7 +260,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="application" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -280,7 +280,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -314,7 +314,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -349,7 +349,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="application" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -367,7 +367,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -391,7 +391,7 @@ describe("TemplateFileUploader", () => {
 					type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 				}),
 			];
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, files);
 
@@ -412,7 +412,7 @@ describe("TemplateFileUploader", () => {
 			render(<TemplateFileUploader parentId={undefined} sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			await user.upload(fileInput, file);
 
@@ -456,7 +456,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -483,7 +483,7 @@ describe("TemplateFileUploader", () => {
 			});
 			Object.defineProperty(file, "size", { value: 2_048_000 });
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -513,7 +513,7 @@ describe("TemplateFileUploader", () => {
 
 			render(<TemplateFileUploader parentId="parent-123" sourceType="template" />);
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 
 			const file1 = new File(["content1"], "doc1.pdf", { type: "application/pdf" });
 			Object.defineProperty(file1, "size", { value: 1_024_000 });
@@ -568,7 +568,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "huge.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 105 * 1024 * 1024 });
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -590,7 +590,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {
@@ -610,7 +610,7 @@ describe("TemplateFileUploader", () => {
 			const file = new File(["content"], "document.pdf", { type: "application/pdf" });
 			Object.defineProperty(file, "size", { value: 1_024_000 });
 
-			const fileInput = screen.getByTestId("file-input");
+			const fileInput = screen.getByTestId("template-file-input");
 			await user.upload(fileInput, file);
 
 			await waitFor(() => {

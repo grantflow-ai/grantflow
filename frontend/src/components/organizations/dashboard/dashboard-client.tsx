@@ -24,6 +24,7 @@ import { useOrganizationValidation } from "@/hooks/use-organization-validation";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
+import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -36,8 +37,17 @@ interface DashboardClientProps {
 
 export function DashboardClient({ initialOrganizations, initialProjects }: DashboardClientProps) {
 	const router = useRouter();
+	const isBackofficeAdmin = useUserStore((state) => state.isBackofficeAdmin);
+	const user = useUserStore((state) => state.user);
 
 	const validatedOrganizationId = useOrganizationValidation(initialOrganizations);
+
+	log.info("Dashboard rendering with user admin status", {
+		component: "DashboardClient",
+		is_backoffice_admin: isBackofficeAdmin,
+		user_uid: user?.uid,
+		validated_organization_id: validatedOrganizationId,
+	});
 
 	const { clearActiveProject, navigateToApplication, navigateToProject, stateHydrated } = useNavigationStore();
 	const { addNotification } = useNotificationStore();

@@ -177,4 +177,55 @@ describe("NavMain", () => {
 			);
 		});
 	});
+
+	describe("Admin Navigation", () => {
+		beforeEach(() => {
+			const mockApplications = ListApplicationsResponseFactory.build({
+				applications: [],
+			});
+			vi.mocked(listOrganizationApplications).mockResolvedValue(mockApplications);
+		});
+
+		it("shows admin button when isBackofficeAdmin is true", () => {
+			render(
+				<SidebarProvider>
+					<NavMain isBackofficeAdmin={true} userRole="OWNER" />
+				</SidebarProvider>,
+			);
+
+			expect(screen.getByTestId("admin-button")).toBeInTheDocument();
+		});
+
+		it("hides admin button when isBackofficeAdmin is false", () => {
+			render(
+				<SidebarProvider>
+					<NavMain isBackofficeAdmin={false} userRole="OWNER" />
+				</SidebarProvider>,
+			);
+
+			expect(screen.queryByTestId("admin-button")).not.toBeInTheDocument();
+		});
+
+		it("hides admin button when isBackofficeAdmin is undefined", () => {
+			render(
+				<SidebarProvider>
+					<NavMain userRole="OWNER" />
+				</SidebarProvider>,
+			);
+
+			expect(screen.queryByTestId("admin-button")).not.toBeInTheDocument();
+		});
+
+		it("admin button links to granting institutions page", () => {
+			render(
+				<SidebarProvider>
+					<NavMain isBackofficeAdmin={true} userRole="OWNER" />
+				</SidebarProvider>,
+			);
+
+			const adminButton = screen.getByTestId("admin-button");
+			const link = adminButton.closest("a");
+			expect(link).toHaveAttribute("href", "/admin/granting-institutions");
+		});
+	});
 });

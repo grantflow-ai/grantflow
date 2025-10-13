@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,6 +22,7 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { DashboardIcon } from "../icons/dashboard-icon";
 import { NoteStackIcon } from "../icons/note-stack-icon";
@@ -65,17 +66,26 @@ const SidebarStatusStyleMap: Record<ApplicationStatus, SidebarStatusStyle> = {
 
 interface NavMainProps {
 	"data-testid"?: string;
+	isBackofficeAdmin?: boolean;
 	userRole?: "ADMIN" | "COLLABORATOR" | "OWNER";
 }
 
-export function NavMain({ userRole, ...props }: NavMainProps) {
+export function NavMain({ isBackofficeAdmin, userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
+
+	log.info("NavMain rendering with admin status", {
+		component: "NavMain",
+		is_backoffice_admin: isBackofficeAdmin,
+		pathname,
+		user_role: userRole,
+	});
 	const router = useRouter();
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { selectedOrganizationId } = useOrganizationStore();
 	const [activeCollapsible, setActiveCollapsible] = useState<null | string>(isSettingsActive ? "settings" : null);
 	const isDashboardActive = pathname === routes.organization.root();
+	const isAdminActive = pathname.startsWith("/admin");
 	const [recentApplications, setRecentApplications] = useState<
 		API.ListOrganizationApplications.Http200.ResponseBody["applications"]
 	>([]);
@@ -359,6 +369,26 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
+
+			{isBackofficeAdmin && (
+				<SidebarMenuItem>
+					<SidebarMenuButton asChild className="text-primary" data-testid="admin-button" tooltip="Admin">
+						<Link className="flex items-center gap-2" href={routes.admin.grantingInstitutions.list()}>
+							<Shield
+								className={`size-4 shrink-0 group-data-[collapsible=icon]:hidden ${isAdminActive ? "text-primary" : "text-app-gray-700"}`}
+							/>
+							<Shield
+								className={`size-4 shrink-0 hidden group-data-[collapsible=icon]:block ${isAdminActive ? "text-primary" : "text-app-black"}`}
+							/>
+							<span
+								className={`group-data-[collapsible=icon]:hidden text-sm font-normal leading-5  ${isAdminActive ? "text-primary" : "text-app-black"}`}
+							>
+								Admin
+							</span>
+						</Link>
+					</SidebarMenuButton>
+				</SidebarMenuItem>
+			)}
 		</SidebarMenu>
 	);
 }

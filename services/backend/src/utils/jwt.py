@@ -16,18 +16,21 @@ class JWTClaims(NamedTuple):
     firebase_uid: str
     organization_id: UUID | None
     role: UserRoleEnum | None
+    is_backoffice_admin: bool
 
 
 def create_jwt(
     firebase_uid: str,
     organization_id: UUID | None = None,
     role: UserRoleEnum | None = None,
+    is_backoffice_admin: bool = False,
     ttl: timedelta | None = None,
 ) -> str:
     payload = {
         "sub": firebase_uid,
         "iat": int(datetime.now(UTC).timestamp()),
         "jti": token_hex(16),
+        "is_backoffice_admin": is_backoffice_admin,
     }
 
     if organization_id is not None:
@@ -73,10 +76,13 @@ def decode_jwt_claims(token: str) -> JWTClaims:
         if "role" in decoded_token:
             role = UserRoleEnum(decoded_token["role"])
 
+        is_backoffice_admin = decoded_token.get("is_backoffice_admin", False)
+
         return JWTClaims(
             firebase_uid=firebase_uid,
             organization_id=organization_id,
             role=role,
+            is_backoffice_admin=is_backoffice_admin,
         )
     except (
         ValueError,

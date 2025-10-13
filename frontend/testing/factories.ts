@@ -35,6 +35,7 @@ export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>(()
 	const testJwtValue =
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1vY2sgVXNlciIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxODkzNDU2MDAwfQ.4Adcj3UFYzPUVaVF43FmMab6RlaQD8A9V8wFzzht-KQ";
 	return {
+		is_backoffice_admin: false,
 		jwt_token: testJwtValue,
 	};
 });

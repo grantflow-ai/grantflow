@@ -1,14 +1,11 @@
 "use client";
 
-import Image from "next/image";
-import React from "react";
-
-import AppInput from "@/components/app/fields/input-field";
+import React, { useCallback } from "react";
+import { RagSourceUrlInput } from "@/components/shared/rag-source-url-input";
 import { WizardStep } from "@/constants";
 import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ parentId }: { parentId?: string }) {
 	const addUrl = useApplicationStore((state) => state.addUrl);
@@ -16,7 +13,7 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 	const currentStep = useWizardStore((state) => state.currentStep);
 	const { trackLinkAdd } = useWizardAnalytics();
 
-	const urls = React.useMemo(() => {
+	const existingUrls = React.useMemo(() => {
 		if (!application) return [];
 
 		if (parentId === application.grant_template?.id) {
@@ -28,68 +25,19 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 		return application.rag_sources.filter((source) => source.url).map((source) => source.url!);
 	}, [application, parentId]);
 
-	const [urlInput, setUrlInput] = React.useState("");
-	const [urlError, setUrlError] = React.useState<null | string>(null);
-
-	const validateUrl = (url: string): null | string => {
-		if (!isValidUrl(url)) {
-			return "Please enter a valid URL";
-		}
-		if (!parentId) {
-			return "Cannot add URL: Parent ID missing";
-		}
-		if (urls.includes(url)) {
-			return "URL already exists";
-		}
-		return null;
-	};
-
-	const handleAddUrl = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key !== "Enter" || !urlInput.trim()) return;
-
-		e.preventDefault();
-		const trimmedUrl = urlInput.trim();
-
-		const error = validateUrl(trimmedUrl);
-		if (error) {
-			setUrlError(error);
-			if (error === "URL already exists") {
-				setUrlInput("");
+	const handleUrlAdd = useCallback(
+		async (url: string) => {
+			if (!parentId) {
+				throw new Error("Cannot add URL: Parent ID missing");
 			}
-			return;
-		}
 
-		setUrlError(null);
-		const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
+			const step = currentStep === WizardStep.APPLICATION_DETAILS ? 1 : 3;
+			await trackLinkAdd(url, step);
 
-		await trackLinkAdd(trimmedUrl, step);
-
-		try {
-			await addUrl(trimmedUrl, parentId!);
-			setUrlInput("");
-		} catch (error) {
-			setUrlInput("");
-			throw error;
-		}
-	};
-
-	return (
-		<AppInput
-			errorMessage={urlError}
-			icon={<Image alt="Globe" className="text-input-icon" height={16} src="/icons/globe.svg" width={16} />}
-			id="url-input"
-			label="URL"
-			onChange={(e) => {
-				setUrlInput(e.target.value);
-				if (urlError) {
-					setUrlError(null);
-				}
-			}}
-			onKeyDown={handleAddUrl}
-			placeholder="Paste a link and press Enter to add"
-			testId="url-input"
-			type="url"
-			value={urlInput}
-		/>
+			await addUrl(url, parentId);
+		},
+		[addUrl, currentStep, parentId, trackLinkAdd],
 	);
+
+	return <RagSourceUrlInput existingUrls={existingUrls} onUrlAdd={handleUrlAdd} testId="url-input" />;
 }

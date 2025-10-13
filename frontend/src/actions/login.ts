@@ -17,11 +17,17 @@ export async function login(idToken: string) {
 		const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 		const requestBody: API.Login.RequestBody = { id_token: idToken };
 
-		const { jwt_token } = await getClient()
-			.post(loginUrl, { json: requestBody })
-			.json<API.Login.Http201.ResponseBody>();
+		const response = await getClient().post(loginUrl, { json: requestBody }).json<API.Login.Http201.ResponseBody>();
+
+		const { is_backoffice_admin, jwt_token } = response;
+
+		log.info("Backoffice admin status received from backend", {
+			action: "login",
+			is_backoffice_admin,
+		});
 
 		const cookieStore = await cookies();
+		// Store JWT in httpOnly cookie
 		cookieStore.set({
 			httpOnly: true,
 			maxAge: 60 * 60 * 24 * 7,
@@ -54,6 +60,9 @@ export async function login(idToken: string) {
 				.json();
 
 			log.info("action_success", { action: "login", duration_ms: Date.now() - started });
+
+			// Return admin status to client
+			return { is_backoffice_admin };
 		} catch (verifyError) {
 			const cookieStore = await cookies();
 			cookieStore.delete(SESSION_COOKIE);

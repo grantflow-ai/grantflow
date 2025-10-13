@@ -18,7 +18,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		const auth = getFirebaseAuth();
 		const unsubscribe = onAuthStateChanged(auth, (user) => {
 			if (user) {
-				log.info("User logged in", { uid: user.uid });
+				log.info("User logged in via Firebase auth", {
+					component: "AuthProvider",
+					uid: user.uid,
+				});
 				const userInfo = convertFirebaseUser(user);
 				setUser(userInfo);
 			} else {
