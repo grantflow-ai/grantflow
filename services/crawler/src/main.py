@@ -412,21 +412,25 @@ async def handle_url_crawling(
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
-        is_retriable = (
-            getattr(e, "category", None) == "retriable"
-            if hasattr(e, "category")
-            else False
+        error_category = (
+            getattr(e, "category", "unknown") if hasattr(e, "category") else "unknown"
         )
+        is_retriable = error_category == "retriable"
 
-        logger.exception(
-            "Error during URL crawling",
-            url=crawling_request["url"],
-            source_id=str(crawling_request["source_id"]),
-            error_type=error_type,
-            error_category=getattr(e, "category", "unknown"),
-            trace_id=trace_id,
-            error_duration_ms=round((time.time() - start_time) * 1000, 2),
-        )
+        log_payload = {
+            "url": crawling_request["url"],
+            "source_id": str(crawling_request["source_id"]),
+            "error_type": error_type,
+            "error_message": error_message,
+            "error_category": error_category,
+            "trace_id": trace_id,
+            "error_duration_ms": round((time.time() - start_time) * 1000, 2),
+        }
+
+        if is_retriable:
+            logger.exception("Error during URL crawling", **log_payload)
+        else:
+            logger.warning("Non-retriable error during URL crawling", **log_payload)
 
         if grant_application_id:
             if is_retriable:
@@ -467,6 +471,26 @@ async def handle_url_crawling(
                         error_message=error_message,
                     )
                 )
+        if is_retriable:
+            logger.info(
+                "Retrying URL crawling after retriable error",
+                url=crawling_request["url"],
+                source_id=str(crawling_request["source_id"]),
+                error_type=error_type,
+                trace_id=trace_id,
+            )
+            raise
+
+        logger.warning(
+            "Acknowledged non-retriable crawling failure",
+            url=crawling_request["url"],
+            source_id=str(crawling_request["source_id"]),
+            error_type=error_type,
+            error_category=error_category,
+            trace_id=trace_id,
+        )
+        return
+
     finally:
         await memory_store.delete(session_key)
 

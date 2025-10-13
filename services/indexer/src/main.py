@@ -342,7 +342,8 @@ async def handle_file_indexing(
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
-        is_retriable = getattr(e, "category", None) == "retriable" if hasattr(e, "category") else False
+        error_category = getattr(e, "category", "unknown") if hasattr(e, "category") else "unknown"
+        is_retriable = error_category == "retriable"
 
         logger.exception(
             "Error processing file",
@@ -401,11 +402,29 @@ async def handle_file_indexing(
             "Updated status to failed",
             failure_update_duration_ms=round(failure_update_duration * 1000, 2),
             is_retriable_error=is_retriable,
-            error_category=getattr(e, "category", "unknown"),
+            error_category=error_category,
             trace_id=trace_id,
         )
 
-        raise
+        if is_retriable:
+            logger.info(
+                "Retrying file indexing after retriable error",
+                filename=parse_result["blob_name"],
+                source_id=parse_result["source_id"],
+                error_type=error_type,
+                trace_id=trace_id,
+            )
+            raise
+
+        logger.warning(
+            "Acknowledged non-retriable indexing failure",
+            filename=parse_result["blob_name"],
+            source_id=parse_result["source_id"],
+            error_type=error_type,
+            error_category=error_category,
+            trace_id=trace_id,
+        )
+        return
 
 
 app = create_litestar_app(

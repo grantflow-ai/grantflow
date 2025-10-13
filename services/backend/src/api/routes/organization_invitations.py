@@ -9,7 +9,7 @@ from packages.db.src.tables import Organization, OrganizationInvitation, Organiz
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import insert, select, update
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.common_types import APIRequest
@@ -159,8 +159,23 @@ async def handle_create_organization_invitation(
                 expires_at=expires_at.isoformat(),
             )
 
+        except IntegrityError as e:
+            await session.rollback()
+            logger.warning(
+                "Duplicate organization invitation detected during creation",
+                organization_id=str(organization_id),
+                email=data["email"],
+                error=str(e.orig) if hasattr(e, "orig") else str(e),
+            )
+            raise ValidationException("Invitation already exists for this email") from e
         except SQLAlchemyError as e:
-            logger.error("Error creating organization invitation", exc_info=e)
+            await session.rollback()
+            logger.error(
+                "Unexpected database error creating organization invitation",
+                organization_id=str(organization_id),
+                email=data["email"],
+                exc_info=e,
+            )
             raise DatabaseError("Error creating organization invitation", context=str(e)) from e
 
 

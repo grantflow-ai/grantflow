@@ -165,7 +165,7 @@ async def handle_grant_application_notifications(
             project_id=str(project_id),
             application_id=str(application_id),
         )
-        raise
+        return
     except Exception as e:
         logger.error(
             "Unexpected error in WebSocket handler",
