@@ -36,6 +36,7 @@ export function useCookieConsent() {
 	};
 
 	return {
+		analyticsConsent: isHydrated ? Boolean(consentData?.preferences.analytics) : false,
 		consentData,
 		hasConsent: isHydrated ? Boolean(consentData?.consentGiven) : false,
 		hasInteracted: isHydrated ? Boolean(consentData?.hasInteracted) : false,
