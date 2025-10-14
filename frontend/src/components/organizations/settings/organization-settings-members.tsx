@@ -4,13 +4,13 @@ import { Edit, MoreVertical, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
 import {
-	createOrganizationInvitation,
 	deleteOrganizationInvitation,
 	getOrganizationInvitations,
 	getOrganizationMembers,
 	removeOrganizationMember,
 	updateOrganizationMemberRole,
 } from "@/actions/organization";
+import { inviteOrganizationMember } from "@/actions/organization-invitation";
 import { getProjects } from "@/actions/project";
 import type { InviteOptions } from "@/components/organizations/modals/invite-collaborator-modal";
 import { InviteCollaboratorModal } from "@/components/organizations/modals/invite-collaborator-modal";
@@ -21,6 +21,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotificationStore } from "@/stores/notification-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
@@ -71,6 +73,8 @@ export function OrganizationSettingsMembers({
 
 	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
+	const { organization } = useOrganizationStore();
+	const { user } = useUserStore();
 
 	const { data: members = [], isLoading } = useSWR(
 		`/organizations/${organizationId}/members`,
@@ -161,16 +165,29 @@ export function OrganizationSettingsMembers({
 
 	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
 		try {
-			await createOrganizationInvitation(organizationId, {
+			const result = await inviteOrganizationMember({
 				email,
-				has_all_projects_access: hasAllProjectsAccess,
-				project_ids: projectIds,
-				role,
+				hasAllProjectsAccess,
+				inviterName: user?.displayName ?? "Team Member",
+				organizationId,
+				organizationName: organization?.name ?? "",
+				projectIds,
+				role: role === "ADMIN" ? "admin" : "member",
 			});
+
+			if (!result.success) {
+				addNotification({
+					message: result.error ?? "Failed to send invitation",
+					projectName: "",
+					title: "Invitation failed",
+					type: "warning",
+				});
+				return;
+			}
 
 			await mutate(`/organizations/${organizationId}/invitations`);
 			addNotification({
-				message: `Invitation sent to ${email}`,
+				message: `Invitation email sent to ${email}`,
 				projectName: "",
 				title: "Invitation sent",
 				type: "success",

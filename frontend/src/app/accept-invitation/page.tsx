@@ -64,12 +64,19 @@ function AcceptInvitationContent() {
 				const result = await acceptInvitation(invitationId, token);
 
 				const resultPayload = JSON.parse(atob(result.token.split(".")[1])) as {
-					project_id: string;
+					organization_id?: string;
+					project_id?: string;
 				};
-				const projectId = resultPayload.project_id;
 
-				log.info("Invitation accepted successfully", { invitationId, projectId });
-				router.push(`/projects/${projectId}?success=invitation-accepted`);
+				log.info("Invitation accepted successfully", { invitationId, resultPayload });
+
+				if (resultPayload.organization_id && !resultPayload.project_id) {
+					router.push("/projects?success=invitation-accepted");
+				} else if (resultPayload.project_id) {
+					router.push(`/projects/${resultPayload.project_id}?success=invitation-accepted`);
+				} else {
+					router.push("/projects?success=invitation-accepted");
+				}
 			} catch (error) {
 				log.error("Failed to accept invitation", error);
 				router.push("/projects?error=invitation-failed");

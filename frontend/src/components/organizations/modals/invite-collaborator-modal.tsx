@@ -47,7 +47,7 @@ export function InviteCollaboratorModal({
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-		if (isCOllaboratorAndNoprojectSelected()) {
+		if (isCollaboratorAndNoprojectSelected()) {
 			toast.error("Please select at least one project for Collaborator role.");
 			return;
 		}
@@ -56,16 +56,23 @@ export function InviteCollaboratorModal({
 
 		setIsSubmitting(true);
 		try {
-			let hasAllProjectsAccess = false;
-			let projectIds: string[] = [];
+			let hasAllProjectsAccess: boolean | undefined;
+			let projectIds: string[] | undefined;
 
 			if (permission === "ADMIN") {
 				hasAllProjectsAccess = true;
-				projectIds = projects.map((project) => project.id);
 			} else if (projectId) {
+				hasAllProjectsAccess = false;
 				projectIds = [projectId];
 			} else {
-				projectIds = selectedProjects;
+				const allProjectsSelected = projects.length > 0 && selectedProjects.length === projects.length;
+
+				if (allProjectsSelected) {
+					hasAllProjectsAccess = true;
+				} else {
+					hasAllProjectsAccess = false;
+					projectIds = selectedProjects;
+				}
 			}
 
 			await onInvite({
@@ -116,7 +123,7 @@ export function InviteCollaboratorModal({
 			setEmailError(null);
 		}
 	};
-	const isCOllaboratorAndNoprojectSelected = () => {
+	const isCollaboratorAndNoprojectSelected = () => {
 		return permission === "COLLABORATOR" && !projectId && selectedProjects.length === 0;
 	};
 
