@@ -186,7 +186,6 @@ function AnswerCard({
 						<div className={showBack ? "" : "ml-auto"}>
 							<AppButton
 								data-testid="next-button"
-								disabled={!isSaveEnabled}
 								onClick={handleNext}
 								variant="primary"
 							>
