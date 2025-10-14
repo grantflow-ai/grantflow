@@ -1,5 +1,6 @@
 "use client";
 
+import { type Analytics, getAnalytics as getFirebaseAnalytics, isSupported } from "firebase/analytics";
 import { type FirebaseApp, initializeApp } from "firebase/app";
 import { type Auth, browserSessionPersistence, getAuth, setPersistence, type User, updateProfile } from "firebase/auth";
 import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -8,7 +9,13 @@ import type { UserInfo } from "@/types/user";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 
-const instanceRef: { app: FirebaseApp | null; auth: Auth | null; storage: FirebaseStorage | null } = {
+const instanceRef: {
+	analytics: Analytics | null;
+	app: FirebaseApp | null;
+	auth: Auth | null;
+	storage: FirebaseStorage | null;
+} = {
+	analytics: null,
 	app: null,
 	auth: null,
 	storage: null,
@@ -159,6 +166,28 @@ export function getFirebaseStorage(): FirebaseStorage {
 	}
 
 	return instanceRef.storage;
+}
+
+export async function getGA4Analytics(): Promise<Analytics | null> {
+	if (!instanceRef.analytics) {
+		// Check if analytics is supported in this environment
+		const analyticsSupported = await isSupported();
+		if (!analyticsSupported) {
+			log.warn("Firebase Analytics is not supported in this environment");
+			return null;
+		}
+
+		try {
+			log.info("Initializing Firebase Analytics");
+			const app = getFirebaseApp();
+			instanceRef.analytics = getFirebaseAnalytics(app);
+		} catch (error) {
+			log.error("Failed to initialize Firebase Analytics", error);
+			return null;
+		}
+	}
+
+	return instanceRef.analytics;
 }
 
 export async function updateUserProfile(profileData: { displayName?: string; photoURL?: string }): Promise<void> {

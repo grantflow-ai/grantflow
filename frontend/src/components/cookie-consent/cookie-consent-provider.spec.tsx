@@ -55,6 +55,7 @@ describe("CookieConsentProvider", () => {
 	describe("Initial Rendering & Hydration Logic", () => {
 		it("should render without crashing", () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -70,6 +71,7 @@ describe("CookieConsentProvider", () => {
 
 		it("should initially show no modals before hydration", () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -88,6 +90,7 @@ describe("CookieConsentProvider", () => {
 
 		it("should show consent modal after hydration when user hasn't interacted", async () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -105,6 +108,7 @@ describe("CookieConsentProvider", () => {
 
 		it("should not show consent modal after hydration when user has already interacted", () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: true,
 				consentData: {
 					consentGiven: true,
 					hasInteracted: true,
@@ -129,6 +133,7 @@ describe("CookieConsentProvider", () => {
 	describe("Modal Visibility State Management", () => {
 		it("should ensure only consent modal shows initially for new users", async () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -152,6 +157,7 @@ describe("CookieConsentProvider", () => {
 		it("should call saveConsent with correct data and hide consent modal", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -184,6 +190,7 @@ describe("CookieConsentProvider", () => {
 		it("should not show preferences modal after accepting all", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -209,6 +216,7 @@ describe("CookieConsentProvider", () => {
 		it("should hide consent modal and show preferences modal", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -235,6 +243,7 @@ describe("CookieConsentProvider", () => {
 		it("should not call saveConsent when customizing", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -259,6 +268,7 @@ describe("CookieConsentProvider", () => {
 		beforeEach(async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -338,6 +348,7 @@ describe("CookieConsentProvider", () => {
 		it("should hide preferences modal and show consent modal", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -371,6 +382,7 @@ describe("CookieConsentProvider", () => {
 		it("should not call saveConsent when canceling preferences", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -404,6 +416,7 @@ describe("CookieConsentProvider", () => {
 		it("should handle rapid state changes correctly", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -436,6 +449,7 @@ describe("CookieConsentProvider", () => {
 		it("should handle multiple saveConsent calls gracefully", async () => {
 			const user = userEvent.setup();
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -460,6 +474,7 @@ describe("CookieConsentProvider", () => {
 
 		it("should handle undefined hook values gracefully", () => {
 			mockUseCookieConsent.mockReturnValue({
+				analyticsConsent: false,
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
@@ -474,6 +489,7 @@ describe("CookieConsentProvider", () => {
 	describe("Hook Integration", () => {
 		it("should correctly use all hook values", () => {
 			const mockHookReturn = {
+				analyticsConsent: true,
 				consentData: {
 					consentGiven: true,
 					hasInteracted: true,

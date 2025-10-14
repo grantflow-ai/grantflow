@@ -1,6 +1,7 @@
 import { log } from "@/utils/logger/client";
 import { getAnalytics } from "@/utils/segment";
 import { TrackingEvents } from "./events";
+import { trackGA4Event } from "./ga4";
 import { getSessionId } from "./session";
 import type { EventProperties, TrackableEvent } from "./types";
 
@@ -48,12 +49,6 @@ export async function trackEvent<T extends TrackableEvent>(
 	properties: Omit<EventProperties[T], "path" | "sessionId" | "timestamp">,
 ): Promise<void> {
 	try {
-		const analyticsInstance = getAnalytics();
-		if (!analyticsInstance) {
-			log.warn("Analytics not initialized", { event });
-			return;
-		}
-
 		const fullProperties = {
 			...properties,
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -64,7 +59,17 @@ export async function trackEvent<T extends TrackableEvent>(
 			timestamp: new Date().toISOString(),
 		};
 
-		await analyticsInstance.track(event, fullProperties);
+		// Track to Segment
+		const analyticsInstance = getAnalytics();
+		if (analyticsInstance) {
+			await analyticsInstance.track(event, fullProperties);
+		} else {
+			log.warn("Segment analytics not initialized", { event });
+		}
+
+		// Track to GA4
+		await trackGA4Event(event, fullProperties);
+
 		log.info("Analytics event tracked", { event, properties: fullProperties });
 	} catch (error) {
 		log.error("Failed to track analytics event", { error, event, properties });
