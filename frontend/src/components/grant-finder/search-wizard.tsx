@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { FormSummary } from "./form-summary";
 import { ProgressBar } from "./progress-bar";
 import { ActivityCodesStep } from "./steps/activity-codes-step";
@@ -111,7 +112,10 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 	const isLastStep = currentStep === WIZARD_STEPS.length - 1;
 
 	return (
-		<div className="rounded-xl border border-blue-600 bg-white p-8 lg:p-12" data-testid="search-wizard">
+		<div
+			className="rounded-xl border border-input-border bg-white p-8 shadow-sm lg:p-12"
+			data-testid="search-wizard"
+		>
 			{}
 			<div className="mb-12" data-testid="wizard-progress-bar">
 				<ProgressBar currentStep={currentStep} steps={WIZARD_STEPS} />
@@ -131,41 +135,36 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 
 			{}
 			<div className="flex justify-between" data-testid="wizard-navigation">
-				<button
-					className={`rounded-md border border-blue-600 px-6 py-2 text-blue-600 transition-colors hover:bg-blue-50 ${
-						currentStep === 0 ? "invisible" : ""
-					}`}
+				<AppButton
+					className={currentStep === 0 ? "invisible" : ""}
 					data-testid="wizard-back-button"
 					onClick={handlePrevious}
-					type="button"
+					size="lg"
+					variant="secondary"
 				>
 					Back
-				</button>
+				</AppButton>
 
 				{isLastStep ? (
-					<button
-						className={`rounded-md px-6 py-2 text-white transition-colors ${
-							isStepValid() ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-gray-300"
-						}`}
+					<AppButton
 						data-testid="wizard-submit-button"
 						disabled={!isStepValid()}
 						onClick={handleSubmit}
-						type="button"
+						size="lg"
+						variant="primary"
 					>
 						Get Alerts
-					</button>
+					</AppButton>
 				) : (
-					<button
-						className={`rounded-md px-6 py-2 text-white transition-colors ${
-							isStepValid() ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-gray-300"
-						}`}
+					<AppButton
 						data-testid="wizard-next-button"
 						disabled={!isStepValid()}
 						onClick={handleNext}
-						type="button"
+						size="lg"
+						variant="primary"
 					>
 						Next
-					</button>
+					</AppButton>
 				)}
 			</div>
 		</div>

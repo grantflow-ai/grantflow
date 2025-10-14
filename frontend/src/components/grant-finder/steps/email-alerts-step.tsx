@@ -1,4 +1,7 @@
+import AppInput from "@/components/app/fields/input-field";
 import type { FormData } from "@/components/grant-finder/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface EmailAlertsStepProps {
 	formData: FormData;
@@ -9,66 +12,57 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 	return (
 		<div className="space-y-6" data-testid="email-alerts-step">
 			<div data-testid="email-alerts-step-header">
-				<h3 className="text-2xl font-semibold text-gray-900" data-testid="email-alerts-step-title">
+				<h3 className="text-2xl font-semibold text-dark" data-testid="email-alerts-step-title">
 					Email for Alerts
 				</h3>
-				<p className="mt-2 text-gray-600" data-testid="email-alerts-step-description">
+				<p className="mt-2 text-muted" data-testid="email-alerts-step-description">
 					Enter your email. We&apos;ll notify you the moment your next funding opportunity is announced. No
 					spam; unsubscribe anytime.
 				</p>
 			</div>
 
 			<div className="max-w-lg" data-testid="email-alerts-input-section">
-				<label
-					className="block text-sm font-medium text-gray-700"
-					data-testid="email-alerts-input-label"
-					htmlFor="email"
-				>
-					Email address
-				</label>
-				<input
-					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-					data-testid="email-alerts-input"
-					id="email"
+				<AppInput
+					label="Email address"
 					onChange={(e) => {
 						setFormData({ ...formData, email: e.target.value });
 					}}
 					placeholder="your.email@university.edu"
+					testId="email-alerts-input"
 					type="email"
 					value={formData.email}
+					variant="field"
 				/>
 			</div>
 
 			<div className="space-y-3" data-testid="email-alerts-checkboxes">
-				<label className="flex items-start" data-testid="terms-checkbox-label">
-					<input
+				<div className="flex items-start gap-2" data-testid="terms-checkbox-label">
+					<Checkbox
 						checked={formData.agreeToTerms}
-						className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 						data-testid="terms-checkbox"
-						onChange={(e) => {
-							setFormData({ ...formData, agreeToTerms: e.target.checked });
+						id="terms"
+						onCheckedChange={(checked) => {
+							setFormData({ ...formData, agreeToTerms: checked === true });
 						}}
-						type="checkbox"
 					/>
-					<span className="ml-2 text-sm text-gray-700" data-testid="terms-checkbox-text">
+					<Label className="text-sm text-dark" data-testid="terms-checkbox-text" htmlFor="terms">
 						I agree to the Terms & Conditions and Privacy Policy. (Required)
-					</span>
-				</label>
+					</Label>
+				</div>
 
-				<label className="flex items-start" data-testid="updates-checkbox-label">
-					<input
+				<div className="flex items-start gap-2" data-testid="updates-checkbox-label">
+					<Checkbox
 						checked={formData.agreeToUpdates}
-						className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 						data-testid="updates-checkbox"
-						onChange={(e) => {
-							setFormData({ ...formData, agreeToUpdates: e.target.checked });
+						id="updates"
+						onCheckedChange={(checked) => {
+							setFormData({ ...formData, agreeToUpdates: checked === true });
 						}}
-						type="checkbox"
 					/>
-					<span className="ml-2 text-sm text-gray-700" data-testid="updates-checkbox-text">
+					<Label className="text-sm text-dark" data-testid="updates-checkbox-text" htmlFor="updates">
 						I consent to receive occasional updates and tips from GrantFlow. (Optional)
-					</span>
-				</label>
+					</Label>
+				</div>
 			</div>
 		</div>
 	);
