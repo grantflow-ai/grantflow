@@ -75,7 +75,7 @@ const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
 
 	for (const [i, question] of RESEARCH_QUESTIONS.entries()) {
 		const answer = formInputs[question.key];
-		const hasAnswer = answer != undefined && answer != null;
+		const hasAnswer = answer != null;
 
 		if (hasAnswer) {
 			lastAnsweredIndex = i;
@@ -99,7 +99,7 @@ export function ResearchDeepDiveContent() {
 
 	const questionFlowState = useMemo(() => getQuestionFlowState(formInputs), [formInputs]);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(() => questionFlowState.selectedQuestion);
-	const [dirtyQuestion, setDirtyQuestion] = useState<number | null>(null);
+	const [dirtyQuestion, setDirtyQuestion] = useState<null | number>(null);
 
 	return (
 		<div className="flex w-full gap-6 px-16 pb-2" data-testid="research-deep-dive-content">
@@ -143,7 +143,7 @@ function AnswerCard({
 	onBack: () => void;
 	onNext: () => void;
 	selectedQuestion: number;
-	setDirtyQuestion: (index: number | null) => void;
+	setDirtyQuestion: (index: null | number) => void;
 	showBack: boolean;
 	showNext: boolean;
 }) {
@@ -211,13 +211,13 @@ function AnswerCard({
 function IndexBadge({
 	hasAnswer,
 	index,
-	isDisabled,
 	isDirty,
+	isDisabled,
 }: {
 	hasAnswer: boolean;
 	index: number;
-	isDisabled: boolean;
 	isDirty: boolean;
+	isDisabled: boolean;
 }) {
 	if (hasAnswer && !isDirty) {
 		return <Image alt="Done" className="size-7" height={26} src="/icons/research-question-done.svg" width={26} />;
@@ -239,16 +239,16 @@ function IndexBadge({
 function QuestionCard({
 	hasAnswer,
 	index,
-	isDisabled,
 	isDirty,
+	isDisabled,
 	isSelected,
 	onClick,
 	question,
 }: {
 	hasAnswer: boolean;
 	index: number;
-	isDisabled: boolean;
 	isDirty: boolean;
+	isDisabled: boolean;
 	isSelected: boolean;
 	onClick: () => void;
 	question: string;
@@ -276,11 +276,10 @@ function QuestionCard({
 		? `flex-1 max-h-5 group-hover:max-h-20 transition-all duration-300 truncate group-hover:whitespace-normal ${textColorClass}`
 		: `flex-1 truncate ${textColorClass}`;
 
-	const outlineClass = isDisabled
-		? "outline-app-gray-100"
-		: isSelected
-			? "outline-2 outline-primary"
-			: "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer";
+	const activeClass = isSelected
+		? "outline-2 outline-primary"
+		: "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer";
+	const outlineClass = isDisabled ? "outline-app-gray-100" : activeClass;
 
 	return (
 		<li>
@@ -297,7 +296,7 @@ function QuestionCard({
 				tabIndex={0}
 			>
 				<div className="flex items-center gap-3">
-					<IndexBadge hasAnswer={hasAnswer} index={index} isDisabled={isDisabled} isDirty={isDirty} />
+					<IndexBadge hasAnswer={hasAnswer} index={index} isDirty={isDirty} isDisabled={isDisabled} />
 					<p className={textClasses} ref={textRef}>
 						{question}
 					</p>
@@ -313,7 +312,7 @@ function QuestionsList({
 	questionFlowState,
 	selectedQuestion,
 }: {
-	dirtyQuestion: number | null;
+	dirtyQuestion: null | number;
 	onSelectQuestion: (index: number) => void;
 	questionFlowState: QuestionFlowState;
 	selectedQuestion: number;
@@ -332,8 +331,8 @@ function QuestionsList({
 					<QuestionCard
 						hasAnswer={hasAnswer}
 						index={index}
-						isDisabled={isDisabled}
 						isDirty={isDirty}
+						isDisabled={isDisabled}
 						isSelected={isSelected}
 						key={item.key}
 						onClick={() => {
