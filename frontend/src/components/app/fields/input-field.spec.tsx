@@ -181,7 +181,7 @@ describe.sequential("AppInput Component", () => {
 
 			const tag = screen.getByText("Words");
 			expect(tag).toBeInTheDocument();
-			expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
+			expect(tag.parentElement).toHaveAttribute("data-type", "Words");
 		});
 
 		it("does not display tag when showCountTypeTag is false", () => {

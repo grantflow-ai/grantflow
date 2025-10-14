@@ -352,6 +352,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 					<div className="gap-4 h-12 2xl:mt-4">
 						<div className="w-64">
 							<InputField
+								countType={formData.limitType === "words" ? "words" : "chars"}
 								label={`Max ${formData.limitType === "words" ? "words" : "characters"}`}
 								onChange={(e) => {
 									const parsedValue = Number.parseInt(e.target.value, 10);
