@@ -10,12 +10,18 @@ interface EmailAlertsStepProps {
 
 export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps) {
 	return (
-		<div className="space-y-6" data-testid="email-alerts-step">
+		<div className="space-y-4" data-testid="email-alerts-step">
 			<div data-testid="email-alerts-step-header">
-				<h3 className="text-2xl font-semibold text-dark" data-testid="email-alerts-step-title">
+				<h3
+					className="font-heading text-2xl font-medium leading-loose text-stone-900"
+					data-testid="email-alerts-step-title"
+				>
 					Email for Alerts
 				</h3>
-				<p className="mt-2 text-muted" data-testid="email-alerts-step-description">
+				<p
+					className="mt-2 text-muted-foreground-dark text-sm leading-none"
+					data-testid="email-alerts-step-description"
+				>
 					Enter your email. We&apos;ll notify you the moment your next funding opportunity is announced. No
 					spam; unsubscribe anytime.
 				</p>
@@ -35,7 +41,7 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 				/>
 			</div>
 
-			<div className="space-y-3" data-testid="email-alerts-checkboxes">
+			<div className="space-y-2" data-testid="email-alerts-checkboxes">
 				<div className="flex items-start gap-2" data-testid="terms-checkbox-label">
 					<Checkbox
 						checked={formData.agreeToTerms}
@@ -45,7 +51,7 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 							setFormData({ ...formData, agreeToTerms: checked === true });
 						}}
 					/>
-					<Label className="text-sm text-dark" data-testid="terms-checkbox-text" htmlFor="terms">
+					<Label className="text-sm text-stone-900" data-testid="terms-checkbox-text" htmlFor="terms">
 						I agree to the Terms & Conditions and Privacy Policy. (Required)
 					</Label>
 				</div>
@@ -59,7 +65,7 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 							setFormData({ ...formData, agreeToUpdates: checked === true });
 						}}
 					/>
-					<Label className="text-sm text-dark" data-testid="updates-checkbox-text" htmlFor="updates">
+					<Label className="text-sm text-stone-900" data-testid="updates-checkbox-text" htmlFor="updates">
 						I consent to receive occasional updates and tips from GrantFlow. (Optional)
 					</Label>
 				</div>

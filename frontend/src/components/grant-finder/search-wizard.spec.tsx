@@ -1,22 +1,28 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SearchWizard } from "./search-wizard";
 
 vi.mock("sonner", () => ({
 	toast: {
+		error: vi.fn(),
 		success: vi.fn(),
 	},
 }));
 
-describe.sequential("SearchWizard", () => {
-	const mockOnSubmit = vi.fn();
-	const user = userEvent.setup();
+vi.mock("next/navigation", () => ({
+	useRouter: vi.fn(() => ({
+		push: vi.fn(),
+	})),
+}));
 
-	beforeEach(() => {
-		mockOnSubmit.mockClear();
-	});
+vi.mock("@/actions/grants", () => ({
+	createSubscription: vi.fn().mockResolvedValue({}),
+}));
+
+describe.sequential("SearchWizard", () => {
+	const user = userEvent.setup();
 
 	afterEach(() => {
 		cleanup();
@@ -24,49 +30,49 @@ describe.sequential("SearchWizard", () => {
 	});
 
 	it("renders search wizard with testid", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		expect(screen.getByTestId("search-wizard")).toBeInTheDocument();
 	});
 
 	it("renders progress bar", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		expect(screen.getByTestId("wizard-progress-bar")).toBeInTheDocument();
 		expect(screen.getByTestId("progress-bar")).toBeInTheDocument();
 	});
 
 	it("renders step content container", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		expect(screen.getByTestId("wizard-step-content")).toBeInTheDocument();
 	});
 
 	it("renders navigation buttons", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		expect(screen.getByTestId("wizard-navigation")).toBeInTheDocument();
 		expect(screen.getByTestId("wizard-back-button")).toBeInTheDocument();
 		expect(screen.getByTestId("wizard-next-button")).toBeInTheDocument();
 	});
 
 	it("starts with keywords step", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		expect(screen.getByTestId("keywords-step")).toBeInTheDocument();
 		expect(screen.getByTestId("keywords-step-title")).toHaveTextContent("Keywords");
 	});
 
 	it("back button is invisible on first step", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		const backButton = screen.getByTestId("wizard-back-button");
 		expect(backButton).toHaveClass("invisible");
 	});
 
 	it("next button is disabled when keywords step is invalid", () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 		const nextButton = screen.getByTestId("wizard-next-button");
 		expect(nextButton).toBeDisabled();
 		expect(nextButton).toHaveClass("cursor-not-allowed", "bg-gray-300");
 	});
 
 	it("next button is enabled when keywords are entered", async () => {
-		render(<SearchWizard onSubmit={mockOnSubmit} />);
+		render(<SearchWizard />);
 
 		const keywordsTextarea = screen.getByTestId("keywords-textarea");
 		await user.type(keywordsTextarea, "CRISPR, cancer research");
@@ -78,7 +84,7 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Multi-step navigation", () => {
 		it("navigates through all steps in order", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			expect(screen.getByTestId("keywords-step")).toBeInTheDocument();
 
@@ -117,7 +123,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("can navigate backwards through steps", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
@@ -138,7 +144,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("preserves form data across steps", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR, gene editing");
@@ -157,7 +163,7 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Step validation", () => {
 		it("validates keywords step", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
@@ -172,7 +178,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("does not validate activity codes step (optional)", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
@@ -185,7 +191,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("validates institution location step", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
@@ -204,7 +210,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("validates career stage step", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
@@ -228,7 +234,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("validates email alerts step", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			await navigateToEmailStep(user, { fillEmailForm: false });
 
@@ -250,7 +256,7 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Form submission", () => {
 		it("shows form summary on final step", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			await navigateToEmailStep(user, { fillEmailForm: true });
 
@@ -259,7 +265,8 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("submits form with correct data format", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			const { createSubscription } = await import("@/actions/grants");
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR, cancer research, gene editing");
@@ -283,23 +290,27 @@ describe.sequential("SearchWizard", () => {
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
 			await user.click(termsCheckbox);
 
-			const updatesCheckbox = screen.getByTestId("updates-checkbox");
-			await user.click(updatesCheckbox);
-
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			await user.click(submitButton);
 
-			expect(mockOnSubmit).toHaveBeenCalledWith({
-				activityCodes: undefined,
-				careerStage: "Early-stage (≤ 10 yrs)",
+			expect(createSubscription).toHaveBeenCalledWith({
 				email: "researcher@university.edu",
-				institutionLocation: "U.S. institution (no foreign component)",
-				keywords: ["CRISPR", "cancer research", "gene editing"],
+				search_params: {
+					category: "",
+					deadline_after: "",
+					deadline_before: "",
+					limit: 20,
+					max_amount: 0,
+					min_amount: 0,
+					offset: 0,
+					query: "CRISPR cancer research gene editing",
+				},
 			});
 		});
 
 		it("submits form with minimal required data", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			const { createSubscription } = await import("@/actions/grants");
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "machine learning");
@@ -325,17 +336,24 @@ describe.sequential("SearchWizard", () => {
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			await user.click(submitButton);
 
-			expect(mockOnSubmit).toHaveBeenCalledWith({
-				activityCodes: undefined,
-				careerStage: "Senior (> 20 yrs)",
+			expect(createSubscription).toHaveBeenCalledWith({
 				email: "test@domain.org",
-				institutionLocation: "Non-U.S. (foreign) institution",
-				keywords: ["machine learning"],
+				search_params: {
+					category: "",
+					deadline_after: "",
+					deadline_before: "",
+					limit: 20,
+					max_amount: 0,
+					min_amount: 0,
+					offset: 0,
+					query: "machine learning",
+				},
 			});
 		});
 
 		it("handles keywords with commas correctly", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			const { createSubscription } = await import("@/actions/grants");
+			render(<SearchWizard />);
 
 			await navigateToEmailStep(user, {
 				fillEmailForm: true,
@@ -345,15 +363,19 @@ describe.sequential("SearchWizard", () => {
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			await user.click(submitButton);
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
+			expect(createSubscription).toHaveBeenCalledWith(
 				expect.objectContaining({
-					keywords: ["CRISPR-Cas9", "single-cell RNA-seq", "immunotherapy", "precision medicine"],
+					email: "test@example.com",
+					search_params: expect.objectContaining({
+						query: "CRISPR-Cas9 single-cell RNA-seq immunotherapy precision medicine",
+					}),
 				}),
 			);
 		});
 
 		it("filters out empty keywords", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			const { createSubscription } = await import("@/actions/grants");
+			render(<SearchWizard />);
 
 			await navigateToEmailStep(user, {
 				fillEmailForm: true,
@@ -363,9 +385,12 @@ describe.sequential("SearchWizard", () => {
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			await user.click(submitButton);
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
+			expect(createSubscription).toHaveBeenCalledWith(
 				expect.objectContaining({
-					keywords: ["CRISPR", "cancer research", "gene editing"],
+					email: "test@example.com",
+					search_params: expect.objectContaining({
+						query: "CRISPR cancer research gene editing",
+					}),
 				}),
 			);
 		});
@@ -373,7 +398,7 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Form data persistence", () => {
 		it("preserves all form data during navigation", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "proteomics");
@@ -414,14 +439,14 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Accessibility", () => {
 		it("has proper heading hierarchy", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsTitle = screen.getByTestId("keywords-step-title");
 			expect(keywordsTitle.tagName).toBe("H3");
 		});
 
 		it("has proper form labels", () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const keywordsLabel = screen.getByTestId("keywords-input-label");
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
@@ -431,7 +456,7 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("has proper button types", () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			expect(screen.getByTestId("wizard-back-button")).toHaveAttribute("type", "button");
 			expect(screen.getByTestId("wizard-next-button")).toHaveAttribute("type", "button");
@@ -440,14 +465,14 @@ describe.sequential("SearchWizard", () => {
 
 	describe("Edge cases", () => {
 		it("handles empty form submission gracefully", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 		});
 
 		it("handles very long keywords input", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			render(<SearchWizard />);
 
 			const longKeywords = `${"a".repeat(1000)}, ${"b".repeat(1000)}`;
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
@@ -458,7 +483,8 @@ describe.sequential("SearchWizard", () => {
 		});
 
 		it("handles special characters in keywords", async () => {
-			render(<SearchWizard onSubmit={mockOnSubmit} />);
+			const { createSubscription } = await import("@/actions/grants");
+			render(<SearchWizard />);
 
 			const specialKeywords = "CRISPR-Cas9, α-synuclein, β-amyloid, γ-secretase";
 			await navigateToEmailStep(user, { fillEmailForm: true, keywords: specialKeywords });
@@ -466,9 +492,12 @@ describe.sequential("SearchWizard", () => {
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			await user.click(submitButton);
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
+			expect(createSubscription).toHaveBeenCalledWith(
 				expect.objectContaining({
-					keywords: ["CRISPR-Cas9", "α-synuclein", "β-amyloid", "γ-secretase"],
+					email: "test@example.com",
+					search_params: expect.objectContaining({
+						query: "CRISPR-Cas9 α-synuclein β-amyloid γ-secretase",
+					}),
 				}),
 			);
 		});

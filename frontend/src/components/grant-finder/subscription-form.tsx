@@ -3,6 +3,8 @@
 import { CheckCircle, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { createSubscription } from "@/actions/grants";
+import { AppButton } from "@/components/app/buttons/app-button";
+import AppInput from "@/components/app/fields/input-field";
 import type { API } from "@/types/api-types";
 import type { SearchParams } from "./types";
 
@@ -72,67 +74,60 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 
 	return (
 		<div
-			className="rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6"
+			className="rounded-xl border border-input-border bg-white p-8 shadow-sm lg:p-12"
 			data-testid="subscription-form"
 		>
-			<div className="mb-4 flex items-center gap-2" data-testid="subscription-header">
-				<Mail className="h-5 w-5 text-blue-600" />
-				<h3 className="text-lg font-semibold text-gray-900">Get Grant Alerts</h3>
-			</div>
-
-			<p className="mb-4 text-sm text-gray-600">
-				Never miss a grant opportunity. We&apos;ll email you when new grants matching your search criteria are
-				posted.
-			</p>
-
-			<form className="space-y-3" data-testid="subscription-form-element" onSubmit={handleSubmit}>
+			<div className="space-y-6">
 				<div>
-					<label className="sr-only" htmlFor="subscription-email">
-						Email address
-					</label>
-					<input
-						className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-						data-testid="subscription-email-input"
-						disabled={loading}
-						id="subscription-email"
-						onChange={(e) => {
-							setEmail(e.target.value);
-						}}
-						placeholder="your.email@university.edu"
-						type="email"
-						value={email}
-					/>
+					<div className="mb-4 flex items-center gap-2" data-testid="subscription-header">
+						<Mail className="h-5 w-5 text-primary" />
+						<h3 className="font-heading text-2xl font-medium leading-loose text-stone-900">
+							Get Grant Alerts
+						</h3>
+					</div>
+
+					<p className="text-muted-foreground-dark text-sm leading-none">
+						Never miss a grant opportunity. We&apos;ll email you when new grants matching your search
+						criteria are posted.
+					</p>
 				</div>
 
-				{error && (
-					<p className="text-sm text-red-600" data-testid="subscription-error">
-						{error}
+				<form className="space-y-6" data-testid="subscription-form-element" onSubmit={handleSubmit}>
+					<div className="max-w-lg">
+						<AppInput
+							data-testid="subscription-email-input"
+							disabled={loading}
+							errorMessage={error}
+							id="subscription-email"
+							label="Email address"
+							onChange={(e) => {
+								setEmail(e.target.value);
+								setError(null);
+							}}
+							placeholder="your.email@university.edu"
+							testId="subscription-email-input"
+							type="email"
+							value={email}
+							variant="field"
+						/>
+					</div>
+
+					<AppButton
+						data-testid="subscription-submit-button"
+						disabled={loading}
+						leftIcon={loading ? <Loader2 className="animate-spin" role="progressbar" /> : <Mail />}
+						size="lg"
+						type="submit"
+						variant="primary"
+					>
+						{loading ? "Subscribing..." : "Subscribe to Alerts"}
+					</AppButton>
+
+					<p className="text-muted-foreground-dark text-xs leading-none">
+						By subscribing, you agree to receive email notifications. You can unsubscribe at any time.
 					</p>
-				)}
-
-				<button
-					className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-					data-testid="subscription-submit-button"
-					disabled={loading}
-					type="submit"
-				>
-					{loading ? (
-						<>
-							<Loader2 className="h-4 w-4 animate-spin" role="progressbar" />
-							Subscribing...
-						</>
-					) : (
-						<>
-							<Mail className="h-4 w-4" />
-							Subscribe to Alerts
-						</>
-					)}
-				</button>
-
-				<p className="text-xs text-gray-500">
-					By subscribing, you agree to receive email notifications. You can unsubscribe at any time.
-				</p>
-			</form>
+				</form>
+			</div>
 		</div>
 	);
 }

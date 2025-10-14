@@ -10,13 +10,22 @@ export function CareerStageStep({ formData, setFormData }: CareerStageStepProps)
 	return (
 		<div className="space-y-6" data-testid="career-stage-step">
 			<div data-testid="career-stage-step-header">
-				<h3 className="text-2xl font-semibold text-dark" data-testid="career-stage-step-title">
+				<h3
+					className="font-heading text-2xl font-medium leading-loose text-stone-900"
+					data-testid="career-stage-step-title"
+				>
 					Career Stage
 				</h3>
-				<p className="mt-2 text-muted" data-testid="career-stage-step-description">
+				<p
+					className="mt-2 text-muted-foreground-dark text-sm leading-none"
+					data-testid="career-stage-step-description"
+				>
 					How many years has it been since you earned your PhD?
 				</p>
-				<p className="mt-1 text-sm text-muted" data-testid="career-stage-step-note">
+				<p
+					className="mt-1 text-muted-foreground-dark text-sm leading-none"
+					data-testid="career-stage-step-note"
+				>
 					Note: Certain FOAs limit eligibility to Early-Stage Investigators. Choose the option that matches
 					your status.
 				</p>
@@ -24,7 +33,7 @@ export function CareerStageStep({ formData, setFormData }: CareerStageStepProps)
 
 			<div className="max-w-lg" data-testid="career-stage-select-section">
 				<div
-					className="block text-sm font-medium text-input-label mb-1"
+					className="block text-sm font-semibold text-stone-900 mb-1"
 					data-testid="career-stage-select-label"
 				>
 					Select your career stage
