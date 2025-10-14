@@ -83,7 +83,7 @@ describe.sequential("AcceptInvitationPage", () => {
 		render(<AcceptInvitationPage />);
 
 		await vi.waitFor(() => {
-			expect(acceptInvitation).toHaveBeenCalledWith("inv-123");
+			expect(acceptInvitation).toHaveBeenCalledWith("inv-123", fullToken);
 		});
 
 		await vi.waitFor(() => {
