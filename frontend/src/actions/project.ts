@@ -4,11 +4,12 @@ import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
-export async function acceptInvitation(invitationId: string) {
+export async function acceptInvitation(invitationId: string, token: string) {
 	return withAuthRedirect(
 		getClient()
 			.post(`projects/invitations/${invitationId}/accept`, {
 				headers: await createAuthHeaders(),
+				json: { token },
 			})
 			.json<API.AcceptInvitation.Http200.ResponseBody>(),
 	);

@@ -422,11 +422,15 @@ async def handle_create_invitation_redirect_url(
                 .returning(OrganizationInvitation)
             )
 
+            project_ids = data.get("project_ids", [])
+            if not project_ids:
+                project_ids = [str(project_id)]
+
             jwt_payload = {
                 "invitation_id": str(invitation.id),
                 "project_id": str(project_id),
                 "role": data["role"].value,
-                "project_ids": data.get("project_ids", []),
+                "project_ids": project_ids,
                 "iat": int(datetime.now(UTC).timestamp()),
                 "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),

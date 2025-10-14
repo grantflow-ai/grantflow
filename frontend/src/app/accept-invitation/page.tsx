@@ -61,7 +61,7 @@ function AcceptInvitationContent() {
 					throw new Error("Invalid invitation token format");
 				}
 
-				const result = await acceptInvitation(invitationId);
+				const result = await acceptInvitation(invitationId, token);
 
 				const resultPayload = JSON.parse(atob(result.token.split(".")[1])) as {
 					project_id: string;
