@@ -1,17 +1,19 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { searchGrants } from "@/actions/grants";
+import { AppButton } from "@/components/app/buttons/app-button";
 import type { API } from "@/types/api-types";
 import { GrantCard } from "./grant-card";
 import type { Grant, SearchParams } from "./types";
 
 interface SearchResultsProps {
+	onBack?: () => void;
 	searchParams: SearchParams;
 }
 
-export function SearchResults({ searchParams }: SearchResultsProps) {
+export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 	const [grants, setGrants] = useState<Grant[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<null | string>(null);
@@ -114,6 +116,23 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
 	return (
 		<div className="space-y-6" data-testid="search-results-container">
+			{onBack && (
+				<div className="mb-6 flex items-center justify-between" data-testid="search-results-header">
+					<AppButton
+						data-testid="new-search-button"
+						leftIcon={<ArrowLeft />}
+						onClick={onBack}
+						size="md"
+						variant="secondary"
+					>
+						New Search
+					</AppButton>
+					<h3 className="text-2xl font-semibold text-gray-900" data-testid="search-results-title">
+						{grants.length} Grant{grants.length === 1 ? "" : "s"} Found
+					</h3>
+				</div>
+			)}
+
 			<div className="grid gap-4" data-testid="grants-grid">
 				{grants.map((grant, index) => (
 					<GrantCard grant={grant} key={`${grant.id || index}`} />
@@ -122,22 +141,16 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
 			{hasMore && (
 				<div className="flex justify-center" data-testid="load-more-section">
-					<button
-						className="rounded-md bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+					<AppButton
 						data-testid="load-more-button"
 						disabled={loading}
+						leftIcon={loading ? <Loader2 className="animate-spin" role="progressbar" /> : undefined}
 						onClick={loadMore}
-						type="button"
+						size="lg"
+						variant="primary"
 					>
-						{loading ? (
-							<>
-								<Loader2 className="mr-2 inline h-4 w-4 animate-spin" role="progressbar" />
-								Loading...
-							</>
-						) : (
-							"Load More"
-						)}
-					</button>
+						{loading ? "Loading..." : "Load More"}
+					</AppButton>
 				</div>
 			)}
 		</div>

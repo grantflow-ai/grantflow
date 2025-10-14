@@ -10,10 +10,10 @@ export function ActivityCodesStep({ formData, setFormData }: ActivityCodesStepPr
 	return (
 		<div className="space-y-6" data-testid="activity-codes-step">
 			<div data-testid="activity-codes-step-header">
-				<h3 className="text-2xl font-semibold text-gray-900" data-testid="activity-codes-step-title">
+				<h3 className="text-2xl font-semibold text-dark" data-testid="activity-codes-step-title">
 					NIH Activity Codes
 				</h3>
-				<p className="mt-2 text-gray-600" data-testid="activity-codes-step-description">
+				<p className="mt-2 text-muted" data-testid="activity-codes-step-description">
 					Select one or more grant mechanisms, or leave this blank to scan all FOAs.
 				</p>
 			</div>
