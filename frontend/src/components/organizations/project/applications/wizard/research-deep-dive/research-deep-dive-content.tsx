@@ -277,7 +277,7 @@ function QuestionCard({
 		: `flex-1 truncate ${textColorClass}`;
 
 	const activeClass = isSelected
-		? "outline-2 outline-primary"
+		? "outline-2 outline-primary cursor-pointer"
 		: "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer";
 	const outlineClass = isDisabled ? "outline-app-gray-100" : activeClass;
 
