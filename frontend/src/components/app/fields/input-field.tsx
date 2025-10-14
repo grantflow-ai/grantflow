@@ -31,7 +31,7 @@ const getInputClasses = (
 	className?: string,
 ) => {
 	return cn(
-		"w-full bg-white text-dark text-sm rounded-sm p-3 placeholder:text-sm",
+		"w-full bg-white text-stone-900 text-sm rounded-sm p-3 placeholder:text-sm",
 		disabled
 			? "placeholder:text-input-muted border-input-muted"
 			: "placeholder:text-input-placeholder border-input-muted",

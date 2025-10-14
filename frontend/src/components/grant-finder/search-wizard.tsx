@@ -1,8 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { createSubscription } from "@/actions/grants";
 import { AppButton } from "@/components/app/buttons/app-button";
+import type { API } from "@/types/api-types";
 import { FormSummary } from "./form-summary";
 import { ProgressBar } from "./progress-bar";
 import { ActivityCodesStep } from "./steps/activity-codes-step";
@@ -10,16 +14,21 @@ import { CareerStageStep } from "./steps/career-stage-step";
 import { EmailAlertsStep } from "./steps/email-alerts-step";
 import { InstitutionLocationStep } from "./steps/institution-location-step";
 import { KeywordsStep } from "./steps/keywords-step";
-import type { FormData, SearchParams } from "./types";
+import type { FormData } from "./types";
 
-interface SearchWizardProps {
-	onSubmit: (params: SearchParams) => void;
-}
+const emailAlertsSchema = z.object({
+	agreeToTerms: z.literal(true, {
+		message: "You must agree to the Terms & Conditions to continue",
+	}),
+	email: z.email(),
+});
 
 const WIZARD_STEPS = ["Keywords", "Activity codes", "Institution location", "Career stage", "Email for alerts"];
 
-export function SearchWizard({ onSubmit }: SearchWizardProps) {
+export function SearchWizard() {
+	const router = useRouter();
 	const [currentStep, setCurrentStep] = useState(0);
+	const [loading, setLoading] = useState(false);
 	const [formData, setFormData] = useState<FormData>({
 		activityCodes: [],
 		agreeToTerms: false,
@@ -42,25 +51,56 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 		}
 	};
 
-	const handleSubmit = () => {
-		const searchParams: SearchParams = {
-			activityCodes: formData.activityCodes.length > 0 ? formData.activityCodes : undefined,
-			careerStage: formData.careerStage || undefined,
-			email: formData.email || undefined,
-			institutionLocation: formData.institutionLocation || undefined,
-			keywords: formData.keywords
-				.split(",")
-				.map((k) => k.trim())
-				.filter(Boolean),
-		};
-
-		onSubmit(searchParams);
-
-		toast.success("Success! Your NIH grant alerts are now active.", {
-			description:
-				"We'll notify you instantly when matching funding opportunities are announced. Check your email to confirm your subscription.",
-			duration: 6000,
+	const handleSubmit = async () => {
+		// Validate email and terms
+		const validation = emailAlertsSchema.safeParse({
+			agreeToTerms: formData.agreeToTerms,
+			email: formData.email,
 		});
+
+		if (!validation.success) {
+			const [firstError] = validation.error.issues;
+			toast.error(firstError.message);
+			return;
+		}
+
+		try {
+			setLoading(true);
+
+			// Create subscription
+			const requestBody: API.CreateSubscription.RequestBody = {
+				email: formData.email,
+				search_params: {
+					category: "",
+					deadline_after: "",
+					deadline_before: "",
+					limit: 20,
+					max_amount: 0,
+					min_amount: 0,
+					offset: 0,
+					query: formData.keywords
+						.split(",")
+						.map((k) => k.trim())
+						.filter(Boolean)
+						.join(" "),
+				},
+			};
+
+			await createSubscription(requestBody);
+
+			toast.success("Success! Your NIH grant alerts are now active.", {
+				description:
+					"We'll notify you instantly when matching funding opportunities are announced. Check your email to confirm your subscription.",
+				duration: 6000,
+			});
+
+			// Redirect to homepage
+			router.push("/");
+		} catch {
+			toast.error("Failed to create subscription. Please try again.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const isStepValid = () => {
@@ -78,7 +118,12 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 				return formData.careerStage.length > 0;
 			}
 			case 4: {
-				return formData.email.length > 0 && formData.agreeToTerms;
+				// Use zod validation for final step
+				const validation = emailAlertsSchema.safeParse({
+					agreeToTerms: formData.agreeToTerms,
+					email: formData.email,
+				});
+				return validation.success;
 			}
 			default: {
 				return false;
@@ -116,28 +161,25 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 			className="rounded-xl border border-input-border bg-white p-8 shadow-sm lg:p-12"
 			data-testid="search-wizard"
 		>
-			{}
 			<div className="mb-12" data-testid="wizard-progress-bar">
 				<ProgressBar currentStep={currentStep} steps={WIZARD_STEPS} />
 			</div>
 
-			{}
 			<div className="mb-8 min-h-[400px]" data-testid="wizard-step-content">
 				{renderStep()}
 			</div>
 
-			{}
 			{isLastStep && (
 				<div className="mb-8" data-testid="wizard-form-summary">
 					<FormSummary formData={formData} />
 				</div>
 			)}
 
-			{}
 			<div className="flex justify-between" data-testid="wizard-navigation">
 				<AppButton
 					className={currentStep === 0 ? "invisible" : ""}
 					data-testid="wizard-back-button"
+					disabled={loading}
 					onClick={handlePrevious}
 					size="lg"
 					variant="secondary"
@@ -148,12 +190,12 @@ export function SearchWizard({ onSubmit }: SearchWizardProps) {
 				{isLastStep ? (
 					<AppButton
 						data-testid="wizard-submit-button"
-						disabled={!isStepValid()}
-						onClick={handleSubmit}
+						disabled={!isStepValid() || loading}
+						onClick={() => void handleSubmit()}
 						size="lg"
 						variant="primary"
 					>
-						Get Alerts
+						{loading ? "Submitting..." : "Get Alerts"}
 					</AppButton>
 				) : (
 					<AppButton

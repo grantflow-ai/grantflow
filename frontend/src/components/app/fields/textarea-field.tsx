@@ -77,7 +77,7 @@ export default function AppTextArea({
 			<Textarea
 				{...props}
 				className={cn(
-					"w-full bg-white text-dark text-sm rounded-sm py-2 px-3 placeholder:text-sm",
+					"w-full bg-white text-stone-900 text-sm rounded-sm py-2 px-3 placeholder:text-sm",
 					props.disabled ? "placeholder:text-input-muted" : "placeholder:text-input-placeholder",
 					variant === "field" && "ring-1 ring-input-border",
 					errorMessage && "border-error",

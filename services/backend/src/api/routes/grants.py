@@ -2,13 +2,14 @@ from datetime import UTC, datetime
 from typing import Any, NotRequired, TypedDict
 
 from litestar import get, post
-from litestar.exceptions import NotFoundException, ValidationException
+from litestar.exceptions import NotFoundException
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import Grant, GrantMatchingSubscription
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import func, insert, or_, update
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import func, or_, update
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -206,26 +207,35 @@ async def handle_create_subscription(
                 "unsubscribed": False,
             }
 
-            try:
-                result = await session.execute(
-                    insert(GrantMatchingSubscription)
-                    .values(**subscription_data)
-                    .returning(GrantMatchingSubscription.id)
+            # Use ON CONFLICT to update existing subscription or insert new one
+            stmt = (
+                insert(GrantMatchingSubscription)
+                .values(**subscription_data)
+                .on_conflict_do_update(
+                    index_elements=["email"],
+                    set_={
+                        "search_params": subscription_data["search_params"],
+                        "frequency": subscription_data["frequency"],
+                        "unsubscribed": False,
+                        "unsubscribed_at": None,
+                    },
                 )
-                subscription_id = result.scalar_one()
+                .returning(GrantMatchingSubscription.id)
+            )
 
-                return SubscriptionResponse(
-                    id=str(subscription_id),
-                    message="Subscription created successfully.",
-                )
+            result = await session.execute(stmt)
+            subscription_id = result.scalar_one()
 
-            except IntegrityError as e:
-                logger.warning(
-                    "Duplicate subscription attempt",
-                    email=data["email"],
-                    error=str(e),
-                )
-                raise ValidationException("A subscription with this email already exists") from e
+            logger.info(
+                "Subscription created or updated",
+                email=data["email"],
+                subscription_id=str(subscription_id),
+            )
+
+            return SubscriptionResponse(
+                id=str(subscription_id),
+                message="Subscription created successfully.",
+            )
 
     except SQLAlchemyError as e:
         logger.error(

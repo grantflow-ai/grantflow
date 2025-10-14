@@ -127,7 +127,7 @@ export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 					>
 						New Search
 					</AppButton>
-					<h3 className="text-2xl font-semibold text-gray-900" data-testid="search-results-title">
+					<h3 className="font-heading text-2xl font-medium text-stone-900" data-testid="search-results-title">
 						{grants.length} Grant{grants.length === 1 ? "" : "s"} Found
 					</h3>
 				</div>

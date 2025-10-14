@@ -65,12 +65,12 @@ export function GrantCard({ grant }: GrantCardProps) {
 							)}
 						</div>
 
-						<h3 className="mb-2 text-lg font-semibold text-dark" data-testid="grant-title">
+						<h3 className="mb-2 text-lg font-semibold text-stone-900" data-testid="grant-title">
 							{grant.title || "Untitled Grant Opportunity"}
 						</h3>
 
 						<div
-							className="mb-3 flex items-center gap-1 text-sm text-muted"
+							className="mb-3 flex items-center gap-1 text-sm text-muted-foreground-dark"
 							data-testid="grant-organization"
 						>
 							<Building2 className="h-4 w-4" />
@@ -80,16 +80,16 @@ export function GrantCard({ grant }: GrantCardProps) {
 				</div>
 
 				{grant.description && (
-					<p className="line-clamp-3 text-sm text-muted" data-testid="grant-description">
+					<p className="line-clamp-3 text-sm text-muted-foreground-dark" data-testid="grant-description">
 						{grant.description}
 					</p>
 				)}
 
 				<div className="grid gap-3 sm:grid-cols-2" data-testid="grant-details">
 					<div className="flex items-center gap-2" data-testid="grant-deadline">
-						<Calendar className="h-4 w-4 text-muted" />
+						<Calendar className="h-4 w-4 text-muted-foreground" />
 						<div className="text-sm">
-							<div className="text-muted">Deadline</div>
+							<div className="text-muted-foreground-dark">Deadline</div>
 							<div className={`font-medium ${getDeadlineColor(grant.deadline ?? undefined)}`}>
 								{formatDeadline(grant.deadline ?? undefined)}
 							</div>
@@ -97,10 +97,10 @@ export function GrantCard({ grant }: GrantCardProps) {
 					</div>
 
 					<div className="flex items-center gap-2" data-testid="grant-funding">
-						<DollarSign className="h-4 w-4 text-muted" />
+						<DollarSign className="h-4 w-4 text-muted-foreground" />
 						<div className="text-sm">
-							<div className="text-muted">Funding</div>
-							<div className="font-medium text-dark">
+							<div className="text-muted-foreground-dark">Funding</div>
+							<div className="font-medium text-stone-900">
 								{formatAmount(grant.amount_min, grant.amount_max)}
 							</div>
 						</div>
@@ -110,7 +110,10 @@ export function GrantCard({ grant }: GrantCardProps) {
 				<div className="flex items-center justify-between border-t pt-4" data-testid="grant-footer">
 					<div className="flex items-center gap-4">
 						{grant.eligibility && (
-							<div className="flex items-center gap-1 text-xs text-muted" data-testid="grant-eligibility">
+							<div
+								className="flex items-center gap-1 text-xs text-muted-foreground-dark"
+								data-testid="grant-eligibility"
+							>
 								<FileText className="h-3 w-3" />
 								<span>Eligibility criteria apply</span>
 							</div>
