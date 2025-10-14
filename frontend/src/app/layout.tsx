@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { GA4PageViewTracker } from "@/components/analytics/ga4-pageview-tracker";
 import { cn } from "@/lib/utils";
+import { CookiesProviderWrapper } from "@/providers/cookies-provider";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
@@ -67,8 +68,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				)}
 				suppressHydrationWarning
 			>
-				<GA4PageViewTracker />
-				{children}
+				<CookiesProviderWrapper>
+					<GA4PageViewTracker />
+					{children}
+				</CookiesProviderWrapper>
 			</body>
 		</html>
 	);

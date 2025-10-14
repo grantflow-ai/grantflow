@@ -22,16 +22,13 @@ function GA4PageViewTrackerInner() {
 	const searchParams = useSearchParams();
 	const { analyticsConsent, isHydrated } = useCookieConsent();
 
-	// Update consent when it changes
 	useEffect(() => {
 		if (isHydrated) {
 			void updateGA4Consent(analyticsConsent);
 		}
 	}, [analyticsConsent, isHydrated]);
 
-	// Track page views
 	useEffect(() => {
-		// Only track if user has given consent
 		if (!analyticsConsent) {
 			return;
 		}
