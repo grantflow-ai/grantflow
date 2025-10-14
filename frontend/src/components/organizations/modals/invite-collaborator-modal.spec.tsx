@@ -1,7 +1,13 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
+import { vi } from "vitest";
 import { InviteCollaboratorModal } from "./invite-collaborator-modal";
+
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+	},
+}));
 
 const getLatestModal = async () => {
 	const modals = await screen.findAllByTestId("invite-collaborator-modal");
@@ -171,7 +177,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		});
 	});
 
-	it("calls onInvite with correct parameters when form is submitted", async () => {
+	it("calls onInvite with correct parameters when admin is selected", async () => {
 		const user = userEvent.setup();
 		mockOnInvite.mockResolvedValue(undefined);
 
@@ -196,8 +202,98 @@ describe.sequential("InviteCollaboratorModal", () => {
 			expect(mockOnInvite).toHaveBeenCalledWith({
 				email: "test@example.com",
 				hasAllProjectsAccess: true,
-				projectIds: [],
+				projectIds: undefined,
 				role: "ADMIN",
+			});
+		});
+	});
+
+	it("calls onInvite with hasAllProjectsAccess=true when all projects selected individually", async () => {
+		const user = userEvent.setup();
+		mockOnInvite.mockResolvedValue(undefined);
+		const mockProjects = [
+			{ id: "proj-1", name: "Project 1" },
+			{ id: "proj-2", name: "Project 2" },
+		];
+
+		render(
+			<InviteCollaboratorModal
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={mockProjects}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		await user.type(modalQueries.getByTestId("email-input"), "test@example.com");
+
+		await user.click(modalQueries.getByTestId("permission-dropdown"));
+		await user.click(await modalQueries.findByText("Collaborator"));
+
+		// Select all projects individually
+		await user.click(modalQueries.getByTestId("project-access-dropdown"));
+		await user.click(await modalQueries.findByText("Project 1"));
+
+		await user.click(modalQueries.getByTestId("project-access-dropdown"));
+		await user.click(await modalQueries.findByText("Project 2"));
+
+		// Wait for both projects to be displayed as chips
+		await waitFor(() => {
+			expect(modalQueries.getByText("Project 1")).toBeInTheDocument();
+			expect(modalQueries.getByText("Project 2")).toBeInTheDocument();
+		});
+
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
+
+		await waitFor(() => {
+			expect(mockOnInvite).toHaveBeenCalledWith({
+				email: "test@example.com",
+				hasAllProjectsAccess: true,
+				projectIds: undefined,
+				role: "COLLABORATOR",
+			});
+		});
+	});
+
+	it("calls onInvite with specific projectIds when some projects selected", async () => {
+		const user = userEvent.setup();
+		mockOnInvite.mockResolvedValue(undefined);
+		const mockProjects = [
+			{ id: "proj-1", name: "Project 1" },
+			{ id: "proj-2", name: "Project 2" },
+		];
+
+		render(
+			<InviteCollaboratorModal
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={mockProjects}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		await user.type(modalQueries.getByTestId("email-input"), "test@example.com");
+
+		await user.click(modalQueries.getByTestId("permission-dropdown"));
+		await user.click(await modalQueries.findByText("Collaborator"));
+
+		await user.click(modalQueries.getByTestId("project-access-dropdown"));
+		await user.click(await modalQueries.findByText("Project 1"));
+
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
+
+		await waitFor(() => {
+			expect(mockOnInvite).toHaveBeenCalledWith({
+				email: "test@example.com",
+				hasAllProjectsAccess: false,
+				projectIds: ["proj-1"],
+				role: "COLLABORATOR",
 			});
 		});
 	});
@@ -263,9 +359,47 @@ describe.sequential("InviteCollaboratorModal", () => {
 		expect(mockOnInvite).toHaveBeenCalledWith({
 			email: "test@example.com",
 			hasAllProjectsAccess: true,
-			projectIds: [],
+			projectIds: undefined,
 			role: "ADMIN",
 		});
+	});
+
+	it("shows validation error when collaborator selected without projects", async () => {
+		const user = userEvent.setup();
+		const mockProjects = [
+			{ id: "proj-1", name: "Project 1" },
+			{ id: "proj-2", name: "Project 2" },
+		];
+
+		const { toast } = await import("sonner");
+		const toastErrorSpy = vi.mocked(toast.error);
+		toastErrorSpy.mockClear();
+
+		render(
+			<InviteCollaboratorModal
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={mockProjects}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		await user.type(modalQueries.getByTestId("email-input"), "test@example.com");
+
+		await user.click(modalQueries.getByTestId("permission-dropdown"));
+		await user.click(await modalQueries.findByText("Collaborator"));
+
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
+
+		// Verify toast.error was called with the validation message
+		await waitFor(() => {
+			expect(toastErrorSpy).toHaveBeenCalledWith("Please select at least one project for Collaborator role.");
+		});
+
+		expect(mockOnInvite).not.toHaveBeenCalled();
 	});
 
 	it("shows loading state during submission", async () => {
