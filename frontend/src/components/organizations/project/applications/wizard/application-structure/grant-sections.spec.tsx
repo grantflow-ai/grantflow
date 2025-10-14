@@ -215,9 +215,22 @@ describe("SortableSection", () => {
 		expect(input).toHaveValue(5000);
 	});
 
-	it("displays count type tag in max count input field", () => {
+	it("displays count type tag in max count input field for words constraint", () => {
 		const section = GrantSectionDetailedFactory.build({
 			length_constraint: { source: null, type: "words", value: 3000 },
+		});
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const tags = screen.getAllByText("Words");
+		const inputFieldTag = tags.find((el) => el.parentElement?.hasAttribute("data-type"));
+		expect(inputFieldTag).toBeInTheDocument();
+		expect(inputFieldTag?.parentElement).toHaveAttribute("data-type", "Words");
+	});
+
+	it("displays count type tag in max count input field for characters constraint", () => {
+		const section = GrantSectionDetailedFactory.build({
+			length_constraint: { source: null, type: "characters", value: 19_500 },
 		});
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);

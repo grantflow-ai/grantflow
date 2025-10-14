@@ -128,7 +128,7 @@ export default function AppInput({
 				{showCountTypeTag && (
 					<div
 						className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 bg-indigo-100 rounded-2xl inline-flex justify-start items-center gap-[2.85px]"
-						data-type="Characters"
+						data-type={countType === "chars" ? "Characters" : "Words"}
 					>
 						<div className="justify-start text-app-gray-600 text-[10px] leading-3">
 							{countType === "chars" ? "Characters" : "Words"}
