@@ -15,14 +15,46 @@ import {
 interface InviteCollaboratorsEmailTemplateProps {
 	acceptInvitationUrl: string;
 	inviterName: string;
-	projectName: string;
+	organizationName?: string;
+	projectName?: string;
 }
 
 export default function InviteCollaboratorsEmailTemplate({
 	acceptInvitationUrl,
 	inviterName,
+	organizationName,
 	projectName,
 }: InviteCollaboratorsEmailTemplateProps) {
+	const getPreviewText = () => {
+		if (projectName) {
+			return `collaborate on ${projectName}`;
+		}
+		if (organizationName) {
+			return `join ${organizationName}`;
+		}
+		return `join an organization created by ${inviterName}`;
+	};
+
+	const getInvitationContext = () => {
+		if (projectName) {
+			return (
+				<>
+					collaborate on the research project{" "}
+					<strong style={projectNameStyle}>&quot;{projectName}&quot;</strong> within the GrantFlow platform.
+				</>
+			);
+		}
+		if (organizationName) {
+			return (
+				<>
+					join the <strong style={projectNameStyle}>{organizationName}</strong> organization within the
+					GrantFlow platform.
+				</>
+			);
+		}
+		return <>join an organization within the GrantFlow platform.</>;
+	};
+
 	return (
 		<Html>
 			<Head>
@@ -56,7 +88,7 @@ export default function InviteCollaboratorsEmailTemplate({
           `}
 				</style>
 			</Head>
-			<Preview>You&apos;ve been invited to collaborate on {projectName}</Preview>
+			<Preview>You&apos;ve been invited to {getPreviewText()}</Preview>
 			<Body style={main}>
 				<Container className="container" style={container}>
 					<Section style={header}>
@@ -86,15 +118,22 @@ export default function InviteCollaboratorsEmailTemplate({
 						</Heading>
 
 						<Text className="paragraph" style={paragraph}>
-							You have been invited by <strong>{inviterName}</strong> to collaborate on the research
-							project <strong style={projectNameStyle}>&quot;{projectName}&quot;</strong> within the
-							GrantFlow platform.
+							You have been invited by <strong>{inviterName}</strong> to {getInvitationContext()}
 							<br />
 							GrantFlow is designed to help research teams streamline and manage the grant application
 							process.
 							<br />
-							As a collaborator, you will gain access to the project workspace and will be able to
-							contribute to grant applications and related documentation.
+							{projectName ? (
+								<>
+									As a collaborator, you will gain access to the project workspace and will be able to
+									contribute to grant applications and related documentation.
+								</>
+							) : (
+								<>
+									As a member, you will gain access to the organization&apos;s projects and will be
+									able to contribute to grant applications and related documentation.
+								</>
+							)}
 						</Text>
 
 						<Text className="paragraph" style={paragraph}>
