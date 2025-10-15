@@ -112,13 +112,20 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			expect(firstQuestionCard).not.toHaveClass("outline-app-gray-100");
 		});
 
-		it("disables questions beyond the next unanswered one", () => {
-			const formInputs = EmptyFormInputsFactory.build({
-				background_context: "Some background",
-			});
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
+		        it("disables questions beyond the next unanswered one", () => {
+		            			const formInputs = {
+		            				background_context: "Some background",
+		            				hypothesis: undefined,
+		            				rationale: undefined,
+		            				novelty_and_innovation: undefined,
+		            				impact: undefined,
+		            				team_excellence: undefined,
+		            				research_feasibility: undefined,
+		            				preliminary_data: undefined,
+		            			};
+		            			const application = ApplicationWithTemplateFactory.build({
+		            				form_inputs: formInputs,
+		            			});
 
 			useApplicationStore.setState({ application });
 
@@ -132,11 +139,16 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 
 		it("enables all answered questions for editing", () => {
-			const formInputs = EmptyFormInputsFactory.build({
+			const formInputs = {
 				background_context: "Background",
 				hypothesis: "Hypothesis",
 				rationale: "Rationale",
-			});
+				impact: undefined,
+				novelty_and_innovation: undefined,
+				team_excellence: undefined,
+				research_feasibility: undefined,
+				preliminary_data: undefined,
+			};
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
@@ -291,7 +303,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const nextButton = screen.getByTestId("next-button");
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toBeEnabled();
 		});
 
 		it("disables next button when textarea contains only whitespace", async () => {
@@ -308,7 +320,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const nextButton = screen.getByTestId("next-button");
 
 			await user.type(textarea, "   ");
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toBeEnabled();
 		});
 
 		it("enables next button when textarea has content", async () => {

@@ -75,7 +75,7 @@ const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
 
 	for (const [i, question] of RESEARCH_QUESTIONS.entries()) {
 		const answer = formInputs[question.key];
-		const hasAnswer = answer && answer.trim().length > 0;
+		const hasAnswer = answer != null;
 
 		if (hasAnswer) {
 			lastAnsweredIndex = i;
@@ -99,21 +99,30 @@ export function ResearchDeepDiveContent() {
 
 	const questionFlowState = useMemo(() => getQuestionFlowState(formInputs), [formInputs]);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(() => questionFlowState.selectedQuestion);
+	const [dirtyQuestion, setDirtyQuestion] = useState<null | number>(null);
 
 	return (
 		<div className="flex w-full gap-6 px-16 pb-2" data-testid="research-deep-dive-content">
-			<QuestionsList onSelectQuestion={setSelectedQuestion} questionFlowState={questionFlowState} />
+			<QuestionsList
+				dirtyQuestion={dirtyQuestion}
+				onSelectQuestion={setSelectedQuestion}
+				questionFlowState={questionFlowState}
+				selectedQuestion={selectedQuestion}
+			/>
 
 			<AnswerCard
 				formInputs={formInputs}
 				key={selectedQuestion}
 				onBack={() => {
 					setSelectedQuestion(selectedQuestion - 1);
+					setDirtyQuestion(null);
 				}}
 				onNext={() => {
 					setSelectedQuestion(selectedQuestion + 1);
+					setDirtyQuestion(null);
 				}}
 				selectedQuestion={selectedQuestion}
+				setDirtyQuestion={setDirtyQuestion}
 				showBack={selectedQuestion > 0}
 				showNext={selectedQuestion < RESEARCH_QUESTIONS.length - 1}
 			/>
@@ -126,6 +135,7 @@ function AnswerCard({
 	onBack,
 	onNext,
 	selectedQuestion,
+	setDirtyQuestion,
 	showBack,
 	showNext,
 }: {
@@ -133,6 +143,7 @@ function AnswerCard({
 	onBack: () => void;
 	onNext: () => void;
 	selectedQuestion: number;
+	setDirtyQuestion: (index: null | number) => void;
 	showBack: boolean;
 	showNext: boolean;
 }) {
@@ -145,17 +156,18 @@ function AnswerCard({
 		setAnswerValue(formInputsAnswer);
 	}, [formInputsAnswer]);
 
-	const isSaveEnabled = answerValue.trim().length > 0;
-
 	const handleSave = async () => {
-		if (isSaveEnabled) {
-			await useWizardStore.getState().updateFormInputs({ ...formInputs, [questionKey]: answerValue.trim() });
-		}
+		await useWizardStore.getState().updateFormInputs({ ...formInputs, [questionKey]: answerValue.trim() });
 	};
 
 	const handleNext = () => {
-		onNext();
 		void handleSave();
+		onNext();
+	};
+
+	const handleBack = () => {
+		void handleSave();
+		onBack();
 	};
 
 	const handleSaveDebounced = useDebounce(handleSave, 3000);
@@ -169,6 +181,7 @@ function AnswerCard({
 					containerClass="h-full"
 					onChange={(e) => {
 						setAnswerValue(e.target.value);
+						setDirtyQuestion(selectedQuestion);
 						handleSaveDebounced();
 					}}
 					placeholder={placeholders[questionKey]}
@@ -178,18 +191,13 @@ function AnswerCard({
 
 				<div className="flex justify-between w-full gap-3">
 					{showBack && (
-						<AppButton data-testid="back-button" onClick={onBack} variant="secondary">
+						<AppButton data-testid="back-button" onClick={handleBack} variant="secondary">
 							Back
 						</AppButton>
 					)}
 					{showNext && (
 						<div className={showBack ? "" : "ml-auto"}>
-							<AppButton
-								data-testid="next-button"
-								disabled={!isSaveEnabled}
-								onClick={handleNext}
-								variant="primary"
-							>
+							<AppButton data-testid="next-button" onClick={handleNext} variant="primary">
 								Next
 							</AppButton>
 						</div>
@@ -200,8 +208,18 @@ function AnswerCard({
 	);
 }
 
-function IndexBadge({ hasAnswer, index, isDisabled }: { hasAnswer: boolean; index: number; isDisabled: boolean }) {
-	if (hasAnswer) {
+function IndexBadge({
+	hasAnswer,
+	index,
+	isDirty,
+	isDisabled,
+}: {
+	hasAnswer: boolean;
+	index: number;
+	isDirty: boolean;
+	isDisabled: boolean;
+}) {
+	if (hasAnswer && !isDirty) {
 		return <Image alt="Done" className="size-7" height={26} src="/icons/research-question-done.svg" width={26} />;
 	}
 
@@ -221,13 +239,17 @@ function IndexBadge({ hasAnswer, index, isDisabled }: { hasAnswer: boolean; inde
 function QuestionCard({
 	hasAnswer,
 	index,
+	isDirty,
 	isDisabled,
+	isSelected,
 	onClick,
 	question,
 }: {
 	hasAnswer: boolean;
 	index: number;
+	isDirty: boolean;
 	isDisabled: boolean;
+	isSelected: boolean;
 	onClick: () => void;
 	question: string;
 }) {
@@ -254,10 +276,15 @@ function QuestionCard({
 		? `flex-1 max-h-5 group-hover:max-h-20 transition-all duration-300 truncate group-hover:whitespace-normal ${textColorClass}`
 		: `flex-1 truncate ${textColorClass}`;
 
+	const activeClass = isSelected
+		? "outline-2 outline-primary cursor-pointer"
+		: "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer";
+	const outlineClass = isDisabled ? "outline-app-gray-100" : activeClass;
+
 	return (
 		<li>
 			<AppCard
-				className={`rounded p-3 gap-0 transition-all duration-300 outline-1 ${isDisabled ? "outline-app-gray-100" : "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer"}`}
+				className={`rounded p-3 gap-0 transition-all duration-300 outline-1 ${outlineClass}`}
 				data-testid={`question-card-${index}`}
 				onClick={onClick}
 				onKeyDown={(e: React.KeyboardEvent) => {
@@ -269,7 +296,7 @@ function QuestionCard({
 				tabIndex={0}
 			>
 				<div className="flex items-center gap-3">
-					<IndexBadge hasAnswer={hasAnswer} index={index} isDisabled={isDisabled} />
+					<IndexBadge hasAnswer={hasAnswer} index={index} isDirty={isDirty} isDisabled={isDisabled} />
 					<p className={textClasses} ref={textRef}>
 						{question}
 					</p>
@@ -280,11 +307,15 @@ function QuestionCard({
 }
 
 function QuestionsList({
+	dirtyQuestion,
 	onSelectQuestion,
 	questionFlowState,
+	selectedQuestion,
 }: {
+	dirtyQuestion: null | number;
 	onSelectQuestion: (index: number) => void;
 	questionFlowState: QuestionFlowState;
+	selectedQuestion: number;
 }) {
 	const { answeredQuestions, lastAnsweredIndex } = questionFlowState;
 
@@ -293,12 +324,16 @@ function QuestionsList({
 			{RESEARCH_QUESTIONS.map((item, index) => {
 				const hasAnswer = answeredQuestions.has(index);
 				const isDisabled = index > 0 && !hasAnswer && index > lastAnsweredIndex + 1;
+				const isSelected = index === selectedQuestion;
+				const isDirty = index === dirtyQuestion;
 
 				return (
 					<QuestionCard
 						hasAnswer={hasAnswer}
 						index={index}
+						isDirty={isDirty}
 						isDisabled={isDisabled}
+						isSelected={isSelected}
 						key={item.key}
 						onClick={() => {
 							if (!isDisabled) {
