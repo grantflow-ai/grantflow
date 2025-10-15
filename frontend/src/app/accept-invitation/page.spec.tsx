@@ -69,12 +69,12 @@ describe.sequential("AcceptInvitationPage", () => {
 		expect(mockPush).toHaveBeenCalledWith("/login?returnUrl=%2Faccept-invitation%3Ftoken%3Dvalid.jwt.token");
 	});
 
-	it("should process invitation and redirect to project on success", async () => {
+	it("should process project invitation and redirect to project on success", async () => {
 		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
 		const fullToken = `header.${mockToken}.signature`;
 		mockGet.mockReturnValue(fullToken);
 
-		const mockResultToken = btoa(JSON.stringify({ project_id: "proj-456" }));
+		const mockResultToken = btoa(JSON.stringify({ organization_id: "org-789", project_id: "proj-456" }));
 		const fullResultToken = `header.${mockResultToken}.signature`;
 		(acceptInvitation as any).mockResolvedValue({
 			token: fullResultToken,
@@ -88,6 +88,28 @@ describe.sequential("AcceptInvitationPage", () => {
 
 		await vi.waitFor(() => {
 			expect(mockPush).toHaveBeenCalledWith("/projects/proj-456?success=invitation-accepted");
+		});
+	});
+
+	it("should process organization invitation and redirect to projects list on success", async () => {
+		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
+		const fullToken = `header.${mockToken}.signature`;
+		mockGet.mockReturnValue(fullToken);
+
+		const mockResultToken = btoa(JSON.stringify({ organization_id: "org-789" }));
+		const fullResultToken = `header.${mockResultToken}.signature`;
+		(acceptInvitation as any).mockResolvedValue({
+			token: fullResultToken,
+		});
+
+		render(<AcceptInvitationPage />);
+
+		await vi.waitFor(() => {
+			expect(acceptInvitation).toHaveBeenCalledWith("inv-123", fullToken);
+		});
+
+		await vi.waitFor(() => {
+			expect(mockPush).toHaveBeenCalledWith("/projects?success=invitation-accepted");
 		});
 	});
 
@@ -114,6 +136,42 @@ describe.sequential("AcceptInvitationPage", () => {
 
 		await vi.waitFor(() => {
 			expect(mockPush).toHaveBeenCalledWith("/projects?error=invitation-failed");
+		});
+	});
+
+	it("should fallback to projects list when neither organization_id nor project_id is present", async () => {
+		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
+		const fullToken = `header.${mockToken}.signature`;
+		mockGet.mockReturnValue(fullToken);
+
+		const mockResultToken = btoa(JSON.stringify({}));
+		const fullResultToken = `header.${mockResultToken}.signature`;
+		(acceptInvitation as any).mockResolvedValue({
+			token: fullResultToken,
+		});
+
+		render(<AcceptInvitationPage />);
+
+		await vi.waitFor(() => {
+			expect(mockPush).toHaveBeenCalledWith("/projects?success=invitation-accepted");
+		});
+	});
+
+	it("should prioritize project_id when both organization_id and project_id are present", async () => {
+		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
+		const fullToken = `header.${mockToken}.signature`;
+		mockGet.mockReturnValue(fullToken);
+
+		const mockResultToken = btoa(JSON.stringify({ organization_id: "org-789", project_id: "proj-456" }));
+		const fullResultToken = `header.${mockResultToken}.signature`;
+		(acceptInvitation as any).mockResolvedValue({
+			token: fullResultToken,
+		});
+
+		render(<AcceptInvitationPage />);
+
+		await vi.waitFor(() => {
+			expect(mockPush).toHaveBeenCalledWith("/projects/proj-456?success=invitation-accepted");
 		});
 	});
 });
