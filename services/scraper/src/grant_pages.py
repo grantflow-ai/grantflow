@@ -1,7 +1,6 @@
 from asyncio import gather
 
-from html_to_markdown import PreprocessingOptions
-from html_to_markdown import convert as convert_to_markdown
+from html_to_markdown import PreprocessingOptions, convert
 from mdformat import text
 from packages.shared_utils.src.logger import get_logger
 from services.scraper.src.db_utils import save_grant_page_content
@@ -25,7 +24,7 @@ async def download_and_save_pages(*, urls: list[str]) -> None:
 
 
 async def save_markdown_page(*, html: str, result_name: str) -> None:
-    markdown = convert_to_markdown(
+    markdown = convert(
         html,
         preprocessing=PreprocessingOptions(
             enabled=True,
