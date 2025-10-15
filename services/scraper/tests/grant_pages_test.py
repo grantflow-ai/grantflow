@@ -16,7 +16,7 @@ async def test_save_markdown_page() -> None:
 
     with (
         patch(
-            "services.scraper.src.grant_pages.convert_to_markdown", return_value="# Test Grant\n\nGrant description"
+            "services.scraper.src.grant_pages.convert", return_value="# Test Grant\n\nGrant description"
         ) as mock_convert,
         patch("services.scraper.src.grant_pages.text", return_value="# Test Grant\n\nGrant description") as mock_format,
         patch("services.scraper.src.grant_pages.save_grant_page_content", new_callable=AsyncMock) as mock_save,
