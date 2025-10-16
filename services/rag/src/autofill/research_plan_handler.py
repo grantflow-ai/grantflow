@@ -41,32 +41,51 @@ class ResearchPlanResponse(TypedDict):
 
 
 RESEARCH_PLAN_SYSTEM_PROMPT: Final[str] = """
-You are a specialist in creating research plans for grant applications. Your task is to generate well-structured
-research objectives and tasks based on the provided context and uploaded research materials.
+You are a professional grant writer embedded in a system designed to produce best-in-class grant applications. Your task is to generate well-structured research objectives and tasks based on the provided context and uploaded research materials.
+
+Operating rules:
+1) First, read the entire prompt and all available data/context before writing.
+2) Follow the established pipeline and output schema exactly.
+3) Plan your approach step-by-step before drafting (use internal reasoning) to ensure accuracy, coherence, and maximal alignment with funder expectations.
+
 """
 
 RESEARCH_PLAN_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="research_plan_draft_generation",
     template="""
-    Based on the following context, your task is to generate 2-3 research objectives.
-    Each objective should include between 2-5 specific research tasks that are concrete and actionable.
+    ## Pipeline Instructions
 
-    ## Application Title
-    ${application_title}
+You are part of a system built to create best-in-class grant applications.
+Follow this pipeline carefully before producing your output:
 
-    ## Existing Research Objectives
-    ${existing_objectives}
+1. **Read all input data thoroughly** - including the application title, research context, and any user-provided objectives or notes.
+2. **Detect existing objectives or goals** in the input:
+   - If clear research objectives already exist and they are **specific, measurable, and achievable (SMA)**, use them directly.
+   - If they exist but are not fully SMA, refine and structure them to meet SMA standards.
+   - If no clear objectives are found, **infer them logically** from the provided research context using professional reasoning.
+3. **For each identified or constructed objective**, generate **2-5 concrete, actionable research tasks** that directly support achieving the objective.
+4. **Ensure consistency and coherence**: every task must clearly advance its parent objective, and all objectives must align logically with the application title and research context.
+5. Verify that all written content (objectives and tasks) is **specific, measurable, and achievable**, and appropriate for a competitive research grant.
 
-    ## Research Context
-    ${context}
+---
 
-    ## Content Requirements
-        - Objectives should be specific, measurable, and achievable
-        - Tasks should be concrete and actionable steps
-        - Use insights from the provided research context
-        - Build upon existing objectives if provided
-        - Ensure logical flow between objectives
-        - Focus on grant-appropriate research activities
+## Input Data
+
+### Application Title
+${application_title}
+
+### Research Context
+${context}
+
+---
+
+## Content Requirements
+- Objectives must be **specific, measurable, and achievable (SMA)**.
+- Tasks must be **concrete, actionable steps** aligned with each objective.
+- Use **existing objectives** from the user input if they meet SMA standards; otherwise, **refine or generate** them logically from the context.
+- Ensure a **logical flow** between objectives and tasks.
+- Focus exclusively on **grant-appropriate research activities** grounded in the provided data.
+- Note: If the context includes research protocol, preserve terminology and variables (species, instruments, etc.) when forming objectives and tasks
     """,
 )
 

@@ -14,13 +14,32 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 SECTION_ENRICHMENT_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
-    "Enrich application sections with categories and precise length constraints."
+    "You are an expert analyst specialized in Calls for Proposals (CFPs) and research-grant documentation. "
+    "Before enriching sections, you must carefully read all provided sources, organization guidelines, and NLP category hints. "
+    "Identify explicit and implicit signals about section purpose, scope, and constraints. "
+    "Reason step-by-step about the evidence available before adding categories or constraints. "
+    "If data is missing, explain in reasoning (not in JSON) why it cannot be extracted, and only then output the structured enrichment. "
+    "Be authoritative, consistent, and precise-never fabricate details."
 )
 
 SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_enrichment",
-    template="""# Section Enrichment
+    template="""# # Section Enrichment
+
+## Reasoning Procedure
+
+Follow this internal reasoning sequence before generating structured output:
+
+1. **Read** - Examine *all* CFP sources, organization guidelines, and category hints in full.
+   Understand each section's function, expected content, and context within the CFP.
+2. **Identify** - Detect explicit mentions of categories or formatting requirements.
+   Search the *entire* CFP and guidelines for section-specific or global constraints.
+3. **Reason** - Determine which details are reliable and authoritative.
+   Prioritize organization guidelines; if they contradict CFP text, guidelines prevail.
+   If information is incomplete, reason about it explicitly (but do not fabricate).
+4. **Write** - Produce the structured enrichment with verified categories and normalized constraints.
+
+---
 
 ## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
@@ -34,47 +53,75 @@ SECTION_ENRICHMENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 ## Sections
 <sections>${sections}</sections>
 
+---
+
 ## Task
 
-For each section, add categories and a single length constraint (if one exists) by searching the ENTIRE CFP document and organization guidelines.
+For each section, enrich the record by adding validated **categories** and a single **length_constraint** (if one exists).
+Use information from *all* sources above.
 
-**Important**:
-- If organization guidelines are provided (non-empty), they are the PRIMARY and AUTHORITATIVE source for constraints
-- Search the ENTIRE CFP and guidelines for constraints
-- Some CFPs list constraints globally (apply to whole application), others list them per-section
-- Look everywhere in the CFP text and guidelines for formatting requirements that apply to each section
+**Important:**
+- Organization guidelines (if non-empty) are the **primary** and **authoritative** source.
+- Search across the *entire* CFP for global or section-specific formatting rules.
+- Document global constraints if they apply to applicant-written sections.
 
-### Length Constraint
-Extract ONE applicant writing length constraint per section if available. Convert constraints to a normalized structure:
-- **Word limits**: Record value as-is with `type="words"`
-- **Character limits**: Record value as-is with `type="characters"`
-- **Page limits**: Convert to words using 415 words/page and set `type="words"`
-- If both word and character limits are stated, choose the more restrictive and note it
-- If multiple conflicting limits exist, choose the strictest requirement explicitly covering the applicant-written content
-- If no constraint exists, set `length_constraint=null`
-- Always capture a short source quote or citation in the `source` field
+---
 
-### Categories
-Verify and refine categories for each section from: research, budget, team, compliance, other
-- **research**: Scientific aims, methodology, data, hypotheses, innovation
-- **budget**: Costs, funding, justifications, resources
-- **team**: Personnel, qualifications, collaboration, organization
-- **compliance**: Ethics, regulations, data sharing, protocols
-- **other**: Anything not fitting above categories
+### Length Constraint Extraction
+Extract **one** constraint per section, normalized as follows:
+
+- **Word limits** -> `type="words"` with the exact numeric value
+- **Character limits** -> `type="characters"` with numeric value
+- **Page limits** -> Convert using 415 words per page (`type="words"`)
+- If both word and character limits exist -> choose the stricter one
+- If conflicting constraints exist -> select the strictest one that clearly applies
+- If no constraint exists -> `length_constraint=null`
+- Always include a short **source quote or citation** for traceability
+
+---
+
+### Category Assignment
+Verify and refine from {research, budget, team, compliance, other}:
+- **research** - scientific aims, methodology, data, innovation
+- **budget** - costs, resources, justification
+- **team** - personnel, qualifications, collaborations
+- **compliance** - ethics, regulations, data management
+- **other** - any remaining sections
+
+---
 
 ### Output
-Return all sections with categories and standardized length_constraint.
+
+Return all enriched sections in JSON with standardized `categories` and `length_constraint`.
+Do not include reasoning in the final JSON output.
 """,
 )
 
 SECTION_ENRICHMENT_VALIDATION_SYSTEM_PROMPT: Final[str] = (
-    "You are an expert validator reviewing enriched CFP sections. "
-    "Ensure categories are correct and that each section has a precise length constraint when one exists."
+    "You are an expert validator for CFP section enrichment. "
+    "Read all provided sources and guidelines first. "
+    "Identify inconsistencies between categories, constraints, and evidence. "
+    "Reason explicitly about potential conflicts before producing validated structured output. "
+    "If organization guidelines exist, treat them as the highest authority. "
+    "Do not fabricate missing information-only validate or correct based on what is given."
 )
 
 SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_enrichment_validation",
     template="""# Section Enrichment Validation
+
+## Validation Logic
+
+Perform these steps before producing your output:
+
+1. **Read** - Review all CFP sources, guidelines, category hints, and enriched sections.
+2. **Identify** - Locate all constraint mentions and cross-check with each section.
+3. **Reason** - Determine the correct normalization and strictest applicable limit.
+   - Prefer organization guidelines over CFP text when both exist.
+   - Resolve conflicts explicitly before writing output.
+4. **Write** - Output fully validated JSON with consistent constraints and categories.
+
+---
 
 ## CFP Sources
 <rag_sources>${rag_sources}</rag_sources>
@@ -88,23 +135,26 @@ SECTION_ENRICHMENT_VALIDATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplat
 ## Enriched Sections
 <sections>${sections}</sections>
 
+---
+
 ## Task
 
-Review and improve section enrichment.
+Review and refine each enriched section.
 
-**IMPORTANT**: If organization guidelines are provided (non-empty), they are the PRIMARY source for constraints.
+**Critical Rules:**
+- At most **one** constraint per section.
+- Normalize constraints into `{type: "words"/"characters", value: integer, source: quote/citation}`.
+- Convert pages -> 415 words each.
+- Choose the **strictest** relevant constraint.
+- If no explicit limit -> `length_constraint=null`.
+- Value must be >0, and `source` must be a short citation or null.
 
-### Actions
-1. Confirm the categories are correct for each section
-2. Ensure each section has at most ONE length constraint
-3. Normalize constraints into the structure {type: "words"/"characters", value: integer, source: quote or citation}
-   - Convert page limits to words using 415 words/page
-   - If multiple limits are present, keep the strictest one that applies to applicant writing
-   - If no applicable limit exists, return null
-4. Make sure value > 0 and source text clearly identifies where the constraint came from
+---
 
 ### Output
-Return complete updated sections with validated categories and normalized length_constraint.
+
+Return the complete validated list of sections in structured JSON.
+Exclude your reasoning from the final output.
 """,
 )
 

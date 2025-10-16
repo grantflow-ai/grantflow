@@ -10,12 +10,31 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 SECTION_CLASSIFICATION_SYSTEM_PROMPT: Final[str] = (
-    "You classify grant application sections by type and extract writing guidelines. Be concise and specific."
+    "You are an expert grant-application analyst embedded in a structured pipeline designed to classify proposal sections "
+    "and extract precise writing guidelines. "
+    "Before producing classifications, you must carefully read all provided context, identify implicit patterns and relationships, "
+    "reason about each section's purpose and dependencies, and only then write the output. "
+    "Be accurate, specific, and measurable-never fabricate or assume data that is not provided."
 )
 
 SECTION_CLASSIFICATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_classification",
-    template="""# Classify Application Sections
+    template="""SECTION_CLASSIFICATION_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
+
+## Pipeline Logic
+
+Follow this reasoning sequence before output:
+1. **Read** - Carefully read *all* organization guidelines and section descriptions.
+   Understand each section's role, purpose, and context within the application.
+2. **Identify** - Detect features that define section type (e.g., narrative vs. tabular).
+   Identify indicators of research plan, clinical scope, or structural headers.
+3. **Reason** - Deduce logical relationships among sections (hierarchy, dependencies, relevance).
+   Determine which one is the *main research plan* (`is_plan=true`) and ensure all classifications are consistent.
+   If data is unclear or missing, reason explicitly and base classification only on available evidence.
+4. **Write** - Provide clear, structured classifications and concise actionable guidelines.
+   Each decision should be specific, evidence-based, and aligned with grant-writing standards.
+
+---
 
 ## Organization Guidelines
 
@@ -27,40 +46,47 @@ ${sections}
 
 ## Task
 
-For each section, provide classification and guidelines.
+For each section, provide classification and extract writing guidelines.
 
 ### Classifications
 
-1. **long_form**: Does this section require substantial narrative writing? (true/false)
+1. **long_form** - Does this section require substantial narrative writing? (`true`/`false`)
    - True: Research plans, methodology, background, justifications, protocols
    - False: Budget tables, biosketches, letters, cover pages, forms
 
-2. **is_plan**: Is this the main detailed research plan section? (true/false)
-   - Exactly ONE section should be true (typically "Research Plan", "Project Description", or "Research Strategy")
+2. **is_plan** - Is this the main detailed research plan section? (`true`/`false`)
+   - Exactly **one** section should be true (e.g., “Research Plan”, “Project Description”, “Research Strategy”)
 
-3. **clinical**: Is this specifically for clinical trial information? (true/false)
+3. **clinical** - Is this section specific to clinical trial information? (`true`/`false`)
    - True: Protocol synopsis, clinical trial design, intervention protocols
    - False: All other sections
 
-4. **title_only**: Is this just a structural header with no content? (true/false)
-   - True: Section groupings like "Application Components", "Required Documents"
-   - False: Sections that need content
+4. **title_only** - Is this just a structural header with no content? (`true`/`false`)
+   - True: Section groupings like “Application Components”, “Required Documents”
+   - False: Sections that contain substantive text
 
-5. **needs_writing**: Does this require original applicant writing? (true/false)
+5. **needs_writing** - Does this require original applicant writing? (`true`/`false`)
    - True: Narrative sections, justifications, descriptions
-   - False: Pre-filled forms, budget tables, biosketches, letters from others
+   - False: Pre-filled forms, budget tables, biosketches, or externally provided content
 
-### Guidelines
+---
 
-Extract 2-5 specific writing guidelines for each section from CFP/organization guidelines:
-- Length requirements already handled separately
-- Focus on: content requirements, style, formatting, what to include/avoid
-- Be specific and actionable
-- Empty list if no specific guidelines
+### Guidelines Extraction
+
+Extract **2-5 actionable writing guidelines** for each section from the CFP or organizational guidelines:
+- Focus on *content expectations*, *style*, *format*, and *inclusions/exclusions*
+- Avoid redundancy with length requirements
+- Be concise, concrete, and field-relevant
+- If no specific guidelines exist, return an empty list
+
+---
 
 ### Output
 
-Return all sections with classifications and guidelines.
+Return all sections with their classifications and extracted guidelines in JSON format.
+Do not include reasoning or explanations in the final output.
+
+
 """,
 )
 

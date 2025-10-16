@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from functools import lru_cache
 from typing import Any, Final
 
@@ -9,19 +10,21 @@ from google import genai
 from google.oauth2.service_account import Credentials
 
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import BackendError
+from packages.shared_utils.src.exceptions import BackendError, ExternalOperationError
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 
 
-EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.5-flash")
+EVALUATION_MODEL: Final[str] = get_env(
+    "EVALUATION_MODEL", fallback="gemini-flash-latest"
+)
 GENERATION_MODEL: Final[str] = get_env(
     "GENERATION_MODEL", fallback="gemini-flash-latest"
 )
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
     "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4-20250514"
 )
-REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-flash")
+REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-flash-latest")
 
 GEMINI_FLASH_MODEL: Final[str] = "gemini-flash-latest"
 
@@ -55,8 +58,16 @@ def get_google_ai_client() -> genai.Client:
 
 def get_anthropic_client() -> AsyncAnthropic:
     if not anthropic_client.value:
+        if os.environ.get("DISABLE_ANTHROPIC", "").lower() in {"1", "true", "yes"}:
+            raise ExternalOperationError("Anthropic client is disabled")
+
+        try:
+            api_key = get_env("ANTHROPIC_API_KEY")
+        except ValueError as exc:
+            raise ExternalOperationError("Anthropic client is not configured") from exc
+
         anthropic_client.value = AsyncAnthropic(
-            api_key=get_env("ANTHROPIC_API_KEY"),
+            api_key=api_key,
         )
     return anthropic_client.value
 
