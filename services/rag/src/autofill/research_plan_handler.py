@@ -58,7 +58,7 @@ RESEARCH_PLAN_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
 You are part of a system built to create best-in-class grant applications.
 Follow this pipeline carefully before producing your output:
 
-1. **Read all input data thoroughly** - including the application title, research context, and any user-provided objectives or notes.
+1. **Read all input data thoroughly** - including the application title, existing objectives (if provided), and research context.
 2. **Detect existing objectives or goals** in the input:
    - If clear research objectives already exist and they are **specific, measurable, and achievable (SMA)**, use them directly.
    - If they exist but are not fully SMA, refine and structure them to meet SMA standards.
@@ -73,6 +73,9 @@ Follow this pipeline carefully before producing your output:
 
 ### Application Title
 ${application_title}
+
+### Existing Research Objectives
+${existing_objectives}
 
 ### Research Context
 ${context}
