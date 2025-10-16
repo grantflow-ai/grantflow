@@ -1,7 +1,8 @@
 "use client";
 
 import { ExternalLink, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createFileDownloadUrl } from "@/actions/granting-institutions";
 import {
 	AppDropdownMenu,
 	AppDropdownMenuContent,
@@ -30,12 +31,13 @@ export function FilePreviewCard({
 }) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const removeFile = useApplicationStore((state) => state.removeFile);
+	const [fileUrl, setFileUrl] = useState<null | string>(null);
 
 	const extension = getFileExtension(file.name);
 
 	const canOpenInBrowser = ["md", "pdf"].includes(extension);
 	const hasAccessibleContent = file instanceof File && file.size > 0;
-	const canActuallyOpen = canOpenInBrowser && hasAccessibleContent;
+	const canActuallyOpen = canOpenInBrowser && (hasAccessibleContent || fileUrl);
 
 	const isIndexing = sourceStatus === SourceIndexingStatus.INDEXING;
 	const canRemove = !(isIndexing || disableRemove);
@@ -44,6 +46,11 @@ export function FilePreviewCard({
 		if (!canActuallyOpen) return;
 
 		try {
+			if (fileUrl) {
+				window.open(fileUrl, "_blank");
+				return;
+			}
+
 			const url = URL.createObjectURL(file);
 			window.open(url, "_blank");
 			setTimeout(() => {
@@ -69,6 +76,22 @@ export function FilePreviewCard({
 		e.preventDefault();
 		setDropdownOpen(true);
 	};
+
+	useEffect(() => {
+		(async () => {
+			if (fileUrl) {
+				return;
+			}
+			try {
+				const response = await createFileDownloadUrl(file.id);
+				if (response.url) {
+					setFileUrl(response.url);
+				}
+			} catch (error) {
+				log.warn("Failed to create download url", { error, fileId: file.id });
+			}
+		})();
+	}, [file.id, fileUrl]);
 
 	return (
 		<div

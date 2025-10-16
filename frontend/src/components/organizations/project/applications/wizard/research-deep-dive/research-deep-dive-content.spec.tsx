@@ -112,20 +112,20 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			expect(firstQuestionCard).not.toHaveClass("outline-app-gray-100");
 		});
 
-		        it("disables questions beyond the next unanswered one", () => {
-		            			const formInputs = {
-		            				background_context: "Some background",
-		            				hypothesis: undefined,
-		            				rationale: undefined,
-		            				novelty_and_innovation: undefined,
-		            				impact: undefined,
-		            				team_excellence: undefined,
-		            				research_feasibility: undefined,
-		            				preliminary_data: undefined,
-		            			};
-		            			const application = ApplicationWithTemplateFactory.build({
-		            				form_inputs: formInputs,
-		            			});
+		it("disables questions beyond the next unanswered one", () => {
+			const formInputs = {
+				background_context: "Some background",
+				hypothesis: undefined,
+				impact: undefined,
+				novelty_and_innovation: undefined,
+				preliminary_data: undefined,
+				rationale: undefined,
+				research_feasibility: undefined,
+				team_excellence: undefined,
+			};
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: formInputs,
+			});
 
 			useApplicationStore.setState({ application });
 
@@ -142,12 +142,12 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = {
 				background_context: "Background",
 				hypothesis: "Hypothesis",
-				rationale: "Rationale",
 				impact: undefined,
 				novelty_and_innovation: undefined,
-				team_excellence: undefined,
-				research_feasibility: undefined,
 				preliminary_data: undefined,
+				rationale: "Rationale",
+				research_feasibility: undefined,
+				team_excellence: undefined,
 			};
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
