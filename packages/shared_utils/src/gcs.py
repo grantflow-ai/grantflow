@@ -14,8 +14,8 @@ from packages.shared_utils.src.exceptions import ExternalOperationError, Validat
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
-from packages.shared_utils.src.sync import run_sync
 from packages.shared_utils.src.shared_types import EntityType
+from packages.shared_utils.src.sync import run_sync
 
 logger = get_logger(__name__)
 
@@ -279,6 +279,87 @@ async def delete_blob(blob_path: str) -> None:
             "Failed to delete blob",
             context={
                 "blob_path": blob_path,
+                "error": str(e),
+            },
+        ) from e
+
+
+async def create_signed_download_url(
+    bucket_name: str,
+    object_path: str,
+    filename: str,
+    trace_id: str | None = None,
+    expiration_seconds: int = ONE_MINUTE_SECONDS * 60,
+) -> str:
+    if get_env("DEBUG", fallback="false", raise_on_missing=False).lower() == "true":
+        dev_url = f"dev://download/{bucket_name}/{object_path}"
+        logger.info(
+            "Created dev bypass URL for file download",
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+        return dev_url
+
+    if emulator_host := get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False):
+        emulator_url = (
+            f"{emulator_host}/storage/v1/b/{bucket_name}/o/{object_path}?alt=media"
+        )
+        logger.info(
+            "Created emulator download URL",
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+        return emulator_url
+
+    try:
+        storage_client = get_storage_client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(object_path)
+
+        if not await run_sync(blob.exists):
+            raise ExternalOperationError(
+                "File not found",
+                context={
+                    "bucket_name": bucket_name,
+                    "object_path": object_path,
+                    "filename": filename,
+                },
+            )
+
+        signed_url = await run_sync(
+            blob.generate_signed_url,
+            version="v4",
+            expiration=expiration_seconds,
+            method="GET",
+            response_disposition=f'inline; filename="{filename}"' if filename else None,
+        )
+
+        logger.info(
+            "Created signed download URL",
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+            expiration_seconds=expiration_seconds,
+            trace_id=trace_id,
+        )
+
+        return cast("str", signed_url)
+    except ClientError as e:
+        logger.error(
+            "Failed to create signed download URL",
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+            exc_info=e,
+        )
+        raise ExternalOperationError(
+            "Failed to create signed download URL",
+            context={
+                "bucket_name": bucket_name,
+                "object_path": object_path,
+                "filename": filename,
                 "error": str(e),
             },
         ) from e

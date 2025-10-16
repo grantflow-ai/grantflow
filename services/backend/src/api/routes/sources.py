@@ -27,8 +27,10 @@ from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS, Notif
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
     construct_object_uri,
+    create_signed_download_url,
     create_signed_upload_url,
     delete_blob,
+    get_bucket,
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
@@ -69,6 +71,10 @@ class RagUrlResponse(TypedDict):
 class UploadUrlResponse(TypedDict):
     url: str
     source_id: str
+
+
+class DownloadUrlResponse(TypedDict):
+    url: str
 
 
 class UrlCrawlingRequest(TypedDict):
@@ -624,6 +630,33 @@ async def handle_create_upload_url(
     )
 
     return UploadUrlResponse(url=url, source_id=str(source_id))
+
+
+@get(
+    "/sources/{source_id:uuid}/download-url",
+    operation_id=_create_operation_id_creator("Create{value}RagSourceDownloadUrl"),
+)
+async def handle_create_download_url(
+    request: APIRequest,
+    source_id: UUID,
+    session_maker: async_sessionmaker[AsyncSession],
+) -> DownloadUrlResponse:
+    trace_id = get_trace_id(request)
+
+    async with session_maker() as session:
+        rag_file = await session.scalar(select(RagFile).where(RagFile.id == source_id))
+
+        if not rag_file:
+            raise NotFoundException(f"RAG file with source_id {source_id} not found")
+
+        url = await create_signed_download_url(
+            bucket_name=get_bucket().name,
+            object_path=rag_file.object_path,
+            filename=rag_file.filename,
+            trace_id=trace_id,
+        )
+
+        return DownloadUrlResponse(url=url)
 
 
 @post(

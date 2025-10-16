@@ -98,6 +98,7 @@ from services.backend.src.api.routes.projects import (
 from services.backend.src.api.routes.rag_jobs import handle_cancel_rag_job, handle_retrieve_rag_job
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
+    handle_create_download_url,
     handle_create_upload_url,
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
@@ -174,6 +175,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_get_granting_institution,
     handle_update_granting_institution,
     handle_delete_granting_institution,
+    handle_create_download_url,
     handle_create_upload_url,
     handle_crawl_url,
     handle_retrieve_rag_sources,
