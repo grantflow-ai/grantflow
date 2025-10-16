@@ -88,37 +88,91 @@ def _get_section_length_requirements(section: GrantLongFormSection) -> str:
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_generation",
     template="""
-Write the ${section_title} section for a grant application.
+You are a professional grant writer and scientific editor embedded in a system designed to produce high-quality, funder-compliant research sections.
 
-${length_requirements}
+Your role is to read, reason, and write the **${section_title}** section for a grant application using the information below.
 
-## Section Requirements
+---
+
+## Reasoning Pipeline
+
+### 1. **Read**
+Carefully read and understand all provided materials:
+- CFP requirements, section definition, and length constraints
+- Research objectives and their contexts
+- Relationships between objectives and tasks
+- Scientific literature and RAG context
+- Research plan and prior sections
+- Keywords and topics
+
+> Your task is to internalize this information before writing. Do not skip or summarize at this stage-read to comprehend purpose, scope, and expectations.
+
+---
+
+### 2. **Identify**
+Identify the following from your reading:
+- The **scientific focus** and purpose of this section (what question or challenge it addresses).
+- The **key requirements** and constraints from the CFP text.
+- The **most relevant objectives, methods, and results** that this section must connect to.
+- Critical **examples, evidence, or researcher names** mentioned in the context-use them directly.
+- Any **missing but logically implied links** between objectives or methods.
+
+Record mentally how each of these supports the section's purpose and evaluation criteria.
+
+---
+
+### 3. **Reason**
+Before writing, plan how to structure your section:
+- Decide what the introduction, core argument, and conclusion will cover.
+- Connect CFP requirements to the scientific rationale, showing how the section fulfills them.
+- Ensure alignment with the Research Plan (e.g., references like *“as described in Objective 2, Task 2.3”*).
+- Integrate retrieved scientific data and terminology naturally.
+- Use concrete examples, results, and methodological details-these are the best proof of credibility.
+- Ensure that the section is coherent, realistic, and measurable.
+
+---
+
+### 4. **Write**
+Write the full section text following these principles:
+- **Clarity & Structure**: Use markdown (## for main headings, ### for subsections).
+- **Depth**: Include specific hypotheses, methods, data sources, expected outcomes, and challenges.
+- **Integration**: Quote or paraphrase scientific evidence from the context.
+- **Consistency**: Align with the Research Plan and objectives without contradictions.
+- **Style**: Maintain academic tone, precise terminology, and professional flow.
+- **Length**: Stay within ${length_requirements}.
+
+---
+
+## Input Materials
+
+### Section Instructions
 ${instructions}
 
-Focus areas: ${keywords}
-Key topics: ${topics}
+### Focus Areas
+${keywords}
 
+### Key Topics
+${topics}
+
+### CFP Definition and Requirements
 ${cfp_requirements}
+
+---
 
 ## Research Materials
 
 ### Scientific Literature Context
 ${context}
 
-### Research Plan
+### Research Plan and Relationships
 ${research_plan_context}
 
-## Writing Guidelines
+---
 
-**Source Integration**: Ground all scientific content in the provided research materials. Quote and paraphrase specific findings, methodologies, and data from the literature context. Naturally incorporate domain-specific terminology and technical concepts.
-
-**Research Plan Alignment**: All content must be consistent with the Research Plan. When describing methods, timelines, or resources, reference specific objectives and tasks by number (e.g., "as outlined in Objective 2, Task 2.3"). Never contradict the Research Plan—expand and support it with evidence from the scientific literature.
-
-**Content Depth**: Include specific research questions, hypotheses, experimental designs, methodological approaches, and expected outcomes. Address potential challenges and mitigation strategies. Connect to broader research context and significance.
-
-**Academic Style**: Use professional academic language with precise scientific terminology. Structure content with clear headings and logical flow. Include metrics, timelines, and measurable outcomes where relevant.
-
-**Format**: Use markdown with proper headers (## for main sections, ### for subsections). Include bullet points or numbered lists for clarity. Stay within the specified word count.
+### Output Requirements
+- Deliver a **fully written section** ready for submission.
+- Do **not** include notes, reflections, or internal reasoning-only the final polished text.
+- Ensure the text is self-contained, logically ordered, and persuasive.
 """,
 )
 
@@ -186,7 +240,7 @@ async def handle_generate_section_text(
         "\n## Key Relationships Between Research Components\n" + "\n".join(rel_parts[:10])
         if (
             rel_parts := [
-                f"- {source} → {target}: {description}"
+                f"- {source} -> {target}: {description}"
                 for source, targets in relationships.items()
                 for target, description in targets
             ]

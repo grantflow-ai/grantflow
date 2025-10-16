@@ -22,67 +22,110 @@ ResearchRelationships = dict[str, list[tuple[str, str]]]
 
 
 EXTRACT_RELATIONSHIPS_SYSTEM_PROMPT: Final[str] = """
-Identify and characterize relationships between research objectives and tasks.
-Create coherent research narrative demonstrating strategic planning.
+You are a professional grant writer and research analyst embedded in a system designed to produce best-in-class grant applications.
+Your role is to identify and characterize meaningful relationships between research objectives and tasks, revealing a coherent,
+strategically aligned research plan.
+
+### Operating Pipeline
+1. **Read** all input materials carefully - including research objectives, their tasks, RAG results, and form inputs.
+2. **Identify**:
+   - Logical, methodological, or conceptual dependencies between objectives and tasks.
+   - Sequential, causal, complementary, or iterative flows within the project.
+   - Shared resources, data, or methods that connect components.
+3. **Reason**:
+   - Determine which relationships best demonstrate scientific planning, integration, and feasibility.
+   - Plan concise and accurate explanations of how objectives and tasks reinforce each other.
+   - Ensure clarity, factual accuracy, and balance between depth and brevity.
+4. **Write**:
+   - Generate structured relationships that follow the schema precisely.
+   - Each description must be specific, measurable, and 100-200 words in length.
+   - Use professional academic tone, concrete examples, and scientific terminology.
+   - Emphasize purpose, mechanism of interaction, and significance for project success.
+
+### Style and Fidelity
+- Preserve the tone and terminology of the input.
+- Integrate researcher names, technical methods, or references from the data where relevant.
+- Prefer concise, evidence-based reasoning over generic claims.
+- Ensure internal logical flow across all relationships.
 """
 
 EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_relationships",
     template="""
-Identify significant relationships between research objectives and tasks.
+Identify and articulate significant relationships between research objectives and tasks for the grant narrative.
+
+## Pipeline
+1. **Read** the full input - objectives, tasks, contextual RAG data, and form inputs.
+2. **Identify**:
+   - Dependencies (between objectives, tasks, or both).
+   - Relationship types: Sequential, Causal, Complementary, Iterative, Methodological, or Conceptual.
+   - Any explicitly stated links or shared methodologies.
+3. **Reason**:
+   - Map how each relationship contributes to strategic alignment and overall feasibility.
+   - Plan explanations that are specific, balanced, and well-structured (100-200 words).
+4. **Write**:
+   - Produce relationship objects following the schema exactly.
+   - Each description should clearly explain:
+       * The relationship type and interaction mechanism.
+       * How the elements collaborate or depend on each other.
+       * Why the relationship strengthens the research plan.
+   - Use concise academic tone and include examples or details where relevant.
 
 ## Input
-
 <research_objectives>${research_objectives}</research_objectives>
 <rag_results>${rag_results}</rag_results>
 <form_inputs>${form_inputs}</form_inputs>
 
-## Task
-
-Analyze objectives and tasks to identify:
-- Dependencies (between objectives, between tasks, across objectives)
-- Relationship types: Sequential, Causal, Complementary, Iterative, Methodological, Conceptual
-- Information flow and strategic alignment
-
 ## Notation
-
 - Objectives: "1", "2", "3"
 - Tasks: "1.1", "2.3", "3.2"
 
-## Output
-
-Array of relationship objects with properties:
+## Required Output Schema
+Array of relationship objects with:
 - **source**: Source identifier (e.g., "1", "2.3")
 - **target**: Target identifier (e.g., "1", "2.3")
 - **desc**: Relationship description (100-200 words)
 
-Description should explain:
-- Relationship type and nature
-- How elements interact
-- Significance for research plan
-
-Focus on meaningful relationships (quality over quantity).
+## Output Requirements
+- Avoid duplicates and self-relationships.
+- Focus on clarity, logical structure, and meaningful connections.
+- Quality over quantity - ensure every relationship adds narrative or methodological value.
 """,
 )
 
 RELATIONSHIPS_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="refine_relationships",
     template="""
-Review the draft relationships and produce an improved version that strictly follows the schema.
+You are a professional grant writer and scientific editor responsible for refining research-relationship mappings.
+Your goal is to improve clarity, precision, and structural coverage while preserving logical and factual accuracy.
 
-## Research Objectives
-${research_objectives}
+## Reasoning Pipeline
+1. **Read** the provided research objectives and draft relationships carefully.
+2. **Identify**:
+   - Duplicates, self-links, or irrelevant pairs.
+   - Weak or vague descriptions needing clarity or evidence.
+   - Missing coverage - ensure at least 70% of objectives appear as source or target.
+3. **Reason**:
+   - Plan targeted improvements to strengthen logic, coverage, and coherence.
+   - Maintain fidelity to scientific tone and technical content.
+   - Align descriptions with the overall research plan's narrative flow.
+4. **Write**:
+   - Produce the refined list using the same schema (source, target, desc).
+   - Each description must remain 100-200 words, specific, and logically grounded.
+   - Retain valid insights; rephrase only for clarity or structure.
+   - Use examples, names, or methods naturally - evidence is the best validation.
 
-## Draft Relationships
-${draft_relationships}
+## Input
+<research_objectives>${research_objectives}</research_objectives>
+<draft_relationships>${draft_relationships}</draft_relationships>
 
-## Requirements
-1. Remove duplicate (source, target) pairs and any self-relationships.
-2. Ensure each relationship description stays within 100-200 words and remains specific.
-3. Cover at least 70% of research objectives; add concise relationships when coverage is lacking.
-4. Preserve valid insights from the draft while improving clarity and structure.
+## Output Requirements
+1. Remove duplicates and self-links.
+2. Ensure schema conformity and field completeness.
+3. Strengthen scientific reasoning and logical flow.
+4. Maintain academic tone and factual precision.
+5. Provide coherent, refined relationships ready for inclusion in the final grant narrative.
 
-Return the full relationship list using the exact schema.
 """,
 )
 
