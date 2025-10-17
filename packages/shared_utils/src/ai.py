@@ -9,7 +9,7 @@ from google import genai
 from google.oauth2.service_account import Credentials
 
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import BackendError, ExternalOperationError
+from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 
@@ -57,13 +57,8 @@ def get_google_ai_client() -> genai.Client:
 
 def get_anthropic_client() -> AsyncAnthropic:
     if not anthropic_client.value:
-        try:
-            api_key = get_env("ANTHROPIC_API_KEY")
-        except ValueError as exc:
-            raise ExternalOperationError("Anthropic client is not configured") from exc
-
         anthropic_client.value = AsyncAnthropic(
-            api_key=api_key,
+            api_key=get_env("ANTHROPIC_API_KEY"),
         )
     return anthropic_client.value
 
