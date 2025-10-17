@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import os
 from functools import lru_cache
 from typing import Any, Final
 
@@ -58,9 +57,6 @@ def get_google_ai_client() -> genai.Client:
 
 def get_anthropic_client() -> AsyncAnthropic:
     if not anthropic_client.value:
-        if os.environ.get("DISABLE_ANTHROPIC", "").lower() in {"1", "true", "yes"}:
-            raise ExternalOperationError("Anthropic client is disabled")
-
         try:
             api_key = get_env("ANTHROPIC_API_KEY")
         except ValueError as exc:

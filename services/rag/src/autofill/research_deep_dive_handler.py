@@ -67,51 +67,51 @@ class ResearchDeepDiveDraft(TypedDict):
 RESEARCH_DEEP_DIVE_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="research_deep_dive_draft",
     template="""
-## Pipeline Instructions
+    ## Pipeline Instructions
 
-You are part of a system built to create best-in-class grant applications.
-Follow this reasoning pipeline carefully before generating draft answers:
+    You are part of a system built to create best-in-class grant applications.
+    Follow this reasoning pipeline carefully before generating draft answers:
 
-1. **Read** all input data - the application title, all research questions, research context, and stated research objectives.
-2. **Identify** key information for each question:
-   - Determine the central focus of each research question.
-   - Extract relevant evidence, concepts, and terminology from the research context and objectives.
-   - Look carefully for names of people, institutions, previous works, publications, and technical terms.
-   - Determine which references are most relevant for each answer.
-3. **Reason** about each answer:
-   - Plan how each response will address its question clearly and directly.
-   - Structure answers logically: background -> reasoning and evidence -> implications or conclusions.
-   - Decide which identified examples, names, and terms will best demonstrate understanding.
-   - Ensure factual consistency - do not invent or assume information beyond what is implied.
-4. **Write** draft answers using the same professional and academic tone as the input text.
-   - Preserve the terminology, voice, and conceptual framing from the input.
-   - Integrate names, works, and field-specific terms naturally.
-   - Use examples and specific details to prove points and demonstrate understanding.
-   - Maintain precision, coherence, and alignment with grant standards.
+    1. **Read** all input data - the application title, all research questions, research context, and stated research objectives.
+    2. **Identify** key information for each question:
+       - Determine the central focus of each research question.
+       - Extract relevant evidence, concepts, and terminology from the research context and objectives.
+       - Look carefully for names of people, institutions, previous works, publications, and technical terms.
+       - Determine which references are most relevant for each answer.
+    3. **Reason** about each answer:
+       - Plan how each response will address its question clearly and directly.
+       - Structure answers logically: background -> reasoning and evidence -> implications or conclusions.
+       - Decide which identified examples, names, and terms will best demonstrate understanding.
+       - Ensure factual consistency - do not invent or assume information beyond what is implied.
+    4. **Write** draft answers using the same professional and academic tone as the input text.
+       - Preserve the terminology, voice, and conceptual framing from the input.
+       - Integrate names, works, and field-specific terms naturally.
+       - Use examples and specific details to prove points and demonstrate understanding.
+       - Maintain precision, coherence, and alignment with grant standards.
 
----
+    ---
 
-## Input Data
+    ## Input Data
 
-### Application Title
-${application_title}
+    ### Application Title
+    ${application_title}
 
-### Research Context
-${context}
+    ### Research Context
+    ${context}
 
-### Research Objectives
-${objectives_text}
+    ### Research Objectives
+    ${objectives_text}
 
----
+    ---
 
-## Drafting Guidelines
-- Provide evidence-backed answers for every question.
-- Aim for 150-250 words per answer; concise but complete.
-- Note gaps if context lacks supporting evidence.
-- Use specific details, examples, and contextual references.
-- Maintain professional academic tone throughout.
+    ## Drafting Guidelines
+    - Provide evidence-backed answers for every question.
+    - Aim for 150-250 words per answer; concise but complete.
+    - Note gaps if context lacks supporting evidence.
+    - Use specific details, examples, and contextual references.
+    - Maintain professional academic tone throughout.
 
-Return a JSON object with one string per question using the provided keys.
+    Return a JSON object with one string per question using the provided keys.
     """,
 )
 

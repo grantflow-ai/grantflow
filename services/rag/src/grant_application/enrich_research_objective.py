@@ -49,45 +49,35 @@ to support subsequent text generation, retrieval, and evaluation.
 ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="enrich_research_objective",
     template="""
-Enrich the following research objective and its tasks with metadata and scientific depth for grant proposal generation.
+    Enrich the following research objective and its tasks with metadata and scientific depth for grant proposal generation.
 
-## Pipeline
-1. **Read the data you received** - the full context, keywords, topics, and form inputs.
-2. **Identify** whether the user input already contains a clear objective or not.
-   - If yes -> use it directly.
-   - If not -> infer it logically from the available context.
-3. **Reason** before writing:
-   - Map how each component (context, instructions, description, etc.) will serve the objective.
-   - Identify and retain critical terms, examples, and scientific details.
-   - Ensure each enriched output field is specific, measurable, and achievable.
-4. **Write**:
-   - Produce structured enriched content for both the research objective and its tasks.
-   - Keep original tone and terminology.
-   - Prefer concrete examples, researcher names, methods, and specific terms rather than general statements.
+    ## Pipeline
+    1. **Read the data you received** - the full context, keywords, topics, and form inputs.
+    2. **Identify** whether the user input already contains a clear objective or not.
+       - If yes -> use it directly.
+       - If not -> infer it logically from the available context.
+    3. **Reason** before writing:
+       - Map how each component will serve the objective.
+       - Identify and retain critical terms, examples, and scientific details.
+       - Ensure each enriched output field is specific, measurable, and achievable.
+    4. **Write**:
+       - Produce structured enriched content for both the research objective and its tasks.
+       - Keep original tone and terminology.
+       - Prefer concrete examples, researcher names, methods, and specific terms rather than general statements.
 
-## Input Data
-<objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
-<rag_results>${rag_results}</rag_results>
-<form_inputs>${form_inputs}</form_inputs>
-<keywords>${keywords}</keywords>
-<topics>${topics}</topics>
+    ## Input Data
+    <objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
+    <rag_results>${rag_results}</rag_results>
+    <form_inputs>${form_inputs}</form_inputs>
+    <keywords>${keywords}</keywords>
+    <topics>${topics}</topics>
 
-## Required Fields (7 per objective/task)
-1. **enriched** - Expanded version with scientific rationale and impact (≥50 chars).
-2. **terms** - Exactly 5 essential scientific terms central to the research.
-3. **context** - Clear background explaining the scientific need and gap (≥50 chars).
-4. **instructions** - Internal AI guidance for future text generation (style, tone, depth, etc.; ≥50 chars).
-5. **description** - Purpose, methodology, dependencies, expected results, innovation, and risks (≥50 chars).
-6. **questions** - 3-10 guiding scientific questions.
-7. **queries** - 3-10 short, precise search phrases for retrieval.
-
-## Output Requirements
-- Every field must be present and respect schema constraints.
-- Retain all domain-specific terminology and relevant examples.
-- Use concise academic writing style appropriate for grants.
-- Ensure coherence between objectives and tasks.
-- Use specific, measurable, and realistic details."
-""",
+    ## Output Requirements
+    - Retain all domain-specific terminology and relevant examples.
+    - Use concise academic writing style appropriate for grants.
+    - Ensure coherence between objectives and tasks.
+    - Use specific, measurable, and realistic details.
+    """,
 )
 
 enriched_object_schema = {
@@ -162,50 +152,41 @@ research_objective_enrichment_schema = {
 ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="refine_enrich_research_objective",
     template="""
-You are a professional grant writer and scientific editor embedded in a system designed to produce best-in-class grant applications.
-Your task is to review and refine enriched research objectives and tasks while preserving schema structure, terminology, and meaning.
+    You are a professional grant writer and scientific editor embedded in a system designed to produce best-in-class grant applications.
+    Your task is to review and refine enriched research objectives and tasks while preserving schema structure, terminology, and meaning.
 
-## Reasoning Pipeline
-1. **Read** all provided inputs - the original objective, enrichment draft, RAG context, keywords, and topics.
-2. **Identify**:
-   - Weak, unclear, or redundant parts in each enrichment field.
-   - Missing or inconsistent logic between objectives and tasks.
-   - Opportunities to clarify methodology, dependencies, and innovation.
-3. **Reason**:
-   - Plan improvements logically before writing.
-   - Maintain scientific tone and fidelity to the original domain.
-   - Strengthen the link between scientific rationale, methods, and expected results.
-   - Preserve all original technical terms, researcher names, and examples.
-4. **Write**:
-   - Produce the refined output following the exact schema and field names.
-   - Keep every field present with the same constraints (lengths, counts).
-   - Replace generic phrases with specific, evidence-based details or realistic examples.
-   - Improve flow, coherence, and readability without changing meaning or data.
+    ## Reasoning Pipeline
+    1. **Read** all provided inputs - the original objective, enrichment draft, RAG context, keywords, and topics.
+    2. **Identify**:
+       - Weak, unclear, or redundant parts in each enrichment field.
+       - Missing or inconsistent logic between objectives and tasks.
+       - Opportunities to clarify methodology, dependencies, and innovation.
+    3. **Reason**:
+       - Plan improvements logically before writing.
+       - Maintain scientific tone and fidelity to the original domain.
+       - Strengthen the link between scientific rationale, methods, and expected results.
+       - Preserve all original technical terms, researcher names, and examples.
+    4. **Write**:
+       - Produce the refined output following the exact schema and field names.
+       - Keep every field present with the same constraints.
+       - Replace generic phrases with specific, evidence-based details or realistic examples.
+       - Improve flow, coherence, and readability without changing meaning or data.
 
-## Input
-<objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
-<rag_results>${rag_results}</rag_results>
-<form_inputs>${form_inputs}</form_inputs>
-<keywords>${keywords}</keywords>
-<topics>${topics}</topics>
+    ## Input
+    <objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
+    <rag_results>${rag_results}</rag_results>
+    <form_inputs>${form_inputs}</form_inputs>
+    <keywords>${keywords}</keywords>
+    <topics>${topics}</topics>
 
-## Required Output Fields (7 per objective/task)
-1. **enriched** - Final, polished version of the enriched objective (≥50 chars).
-2. **terms** - Exactly 5 fundamental scientific terms (keep from input unless illogical).
-3. **context** - Polished scientific background explaining rationale (≥50 chars).
-4. **instructions** - Refined internal AI guidance (≥50 chars).
-5. **description** - Coherent and logically ordered summary of purpose, methodology, dependencies, risks, and innovation (≥50 chars).
-6. **questions** - 3-10 strong guiding questions.
-7. **queries** - 3-10 precise retrieval phrases (3-7 words).
-
-## Content and Style Rules
-- Always preserve schema structure.
-- Never remove or rename fields.
-- Maintain academic tone, professional voice, and factual precision.
-- Include examples, researcher names, and references naturally - they are the best proof of credibility.
-- Ensure internal consistency and logical sequence across objectives and tasks.
-- Final output must be technically and stylistically ready for grant submission."
-""",
+    ## Content and Style Rules
+    - Always preserve schema structure.
+    - Never remove or rename fields.
+    - Maintain academic tone, professional voice, and factual precision.
+    - Include examples, researcher names, and references naturally.
+    - Ensure internal consistency and logical sequence across objectives and tasks.
+    - Final output must be technically and stylistically ready for grant submission.
+    """,
 )
 
 
