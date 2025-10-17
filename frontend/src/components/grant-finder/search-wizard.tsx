@@ -7,7 +7,7 @@ import { z } from "zod";
 import { createSubscription } from "@/actions/grants";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { API } from "@/types/api-types";
-import { FormSummary } from "./form-summary";
+
 import { ProgressBar } from "./progress-bar";
 import { ActivityCodesStep } from "./steps/activity-codes-step";
 import { CareerStageStep } from "./steps/career-stage-step";
@@ -15,6 +15,9 @@ import { EmailAlertsStep } from "./steps/email-alerts-step";
 import { InstitutionLocationStep } from "./steps/institution-location-step";
 import { KeywordsStep } from "./steps/keywords-step";
 import type { FormData } from "./types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { AnimatedGradientBackground } from "../landing-page/backgrounds-animated";
 
 const emailAlertsSchema = z.object({
 	agreeToTerms: z.literal(true, {
@@ -23,7 +26,8 @@ const emailAlertsSchema = z.object({
 	email: z.email(),
 });
 
-const WIZARD_STEPS = ["Keywords", "Activity codes", "Institution location", "Career stage", "Email for alerts"];
+
+const WIZARD_STEPS = ["Keywords", "Activity codes", "Institution location", "Career stage", "Alerts Setting"];
 
 export function SearchWizard() {
 	const router = useRouter();
@@ -33,9 +37,10 @@ export function SearchWizard() {
 		activityCodes: [],
 		agreeToTerms: false,
 		agreeToUpdates: false,
-		careerStage: "",
+
+		careerStage: [],
 		email: "",
-		institutionLocation: "",
+		institutionLocation: [],
 		keywords: "",
 	});
 
@@ -158,7 +163,7 @@ export function SearchWizard() {
 
 	return (
 		<div
-			className="rounded-xl border border-input-border bg-white p-8 shadow-sm lg:p-12"
+			className="rounded-xl border border-primary bg-white p-8 shadow-sm lg:p-12"
 			data-testid="search-wizard"
 		>
 			<div className="mb-12" data-testid="wizard-progress-bar">
@@ -166,46 +171,46 @@ export function SearchWizard() {
 			</div>
 
 			<div className="mb-8 min-h-[400px]" data-testid="wizard-step-content">
+				
 				{renderStep()}
 			</div>
 
-			{isLastStep && (
-				<div className="mb-8" data-testid="wizard-form-summary">
-					<FormSummary formData={formData} />
-				</div>
-			)}
+		
 
 			<div className="flex justify-between" data-testid="wizard-navigation">
 				<AppButton
-					className={currentStep === 0 ? "invisible" : ""}
+					className={currentStep === 0 ? "invisible" : "w-[128px] gap-1 items-center font-normal text-base font-sans"}
 					data-testid="wizard-back-button"
 					disabled={loading}
 					onClick={handlePrevious}
-					size="lg"
 					variant="secondary"
 				>
+					<ChevronLeft/>
 					Back
 				</AppButton>
 
 				{isLastStep ? (
 					<AppButton
+					className="w-[128px] gap-1 items-center font-normal text-base font-sans"
 						data-testid="wizard-submit-button"
 						disabled={!isStepValid() || loading}
 						onClick={() => void handleSubmit()}
 						size="lg"
 						variant="primary"
 					>
-						{loading ? "Submitting..." : "Get Alerts"}
+						{loading ? "Submitting..." : "Send"}
+						<Image src="/icons/send-icon.svg" alt="send icon" width={12} height={12}/>
 					</AppButton>
 				) : (
 					<AppButton
+					className="w-[128px] gap-1 items-center font-normal text-base font-sans"
 						data-testid="wizard-next-button"
 						disabled={!isStepValid()}
 						onClick={handleNext}
-						size="lg"
 						variant="primary"
 					>
 						Next
+						<ChevronRight/>
 					</AppButton>
 				)}
 			</div>
