@@ -55,7 +55,7 @@ For each section requiring writing (`needs_writing=true`), generate **content me
 ### Fields to Generate
 
 1. **keywords** - 5-15 highly specific domain terms.
-   - Research plan sections: 10-15 keywords.
+   - Research plan sections: 5-15 keywords.
    - Other sections: 5-10 keywords.
    - Use field-accurate, contextual terms (e.g., "neural network optimization" not "AI").
 
@@ -109,7 +109,7 @@ content_metadata_schema: Final = {
                     "keywords": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 2, "maxLength": 50},
-                        "minItems": 0,
+                        "minItems": 5,
                         "maxItems": 20,
                     },
                     "topics": {

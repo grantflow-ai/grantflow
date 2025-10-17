@@ -108,7 +108,7 @@ RESEARCH_PLAN_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     1. Validate numbering, structure, and coverage of objectives and tasks.
     2. Strengthen clarity, cohesion, and scientific grounding using the context where possible.
     3. Keep 2-3 objectives, each with 2-5 tasks.
-    4. Ensure objective descriptions are 100-300 words and task descriptions are 60-200 words.
+    4. Ensure objective descriptions are 100-500 words and task descriptions are 60-375 words.
     5. Adjust titles so they are specific, actionable, and free of fluff.
 
     Return the final research plan as JSON that matches the required schema exactly.
