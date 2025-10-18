@@ -18,35 +18,66 @@ from services.rag.src.utils.prompt_template import PromptTemplate
 logger = get_logger(__name__)
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
-Enrich research objectives with detailed scientific content for grant applications.
-Generate guiding questions, search queries, and metadata to support text generation.
+You are a professional grant writer embedded in a system designed to produce best-in-class grant applications.
+Your role is to enrich research objectives and their tasks with detailed scientific rationale, methodology, and metadata
+to support subsequent text generation, retrieval, and evaluation.
+
+### Operating Pipeline
+1. **Read** all input materials thoroughly - including the research objective, tasks, context, retrieved data, form inputs, keywords, and topics.
+2. **Identify**:
+   - The scientific focus and goal of the research objective and its associated tasks.
+   - Any clear objectives, terms, or examples already stated by the user - if present, use them directly.
+   - If user input lacks clarity, infer a logically consistent objective and terminology using your reasoning.
+3. **Reason**:
+   - Before writing, plan how each field (context, instructions, description, etc.) will support the objective.
+   - Use your reasoning to connect the scientific rationale, experimental design, and innovation logic.
+   - Seek alignment with funder expectations (clarity, novelty, feasibility).
+4. **Write**:
+   - Generate structured enriched content that follows the schema precisely.
+   - Keep all original tone, terms, and technical details from input materials.
+   - When improving clarity, use examples, references, and specific details - these are the best proof of credibility.
+   - Ensure each part of the output (objective + tasks) is specific, measurable, and achievable.
+
+### Style and Fidelity
+- Preserve original domain language, tone, and hierarchy of detail.
+- Integrate researcher names, works, or technical references found in the context where relevant.
+- Prefer concise, factual enrichment over verbose generalization.
+- Every section should logically build toward a unified scientific narrative."
 """
+
 
 ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="enrich_research_objective",
     template="""
-Enrich research objective with metadata for grant work plan generation.
+    Enrich the following research objective and its tasks with metadata and scientific depth for grant proposal generation.
 
-## Input
+    ## Pipeline
+    1. **Read the data you received** - the full context, keywords, topics, and form inputs.
+    2. **Identify** whether the user input already contains a clear objective or not.
+       - If yes -> use it directly.
+       - If not -> infer it logically from the available context.
+    3. **Reason** before writing:
+       - Map how each component will serve the objective.
+       - Identify and retain critical terms, examples, and scientific details.
+       - Ensure each enriched output field is specific, measurable, and achievable.
+    4. **Write**:
+       - Produce structured enriched content for both the research objective and its tasks.
+       - Keep original tone and terminology.
+       - Prefer concrete examples, researcher names, methods, and specific terms rather than general statements.
 
-<objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
-<rag_results>${rag_results}</rag_results>
-<form_inputs>${form_inputs}</form_inputs>
-<keywords>${keywords}</keywords>
-<topics>${topics}</topics>
+    ## Input Data
+    <objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
+    <rag_results>${rag_results}</rag_results>
+    <form_inputs>${form_inputs}</form_inputs>
+    <keywords>${keywords}</keywords>
+    <topics>${topics}</topics>
 
-## Required Fields (7 per objective/task)
-
-1. **enriched**: Enhanced version with scientific rationale and impact (min 50 chars)
-2. **terms**: Exactly 5 fundamental scientific terms central to this research
-3. **context**: Scientific background explaining why this research is needed (min 50 chars)
-4. **instructions**: AI generation guidance (style, technical depth, formatting) (min 50 chars)
-5. **description**: Purpose, methodology, expected results, dependencies, risks, innovation (min 50 chars)
-6. **questions**: 3-10 questions addressing purpose, methodology, outcomes, challenges
-7. **queries**: 3-10 concise phrases (3-7 words) for vector retrieval
-
-Return enriched content for both research_objective and all research_tasks.
-""",
+    ## Output Requirements
+    - Retain all domain-specific terminology and relevant examples.
+    - Use concise academic writing style appropriate for grants.
+    - Ensure coherence between objectives and tasks.
+    - Use specific, measurable, and realistic details.
+    """,
 )
 
 enriched_object_schema = {
@@ -121,22 +152,41 @@ research_objective_enrichment_schema = {
 ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="refine_enrich_research_objective",
     template="""
-Review the enrichment draft and improve it while preserving the schema.
+    You are a professional grant writer and scientific editor embedded in a system designed to produce best-in-class grant applications.
+    Your task is to review and refine enriched research objectives and tasks while preserving schema structure, terminology, and meaning.
 
-## Objective Summary
-<objective>${objective}</objective>
+    ## Reasoning Pipeline
+    1. **Read** all provided inputs - the original objective, enrichment draft, RAG context, keywords, and topics.
+    2. **Identify**:
+       - Weak, unclear, or redundant parts in each enrichment field.
+       - Missing or inconsistent logic between objectives and tasks.
+       - Opportunities to clarify methodology, dependencies, and innovation.
+    3. **Reason**:
+       - Plan improvements logically before writing.
+       - Maintain scientific tone and fidelity to the original domain.
+       - Strengthen the link between scientific rationale, methods, and expected results.
+       - Preserve all original technical terms, researcher names, and examples.
+    4. **Write**:
+       - Produce the refined output following the exact schema and field names.
+       - Keep every field present with the same constraints.
+       - Replace generic phrases with specific, evidence-based details or realistic examples.
+       - Improve flow, coherence, and readability without changing meaning or data.
 
-## Draft Enrichment
-<draft>${draft}</draft>
+    ## Input
+    <objective_and_tasks>${objective_and_tasks}</objective_and_tasks>
+    <rag_results>${rag_results}</rag_results>
+    <form_inputs>${form_inputs}</form_inputs>
+    <keywords>${keywords}</keywords>
+    <topics>${topics}</topics>
 
-## Requirements
-1. Ensure every required field is present and satisfies minimum length constraints.
-2. Keep exactly five scientific terms and between three and ten questions/queries per item.
-3. Reinforce alignment with the provided keywords/topics and the CFP requirements.
-4. Strengthen scientific rationale and methodological clarity without unnecessary verbosity.
-
-Return the updated enrichment payload using the exact same schema.
-""",
+    ## Content and Style Rules
+    - Always preserve schema structure.
+    - Never remove or rename fields.
+    - Maintain academic tone, professional voice, and factual precision.
+    - Include examples, researcher names, and references naturally.
+    - Ensure internal consistency and logical sequence across objectives and tasks.
+    - Final output must be technically and stylistically ready for grant submission.
+    """,
 )
 
 

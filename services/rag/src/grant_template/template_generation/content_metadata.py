@@ -10,13 +10,35 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 CONTENT_METADATA_SYSTEM_PROMPT: Final[str] = (
-    "You generate content metadata for grant application sections. "
-    "Focus on keywords, topics, instructions, and search queries. Be specific and actionable."
+    "You are an expert grant-writing strategist embedded in a structured system designed to produce "
+    "precise and actionable content metadata for grant applications. "
+    "Your task is to generate metadata that supports scientifically grounded, coherent, and funder-aligned writing. "
+    "Before producing output, read all available context carefully, identify missing data, reason through relationships "
+    "between sections, and only then write the output. "
+    "Be specific, measurable, and academically accurate-never fabricate data or generic placeholders."
 )
 
 CONTENT_METADATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="content_metadata",
     template="""# Generate Content Metadata
+
+# Generate Content Metadata for Grant Application Sections
+
+## Pipeline Logic
+
+Follow this reasoning sequence before writing:
+1. **Read** - Carefully read *all* provided information in `organization_guidelines` and `sections`.
+   Identify section purposes, definitions, and contextual hints.
+2. **Identify** - Extract the main scientific and structural focus for each section.
+   Detect technical areas, repeated terms, references, or themes.
+3. **Reason** - Determine how each section connects to others.
+   Infer intent, content hierarchy, and emphasis from patterns and guidelines.
+   If information is missing, explain briefly what's missing and why it matters before generating.
+4. **Write** - Produce metadata that is *specific, measurable, and achievable*.
+   Use domain terminology, concrete keywords, and realistic queries.
+   Be explicit and evidence-based, reflecting reasoning from prior steps.
+
+---
 
 ## Organization Guidelines
 
@@ -28,43 +50,50 @@ ${sections}
 
 ## Task
 
-For each section requiring writing (needs_writing=true), generate content metadata.
+For each section requiring writing (`needs_writing=true`), generate **content metadata** as described below.
 
-### Fields
+### Fields to Generate
 
-1. **keywords**: 5-15 specific domain terms
-   - Research plan sections: 10-15 keywords
-   - Other sections: 5-10 keywords
-   - Be specific: "preliminary data analysis" not "data"
+1. **keywords** - 5-15 highly specific domain terms.
+   - Research plan sections: 5-15 keywords.
+   - Other sections: 5-10 keywords.
+   - Use field-accurate, contextual terms (e.g., "neural network optimization" not "AI").
 
-2. **topics**: 3-8 key areas to address
-   - Research plan sections: 5-8 topics
-   - Other sections: 3-5 topics
-   - Focus on what content must cover
+2. **topics** - 3-8 core thematic areas or discussion points.
+   - Research plan sections: 5-8 topics.
+   - Other sections: 3-5 topics.
+   - Capture the conceptual and methodological focus.
 
-3. **generation_instructions**: 100-500 words
-   - Purpose of this section
-   - Key content to include
-   - Writing style and tone
+3. **generation_instructions** - 100-500 words describing:
+   - The section's scientific or administrative purpose
+   - Required content and data elements
+   - Writing tone and narrative style
    - Common pitfalls to avoid
-   - Be specific and actionable
+   - Explicit actionable instructions (not abstract advice)
 
-4. **search_queries**: 3-10 queries for RAG retrieval
-   - Research plan sections: 7-10 queries
-   - Other sections: 3-5 queries
-   - Diverse queries covering different aspects
-   - Specific to section's focus
+4. **search_queries** - 3-10 distinct queries for RAG retrieval.
+   - Research plan sections: 7-10 queries.
+   - Other sections: 3-5 queries.
+   - Include variety (methods, objectives, datasets, references, names, terminology).
+   - Reflect precise knowledge needs based on reasoning.
+
+---
 
 ### Guidelines
 
-- For sections with needs_writing=false, provide minimal metadata (empty keywords/topics, basic instructions)
-- Use section guidelines and definition to inform metadata
-- Research plan (is_plan=true) gets most detailed metadata
-- Clinical sections focus on trial-specific terms
+- For `needs_writing=false`, return minimal metadata:
+  empty keywords/topics, one-sentence generation instruction.
+- Always align with section definitions and organizational rules.
+- For research plan sections (`is_plan=true`), emphasize methodology and data-driven terms.
+- Clinical sections must include trial-specific language (e.g., “Phase II design,” “patient cohort,” “regulatory compliance”).
+- Prefer terms and phrasing already used in the source data; examples and real entities improve precision.
 
-### Output
+---
 
-Return all sections with content metadata.
+### Output Format
+
+Return all sections with content metadata as a JSON structure matching the defined schema.
+Do **not** include reasoning or explanations in the output itself.
 """,
 )
 
@@ -80,7 +109,7 @@ content_metadata_schema: Final = {
                     "keywords": {
                         "type": "array",
                         "items": {"type": "string", "minLength": 2, "maxLength": 50},
-                        "minItems": 0,
+                        "minItems": 5,
                         "maxItems": 20,
                     },
                     "topics": {
