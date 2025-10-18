@@ -68,9 +68,40 @@ GENERATE_WORK_COMPONENT_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     template="""
 Your task is to write the text for a ${object_type} in a grant application work plan.
 
-An ${object_type} is ${object_type_description}. This component must be scientifically accurate, methodologically sound, and demonstrate a clear scientific contribution to the field. The text will be evaluated by scientific experts and must balance technical precision with clarity.
+An ${object_type} is ${object_type_description}. This component must be scientifically accurate, methodologically sound, and demonstrate a clear scientific contribution to the field.
+The text will be evaluated by scientific experts and must balance technical precision with clarity.
 
-The title of this ${object_type} is ${object_title} and the user provided the following description for it:
+---
+
+## Operating Pipeline
+
+Follow this structured reasoning process before and during writing:
+
+1. **Read**
+   - Carefully read *all* provided materials: the description, relationships, instructions, guiding questions, and prior work plan text.
+   - Do not assume missing information until everything has been reviewed.
+
+2. **Identify**
+   - Identify the main research focus, technical goals, and dependencies.
+   - Recognize relevant methods, terms, names of researchers, datasets, and related works already mentioned in the context.
+   - Mark only *truly* missing data-do not fabricate details.
+
+3. **Reason**
+   - Reason through how this ${object_type} connects to other components and the overall research plan.
+   - Determine the scientific logic, contribution, and sequence of activities based on the information you have.
+   - When data is missing, explicitly mention it using precise reasoning about what's absent and why it matters.
+
+4. **Write**
+   - Write with precision and structure.
+   - Integrate available examples, references, and terminology naturally.
+   - Keep tone professional, scientific, and aligned with the original context and terminology.
+   - Examples, names, and technical details strengthen credibility-use them when relevant.
+
+---
+
+## Component Context
+
+The title of this ${object_type} is ${object_title}, and the user provided the following description for it:
 
 <description>
 ${description}
@@ -92,7 +123,7 @@ ${relationships}
 
 ${relationship_guidance}
 
-Use these relationships to ensure that the generated text is consistent with the context and information provided in the previous sections.
+Use these relationships to ensure the generated text is consistent with the broader context and prior sections.
 
 ## Content Guidance
 
@@ -103,62 +134,53 @@ The generated text should address (implicitly) the following guiding questions:
 ${guiding_questions}
 </guiding_questions>
 
-Use the part of the work plan that has already been written to ensure that the generated text is consistent with the context and information provided in the previous sections:
+Use the already written parts of the work plan to maintain continuity and coherence:
 <work_plan_text>
 ${work_plan_text}
 </work_plan_text>
+
 """,
 )
 
 ADJUST_WORK_COMPONENT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="adjust_work_component_length",
     template="""
-Revise the ${object_type} draft so that it meets the word constraints without losing essential content.
+Your task is to ${direction} the following ${object_type} text to meet the required word count.
 
-## Component Context
+- **Minimum words**: ${min_words}
+- **Maximum words**: ${max_words}
 
-- Identifier: ${component_number}
-- Title: ${component_title}
-- Direction: ${direction}
-- Maximum words: ${max_words}
-- Minimum words: ${min_words}
+You must preserve scientific accuracy, structure, and coherence.
 
-## Instructions
+Component number: ${component_number}
+Title: ${component_title}
 
+Instructions:
 <instructions>
 ${instructions}
 </instructions>
 
-## Guiding Questions
-
+Guiding questions:
 <guiding_questions>
 ${guiding_questions}
 </guiding_questions>
 
-## Relationships
-
+Relationships:
 <relationships>
 ${relationships}
 </relationships>
 
-## Work Plan So Far
-
-<work_plan>
+Work Plan So Far:
+<work_plan_so_far>
 ${work_plan_so_far}
-</work_plan>
+</work_plan_so_far>
 
-## Current Draft
-
-<draft>
+Draft text:
+<draft_text>
 ${draft_text}
-</draft>
+</draft_text>
 
-## Requirements
-
-1. Preserve factual commitments, dependencies, and sequencing signals.
-2. Maintain markdown headings and logical flow.
-3. Do not mention that this is a revision or discuss token counts.
-4. Return the full revised text only.
+Adjust and return the improved text only.
 """,
 )
 

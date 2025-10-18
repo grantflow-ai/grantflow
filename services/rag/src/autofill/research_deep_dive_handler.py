@@ -39,8 +39,17 @@ RESEARCH_DEEP_DIVE_FIELD_MAPPING: Final[dict[ResearchDeepDiveKey, str]] = {
 }
 
 RESEARCH_DEEP_DIVE_SYSTEM_PROMPT: Final[str] = """
-You are a specialist in writing comprehensive research answers for grant applications. Your task is to generate
-detailed, well-structured answers to research questions based on the provided context and research materials.
+You are a professional grant writer embedded in a system designed to produce best-in-class grant applications.
+Your task is to generate detailed, well-structured answers to research questions based on the provided context,
+research objectives, and uploaded research materials.
+
+Operating rules:
+1) First, read the entire prompt and all available data/context before writing.
+2) Follow the established pipeline and output schema exactly.
+3) Plan your approach step-by-step (use internal reasoning) before drafting to ensure accuracy, coherence, and maximal alignment with funder expectations.
+4) Ensure that each answer directly addresses the research question, draws on the provided context and objectives, and maintains consistency with grant-writing standards.
+5) Write in a professional academic tone, providing specific, evidence-based, and grant-appropriate details.
+
 """
 
 
@@ -58,18 +67,49 @@ class ResearchDeepDiveDraft(TypedDict):
 RESEARCH_DEEP_DIVE_DRAFT_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="research_deep_dive_draft",
     template="""
-    Create draft answers for each research deep dive question for the grant application titled "${application_title}".
+    ## Pipeline Instructions
 
-    ## Research Objectives
+    You are part of a system built to create best-in-class grant applications.
+    Follow this reasoning pipeline carefully before generating draft answers:
+
+    1. **Read** all input data - the application title, all research questions, research context, and stated research objectives.
+    2. **Identify** key information for each question:
+       - Determine the central focus of each research question.
+       - Extract relevant evidence, concepts, and terminology from the research context and objectives.
+       - Look carefully for names of people, institutions, previous works, publications, and technical terms.
+       - Determine which references are most relevant for each answer.
+    3. **Reason** about each answer:
+       - Plan how each response will address its question clearly and directly.
+       - Structure answers logically: background -> reasoning and evidence -> implications or conclusions.
+       - Decide which identified examples, names, and terms will best demonstrate understanding.
+       - Ensure factual consistency - do not invent or assume information beyond what is implied.
+    4. **Write** draft answers using the same professional and academic tone as the input text.
+       - Preserve the terminology, voice, and conceptual framing from the input.
+       - Integrate names, works, and field-specific terms naturally.
+       - Use examples and specific details to prove points and demonstrate understanding.
+       - Maintain precision, coherence, and alignment with grant standards.
+
+    ---
+
+    ## Input Data
+
+    ### Application Title
+    ${application_title}
+
+    ### Research Context
+    ${context}
+
+    ### Research Objectives
     ${objectives_text}
 
-    ## Research Context
-    ${context}
+    ---
 
     ## Drafting Guidelines
     - Provide evidence-backed answers for every question.
     - Aim for 150-250 words per answer; concise but complete.
     - Note gaps if context lacks supporting evidence.
+    - Use specific details, examples, and contextual references.
+    - Maintain professional academic tone throughout.
 
     Return a JSON object with one string per question using the provided keys.
     """,

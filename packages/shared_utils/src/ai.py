@@ -14,14 +14,16 @@ from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 
 
-EVALUATION_MODEL: Final[str] = get_env("EVALUATION_MODEL", fallback="gemini-2.5-flash")
+EVALUATION_MODEL: Final[str] = get_env(
+    "EVALUATION_MODEL", fallback="gemini-flash-latest"
+)
 GENERATION_MODEL: Final[str] = get_env(
     "GENERATION_MODEL", fallback="gemini-flash-latest"
 )
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
     "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4-20250514"
 )
-REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-2.5-flash")
+REASONING_MODEL: Final[str] = get_env("REASONING_MODEL", fallback="gemini-flash-latest")
 
 GEMINI_FLASH_MODEL: Final[str] = "gemini-flash-latest"
 
