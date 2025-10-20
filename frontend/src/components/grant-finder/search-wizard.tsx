@@ -181,6 +181,7 @@ export function SearchWizard() {
 					data-testid="wizard-back-button"
 					disabled={loading}
 					onClick={handlePrevious}
+					type="button"
 					variant="secondary"
 				>
 					<ChevronLeft />
@@ -194,6 +195,7 @@ export function SearchWizard() {
 						disabled={!isStepValid() || loading}
 						onClick={() => void handleSubmit()}
 						size="lg"
+						type="button"
 						variant="primary"
 					>
 						{loading ? "Submitting..." : "Send"}
@@ -205,6 +207,7 @@ export function SearchWizard() {
 						data-testid="wizard-next-button"
 						disabled={!isStepValid()}
 						onClick={handleNext}
+						type="button"
 						variant="primary"
 					>
 						Next
