@@ -9,10 +9,7 @@ export function KeywordsStep({ formData, setFormData }: KeywordsStepProps) {
 	return (
 		<div className="flex flex-col gap-6" data-testid="keywords-step">
 			<div className="flex flex-col gap-2 w-[874px]" data-testid="keywords-step-header">
-				<h3
-					className="font-cabin text-[28px] font-medium text-gray-600"
-					data-testid="keywords-step-title"
-				>
+				<h3 className="font-cabin text-[28px] font-medium text-gray-600" data-testid="keywords-step-title">
 					Keywords
 				</h3>
 				<p
@@ -27,17 +24,20 @@ export function KeywordsStep({ formData, setFormData }: KeywordsStepProps) {
 			</div>
 
 			<div>
-				<label className="font-sans text-xs font-normal text-app-gray-400">Scientific Topics & Methods</label>
-			<textarea
-				onChange={(e) => {
-					setFormData({ ...formData, keywords: e.target.value });
-				}}
-				className="resize-none border border-gray-100 bg-white px-3 py-2 rounded-sm w-full h-[231px] font-sans placeholder:font-sans placeholder:font-normal text-gray-400 placeholder:text-sm placeholder:text-gray-400 "
-				placeholder="CRISPR, Alzheimer's disease, proteomics, high-throughput screening"
-				rows={5}
-				data-testid="keywords-textarea"
-				value={formData.keywords}
-			/>
+				<label className="font-sans text-xs font-normal text-app-gray-400" htmlFor="keywords">
+					Scientific Topics & Methods
+				</label>
+				<textarea
+					className="resize-none border border-gray-100 bg-white px-3 py-2 rounded-sm w-full h-[231px] font-sans placeholder:font-sans placeholder:font-normal text-gray-400 placeholder:text-sm placeholder:text-gray-400 "
+					data-testid="keywords-textarea"
+					id="keywords"
+					onChange={(e) => {
+						setFormData({ ...formData, keywords: e.target.value });
+					}}
+					placeholder="CRISPR, Alzheimer's disease, proteomics, high-throughput screening"
+					rows={5}
+					value={formData.keywords}
+				/>
 			</div>
 		</div>
 	);

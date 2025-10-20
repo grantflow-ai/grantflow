@@ -5,13 +5,21 @@ import { useEffect, useRef, useState } from "react";
 
 interface MultiSelectProps {
 	"data-testid"?: string;
+	id?: string;
 	onValueChange: (value: string[]) => void;
 	options: string[];
 	placeholder: string;
 	value: string[];
 }
 
-export function MultiSelect({ "data-testid": testId, onValueChange, options, placeholder, value }: MultiSelectProps) {
+export function MultiSelect({
+	"data-testid": testId,
+	id,
+	onValueChange,
+	options,
+	placeholder,
+	value,
+}: MultiSelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,15 +46,20 @@ export function MultiSelect({ "data-testid": testId, onValueChange, options, pla
 	return (
 		<div className="relative w-full" data-testid={testId} ref={containerRef}>
 			<button
-				className={`flex w-full items-center cursor-pointer justify-between rounded-[4px] border border-primary px-3 py-2 text-left  bg-white `}
+				className={
+					"flex w-full items-center cursor-pointer justify-between rounded-[4px] border border-primary px-3 py-2 text-left  bg-white "
+				}
 				data-testid={testId ? `${testId}-trigger` : undefined}
+				id={id}
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
 				type="button"
 			>
 				<span
-					className={value.length > 0 ? "text-gray-900" : " font-sans font-normal text-base text-app-gray-400"}
+					className={
+						value.length > 0 ? "text-gray-900" : " font-sans font-normal text-base text-app-gray-400"
+					}
 					data-testid={testId ? `${testId}-display-text` : undefined}
 				>
 					{displayText}
@@ -78,7 +91,9 @@ export function MultiSelect({ "data-testid": testId, onValueChange, options, pla
 						>
 							<div
 								className={` flex h-3 w-3 items-center justify-center border ${
-									value.includes(option) ? "border-blue-600 bg-blue-600" : "border-app-gray-700 group-hover:border-white bg-transparent"
+									value.includes(option)
+										? "border-blue-600 bg-blue-600"
+										: "border-app-gray-700 group-hover:border-white bg-transparent"
 								}`}
 								data-testid={
 									testId

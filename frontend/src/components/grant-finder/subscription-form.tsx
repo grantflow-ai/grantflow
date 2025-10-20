@@ -40,7 +40,7 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 					max_amount: 0,
 					min_amount: 0,
 					offset: 0,
-					query: searchParams.keywords.join(" "),
+					query: (searchParams.keywords ?? []).join(" "),
 				},
 			};
 			await createSubscription(requestBody);

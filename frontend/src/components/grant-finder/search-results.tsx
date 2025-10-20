@@ -30,7 +30,7 @@ export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 				const queryParams: API.GrantsHandleSearchGrants.QueryParameters = {
 					limit,
 					offset: 0,
-					search_query: searchParams.keywords.join(" "),
+					search_query: (searchParams.keywords ?? []).join(" "),
 				};
 
 				const response = await searchGrants(queryParams);
@@ -57,7 +57,7 @@ export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 			const queryParams: API.GrantsHandleSearchGrants.QueryParameters = {
 				limit,
 				offset: currentOffset,
-				search_query: searchParams.keywords.join(" "),
+				search_query: (searchParams.keywords ?? []).join(" "),
 			};
 
 			const response = await searchGrants(queryParams);

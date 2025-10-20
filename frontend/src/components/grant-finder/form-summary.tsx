@@ -18,9 +18,12 @@ const truncateText = (text: string, maxLength: number) => {
 
 export function FormSummary({ formData }: FormSummaryProps) {
 	return (
-		<div className="w-[378px]  bg-app-gray-20 border border-app-gray-100 rounded-[8px] py-4 px-[25px]" data-testid="form-summary">
+		<div
+			className="w-[378px]  bg-app-gray-20 border border-app-gray-100 rounded-[8px] py-4 px-[25px]"
+			data-testid="form-summary"
+		>
 			<div className="space-y-6" data-testid="form-summary-content">
-				<div data-testid="form-summary-header" className="flex flex-col gap-2">
+				<div className="flex flex-col gap-2" data-testid="form-summary-header">
 					<h4 className="text-2xl font-medium font-cabin text-gray-900" data-testid="form-summary-title">
 						Your Search Summary
 					</h4>
@@ -30,28 +33,37 @@ export function FormSummary({ formData }: FormSummaryProps) {
 				</div>
 
 				<div className="flex flex-col gap-2.5" data-testid="form-summary-grid">
-					<div data-testid="form-summary-keywords" className="space-y-2">
-						<div className="text-sm font-normal font-sans text-app-gray-600" data-testid="form-summary-keywords-label">
+					<div className="space-y-2" data-testid="form-summary-keywords">
+						<div
+							className="text-sm font-normal font-sans text-app-gray-600"
+							data-testid="form-summary-keywords-label"
+						>
 							Keywords
 						</div>
-						<div className="text-sm font-normal font-sans text-app-black" data-testid="form-summary-keywords-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-keywords-value"
+						>
 							{formData.keywords ? truncateText(formData.keywords, 60) : "Not specified"}
 						</div>
 					</div>
 
-					<div data-testid="form-summary-activity-codes" className="space-y-2">
+					<div className="space-y-2" data-testid="form-summary-activity-codes">
 						<div
 							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-activity-codes-label"
 						>
 							Activity codes
 						</div>
-						<div className="text-sm font-normal font-sans text-app-black" data-testid="form-summary-activity-codes-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-activity-codes-value"
+						>
 							{formatActivityCodes(formData.activityCodes)}
 						</div>
 					</div>
 
-					<div data-testid="form-summary-institution-location" className="space-y-2">
+					<div className="space-y-2" data-testid="form-summary-institution-location">
 						<div
 							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-institution-location-label"
@@ -68,20 +80,26 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 
-					<div data-testid="form-summary-career-stage" className="space-y-2">
+					<div className="space-y-2" data-testid="form-summary-career-stage">
 						<div
 							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-career-stage-label"
 						>
 							Career stage
 						</div>
-						<div className="text-sm font-normal font-sans text-app-black" data-testid="form-summary-career-stage-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-career-stage-value"
+						>
 							{formData.careerStage.length > 0 ? formData.careerStage.join(", ") : "Not specified"}
 						</div>
 					</div>
 
-					<div data-testid="form-summary-email" className="space-y-2">
-						<div className="text-sm font-normal font-sans text-app-gray-600" data-testid="form-summary-email-label">
+					<div className="space-y-2" data-testid="form-summary-email">
+						<div
+							className="text-sm font-normal font-sans text-app-gray-600"
+							data-testid="form-summary-email-label"
+						>
 							Email for alerts
 						</div>
 						<div
@@ -92,9 +110,6 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 				</div>
-
-				
-				
 			</div>
 		</div>
 	);

@@ -25,9 +25,12 @@ export function InstitutionLocationStep({ formData, setFormData }: InstitutionLo
 			</div>
 
 			<div className="w-full" data-testid="institution-location-select-section">
-				<label className="font-sans text-xs font-normal text-app-gray-400">Institution location</label>
+				<label className="font-sans text-xs font-normal text-app-gray-400" htmlFor="institution-location">
+					Institution location
+				</label>
 				<MultiSelect
 					data-testid="institution-location-multiselect"
+					id="institution-location"
 					onValueChange={(value) => {
 						setFormData({ ...formData, institutionLocation: value });
 					}}

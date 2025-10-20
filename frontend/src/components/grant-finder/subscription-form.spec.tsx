@@ -151,9 +151,9 @@ describe.sequential("SubscriptionForm", () => {
 		it("submits form with correct data", async () => {
 			const searchParams = SearchParamsFactory.build({
 				activityCodes: ["R01", "R21"],
-				careerStage: "Early-stage (≤ 10 yrs)",
+				careerStage: ["Early-stage (≤ 10 yrs)"],
 				email: "researcher@university.edu",
-				institutionLocation: "U.S. institution (no foreign component)",
+				institutionLocation: ["U.S. institution (no foreign component)"],
 				keywords: ["CRISPR", "gene editing"],
 			});
 
