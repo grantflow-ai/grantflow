@@ -1035,15 +1035,17 @@ export const SearchParamsFactory = new Factory<SearchParams>((factory) => ({
 			)
 		: undefined,
 	careerStage: factory.datatype.boolean()
-		? factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"])
+		? [factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"])]
 		: undefined,
 	email: factory.datatype.boolean() ? factory.internet.email() : undefined,
 	institutionLocation: factory.datatype.boolean()
-		? factory.helpers.arrayElement([
-				"U.S. institution (no foreign component)",
-				"U.S. institution with foreign component",
-				"Non-U.S. (foreign) institution",
-			])
+		? [
+				factory.helpers.arrayElement([
+					"U.S. institution (no foreign component)",
+					"U.S. institution with foreign component",
+					"Non-U.S. (foreign) institution",
+				]),
+			]
 		: undefined,
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
 }));
@@ -1055,17 +1057,17 @@ export const FormDataFactory = new Factory<FormData>((factory) => ({
 	),
 	agreeToTerms: factory.datatype.boolean(),
 	agreeToUpdates: factory.datatype.boolean(),
-	careerStage: factory.helpers.arrayElement([
-		"Early-stage (≤ 10 yrs)",
-		"Mid-career (11–20 yrs)",
-		"Senior (> 20 yrs)",
-	]),
+	careerStage: [
+		factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"]),
+	],
 	email: factory.internet.email(),
-	institutionLocation: factory.helpers.arrayElement([
-		"U.S. institution (no foreign component)",
-		"U.S. institution with foreign component",
-		"Non-U.S. (foreign) institution",
-	]),
+	institutionLocation: [
+		factory.helpers.arrayElement([
+			"U.S. institution (no foreign component)",
+			"U.S. institution with foreign component",
+			"Non-U.S. (foreign) institution",
+		]),
+	],
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }).join(", "),
 }));
 

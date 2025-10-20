@@ -12,7 +12,7 @@ interface EmailAlertsStepProps {
 export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps) {
 	return (
 		<div className="space-y-6" data-testid="email-alerts-step">
-			<div data-testid="email-alerts-step-header" className="flex flex-col gap-2">
+			<div className="flex flex-col gap-2" data-testid="email-alerts-step-header">
 				<h3
 					className="font-cabin text-[28px] font-medium leading-loose text-app-black"
 					data-testid="email-alerts-step-title"
@@ -30,10 +30,13 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 			<main className="flex gap-6">
 				<div className="w-[539px] flex justify-between flex-col ">
 					<div className="w-full" data-testid="email-alerts-input-section">
-						<label className="font-sans text-xs font-normal text-app-gray-400">Email address</label>
+						<label className="font-sans text-xs font-normal text-app-gray-400" htmlFor="email">
+							Email address
+						</label>
 						<div className="relative">
 							<input
 								className="w-full rounded-[4px] h-10 border border-primary px-3 placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-app-gray-400"
+								id="email"
 								onChange={(e) => {
 									setFormData({ ...formData, email: e.target.value });
 								}}
@@ -41,7 +44,7 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 								type="email"
 								value={formData.email}
 							/>
-								<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+							<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
 						</div>
 					</div>
 

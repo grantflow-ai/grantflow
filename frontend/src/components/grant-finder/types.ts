@@ -16,7 +16,7 @@ export interface SearchParams {
 
 	email?: string;
 	institutionLocation?: string[];
-	keywords: string[];
+	keywords?: string[];
 }
 
 type ExtractArrayType<T> = T extends readonly (infer U)[] ? U : never;

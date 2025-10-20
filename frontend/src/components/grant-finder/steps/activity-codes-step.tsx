@@ -25,9 +25,12 @@ export function ActivityCodesStep({ formData, setFormData }: ActivityCodesStepPr
 			</div>
 
 			<div className="w-full" data-testid="activity-codes-select-section">
-				<label className="font-sans text-xs font-normal text-app-gray-400">Activity codes</label>
+				<label className="font-sans text-xs font-normal text-app-gray-400" htmlFor="activity-codes">
+					Activity codes
+				</label>
 				<MultiSelect
 					data-testid="activity-codes-multiselect"
+					id="activity-codes"
 					onValueChange={(value) => {
 						setFormData({ ...formData, activityCodes: value });
 					}}

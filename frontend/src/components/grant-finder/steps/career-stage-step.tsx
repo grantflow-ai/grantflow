@@ -32,9 +32,12 @@ export function CareerStageStep({ formData, setFormData }: CareerStageStepProps)
 			</div>
 
 			<div className="w-full" data-testid="career-stage-select-section">
-				<label className="font-sans text-xs font-normal text-app-gray-400">Career stage</label>
+				<label className="font-sans text-xs font-normal text-app-gray-400" htmlFor="career-stage">
+					Career stage
+				</label>
 				<MultiSelect
 					data-testid="career-stage-multiselect"
+					id="career-stage"
 					onValueChange={(value) => {
 						setFormData({ ...formData, careerStage: value });
 					}}

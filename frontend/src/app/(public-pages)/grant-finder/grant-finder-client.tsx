@@ -1,18 +1,16 @@
 "use client";
 
-import { SearchWizard } from "@/components/grant-finder/search-wizard";
-
-import { NavHeader } from "@/components/landing-page/nav-header";
 import Image from "next/image";
+import { SearchWizard } from "@/components/grant-finder/search-wizard";
+import { NavHeader } from "@/components/landing-page/nav-header";
 
 export function GrantFinderClient() {
 	return (
 		<div className="flex h-screen w-full flex-col bg-preview-bg isolate" data-testid="grant-finder-client">
 			<NavHeader />
 
-		
 			<div className="pointer-events-none  absolute top-1/2 right-[-100px] h-[1000px] w-[1024px] -translate-y-1/2 z-[-1]">
-				<Image src="assets/right-gradient.svg" alt="gradient" fill/>
+				<Image alt="gradient" fill src="assets/right-gradient.svg" />
 			</div>
 
 			<main className="flex-1 overflow-y-auto">
