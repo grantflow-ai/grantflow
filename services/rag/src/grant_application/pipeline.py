@@ -41,6 +41,7 @@ from services.rag.src.grant_application.utils import (
 )
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.job_manager import JobManager
+from services.rag.src.utils.red_team_logger import save_application_output, save_sections_breakdown
 
 logger = get_logger(__name__)
 
@@ -333,7 +334,7 @@ async def _handle_pipeline_error(
         raise DatabaseError("Failed to record pipeline error in database") from e
 
 
-async def handle_grant_application_pipeline(  # noqa: PLR0912
+async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
     grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
@@ -671,6 +672,28 @@ async def handle_grant_application_pipeline(  # noqa: PLR0912
                     character_count=len(application_text) if application_text else 0,
                     trace_id=trace_id,
                 )
+
+                # RED TEAM: Save output for review
+                try:
+                    save_application_output(
+                        application_id=str(application_id),
+                        application_title=grant_application.title,
+                        application_text=application_text,
+                        output_format="md",
+                    )
+                    save_sections_breakdown(
+                        application_id=str(application_id),
+                        application_title=grant_application.title,
+                        grant_sections=grant_template.grant_sections,
+                        section_texts=complete_section_texts,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to save red team output (non-fatal)",
+                        application_id=str(application_id),
+                        error=str(e),
+                        trace_id=trace_id,
+                    )
 
                 try:
                     async with session_maker() as session, session.begin():
