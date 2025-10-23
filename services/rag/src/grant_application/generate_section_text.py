@@ -114,7 +114,8 @@ Identify the following from your reading:
 - The **scientific focus** and purpose of this section (what question or challenge it addresses).
 - The **key requirements** and constraints from the CFP text.
 - The **most relevant objectives, methods, and results** that this section must connect to.
-- Critical **examples, evidence, or researcher names** mentioned in the context-use them directly.
+- Which specific **research goals and tasks** from the work plan are directly applicable to this section's scope.
+- Critical **examples, evidence, or researcher names** mentioned in the scientific literature-use them to substantiate how the research can accomplish the identified goals.
 - Any **missing but logically implied links** between objectives or methods.
 
 Record mentally how each of these supports the section's purpose and evaluation criteria.
@@ -125,8 +126,9 @@ Record mentally how each of these supports the section's purpose and evaluation 
 Before writing, plan how to structure your section:
 - Decide what the introduction, core argument, and conclusion will cover.
 - Connect CFP requirements to the scientific rationale, showing how the section fulfills them.
-- Ensure alignment with the Research Plan (e.g., references like *“as described in Objective 2, Task 2.3”*).
-- Integrate retrieved scientific data and terminology naturally.
+- Ensure alignment with the Research Plan (e.g., references like *"as described in Objective 2, Task 2.3"*).
+- Determine which research goals and tasks are directly relevant to this section's purpose. Plan to incorporate them only where they strengthen the scientific argument.
+- Integrate retrieved scientific data and terminology naturally. Use the evidence to show that the proposed objectives are achievable and well-grounded.
 - Use concrete examples, results, and methodological details-these are the best proof of credibility.
 - Ensure that the section is coherent, realistic, and measurable.
 
@@ -138,6 +140,7 @@ Write the full section text following these principles:
 - **Depth**: Include specific hypotheses, methods, data sources, expected outcomes, and challenges.
 - **Integration**: Quote or paraphrase scientific evidence from the context.
 - **Consistency**: Align with the Research Plan and objectives without contradictions.
+- **Goals & Tasks**: When relevant to the section, reference specific research objectives or tasks from the work plan. Adapt the language to fit naturally within the academic tone, and cite details only when supported by the scientific literature context. Demonstrate how the proposed research, grounded in the provided evidence, can feasibly achieve the stated goals.
 - **Style**: Maintain academic tone, precise terminology, and professional flow.
 - **Length**: Stay within ${length_requirements}.
 
