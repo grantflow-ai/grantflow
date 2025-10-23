@@ -50,7 +50,7 @@ interface ApplicationCardProps {
 	onDelete: (id: string) => void;
 	onDownload: (applicationId: string, format: DownloadFormat) => void;
 	onDuplicate: (id: string, currentTitle: string) => void;
-	onOpen: (applicationId: string, applicationTitle: string) => void;
+	onOpen: (application: API.ListApplications.Http200.ResponseBody["applications"][0]) => void;
 }
 
 export function ApplicationCard({
@@ -164,7 +164,7 @@ export function ApplicationCard({
 						className="w-[97px] py-0.5 bg-white"
 						data-testid={`application-card-open-button-${application.id}`}
 						onClick={() => {
-							onOpen(application.id, application.title);
+							onOpen(application);
 						}}
 						variant="secondary"
 					>
