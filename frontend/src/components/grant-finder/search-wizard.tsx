@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -7,7 +9,6 @@ import { z } from "zod";
 import { createSubscription } from "@/actions/grants";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { API } from "@/types/api-types";
-import { FormSummary } from "./form-summary";
 import { ProgressBar } from "./progress-bar";
 import { ActivityCodesStep } from "./steps/activity-codes-step";
 import { CareerStageStep } from "./steps/career-stage-step";
@@ -23,7 +24,7 @@ const emailAlertsSchema = z.object({
 	email: z.email(),
 });
 
-const WIZARD_STEPS = ["Keywords", "Activity codes", "Institution location", "Career stage", "Email for alerts"];
+const WIZARD_STEPS = ["Keywords", "Activity codes", "Institution location", "Career stage", "Alerts Setting"];
 
 export function SearchWizard() {
 	const router = useRouter();
@@ -33,9 +34,10 @@ export function SearchWizard() {
 		activityCodes: [],
 		agreeToTerms: false,
 		agreeToUpdates: false,
-		careerStage: "",
+
+		careerStage: [],
 		email: "",
-		institutionLocation: "",
+		institutionLocation: [],
 		keywords: "",
 	});
 
@@ -158,54 +160,58 @@ export function SearchWizard() {
 
 	return (
 		<div
-			className="rounded-xl border border-input-border bg-white p-8 shadow-sm lg:p-12"
+			className="flex flex-col rounded-[8px] gap-10 border border-primary bg-white p-16  min-h-[714px]"
 			data-testid="search-wizard"
 		>
-			<div className="mb-12" data-testid="wizard-progress-bar">
-				<ProgressBar currentStep={currentStep} steps={WIZARD_STEPS} />
-			</div>
-
-			<div className="mb-8 min-h-[400px]" data-testid="wizard-step-content">
-				{renderStep()}
-			</div>
-
-			{isLastStep && (
-				<div className="mb-8" data-testid="wizard-form-summary">
-					<FormSummary formData={formData} />
+			<div className="flex flex-col gap-10">
+				<div className="" data-testid="wizard-progress-bar">
+					<ProgressBar currentStep={currentStep} steps={WIZARD_STEPS} />
 				</div>
-			)}
 
-			<div className="flex justify-between" data-testid="wizard-navigation">
+				<div className="min-h-[400px]" data-testid="wizard-step-content">
+					{renderStep()}
+				</div>
+			</div>
+
+			<div className="mt-auto flex items-end justify-between " data-testid="wizard-navigation">
 				<AppButton
-					className={currentStep === 0 ? "invisible" : ""}
+					className={
+						currentStep === 0 ? "invisible" : "w-[128px] gap-1 items-center font-normal text-base font-sans"
+					}
 					data-testid="wizard-back-button"
 					disabled={loading}
 					onClick={handlePrevious}
-					size="lg"
+					type="button"
 					variant="secondary"
 				>
+					<ChevronLeft />
 					Back
 				</AppButton>
 
 				{isLastStep ? (
 					<AppButton
+						className="w-[128px] gap-1 items-center font-normal text-base font-sans"
 						data-testid="wizard-submit-button"
 						disabled={!isStepValid() || loading}
 						onClick={() => void handleSubmit()}
 						size="lg"
+						type="button"
 						variant="primary"
 					>
-						{loading ? "Submitting..." : "Get Alerts"}
+						{loading ? "Submitting..." : "Send"}
+						<Image alt="send icon" height={12} src="/icons/send-icon.svg" width={12} />
 					</AppButton>
 				) : (
 					<AppButton
+						className="w-[128px] gap-1 items-center font-normal text-base font-sans"
 						data-testid="wizard-next-button"
 						disabled={!isStepValid()}
 						onClick={handleNext}
-						size="lg"
+						type="button"
 						variant="primary"
 					>
 						Next
+						<ChevronRight />
 					</AppButton>
 				)}
 			</div>

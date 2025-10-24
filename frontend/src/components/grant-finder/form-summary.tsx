@@ -18,119 +18,98 @@ const truncateText = (text: string, maxLength: number) => {
 
 export function FormSummary({ formData }: FormSummaryProps) {
 	return (
-		<div className="rounded-lg border border-gray-200 bg-gray-50 p-6" data-testid="form-summary">
+		<div
+			className="w-[378px]  bg-app-gray-20 border border-app-gray-100 rounded-[8px] py-4 px-[25px]"
+			data-testid="form-summary"
+		>
 			<div className="space-y-6" data-testid="form-summary-content">
-				<div data-testid="form-summary-header">
-					<h4 className="text-lg font-semibold text-gray-900" data-testid="form-summary-title">
+				<div className="flex flex-col gap-2" data-testid="form-summary-header">
+					<h4 className="text-2xl font-medium font-cabin text-gray-900" data-testid="form-summary-title">
 						Your Search Summary
 					</h4>
-					<p className="mt-1 text-sm text-gray-600" data-testid="form-summary-description">
+					<p className=" text-sm font-sans text-app-gray-600" data-testid="form-summary-description">
 						Review your selections below
 					</p>
 				</div>
 
-				<div className="grid gap-4 sm:grid-cols-2" data-testid="form-summary-grid">
-					{}
-					<div data-testid="form-summary-keywords">
-						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-keywords-label">
+				<div className="flex flex-col gap-2.5" data-testid="form-summary-grid">
+					<div className="space-y-2" data-testid="form-summary-keywords">
+						<div
+							className="text-sm font-normal font-sans text-app-gray-600"
+							data-testid="form-summary-keywords-label"
+						>
 							Keywords
 						</div>
-						<div className="mt-1 text-sm text-gray-900" data-testid="form-summary-keywords-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-keywords-value"
+						>
 							{formData.keywords ? truncateText(formData.keywords, 60) : "Not specified"}
 						</div>
 					</div>
 
-					{}
-					<div data-testid="form-summary-activity-codes">
+					<div className="space-y-2" data-testid="form-summary-activity-codes">
 						<div
-							className="text-sm font-medium text-gray-600"
+							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-activity-codes-label"
 						>
 							Activity codes
 						</div>
-						<div className="mt-1 text-sm text-gray-900" data-testid="form-summary-activity-codes-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-activity-codes-value"
+						>
 							{formatActivityCodes(formData.activityCodes)}
 						</div>
 					</div>
 
-					{}
-					<div data-testid="form-summary-institution-location">
+					<div className="space-y-2" data-testid="form-summary-institution-location">
 						<div
-							className="text-sm font-medium text-gray-600"
+							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-institution-location-label"
 						>
 							Institution location
 						</div>
 						<div
-							className="mt-1 text-sm text-gray-900"
+							className="text-sm font-normal font-sans text-app-black"
 							data-testid="form-summary-institution-location-value"
 						>
-							{formData.institutionLocation || "Not specified"}
+							{formData.institutionLocation.length > 0
+								? formData.institutionLocation.join(", ")
+								: "Not specified"}
 						</div>
 					</div>
 
-					{}
-					<div data-testid="form-summary-career-stage">
+					<div className="space-y-2" data-testid="form-summary-career-stage">
 						<div
-							className="text-sm font-medium text-gray-600"
+							className="text-sm font-normal font-sans text-app-gray-600"
 							data-testid="form-summary-career-stage-label"
 						>
 							Career stage
 						</div>
-						<div className="mt-1 text-sm text-gray-900" data-testid="form-summary-career-stage-value">
-							{formData.careerStage || "Not specified"}
+						<div
+							className="text-sm font-normal font-sans text-app-black"
+							data-testid="form-summary-career-stage-value"
+						>
+							{formData.careerStage.length > 0 ? formData.careerStage.join(", ") : "Not specified"}
 						</div>
 					</div>
 
-					{}
-					<div className="sm:col-span-2" data-testid="form-summary-email">
-						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-email-label">
+					<div className="space-y-2" data-testid="form-summary-email">
+						<div
+							className="text-sm font-normal font-sans text-app-gray-600"
+							data-testid="form-summary-email-label"
+						>
 							Email for alerts
 						</div>
-						<div className="mt-1 break-all text-sm text-gray-900" data-testid="form-summary-email-value">
+						<div
+							className="text-sm font-normal font-sans text-app-black break-all"
+							data-testid="form-summary-email-value"
+						>
 							{formData.email || "Not specified"}
 						</div>
 					</div>
 				</div>
-
-				{}
-				{(formData.agreeToTerms || formData.agreeToUpdates) && (
-					<div className="border-t border-gray-200 pt-4" data-testid="form-summary-preferences">
-						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-preferences-label">
-							Preferences
-						</div>
-						<div className="mt-2 flex flex-wrap gap-4" data-testid="form-summary-preferences-list">
-							{formData.agreeToTerms && (
-								<div className="flex items-center gap-2" data-testid="form-summary-preference-terms">
-									<div
-										className="h-2 w-2 rounded-full bg-blue-600"
-										data-testid="form-summary-preference-terms-indicator"
-									/>
-									<span
-										className="text-sm text-gray-900"
-										data-testid="form-summary-preference-terms-text"
-									>
-										Terms & Conditions
-									</span>
-								</div>
-							)}
-							{formData.agreeToUpdates && (
-								<div className="flex items-center gap-2" data-testid="form-summary-preference-updates">
-									<div
-										className="h-2 w-2 rounded-full bg-blue-600"
-										data-testid="form-summary-preference-updates-indicator"
-									/>
-									<span
-										className="text-sm text-gray-900"
-										data-testid="form-summary-preference-updates-text"
-									>
-										GrantFlow updates
-									</span>
-								</div>
-							)}
-						</div>
-					</div>
-				)}
 			</div>
 		</div>
 	);

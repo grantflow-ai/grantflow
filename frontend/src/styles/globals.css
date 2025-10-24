@@ -9,6 +9,7 @@
   --font-cabin: var(--font-cabin);
   --font-sans: var(--font-sans);
   --font-body: var(--font-body);
+  --font-sora: var(--font-sora)
   --font-button: var(--font-button);
 
   --color-background: var(--background);
@@ -109,6 +110,7 @@
   --font-cabin: "Cabin", sans-serif;
   --font-sans: "Source Sans 3", sans-serif;
   --font-source-sans: "Source Sans Pro", sans-serif;
+  --font-sora: "Sora", sans-serif;
   --app-red: oklch(0.67 0.2207 13.38); /* FF456D */
   --app-light-red: #ffecec;
   --app-green: oklch(0.86 0.1786 142.59); /* 86EF7F */

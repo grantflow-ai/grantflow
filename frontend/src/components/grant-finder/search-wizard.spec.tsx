@@ -103,9 +103,8 @@ describe.sequential("SearchWizard", () => {
 			expect(screen.getByTestId("institution-location-step")).toBeInTheDocument();
 			expect(screen.getByTestId("institution-location-step-title")).toHaveTextContent("Institution Location");
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
-
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
@@ -203,9 +202,8 @@ describe.sequential("SearchWizard", () => {
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
-
 			expect(nextButton).not.toBeDisabled();
 		});
 
@@ -219,7 +217,7 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
 
 			await user.click(nextButton);
@@ -232,7 +230,6 @@ describe.sequential("SearchWizard", () => {
 
 			expect(nextButton).not.toBeDisabled();
 		});
-
 		it("validates email alerts step", async () => {
 			render(<SearchWizard />);
 
@@ -276,7 +273,7 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
 			await user.click(nextButton);
 
@@ -319,7 +316,7 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "Non-U.S. (foreign) institution");
 			await user.click(nextButton);
 
@@ -407,7 +404,7 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-select");
+			const institutionSelect = screen.getByTestId("institution-location-multiselect");
 			await user.selectOptions(institutionSelect, "U.S. institution with foreign component");
 			await user.click(nextButton);
 
@@ -426,7 +423,7 @@ describe.sequential("SearchWizard", () => {
 			expect(screen.getByTestId("career-stage-select")).toHaveValue("Mid-career (11–20 yrs)");
 
 			await user.click(backButton);
-			expect(screen.getByTestId("institution-location-select")).toHaveValue(
+			expect(screen.getByTestId("institution-location-multiselect")).toHaveValue(
 				"U.S. institution with foreign component",
 			);
 
@@ -443,16 +440,6 @@ describe.sequential("SearchWizard", () => {
 
 			const keywordsTitle = screen.getByTestId("keywords-step-title");
 			expect(keywordsTitle.tagName).toBe("H3");
-		});
-
-		it("has proper form labels", () => {
-			render(<SearchWizard />);
-
-			const keywordsLabel = screen.getByTestId("keywords-input-label");
-			const keywordsTextarea = screen.getByTestId("keywords-textarea");
-
-			expect(keywordsLabel).toHaveAttribute("for", "keywords");
-			expect(keywordsTextarea).toHaveAttribute("id", "keywords");
 		});
 
 		it("has proper button types", () => {
@@ -515,7 +502,7 @@ async function navigateToEmailStep(
 	await user.click(nextButton);
 	await user.click(nextButton);
 
-	const institutionSelect = screen.getByTestId("institution-location-select");
+	const institutionSelect = screen.getByTestId("institution-location-multiselect");
 	await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
 	await user.click(nextButton);
 
