@@ -5,28 +5,26 @@ import { getApplication } from "@/actions/grant-applications";
 import { EditorContainer } from "@/components/organizations/project/applications/editor/editor-container";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 export function ApplicationEditorPageClient() {
 	const router = useRouter();
-	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
-	const { activeApplicationId } = useNavigationStore();
+	const { activeApplicationId, activeProjectId, stateHydrated: navigationStateHydrated } = useNavigationStore();
 	const [application, setApplication] = useState<Awaited<ReturnType<typeof getApplication>> | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<null | string>(null);
 
 	useEffect(() => {
 		async function loadApplication() {
-			if (!(project && activeApplicationId && selectedOrganizationId)) {
+			if (!(activeProjectId && activeApplicationId && selectedOrganizationId)) {
 				router.replace(routes.organization.root());
 				return;
 			}
 
 			try {
 				setIsLoading(true);
-				const app = await getApplication(selectedOrganizationId, project.id, activeApplicationId);
+				const app = await getApplication(selectedOrganizationId, activeProjectId, activeApplicationId);
 				setApplication(app);
 			} catch {
 				setError("Failed to load application");
@@ -38,8 +36,12 @@ export function ApplicationEditorPageClient() {
 			}
 		}
 
+		if (!(navigationStateHydrated && selectedOrganizationId)) {
+			return;
+		}
+
 		void loadApplication();
-	}, [project, activeApplicationId, router, selectedOrganizationId]);
+	}, [activeProjectId, activeApplicationId, router, selectedOrganizationId, navigationStateHydrated]);
 
 	if (isLoading) {
 		return (
@@ -59,7 +61,7 @@ export function ApplicationEditorPageClient() {
 		);
 	}
 
-	if (!(application && project && application.editor_document_id && application.text)) {
+	if (!(application && activeProjectId && application.editor_document_id && application.text)) {
 		return null;
 	}
 

@@ -29,6 +29,7 @@ import { useNewApplicationModalStore } from "@/stores/new-application-modal-stor
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
+import type { API } from "@/types/api-types";
 import type { DownloadFormat } from "@/types/download";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -245,12 +246,17 @@ export function ProjectDetailClient() {
 		}
 	};
 
-	const handleOpenApplication = (applicationId: string, applicationTitle: string) => {
+	const handleOpenApplication = (application: API.ListApplications.Http200.ResponseBody["applications"][0]) => {
 		if (!project) return;
 
-		navigateToApplication(project.id, project.name, applicationId, applicationTitle);
-		const wizardPath = routes.organization.project.application.wizard();
-		router.push(wizardPath);
+		navigateToApplication(project.id, project.name, application.id, application.title);
+		if (application.status === "WORKING_DRAFT") {
+			const editorPath = routes.organization.project.application.editor();
+			router.push(editorPath);
+		} else {
+			const wizardPath = routes.organization.project.application.wizard();
+			router.push(wizardPath);
+		}
 	};
 
 	const handleDownloadApplication = async (applicationId: string, format: DownloadFormat) => {

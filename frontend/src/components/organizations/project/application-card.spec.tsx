@@ -87,7 +87,7 @@ describe("ApplicationCard", () => {
 		const openButton = screen.getByTestId("application-card-open-button-app-123");
 		await user.click(openButton);
 
-		expect(mockOnOpen).toHaveBeenCalledWith("app-123", "Test Application");
+		expect(mockOnOpen).toHaveBeenCalledWith(application);
 	});
 
 	it("should display formatted last edited date", () => {
