@@ -395,6 +395,21 @@ export namespace API {
 };
 };
 
+	export namespace CreateGrantingInstitutionRagSourceDownloadUrl {
+	export namespace Http201 {
+	export type ResponseBody = {
+	url: string;
+};
+};
+export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+}
+
 	export namespace CreateInvitationRedirectUrl {
 	export namespace Http201 {
 	export type ResponseBody = {

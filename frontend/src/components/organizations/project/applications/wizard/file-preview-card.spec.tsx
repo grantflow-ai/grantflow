@@ -26,6 +26,14 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 	),
 }));
 
+const { mockCreateFileDownloadUrl } = vi.hoisted(() => {
+	return { mockCreateFileDownloadUrl: vi.fn() };
+});
+
+vi.mock("@/actions/granting-institutions", () => ({
+	createFileDownloadUrl: mockCreateFileDownloadUrl,
+}));
+
 afterEach(() => {
 	cleanup();
 });
@@ -101,6 +109,20 @@ describe("FilePreviewCard", () => {
 
 			const openMenuItem = screen.getByTestId("file-menu-open");
 			expect(openMenuItem).not.toBeDisabled();
+		});
+
+		it("enables Open option for url files", async () => {
+			const file = FileWithIdFactory.build({ name: "document.docx" });
+			mockCreateFileDownloadUrl.mockResolvedValueOnce({
+				url: "https://upload.url/path",
+			});
+			render(<FilePreviewCard file={file} />);
+
+			const iconContainer = document.querySelector('[role="img"]')!;
+			fireEvent.contextMenu(iconContainer);
+
+			const menuOpen = await screen.findByTestId("file-menu-open", {}, { timeout: 3000 });
+			expect(menuOpen).toBeDisabled();
 		});
 	});
 

@@ -20,7 +20,7 @@ from packages.db.src.tables import (
 )
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.factories import GrantApplicationFactory
+from testing.factories import GrantApplicationFactory, RagFileFactory
 
 from services.backend.tests.conftest import TestingClientType
 
@@ -374,6 +374,77 @@ async def test_create_upload_url(
         trace_id=ANY,
         content_type="application/pdf",
     )
+
+
+async def test_create_download_url(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
+
+    rag_file = RagFileFactory.build(
+        bucket_name="test-bucket",
+        object_path="grant_application/test-entity/test-source/test-file.pdf",
+        filename="test-file.pdf",
+    )
+
+    async with async_session_maker() as session, session.begin():
+        session.add(rag_file)
+        await session.commit()
+        source_id = rag_file.id
+
+    mock_download_url = mocker.patch(
+        "services.backend.src.api.routes.sources.create_signed_download_url",
+        return_value=mock_signed_url,
+    )
+
+    mock_bucket = Mock()
+    mock_bucket.name = "test-bucket"
+    mocker.patch(
+        "services.backend.src.api.routes.sources.get_bucket",
+        return_value=mock_bucket,
+    )
+
+    response = await test_client.get(
+        f"/sources/{source_id}/download-url",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    result = response.json()
+    assert "url" in result
+    assert result["url"] == mock_signed_url
+
+    mock_download_url.assert_called_once_with(
+        bucket_name="test-bucket",
+        object_path="grant_application/test-entity/test-source/test-file.pdf",
+        filename="test-file.pdf",
+        trace_id=ANY,
+    )
+
+
+async def test_create_download_url_not_found(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+) -> None:
+    # Use a non-existent UUID
+    source_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+    response = await test_client.get(
+        f"/sources/{source_id}/download-url",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+    result = response.json()
+    assert "detail" in result
+    assert f"RAG file with source_id {source_id} not found" in result["detail"]
 
 
 async def test_create_granting_institution_upload_url(

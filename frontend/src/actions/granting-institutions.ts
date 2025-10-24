@@ -15,6 +15,16 @@ export async function crawlGrantingInstitutionUrl(id: string, url: string) {
 	);
 }
 
+export async function createFileDownloadUrl(sourceId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`sources/${sourceId}/download-url`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.CreateGrantingInstitutionRagSourceDownloadUrl.Http201.ResponseBody>(),
+	);
+}
+
 export async function createGrantingInstitution(data: API.CreateGrantingInstitution.RequestBody) {
 	return withAuthRedirect(
 		getClient()
