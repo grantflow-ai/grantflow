@@ -13,7 +13,7 @@ interface ApplicationListProps {
 	onDelete: (id: string) => void;
 	onDownload: (applicationId: string, format: DownloadFormat) => void;
 	onDuplicate: (id: string, currentTitle: string) => void;
-	onOpen: (applicationId: string, applicationTitle: string) => void;
+	onOpen: (application: API.ListApplications.Http200.ResponseBody["applications"][0]) => void;
 	searchQuery: string;
 }
 
