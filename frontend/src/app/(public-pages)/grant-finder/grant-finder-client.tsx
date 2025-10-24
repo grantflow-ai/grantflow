@@ -1,32 +1,53 @@
 "use client";
 
-import { GrantFinderHeader } from "@/components/grant-finder/grant-finder-header";
+import Image from "next/image";
 import { SearchWizard } from "@/components/grant-finder/search-wizard";
+import { NavHeader } from "@/components/landing-page/nav-header";
 
 export function GrantFinderClient() {
 	return (
-		<div className="flex h-screen w-full flex-col bg-preview-bg" data-testid="grant-finder-client">
-			<GrantFinderHeader />
+		<div className="flex h-screen w-full flex-col bg-preview-bg isolate" data-testid="grant-finder-client">
+			<NavHeader />
+
+			<div className="pointer-events-none  absolute top-1/2 right-[-100px] h-[1000px] w-[1024px] -translate-y-1/2 z-[-1]">
+				<Image alt="gradient" fill src="assets/right-gradient.svg" />
+			</div>
 
 			<main className="flex-1 overflow-y-auto">
-				<div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8" data-testid="main-content">
-					<div className="mb-8 text-center" data-testid="main-content-header">
-						<h2
-							className="font-heading text-3xl font-medium text-stone-900"
-							data-testid="main-content-title"
-						>
-							Find Your Next Grant in Minutes
-						</h2>
-						<p
-							className="mx-auto mt-4 max-w-3xl text-muted-foreground-dark text-sm leading-none"
-							data-testid="main-content-subtitle"
-						>
-							Tell us about your research focus and we&apos;ll match you with relevant NIH funding
-							opportunities.
-						</p>
-					</div>
+				<div className="mx-auto w-[1069px] px-4 py-8 sm:px-6 lg:px-8" data-testid="main-content">
+					<main className="font-cabin flex flex-col gap-[80px]">
+						<div className="flex flex-col gap-3">
+							<div className="font-normal text-xs leading-[18px] text-white bg-primary px-2 rounded-[20px] w-fit ">
+								Free Service from Vsphera
+							</div>
+							<h1
+								className="font-cabin text-[64px] leading-[74px] font-normal text-app-black"
+								data-testid="main-content-title"
+							>
+								Find the Right NIH Grant,
+								<br /> Faster. Smarter. Easier.
+							</h1>
+						</div>
 
-					<SearchWizard />
+						<div className="flex flex-col gap-6">
+							<div className="flex flex-col gap-3">
+								<h5 className="font-medium font-cabin text-4xl text-gray-700 ">
+									NIH Grant Matches Sent Straight to Your Inbox
+								</h5>
+
+								<p
+									className="w-[862px] font-normal font-sans text-base  text-[#636170] leading-5 "
+									data-testid="main-content-subtitle"
+								>
+									Our intelligent NIH Grants Finder helps researchers and labs instantly discover
+									funding opportunities tailored to their field, project type, and stage, so you can
+									focus on your science, not on searching. Plus, get email alerts the moment a
+									matching grant is announced, ensuring you never miss the right opportunity.
+								</p>
+							</div>
+							<SearchWizard />
+						</div>
+					</main>
 				</div>
 			</main>
 		</div>

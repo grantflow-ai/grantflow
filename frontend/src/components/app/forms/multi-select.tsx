@@ -5,13 +5,21 @@ import { useEffect, useRef, useState } from "react";
 
 interface MultiSelectProps {
 	"data-testid"?: string;
+	id?: string;
 	onValueChange: (value: string[]) => void;
 	options: string[];
 	placeholder: string;
 	value: string[];
 }
 
-export function MultiSelect({ "data-testid": testId, onValueChange, options, placeholder, value }: MultiSelectProps) {
+export function MultiSelect({
+	"data-testid": testId,
+	id,
+	onValueChange,
+	options,
+	placeholder,
+	value,
+}: MultiSelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,35 +46,38 @@ export function MultiSelect({ "data-testid": testId, onValueChange, options, pla
 	return (
 		<div className="relative w-full" data-testid={testId} ref={containerRef}>
 			<button
-				className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left transition-colors ${
-					isOpen ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-300"
-				} bg-white hover:border-gray-400`}
+				className={
+					"flex w-full items-center cursor-pointer justify-between rounded-[4px] border border-primary px-3 py-2 text-left  bg-white "
+				}
 				data-testid={testId ? `${testId}-trigger` : undefined}
+				id={id}
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
 				type="button"
 			>
 				<span
-					className={value.length > 0 ? "text-gray-900" : "text-gray-500"}
+					className={
+						value.length > 0 ? "text-gray-900" : " font-sans font-normal text-base text-app-gray-400"
+					}
 					data-testid={testId ? `${testId}-display-text` : undefined}
 				>
 					{displayText}
 				</span>
 				<ChevronDown
-					className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+					className={`h-4 w-4 text-app-gray-700 transition-transform  ${isOpen ? "rotate-180" : ""}`}
 					data-testid={testId ? `${testId}-chevron` : undefined}
 				/>
 			</button>
 
 			{isOpen && (
 				<div
-					className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+					className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[4px] border border-app-gray-100 bg-white p-1 "
 					data-testid={testId ? `${testId}-dropdown` : undefined}
 				>
 					{options.map((option) => (
 						<button
-							className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-gray-50"
+							className=" w-full hover:bg-primary items-center flex text-app-black rounded-[6px] cursor-pointer gap-1 hover:text-white p-3 text-left text-sm group"
 							data-testid={
 								testId
 									? `${testId}-option-${option.toLowerCase().replaceAll(/[^a-z0-9]/g, "-")}`
@@ -79,8 +90,10 @@ export function MultiSelect({ "data-testid": testId, onValueChange, options, pla
 							type="button"
 						>
 							<div
-								className={`mr-2 flex h-4 w-4 items-center justify-center rounded border ${
-									value.includes(option) ? "border-blue-600 bg-blue-600" : "border-gray-300 bg-white"
+								className={` flex h-3 w-3 items-center justify-center border ${
+									value.includes(option)
+										? "border-blue-600 bg-blue-600"
+										: "border-app-gray-700 group-hover:border-white bg-transparent"
 								}`}
 								data-testid={
 									testId
@@ -91,7 +104,7 @@ export function MultiSelect({ "data-testid": testId, onValueChange, options, pla
 								{value.includes(option) && <Check className="h-3 w-3 text-white" />}
 							</div>
 							<span
-								className="text-gray-900"
+								className="font-normal text-sm font-sora"
 								data-testid={
 									testId
 										? `${testId}-option-text-${option.toLowerCase().replaceAll(/[^a-z0-9]/g, "-")}`

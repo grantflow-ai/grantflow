@@ -4,18 +4,19 @@ export interface FormData {
 	activityCodes: string[];
 	agreeToTerms: boolean;
 	agreeToUpdates: boolean;
-	careerStage: string;
+	careerStage: string[];
 	email: string;
-	institutionLocation: string;
+	institutionLocation: string[];
 	keywords: string;
 }
 export type Grant = GrantsResponse extends infer T | Record<string, never> ? ExtractArrayType<T> : never;
 export interface SearchParams {
 	activityCodes?: string[];
-	careerStage?: string;
+	careerStage?: string[];
+
 	email?: string;
-	institutionLocation?: string;
-	keywords: string[];
+	institutionLocation?: string[];
+	keywords?: string[];
 }
 
 type ExtractArrayType<T> = T extends readonly (infer U)[] ? U : never;

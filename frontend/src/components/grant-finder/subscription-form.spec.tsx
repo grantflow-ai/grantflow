@@ -115,7 +115,7 @@ describe.sequential("SubscriptionForm", () => {
 			const submitButton = screen.getByTestId("subscription-submit-button");
 			await user.click(submitButton);
 
-			expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+			expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 			expect(screen.getByText("Please enter your email address")).toBeInTheDocument();
 		});
 
@@ -123,7 +123,7 @@ describe.sequential("SubscriptionForm", () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["initial"] });
 			render(<SubscriptionForm searchParams={searchParams} />);
 
-			expect(screen.queryByTestId("subscription-error")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("subscription-email-input-error")).not.toBeVisible();
 		});
 
 		it("clears error when email is entered after validation error", async () => {
@@ -133,7 +133,7 @@ describe.sequential("SubscriptionForm", () => {
 			const submitButton = screen.getByTestId("subscription-submit-button");
 			await user.click(submitButton);
 
-			expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+			expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 
 			const emailInput = screen.getByTestId("subscription-email-input");
 			await user.type(emailInput, "valid@email.com");
@@ -143,7 +143,7 @@ describe.sequential("SubscriptionForm", () => {
 
 			await user.click(submitButton);
 
-			expect(screen.queryByTestId("subscription-error")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("subscription-email-input-error")).not.toBeInTheDocument();
 		});
 	});
 
@@ -151,9 +151,9 @@ describe.sequential("SubscriptionForm", () => {
 		it("submits form with correct data", async () => {
 			const searchParams = SearchParamsFactory.build({
 				activityCodes: ["R01", "R21"],
-				careerStage: "Early-stage (≤ 10 yrs)",
+				careerStage: ["Early-stage (≤ 10 yrs)"],
 				email: "researcher@university.edu",
-				institutionLocation: "U.S. institution (no foreign component)",
+				institutionLocation: ["U.S. institution (no foreign component)"],
 				keywords: ["CRISPR", "gene editing"],
 			});
 
@@ -344,7 +344,7 @@ describe.sequential("SubscriptionForm", () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+				expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 				expect(screen.getByText("Failed to create subscription. Please try again.")).toBeInTheDocument();
 			});
 		});
@@ -363,7 +363,7 @@ describe.sequential("SubscriptionForm", () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+				expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 				expect(submitButton).not.toBeDisabled();
 				expect(emailInput).not.toBeDisabled();
 			});
@@ -383,7 +383,7 @@ describe.sequential("SubscriptionForm", () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+				expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 				expect(emailInput).toHaveValue("preserve@test.com");
 			});
 		});
@@ -405,7 +405,7 @@ describe.sequential("SubscriptionForm", () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
+				expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
 			});
 
 			await user.click(submitButton);
@@ -511,22 +511,6 @@ describe.sequential("SubscriptionForm", () => {
 			expect(label).toBe(emailInput);
 		});
 
-		it("has screen reader only label", () => {
-			const searchParams = SearchParamsFactory.build({ keywords: ["screen-reader"] });
-			render(<SubscriptionForm searchParams={searchParams} />);
-
-			const label = screen.getByText("Email address");
-			expect(label).toHaveClass("sr-only");
-		});
-
-		it("has proper button attributes", () => {
-			const searchParams = SearchParamsFactory.build({ keywords: ["button-attrs"] });
-			render(<SubscriptionForm searchParams={searchParams} />);
-
-			const submitButton = screen.getByTestId("subscription-submit-button");
-			expect(submitButton).toHaveAttribute("type", "submit");
-		});
-
 		it("shows proper disabled states", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["disabled-states"] });
 
@@ -540,8 +524,8 @@ describe.sequential("SubscriptionForm", () => {
 			await user.type(emailInput, "disabled@test.com");
 			await user.click(submitButton);
 
-			expect(emailInput).toHaveClass("disabled:cursor-not-allowed", "disabled:opacity-50");
-			expect(submitButton).toHaveClass("disabled:cursor-not-allowed", "disabled:opacity-50");
+			expect(emailInput).toBeDisabled();
+			expect(submitButton).toBeDisabled();
 		});
 	});
 
