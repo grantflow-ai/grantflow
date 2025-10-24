@@ -9,12 +9,14 @@ from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
+from sqlalchemy.sql import True_
 
 from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
 from packages.shared_utils.src.exceptions import ExternalOperationError, ValidationError
 from packages.shared_utils.src.gcs import (
     bucket_ref,
     construct_object_uri,
+    create_signed_download_url,
     create_signed_upload_url,
     download_blob,
     get_bucket,
@@ -201,7 +203,9 @@ async def test_download_blob_success(
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
     ):
         mock_get_bucket.return_value = mock_bucket
@@ -224,7 +228,9 @@ async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) 
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         pytest.raises(ExternalOperationError) as exc_info,
     ):
@@ -321,7 +327,9 @@ async def test_create_signed_upload_url(
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
@@ -380,7 +388,9 @@ async def test_create_signed_upload_url_with_uuids(
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
@@ -439,7 +449,9 @@ async def test_create_signed_upload_url_error(
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
         pytest.raises(ExternalOperationError) as exc_info,
@@ -495,7 +507,9 @@ async def test_create_signed_upload_url_with_content_type(
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
@@ -546,7 +560,9 @@ async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) 
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
     ):
         mock_get_bucket.return_value = mock_bucket
@@ -570,7 +586,9 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
-            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
         ),
         pytest.raises(ExternalOperationError) as exc_info,
     ):
@@ -655,3 +673,263 @@ def test_construct_and_parse_round_trip() -> None:
     assert result["entity_id"] == entity_id
     assert result["source_id"] == source_id
     assert result["blob_name"] == blob_name
+
+
+async def test_create_signed_download_url(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    bucket_name = "test-bucket"
+    object_path = "grant_application/entity-456/source-789/test-file.pdf"
+    filename = "test-file.pdf"
+    expected_signed_url = "https://storage.googleapis.com/signed-download-url"
+
+    mock_blob = MagicMock()
+    mock_blob.exists.return_value = True
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
+    mock_storage_client = MagicMock()
+    mock_storage_client.bucket.return_value = mock_bucket
+
+    with (
+        patch(
+            "packages.shared_utils.src.gcs.get_storage_client",
+            return_value=mock_storage_client,
+        ),
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch(
+            "packages.shared_utils.src.gcs.run_sync",
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
+        ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
+    ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_download_url(
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+
+        mock_bucket.blob.assert_called_once_with(object_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=ONE_MINUTE_SECONDS * 60,  # Default 1 hour
+            method="GET",
+            response_disposition=f'inline; filename="{filename}"',
+        )
+        assert url == expected_signed_url
+
+
+async def test_create_signed_download_url_with_custom_expiration(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    bucket_name = "test-bucket"
+    object_path = "grant_application/entity-456/source-789/test-file.pdf"
+    filename = "test-file.pdf"
+    custom_expiration = 1800
+    expected_signed_url = "https://storage.googleapis.com/signed-download-url"
+
+    mock_blob = MagicMock()
+    mock_blob.exists.return_value = True
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
+    mock_storage_client = MagicMock()
+    mock_storage_client.bucket.return_value = mock_bucket
+
+    with (
+        patch(
+            "packages.shared_utils.src.gcs.get_storage_client",
+            return_value=mock_storage_client,
+        ),
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch(
+            "packages.shared_utils.src.gcs.run_sync",
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
+        ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
+    ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_download_url(
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+            expiration_seconds=custom_expiration,
+        )
+
+        mock_bucket.blob.assert_called_once_with(object_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=custom_expiration,
+            method="GET",
+            response_disposition=f'inline; filename="{filename}"',
+        )
+        assert url == expected_signed_url
+
+
+async def test_create_signed_download_url_debug_mode(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    bucket_name = "test-bucket"
+    object_path = "grant_application/entity-456/source-789/test-file.pdf"
+    filename = "test-file.pdf"
+
+    with patch("packages.shared_utils.src.gcs.get_env") as mock_get_env:
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "true"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+
+        url = await create_signed_download_url(
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+
+        expected_dev_url = f"dev://download/{bucket_name}/{object_path}"
+        assert url == expected_dev_url
+        mock_bucket.blob.assert_not_called()
+
+
+async def test_create_signed_download_url_emulator_mode(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    bucket_name = "test-bucket"
+    object_path = "grant_application/entity-456/source-789/test-file.pdf"
+    filename = "test-file.pdf"
+    emulator_host = "http://localhost:9023"
+
+    with patch("packages.shared_utils.src.gcs.get_env") as mock_get_env:
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return emulator_host
+            elif key == "GCS_BUCKET_NAME":
+                return bucket_name
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+
+        url = await create_signed_download_url(
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+
+        expected_emulator_url = (
+            f"{emulator_host}/storage/v1/b/{bucket_name}/o/{object_path}?alt=media"
+        )
+        assert url == expected_emulator_url
+        mock_bucket.blob.assert_not_called()
+
+
+async def test_create_signed_download_url_without_filename(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    bucket_name = "test-bucket"
+    object_path = "grant_application/entity-456/source-789/test-file.pdf"
+    filename = ""
+    expected_signed_url = "https://storage.googleapis.com/signed-download-url"
+
+    mock_blob = MagicMock()
+    mock_blob.exists.return_value = True_
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
+    mock_storage_client = MagicMock()
+    mock_storage_client.bucket.return_value = mock_bucket
+
+    with (
+        patch(
+            "packages.shared_utils.src.gcs.get_storage_client",
+            return_value=mock_storage_client,
+        ),
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch(
+            "packages.shared_utils.src.gcs.run_sync",
+            side_effect=lambda f, *args, **kwargs: f(*args, **kwargs)
+            if callable(f)
+            else f,
+        ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
+    ):
+
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_download_url(
+            bucket_name=bucket_name,
+            object_path=object_path,
+            filename=filename,
+        )
+
+        mock_bucket.blob.assert_called_once_with(object_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=ONE_MINUTE_SECONDS * 60,
+            method="GET",
+            response_disposition=None,
+        )
+        assert url == expected_signed_url
