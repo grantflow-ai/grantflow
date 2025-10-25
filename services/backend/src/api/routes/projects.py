@@ -10,7 +10,7 @@ import msgspec
 from jwt import decode, encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
-from packages.db.src.enums import UserRoleEnum
+from packages.db.src.enums import GrantType, UserRoleEnum
 from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
@@ -995,6 +995,7 @@ async def handle_duplicate_project(
                                 "grant_sections": template.grant_sections,
                                 "granting_institution_id": template.granting_institution_id,
                                 "submission_date": template.submission_date,
+                                "grant_type": template.grant_type or GrantType.RESEARCH,
                             }
                         )
                         .returning(GrantTemplate)

@@ -3,7 +3,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.enums import ApplicationStatusEnum, GrantType
 from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
     GrantApplication,
@@ -275,6 +275,7 @@ async def test_retrieve_application_with_grant_template(
                 {"id": "section1", "title": "Introduction", "order": 1},
                 {"id": "section2", "title": "Methods", "order": 2},
             ],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.commit()
@@ -289,6 +290,7 @@ async def test_retrieve_application_with_grant_template(
     assert "grant_template" in data
     assert data["grant_template"]["id"] == str(template.id)
     assert len(data["grant_template"]["grant_sections"]) == 2
+    assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
 
 
 async def test_retrieve_application_with_research_objectives(
@@ -361,6 +363,7 @@ async def test_duplicate_application(
         template = GrantTemplate(
             grant_application_id=original_app.id,
             grant_sections=[{"id": "s1", "title": "Section 1", "order": 1}],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.commit()
@@ -383,6 +386,7 @@ async def test_duplicate_application(
 
     assert "grant_template" in data
     assert len(data["grant_template"]["grant_sections"]) == 1
+    assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
 
 
 async def test_duplicate_application_not_found(
@@ -477,6 +481,7 @@ async def test_retrieve_application_with_rag_sources(
     assert "rag_sources" in data["grant_template"]
     assert len(data["grant_template"]["rag_sources"]) == 1
     assert data["grant_template"]["rag_sources"][0]["filename"] == "file.pdf"
+    assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
 
 
 @pytest.fixture
@@ -503,6 +508,7 @@ async def grant_template(
         template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.commit()

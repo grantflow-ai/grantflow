@@ -4,7 +4,7 @@ from uuid import UUID
 
 from litestar import patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import GrantType, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 class UpdateGrantTemplateRequestBody(TypedDict):
     grant_sections: NotRequired[list[GrantLongFormSection]]
     submission_date: NotRequired[date]
+    grant_type: NotRequired[GrantType]
 
 
 @post(
@@ -115,10 +116,15 @@ async def handle_update_grant_template(
             if not grant_template:
                 raise ValidationException("Grant template not found")
 
+            update_values: dict[str, Any] = dict(data)
+
+            if "grant_type" in update_values and update_values["grant_type"] is not None:
+                update_values["grant_type"] = GrantType(update_values["grant_type"])
+
             await session.execute(
                 update(GrantTemplate)
                 .where(GrantTemplate.id == grant_template.id, GrantTemplate.deleted_at.is_(None))
-                .values(**data)
+                .values(**update_values)
             )
             await session.commit()
         except ValidationException:

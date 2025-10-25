@@ -420,6 +420,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [
 							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
@@ -459,6 +460,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
 						updated_at: new Date().toISOString(),
@@ -494,6 +496,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
 						updated_at: new Date().toISOString(),

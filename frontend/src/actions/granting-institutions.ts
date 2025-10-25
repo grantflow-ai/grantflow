@@ -21,7 +21,7 @@ export async function createFileDownloadUrl(sourceId: string) {
 			.get(`sources/${sourceId}/download-url`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.CreateGrantingInstitutionRagSourceDownloadUrl.Http201.ResponseBody>(),
+			.json<API.CreateGrantingInstitutionRagSourceDownloadUrl.Http200.ResponseBody>(),
 	);
 }
 

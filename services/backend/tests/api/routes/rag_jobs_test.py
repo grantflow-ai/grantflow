@@ -4,7 +4,12 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from packages.db.src.enums import GrantApplicationStageEnum, GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.enums import (
+    GrantApplicationStageEnum,
+    GrantTemplateStageEnum,
+    GrantType,
+    RagGenerationStatusEnum,
+)
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -60,6 +65,7 @@ async def grant_template(
         template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.commit()
