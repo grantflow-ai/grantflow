@@ -6,6 +6,7 @@ import {
 	GrantTemplateFactory,
 } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getApplication, updateApplication } from "@/actions/grant-applications";
 import { updateGrantTemplate } from "@/actions/grant-template";
@@ -500,6 +501,74 @@ describe("Application Store", () => {
 			await updateGrantSections([]);
 
 			expect(updateGrantTemplate).toHaveBeenCalled();
+		});
+	});
+
+	describe.sequential("updateGrantType", () => {
+		it("should return early when grant template ID is missing", async () => {
+			const application: API.RetrieveApplication.Http200.ResponseBody = {
+				...ApplicationFactory.build(),
+				grant_template: undefined,
+			};
+
+			useApplicationStore.setState({ application });
+
+			const { updateGrantType } = useApplicationStore.getState();
+
+			await updateGrantType("TRANSLATIONAL");
+
+			expect(updateGrantTemplate).not.toHaveBeenCalled();
+		});
+
+		it("should update state and call API on success", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build({
+						grant_type: "RESEARCH",
+					}),
+					id: "template-id",
+				},
+				id: "app-id",
+				project_id: "project-id",
+			});
+
+			useApplicationStore.setState({ application });
+
+			vi.mocked(updateGrantTemplate).mockResolvedValue(undefined);
+
+			const { updateGrantType } = useApplicationStore.getState();
+
+			await updateGrantType("TRANSLATIONAL");
+
+			expect(updateGrantTemplate).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id", "template-id", {
+				grant_type: "TRANSLATIONAL",
+			});
+
+			const finalState = useApplicationStore.getState();
+			expect(finalState.application?.grant_template?.grant_type).toBe("TRANSLATIONAL");
+		});
+
+		it("should restore state and show error toast on failure", async () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build({
+						grant_type: "RESEARCH",
+					}),
+					id: "template-id",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			vi.mocked(updateGrantTemplate).mockRejectedValue(new Error("API Error"));
+
+			const { updateGrantType } = useApplicationStore.getState();
+
+			await updateGrantType("TRANSLATIONAL");
+
+			expect(toast.error).toHaveBeenCalledWith("Failed to update grant type");
+			const finalState = useApplicationStore.getState();
+			expect(finalState.application?.grant_template?.grant_type).toBe("RESEARCH");
 		});
 	});
 
