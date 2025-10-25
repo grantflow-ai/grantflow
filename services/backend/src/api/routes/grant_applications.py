@@ -11,6 +11,7 @@ from litestar.response import Response
 from markdown import markdown
 from packages.db.src.enums import (
     ApplicationStatusEnum,
+    GrantType,
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
@@ -126,6 +127,7 @@ class GrantTemplateResponse(TypedDict):
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
+    grant_type: GrantType
     created_at: str
     updated_at: str
 
@@ -232,6 +234,7 @@ def build_application_response(grant_application: GrantApplication) -> Applicati
             "grant_application_id": str(template.grant_application_id),
             "grant_sections": template.grant_sections,
             "rag_sources": [],
+            "grant_type": template.grant_type,
             "created_at": template.created_at.isoformat(),
             "updated_at": template.updated_at.isoformat(),
         }
@@ -325,6 +328,7 @@ async def handle_create_application(
                     {
                         "grant_application_id": application.id,
                         "grant_sections": [],
+                        "grant_type": GrantType.RESEARCH,
                     }
                 )
                 .returning(GrantTemplate)
@@ -715,6 +719,7 @@ async def handle_duplicate_application(
                             "grant_sections": template.grant_sections,
                             "granting_institution_id": template.granting_institution_id,
                             "submission_date": template.submission_date,
+                            "grant_type": template.grant_type,
                         }
                     )
                     .returning(GrantTemplate)
