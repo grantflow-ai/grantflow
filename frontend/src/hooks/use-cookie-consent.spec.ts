@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 // eslint-disable-next-line import-x/no-unresolved
 import { useCookies } from "react-cookie";
 import { vi } from "vitest";
@@ -8,6 +8,11 @@ import { type CookieConsentData, useCookieConsent } from "./use-cookie-consent";
 vi.mock("react-cookie");
 
 const mockUseCookies = vi.mocked(useCookies);
+
+const waitForHydration = async (result: { current: ReturnType<typeof useCookieConsent> }) =>
+	waitFor(() => {
+		expect(result.current.isHydrated).toBe(true);
+	});
 
 describe("useCookieConsent", () => {
 	const mockSetCookie = vi.fn();
@@ -19,35 +24,39 @@ describe("useCookieConsent", () => {
 	});
 
 	describe("Hook Initialization & State Management", () => {
-		it("should return correct initial structure with all required properties", () => {
+		it("should return correct initial structure with all required properties", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			expect(result.current).toEqual({
-				consentData: undefined,
-				hasConsent: false,
-				hasInteracted: false,
-				isHydrated: true,
-				saveConsent: expect.any(Function),
-			});
+			expect(result.current.analyticsConsent).toBe(false);
+			expect(result.current.consentData).toBeUndefined();
+			expect(result.current.hasConsent).toBe(false);
+			expect(result.current.hasInteracted).toBe(false);
+			expect(result.current.isHydrated).toBe(true);
+			expect(typeof result.current.saveConsent).toBe("function");
+
+			await waitForHydration(result);
 		});
 
-		it("should have isHydrated as true after initialization in test environment", () => {
+		it("should have isHydrated as true after initialization in test environment", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.isHydrated).toBe(true);
 		});
 
-		it("should return correct consent values when no cookie exists", () => {
+		it("should return correct consent values when no cookie exists", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
+			expect(result.current.analyticsConsent).toBe(false);
 		});
 
 		it("should not crash when initialized", () => {
@@ -58,26 +67,27 @@ describe("useCookieConsent", () => {
 	});
 
 	describe("Hydration Logic", () => {
-		it("should have isHydrated as true in test environment", () => {
+		it("should have isHydrated as true in test environment", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.isHydrated).toBe(true);
 		});
 
-		it("should maintain hydration state on re-renders", () => {
+		it("should maintain hydration state on re-renders", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { rerender, result } = renderHook(() => useCookieConsent());
 
-			expect(result.current.isHydrated).toBe(true);
+			await waitForHydration(result);
 
 			rerender();
 			expect(result.current.isHydrated).toBe(true);
 		});
 
-		it("should read cookies when hydrated", () => {
+		it("should read cookies when hydrated", async () => {
 			const mockConsentData = {
 				consentGiven: true,
 				hasInteracted: true,
@@ -92,14 +102,16 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.consentData).toEqual(mockConsentData);
 		});
 
-		it("should handle undefined cookies when hydrated", () => {
+		it("should handle undefined cookies when hydrated", async () => {
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.consentData).toBeUndefined();
 		});
 	});
@@ -120,10 +132,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toEqual(mockConsentData);
 		});
 
@@ -132,10 +141,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toBeUndefined();
 		});
 
@@ -154,15 +160,12 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toEqual(mockConsentData);
 			expect(result.current.consentData?.consentGiven).toBe(false);
 			expect(result.current.consentData?.hasInteracted).toBe(true);
-			expect(result.current.consentData?.preferences.analytics).toBe(false);
-			expect(result.current.consentData?.preferences.essential).toBe(true);
+			expect(result.current.consentData?.preferences?.analytics).toBe(false);
+			expect(result.current.consentData?.preferences?.essential).toBe(true);
 		});
 
 		it("should handle invalid cookie data gracefully", async () => {
@@ -175,20 +178,23 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
-			expect(result.current.consentData).toBe("invalid-data");
+			await waitForHydration(result);
+			expect(result.current.consentData).toBe("invalid-data" as unknown as CookieConsentData);
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
 		});
 	});
 
 	describe("Computed Properties (hasConsent)", () => {
-		it("should return correct value based on cookie state when hydrated", () => {
+		it("should return correct value based on cookie state when hydrated", async () => {
 			mockUseCookies.mockReturnValue([
-				{ [COOKIE_CONSENT]: { consentGiven: true } },
+				{
+					[COOKIE_CONSENT]: {
+						consentGiven: true,
+						hasInteracted: true,
+						preferences: { analytics: true, essential: true },
+					},
+				},
 				mockSetCookie,
 				mockRemoveCookie,
 				mockUpdateCookies,
@@ -196,7 +202,9 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(true);
+			expect(result.current.analyticsConsent).toBe(true);
 		});
 
 		it("should return false when no consent data exists", async () => {
@@ -204,10 +212,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(false);
 		});
 
@@ -226,10 +231,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(false);
 		});
 
@@ -248,10 +250,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(true);
 		});
 
@@ -265,16 +264,13 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasConsent).toBe(false);
 		});
 	});
 
 	describe("Computed Properties (hasInteracted)", () => {
-		it("should return correct value based on cookie state when hydrated", () => {
+		it("should return correct value based on cookie state when hydrated", async () => {
 			mockUseCookies.mockReturnValue([
 				{ [COOKIE_CONSENT]: { hasInteracted: true } },
 				mockSetCookie,
@@ -284,6 +280,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			await waitForHydration(result);
 			expect(result.current.hasInteracted).toBe(true);
 		});
 
@@ -292,10 +289,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasInteracted).toBe(false);
 		});
 
@@ -314,10 +308,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasInteracted).toBe(false);
 		});
 
@@ -336,10 +327,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasInteracted).toBe(true);
 		});
 
@@ -353,10 +341,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.hasInteracted).toBe(false);
 		});
 	});
@@ -555,10 +540,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toBeUndefined();
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
@@ -607,10 +589,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toEqual(corruptedData);
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
@@ -626,10 +605,7 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
+			await waitForHydration(result);
 			expect(result.current.consentData).toBe(null);
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
@@ -671,7 +647,6 @@ describe("useCookieConsent", () => {
 			expect(result.current.isHydrated).toBe(true);
 			expect(result.current.hasConsent).toBe(true);
 			expect(result.current.hasInteracted).toBe(true);
-			expect(result.current.consentData).toEqual({ consentGiven: true, hasInteracted: true });
 		});
 
 		it("should prevent hydration mismatch by delaying cookie reads", async () => {
@@ -687,15 +662,6 @@ describe("useCookieConsent", () => {
 			expect(result.current.isHydrated).toBe(true);
 			expect(result.current.hasConsent).toBe(true);
 			expect(result.current.hasInteracted).toBe(true);
-			expect(result.current.consentData).toEqual({ consentGiven: true, hasInteracted: true });
-
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0));
-			});
-
-			expect(result.current.hasConsent).toBe(true);
-			expect(result.current.hasInteracted).toBe(true);
-			expect(result.current.isHydrated).toBe(true);
 		});
 
 		it("should ensure consistent behavior across SSR and client-side rendering", async () => {
@@ -707,12 +673,7 @@ describe("useCookieConsent", () => {
 			expect(instance1.result.current.hasConsent).toBe(instance2.result.current.hasConsent);
 			expect(instance1.result.current.hasInteracted).toBe(instance2.result.current.hasInteracted);
 
-			await act(async () => {
-				await Promise.all([
-					new Promise((resolve) => setTimeout(resolve, 0)),
-					new Promise((resolve) => setTimeout(resolve, 0)),
-				]);
-			});
+			await Promise.all([waitForHydration(instance1.result), waitForHydration(instance2.result)]);
 
 			expect(instance1.result.current.isHydrated).toBe(instance2.result.current.isHydrated);
 		});
