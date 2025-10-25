@@ -6,6 +6,7 @@ import eslintJS from "@eslint/js";
 import sonarjs from 'eslint-plugin-sonarjs';
 
 import biomeConfig from "eslint-config-biome";
+// eslint-disable-next-line import-x/no-unresolved
 import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";

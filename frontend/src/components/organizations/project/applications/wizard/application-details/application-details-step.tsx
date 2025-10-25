@@ -32,15 +32,9 @@ export function ApplicationDetailsStep({
 	const applicationTitle = useApplicationStore((state) => state.application?.title);
 	const grantTemplateId = useApplicationStore((state) => state.application?.grant_template?.id);
 
-	const [draftTitle, setDraftTitle] = useState("");
+	const [draftTitle, setDraftTitle] = useState(applicationTitle ?? "");
 	const [showError, setShowError] = useState(false);
 	const [attemptedContinue, setAttemptedContinue] = useState(false);
-
-	useEffect(() => {
-		if (applicationTitle !== undefined) {
-			setDraftTitle(applicationTitle);
-		}
-	}, [applicationTitle]);
 
 	useEffect(() => {
 		const handleValidation = () => {

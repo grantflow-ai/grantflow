@@ -21,7 +21,12 @@ export function useCookieConsent() {
 	const [isHydrated, setIsHydrated] = useState(false);
 
 	useEffect(() => {
-		setIsHydrated(true);
+		const timer = setTimeout(() => {
+			setIsHydrated(true);
+		}, 0);
+		return () => {
+			clearTimeout(timer);
+		};
 	}, []);
 
 	const consentData = isHydrated ? (cookies[COOKIE_CONSENT] as CookieConsentData | undefined) : undefined;

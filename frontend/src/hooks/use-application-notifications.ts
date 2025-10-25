@@ -1,5 +1,6 @@
 import { createTypeGuard, isRecord } from "@tool-belt/type-predicates";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
@@ -138,7 +139,9 @@ export function useApplicationNotifications({
 			previousNotificationCount: notifications.length,
 			projectId,
 		});
-		setNotifications([]);
+		flushSync(() => {
+			setNotifications([]);
+		});
 		reconnectAttemptRef.current = 0;
 	}, [applicationId, organizationId, projectId]);
 
@@ -361,7 +364,11 @@ export function useApplicationNotifications({
 			projectId,
 		});
 
+		// This effect subscribes to WebSocket messages and updates state in response to external events,
+		// which is a valid use case for setState in an effect
+
 		if (isWebsocketMessage(lastJsonMessage)) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			handleValidMessage(lastJsonMessage);
 		} else {
 			handleInvalidMessage(lastJsonMessage);

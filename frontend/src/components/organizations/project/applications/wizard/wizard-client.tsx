@@ -227,7 +227,9 @@ export function WizardClientComponent({
 
 		const { event } = latestRagNotification;
 
+		// This effect subscribes to WebSocket notifications and updates state in response to external events
 		if (isApplicationGenEvent(event)) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- WebSocket subscription updates state in response to external events
 			setGenerationProgress(APPLICATION_GENERATION_PROGRESS[event]);
 		}
 	}, [latestRagNotification]);
