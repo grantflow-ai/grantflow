@@ -167,6 +167,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -803,6 +811,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -1695,6 +1711,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -2015,6 +2039,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -2124,6 +2156,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	research_objectives?: {
 	description?: string;

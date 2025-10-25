@@ -111,6 +111,17 @@ export const EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS: ApplicationFormInputs = {
 	team_excellence: "",
 };
 
+export const EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS: ApplicationFormInputs = {
+	commercialization_plan: "",
+	core_concept: "",
+	proof_of_concept: "",
+	team_translation_capability: "",
+	translational_impact: "",
+	translational_potential: "",
+	unique_approach: "",
+	unmet_need_context: "",
+};
+
 const initialState: ApplicationState = {
 	application: null,
 	areAppOperationsInProgress: false,
@@ -1176,9 +1187,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 			// Reset deep dive form inputs if flag is set
 			if (shouldResetDeepDiveOnGrantTypeChange) {
-				await get().updateApplication({ form_inputs: EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS });
+				const emptyFormInputs =
+					grantType === "TRANSLATIONAL"
+						? EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS
+						: EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS;
+				await get().updateApplication({ form_inputs: emptyFormInputs });
 				set({ shouldResetDeepDiveOnGrantTypeChange: false });
-				log.info("updateGrantType: Reset research deep dive form inputs");
+				log.info("updateGrantType: Reset deep dive form inputs", { grant_type: grantType });
 			}
 		} catch (error) {
 			const restoredApplication = {
