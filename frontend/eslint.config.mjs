@@ -2,10 +2,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fixupPluginRules } from "@eslint/compat";
-import { defineConfig, globalIgnores } from "eslint/config";
 import eslintJS from "@eslint/js";
-import eslintPluginNext from "@next/eslint-plugin-next";
-import sonarjs from "eslint-plugin-sonarjs";
+import sonarjs from 'eslint-plugin-sonarjs';
+
 import biomeConfig from "eslint-config-biome";
 import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
@@ -26,7 +25,7 @@ import eslintTS from "typescript-eslint";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const typescriptConfigs = eslintTS.config(
+export default eslintTS.config(
 	eslintJS.configs.recommended,
 	...eslintTS.configs.strictTypeChecked,
 	...eslintTS.configs.stylisticTypeChecked,
@@ -311,14 +310,3 @@ const typescriptConfigs = eslintTS.config(
 
 	biomeConfig,
 );
-
-export default defineConfig([
-	eslintPluginNext.configs["core-web-vitals"],
-	...typescriptConfigs,
-	globalIgnores([
-		".next/**",
-		"out/**",
-		"build/**",
-		"next-env.d.ts",
-	]),
-]);
