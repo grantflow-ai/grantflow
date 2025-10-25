@@ -1,6 +1,11 @@
 from typing import TYPE_CHECKING, Final, cast
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+    TranslationalResearchDeepDive,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
@@ -93,7 +98,7 @@ async def handle_batch_enrich_objectives(
     research_objectives: list[ResearchObjective],
     grant_section: GrantLongFormSection,
     application_id: str,
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> list[ObjectiveEnrichmentDTO]:

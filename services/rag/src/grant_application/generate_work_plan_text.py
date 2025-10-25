@@ -2,7 +2,11 @@ import math
 import re
 from typing import TYPE_CHECKING, Any, Final, cast
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    TranslationalResearchDeepDive,
+)
 from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
@@ -243,7 +247,7 @@ async def adjust_component_length(
     component: ResearchComponentGenerationDTO,
     component_text: str,
     rag_results: list[str],
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     work_plan_text: str,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
@@ -379,7 +383,7 @@ async def generate_work_plan_component_text(
     *,
     application_id: str,
     component: ResearchComponentGenerationDTO,
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     work_plan_text: str,
     shared_rag_results: list[str] | None = None,
     trace_id: str,
@@ -508,7 +512,7 @@ async def generate_work_plan_component_text(
 async def generate_workplan_section(
     *,
     application_id: str,
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     components: list[ResearchComponentGenerationDTO],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",

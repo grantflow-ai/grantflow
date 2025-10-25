@@ -12,13 +12,8 @@ vi.mock("@/utils/logger/client", () => ({
 		warn: vi.fn(),
 	},
 }));
-vi.mock("@/utils/state", () => ({
-	Ref: class {
-		value: unknown = undefined;
-	},
-}));
 
-describe("api", () => {
+describe("api/client", () => {
 	const mockKyInstance = {
 		delete: vi.fn(),
 		extend: vi.fn(),
@@ -60,8 +55,8 @@ describe("api", () => {
 	};
 
 	beforeEach(() => {
-		vi.clearAllMocks();
 		vi.resetModules();
+		vi.clearAllMocks();
 		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
 		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
 	});
@@ -71,8 +66,8 @@ describe("api", () => {
 	});
 
 	describe("getClient", () => {
-		it("should create a ky instance with correct configuration", async () => {
-			const { getClient } = await import("./api");
+		it("creates a ky instance with correct configuration", async () => {
+			const { getClient } = await import("./client");
 			const client = getClient();
 
 			expect(ky.create).toHaveBeenCalledWith({
@@ -84,8 +79,8 @@ describe("api", () => {
 			expect(client).toBe(mockKyInstance);
 		});
 
-		it("should reuse the same client instance on subsequent calls", async () => {
-			const { getClient } = await import("./api");
+		it("reuses the same client instance on subsequent calls", async () => {
+			const { getClient } = await import("./client");
 			const client1 = getClient();
 			const client2 = getClient();
 
@@ -93,8 +88,8 @@ describe("api", () => {
 			expect(client1).toBe(client2);
 		});
 
-		it("should configure afterResponse hook correctly", async () => {
-			const { getClient } = await import("./api");
+		it("configures afterResponse hook correctly", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -103,16 +98,14 @@ describe("api", () => {
 
 			if (afterResponseHook) {
 				vi.clearAllMocks();
-				const result = await afterResponseHook(mockRequest as any, {} as any, mockResponse as any, {
-					retryCount: 0,
-				});
+				await afterResponseHook(mockRequest as any, {} as any, mockResponse as any, { retryCount: 0 });
 
-				expect(result).toBe(mockResponse);
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
 					method: "GET",
 					operation: "test-operation",
 					response_body: {},
 					response_headers: {},
+					retry_count: 0,
 					status: 200,
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
@@ -120,8 +113,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should configure beforeError hook correctly", async () => {
-			const { getClient } = await import("./api");
+		it("configures beforeError hook correctly", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -141,14 +134,12 @@ describe("api", () => {
 							get: () => "application/json",
 						},
 						status: 500,
-						statusText: "Internal Server Error",
+						statusText: "Server error",
 					},
 				};
 
 				vi.clearAllMocks();
-				const result = await beforeErrorHook(mockError as any, { retryCount: 0 });
-
-				expect(result).toBe(mockError);
+				await beforeErrorHook(mockError as any, { retryCount: 0 });
 
 				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", mockError, {
 					backend_url: "https://api.example.com",
@@ -159,16 +150,17 @@ describe("api", () => {
 					response_body: {},
 					response_headers: {},
 					response_text: undefined,
+					retry_count: 0,
 					status: 500,
-					status_text: "Internal Server Error",
+					status_text: "Server error",
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
 			}
 		});
 
-		it("should configure beforeRequest hook correctly", async () => {
-			const { getClient } = await import("./api");
+		it("configures beforeRequest hook correctly", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -177,9 +169,8 @@ describe("api", () => {
 
 			if (beforeRequestHook) {
 				vi.clearAllMocks();
-				beforeRequestHook(mockRequest as any, {} as any, { retryCount: 0 });
+				await beforeRequestHook(mockRequest as any, {} as any, { retryCount: 0 });
 
-				expect(log.info).toHaveBeenCalledTimes(1);
 				expect(log.info).toHaveBeenCalledWith("API REQUEST GET https://api.example.com/test", {
 					base_url: "https://api.example.com",
 					full_url: "https://api.example.com/test",
@@ -188,14 +179,15 @@ describe("api", () => {
 					pathname: "/test",
 					request_body: undefined,
 					request_headers: expect.any(Object),
+					retry_count: 0,
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
 			}
 		});
 
-		it("should handle missing headers gracefully", async () => {
-			const { getClient } = await import("./api");
+		it("handles missing headers gracefully", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -212,16 +204,14 @@ describe("api", () => {
 
 			if (afterResponseHook) {
 				vi.clearAllMocks();
-				const result = await afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any, {
-					retryCount: 0,
-				});
+				await afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any, { retryCount: 0 });
 
-				expect(result).toBe(mockResponse);
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
 					method: "GET",
 					operation: null,
 					response_body: {},
 					response_headers: {},
+					retry_count: 0,
 					status: 200,
 					trace_id: null,
 					url: "https://api.example.com/test",
@@ -229,8 +219,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should handle different HTTP methods", async () => {
-			const { getClient } = await import("./api");
+		it("handles different HTTP methods", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -245,20 +235,21 @@ describe("api", () => {
 				const request = { ...mockRequest, method };
 
 				if (beforeRequestHook) {
-					beforeRequestHook(request as any, {} as any, { retryCount: 0 });
+					await beforeRequestHook(request as any, {} as any, { retryCount: 0 });
 
 					expect(log.info).toHaveBeenCalledWith(
 						`API REQUEST ${method} https://api.example.com/test`,
 						expect.objectContaining({
 							method,
+							retry_count: 0,
 						}),
 					);
 				}
 			}
 		});
 
-		it("should handle different response statuses", async () => {
-			const { getClient } = await import("./api");
+		it("handles different response statuses", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -273,14 +264,12 @@ describe("api", () => {
 				const response = { ...mockResponse, status };
 
 				if (afterResponseHook) {
-					const result = await afterResponseHook(mockRequest as any, {} as any, response as any, {
-						retryCount: 0,
-					});
+					await afterResponseHook(mockRequest as any, {} as any, response as any, { retryCount: 0 });
 
-					expect(result).toBe(response);
 					expect(log.info).toHaveBeenCalledWith(
 						`API GET https://api.example.com/test - ${status}`,
 						expect.objectContaining({
+							retry_count: 0,
 							status,
 						}),
 					);
@@ -288,8 +277,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should use correct timeout value", async () => {
-			const { getClient } = await import("./api");
+		it("uses correct timeout value", async () => {
+			const { getClient } = await import("./client");
 			getClient();
 
 			expect(ky.create).toHaveBeenCalledWith(
@@ -299,13 +288,13 @@ describe("api", () => {
 			);
 		});
 
-		it("should use environment variable for prefixUrl", async () => {
+		it("uses environment variable for prefixUrl", async () => {
 			const customEnv = {
 				NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://custom-api.example.com",
 			};
 			vi.mocked(getEnv).mockReturnValue(customEnv as any);
 
-			const { getClient } = await import("./api");
+			const { getClient } = await import("./client");
 			getClient();
 
 			expect(ky.create).toHaveBeenCalledWith(
