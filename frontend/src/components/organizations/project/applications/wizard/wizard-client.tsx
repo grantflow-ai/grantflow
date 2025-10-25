@@ -329,7 +329,7 @@ export function WizardClientComponent({
 			<section className="flex-1 overflow-hidden" data-testid="step-content-container">
 				{stepComponents[currentStep]}
 			</section>
-			<WizardFooter />
+			<WizardFooter dialogRef={dialogRef} />
 
 			{latestRagNotification && <RagNotificationHandler notification={latestRagNotification} />}
 			<WizardDialog ref={dialogRef} />

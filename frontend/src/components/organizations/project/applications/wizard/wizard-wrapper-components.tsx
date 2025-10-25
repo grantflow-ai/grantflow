@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import type { RefObject } from "react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -10,10 +11,13 @@ import { WizardStep } from "@/constants";
 import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents } from "@/utils/tracking";
+import { openConfirmationDialog } from "./application-structure/confirmation-dialogs";
 import { Autosave } from "./autosave";
 import { Deadline } from "./deadline";
+import type { WizardDialogRef } from "./modal/wizard-dialog";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
@@ -31,6 +35,20 @@ const STEP_ICONS: Record<IndicatorStatus, React.ReactElement> = {
 	done: <Image alt="Step done" height={15} src="/icons/application-step-done.svg" width={15} />,
 	inactive: <Image alt="Step inactive" height={15} src="/icons/application-step-inactive.svg" width={15} />,
 };
+
+type FormInputs = API.RetrieveApplication.Http200.ResponseBody["form_inputs"];
+
+const hasResearchDeepDiveResponses = (formInputs?: FormInputs): boolean => {
+	if (!formInputs) {
+		return false;
+	}
+
+	return Object.values(formInputs).some((value) => typeof value === "string" && value.trim().length > 0);
+};
+
+interface WizardFooterProps {
+	dialogRef?: React.RefObject<null | WizardDialogRef>;
+}
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: IndicatorStatus }) {
 	if (isLastStep) {
@@ -51,7 +69,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 	);
 }
 
-export function WizardFooter() {
+export function WizardFooter({ dialogRef }: WizardFooterProps) {
 	const currentStep = useWizardStore((state) => state.currentStep);
 
 	return (
@@ -59,7 +77,7 @@ export function WizardFooter() {
 			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary py-4 px-6"
 			data-testid="wizard-footer"
 		>
-			<LeftButton currentStep={currentStep} />
+			<LeftButton currentStep={currentStep} dialogRef={dialogRef} />
 			<RightButton currentStep={currentStep} />
 		</footer>
 	);
@@ -282,10 +300,22 @@ function getValidationErrorMessage(
 	}
 }
 
-function LeftButton({ currentStep }: { currentStep: WizardStep }) {
+function LeftButton({
+	currentStep,
+	dialogRef,
+}: {
+	currentStep: WizardStep;
+	dialogRef?: RefObject<null | WizardDialogRef>;
+}) {
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const setShouldResetDeepDiveOnGrantTypeChange = useApplicationStore(
+		(state) => state.setShouldResetDeepDiveOnGrantTypeChange,
+	);
 	const { trackNavigation } = useWizardAnalytics();
+	const hasDeepDiveResponses = useApplicationStore((state) =>
+		hasResearchDeepDiveResponses(state.application?.form_inputs),
+	);
 
 	const showBack = currentStep !== WizardStep.APPLICATION_TYPE;
 	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
@@ -295,16 +325,41 @@ function LeftButton({ currentStep }: { currentStep: WizardStep }) {
 		toPreviousStep();
 	}, [trackNavigation, toPreviousStep]);
 
+	const handleBackWithResetWarning = useCallback(() => {
+		if (!(hasDeepDiveResponses && dialogRef?.current)) {
+			void handleBack();
+			return;
+		}
+
+		openConfirmationDialog(dialogRef, {
+			confirmButtonText: "Change Type",
+			description:
+				"Changing the application type will reset your Research Deep Dive responses. This action cannot be undone.",
+			onConfirm: async () => {
+				setShouldResetDeepDiveOnGrantTypeChange(true);
+				await handleBack();
+			},
+			title: "Reset Research Deep Dive responses?",
+		});
+	}, [dialogRef, handleBack, hasDeepDiveResponses, setShouldResetDeepDiveOnGrantTypeChange]);
+
 	if (!showBack) {
 		return <div />;
 	}
+
+	const onBackClick =
+		currentStep === WizardStep.APPLICATION_DETAILS
+			? handleBackWithResetWarning
+			: () => {
+					void handleBack();
+				};
 
 	return (
 		<AppButton
 			data-testid="back-button"
 			disabled={backDisabled}
 			leftIcon={<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />}
-			onClick={handleBack}
+			onClick={onBackClick}
 			size="lg"
 			theme="dark"
 			variant="secondary"
