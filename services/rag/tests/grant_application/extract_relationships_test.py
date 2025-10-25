@@ -363,7 +363,7 @@ async def test_handle_extract_relationships_with_translational_form_inputs(
             {
                 "source": "Objective 1",
                 "target": "Objective 2",
-                "description": "Task 1 enables Task 2",
+                "desc": "Task 1 enables Task 2",
             }
         ]
     }
@@ -380,8 +380,9 @@ async def test_handle_extract_relationships_with_translational_form_inputs(
         job_manager=mock_job_manager,
     )
 
-    assert result is not None
-    assert "relationships" in result
-    assert len(result["relationships"]) == 1
+    assert isinstance(result, dict)
+    assert "Objective 1" in result
+    assert len(result["Objective 1"]) == 1
+    assert result["Objective 1"][0] == ("Objective 2", "Task 1 enables Task 2")
     mock_extract_relationships_generation.assert_called_once()
     mock_refine_relationships.assert_called_once()
