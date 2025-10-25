@@ -174,29 +174,49 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
 export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
+	// Basic Science fields
 	background_context: factory.lorem.paragraphs(2),
+	// Translational Research fields
+	commercialization_plan: factory.lorem.paragraph(),
+	core_concept: factory.lorem.paragraph(),
 	hypothesis: factory.lorem.paragraph(),
 	impact: factory.lorem.paragraph(),
 	novelty_and_innovation: factory.lorem.paragraph(),
 	preliminary_data: factory.lorem.paragraphs(2),
+	proof_of_concept: factory.lorem.paragraphs(2),
 	rationale: factory.lorem.paragraph(),
 	research_feasibility: factory.lorem.paragraph(),
 	scientific_infrastructure: factory.lorem.paragraph(),
 	team_excellence: factory.lorem.paragraph(),
+	team_translation_capability: factory.lorem.paragraph(),
+	translational_impact: factory.lorem.paragraph(),
+	translational_potential: factory.lorem.paragraph(),
+	unique_approach: factory.lorem.paragraph(),
+	unmet_need_context: factory.lorem.paragraphs(2),
 }));
 
 export const EmptyFormInputsFactory = {
 	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
 		const defaults: FormInputs = {
+			// Basic Science fields
 			background_context: "",
+			// Translational Research fields
+			commercialization_plan: "",
+			core_concept: "",
 			hypothesis: "",
 			impact: "",
 			novelty_and_innovation: "",
 			preliminary_data: "",
+			proof_of_concept: "",
 			rationale: "",
 			research_feasibility: "",
 			scientific_infrastructure: "",
 			team_excellence: "",
+			team_translation_capability: "",
+			translational_impact: "",
+			translational_potential: "",
+			unique_approach: "",
+			unmet_need_context: "",
 		};
 		return { ...defaults, ...overrides };
 	},

@@ -550,4 +550,154 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			expect(screen.getByTestId("research-deep-dive-answer")).toHaveValue("Some background");
 		});
 	});
+
+	describe("Translational Research Grant Type", () => {
+		it("renders translational research questions when grant type is TRANSLATIONAL", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveContent />);
+
+			// Should show 8 question cards
+			expect(screen.getByTestId("question-card-0")).toBeInTheDocument();
+			expect(screen.getByTestId("question-card-7")).toBeInTheDocument();
+			expect(screen.queryByTestId("question-card-8")).not.toBeInTheDocument();
+		});
+
+		it("displays correct translational research question text", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveContent />);
+
+			const firstQuestionCard = screen.getByTestId("question-card-0");
+			expect(firstQuestionCard).toHaveTextContent("unmet need");
+		});
+
+		it("shows correct placeholder for translational research questions", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveContent />);
+
+			const textarea = screen.getByTestId("research-deep-dive-answer");
+			expect(textarea.placeholder).toContain("context and unmet need");
+		});
+
+		it("saves translational research answers to correct fields", async () => {
+			const user = userEvent.setup();
+			const mockUpdateFormInputs = vi.fn();
+
+			const originalState = useWizardStore.getState();
+			useWizardStore.setState({
+				...originalState,
+				updateFormInputs: mockUpdateFormInputs,
+			});
+
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveContent />);
+
+			const textarea = screen.getByTestId("research-deep-dive-answer");
+			const nextButton = screen.getByTestId("next-button");
+
+			await user.type(textarea, "Addressing gap in cancer immunotherapy");
+			await user.click(nextButton);
+
+			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				unmet_need_context: "Addressing gap in cancer immunotherapy",
+			});
+		});
+
+		it("handles all 8 translational research questions in sequence", async () => {
+			const user = userEvent.setup();
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: EmptyFormInputsFactory.build({
+					commercialization_plan: "Plan",
+					core_concept: "Core concept",
+					team_translation_capability: "Team capability",
+					translational_impact: "Impact",
+					translational_potential: "Potential",
+					unique_approach: "Approach",
+					unmet_need_context: "Need context",
+				}),
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveContent />);
+
+			// Navigate to last question
+			const lastQuestionCard = screen.getByTestId("question-card-7");
+			await user.click(lastQuestionCard);
+
+			const textarea = screen.getByTestId("research-deep-dive-answer");
+			expect(textarea).toHaveValue("");
+		});
+
+		it("switches question sets when grant type changes", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "RESEARCH",
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { rerender } = render(<ResearchDeepDiveContent />);
+
+			const firstQuestionCard = screen.getByTestId("question-card-0");
+			expect(firstQuestionCard).toHaveTextContent("background");
+
+			// Change grant type
+			const updatedApplication = ApplicationWithTemplateFactory.build({
+				form_inputs: undefined,
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+
+			useApplicationStore.setState({ application: updatedApplication });
+			rerender(<ResearchDeepDiveContent />);
+
+			const updatedFirstQuestionCard = screen.getByTestId("question-card-0");
+			expect(updatedFirstQuestionCard).toHaveTextContent("unmet need");
+		});
+	});
 });
