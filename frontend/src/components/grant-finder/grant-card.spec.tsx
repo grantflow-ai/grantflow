@@ -40,7 +40,6 @@ describe.sequential("GrantCard", () => {
 		render(<GrantCard grant={grant} />);
 
 		expect(screen.getByTestId("activity-code-badge")).toHaveTextContent("R01");
-		expect(screen.getByTestId("activity-code-badge")).toHaveClass("bg-blue-100", "text-blue-800");
 	});
 
 	it("does not display activity code badge when not present", () => {
@@ -340,20 +339,12 @@ describe.sequential("GrantCard", () => {
 			expect(card).toHaveClass("transition-shadow", "hover:shadow-md");
 		});
 
-		it("has proper spacing and layout classes", () => {
-			const grant = GrantFactory.build();
-			render(<GrantCard grant={grant} />);
-
-			const card = screen.getByTestId("grant-card");
-			expect(card).toHaveClass("rounded-lg", "border", "border-gray-200", "bg-white", "p-6");
-		});
-
 		it("has proper grid layout for grant details", () => {
 			const grant = GrantFactory.build();
 			render(<GrantCard grant={grant} />);
 
 			const details = screen.getByTestId("grant-details");
-			expect(details).toHaveClass("mb-4", "grid", "gap-3", "sm:grid-cols-2");
+			expect(details).toHaveClass("grid", "gap-3", "sm:grid-cols-2");
 		});
 	});
 

@@ -133,6 +133,29 @@ vi.mock("@/hooks/use-project-title-editing", () => ({
 const mockDownloadApplication = vi.mocked(grantApplicationActions.downloadApplication);
 const mockToast = vi.mocked(toast);
 
+const setupAnchorSpies = () => {
+	const clickSpy = vi.fn();
+	const removeSpy = vi.fn();
+	let anchor: HTMLAnchorElement | null = null;
+	const appendSpy = vi.spyOn(document.body, "append").mockImplementation((...nodes: (Node | string)[]) => {
+		const [node] = nodes;
+		if (node instanceof Node) {
+			anchor = node as HTMLAnchorElement;
+			anchor.click = clickSpy as typeof anchor.click;
+			anchor.remove = removeSpy as typeof anchor.remove;
+		}
+	});
+
+	return {
+		get anchor() {
+			return anchor;
+		},
+		clickSpy,
+		removeSpy,
+		restore: () => appendSpy.mockRestore(),
+	};
+};
+
 describe("ProjectDetailClient Download Functionality", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -198,26 +221,14 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const mockBlob = new Blob(["# Test Application\\n\\nContent"], { type: "text/markdown" });
 		mockDownloadApplication.mockResolvedValue(mockBlob);
 
+		const originalCreateObjectURL = globalThis.URL.createObjectURL;
+		const originalRevokeObjectURL = globalThis.URL.revokeObjectURL;
 		const mockCreateObjectURL = vi.fn(() => "blob:test-url");
 		const mockRevokeObjectURL = vi.fn();
 		globalThis.URL.createObjectURL = mockCreateObjectURL;
 		globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
-		const mockLink = document.createElement("a");
-		mockLink.click = vi.fn();
-		mockLink.remove = vi.fn();
-
-		// eslint-disable-next-line @typescript-eslint/no-deprecated
-		const originalCreateElement = document.createElement.bind(document);
-		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-			if (tagName === "a") {
-				return mockLink;
-			}
-			return originalCreateElement(tagName);
-		});
-
-		const mockAppend = vi.fn();
-		vi.spyOn(document.body, "append").mockImplementation(mockAppend);
+		const anchorControl = setupAnchorSpies();
 
 		render(<ProjectDetailClient />);
 
@@ -243,11 +254,17 @@ describe("ProjectDetailClient Download Functionality", () => {
 			});
 		});
 
+		const link = anchorControl.anchor;
+		expect(link).not.toBeNull();
 		expect(mockCreateObjectURL).toHaveBeenCalledWith(mockBlob);
-		expect(mockLink.href).toBe("blob:test-url");
-		expect(mockLink.download).toBe("Test_Application.md");
-		expect(mockLink.click).toHaveBeenCalled();
+		expect(link?.href).toBe("blob:test-url");
+		expect(link?.download).toBe("Test_Application.md");
+		expect(anchorControl.clickSpy).toHaveBeenCalled();
 		expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:test-url");
+
+		anchorControl.restore();
+		globalThis.URL.createObjectURL = originalCreateObjectURL;
+		globalThis.URL.revokeObjectURL = originalRevokeObjectURL;
 	});
 
 	it("successfully downloads application in PDF format", async () => {
@@ -255,23 +272,14 @@ describe("ProjectDetailClient Download Functionality", () => {
 		const mockBlob = new Blob([new ArrayBuffer(1024)], { type: "application/pdf" });
 		mockDownloadApplication.mockResolvedValue(mockBlob);
 
-		globalThis.URL.createObjectURL = vi.fn(() => "blob:test-pdf-url");
-		globalThis.URL.revokeObjectURL = vi.fn();
+		const originalCreateObjectURL = globalThis.URL.createObjectURL;
+		const originalRevokeObjectURL = globalThis.URL.revokeObjectURL;
+		const mockCreateObjectURL = vi.fn(() => "blob:test-pdf-url");
+		const mockRevokeObjectURL = vi.fn();
+		globalThis.URL.createObjectURL = mockCreateObjectURL;
+		globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
-		const mockLink = document.createElement("a");
-		mockLink.click = vi.fn();
-		mockLink.remove = vi.fn();
-
-		// eslint-disable-next-line @typescript-eslint/no-deprecated
-		const originalCreateElement = document.createElement.bind(document);
-		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-			if (tagName === "a") {
-				return mockLink;
-			}
-			return originalCreateElement(tagName);
-		});
-
-		vi.spyOn(document.body, "append").mockImplementation(vi.fn());
+		const anchorControl = setupAnchorSpies();
 
 		render(<ProjectDetailClient />);
 
@@ -289,8 +297,12 @@ describe("ProjectDetailClient Download Functionality", () => {
 
 		await waitFor(() => {
 			expect(mockDownloadApplication).toHaveBeenCalledWith("org-123", expect.any(String), "app-123", "pdf");
-			expect(mockLink.download).toBe("Test_Application.pdf");
+			expect(anchorControl.anchor?.download).toBe("Test_Application.pdf");
 		});
+
+		anchorControl.restore();
+		globalThis.URL.createObjectURL = originalCreateObjectURL;
+		globalThis.URL.revokeObjectURL = originalRevokeObjectURL;
 	});
 
 	it("handles download errors gracefully", async () => {
@@ -353,23 +365,12 @@ describe("ProjectDetailClient Download Functionality", () => {
 			};
 		});
 
+		const originalCreateObjectURL = globalThis.URL.createObjectURL;
+		const originalRevokeObjectURL = globalThis.URL.revokeObjectURL;
 		globalThis.URL.createObjectURL = vi.fn(() => "blob:test-url");
 		globalThis.URL.revokeObjectURL = vi.fn();
 
-		const mockLink = document.createElement("a");
-		mockLink.click = vi.fn();
-		mockLink.remove = vi.fn();
-
-		// eslint-disable-next-line @typescript-eslint/no-deprecated
-		const originalCreateElement = document.createElement.bind(document);
-		vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-			if (tagName === "a") {
-				return mockLink;
-			}
-			return originalCreateElement(tagName);
-		});
-
-		vi.spyOn(document.body, "append").mockImplementation(vi.fn());
+		const anchorControl = setupAnchorSpies();
 
 		render(<ProjectDetailClient />);
 
@@ -386,8 +387,12 @@ describe("ProjectDetailClient Download Functionality", () => {
 		await user.click(markdownOption);
 
 		await waitFor(() => {
-			expect(mockLink.download).toBe("Test__App___With___Special___Characters___.md");
+			expect(anchorControl.anchor?.download).toBe("Test__App___With___Special___Characters___.md");
 		});
+
+		anchorControl.restore();
+		globalThis.URL.createObjectURL = originalCreateObjectURL;
+		globalThis.URL.revokeObjectURL = originalRevokeObjectURL;
 	});
 
 	it("manages loading state correctly", async () => {

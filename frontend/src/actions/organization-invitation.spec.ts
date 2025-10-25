@@ -5,11 +5,11 @@ const mockEmailSend = vi.fn();
 vi.mock("@/actions/organization");
 vi.mock("@/utils/env");
 vi.mock("resend", () => ({
-	Resend: vi.fn().mockImplementation(() => ({
-		emails: {
+	Resend: vi.fn().mockImplementation(function (this: { emails: { send: typeof mockEmailSend } }) {
+		this.emails = {
 			send: mockEmailSend,
-		},
-	})),
+		};
+	}),
 }));
 
 import { createOrganizationInvitation } from "@/actions/organization";

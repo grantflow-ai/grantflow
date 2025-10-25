@@ -121,13 +121,13 @@ export function GrantCard({ grant }: GrantCardProps) {
 					</div>
 
 					{grant.url && (
-						<a href={grant.url} rel="noopener noreferrer" target="_blank">
-							<AppButton
-								data-testid="grant-view-details-link"
-								rightIcon={<ExternalLink />}
-								size="md"
-								variant="secondary"
-							>
+						<a
+							data-testid="grant-view-details-link"
+							href={grant.url}
+							rel="noopener noreferrer"
+							target="_blank"
+						>
+							<AppButton rightIcon={<ExternalLink />} size="md" variant="secondary">
 								View Details
 							</AppButton>
 						</a>
