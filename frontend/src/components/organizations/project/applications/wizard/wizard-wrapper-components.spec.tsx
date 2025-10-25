@@ -50,7 +50,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		});
 
 		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
+			currentStep: WizardStep.APPLICATION_TYPE,
 		});
 	});
 
@@ -66,7 +66,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 		it("hides back button on the first step", () => {
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
+				currentStep: WizardStep.APPLICATION_TYPE,
 			});
 			render(<WizardFooter />);
 

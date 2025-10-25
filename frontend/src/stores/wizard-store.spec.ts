@@ -51,7 +51,7 @@ describe.sequential("wizard store", () => {
 	describe("initial state", () => {
 		it("should initialize with correct default state", () => {
 			const state = useWizardStore.getState();
-			expect(state.currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+			expect(state.currentStep).toBe(WizardStep.APPLICATION_TYPE);
 			expect(state.isGeneratingTemplate).toBe(false);
 			expect(state.templateGenerationFailed).toBe(false);
 			expect(state.templateGenerationErrorMessage).toBe(null);

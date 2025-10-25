@@ -72,8 +72,8 @@ export function WizardHeader() {
 	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
 
-	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
-	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
+	const showHeaderInfo = ![WizardStep.APPLICATION_DETAILS, WizardStep.APPLICATION_TYPE].includes(currentStep);
+	const isFirstStep = currentStep === WizardStep.APPLICATION_TYPE;
 
 	const handleExit = () => {
 		router.push(routes.organization.project.detail());
@@ -175,6 +175,7 @@ function generateFooterRightButtonProps(
 	hasApplicationText?: boolean,
 	shouldRegenerate?: boolean,
 ) {
+	const isGrantTypeStep = currentStep === WizardStep.APPLICATION_TYPE;
 	const isStep1 = currentStep === WizardStep.APPLICATION_DETAILS;
 	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
 	const isResearchDeepDiveStep = currentStep === WizardStep.RESEARCH_DEEP_DIVE;
@@ -185,6 +186,9 @@ function generateFooterRightButtonProps(
 
 	return {
 		leftIcon: (() => {
+			if (isGrantTypeStep) {
+				return undefined;
+			}
 			if (isApproveStep) {
 				return <Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />;
 			}
@@ -194,6 +198,9 @@ function generateFooterRightButtonProps(
 			return undefined;
 		})(),
 		rightButtonText: (() => {
+			if (isGrantTypeStep) {
+				return "Next";
+			}
 			if (shouldShowRegenerate) {
 				return "Regenerate";
 			}
@@ -209,7 +216,7 @@ function generateFooterRightButtonProps(
 			return "Next";
 		})(),
 		rightIcon:
-			shouldShowGenerate || shouldShowRegenerate ? undefined : (
+			isGrantTypeStep || shouldShowGenerate || shouldShowRegenerate ? undefined : (
 				<Image alt="Go ahead" height={15} src="/icons/go-ahead-white.svg" width={15} />
 			),
 	};
@@ -254,6 +261,9 @@ function getValidationErrorMessage(
 		case WizardStep.APPLICATION_STRUCTURE: {
 			return "Research plan is missing.";
 		}
+		case WizardStep.APPLICATION_TYPE: {
+			return "Select the focus of your proposal before continuing";
+		}
 		case WizardStep.KNOWLEDGE_BASE: {
 			if (!appRagSources || appRagSources.length === 0) {
 				return "Please add at least one knowledge source";
@@ -277,7 +287,7 @@ function LeftButton({ currentStep }: { currentStep: WizardStep }) {
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const { trackNavigation } = useWizardAnalytics();
 
-	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
+	const showBack = currentStep !== WizardStep.APPLICATION_TYPE;
 	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
 
 	const handleBack = useCallback(async () => {
@@ -362,8 +372,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	);
 
 	const validation = validateStepNext();
-	const isStep1 = currentStep === WizardStep.APPLICATION_DETAILS;
-	const shouldDisableButton = !(isStep1 || validation.isValid);
+	const isSkippableStep =
+		currentStep === WizardStep.APPLICATION_TYPE || currentStep === WizardStep.APPLICATION_DETAILS;
+	const shouldDisableButton = !(isSkippableStep || validation.isValid);
 
 	const handleValidationError = useCallback(
 		async (validation: ValidationResult) => {
