@@ -10,58 +10,18 @@ import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { useDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
+import {
+	BASIC_SCIENCE_PLACEHOLDERS,
+	BASIC_SCIENCE_QUESTIONS,
+	type QuestionConfig,
+	TRANSLATIONAL_RESEARCH_PLACEHOLDERS,
+	TRANSLATIONAL_RESEARCH_QUESTIONS,
+} from "./questions";
 
 type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
 
 const getDisabledTextColorClass = (): string => "text-app-gray-400";
 const getEnabledTextColorClass = (): string => "text-app-black";
-
-const placeholders: Record<keyof FormInputs, string> = {
-	background_context: "Provide context and background of your research project...",
-	hypothesis: "Describe your central hypothesis or key research question...",
-	impact: "Describe how your research will contribute to the field and society...",
-	novelty_and_innovation: "Highlight what makes your approach unique or innovative...",
-	preliminary_data: "Share any preliminary findings that support your research...",
-	rationale: "Explain why this research is important and what motivates it...",
-	research_feasibility: "Describe what makes your research plan realistic and achievable...",
-	scientific_infrastructure: "Describe the scientific infrastructure and resources available for your research...",
-	team_excellence: "Explain what makes your team uniquely qualified for this project...",
-};
-
-const RESEARCH_QUESTIONS: { key: keyof FormInputs; question: string }[] = [
-	{
-		key: "background_context",
-		question: "What is the context and background of your research?",
-	},
-	{
-		key: "hypothesis",
-		question: "What is the central hypothesis or key question your research aims to address?",
-	},
-	{
-		key: "rationale",
-		question: "Why is this research important and what motivates its pursuit?",
-	},
-	{
-		key: "novelty_and_innovation",
-		question: "What makes your approach unique or innovative compared to existing research?",
-	},
-	{
-		key: "impact",
-		question: "How will your research contribute to the field and society?",
-	},
-	{
-		key: "team_excellence",
-		question: "What makes your team uniquely qualified to carry out this project?",
-	},
-	{
-		key: "research_feasibility",
-		question: "What makes your research plan realistic and achievable?",
-	},
-	{
-		key: "preliminary_data",
-		question: "Have you obtained any preliminary findings that support your research?",
-	},
-];
 
 interface QuestionFlowState {
 	answeredQuestions: Set<number>;
@@ -69,11 +29,11 @@ interface QuestionFlowState {
 	selectedQuestion: number;
 }
 
-const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
+const getQuestionFlowState = (formInputs: FormInputs, questions: QuestionConfig[]): QuestionFlowState => {
 	let lastAnsweredIndex = -1;
 	const answeredQuestions = new Set<number>();
 
-	for (const [i, question] of RESEARCH_QUESTIONS.entries()) {
+	for (const [i, question] of questions.entries()) {
 		const answer = formInputs[question.key];
 		const hasAnswer = answer != null;
 
@@ -85,8 +45,8 @@ const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
 
 	let selectedQuestion = lastAnsweredIndex + 1;
 
-	if (answeredQuestions.size === RESEARCH_QUESTIONS.length) {
-		selectedQuestion = RESEARCH_QUESTIONS.length - 1;
+	if (answeredQuestions.size === questions.length) {
+		selectedQuestion = questions.length - 1;
 	}
 
 	return { answeredQuestions, lastAnsweredIndex, selectedQuestion };
@@ -94,10 +54,16 @@ const getQuestionFlowState = (formInputs: FormInputs): QuestionFlowState => {
 
 export function ResearchDeepDiveContent() {
 	const formInputs = useApplicationStore((state) => state.application?.form_inputs) ?? {};
+	const grantType = useApplicationStore((state) => state.application?.grant_template?.grant_type);
 
-	log.info("Form inputs", { formInputs });
+	// Determine which question set and placeholders to use based on grant type
+	const isTranslational = grantType === "TRANSLATIONAL";
+	const questions = isTranslational ? TRANSLATIONAL_RESEARCH_QUESTIONS : BASIC_SCIENCE_QUESTIONS;
+	const placeholders = isTranslational ? TRANSLATIONAL_RESEARCH_PLACEHOLDERS : BASIC_SCIENCE_PLACEHOLDERS;
 
-	const questionFlowState = useMemo(() => getQuestionFlowState(formInputs), [formInputs]);
+	log.info("Form inputs", { formInputs, grantType, isTranslational });
+
+	const questionFlowState = useMemo(() => getQuestionFlowState(formInputs, questions), [formInputs, questions]);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(() => questionFlowState.selectedQuestion);
 	const [dirtyQuestion, setDirtyQuestion] = useState<null | number>(null);
 
@@ -107,6 +73,7 @@ export function ResearchDeepDiveContent() {
 				dirtyQuestion={dirtyQuestion}
 				onSelectQuestion={setSelectedQuestion}
 				questionFlowState={questionFlowState}
+				questions={questions}
 				selectedQuestion={selectedQuestion}
 			/>
 
@@ -121,10 +88,12 @@ export function ResearchDeepDiveContent() {
 					setSelectedQuestion(selectedQuestion + 1);
 					setDirtyQuestion(null);
 				}}
+				placeholders={placeholders}
+				questions={questions}
 				selectedQuestion={selectedQuestion}
 				setDirtyQuestion={setDirtyQuestion}
 				showBack={selectedQuestion > 0}
-				showNext={selectedQuestion < RESEARCH_QUESTIONS.length - 1}
+				showNext={selectedQuestion < questions.length - 1}
 			/>
 		</div>
 	);
@@ -134,6 +103,8 @@ function AnswerCard({
 	formInputs,
 	onBack,
 	onNext,
+	placeholders,
+	questions,
 	selectedQuestion,
 	setDirtyQuestion,
 	showBack,
@@ -142,12 +113,14 @@ function AnswerCard({
 	formInputs: FormInputs;
 	onBack: () => void;
 	onNext: () => void;
+	placeholders: Partial<Record<keyof FormInputs, string>>;
+	questions: QuestionConfig[];
 	selectedQuestion: number;
 	setDirtyQuestion: (index: null | number) => void;
 	showBack: boolean;
 	showNext: boolean;
 }) {
-	const { key: questionKey, question } = RESEARCH_QUESTIONS[selectedQuestion];
+	const { key: questionKey, question } = questions[selectedQuestion];
 	const formInputsAnswer = formInputs[questionKey] ?? "";
 
 	const [answerValue, setAnswerValue] = useState(formInputsAnswer);
@@ -310,18 +283,20 @@ function QuestionsList({
 	dirtyQuestion,
 	onSelectQuestion,
 	questionFlowState,
+	questions,
 	selectedQuestion,
 }: {
 	dirtyQuestion: null | number;
 	onSelectQuestion: (index: number) => void;
 	questionFlowState: QuestionFlowState;
+	questions: QuestionConfig[];
 	selectedQuestion: number;
 }) {
 	const { answeredQuestions, lastAnsweredIndex } = questionFlowState;
 
 	return (
 		<ul className="w-1/2 p-1 flex flex-col space-y-2 2xl:space-y-3 h-80 overflow-y-scroll 2xl:h-full 2xl:overflow-y-auto">
-			{RESEARCH_QUESTIONS.map((item, index) => {
+			{questions.map((item, index) => {
 				const hasAnswer = answeredQuestions.has(index);
 				const isDisabled = index > 0 && !hasAnswer && index > lastAnsweredIndex + 1;
 				const isSelected = index === selectedQuestion;

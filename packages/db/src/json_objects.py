@@ -86,6 +86,17 @@ class ResearchDeepDive(TypedDict):
     scientific_infrastructure: NotRequired[str]
 
 
+class TranslationalResearchDeepDive(TypedDict):
+    unmet_need_context: NotRequired[str]
+    core_concept: NotRequired[str]
+    translational_potential: NotRequired[str]
+    unique_approach: NotRequired[str]
+    translational_impact: NotRequired[str]
+    team_translation_capability: NotRequired[str]
+    commercialization_plan: NotRequired[str]
+    proof_of_concept: NotRequired[str]
+
+
 class GrantTemplateRagJobCheckpoint(TypedDict):
     stage: GrantTemplateStageEnum
     cfp_subject: str
