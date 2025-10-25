@@ -37,6 +37,11 @@ class NotificationTypeEnum(StrEnum):
     ERROR = "ERROR"
 
 
+class GrantType(StrEnum):
+    RESEARCH = "RESEARCH"
+    TRANSLATIONAL = "TRANSLATIONAL"
+
+
 class GrantTemplateStageEnum(StrEnum):
     CFP_ANALYSIS = "CFP_ANALYSIS"
     TEMPLATE_GENERATION = "TEMPLATE_GENERATION"

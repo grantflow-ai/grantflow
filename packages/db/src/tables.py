@@ -41,6 +41,7 @@ from packages.db.src.enums import (
     ApplicationStatusEnum,
     GrantApplicationStageEnum,
     GrantTemplateStageEnum,
+    GrantType,
     NotificationTypeEnum,
     RagGenerationStatusEnum,
     SourceIndexingStatusEnum,
@@ -473,17 +474,15 @@ class GrantApplicationSource(Base):
 class GrantTemplate(BaseWithUUIDPK):
     __tablename__ = "grant_templates"
 
+    grant_type: Mapped[GrantType] = mapped_column(Enum(GrantType, default=GrantType.RESEARCH, index=True))
     grant_sections: Mapped[list[GrantLongFormSection | GrantElement]] = mapped_column(JSON)
-
     grant_application_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
     granting_institution_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("granting_institutions.id", ondelete="SET NULL"), nullable=True
     )
-
     submission_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-
     grant_application: Relationship[GrantApplication] = relationship(
         "GrantApplication", back_populates="grant_template"
     )
