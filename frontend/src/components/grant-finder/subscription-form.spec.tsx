@@ -115,7 +115,8 @@ describe.sequential("SubscriptionForm", () => {
 			const submitButton = screen.getByTestId("subscription-submit-button");
 			await user.click(submitButton);
 
-			expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
+			const errorElement = screen.getByTestId("subscription-email-input-error");
+			expect(errorElement).toHaveClass("visible");
 			expect(screen.getByText("Please enter your email address")).toBeInTheDocument();
 		});
 
@@ -123,9 +124,9 @@ describe.sequential("SubscriptionForm", () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["initial"] });
 			render(<SubscriptionForm searchParams={searchParams} />);
 
-			const errorElement = screen.queryByTestId("subscription-email-input-error");
-			expect(errorElement).toBeInTheDocument();
+			const errorElement = screen.getByTestId("subscription-email-input-error");
 			expect(errorElement).toHaveClass("invisible");
+			expect(errorElement).toHaveTextContent("");
 		});
 
 		it("clears error when email is entered after validation error", async () => {
@@ -135,7 +136,7 @@ describe.sequential("SubscriptionForm", () => {
 			const submitButton = screen.getByTestId("subscription-submit-button");
 			await user.click(submitButton);
 
-			expect(screen.getByTestId("subscription-email-input-error")).toBeInTheDocument();
+			expect(screen.getByTestId("subscription-email-input-error")).toHaveClass("visible");
 
 			const emailInput = screen.getByTestId("subscription-email-input");
 			await user.type(emailInput, "valid@email.com");
@@ -143,9 +144,15 @@ describe.sequential("SubscriptionForm", () => {
 			const mockResponse = GrantSubscriptionResponseFactory.build();
 			mockCreateSubscription.mockResolvedValue(mockResponse);
 
+			const errorElement = screen.getByTestId("subscription-email-input-error");
+			expect(errorElement).toHaveClass("invisible");
+			expect(errorElement).toHaveTextContent("");
+
 			await user.click(submitButton);
 
-			expect(screen.queryByTestId("subscription-email-input-error")).not.toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.queryByTestId("subscription-email-input-error")).toBeNull();
+			});
 		});
 	});
 
@@ -324,9 +331,9 @@ describe.sequential("SubscriptionForm", () => {
 
 			await waitFor(() => {
 				const successContainer = screen.getByTestId("subscription-success");
-				expect(successContainer).toBeInTheDocument();
-				expect(screen.getByTestId("success-title")).toBeInTheDocument();
-				expect(screen.getByTestId("success-message")).toBeInTheDocument();
+				expect(successContainer).toHaveClass("border-green-200", "bg-green-50");
+				expect(screen.getByTestId("success-title")).toHaveClass("text-green-900");
+				expect(screen.getByTestId("success-message")).toHaveClass("text-green-700");
 			});
 		});
 	});

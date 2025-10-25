@@ -46,6 +46,30 @@ export function InviteCollaboratorModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
+	const resetFormState = () => {
+		setName("");
+		setEmail("");
+		setPermission(undefined);
+		setProjectAccess("");
+		setSelectedProjects([]);
+	};
+
+	const computeAccess = (): Pick<InviteOptions, "hasAllProjectsAccess" | "projectIds"> => {
+		if (permission === "ADMIN") {
+			return { hasAllProjectsAccess: true };
+		}
+
+		if (projectId) {
+			return { hasAllProjectsAccess: false, projectIds: [projectId] };
+		}
+
+		if (projects.length > 0 && selectedProjects.length === projects.length) {
+			return { hasAllProjectsAccess: true };
+		}
+
+		return { hasAllProjectsAccess: false, projectIds: selectedProjects };
+	};
+
 	const handleSubmit = async () => {
 		if (isCollaboratorAndNoprojectSelected()) {
 			toast.error("Please select at least one project for Collaborator role.");
@@ -54,39 +78,16 @@ export function InviteCollaboratorModal({
 
 		if (!(email && permission)) return;
 
+		const access = computeAccess();
 		setIsSubmitting(true);
 		try {
-			let hasAllProjectsAccess: boolean | undefined;
-			let projectIds: string[] | undefined;
-
-			if (permission === "ADMIN") {
-				hasAllProjectsAccess = true;
-			} else if (projectId) {
-				hasAllProjectsAccess = false;
-				projectIds = [projectId];
-			} else {
-				const allProjectsSelected = projects.length > 0 && selectedProjects.length === projects.length;
-
-				if (allProjectsSelected) {
-					hasAllProjectsAccess = true;
-				} else {
-					hasAllProjectsAccess = false;
-					projectIds = selectedProjects;
-				}
-			}
-
 			await onInvite({
 				email,
-				hasAllProjectsAccess,
-				projectIds,
+				...access,
 				role: permission,
 			});
 
-			setName("");
-			setEmail("");
-			setPermission(undefined);
-			setProjectAccess("");
-			setSelectedProjects([]);
+			resetFormState();
 			onClose();
 		} catch {
 			toast.error("Failed to invite collaborator. Please try again.");
@@ -96,10 +97,7 @@ export function InviteCollaboratorModal({
 	};
 
 	const handleClose = () => {
-		setName("");
-		setEmail("");
-		setPermission(undefined);
-		setSelectedProjects([]);
+		resetFormState();
 		onClose();
 	};
 

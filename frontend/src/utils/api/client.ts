@@ -21,7 +21,7 @@ export function getClient(): KyInstance {
 	clientRef.value ??= ky.create({
 		hooks: {
 			afterResponse: [
-				async (request, _options, response) => {
+				async (request, _options, response, state) => {
 					const clonedResponse = response.clone();
 					let responseBody: unknown;
 
@@ -37,6 +37,7 @@ export function getClient(): KyInstance {
 						operation: request.headers.get("X-Operation"),
 						response_body: responseBody,
 						response_headers: Object.fromEntries(response.headers.entries()),
+						retry_count: state.retryCount,
 						status: response.status,
 						trace_id: request.headers.get("X-Trace-ID"),
 						url: request.url,
@@ -46,7 +47,7 @@ export function getClient(): KyInstance {
 				},
 			],
 			beforeError: [
-				async (error) => {
+				async (error, state) => {
 					let responseBody: unknown;
 					let responseText: string | undefined;
 
@@ -70,6 +71,7 @@ export function getClient(): KyInstance {
 						response_body: responseBody,
 						response_headers: Object.fromEntries(error.response.headers.entries()),
 						response_text: responseText,
+						retry_count: state.retryCount,
 						status: error.response.status,
 						status_text: error.response.statusText,
 						trace_id: error.request.headers.get("X-Trace-ID"),
@@ -80,7 +82,7 @@ export function getClient(): KyInstance {
 				},
 			],
 			beforeRequest: [
-				(request, options) => {
+				(request, options, state) => {
 					if (!request.headers.get("X-Trace-ID")) {
 						const traceId = generateTraceId();
 						request.headers.set("X-Trace-ID", traceId);
@@ -108,6 +110,7 @@ export function getClient(): KyInstance {
 						pathname: new URL(request.url).pathname,
 						request_body: requestBody,
 						request_headers: Object.fromEntries(request.headers.entries()),
+						retry_count: state.retryCount,
 						trace_id: request.headers.get("X-Trace-ID"),
 						url: request.url,
 					});

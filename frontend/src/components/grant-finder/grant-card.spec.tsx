@@ -40,6 +40,7 @@ describe.sequential("GrantCard", () => {
 		render(<GrantCard grant={grant} />);
 
 		expect(screen.getByTestId("activity-code-badge")).toHaveTextContent("R01");
+		expect(screen.getByTestId("activity-code-badge")).toHaveClass("bg-primary/10", "text-primary");
 	});
 
 	it("does not display activity code badge when not present", () => {
@@ -108,12 +109,13 @@ describe.sequential("GrantCard", () => {
 		});
 		render(<GrantCard grant={grant} />);
 
-		const link = screen.getByTestId("grant-view-details-link");
-		expect(link).toBeInTheDocument();
+		const link = screen.getByRole("link", { name: "View Details" });
 		expect(link).toHaveAttribute("href", "https://grants.nih.gov/test");
 		expect(link).toHaveAttribute("target", "_blank");
 		expect(link).toHaveAttribute("rel", "noopener noreferrer");
-		expect(link).toHaveTextContent("View Details");
+
+		const button = screen.getByTestId("grant-view-details-link");
+		expect(button).toHaveTextContent("View Details");
 	});
 
 	it("does not display View Details link when URL is not present", () => {
@@ -312,9 +314,9 @@ describe.sequential("GrantCard", () => {
 			});
 			render(<GrantCard grant={grant} />);
 
-			const link = screen.getByTestId("grant-view-details-link");
-			expect(link).toHaveAttribute("rel", "noopener noreferrer");
-			expect(link).toHaveAttribute("target", "_blank");
+			const anchor = screen.getByRole("link", { name: "View Details" });
+			expect(anchor).toHaveAttribute("rel", "noopener noreferrer");
+			expect(anchor).toHaveAttribute("target", "_blank");
 		});
 
 		it("has proper semantic structure", () => {
@@ -337,6 +339,21 @@ describe.sequential("GrantCard", () => {
 
 			const card = screen.getByTestId("grant-card");
 			expect(card).toHaveClass("transition-shadow", "hover:shadow-md");
+		});
+
+		it("has proper spacing and layout classes", () => {
+			const grant = GrantFactory.build();
+			render(<GrantCard grant={grant} />);
+
+			const card = screen.getByTestId("grant-card");
+			expect(card).toHaveClass(
+				"rounded-xl",
+				"border",
+				"py-6",
+				"shadow-sm",
+				"transition-shadow",
+				"hover:shadow-md",
+			);
 		});
 
 		it("has proper grid layout for grant details", () => {

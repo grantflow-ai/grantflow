@@ -20,6 +20,7 @@ from packages.db.src.json_objects import (
     GrantLongFormSection,
     ResearchDeepDive,
     ResearchObjective,
+    TranslationalResearchDeepDive,
 )
 from packages.db.src.tables import (
     EditorDocument,
@@ -139,7 +140,7 @@ class ApplicationResponse(TypedDict):
     description: NotRequired[str]
     status: ApplicationStatusEnum
     completed_at: NotRequired[str]
-    form_inputs: NotRequired[ResearchDeepDive]
+    form_inputs: NotRequired[ResearchDeepDive | TranslationalResearchDeepDive]
     research_objectives: NotRequired[list[ResearchObjective]]
     text: NotRequired[str]
     grant_template: NotRequired[GrantTemplateResponse]
