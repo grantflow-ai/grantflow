@@ -160,7 +160,7 @@ export function SearchWizard() {
 
 	return (
 		<div
-			className="flex flex-col rounded-[8px] gap-10 border border-primary bg-white p-16  min-h-[714px]"
+			className="flex flex-col rounded-[8px] gap-10 border border-primary bg-white p-16 min-h-[714px]"
 			data-testid="search-wizard"
 		>
 			<div className="flex flex-col gap-10">

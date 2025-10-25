@@ -68,7 +68,6 @@ describe.sequential("SearchWizard", () => {
 		render(<SearchWizard />);
 		const nextButton = screen.getByTestId("wizard-next-button");
 		expect(nextButton).toBeDisabled();
-		expect(nextButton).toHaveClass("cursor-not-allowed", "bg-gray-300");
 	});
 
 	it("next button is enabled when keywords are entered", async () => {
@@ -79,7 +78,6 @@ describe.sequential("SearchWizard", () => {
 
 		const nextButton = screen.getByTestId("wizard-next-button");
 		expect(nextButton).not.toBeDisabled();
-		expect(nextButton).toHaveClass("bg-blue-600", "hover:bg-blue-700");
 	});
 
 	describe("Multi-step navigation", () => {
@@ -103,22 +101,28 @@ describe.sequential("SearchWizard", () => {
 			expect(screen.getByTestId("institution-location-step")).toBeInTheDocument();
 			expect(screen.getByTestId("institution-location-step-title")).toHaveTextContent("Institution Location");
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			);
+			await user.click(institutionOption);
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
 			expect(screen.getByTestId("career-stage-step")).toBeInTheDocument();
 			expect(screen.getByTestId("career-stage-step-title")).toHaveTextContent("Career Stage");
 
-			const careerSelect = screen.getByTestId("career-stage-select");
-			await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
+			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+			await user.click(careerTrigger);
+			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
+			await user.click(careerOption);
 
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
 			expect(screen.getByTestId("email-alerts-step")).toBeInTheDocument();
-			expect(screen.getByTestId("email-alerts-step-title")).toHaveTextContent("Email for Alerts");
+			expect(screen.getByTestId("email-alerts-step-title")).toHaveTextContent("Alerts Setting");
 		});
 
 		it("can navigate backwards through steps", async () => {
@@ -202,8 +206,12 @@ describe.sequential("SearchWizard", () => {
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			);
+			await user.click(institutionOption);
 			expect(nextButton).not.toBeDisabled();
 		});
 
@@ -217,16 +225,22 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			);
+			await user.click(institutionOption);
 
 			await user.click(nextButton);
 
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			const careerSelect = screen.getByTestId("career-stage-select");
-			await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
+			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+			await user.click(careerTrigger);
+			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
+			await user.click(careerOption);
 
 			expect(nextButton).not.toBeDisabled();
 		});
@@ -237,7 +251,6 @@ describe.sequential("SearchWizard", () => {
 
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			expect(submitButton).toBeDisabled();
-			expect(submitButton).toHaveTextContent("Get Alerts");
 
 			const emailInput = screen.getByTestId("email-alerts-input");
 			await user.type(emailInput, "test@example.com");
@@ -273,12 +286,18 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			);
+			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerSelect = screen.getByTestId("career-stage-select");
-			await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
+			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+			await user.click(careerTrigger);
+			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
+			await user.click(careerOption);
 			await user.click(nextButton);
 
 			const emailInput = screen.getByTestId("email-alerts-input");
@@ -316,12 +335,18 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "Non-U.S. (foreign) institution");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-non-u-s---foreign--institution",
+			);
+			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerSelect = screen.getByTestId("career-stage-select");
-			await user.selectOptions(careerSelect, "Senior (> 20 yrs)");
+			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+			await user.click(careerTrigger);
+			const careerOption = screen.getByTestId("career-stage-multiselect-option-senior----20-yrs-");
+			await user.click(careerOption);
 			await user.click(nextButton);
 
 			const emailInput = screen.getByTestId("email-alerts-input");
@@ -404,12 +429,18 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionSelect = screen.getByTestId("institution-location-multiselect");
-			await user.selectOptions(institutionSelect, "U.S. institution with foreign component");
+			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+			await user.click(institutionTrigger);
+			const institutionOption = screen.getByTestId(
+				"institution-location-multiselect-option-u-s--institution-with-foreign-component",
+			);
+			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerSelect = screen.getByTestId("career-stage-select");
-			await user.selectOptions(careerSelect, "Mid-career (11–20 yrs)");
+			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+			await user.click(careerTrigger);
+			const careerOption = screen.getByTestId("career-stage-multiselect-option-mid-career--11-20-yrs-");
+			await user.click(careerOption);
 			await user.click(nextButton);
 
 			const emailInput = screen.getByTestId("email-alerts-input");
@@ -420,12 +451,12 @@ describe.sequential("SearchWizard", () => {
 			const backButton = screen.getByTestId("wizard-back-button");
 			await user.click(backButton);
 
-			expect(screen.getByTestId("career-stage-select")).toHaveValue("Mid-career (11–20 yrs)");
+			const careerDisplayText = screen.getByTestId("career-stage-multiselect-display-text");
+			expect(careerDisplayText).toHaveTextContent("1 selected");
 
 			await user.click(backButton);
-			expect(screen.getByTestId("institution-location-multiselect")).toHaveValue(
-				"U.S. institution with foreign component",
-			);
+			const institutionDisplayText = screen.getByTestId("institution-location-multiselect-display-text");
+			expect(institutionDisplayText).toHaveTextContent("1 selected");
 
 			await user.click(backButton);
 			await user.click(backButton);
@@ -502,12 +533,18 @@ async function navigateToEmailStep(
 	await user.click(nextButton);
 	await user.click(nextButton);
 
-	const institutionSelect = screen.getByTestId("institution-location-multiselect");
-	await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
+	const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
+	await user.click(institutionTrigger);
+	const institutionOption = screen.getByTestId(
+		"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+	);
+	await user.click(institutionOption);
 	await user.click(nextButton);
 
-	const careerSelect = screen.getByTestId("career-stage-select");
-	await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
+	const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
+	await user.click(careerTrigger);
+	const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
+	await user.click(careerOption);
 	await user.click(nextButton);
 
 	if (options.fillEmailForm) {

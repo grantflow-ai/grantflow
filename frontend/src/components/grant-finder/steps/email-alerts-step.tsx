@@ -36,6 +36,7 @@ export function EmailAlertsStep({ formData, setFormData }: EmailAlertsStepProps)
 						<div className="relative">
 							<input
 								className="w-full rounded-[4px] h-10 border border-primary px-3 placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-app-gray-400"
+								data-testid="email-alerts-input"
 								id="email"
 								onChange={(e) => {
 									setFormData({ ...formData, email: e.target.value });
