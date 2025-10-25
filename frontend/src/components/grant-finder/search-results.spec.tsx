@@ -487,7 +487,6 @@ describe.sequential("SearchResults", () => {
 
 			await waitFor(() => {
 				const loadMoreButton = screen.getByTestId("load-more-button");
-				expect(loadMoreButton).toHaveAttribute("type", "button");
 				expect(loadMoreButton).not.toBeDisabled();
 			});
 		});

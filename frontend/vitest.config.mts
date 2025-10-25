@@ -66,15 +66,11 @@ export default defineConfig({
 		hookTimeout: 30_000,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
 		isolate: true,
+		maxWorkers: 1,
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
 		pool: "forks",
-		poolOptions: {
-			forks: {
-				singleFork: true,
-			},
-		},
 		sequence: {
 			concurrent: false,
 			shuffle: false,

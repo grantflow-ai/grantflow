@@ -6,19 +6,23 @@ import * as firebase from "@/utils/firebase";
 
 import { handleGoogleLogin, handleOrcidLogin, handleOrcidSignup } from "./auth-providers";
 
-vi.mock("firebase/auth", () => ({
-	getAdditionalUserInfo: vi.fn(),
-	GoogleAuthProvider: Object.assign(
-		vi.fn(() => ({})),
-		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
-	),
-	OAuthProvider: vi.fn(() => {
-		return {
-			setCustomParameters: vi.fn(),
-		};
-	}),
-	signInWithPopup: vi.fn(),
-}));
+vi.mock("firebase/auth", () => {
+	const GoogleAuthProviderMock = vi.fn(function (this: unknown) {});
+	Object.assign(GoogleAuthProviderMock, {
+		credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }),
+	});
+
+	const OAuthProviderMock = vi.fn(function (this: { setCustomParameters: ReturnType<typeof vi.fn> }) {
+		this.setCustomParameters = vi.fn();
+	});
+
+	return {
+		GoogleAuthProvider: GoogleAuthProviderMock,
+		getAdditionalUserInfo: vi.fn(),
+		OAuthProvider: OAuthProviderMock,
+		signInWithPopup: vi.fn(),
+	};
+});
 
 vi.mock("@/utils/firebase", () => ({
 	getFirebaseAuth: vi.fn(),
