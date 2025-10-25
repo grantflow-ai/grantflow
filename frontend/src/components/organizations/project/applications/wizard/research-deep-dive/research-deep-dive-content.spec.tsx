@@ -601,8 +601,8 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			render(<ResearchDeepDiveContent />);
 
-			const textarea = screen.getByTestId("research-deep-dive-answer") as HTMLTextAreaElement;
-			expect(textarea.placeholder).toContain("context and unmet need");
+			const textarea = screen.getByTestId("research-deep-dive-answer");
+			expect((textarea as HTMLTextAreaElement).placeholder).toContain("context and unmet need");
 		});
 
 		it("saves translational research answers to correct fields", async () => {
