@@ -271,7 +271,7 @@ const logGrantSectionsUpdate = (
 
 const updateGrantTemplateAPI = async (
 	application: NonNullable<ApplicationType>,
-	processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
+	data: Partial<API.UpdateGrantTemplate.RequestBody>,
 ) => {
 	const { selectedOrganizationId } = useOrganizationStore.getState();
 	if (!selectedOrganizationId) {
@@ -283,7 +283,7 @@ const updateGrantTemplateAPI = async (
 		application.project_id,
 		application.id,
 		application.grant_template?.id ?? "",
-		{ grant_sections: processedSections },
+		data,
 	);
 };
 
@@ -312,6 +312,7 @@ interface ApplicationActions {
 		title: string,
 	) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
+	updateGrantType: (grantType: API.UpdateGrantTemplate.RequestBody["grant_type"]) => Promise<void>;
 }
 
 const uploadFileInDevelopment = async (
@@ -1104,7 +1105,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication, isSaving: true });
 
 		try {
-			await updateGrantTemplateAPI(application, processedSections ?? []);
+			await updateGrantTemplateAPI(application, { grant_sections: processedSections ?? [] });
 			log.info("updateGrantSections: Success", {
 				grant_sections: (processedSections ?? []).map((section) => ({
 					id: section.id,
@@ -1120,6 +1121,49 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
+		} finally {
+			set({ isSaving: false });
+		}
+	},
+	updateGrantType: async (grantType: API.UpdateGrantTemplate.RequestBody["grant_type"]) => {
+		const { application } = get();
+
+		if (!application?.grant_template?.id) {
+			log.warn("updateGrantType: No grant template ID found");
+			return;
+		}
+
+		if (!grantType) {
+			log.warn("updateGrantType: No grant type provided");
+			return;
+		}
+
+		const previousGrantType = application.grant_template.grant_type;
+		const updatedApplication = {
+			...application,
+			grant_template: {
+				...application.grant_template,
+				grant_type: grantType,
+			},
+		} as NonNullable<ApplicationType>;
+
+		set({ application: updatedApplication, isSaving: true });
+
+		try {
+			await updateGrantTemplateAPI(application, { grant_type: grantType });
+			log.info("updateGrantType: Success", { grant_type: grantType });
+		} catch (error) {
+			const restoredApplication = {
+				...application,
+				grant_template: {
+					...application.grant_template,
+					grant_type: previousGrantType,
+				},
+			} as NonNullable<ApplicationType>;
+
+			set({ application: restoredApplication });
+			log.error("updateGrantType: Failed", error);
+			toast.error("Failed to update grant type");
 		} finally {
 			set({ isSaving: false });
 		}
