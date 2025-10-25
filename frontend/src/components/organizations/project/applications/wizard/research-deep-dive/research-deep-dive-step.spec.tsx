@@ -188,4 +188,135 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
 		});
 	});
+
+	describe("Grant Type Dynamic Content", () => {
+		it("shows basic science header for RESEARCH grant type", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "RESEARCH",
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveStep />);
+
+			expect(screen.getByTestId("research-deep-dive-header")).toHaveTextContent("Research Deep Dive");
+			expect(screen.getByTestId("research-deep-dive-description")).toHaveTextContent(
+				"Before generating your grant application draft, it would be helpful to learn a bit more about your research to ensure more accurate results.",
+			);
+		});
+
+		it("shows translational research header for TRANSLATIONAL grant type", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveStep />);
+
+			expect(screen.getByTestId("research-deep-dive-header")).toHaveTextContent(
+				"Translational Research Deep Dive",
+			);
+			expect(screen.getByTestId("research-deep-dive-description")).toHaveTextContent(
+				"Before generating your grant application draft, it would be helpful to learn more about your translational research approach to ensure accurate results.",
+			);
+		});
+
+		it("updates header when grant type changes", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "RESEARCH",
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			const { rerender } = render(<ResearchDeepDiveStep />);
+
+			expect(screen.getByTestId("research-deep-dive-header")).toHaveTextContent("Research Deep Dive");
+
+			// Change grant type
+			const updatedApplication = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+			useApplicationStore.setState({ application: updatedApplication });
+			rerender(<ResearchDeepDiveStep />);
+
+			expect(screen.getByTestId("research-deep-dive-header")).toHaveTextContent(
+				"Translational Research Deep Dive",
+			);
+		});
+	});
+
+	describe("Dev Reset Button Grant Type Support", () => {
+		it("resets to basic science empty inputs for RESEARCH grant type", () => {
+			vi.stubEnv("NODE_ENV", "development");
+
+			const mockUpdateFormInputs = vi.fn();
+			useWizardStore.setState({ updateFormInputs: mockUpdateFormInputs });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "RESEARCH",
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveStep />);
+
+			const resetButton = screen.getByTestId("dev-reset-button");
+			resetButton.click();
+
+			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				background_context: "",
+				hypothesis: "",
+				impact: "",
+				novelty_and_innovation: "",
+				preliminary_data: "",
+				rationale: "",
+				research_feasibility: "",
+				scientific_infrastructure: "",
+				team_excellence: "",
+			});
+		});
+
+		it("resets to translational empty inputs for TRANSLATIONAL grant type", () => {
+			vi.stubEnv("NODE_ENV", "development");
+
+			const mockUpdateFormInputs = vi.fn();
+			useWizardStore.setState({ updateFormInputs: mockUpdateFormInputs });
+
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...ApplicationWithTemplateFactory.build().grant_template!,
+					grant_type: "TRANSLATIONAL",
+				},
+			});
+			useApplicationStore.setState({ application });
+
+			render(<ResearchDeepDiveStep />);
+
+			const resetButton = screen.getByTestId("dev-reset-button");
+			resetButton.click();
+
+			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				commercialization_plan: "",
+				core_concept: "",
+				proof_of_concept: "",
+				team_translation_capability: "",
+				translational_impact: "",
+				translational_potential: "",
+				unique_approach: "",
+				unmet_need_context: "",
+			});
+		});
+	});
 });

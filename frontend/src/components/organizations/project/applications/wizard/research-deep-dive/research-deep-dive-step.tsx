@@ -1,16 +1,27 @@
 "use client";
 
 import { AppButton } from "@/components/app/buttons/app-button";
-import { EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS } from "@/stores/application-store";
+import {
+	EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS,
+	EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS,
+	useApplicationStore,
+} from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { log } from "@/utils/logger/client";
 import { AiAutofillButton } from "../ai-autofill-button";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
+const getEmptyFormInputs = () => {
+	const grantType = useApplicationStore.getState().application?.grant_template?.grant_type;
+	const isTranslational = grantType === "TRANSLATIONAL";
+	return isTranslational ? EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS : EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS;
+};
+
 const handleResetFormInputs = async () => {
 	if (process.env.NODE_ENV === "development") {
-		await useWizardStore.getState().updateFormInputs(EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS);
-		log.info("Dev: Form inputs reset", { emptyFormInputs: EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS });
+		const emptyFormInputs = getEmptyFormInputs();
+		await useWizardStore.getState().updateFormInputs(emptyFormInputs);
+		log.info("Dev: Form inputs reset", { emptyFormInputs });
 	}
 };
 
@@ -32,6 +43,13 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const cancelAutofill = useWizardStore((state) => state.cancelAutofill);
+	const grantType = useApplicationStore((state) => state.application?.grant_template?.grant_type);
+
+	const isTranslational = grantType === "TRANSLATIONAL";
+	const headerTitle = isTranslational ? "Translational Research Deep Dive" : "Research Deep Dive";
+	const headerDescription = isTranslational
+		? "Before generating your grant application draft, it would be helpful to learn more about your translational research approach to ensure accurate results."
+		: "Before generating your grant application draft, it would be helpful to learn a bit more about your research to ensure more accurate results.";
 
 	return (
 		<div className="flex items-center justify-between 2xl:mt-5 px-17 gap-4">
@@ -40,14 +58,13 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 					className="text-app-black text-3xl font-medium font-heading leading-loose"
 					data-testid="research-deep-dive-header"
 				>
-					Research Deep Dive
+					{headerTitle}
 				</h2>
 				<p
 					className="text-app-black font-normal text-base leading-tight -mt-2"
 					data-testid="research-deep-dive-description"
 				>
-					Before generating your grant application draft, it would be helpful to learn a bit more about your
-					research to ensure more accurate results.
+					{headerDescription}
 				</p>
 			</div>
 			<div className="flex items-center gap-3">
