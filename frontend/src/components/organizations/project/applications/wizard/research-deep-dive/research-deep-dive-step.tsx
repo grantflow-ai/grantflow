@@ -1,29 +1,16 @@
 "use client";
 
 import { AppButton } from "@/components/app/buttons/app-button";
+import { EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { AiAutofillButton } from "../ai-autofill-button";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
-type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
-
 const handleResetFormInputs = async () => {
 	if (process.env.NODE_ENV === "development") {
-		const emptyFormInputs: FormInputs = {
-			background_context: "",
-			hypothesis: "",
-			impact: "",
-			novelty_and_innovation: "",
-			preliminary_data: "",
-			rationale: "",
-			research_feasibility: "",
-			scientific_infrastructure: "",
-			team_excellence: "",
-		};
-		await useWizardStore.getState().updateFormInputs(emptyFormInputs);
-		log.info("Dev: Form inputs reset", { emptyFormInputs });
+		await useWizardStore.getState().updateFormInputs(EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS);
+		log.info("Dev: Form inputs reset", { emptyFormInputs: EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS });
 	}
 };
 
