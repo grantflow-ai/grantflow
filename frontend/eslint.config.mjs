@@ -9,7 +9,6 @@ import biomeConfig from "eslint-config-biome";
 import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
-import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import eslintPluginMarkdown from "eslint-plugin-markdown";
 import eslintPluginNode from "eslint-plugin-n";
 import eslintPluginPaths from "eslint-plugin-paths";
@@ -36,7 +35,6 @@ export default eslintTS.config(
 	eslintPluginPerfectionist.configs["recommended-alphabetical"],
 	eslintPluginReact.configs.flat.recommended,
 	reactPerfPlugin.configs.flat.recommended,
-	eslintPluginJsxA11y.flatConfigs.recommended,
 	...eslintPluginStorybook.configs["flat/recommended"],
 	...nextConfig,
 	eslintPluginImportX.flatConfigs.recommended,
@@ -177,6 +175,16 @@ export default eslintTS.config(
 	{
 		extends: [eslintTS.configs.disableTypeChecked],
 		files: ["**/*.js", "**/*.cjs", "**/*.mjs", "eslint.config.mjs"],
+	},
+	{
+		files: ["**/*.mts", "testing/**/*.ts", "vitest.*.ts"],
+		languageOptions: {
+			parser: eslintTS.parser,
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: __dirname,
+			},
+		},
 	},
 	{
 		files: ["**/*.md"],
