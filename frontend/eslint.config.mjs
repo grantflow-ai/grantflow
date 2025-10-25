@@ -2,11 +2,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fixupPluginRules } from "@eslint/compat";
-import { FlatCompat } from "@eslint/eslintrc";
 import eslintJS from "@eslint/js";
 import sonarjs from 'eslint-plugin-sonarjs';
 
 import biomeConfig from "eslint-config-biome";
+import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
@@ -24,8 +24,6 @@ import eslintPluginVitest from "eslint-plugin-vitest";
 import globals from "globals";
 import eslintTS from "typescript-eslint";
 
-const compat = new FlatCompat();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default eslintTS.config(
@@ -40,7 +38,7 @@ export default eslintTS.config(
 	reactPerfPlugin.configs.flat.recommended,
 	eslintPluginJsxA11y.flatConfigs.recommended,
 	...eslintPluginStorybook.configs["flat/recommended"],
-	...compat.extends("plugin:@next/next/core-web-vitals"),
+	...nextConfig,
 	eslintPluginImportX.flatConfigs.recommended,
 	eslintPluginImportX.flatConfigs.typescript,
 	sonarjs.configs.recommended,

@@ -2,7 +2,6 @@ import ky from "ky";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
-import { Ref } from "@/utils/state";
 
 vi.mock("ky");
 vi.mock("@/utils/env");
