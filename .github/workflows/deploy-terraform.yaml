@@ -61,6 +61,12 @@ jobs:
       should_deploy: ${{ steps.check.outputs.should_deploy }}
       services_to_deploy: ${{ steps.services.outputs.services }}
       image_digests: ${{ steps.artifacts.outputs.digests }}
+      backend_digest: ${{ steps.artifacts.outputs.digest_backend }}
+      crawler_digest: ${{ steps.artifacts.outputs.digest_crawler }}
+      indexer_digest: ${{ steps.artifacts.outputs.digest_indexer }}
+      rag_digest: ${{ steps.artifacts.outputs.digest_rag }}
+      scraper_digest: ${{ steps.artifacts.outputs.digest_scraper }}
+      crdt_digest: ${{ steps.artifacts.outputs.digest_crdt }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -220,6 +226,12 @@ jobs:
       TF_VAR_project_id: grantflow
       TF_VAR_image_tag: ${{ needs.collect-build-info.outputs.environment == 'production' && (github.event.workflow_run.head_sha || github.sha) || format('staging-{0}', github.event.workflow_run.head_sha || github.sha) }}
       ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
+      TF_VAR_backend_image_digest: ${{ needs.collect-build-info.outputs.backend_digest }}
+      TF_VAR_crawler_image_digest: ${{ needs.collect-build-info.outputs.crawler_digest }}
+      TF_VAR_indexer_image_digest: ${{ needs.collect-build-info.outputs.indexer_digest }}
+      TF_VAR_rag_image_digest: ${{ needs.collect-build-info.outputs.rag_digest }}
+      TF_VAR_scraper_image_digest: ${{ needs.collect-build-info.outputs.scraper_digest }}
+      TF_VAR_crdt_image_digest: ${{ needs.collect-build-info.outputs.crdt_digest }}
     outputs:
       plan_exitcode: ${{ steps.plan.outputs.exitcode }}
       plan_output: ${{ steps.plan.outputs.stdout }}
@@ -383,6 +395,12 @@ jobs:
       TF_VAR_project_id: grantflow
       TF_VAR_image_tag: ${{ needs.collect-build-info.outputs.environment == 'production' && (github.event.workflow_run.head_sha || github.sha) || format('staging-{0}', github.event.workflow_run.head_sha || github.sha) }}
       ENVIRONMENT: ${{ needs.collect-build-info.outputs.environment || inputs.environment }}
+      TF_VAR_backend_image_digest: ${{ needs.collect-build-info.outputs.backend_digest }}
+      TF_VAR_crawler_image_digest: ${{ needs.collect-build-info.outputs.crawler_digest }}
+      TF_VAR_indexer_image_digest: ${{ needs.collect-build-info.outputs.indexer_digest }}
+      TF_VAR_rag_image_digest: ${{ needs.collect-build-info.outputs.rag_digest }}
+      TF_VAR_scraper_image_digest: ${{ needs.collect-build-info.outputs.scraper_digest }}
+      TF_VAR_crdt_image_digest: ${{ needs.collect-build-info.outputs.crdt_digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
