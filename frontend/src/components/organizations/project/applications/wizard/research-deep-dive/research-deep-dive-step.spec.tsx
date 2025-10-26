@@ -42,6 +42,9 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 		it("renders header section with correct content", () => {
 			const application = ApplicationWithTemplateFactory.build();
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 			useApplicationStore.setState({ application });
 
 			render(<ResearchDeepDiveStep />);
