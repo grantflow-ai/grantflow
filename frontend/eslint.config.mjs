@@ -137,6 +137,8 @@ export default eslintTS.config(
 			"prefer-const": ["error", { destructuring: "all" }],
 			"prefer-destructuring": "error",
 			"prefer-template": "warn",
+			"react-hooks/refs": "off",
+			"react-hooks/set-state-in-effect": "off",
 			"react-perf/jsx-no-new-function-as-prop": "off",
 			"react-perf/jsx-no-new-object-as-prop": "off",
 			"react/prop-types": "off",

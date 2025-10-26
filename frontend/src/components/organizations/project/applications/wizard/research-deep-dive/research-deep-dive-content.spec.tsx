@@ -69,9 +69,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				background_context: "Some background context",
 				hypothesis: "Some hypothesis",
 			});
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: formInputs });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -262,9 +263,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = EmptyFormInputsFactory.build({
 				background_context: "Initial content",
 			});
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: formInputs });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -279,9 +281,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const updatedFormInputs = EmptyFormInputsFactory.build({
 				background_context: "Updated content",
 			});
-			const updatedApplication = ApplicationWithTemplateFactory.build({
-				form_inputs: updatedFormInputs,
-			});
+			const updatedApplication = ApplicationWithTemplateFactory.build({ form_inputs: updatedFormInputs });
+			if (updatedApplication.grant_template) {
+				updatedApplication.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application: updatedApplication });
 			rerender(<ResearchDeepDiveContent />);
@@ -350,9 +353,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				updateFormInputs: mockUpdateFormInputs,
 			});
 
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: undefined });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -379,9 +383,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				updateFormInputs: mockUpdateFormInputs,
 			});
 
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: undefined });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -515,9 +520,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = EmptyFormInputsFactory.build({
 				background_context: "Some background",
 			});
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: formInputs });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -535,9 +541,10 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = EmptyFormInputsFactory.build({
 				background_context: "Some background",
 			});
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: formInputs,
-			});
+			const application = ApplicationWithTemplateFactory.build({ form_inputs: formInputs });
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
