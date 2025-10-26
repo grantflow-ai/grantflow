@@ -368,7 +368,6 @@ export function useApplicationNotifications({
 		// which is a valid use case for setState in an effect
 
 		if (isWebsocketMessage(lastJsonMessage)) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			handleValidMessage(lastJsonMessage);
 		} else {
 			handleInvalidMessage(lastJsonMessage);
