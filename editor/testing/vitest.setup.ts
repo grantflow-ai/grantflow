@@ -15,6 +15,12 @@ globalThis.matchMedia = vi.fn().mockImplementation((query: string) => ({
 	removeListener: vi.fn(),
 }));
 
+globalThis.ResizeObserver = class ResizeObserver {
+	disconnect = vi.fn();
+	observe = vi.fn();
+	unobserve = vi.fn();
+};
+
 afterEach(() => {
 	cleanup();
 });

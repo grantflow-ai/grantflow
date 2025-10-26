@@ -174,29 +174,49 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
 export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
+	// Basic Science fields
 	background_context: factory.lorem.paragraphs(2),
+	// Translational Research fields
+	commercialization_plan: factory.lorem.paragraph(),
+	core_concept: factory.lorem.paragraph(),
 	hypothesis: factory.lorem.paragraph(),
 	impact: factory.lorem.paragraph(),
 	novelty_and_innovation: factory.lorem.paragraph(),
 	preliminary_data: factory.lorem.paragraphs(2),
+	proof_of_concept: factory.lorem.paragraphs(2),
 	rationale: factory.lorem.paragraph(),
 	research_feasibility: factory.lorem.paragraph(),
 	scientific_infrastructure: factory.lorem.paragraph(),
 	team_excellence: factory.lorem.paragraph(),
+	team_translation_capability: factory.lorem.paragraph(),
+	translational_impact: factory.lorem.paragraph(),
+	translational_potential: factory.lorem.paragraph(),
+	unique_approach: factory.lorem.paragraph(),
+	unmet_need_context: factory.lorem.paragraphs(2),
 }));
 
 export const EmptyFormInputsFactory = {
 	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
 		const defaults: FormInputs = {
+			// Basic Science fields
 			background_context: "",
+			// Translational Research fields
+			commercialization_plan: "",
+			core_concept: "",
 			hypothesis: "",
 			impact: "",
 			novelty_and_innovation: "",
 			preliminary_data: "",
+			proof_of_concept: "",
 			rationale: "",
 			research_feasibility: "",
 			scientific_infrastructure: "",
 			team_excellence: "",
+			team_translation_capability: "",
+			translational_impact: "",
+			translational_potential: "",
+			unique_approach: "",
+			unmet_need_context: "",
 		};
 		return { ...defaults, ...overrides };
 	},
@@ -245,15 +265,16 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 	}),
 }));
 
-type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
+export type GrantTemplateResponse = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
-export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
+export const GrantTemplateFactory = new Factory<GrantTemplateResponse>((factory) => ({
 	created_at: factory.date.past().toISOString(),
 	grant_application_id: factory.string.uuid(),
 	grant_sections: factory.helpers.multiple(
 		() => (factory.datatype.boolean() ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build()),
 		{ count: { max: 10, min: 1 } },
 	),
+	grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
 	granting_institution: factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined,
 	granting_institution_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	id: factory.string.uuid(),
@@ -271,7 +292,7 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	editor_document_id: "123",
 	editor_document_init: false,
 	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
-	grant_template: factory.datatype.boolean() ? (GrantTemplateFactory.build() as any) : undefined,
+	grant_template: factory.datatype.boolean() ? GrantTemplateFactory.build() : undefined,
 	id: factory.string.uuid(),
 	project_id: factory.string.uuid(),
 	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),

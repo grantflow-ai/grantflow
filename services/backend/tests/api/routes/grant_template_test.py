@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import GrantType, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
@@ -40,6 +40,7 @@ async def test_update_grant_template_success(
                     "parent_id": None,
                 }
             ],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.commit()
@@ -64,6 +65,7 @@ async def test_update_grant_template_success(
             }
         ],
         "submission_date": "2024-12-31",
+        "grant_type": GrantType.TRANSLATIONAL.value,
     }
 
     response = await test_client.patch(
@@ -93,6 +95,7 @@ async def test_update_grant_template_success(
         assert section["search_queries"] == ["introduction research"]
         assert section["topics"] == ["research background"]
         assert updated_template.submission_date == date(2024, 12, 31)
+        assert updated_template.grant_type == GrantType.TRANSLATIONAL
 
 
 async def test_update_grant_template_not_found(
@@ -140,6 +143,7 @@ async def test_generate_grant_template_success(
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.flush()
@@ -193,6 +197,7 @@ async def test_generate_grant_template_with_created_status(
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.flush()
@@ -230,6 +235,7 @@ async def test_generate_grant_template_no_sources(
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.commit()
@@ -267,6 +273,7 @@ async def test_generate_grant_template_failed_sources_only(
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.flush()
@@ -299,6 +306,7 @@ async def test_update_grant_template_unauthorized(
         grant_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(grant_template)
         await session.commit()

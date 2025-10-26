@@ -8,7 +8,7 @@ from packages.db.src.constants import (
     RAG_FILE,
     RAG_URL,
 )
-from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
+from packages.db.src.enums import GrantType, RagGenerationStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import (
     Chunk,
     GrantElement,
@@ -81,6 +81,7 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __set_association_proxy__ = False
     rag_job_id = None
     deleted_at = None
+    grant_type = GrantType.RESEARCH
     grant_sections = Use(
         lambda: [
             GrantSectionFactory.build(

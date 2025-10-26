@@ -123,6 +123,7 @@ export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 						leftIcon={<ArrowLeft />}
 						onClick={onBack}
 						size="md"
+						type="button"
 						variant="secondary"
 					>
 						New Search
@@ -147,6 +148,7 @@ export function SearchResults({ onBack, searchParams }: SearchResultsProps) {
 						leftIcon={loading ? <Loader2 className="animate-spin" role="progressbar" /> : undefined}
 						onClick={loadMore}
 						size="lg"
+						type="button"
 						variant="primary"
 					>
 						{loading ? "Loading..." : "Load More"}

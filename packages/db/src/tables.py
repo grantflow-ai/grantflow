@@ -41,6 +41,7 @@ from packages.db.src.enums import (
     ApplicationStatusEnum,
     GrantApplicationStageEnum,
     GrantTemplateStageEnum,
+    GrantType,
     NotificationTypeEnum,
     RagGenerationStatusEnum,
     SourceIndexingStatusEnum,
@@ -53,6 +54,7 @@ from packages.db.src.json_objects import (
     GrantLongFormSection,
     ResearchDeepDive,
     ResearchObjective,
+    TranslationalResearchDeepDive,
 )
 
 
@@ -413,7 +415,7 @@ class GrantApplication(BaseWithUUIDPK):
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     completion_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    form_inputs: Mapped[ResearchDeepDive | None] = mapped_column(JSON, nullable=True)
+    form_inputs: Mapped[ResearchDeepDive | TranslationalResearchDeepDive | None] = mapped_column(JSON, nullable=True)
     research_objectives: Mapped[list[ResearchObjective] | None] = mapped_column(JSON, nullable=True)
     status: Mapped[ApplicationStatusEnum] = mapped_column(
         Enum(ApplicationStatusEnum), default=ApplicationStatusEnum.WORKING_DRAFT, index=True
@@ -473,17 +475,15 @@ class GrantApplicationSource(Base):
 class GrantTemplate(BaseWithUUIDPK):
     __tablename__ = "grant_templates"
 
+    grant_type: Mapped[GrantType] = mapped_column(Enum(GrantType, default=GrantType.RESEARCH, index=True))
     grant_sections: Mapped[list[GrantLongFormSection | GrantElement]] = mapped_column(JSON)
-
     grant_application_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("grant_applications.id", ondelete="CASCADE"), index=True
     )
     granting_institution_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("granting_institutions.id", ondelete="SET NULL"), nullable=True
     )
-
     submission_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-
     grant_application: Relationship[GrantApplication] = relationship(
         "GrantApplication", back_populates="grant_template"
     )

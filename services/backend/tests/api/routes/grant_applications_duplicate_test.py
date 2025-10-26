@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
-from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.enums import ApplicationStatusEnum, GrantType
 from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
@@ -135,7 +135,10 @@ async def test_duplicate_with_grant_template(
         ]
 
         new_template = GrantTemplate(
-            grant_application_id=grant_application.id, grant_sections=test_grant_sections, granting_institution_id=None
+            grant_application_id=grant_application.id,
+            grant_sections=test_grant_sections,
+            granting_institution_id=None,
+            grant_type=GrantType.RESEARCH,
         )
         session.add(new_template)
         await session.commit()
@@ -160,6 +163,7 @@ async def test_duplicate_with_grant_template(
     assert "grant_template" in data
     assert data["grant_template"]["id"] != str(template_id)
     assert data["grant_template"]["grant_sections"] == test_grant_sections
+    assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
 
 
 async def test_duplicate_preserves_rag_sources(

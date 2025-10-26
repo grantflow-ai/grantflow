@@ -130,6 +130,7 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 			const stepMap: Record<WizardStep, keyof typeof TrackingEvents | null> = {
 				"Application Details": "WIZARD_STEP_1_NEXT",
 				"Application Structure": null,
+				"Application Type": null,
 				"Generate and Complete": null,
 				"Knowledge Base": "WIZARD_STEP_3_NEXT",
 				"Research Deep Dive": null,

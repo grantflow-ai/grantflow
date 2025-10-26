@@ -40,6 +40,20 @@ const loginFormSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
+type SocialProvider = "google" | "orcid";
+
+const handleSocialSignInFailure = (provider: SocialProvider, error: unknown) => {
+	if (isRedirectError(error)) {
+		return;
+	}
+
+	log.error(`${provider} sign-in failed`, error, { page: "login", provider });
+
+	const providerLabel = provider.toUpperCase();
+	const message = error instanceof Error ? error.message : `${providerLabel} sign-in failed due to an error`;
+	toast.error(message);
+};
+
 export default function Login() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
@@ -49,16 +63,59 @@ export default function Login() {
 	const [showMobileWarning, setShowMobileWarning] = useState(false);
 	const isMobile = useIsMobile();
 
+	const requireCookieConsent = () => {
+		if (hasConsent) {
+			return true;
+		}
+
+		toast.error("Please accept cookies to continue with login");
+		return false;
+	};
+
+	const showNoAccountError = () => {
+		setSocialSignInError(
+			<>
+				No account found with this email.{" "}
+				<Link
+					className="text-primary text-sm hover:underline"
+					data-testid="login-no-account-link"
+					href="/signup"
+				>
+					Create an account.
+				</Link>
+			</>,
+		);
+	};
+
+	const handleExistingUserLogin = async (idToken: string, user: User) => {
+		setUser(convertFirebaseUser(user));
+		const loginResult = await login(idToken);
+
+		log.info("Login completed - setting admin status", {
+			component: "LoginPage",
+			is_backoffice_admin: loginResult.is_backoffice_admin,
+			uid: user.uid,
+		});
+
+		setBackofficeAdmin(loginResult.is_backoffice_admin);
+
+		if (isMobile) {
+			setShowMobileWarning(true);
+			return;
+		}
+
+		checkProfileAndRedirect(user.displayName);
+	};
+
 	if (showMobileWarning) {
 		return <PostLogin />;
 	}
 
 	const handleSocialSignIn = async (
-		provider: "google" | "orcid",
+		provider: SocialProvider,
 		signInMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
 	) => {
-		if (!hasConsent) {
-			toast.error("Please accept cookies to continue with login");
+		if (!requireCookieConsent()) {
 			return;
 		}
 
@@ -69,47 +126,14 @@ export default function Login() {
 		try {
 			const { idToken, isNewUser, user } = await signInMethod();
 
-			if (!isNewUser) {
-				setUser(convertFirebaseUser(user));
-				const loginResult = await login(idToken);
-
-				log.info("Login completed - setting admin status", {
-					component: "LoginPage",
-					is_backoffice_admin: loginResult.is_backoffice_admin,
-					uid: user.uid,
-				});
-
-				setBackofficeAdmin(loginResult.is_backoffice_admin);
-
-				if (isMobile) {
-					setShowMobileWarning(true);
-					return;
-				}
-
-				checkProfileAndRedirect(user.displayName);
+			if (isNewUser) {
+				showNoAccountError();
 				return;
 			}
 
-			const errorWithLink = (
-				<>
-					No account found with this email.{" "}
-					<Link
-						className="text-primary text-sm hover:underline"
-						data-testid="login-no-account-link"
-						href="/signup"
-					>
-						Create an account.
-					</Link>
-				</>
-			);
-			setSocialSignInError(errorWithLink);
+			await handleExistingUserLogin(idToken, user);
 		} catch (error) {
-			if (!isRedirectError(error)) {
-				log.error(`${provider} sign-in failed`, error, { page: "login", provider });
-				toast.error(
-					error instanceof Error ? error.message : `${provider.toUpperCase()} sign-in failed due to an error`,
-				);
-			}
+			handleSocialSignInFailure(provider, error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -121,12 +145,12 @@ export default function Login() {
 	};
 
 	const handleOrcidSignin = async () => {
+		log.info("ORCID sign-in button clicked", { page: "login" });
 		await handleSocialSignIn("orcid", handleOrcidLogin);
 	};
 
 	const handleEmailSignin = async (email: string) => {
-		if (!hasConsent) {
-			toast.error("Please accept cookies to continue with login");
+		if (!requireCookieConsent()) {
 			return;
 		}
 

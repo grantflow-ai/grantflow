@@ -9,10 +9,13 @@ export function createGcpLoggingPinoConfig() {
 export const instance = () => ({});
 export const project = () => Promise.resolve("mock-project");
 export const isAvailable = () => Promise.resolve(false);
-export default {
+
+const loggerMock = {
 	createGcpLoggingPinoConfig,
 	instance,
 	isAvailable,
 	LoggingUtils,
 	project,
 };
+
+export default loggerMock;

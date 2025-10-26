@@ -9,7 +9,7 @@
   --font-cabin: var(--font-cabin);
   --font-sans: var(--font-sans);
   --font-body: var(--font-body);
-  --font-sora: var(--font-sora)
+  --font-sora: var(--font-sora);
   --font-button: var(--font-button);
 
   --color-background: var(--background);
@@ -246,8 +246,8 @@
     position: absolute;
     height: 100px;
     width: 30px;
-    background-color: #efee fe;
-    box-shadow: 0 0 10px #efee fe;
+    background-color: #efeefe;
+    box-shadow: 0 0 10px #efeefe;
     filter: blur(5px);
     opacity: 0.6;
     transition: 1.5s;

@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import uuid4
 
-from packages.db.src.enums import ApplicationStatusEnum
+from packages.db.src.enums import ApplicationStatusEnum, GrantType
 from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
@@ -59,6 +59,7 @@ async def test_duplicate_project_success(
         template1 = GrantTemplate(
             grant_application_id=app1.id,
             grant_sections=[{"title": "Section 1", "type": "section"}],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template1)
 
@@ -208,6 +209,7 @@ async def test_duplicate_project_preserves_rag_sources(
         template = GrantTemplate(
             grant_application_id=app.id,
             grant_sections=[],
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.flush()

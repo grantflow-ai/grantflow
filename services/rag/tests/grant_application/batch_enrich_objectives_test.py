@@ -2,7 +2,13 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+    ResearchTask,
+    TranslationalResearchDeepDive,
+)
 
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 
@@ -282,3 +288,49 @@ async def test_handle_batch_enrich_objectives_calls_shared_retrieval(
     mock_batched_gather.assert_called_once()
     call_args = mock_batched_gather.call_args
     assert len(call_args[0]) == 2
+
+
+@pytest.fixture
+def sample_translational_form_inputs() -> TranslationalResearchDeepDive:
+    return TranslationalResearchDeepDive(
+        unmet_need_context="Current cancer therapies are ineffective for 40% of patients",
+        core_concept="Novel combination immunotherapy targeting T-cell exhaustion pathways",
+        translational_potential="Could improve outcomes for treatment-resistant cancer patients",
+        unique_approach="First-in-class dual checkpoint inhibitor with metabolic reprogramming",
+        translational_impact="May reduce mortality by 30% in advanced melanoma",
+        team_translation_capability="Team has 3 FDA-approved therapies and 50+ clinical trials",
+        commercialization_plan="Phase 1 trials in Year 2, partnering with biotech for Phase 2/3",
+        proof_of_concept="Preclinical studies show 80% tumor regression in mouse models",
+    )
+
+
+@patch("services.rag.src.grant_application.batch_enrich_objectives.batched_gather")
+@patch("services.rag.src.grant_application.batch_enrich_objectives.perform_shared_retrieval")
+async def test_handle_batch_enrich_objectives_with_translational_form_inputs(
+    mock_perform_shared_retrieval: AsyncMock,
+    mock_batched_gather: AsyncMock,
+    mock_job_manager: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: GrantLongFormSection,
+    sample_translational_form_inputs: TranslationalResearchDeepDive,
+) -> None:
+    """Test that handle_batch_enrich_objectives works with TranslationalResearchDeepDive form inputs."""
+    mock_perform_shared_retrieval.return_value = "Shared context from retrieval"
+    mock_batched_gather.return_value = [{"research_objective": {}, "research_tasks": []}] * 2
+
+    test_app_id = str(uuid4())
+    test_trace_id = str(uuid4())
+
+    result = await handle_batch_enrich_objectives(
+        research_objectives=sample_research_objectives,
+        grant_section=sample_grant_section,
+        application_id=test_app_id,
+        form_inputs=sample_translational_form_inputs,
+        trace_id=test_trace_id,
+        job_manager=mock_job_manager,
+    )
+
+    assert result is not None
+    assert len(result) == 2
+    mock_perform_shared_retrieval.assert_called_once()
+    mock_batched_gather.assert_called_once()

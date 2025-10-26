@@ -80,6 +80,8 @@ const arrayReplaceDeepMerge = deepmergeCustom({
 	},
 });
 
+type ApplicationFormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+
 interface ApplicationState {
 	application: ApplicationType;
 	areAppOperationsInProgress: boolean;
@@ -92,9 +94,33 @@ interface ApplicationState {
 		isRestoring: boolean;
 		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
 	};
+	shouldResetDeepDiveOnGrantTypeChange: boolean;
 }
 
 type SourceType = "application" | "template";
+
+export const EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS: ApplicationFormInputs = {
+	background_context: "",
+	hypothesis: "",
+	impact: "",
+	novelty_and_innovation: "",
+	preliminary_data: "",
+	rationale: "",
+	research_feasibility: "",
+	scientific_infrastructure: "",
+	team_excellence: "",
+};
+
+export const EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS: ApplicationFormInputs = {
+	commercialization_plan: "",
+	core_concept: "",
+	proof_of_concept: "",
+	team_translation_capability: "",
+	translational_impact: "",
+	translational_potential: "",
+	unique_approach: "",
+	unmet_need_context: "",
+};
 
 const initialState: ApplicationState = {
 	application: null,
@@ -108,6 +134,7 @@ const initialState: ApplicationState = {
 		isRestoring: false,
 		restoredJob: null,
 	},
+	shouldResetDeepDiveOnGrantTypeChange: false,
 };
 
 const validateStateForRagSource = (application: ApplicationType, parentId: string, actionName: string): boolean => {
@@ -271,7 +298,7 @@ const logGrantSectionsUpdate = (
 
 const updateGrantTemplateAPI = async (
 	application: NonNullable<ApplicationType>,
-	processedSections: API.UpdateGrantTemplate.RequestBody["grant_sections"],
+	data: Partial<API.UpdateGrantTemplate.RequestBody>,
 ) => {
 	const { selectedOrganizationId } = useOrganizationStore.getState();
 	if (!selectedOrganizationId) {
@@ -283,7 +310,7 @@ const updateGrantTemplateAPI = async (
 		application.project_id,
 		application.id,
 		application.grant_template?.id ?? "",
-		{ grant_sections: processedSections },
+		data,
 	);
 };
 
@@ -303,6 +330,7 @@ interface ApplicationActions {
 	reset: () => void;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
 	setSaving: (isSaving: boolean) => void;
+	setShouldResetDeepDiveOnGrantTypeChange: (shouldReset: boolean) => void;
 	softReset: () => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (
@@ -312,6 +340,7 @@ interface ApplicationActions {
 		title: string,
 	) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
+	updateGrantType: (grantType: API.UpdateGrantTemplate.RequestBody["grant_type"]) => Promise<void>;
 }
 
 const uploadFileInDevelopment = async (
@@ -960,6 +989,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ isSaving });
 	},
 
+	setShouldResetDeepDiveOnGrantTypeChange: (shouldReset: boolean) => {
+		set({ shouldResetDeepDiveOnGrantTypeChange: shouldReset });
+	},
+
 	softReset: () => {
 		const currentApplication = get().application;
 		set({
@@ -1104,7 +1137,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication, isSaving: true });
 
 		try {
-			await updateGrantTemplateAPI(application, processedSections ?? []);
+			await updateGrantTemplateAPI(application, { grant_sections: processedSections ?? [] });
 			log.info("updateGrantSections: Success", {
 				grant_sections: (processedSections ?? []).map((section) => ({
 					id: section.id,
@@ -1120,6 +1153,60 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
+		} finally {
+			set({ isSaving: false });
+		}
+	},
+	updateGrantType: async (grantType: API.UpdateGrantTemplate.RequestBody["grant_type"]) => {
+		const { application, shouldResetDeepDiveOnGrantTypeChange } = get();
+
+		if (!application?.grant_template?.id) {
+			log.warn("updateGrantType: No grant template ID found");
+			return;
+		}
+
+		if (!grantType) {
+			log.warn("updateGrantType: No grant type provided");
+			return;
+		}
+
+		const previousGrantType = application.grant_template.grant_type;
+		const updatedApplication = {
+			...application,
+			grant_template: {
+				...application.grant_template,
+				grant_type: grantType,
+			},
+		} as NonNullable<ApplicationType>;
+
+		set({ application: updatedApplication, isSaving: true });
+
+		try {
+			await updateGrantTemplateAPI(application, { grant_type: grantType });
+			log.info("updateGrantType: Success", { grant_type: grantType });
+
+			// Reset deep dive form inputs if flag is set
+			if (shouldResetDeepDiveOnGrantTypeChange) {
+				const emptyFormInputs =
+					grantType === "TRANSLATIONAL"
+						? EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS
+						: EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS;
+				await get().updateApplication({ form_inputs: emptyFormInputs });
+				set({ shouldResetDeepDiveOnGrantTypeChange: false });
+				log.info("updateGrantType: Reset deep dive form inputs", { grant_type: grantType });
+			}
+		} catch (error) {
+			const restoredApplication = {
+				...application,
+				grant_template: {
+					...application.grant_template,
+					grant_type: previousGrantType,
+				},
+			} as NonNullable<ApplicationType>;
+
+			set({ application: restoredApplication });
+			log.error("updateGrantType: Failed", error);
+			toast.error("Failed to update grant type");
 		} finally {
 			set({ isSaving: false });
 		}

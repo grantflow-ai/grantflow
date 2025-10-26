@@ -6,6 +6,7 @@ import eslintJS from "@eslint/js";
 import sonarjs from 'eslint-plugin-sonarjs';
 
 import biomeConfig from "eslint-config-biome";
+// eslint-disable-next-line import-x/no-unresolved
 import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
@@ -136,6 +137,8 @@ export default eslintTS.config(
 			"prefer-const": ["error", { destructuring: "all" }],
 			"prefer-destructuring": "error",
 			"prefer-template": "warn",
+			"react-hooks/refs": "off",
+			"react-hooks/set-state-in-effect": "off",
 			"react-perf/jsx-no-new-function-as-prop": "off",
 			"react-perf/jsx-no-new-object-as-prop": "off",
 			"react/prop-types": "off",

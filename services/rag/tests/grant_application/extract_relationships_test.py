@@ -3,7 +3,13 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+    ResearchTask,
+    TranslationalResearchDeepDive,
+)
 
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 
@@ -323,3 +329,60 @@ async def test_handle_extract_relationships_error_handling(
 
     mock_extract_relationships_generation.assert_called_once()
     mock_retrieve_documents.assert_called_once()
+
+
+@pytest.fixture
+def sample_translational_form_inputs() -> TranslationalResearchDeepDive:
+    return TranslationalResearchDeepDive(
+        unmet_need_context="Current cancer therapies are ineffective for 40% of patients",
+        core_concept="Novel combination immunotherapy targeting T-cell exhaustion pathways",
+        translational_potential="Could improve outcomes for treatment-resistant cancer patients",
+        unique_approach="First-in-class dual checkpoint inhibitor with metabolic reprogramming",
+        translational_impact="May reduce mortality by 30% in advanced melanoma",
+        team_translation_capability="Team has 3 FDA-approved therapies and 50+ clinical trials",
+        commercialization_plan="Phase 1 trials in Year 2, partnering with biotech for Phase 2/3",
+        proof_of_concept="Preclinical studies show 80% tumor regression in mouse models",
+    )
+
+
+@patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
+@patch("services.rag.src.grant_application.extract_relationships.refine_relationships")
+@patch("services.rag.src.grant_application.extract_relationships.extract_relationships_generation")
+async def test_handle_extract_relationships_with_translational_form_inputs(
+    mock_extract_relationships_generation: AsyncMock,
+    mock_refine_relationships: AsyncMock,
+    mock_retrieve_documents: AsyncMock,
+    mock_job_manager: AsyncMock,
+    sample_research_objectives: list[ResearchObjective],
+    sample_grant_section: GrantLongFormSection,
+    sample_translational_form_inputs: TranslationalResearchDeepDive,
+) -> None:
+    """Test that handle_extract_relationships works with TranslationalResearchDeepDive form inputs."""
+    mock_relationships_response = {
+        "relationships": [
+            {
+                "source": "Objective 1",
+                "target": "Objective 2",
+                "desc": "Task 1 enables Task 2",
+            }
+        ]
+    }
+    mock_extract_relationships_generation.return_value = mock_relationships_response
+    mock_refine_relationships.return_value = mock_relationships_response
+    mock_retrieve_documents.return_value = []
+
+    result = await handle_extract_relationships(
+        application_id=str(uuid4()),
+        research_objectives=sample_research_objectives,
+        grant_section=sample_grant_section,
+        form_inputs=sample_translational_form_inputs,
+        trace_id=str(uuid4()),
+        job_manager=mock_job_manager,
+    )
+
+    assert isinstance(result, dict)
+    assert "Objective 1" in result
+    assert len(result["Objective 1"]) == 1
+    assert result["Objective 1"][0] == ("Objective 2", "Task 1 enables Task 2")
+    mock_extract_relationships_generation.assert_called_once()
+    mock_refine_relationships.assert_called_once()

@@ -26,17 +26,6 @@ export function Notification({
 	const handleClearAll = () => {
 		setNotifications([]);
 	};
-	function EmptyState() {
-		return (
-			<div
-				className="
-				h-28 p-4 flex items-center justify-center border-b border-app-gray-100 text-app-black font-normal text-sm leading-4 cursor-pointer
-			"
-			>
-				You don’t have any notifications.
-			</div>
-		);
-	}
 	return (
 		<div className="relative">
 			<div className="cursor-pointer relative block" data-testid="notification-trigger">
@@ -124,6 +113,18 @@ export function Notification({
 					</motion.div>
 				)}
 			</AnimatePresence>
+		</div>
+	);
+}
+
+function EmptyState() {
+	return (
+		<div
+			className="
+				h-28 p-4 flex items-center justify-center border-b border-app-gray-100 text-app-black font-normal text-sm leading-4 cursor-pointer
+			"
+		>
+			You don&apos;t have any notifications.
 		</div>
 	);
 }

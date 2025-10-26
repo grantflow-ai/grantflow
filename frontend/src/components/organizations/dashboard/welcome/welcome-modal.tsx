@@ -19,15 +19,8 @@ interface WelcomeModalProps {
 export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 	const router = useRouter();
 	const { dismissWelcomeModal, hasSeenWelcomeModal } = useUserStore();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(() => !hasSeenWelcomeModal);
 	const [step, setStep] = useState(1);
-
-	useEffect(() => {
-		const isTestEnvironment = process.env.NODE_ENV === "test" || globalThis.location.port === "3001";
-		if (!(hasSeenWelcomeModal || isTestEnvironment)) {
-			setOpen(true);
-		}
-	}, [hasSeenWelcomeModal]);
 
 	useEffect(() => {
 		if (!open) return;

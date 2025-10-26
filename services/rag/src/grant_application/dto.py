@@ -1,6 +1,12 @@
 from typing import Literal, NotRequired, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection, LengthConstraint, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    LengthConstraint,
+    ResearchDeepDive,
+    ResearchObjective,
+    TranslationalResearchDeepDive,
+)
 
 
 class ResearchComponentGenerationDTO(TypedDict):
@@ -19,7 +25,7 @@ class EnrichObjectiveInputDTO(TypedDict):
     application_id: str
     grant_section: GrantLongFormSection
     research_objective: ResearchObjective
-    form_inputs: ResearchDeepDive
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive
     retrieval_context: str
     keywords: list[str]
     topics: list[str]

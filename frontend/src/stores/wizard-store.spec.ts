@@ -51,7 +51,7 @@ describe.sequential("wizard store", () => {
 	describe("initial state", () => {
 		it("should initialize with correct default state", () => {
 			const state = useWizardStore.getState();
-			expect(state.currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+			expect(state.currentStep).toBe(WizardStep.APPLICATION_TYPE);
 			expect(state.isGeneratingTemplate).toBe(false);
 			expect(state.templateGenerationFailed).toBe(false);
 			expect(state.templateGenerationErrorMessage).toBe(null);
@@ -996,17 +996,26 @@ describe.sequential("wizard store", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: {
 					background_context: "",
+					commercialization_plan: "",
+					core_concept: "",
 					hypothesis: "",
 					impact: "",
 					novelty_and_innovation: "",
 					preliminary_data: "",
+					proof_of_concept: "",
 					rationale: "",
 					research_feasibility: "",
 					scientific_infrastructure: "",
 					team_excellence: "",
+					team_translation_capability: "",
+					translational_impact: "",
+					translational_potential: "",
+					unique_approach: "",
+					unmet_need_context: "",
 				},
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Section 1" }],
+					grant_type: "RESEARCH",
 				}),
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
