@@ -17,16 +17,6 @@ tasks:
       - uv tool install lefthook
       - lefthook install
 
-  setup:claude:
-    desc: Setup Claude MCP integrations (Model Context Protocol)
-    preconditions:
-      - sh: command -v claude
-        msg: "Claude CLI is not installed or not in PATH. Please install Claude Desktop first."
-    cmds:
-      - claude mcp add --transport sse linear-server https://mcp.linear.app/sse
-      - claude mcp add playwright "npx -y @playwright/mcp@latest"
-      - claude mcp add ai-rulez "uv tool run ai-rulez mcp"
-
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)
     deps:

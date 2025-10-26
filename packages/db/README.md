@@ -1,101 +1,329 @@
-# GrantFlow.AI Database Package
+# Database Package
 
-This package contains the shared database models, migrations, and utilities for GrantFlow.AI services.
+Shared database layer providing SQLAlchemy models, Alembic migrations, and query helpers for all GrantFlow.AI services. This package implements a PostgreSQL-based multi-tenant architecture with soft-delete patterns, vector embeddings for RAG operations, and comprehensive relationship management.
 
-## Project Structure
-
-The database package is organized as follows:
+## Package Structure
 
 ```
-/
-  alembic/            # Database migrations
-    versions/         # Individual migration scripts
-    env.py            # Alembic environment configuration
-    script.py.mako    # Template for migration script generation
-  alembic.ini         # Alembic configuration file
-  pg-extensions.sql   # PostgreSQL extensions setup script
-  src/
-    __init__.py       # Package exports
-    connection.py     # Database connection utilities
-    constants.py      # Database-related constants
-    enums.py          # Shared enumeration types
-    json_objects.py   # JSON object structures for DB columns
-    tables.py         # SQLAlchemy model definitions
+packages/db/
+├── alembic/                    # Database migrations
+│   ├── versions/              # Individual migration scripts
+│   ├── env.py                 # Alembic environment configuration
+│   └── script.py.mako         # Migration template
+├── alembic.ini                # Alembic configuration
+├── pg-extensions.sql          # PostgreSQL extensions (pgvector)
+└── src/
+    ├── __init__.py            # Package exports
+    ├── connection.py          # Database connection utilities
+    ├── constants.py           # Constants (EMBEDDING_DIMENSIONS, source types)
+    ├── enums.py               # Shared enumerations (UserRoleEnum, StatusEnum, etc.)
+    ├── json_objects.py        # TypedDict definitions for JSON columns
+    ├── query_helpers.py       # Soft-delete and metadata filtering helpers
+    ├── tables.py              # SQLAlchemy model definitions
+    └── utils.py               # Database utilities
 ```
 
-## Tech Stack
+## Database Models
 
-- **SQLAlchemy 2.0+**: Modern ORM with asyncio support
-- **Alembic**: Database migration tool
-- **PostgreSQL**: Primary database with pgvector extension
-- **asyncpg**: Fast asynchronous PostgreSQL driver
-- **Python 3.13+**: Leveraging latest type annotations
+The database schema follows a hierarchical multi-tenant structure with polymorphic RAG sources and collaborative editing support:
 
-## Key Features
+```mermaid
+erDiagram
+    Organization ||--o{ OrganizationUser : has
+    Organization ||--o{ Project : contains
+    Organization ||--o{ Notification : receives
 
-- **Async-first**: All database operations support async/await
-- **Strictly Typed**: Comprehensive type annotations with Python 3.13 syntax
-- **Migration Support**: Alembic integration for database versioning
-- **Vector Operations**: pgvector integration for embedding storage and similarity search
+    OrganizationUser ||--o{ ProjectAccess : grants
+    OrganizationUser }o--|| User : represents
 
-## Core Models
+    Project ||--o{ GrantApplication : contains
+    Project ||--o{ ProjectAccess : controls
 
-The database schema includes the following primary models:
+    GrantApplication ||--|| GrantTemplate : has
+    GrantApplication ||--o{ GrantApplicationSource : references
+    GrantApplication ||--o{ RagGenerationJob : triggers
+    GrantApplication ||--o{ EditorDocument : owns
+    GrantApplication ||--o{ GenerationNotification : receives
+    GrantApplication }o--o| GrantApplication : "parent/children"
 
-1. **Project**: Research projects for organizing grant applications
-2. **GrantApplication**: Grant application data and metadata
-3. **GrantTemplate**: Structured template for grant applications
-4. **FundingOrganization**: Information about funding organizations
-5. **RagFile**: Files indexed for RAG operations
-6. **GrantApplicationFile**: Mapping between applications and files
+    GrantTemplate ||--o{ GrantTemplateSource : references
+    GrantTemplate ||--o{ RagGenerationJob : triggers
+    GrantTemplate }o--|| GrantingInstitution : "funded by"
 
-For a visual representation of the database schema and entity relationships, see the [Data Model Diagram](../../diagrams/db/data-model.md).
+    GrantingInstitution ||--o{ Grant : publishes
+    GrantingInstitution ||--o{ GrantingInstitutionSource : references
 
-## Database Migrations
+    RagSource ||--o{ TextVector : vectorized
+    RagSource ||--o{ GrantApplicationSource : "linked to"
+    RagSource ||--o{ GrantTemplateSource : "linked to"
+    RagSource ||--o{ GrantingInstitutionSource : "linked to"
+    RagSource }o--o| RagSource : "parent/children"
 
-Database migrations are handled through Alembic:
+    RagFile --|> RagSource : inherits
+    RagUrl --|> RagSource : inherits
 
-```bash
-# Create a new migration (from the db package directory)
-PYTHONPATH=. uv run alembic revision --autogenerate -m "description"
+    RagGenerationJob }o--o| RagGenerationJob : "parent/children"
 
-# Apply migrations
-PYTHONPATH=. uv run alembic upgrade head
+    EditorDocument }o--|| GrantApplication : belongs_to
 ```
 
-Migrations are also accessible through the Taskfile in the root repository:
+### Core Entity Descriptions
 
-```bash
-# Create migration
-task db:create-migration -- "description"
+**Multi-tenancy & Access Control:**
+- `Organization`: Top-level tenant entity
+- `OrganizationUser`: User membership with role-based permissions (OWNER, ADMIN, COLLABORATOR)
+- `Project`: Organizational unit for grant applications
+- `ProjectAccess`: Fine-grained project access control
 
-# Apply migrations
-task db:migrate
-```
+**Grant Management:**
+- `GrantApplication`: Main entity for grant proposals with deep dive questions and research objectives
+- `GrantTemplate`: Structured grant template with sections and CFP analysis
+- `GrantingInstitution`: Funding organizations (NIH, NSF, etc.)
+- `Grant`: Published grant opportunities with deadlines and requirements
 
-## Usage in Services
+**RAG (Retrieval-Augmented Generation):**
+- `RagSource`: Polymorphic base for indexable content (files and URLs)
+- `RagFile`: GCS-stored files with extraction metadata
+- `RagUrl`: Crawled web pages with title and description
+- `TextVector`: Embeddings with 384-dimensional vectors for similarity search
 
-The database package is designed to be imported by other services:
+**Workflow Management:**
+- `RagGenerationJob`: Async job tracking for template/application generation stages
+- `GenerationNotification`: Real-time updates during generation pipeline
+- `Notification`: User notifications for deadlines and system events
+
+**Collaboration:**
+- `EditorDocument`: CRDT-based collaborative editing state (Y.js binary format)
+
+## Soft-Delete Pattern
+
+All models inherit from `Base` which implements a soft-delete pattern using the `deleted_at` timestamp. Soft-deleted records remain in the database but are excluded from queries.
+
+### Using Query Helpers
+
+Always use the `select_active()` and `update_active()` helpers from `/packages/db/src/query_helpers.py` to automatically filter out soft-deleted records:
 
 ```python
-from packages.db.tables import Project, GrantApplication
-from packages.db.connection import get_async_session_maker
+from packages.db.src.query_helpers import select_active, update_active
+from packages.db.src.tables import Project
 from sqlalchemy import select
 
-async def get_project(project_id: UUID) -> Project:
-    async_session_maker = get_async_session_maker()
-    async with async_session_maker() as session:
-        project = await session.scalar(
-            select(Project).where(Project.id == project_id)
-        )
-        return project
+# CORRECT: Use helper to exclude deleted records
+query = select_active(Project).where(Project.organization_id == org_id)
+projects = await session.scalars(query)
+
+# INCORRECT: Manual filtering is error-prone and violates soft-delete pattern
+query = select(Project).where(
+    Project.organization_id == org_id,
+    Project.deleted_at.is_(None)  # Don't do this
+)
 ```
 
-## Development
+### Soft-Delete Operations
 
-When making changes to the database models:
+```python
+from packages.db.src.tables import GrantApplication
 
-1. Update the SQLAlchemy models in `src/tables.py`
-2. Create a migration using Alembic
-3. Test the migration locally
-4. Update any relevant DTOs in the services using these models
+# Soft delete a record
+application.soft_delete()  # Sets deleted_at to current timestamp
+await session.commit()
+
+# Restore a soft-deleted record
+application.restore()  # Sets deleted_at to None
+await session.commit()
+
+# Check if deleted
+if application.is_deleted:
+    print("This record has been soft-deleted")
+```
+
+### Query Helper Functions
+
+The package provides comprehensive helpers in `/packages/db/src/query_helpers.py`:
+
+**Basic Filters:**
+- `select_active(model)`: SELECT query excluding deleted records
+- `select_active_by_id(model, id)`: SELECT by ID excluding deleted records
+- `update_active(model)`: UPDATE query excluding deleted records
+- `update_active_by_id(model, id)`: UPDATE by ID excluding deleted records
+- `add_active_filter(query, *models)`: Add soft-delete filter to existing query
+
+**Metadata Filters (for `document_metadata` JSON columns):**
+- `metadata_has_entity_type(column, entity_type)`: Filter by entity type in metadata
+- `metadata_has_categories(column, categories, match_mode)`: Filter by categories (any/all)
+- `metadata_has_keyword(column, keyword, min_confidence)`: Filter by keyword with confidence threshold
+- `build_metadata_filter(column, ...)`: Composite filter builder combining entity types, categories, and quality scores
+
+## Exported Utilities
+
+The package exports the following from `/packages/db/src/__init__.py`:
+
+**Models:**
+All table classes from `tables.py` including `Organization`, `Project`, `GrantApplication`, `GrantTemplate`, `RagSource`, `RagFile`, `RagUrl`, `TextVector`, `EditorDocument`, etc.
+
+**Enumerations:**
+- `UserRoleEnum`: OWNER, ADMIN, COLLABORATOR
+- `ApplicationStatusEnum`: WORKING_DRAFT, IN_PROGRESS, GENERATING, CANCELLED
+- `SourceIndexingStatusEnum`: CREATED, INDEXING, FINISHED, FAILED
+- `RagGenerationStatusEnum`: PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
+- `GrantType`: RESEARCH, TRANSLATIONAL
+- `GrantTemplateStageEnum`: CFP_ANALYSIS, TEMPLATE_GENERATION
+- `GrantApplicationStageEnum`: BLUEPRINT_PREP, WORKPLAN_GENERATION, SECTION_SYNTHESIS
+
+**TypedDict Structures:**
+- `Chunk`: Text chunk with optional page number
+- `ResearchTask`: Task with number, title, description
+- `ResearchObjective`: Objective with research tasks
+- `ResearchDeepDive`: Research-focused deep dive questions
+- `TranslationalResearchDeepDive`: Translational research deep dive questions
+- `CFPAnalysis`: Call for Proposals analysis structure
+- `GrantElement`: Base grant section element
+- `GrantLongFormSection`: Extended section with generation instructions
+
+**Constants:**
+- `EMBEDDING_DIMENSIONS`: 384 (dimensionality for text embeddings)
+- `RAG_FILE`, `RAG_URL`: Polymorphic identity constants
+
+**Query Helpers:**
+All functions from `query_helpers.py` for soft-delete filtering and metadata queries.
+
+**Connection:**
+- `get_async_session_maker()`: Factory for async database sessions
+
+## Notes
+
+### Async Session Management
+
+All database operations must use async context managers with explicit transaction boundaries:
+
+```python
+from packages.db.src.connection import get_async_session_maker
+
+async_session_maker = get_async_session_maker()
+
+# CORRECT: Explicit transaction boundary
+async with async_session_maker() as session, session.begin():
+    project = await session.scalar(
+        select_active(Project).where(Project.id == project_id)
+    )
+    # Modifications are automatically committed
+
+# INCORRECT: Reusing sessions across requests
+session = async_session_maker()  # Don't do this
+# ... multiple operations ...
+```
+
+### Vector Embeddings with pgvector
+
+The `TextVector` table stores 384-dimensional embeddings generated from indexed content:
+
+```python
+from packages.db.src.tables import TextVector
+from packages.db.src.constants import EMBEDDING_DIMENSIONS
+
+# Query for similar vectors using cosine distance
+from sqlalchemy import select, func
+
+query = select(TextVector).order_by(
+    TextVector.embedding.cosine_distance(query_embedding)
+).limit(10)
+
+similar_chunks = await session.scalars(query)
+```
+
+The embedding column uses pgvector's HNSW index (Hierarchical Navigable Small World) for efficient approximate nearest neighbor search with the following parameters:
+- `m`: 48 (max connections per layer)
+- `ef_construction`: 256 (size of dynamic candidate list during construction)
+- `vector_cosine_ops`: Cosine distance optimization
+
+### JSON Columns with TypedDict
+
+Several columns use JSON/JSONB storage with strict TypedDict schemas:
+
+**GrantApplication:**
+- `form_inputs`: `ResearchDeepDive | TranslationalResearchDeepDive` - Deep dive questionnaire responses
+- `research_objectives`: `list[ResearchObjective]` - Structured research objectives with tasks
+
+**GrantTemplate:**
+- `grant_sections`: `list[GrantLongFormSection | GrantElement]` - Template structure
+- `cfp_analysis`: `CFPAnalysis` - Analyzed call for proposals
+
+**TextVector:**
+- `chunk`: `Chunk` - Text content with metadata
+
+**RagSource:**
+- `document_metadata`: `DocumentMetadata` - Extracted document metadata (entities, keywords, categories)
+
+These TypedDict structures provide type safety when accessing JSON fields:
+
+```python
+from packages.db.src.json_objects import ResearchDeepDive
+
+application = await session.scalar(
+    select_active(GrantApplication).where(GrantApplication.id == app_id)
+)
+
+# Type-safe access to JSON fields
+if application.form_inputs:
+    deep_dive: ResearchDeepDive = application.form_inputs
+    hypothesis = deep_dive.get("hypothesis")
+```
+
+### Polymorphic Inheritance
+
+`RagSource` uses SQLAlchemy's single-table inheritance pattern:
+
+```python
+from packages.db.src.tables import RagSource, RagFile, RagUrl
+from packages.db.src.constants import RAG_FILE, RAG_URL
+
+# Query all sources (returns RagFile and RagUrl instances)
+all_sources = await session.scalars(select_active(RagSource))
+
+# Query only files
+files = await session.scalars(select_active(RagFile))
+
+# Query only URLs
+urls = await session.scalars(select_active(RagUrl))
+
+# Check polymorphic type
+if source.source_type == RAG_FILE:
+    # source is a RagFile instance
+    print(f"File: {source.filename}")
+elif source.source_type == RAG_URL:
+    # source is a RagUrl instance
+    print(f"URL: {source.url}")
+```
+
+### Self-Referential Relationships
+
+Several tables support hierarchical structures:
+
+**GrantApplication** (parent/children):
+```python
+# Create revision from existing application
+new_version = GrantApplication(
+    title=original.title,
+    parent_id=original.id,
+    project_id=original.project_id,
+)
+```
+
+**RagSource** (parent/children):
+```python
+# Create sub-document from parent source
+sub_doc = RagUrl(
+    url=chapter_url,
+    parent_id=main_doc.id,
+)
+```
+
+**RagGenerationJob** (parent/child jobs):
+```python
+# Create dependent job
+child_job = RagGenerationJob(
+    parent_job_id=parent_job.id,
+    grant_template_id=template.id,
+    template_stage=GrantTemplateStageEnum.TEMPLATE_GENERATION,
+)
+```
