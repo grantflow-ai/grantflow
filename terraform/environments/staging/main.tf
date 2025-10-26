@@ -105,17 +105,17 @@ module "cloud_run" {
   rag_service_account_email     = module.iam.rag_service_account_email
 
   # Image digests from CI/CD (passed via TF_VAR environment variables)
-  backend_image_digest  = var.backend_image_digest
-  crawler_image_digest  = var.crawler_image_digest
-  indexer_image_digest  = var.indexer_image_digest
-  rag_image_digest      = var.rag_image_digest
-  scraper_image_digest  = var.scraper_image_digest
-  crdt_image_digest     = var.crdt_image_digest
+  backend_image_digest = var.backend_image_digest
+  crawler_image_digest = var.crawler_image_digest
+  indexer_image_digest = var.indexer_image_digest
+  rag_image_digest     = var.rag_image_digest
+  scraper_image_digest = var.scraper_image_digest
+  crdt_image_digest    = var.crdt_image_digest
 
-  min_instances                 = 1
-  max_instances                 = 2
-  cpu_limit                     = "1"
-  memory_limit                  = "1Gi"
+  min_instances = 1
+  max_instances = 2
+  cpu_limit     = "1"
+  memory_limit  = "1Gi"
 
   indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
