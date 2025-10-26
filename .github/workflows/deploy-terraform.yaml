@@ -248,8 +248,8 @@ jobs:
       - name: Prepare Cloud Functions for deployment
         run: |
           echo "📦 Preparing Cloud Functions for deployment..."
-          echo "Copying workspace packages to functions directory..."
-          cp -r packages functions/
+          echo "Copying workspace packages to dlq_manager function directory..."
+          cp -r packages functions/dlq_manager/
           echo "Generating requirements.txt from workspace dependencies..."
           uv export \
             --format requirements-txt \
@@ -414,8 +414,8 @@ jobs:
       - name: Prepare Cloud Functions for deployment
         run: |
           echo "📦 Preparing Cloud Functions for deployment..."
-          echo "Copying workspace packages to functions directory..."
-          cp -r packages functions/
+          echo "Copying workspace packages to dlq_manager function directory..."
+          cp -r packages functions/dlq_manager/
           echo "Generating requirements.txt from workspace dependencies..."
           uv export \
             --format requirements-txt \
