@@ -353,6 +353,7 @@ module "app_hosting" {
   environment     = var.environment
   firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a"
   image_tag       = var.image_tag
+  image_digest    = var.frontend_image_digest
 
   secret_ids = [
     "NEXT_PUBLIC_SITE_URL_STAGING",

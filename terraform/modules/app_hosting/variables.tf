@@ -35,6 +35,12 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "image_digest" {
+  description = "Docker image digest (optional, takes precedence over tag)"
+  type        = string
+  default     = ""
+}
+
 variable "secret_ids" {
   description = "List of Secret Manager secret IDs that App Hosting needs access to"
   type        = list(string)

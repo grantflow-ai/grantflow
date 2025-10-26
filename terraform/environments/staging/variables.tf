@@ -70,3 +70,9 @@ variable "crdt_image_digest" {
   type        = string
   default     = ""
 }
+
+variable "frontend_image_digest" {
+  description = "Frontend service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
