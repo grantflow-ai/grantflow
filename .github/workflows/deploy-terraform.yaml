@@ -345,7 +345,7 @@ jobs:
           fi
 
       - name: Upload Plan
-        if: steps.plan.outputs.exitcode == '2'
+        if: always() && hashFiles('terraform/environments/${{ env.ENVIRONMENT }}/tfplan') != ''
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-${{ env.ENVIRONMENT }}-${{ github.sha }}
