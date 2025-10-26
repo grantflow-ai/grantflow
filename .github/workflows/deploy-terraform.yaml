@@ -67,6 +67,7 @@ jobs:
       rag_digest: ${{ steps.artifacts.outputs.digest_rag }}
       scraper_digest: ${{ steps.artifacts.outputs.digest_scraper }}
       crdt_digest: ${{ steps.artifacts.outputs.digest_crdt }}
+      frontend_digest: ${{ steps.artifacts.outputs.digest_frontend }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -176,7 +177,7 @@ jobs:
 
           # Determine which services to collect digests for
           if [[ "$SERVICES_TO_DEPLOY" == "all" ]]; then
-            SERVICES="backend crawler indexer rag scraper crdt"
+            SERVICES="backend crawler indexer rag scraper crdt frontend"
           else
             SERVICES="$SERVICES_TO_DEPLOY"
           fi
@@ -185,11 +186,6 @@ jobs:
           for service in $(echo "$SERVICES" | tr ',' ' '); do
             service=$(echo "$service" | xargs) # trim whitespace
             if [[ -z "$service" ]]; then
-              continue
-            fi
-
-            if [[ "$service" == "frontend" ]]; then
-              echo "Skipping frontend (not deployed via terraform)"
               continue
             fi
 
@@ -232,6 +228,7 @@ jobs:
       TF_VAR_rag_image_digest: ${{ needs.collect-build-info.outputs.rag_digest }}
       TF_VAR_scraper_image_digest: ${{ needs.collect-build-info.outputs.scraper_digest }}
       TF_VAR_crdt_image_digest: ${{ needs.collect-build-info.outputs.crdt_digest }}
+      TF_VAR_frontend_image_digest: ${{ needs.collect-build-info.outputs.frontend_digest }}
     outputs:
       plan_exitcode: ${{ steps.plan.outputs.exitcode }}
       plan_output: ${{ steps.plan.outputs.stdout }}
@@ -246,21 +243,7 @@ jobs:
           enable-cache: true
 
       - name: Prepare Cloud Functions for deployment
-        run: |
-          echo "📦 Preparing Cloud Functions for deployment..."
-          echo "Copying workspace packages to dlq_manager function directory..."
-          cp -r packages functions/dlq_manager/
-          echo "Generating requirements.txt from workspace dependencies..."
-          uv export \
-            --format requirements-txt \
-            --output-file functions/dlq_manager/requirements.txt \
-            --no-hashes \
-            --no-editable \
-            --group functions
-          echo "🔧 Removing workspace package references (packages will be copied directly)..."
-          grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp
-          mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
-          echo "✅ Cloud Functions prepared for deployment"
+        run: ./scripts/prepare-cloud-functions.sh
 
       - name: Setup GCP Auth
         uses: google-github-actions/auth@v3
@@ -401,6 +384,7 @@ jobs:
       TF_VAR_rag_image_digest: ${{ needs.collect-build-info.outputs.rag_digest }}
       TF_VAR_scraper_image_digest: ${{ needs.collect-build-info.outputs.scraper_digest }}
       TF_VAR_crdt_image_digest: ${{ needs.collect-build-info.outputs.crdt_digest }}
+      TF_VAR_frontend_image_digest: ${{ needs.collect-build-info.outputs.frontend_digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -412,21 +396,7 @@ jobs:
           enable-cache: true
 
       - name: Prepare Cloud Functions for deployment
-        run: |
-          echo "📦 Preparing Cloud Functions for deployment..."
-          echo "Copying workspace packages to dlq_manager function directory..."
-          cp -r packages functions/dlq_manager/
-          echo "Generating requirements.txt from workspace dependencies..."
-          uv export \
-            --format requirements-txt \
-            --output-file functions/dlq_manager/requirements.txt \
-            --no-hashes \
-            --no-editable \
-            --group functions
-          echo "🔧 Removing workspace package references (packages will be copied directly)..."
-          grep -v "^\./packages/" functions/dlq_manager/requirements.txt > functions/dlq_manager/requirements.txt.tmp
-          mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements.txt
-          echo "✅ Cloud Functions prepared for deployment"
+        run: ./scripts/prepare-cloud-functions.sh
 
       - name: Setup GCP Auth
         uses: google-github-actions/auth@v3

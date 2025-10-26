@@ -100,35 +100,35 @@ resource "google_secret_manager_secret_iam_member" "app_hosting_secret_access" {
   member    = "serviceAccount:${google_service_account.app_hosting.email}"
 }
 
-# Temporarily commented out - build is in invalid state, blocking deployments
-# resource "google_firebase_app_hosting_build" "frontend" {
-#   provider = google-beta
-#   project  = google_firebase_app_hosting_backend.frontend.project
-#   location = google_firebase_app_hosting_backend.frontend.location
-#   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-#   build_id = substr("${local.backend_id}-${formatdate("MMDDhhmm", timestamp())}", 0, 30)
-#
-#   source {
-#     container {
-#       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/frontend:${var.image_tag}"
-#     }
-#   }
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-#
-# resource "google_firebase_app_hosting_traffic" "frontend" {
-#   provider = google-beta
-#   project  = google_firebase_app_hosting_backend.frontend.project
-#   location = google_firebase_app_hosting_backend.frontend.location
-#   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-#
-#   target {
-#     splits {
-#       build   = google_firebase_app_hosting_build.frontend.name
-#       percent = 100
-#     }
-#   }
-# }
+resource "google_firebase_app_hosting_build" "frontend" {
+  provider = google-beta
+  project  = google_firebase_app_hosting_backend.frontend.project
+  location = google_firebase_app_hosting_backend.frontend.location
+  backend  = google_firebase_app_hosting_backend.frontend.backend_id
+  build_id = substr("${local.backend_id}-${formatdate("MMDDhhmm", timestamp())}", 0, 30)
+
+  source {
+    container {
+      # Use digest if provided (from CI/CD), otherwise fall back to tag
+      image = var.image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/frontend@${var.image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/frontend:${var.image_tag}"
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_firebase_app_hosting_traffic" "frontend" {
+  provider = google-beta
+  project  = google_firebase_app_hosting_backend.frontend.project
+  location = google_firebase_app_hosting_backend.frontend.location
+  backend  = google_firebase_app_hosting_backend.frontend.backend_id
+
+  target {
+    splits {
+      build   = google_firebase_app_hosting_build.frontend.name
+      percent = 100
+    }
+  }
+}
