@@ -103,6 +103,15 @@ module "cloud_run" {
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
   rag_service_account_email     = module.iam.rag_service_account_email
+
+  # Image digests from CI/CD (passed via TF_VAR environment variables)
+  backend_image_digest  = var.backend_image_digest
+  crawler_image_digest  = var.crawler_image_digest
+  indexer_image_digest  = var.indexer_image_digest
+  rag_image_digest      = var.rag_image_digest
+  scraper_image_digest  = var.scraper_image_digest
+  crdt_image_digest     = var.crdt_image_digest
+
   min_instances                 = 1
   max_instances                 = 2
   cpu_limit                     = "1"
