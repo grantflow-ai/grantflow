@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 import msgspec
 import pytest
 from litestar.testing import AsyncTestClient
+from packages.db.src.enums import GrantType
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import (
@@ -383,6 +384,7 @@ async def test_grant_application_missing_grant_sections(
             granting_institution_id=None,
             grant_sections=[],
             cfp_analysis={"test": "data"},
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         application.grant_template = template
@@ -446,6 +448,7 @@ async def test_grant_application_missing_cfp_analysis(
                 }
             ],
             cfp_analysis=None,
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         application.grant_template = template
