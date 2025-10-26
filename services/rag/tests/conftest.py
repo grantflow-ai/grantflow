@@ -6,6 +6,7 @@ from uuid import UUID
 
 import pytest
 from dotenv import load_dotenv
+from packages.db.src.enums import GrantType
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     GrantApplication,
@@ -838,6 +839,7 @@ async def test_application_with_template(async_session_maker: async_sessionmaker
                     "total_sentences": 5,
                 },
             },
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
 
