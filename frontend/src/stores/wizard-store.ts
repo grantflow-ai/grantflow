@@ -16,6 +16,7 @@ const DEBOUNCE_DELAY_MS = 2000;
 export const MIN_TITLE_LENGTH = 10;
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
+	WizardStep.APPLICATION_TYPE,
 	WizardStep.APPLICATION_DETAILS,
 	WizardStep.APPLICATION_STRUCTURE,
 	WizardStep.KNOWLEDGE_BASE,
@@ -105,7 +106,12 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 		return null;
 	}
 
-	const hasGrantSections = (application.grant_template?.grant_sections.length ?? 0) > 0;
+	const grantTemplate = application.grant_template;
+	if (!grantTemplate) {
+		return WizardStep.APPLICATION_DETAILS;
+	}
+
+	const hasGrantSections = grantTemplate.grant_sections.length > 0;
 	if (!hasGrantSections) {
 		return WizardStep.APPLICATION_DETAILS;
 	}
@@ -140,7 +146,7 @@ const initialWizardState: WizardState = {
 	applicationGenerationFailed: false,
 	autofillMessageId: null,
 	autofillType: null,
-	currentStep: WizardStep.APPLICATION_DETAILS,
+	currentStep: WizardStep.APPLICATION_TYPE,
 	isAutofillLoading: {
 		research_deep_dive: false,
 		research_plan: false,
@@ -905,6 +911,12 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return {
 						isValid: true,
 						reason: "All requirements met.",
+					};
+				}
+				case WizardStep.APPLICATION_TYPE: {
+					return {
+						isValid: true,
+						reason: ApplicationDetailsValidationReason.VALID,
 					};
 				}
 				case WizardStep.GENERATE_AND_COMPLETE: {

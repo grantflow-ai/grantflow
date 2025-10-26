@@ -167,6 +167,14 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -205,6 +213,7 @@ export namespace API {
 	parent_id: null | string;
 	title: string;
 })[];
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
@@ -370,6 +379,26 @@ export namespace API {
 };
 };
 
+	export namespace CreateGrantingInstitutionRagSourceDownloadUrl {
+	export namespace Http200 {
+	export type ResponseBody = {
+	url: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	source_id: string;
+};
+};
+
 	export namespace CreateGrantingInstitutionRagSourceUploadUrl {
 	export namespace Http201 {
 	export type ResponseBody = {
@@ -394,21 +423,6 @@ export namespace API {
 	blob_name: string;
 };
 };
-
-	export namespace CreateGrantingInstitutionRagSourceDownloadUrl {
-	export namespace Http201 {
-	export type ResponseBody = {
-	url: string;
-};
-};
-export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-}
 
 	export namespace CreateInvitationRedirectUrl {
 	export namespace Http201 {
@@ -797,6 +811,14 @@ export namespace Http400 {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -835,6 +857,7 @@ export namespace Http400 {
 	parent_id: null | string;
 	title: string;
 })[];
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
@@ -1688,6 +1711,14 @@ export namespace Http400 {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -1726,6 +1757,7 @@ export namespace Http400 {
 	parent_id: null | string;
 	title: string;
 })[];
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
@@ -2007,6 +2039,14 @@ export namespace Http400 {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	grant_template?: {
 	created_at: string;
@@ -2045,6 +2085,7 @@ export namespace Http400 {
 	parent_id: null | string;
 	title: string;
 })[];
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
@@ -2115,6 +2156,14 @@ export namespace Http400 {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	commercialization_plan?: string;
+	core_concept?: string;
+	proof_of_concept?: string;
+	team_translation_capability?: string;
+	translational_impact?: string;
+	translational_potential?: string;
+	unique_approach?: string;
+	unmet_need_context?: string;
 };
 	research_objectives?: {
 	description?: string;
@@ -2180,6 +2229,7 @@ export namespace Http400 {
 	title: string;
 	topics: string[];
 }[];
+	grant_type?: "RESEARCH" | "TRANSLATIONAL";
 	submission_date?: string;
 };
 };

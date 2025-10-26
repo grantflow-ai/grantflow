@@ -23,6 +23,10 @@ vi.mock("./application-structure/application-structure-step", () => ({
 	),
 }));
 
+vi.mock("./application-type/grant-type-step", () => ({
+	GrantTypeStep: () => <div data-testid="grant-type-step">Grant Type</div>,
+}));
+
 vi.mock("./generate-and-complete/generate-complete-step", () => ({
 	GenerateCompleteStep: () => <div data-testid="generate-complete-step">Generate Complete</div>,
 }));
@@ -148,7 +152,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
@@ -163,7 +167,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
@@ -177,7 +181,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_PLAN });
@@ -192,7 +196,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_DEEP_DIVE });
@@ -206,7 +210,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.GENERATE_AND_COMPLETE });

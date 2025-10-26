@@ -4,7 +4,7 @@ from typing import Any
 
 from anyio import Path as AsyncPath
 from packages.db.src.constants import RAG_FILE
-from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.enums import GrantType, SourceIndexingStatusEnum
 from packages.db.src.json_objects import LengthConstraint, ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
     GrantApplication,
@@ -508,6 +508,7 @@ async def create_grant_template_for_application(
         template = GrantTemplate(
             grant_application_id=application_id,
             grant_sections=grant_sections,
+            grant_type=GrantType.RESEARCH,
         )
         session.add(template)
         await session.commit()

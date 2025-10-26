@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from packages.db.src.enums import (
     ApplicationStatusEnum,
+    GrantType,
     NotificationTypeEnum,
     SourceIndexingStatusEnum,
     UserRoleEnum,
@@ -302,6 +303,10 @@ class GrantTemplateResponseFactory(TypedDictFactory[GrantTemplateResponse]):
     @classmethod
     def grant_sections(cls) -> list[GrantLongFormSection | GrantElement]:
         return [GrantLongFormSectionFactory.build() for _ in range(5)]
+
+    @classmethod
+    def grant_type(cls) -> GrantType:
+        return faker.random_element(list(GrantType))
 
     @classmethod
     def submission_date(cls) -> str:

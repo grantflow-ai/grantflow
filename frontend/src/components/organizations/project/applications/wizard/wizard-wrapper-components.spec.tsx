@@ -10,8 +10,10 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { TrackingEvents } from "@/utils/tracking";
 import { ApplicationDetailsValidationReason } from "@/utils/wizard-validation";
+import { openConfirmationDialog } from "./application-structure/confirmation-dialogs";
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
+const mockOpenConfirmationDialog = vi.mocked(openConfirmationDialog);
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
 	useParams: () => ({
@@ -27,6 +29,10 @@ vi.mock("@/utils/segment", () => ({
 	analyticsIdentify: vi.fn().mockResolvedValue(undefined),
 	getAnalytics: vi.fn(),
 	trackWizardEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./application-structure/confirmation-dialogs", () => ({
+	openConfirmationDialog: vi.fn(),
 }));
 
 describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
@@ -50,7 +56,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		});
 
 		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
+			currentStep: WizardStep.APPLICATION_TYPE,
 		});
 	});
 
@@ -66,7 +72,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 		it("hides back button on the first step", () => {
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
+				currentStep: WizardStep.APPLICATION_TYPE,
 			});
 			render(<WizardFooter />);
 
@@ -420,6 +426,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [
 							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
@@ -459,6 +466,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
 						updated_at: new Date().toISOString(),
@@ -494,6 +502,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						created_at: new Date().toISOString(),
 						grant_application_id: "test-app-id",
 						grant_sections: [],
+						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
 						updated_at: new Date().toISOString(),
@@ -704,6 +713,128 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			await user.click(backButton);
 
 			expect(mockToPreviousStep).toHaveBeenCalledOnce();
+		});
+
+		it("shows confirmation dialog when back button is clicked from APPLICATION_DETAILS with filled form inputs", async () => {
+			const user = userEvent.setup();
+			const mockToPreviousStep = vi.fn();
+			const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				toPreviousStep: mockToPreviousStep,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Filled background",
+						hypothesis: "",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
+					},
+				},
+			});
+
+			render(<WizardFooter dialogRef={mockDialogRef} />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			expect(mockOpenConfirmationDialog).toHaveBeenCalledWith(mockDialogRef, {
+				confirmButtonText: "Change Type",
+				description:
+					"Changing the application type will reset your Research Deep Dive responses. This action cannot be undone.",
+				onConfirm: expect.any(Function),
+				title: "Reset Research Deep Dive responses?",
+			});
+			expect(mockToPreviousStep).not.toHaveBeenCalled();
+		});
+
+		it("navigates back without confirmation when no form inputs are filled", async () => {
+			const user = userEvent.setup();
+			const mockToPreviousStep = vi.fn();
+			const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				toPreviousStep: mockToPreviousStep,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "",
+						hypothesis: "",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
+					},
+				},
+			});
+
+			render(<WizardFooter dialogRef={mockDialogRef} />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			expect(mockOpenConfirmationDialog).not.toHaveBeenCalled();
+			expect(mockToPreviousStep).toHaveBeenCalledOnce();
+		});
+
+		it("sets reset flag when user confirms dialog", async () => {
+			const user = userEvent.setup();
+			const mockToPreviousStep = vi.fn();
+			const mockSetShouldResetDeepDiveOnGrantTypeChange = vi.fn();
+			const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
+
+			mockOpenConfirmationDialog.mockImplementation((_ref, config) => {
+				config.onConfirm();
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				toPreviousStep: mockToPreviousStep,
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					form_inputs: {
+						background_context: "Filled background",
+						hypothesis: "",
+						impact: "",
+						novelty_and_innovation: "",
+						preliminary_data: "",
+						rationale: "",
+						research_feasibility: "",
+						scientific_infrastructure: "",
+						team_excellence: "",
+					},
+				},
+				setShouldResetDeepDiveOnGrantTypeChange: mockSetShouldResetDeepDiveOnGrantTypeChange,
+			});
+
+			render(<WizardFooter dialogRef={mockDialogRef} />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			expect(mockSetShouldResetDeepDiveOnGrantTypeChange).toHaveBeenCalledWith(true);
+			await waitFor(() => {
+				expect(mockToPreviousStep).toHaveBeenCalledOnce();
+			});
 		});
 
 		it("does not call generateApplication again when generation fails", async () => {

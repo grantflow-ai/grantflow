@@ -101,22 +101,18 @@ describe.sequential("SearchWizard", () => {
 			expect(screen.getByTestId("institution-location-step")).toBeInTheDocument();
 			expect(screen.getByTestId("institution-location-step-title")).toHaveTextContent("Institution Location");
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution (no foreign component)",
 			);
-			await user.click(institutionOption);
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
 			expect(screen.getByTestId("career-stage-step")).toBeInTheDocument();
 			expect(screen.getByTestId("career-stage-step-title")).toHaveTextContent("Career Stage");
 
-			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-			await user.click(careerTrigger);
-			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
-			await user.click(careerOption);
+			await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Early-stage (≤ 10 yrs)");
 
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
@@ -206,12 +202,11 @@ describe.sequential("SearchWizard", () => {
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution (no foreign component)",
 			);
-			await user.click(institutionOption);
 			expect(nextButton).not.toBeDisabled();
 		});
 
@@ -225,22 +220,18 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution (no foreign component)",
 			);
-			await user.click(institutionOption);
 
 			await user.click(nextButton);
 
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-			await user.click(careerTrigger);
-			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
-			await user.click(careerOption);
+			await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Early-stage (≤ 10 yrs)");
 
 			expect(nextButton).not.toBeDisabled();
 		});
@@ -251,8 +242,9 @@ describe.sequential("SearchWizard", () => {
 
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveTextContent("Send");
 
-			const emailInput = screen.getByTestId("email-alerts-input");
+			const emailInput = screen.getByLabelText("Email address");
 			await user.type(emailInput, "test@example.com");
 
 			expect(submitButton).toBeDisabled();
@@ -286,21 +278,17 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution (no foreign component)",
 			);
-			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-			await user.click(careerTrigger);
-			const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
-			await user.click(careerOption);
+			await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Early-stage (≤ 10 yrs)");
 			await user.click(nextButton);
 
-			const emailInput = screen.getByTestId("email-alerts-input");
+			const emailInput = screen.getByLabelText("Email address");
 			await user.type(emailInput, "researcher@university.edu");
 
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
@@ -335,21 +323,17 @@ describe.sequential("SearchWizard", () => {
 			await user.click(nextButton);
 			await user.click(nextButton);
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-non-u-s---foreign--institution",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"Non-U.S. (foreign) institution",
 			);
-			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-			await user.click(careerTrigger);
-			const careerOption = screen.getByTestId("career-stage-multiselect-option-senior----20-yrs-");
-			await user.click(careerOption);
+			await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Senior (> 20 yrs)");
 			await user.click(nextButton);
 
-			const emailInput = screen.getByTestId("email-alerts-input");
+			const emailInput = screen.getByLabelText("Email address");
 			await user.type(emailInput, "test@domain.org");
 
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
@@ -429,21 +413,17 @@ describe.sequential("SearchWizard", () => {
 
 			await user.click(nextButton);
 
-			const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-			await user.click(institutionTrigger);
-			const institutionOption = screen.getByTestId(
-				"institution-location-multiselect-option-u-s--institution-with-foreign-component",
+			await selectOptionFromMultiSelect(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution with foreign component",
 			);
-			await user.click(institutionOption);
 			await user.click(nextButton);
 
-			const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-			await user.click(careerTrigger);
-			const careerOption = screen.getByTestId("career-stage-multiselect-option-mid-career--11-20-yrs-");
-			await user.click(careerOption);
+			await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Mid-career (11–20 yrs)");
 			await user.click(nextButton);
 
-			const emailInput = screen.getByTestId("email-alerts-input");
+			const emailInput = screen.getByLabelText("Email address");
 			await user.type(emailInput, "test@research.edu");
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
 			await user.click(termsCheckbox);
@@ -451,12 +431,16 @@ describe.sequential("SearchWizard", () => {
 			const backButton = screen.getByTestId("wizard-back-button");
 			await user.click(backButton);
 
-			const careerDisplayText = screen.getByTestId("career-stage-multiselect-display-text");
-			expect(careerDisplayText).toHaveTextContent("1 selected");
+			expect(screen.getByTestId("career-stage-multiselect-display-text")).toHaveTextContent("1 selected");
+			await expectOptionChecked(user, "career-stage-multiselect", "Mid-career (11–20 yrs)");
 
 			await user.click(backButton);
-			const institutionDisplayText = screen.getByTestId("institution-location-multiselect-display-text");
-			expect(institutionDisplayText).toHaveTextContent("1 selected");
+			expect(screen.getByTestId("institution-location-multiselect-display-text")).toHaveTextContent("1 selected");
+			await expectOptionChecked(
+				user,
+				"institution-location-multiselect",
+				"U.S. institution with foreign component",
+			);
 
 			await user.click(backButton);
 			await user.click(backButton);
@@ -533,25 +517,43 @@ async function navigateToEmailStep(
 	await user.click(nextButton);
 	await user.click(nextButton);
 
-	const institutionTrigger = screen.getByTestId("institution-location-multiselect-trigger");
-	await user.click(institutionTrigger);
-	const institutionOption = screen.getByTestId(
-		"institution-location-multiselect-option-u-s--institution--no-foreign-component-",
+	await selectOptionFromMultiSelect(
+		user,
+		"institution-location-multiselect",
+		"U.S. institution (no foreign component)",
 	);
-	await user.click(institutionOption);
 	await user.click(nextButton);
 
-	const careerTrigger = screen.getByTestId("career-stage-multiselect-trigger");
-	await user.click(careerTrigger);
-	const careerOption = screen.getByTestId("career-stage-multiselect-option-early-stage----10-yrs-");
-	await user.click(careerOption);
+	await selectOptionFromMultiSelect(user, "career-stage-multiselect", "Early-stage (≤ 10 yrs)");
 	await user.click(nextButton);
 
 	if (options.fillEmailForm) {
-		const emailInput = screen.getByTestId("email-alerts-input");
+		const emailInput = screen.getByLabelText("Email address");
 		await user.type(emailInput, "test@example.com");
 
 		const termsCheckbox = screen.getByTestId("terms-checkbox");
 		await user.click(termsCheckbox);
 	}
+}
+
+const optionTestId = (optionLabel: string) => optionLabel.toLowerCase().replaceAll(/[^a-z0-9]/g, "-");
+
+async function expectOptionChecked(user: ReturnType<typeof userEvent.setup>, testId: string, optionLabel: string) {
+	const trigger = screen.getByTestId(`${testId}-trigger`);
+	await user.click(trigger);
+	const checkbox = screen.getByTestId(`${testId}-option-checkbox-${optionTestId(optionLabel)}`);
+	expect(checkbox).toHaveClass("bg-blue-600");
+	await user.click(trigger);
+}
+
+async function selectOptionFromMultiSelect(
+	user: ReturnType<typeof userEvent.setup>,
+	testId: string,
+	optionLabel: string,
+) {
+	const trigger = screen.getByTestId(`${testId}-trigger`);
+	await user.click(trigger);
+	const option = await screen.findByTestId(`${testId}-option-${optionTestId(optionLabel)}`);
+	await user.click(option);
+	await user.click(trigger);
 }

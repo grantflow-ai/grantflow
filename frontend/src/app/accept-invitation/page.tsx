@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { acceptInvitation } from "@/actions/project";
 import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
@@ -26,11 +26,71 @@ export default function AcceptInvitationPage() {
 	);
 }
 
+const decodeJwtPayload = (token: string): Record<string, unknown> => {
+	const [, payload] = token.split(".");
+
+	if (!payload) {
+		throw new Error("Invalid invitation token format");
+	}
+
+	const parsed: unknown = JSON.parse(atob(payload));
+
+	if (parsed === null || typeof parsed !== "object") {
+		throw new Error("Invalid invitation token payload");
+	}
+
+	return parsed as Record<string, unknown>;
+};
+
+const extractNonEmptyString = (value: unknown) => (typeof value === "string" && value.length > 0 ? value : undefined);
+
 function AcceptInvitationContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { isAuthenticated } = useUserStore();
 	const [isProcessing, setIsProcessing] = useState(false);
+
+	const navigateAfterAcceptance = useCallback(
+		(payload: { organization_id?: string; project_id?: string }) => {
+			if (payload.project_id) {
+				router.push(`/projects/${payload.project_id}?success=invitation-accepted`);
+				return;
+			}
+
+			router.push("/projects?success=invitation-accepted");
+		},
+		[router],
+	);
+
+	const redirectToLogin = useCallback(
+		(token: string) => {
+			const returnUrl = `/accept-invitation?token=${encodeURIComponent(token)}`;
+			router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+		},
+		[router],
+	);
+
+	const acceptAndRoute = useCallback(
+		async (token: string) => {
+			const invitationPayload = decodeJwtPayload(token);
+			const invitationId = extractNonEmptyString(invitationPayload.invitation_id);
+
+			if (!invitationId) {
+				throw new Error("Invalid invitation token format");
+			}
+
+			const result = await acceptInvitation(invitationId, token);
+			const rawResultPayload = decodeJwtPayload(result.token);
+			const resultPayload = {
+				organization_id: extractNonEmptyString(rawResultPayload.organization_id),
+				project_id: extractNonEmptyString(rawResultPayload.project_id),
+			};
+
+			log.info("Invitation accepted successfully", { invitationId, resultPayload });
+			navigateAfterAcceptance(resultPayload);
+		},
+		[navigateAfterAcceptance],
+	);
 
 	useEffect(() => {
 		const token = searchParams.get("token");
@@ -43,8 +103,7 @@ function AcceptInvitationContent() {
 
 		const processInvitation = async () => {
 			if (!isAuthenticated) {
-				const returnUrl = `/accept-invitation?token=${encodeURIComponent(token)}`;
-				router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+				redirectToLogin(token);
 				return;
 			}
 
@@ -52,31 +111,7 @@ function AcceptInvitationContent() {
 			setIsProcessing(true);
 
 			try {
-				const payload = JSON.parse(atob(token.split(".")[1])) as {
-					invitation_id: string;
-				};
-				const invitationId = payload.invitation_id;
-
-				if (!invitationId) {
-					throw new Error("Invalid invitation token format");
-				}
-
-				const result = await acceptInvitation(invitationId, token);
-
-				const resultPayload = JSON.parse(atob(result.token.split(".")[1])) as {
-					organization_id?: string;
-					project_id?: string;
-				};
-
-				log.info("Invitation accepted successfully", { invitationId, resultPayload });
-
-				if (resultPayload.organization_id && !resultPayload.project_id) {
-					router.push("/projects?success=invitation-accepted");
-				} else if (resultPayload.project_id) {
-					router.push(`/projects/${resultPayload.project_id}?success=invitation-accepted`);
-				} else {
-					router.push("/projects?success=invitation-accepted");
-				}
+				await acceptAndRoute(token);
 			} catch (error) {
 				log.error("Failed to accept invitation", error);
 				router.push("/projects?error=invitation-failed");
@@ -86,7 +121,7 @@ function AcceptInvitationContent() {
 		};
 
 		void processInvitation();
-	}, [searchParams, isAuthenticated, router, isProcessing]);
+	}, [searchParams, isAuthenticated, router, isProcessing, redirectToLogin, acceptAndRoute]);
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-surface-primary">

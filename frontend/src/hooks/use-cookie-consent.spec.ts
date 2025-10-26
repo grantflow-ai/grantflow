@@ -33,10 +33,11 @@ describe("useCookieConsent", () => {
 			expect(result.current.consentData).toBeUndefined();
 			expect(result.current.hasConsent).toBe(false);
 			expect(result.current.hasInteracted).toBe(false);
-			expect(result.current.isHydrated).toBe(true);
+			expect(result.current.isHydrated).toBe(false);
 			expect(typeof result.current.saveConsent).toBe("function");
 
 			await waitForHydration(result);
+			expect(result.current.isHydrated).toBe(true);
 		});
 
 		it("should have isHydrated as true after initialization in test environment", async () => {
@@ -557,10 +558,10 @@ describe("useCookieConsent", () => {
 				return useCookieConsent();
 			});
 
-			expect(renderCount).toBe(2);
+			expect(renderCount).toBe(1);
 
 			rerender();
-			expect(renderCount).toBe(3);
+			expect(renderCount).toBe(2);
 		});
 
 		it("should recreate saveConsent function reference on re-render", () => {
@@ -644,9 +645,9 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			expect(result.current.isHydrated).toBe(true);
-			expect(result.current.hasConsent).toBe(true);
-			expect(result.current.hasInteracted).toBe(true);
+			expect(result.current.isHydrated).toBe(false);
+			expect(result.current.hasConsent).toBe(false);
+			expect(result.current.hasInteracted).toBe(false);
 		});
 
 		it("should prevent hydration mismatch by delaying cookie reads", async () => {
@@ -659,6 +660,11 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
+			expect(result.current.isHydrated).toBe(false);
+			expect(result.current.hasConsent).toBe(false);
+			expect(result.current.hasInteracted).toBe(false);
+
+			await waitForHydration(result);
 			expect(result.current.isHydrated).toBe(true);
 			expect(result.current.hasConsent).toBe(true);
 			expect(result.current.hasInteracted).toBe(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 import { isGenerationEvent, isRagEvent, isRagPipelineErrorEvent } from "@/types/notification-events";
@@ -53,20 +53,19 @@ interface ProgressEventDataMap {
 type ToastId = number | string | undefined;
 
 export function RagNotificationHandler({ notification }: NotificationHandlerProps) {
-	const [toastId, setToastId] = useState<ToastId>();
+	const toastIdRef = useRef<ToastId>(undefined);
 	const previousEventRef = useRef<null | string>(null);
 
 	useEffect(() => {
 		const { event } = notification;
 
-		if (shouldDismissToast(event, previousEventRef.current, toastId)) {
-			toast.dismiss(toastId);
+		if (shouldDismissToast(event, previousEventRef.current, toastIdRef.current)) {
+			toast.dismiss(toastIdRef.current);
 		}
 
 		previousEventRef.current = event;
-		const newToastId = displayNotification(notification);
-		setToastId(newToastId);
-	}, [notification, toastId]);
+		toastIdRef.current = displayNotification(notification);
+	}, [notification]);
 
 	return null;
 }

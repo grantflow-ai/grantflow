@@ -57,7 +57,8 @@
 		"zustand": "5.0.8"
 	},
 	"devDependencies": {
-		"@react-email/preview-server": "4.3.2"
+		"@react-email/preview-server": "4.3.2",
+		"eslint-config-next": "^16.0.0"
 	},
 	"engines": {
 		"node": ">=22.0.0"

@@ -2,7 +2,12 @@ from collections import defaultdict
 from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+    TranslationalResearchDeepDive,
+)
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -333,7 +338,7 @@ async def handle_extract_relationships(
     application_id: str,
     grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> ResearchRelationships:

@@ -8,6 +8,7 @@ export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 export enum WizardStep {
 	APPLICATION_DETAILS = "Application Details",
 	APPLICATION_STRUCTURE = "Application Structure",
+	APPLICATION_TYPE = "Application Type",
 	GENERATE_AND_COMPLETE = "Generate and Complete",
 	KNOWLEDGE_BASE = "Knowledge Base",
 	RESEARCH_DEEP_DIVE = "Research Deep Dive",
@@ -15,6 +16,7 @@ export enum WizardStep {
 }
 
 export const PROGRESS_BAR_STEPS = [
+	WizardStep.APPLICATION_TYPE,
 	WizardStep.APPLICATION_DETAILS,
 	WizardStep.APPLICATION_STRUCTURE,
 	WizardStep.KNOWLEDGE_BASE,
