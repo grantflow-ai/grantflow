@@ -127,6 +127,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -153,6 +156,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -191,6 +197,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -226,6 +235,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
@@ -451,6 +463,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
+			if (application.grant_template) {
+				application.grant_template.grant_type = "RESEARCH";
+			}
 
 			useApplicationStore.setState({ application });
 
