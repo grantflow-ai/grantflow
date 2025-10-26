@@ -34,3 +34,39 @@ variable "image_tag" {
   type        = string
   default     = "staging-latest"
 }
+
+variable "backend_image_digest" {
+  description = "Backend service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
+
+variable "crawler_image_digest" {
+  description = "Crawler service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
+
+variable "indexer_image_digest" {
+  description = "Indexer service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
+
+variable "rag_image_digest" {
+  description = "RAG service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
+
+variable "scraper_image_digest" {
+  description = "Scraper service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
+
+variable "crdt_image_digest" {
+  description = "CRDT service image digest (passed from CI/CD via TF_VAR)"
+  type        = string
+  default     = ""
+}
