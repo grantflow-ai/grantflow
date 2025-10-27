@@ -270,6 +270,20 @@ jobs:
         run: |
           tofu init -upgrade
 
+      - name: Remove orphaned resources from state
+        working-directory: terraform/environments/${{ env.ENVIRONMENT }}
+        run: |
+          # Remove staging_frontend if it exists in state (now managed by Firebase App Hosting)
+          if tofu state list 2>/dev/null | grep -q "module.additional_resources.google_cloud_run_v2_service.staging_frontend"; then
+            echo "Removing staging_frontend from Terraform state (now managed by Firebase App Hosting)"
+            tofu state rm module.additional_resources.google_cloud_run_v2_service.staging_frontend || true
+          fi
+
+          if tofu state list 2>/dev/null | grep -q "module.additional_resources.google_cloud_run_v2_service_iam_member.staging_frontend_public"; then
+            echo "Removing staging_frontend IAM member from Terraform state"
+            tofu state rm module.additional_resources.google_cloud_run_v2_service_iam_member.staging_frontend_public || true
+          fi
+
       - name: Terraform Format Check
         working-directory: terraform/environments/${{ env.ENVIRONMENT }}
         run: |
