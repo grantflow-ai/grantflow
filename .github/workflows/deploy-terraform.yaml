@@ -388,6 +388,7 @@ jobs:
       contents: read
       id-token: write
       issues: write
+      deployments: write
     env:
       TF_VAR_project_id: grantflow
       TF_VAR_image_tag: ${{ needs.collect-build-info.outputs.environment == 'production' && (github.event.workflow_run.head_sha || github.sha) || format('staging-{0}', github.event.workflow_run.head_sha || github.sha) }}
