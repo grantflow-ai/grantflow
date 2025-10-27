@@ -1,6 +1,6 @@
 import hashlib
 import re
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
@@ -106,10 +106,24 @@ def _match_deadline(grant: GrantData, deadline_after: str | float | None, deadli
 
 
 def _match_query(grant: GrantData, query: str | float | None) -> bool:
+    """Match query against grant title, description, and eligibility using simple contains.
+
+    For better performance, this uses simple string matching. The database GIN index
+    is available for more sophisticated full-text search if needed in the future.
+    """
     if query and isinstance(query, str):
         query_lower = query.lower()
-        searchable_text = grant.get("title", "").lower() + " " + grant.get("description", "").lower()
-        return query_lower in searchable_text
+        # Search in title, description, and eligibility
+        searchable_text = (
+            grant.get("title", "").lower()
+            + " "
+            + grant.get("description", "").lower()
+            + " "
+            + (grant.get("eligibility") or "").lower()
+        )
+        # Support multi-word queries by checking if all words are present
+        query_words = query_lower.split()
+        return all(word in searchable_text for word in query_words)
     return True
 
 
@@ -146,9 +160,24 @@ def should_send_notification(subscription: SubscriptionData, frequency: str) -> 
     return False
 
 
-async def _fetch_new_grants(session_maker: async_sessionmaker[AsyncSession], cutoff_time: datetime) -> list[GrantData]:
+async def _fetch_active_grants(session_maker: async_sessionmaker[AsyncSession]) -> list[GrantData]:
+    """Fetch all non-expired grants from the database.
+
+    Returns grants that haven't expired yet (expired_date >= today).
+    This allows matching against the full catalog of active grants,
+    not just recently added ones.
+    """
     async with session_maker() as session:
-        result = await session.execute(select(Grant).where(Grant.created_at >= cutoff_time))
+        today = datetime.now(UTC).date().isoformat()
+
+        # Fetch non-expired grants (where expired_date >= today)
+        # Note: expired_date is stored as string in YYYY-MM-DD format
+        result = await session.execute(
+            select(Grant)
+            .where(Grant.deleted_at.is_(None))
+            .where(Grant.expired_date >= today)
+            .order_by(Grant.expired_date.desc())
+        )
         grants = result.scalars().all()
 
         grants_data: list[GrantData] = []
@@ -156,7 +185,7 @@ async def _fetch_new_grants(session_maker: async_sessionmaker[AsyncSession], cut
             grant_data = GrantData(
                 id=str(grant.id),
                 title=grant.title,
-                description=grant.description,
+                description=grant.description or "",
                 url=grant.url,
                 deadline=grant.expired_date,
                 amount=grant.amount,
@@ -263,18 +292,24 @@ async def process_subscriptions_batch(
     tags=["Webhooks"],
 )
 async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -> MatcherResponse:
+    """Match active grants against user subscriptions and send notifications.
+
+    Changed from processing only grants from last 24h to processing ALL non-expired grants.
+    This ensures users get notified about relevant grants even if they subscribed after
+    the grants were added to the database.
+    """
     logger.info("Starting grant matcher webhook")
 
-    cutoff_time = datetime.now(UTC) - timedelta(days=1)
-    new_grants = await _fetch_new_grants(session_maker, cutoff_time)
+    # Fetch ALL active (non-expired) grants, not just recent ones
+    active_grants = await _fetch_active_grants(session_maker)
 
-    logger.info("Found new grants", count=len(new_grants))
+    logger.info("Found active grants", count=len(active_grants))
 
-    if not new_grants:
-        logger.info("No new grants to process")
+    if not active_grants:
+        logger.info("No active grants to process")
         return MatcherResponse(
             status="success",
-            message="No new grants to process",
+            message="No active grants to process",
             grants_processed=0,
             subscriptions_processed=0,
             notifications_sent=0,
@@ -282,26 +317,37 @@ async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -
 
     all_subscriptions = await _fetch_active_subscriptions(session_maker)
 
+    if not all_subscriptions:
+        logger.info("No active subscriptions found")
+        return MatcherResponse(
+            status="success",
+            message="No active subscriptions",
+            grants_processed=len(active_grants),
+            subscriptions_processed=0,
+            notifications_sent=0,
+        )
+
     batch_size = 100
     total_notifications = 0
     subscription_count = len(all_subscriptions)
 
+    # Process subscriptions in batches
     subscriptions = []
     for subscription in all_subscriptions:
         subscriptions.append(subscription)
 
         if len(subscriptions) >= batch_size:
-            notifications = await process_subscriptions_batch(subscriptions, new_grants, session_maker)
+            notifications = await process_subscriptions_batch(subscriptions, active_grants, session_maker)
             total_notifications += notifications
             subscriptions = []
 
     if subscriptions:
-        notifications = await process_subscriptions_batch(subscriptions, new_grants, session_maker)
+        notifications = await process_subscriptions_batch(subscriptions, active_grants, session_maker)
         total_notifications += notifications
 
     logger.info(
         "Grant matcher completed",
-        grants_processed=len(new_grants),
+        grants_processed=len(active_grants),
         subscriptions_processed=subscription_count,
         notifications_sent=total_notifications,
     )
@@ -309,7 +355,7 @@ async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -
     return MatcherResponse(
         status="success",
         message="Grant matching completed",
-        grants_processed=len(new_grants),
+        grants_processed=len(active_grants),
         subscriptions_processed=subscription_count,
         notifications_sent=total_notifications,
     )

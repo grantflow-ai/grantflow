@@ -12,7 +12,8 @@ from services.scraper.src.grant_pages import (
 
 async def test_save_markdown_page() -> None:
     html = "<h1>Test Grant</h1><p>Grant description</p>"
-    result_name = "PA-24-123"
+    url = "https://grants.gov/search-results-detail/123456"
+    document_number = "PA-24-123"
 
     with (
         patch(
@@ -21,7 +22,7 @@ async def test_save_markdown_page() -> None:
         patch("services.scraper.src.grant_pages.text", return_value="# Test Grant\n\nGrant description") as mock_format,
         patch("services.scraper.src.grant_pages.save_grant_page_content", new_callable=AsyncMock) as mock_save,
     ):
-        await save_markdown_page(html=html, result_name=result_name)
+        await save_markdown_page(html=html, url=url, document_number=document_number)
 
         assert mock_convert.call_count == 1
         call_args = mock_convert.call_args
@@ -29,13 +30,15 @@ async def test_save_markdown_page() -> None:
         assert "preprocessing" in call_args[1]
 
         mock_format.assert_called_once_with("# Test Grant\n\nGrant description")
-        mock_save.assert_called_once_with("PA-24-123", "# Test Grant\n\nGrant description")
+        mock_save.assert_called_once_with(
+            url=url, document_number=document_number, content="# Test Grant\n\nGrant description"
+        )
 
 
 async def test_download_and_save_pages() -> None:
-    urls = [
-        "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html",
-        "https://grants.nih.gov/grants/guide/pa-files/PA-24-124.html",
+    grants_info = [
+        ("https://grants.gov/search-results-detail/123456", "PA-24-123"),
+        ("https://grants.gov/search-results-detail/123457", "PA-24-124"),
     ]
 
     html_content = "<h1>Test Grant</h1><p>Grant description</p>"
@@ -46,14 +49,16 @@ async def test_download_and_save_pages() -> None:
     ):
         mock_download.return_value = html_content
 
-        await download_and_save_pages(urls=urls)
+        await download_and_save_pages(grants_info=grants_info)
 
         assert mock_download.call_count == 2
         assert mock_save.call_count == 2
 
         calls = mock_save.call_args_list
-        assert calls[0][1]["result_name"] == "PA-24-123"
-        assert calls[1][1]["result_name"] == "PA-24-124"
+        assert calls[0][1]["url"] == "https://grants.gov/search-results-detail/123456"
+        assert calls[0][1]["document_number"] == "PA-24-123"
+        assert calls[1][1]["url"] == "https://grants.gov/search-results-detail/123457"
+        assert calls[1][1]["document_number"] == "PA-24-124"
 
 
 async def test_download_grant_pages_with_existing_files() -> None:
