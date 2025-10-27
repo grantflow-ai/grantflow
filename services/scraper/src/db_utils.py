@@ -6,7 +6,7 @@ from uuid import UUID
 from packages.db.src.connection import get_session_maker
 from packages.db.src.constants import RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum
-from packages.db.src.tables import Grant, GrantingInstitution, RagSource, RagUrl
+from packages.db.src.tables import Grant, GrantingInstitution, RagUrl
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.url_utils import normalize_url
@@ -192,32 +192,23 @@ async def save_grant_page_content(url: str, document_number: str, content: str) 
             existing_rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == normalized_url))
 
             if existing_rag_url:
-                # Update existing
-                existing_source = await session.scalar(select(RagSource).where(RagSource.id == existing_rag_url.id))
-                if existing_source:
-                    existing_source.text_content = content
+                # Update existing - RagUrl inherits from RagSource, so we can update both
+                existing_rag_url.text_content = content
                 existing_rag_url.description = description
                 existing_rag_url.title = title
                 logger.debug("Updated existing RagUrl", url=url, document_number=document_number)
             else:
-                # Create new
+                # Create new RagUrl - it inherits from RagSource so both tables are populated
                 rag_url = RagUrl(
                     url=normalized_url,
                     title=title,
                     description=description,
-                )
-                session.add(rag_url)
-                await session.flush()  # Get the ID
-
-                # Create associated rag_source
-                rag_source = RagSource(
-                    id=rag_url.id,
                     text_content=content,
                     source_type=RAG_URL,
                     indexing_status=SourceIndexingStatusEnum.CREATED,
                 )
-                session.add(rag_source)
-                logger.debug("Created new RagUrl and RagSource", url=url, document_number=document_number)
+                session.add(rag_url)
+                logger.debug("Created new RagUrl", url=url, document_number=document_number)
 
             # Update grant description in grants table
             await session.execute(
