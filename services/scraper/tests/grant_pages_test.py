@@ -65,9 +65,9 @@ async def test_download_grant_pages_with_existing_files() -> None:
     search_results = cast(
         "list[GrantInfo]",
         [
-            {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html", "title": "Grant 1"},
-            {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-124.html", "title": "Grant 2"},
-            {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-125.html", "title": "Grant 3"},
+            {"url": "https://grants.gov/search-results-detail/123", "document_number": "PA-24-123", "title": "Grant 1"},
+            {"url": "https://grants.gov/search-results-detail/124", "document_number": "PA-24-124", "title": "Grant 2"},
+            {"url": "https://grants.gov/search-results-detail/125", "document_number": "PA-24-125", "title": "Grant 3"},
         ],
     )
     existing_file_identifiers = {"PA-24-124"}
@@ -81,19 +81,19 @@ async def test_download_grant_pages_with_existing_files() -> None:
 
         assert result == 2
 
-        expected_urls = [
-            "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html",
-            "https://grants.nih.gov/grants/guide/pa-files/PA-24-125.html",
+        expected_grants = [
+            ("https://grants.gov/search-results-detail/123", "PA-24-123"),
+            ("https://grants.gov/search-results-detail/125", "PA-24-125"),
         ]
-        mock_download_save.assert_called_once_with(urls=expected_urls)
+        mock_download_save.assert_called_once_with(grants_info=expected_grants)
 
 
 async def test_download_grant_pages_no_new_files() -> None:
     search_results = cast(
         "list[GrantInfo]",
         [
-            {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-123.html", "title": "Grant 1"},
-            {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-124.html", "title": "Grant 2"},
+            {"url": "https://grants.gov/search-results-detail/123", "document_number": "PA-24-123", "title": "Grant 1"},
+            {"url": "https://grants.gov/search-results-detail/124", "document_number": "PA-24-124", "title": "Grant 2"},
         ],
     )
     existing_file_identifiers = {"PA-24-123", "PA-24-124"}
@@ -114,7 +114,11 @@ async def test_download_grant_pages_chunking() -> None:
     search_results = cast(
         "list[GrantInfo]",
         [
-            {"url": f"https://grants.nih.gov/grants/guide/pa-files/PA-24-{i:03d}.html", "title": f"Grant {i}"}
+            {
+                "url": f"https://grants.gov/search-results-detail/{i}",
+                "document_number": f"PA-24-{i:03d}",
+                "title": f"Grant {i}",
+            }
             for i in range(250)
         ],
     )
@@ -130,7 +134,7 @@ async def test_download_grant_pages_chunking() -> None:
         assert result == 250
         assert mock_download_save.call_count == 3
 
-        call_args = [call[1]["urls"] for call in mock_download_save.call_args_list]
+        call_args = [call[1]["grants_info"] for call in mock_download_save.call_args_list]
         assert len(call_args[0]) == 100
         assert len(call_args[1]) == 100
         assert len(call_args[2]) == 50

@@ -187,18 +187,15 @@ async def test_save_grant_page_content(async_session_maker: async_sessionmaker[A
     await save_grant_page_content(url=url, document_number=document_number, content=content)
 
     async with async_session_maker() as session:
-        from packages.db.src.tables import Grant, RagSource, RagUrl
+        from packages.db.src.tables import Grant, RagUrl
 
         expected_url = normalize_url(url)
         rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == expected_url))
         assert rag_url is not None
         assert rag_url.title == f"Grant: {document_number}"
         assert "This is the content" in rag_url.description
-
-        # Check rag_source has content
-        rag_source = await session.scalar(select(RagSource).where(RagSource.id == rag_url.id))
-        assert rag_source is not None
-        assert rag_source.text_content == content
+        # RagUrl inherits from RagSource, so text_content is on the same object
+        assert rag_url.text_content == content
 
         # Check grant description was updated
         grant = await session.scalar(select(Grant).where(Grant.document_number == document_number))
@@ -239,7 +236,7 @@ async def test_save_grant_page_content_update_existing(async_session_maker: asyn
     await save_grant_page_content(url=url, document_number=document_number, content=updated_content)
 
     async with async_session_maker() as session:
-        from packages.db.src.tables import RagSource, RagUrl
+        from packages.db.src.tables import RagUrl
 
         expected_url = normalize_url(url)
         rag_urls = await session.execute(select(RagUrl).where(RagUrl.url == expected_url))
@@ -247,8 +244,5 @@ async def test_save_grant_page_content_update_existing(async_session_maker: asyn
         assert len(rag_url_list) == 1
         rag_url = rag_url_list[0]
         assert "updated content" in rag_url.description
-
-        # Check rag_source has updated content
-        rag_source = await session.scalar(select(RagSource).where(RagSource.id == rag_url.id))
-        assert rag_source is not None
-        assert rag_source.text_content == updated_content
+        # RagUrl inherits from RagSource, so text_content is on the same object
+        assert rag_url.text_content == updated_content
