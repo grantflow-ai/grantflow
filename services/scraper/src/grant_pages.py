@@ -6,24 +6,28 @@ from packages.shared_utils.src.logger import get_logger
 from services.scraper.src.db_utils import save_grant_page_content
 from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.html_utils import download_page_html
-from services.scraper.src.url_utils import get_identifier_from_nih_url
 
 logger = get_logger(__name__)
 
 
-async def download_and_save_pages(*, urls: list[str]) -> None:
+async def download_and_save_pages(*, grants_info: list[tuple[str, str]]) -> None:
+    """Download and save grant pages.
+
+    Args:
+        grants_info: List of (url, document_number) tuples
+    """
+    urls = [url for url, _ in grants_info]
     html_pages = await gather(*(download_page_html(url=url) for url in urls))
 
     save_tasks = []
-    for result, url in zip(html_pages, urls, strict=False):
-        result_name = get_identifier_from_nih_url(url=url)
-        save_tasks.append(save_markdown_page(html=result, result_name=result_name))
+    for result, (url, document_number) in zip(html_pages, grants_info, strict=False):
+        save_tasks.append(save_markdown_page(html=result, url=url, document_number=document_number))
 
     await gather(*save_tasks)
     logger.info("Finished processing %d pages", len(urls))
 
 
-async def save_markdown_page(*, html: str, result_name: str) -> None:
+async def save_markdown_page(*, html: str, url: str, document_number: str) -> None:
     markdown = convert(
         html,
         preprocessing=PreprocessingOptions(
@@ -32,25 +36,33 @@ async def save_markdown_page(*, html: str, result_name: str) -> None:
     )
     formatted_markdown = text(markdown)
 
-    await save_grant_page_content(result_name, formatted_markdown)
-    logger.debug("Saved markdown page to PostgreSQL", grant_id=result_name)
+    await save_grant_page_content(url=url, document_number=document_number, content=formatted_markdown)
+    logger.debug("Saved markdown page to PostgreSQL", document_number=document_number, url=url)
 
 
 async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:
-    all_urls = [result["url"] for result in search_results]
-    logger.info("Found %d total search results", len(all_urls))
+    # Build list of (url, document_number) for grants that need downloading
+    grants_to_download: list[tuple[str, str]] = []
+    for result in search_results:
+        url = result.get("url", "")
+        document_number = result.get("document_number", "")
 
-    search_result_item_urls = [
-        url for url in all_urls if get_identifier_from_nih_url(url) not in existing_file_identifiers
-    ]
-    logger.info("Will download %d new search results not in storage", len(search_result_item_urls))
+        # Skip if no URL, no document number, or already exists
+        if not url or not document_number or document_number in existing_file_identifiers:
+            continue
 
-    for i in range(0, len(search_result_item_urls), 100):
-        chunk = search_result_item_urls[i : i + 100]
+        grants_to_download.append((url, document_number))
+
+    logger.info("Found %d total search results", len(search_results))
+    logger.info("Will download %d new search results not in storage", len(grants_to_download))
+
+    # Download in chunks of 100
+    for i in range(0, len(grants_to_download), 100):
+        chunk = grants_to_download[i : i + 100]
         logger.info("Downloading chunk starting at index %d", i + 1)
-        await download_and_save_pages(urls=chunk)
+        await download_and_save_pages(grants_info=chunk)
 
     logger.info("Finished downloading")
-    logger.info("Downloaded %d pages", len(search_result_item_urls))
+    logger.info("Downloaded %d pages", len(grants_to_download))
 
-    return len(search_result_item_urls)
+    return len(grants_to_download)

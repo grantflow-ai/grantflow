@@ -158,37 +158,97 @@ async def test_bulk_insert_grants(
 
 
 async def test_save_grant_page_content(async_session_maker: async_sessionmaker[Any]) -> None:
-    grant_id = "TEST-PAGE-001"
+    url = "https://grants.gov/search-results-detail/123456"
+    document_number = "PAR-24-001"
     content = "# Test Grant Page\n\nThis is the content of a test grant page."
 
-    await save_grant_page_content(grant_id, content)
+    # First create a grant with this document_number so the update doesn't fail
+    from packages.db.src.tables import Grant
+
+    async with async_session_maker() as session, session.begin():
+        nih_id = await get_nih_institution_id()
+        grant = Grant(
+            granting_institution_id=nih_id,
+            document_number=document_number,
+            title="Test Grant",
+            description="",
+            release_date="2024-01-01",
+            expired_date="2025-12-31",
+            activity_code="R01",
+            organization="Test Org",
+            parent_organization="Test Parent",
+            participating_orgs="Test Participants",
+            document_type="Notice",
+            clinical_trials="No",
+            url=url,
+        )
+        session.add(grant)
+
+    await save_grant_page_content(url=url, document_number=document_number, content=content)
 
     async with async_session_maker() as session:
-        from packages.db.src.tables import RagUrl
+        from packages.db.src.tables import Grant, RagSource, RagUrl
 
-        expected_url = normalize_url(f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
+        expected_url = normalize_url(url)
         rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == expected_url))
         assert rag_url is not None
-        assert rag_url.title == f"NIH Grant: {grant_id}"
-        assert rag_url.text_content == content
+        assert rag_url.title == f"Grant: {document_number}"
         assert "This is the content" in rag_url.description
+
+        # Check rag_source has content
+        rag_source = await session.scalar(select(RagSource).where(RagSource.id == rag_url.id))
+        assert rag_source is not None
+        assert rag_source.text_content == content
+
+        # Check grant description was updated
+        grant = await session.scalar(select(Grant).where(Grant.document_number == document_number))
+        assert grant is not None
+        assert "This is the content" in grant.description
 
 
 async def test_save_grant_page_content_update_existing(async_session_maker: async_sessionmaker[Any]) -> None:
-    grant_id = "TEST-PAGE-UPDATE"
+    url = "https://grants.gov/search-results-detail/654321"
+    document_number = "RFA-25-002"
     initial_content = "# Initial Content\n\nThis is the initial content."
     updated_content = "# Updated Content\n\nThis is the updated content with more information."
 
-    await save_grant_page_content(grant_id, initial_content)
+    # Create a grant with this document_number
+    from packages.db.src.tables import Grant
 
-    await save_grant_page_content(grant_id, updated_content)
+    async with async_session_maker() as session, session.begin():
+        nih_id = await get_nih_institution_id()
+        grant = Grant(
+            granting_institution_id=nih_id,
+            document_number=document_number,
+            title="Test Grant Update",
+            description="",
+            release_date="2024-01-01",
+            expired_date="2025-12-31",
+            activity_code="R21",
+            organization="Test Org",
+            parent_organization="Test Parent",
+            participating_orgs="Test Participants",
+            document_type="RFA",
+            clinical_trials="Yes",
+            url=url,
+        )
+        session.add(grant)
+
+    await save_grant_page_content(url=url, document_number=document_number, content=initial_content)
+
+    await save_grant_page_content(url=url, document_number=document_number, content=updated_content)
 
     async with async_session_maker() as session:
-        from packages.db.src.tables import RagUrl
+        from packages.db.src.tables import RagSource, RagUrl
 
-        expected_url = normalize_url(f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html")
+        expected_url = normalize_url(url)
         rag_urls = await session.execute(select(RagUrl).where(RagUrl.url == expected_url))
         rag_url_list = rag_urls.scalars().all()
         assert len(rag_url_list) == 1
-        assert rag_url_list[0].text_content == updated_content
-        assert "updated content" in rag_url_list[0].description
+        rag_url = rag_url_list[0]
+        assert "updated content" in rag_url.description
+
+        # Check rag_source has updated content
+        rag_source = await session.scalar(select(RagSource).where(RagSource.id == rag_url.id))
+        assert rag_source is not None
+        assert rag_source.text_content == updated_content

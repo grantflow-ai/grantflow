@@ -4,12 +4,14 @@ from typing import Any
 from uuid import UUID
 
 from packages.db.src.connection import get_session_maker
-from packages.db.src.tables import Grant, GrantingInstitution, RagUrl
+from packages.db.src.constants import RAG_URL
+from packages.db.src.enums import SourceIndexingStatusEnum
+from packages.db.src.tables import Grant, GrantingInstitution, RagSource, RagUrl
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.url_utils import normalize_url
 from services.scraper.src.dtos import GrantInfo
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 
@@ -157,47 +159,75 @@ async def batch_save_grants(grants: Sequence[dict[str, Any] | GrantInfo]) -> int
         raise
 
 
-async def save_grant_page_content(grant_id: str, content: str) -> None:
+async def save_grant_page_content(url: str, document_number: str, content: str) -> None:
+    """Save grant page content to rag_sources and update grant description.
+
+    Args:
+        url: The actual grants.gov URL that was downloaded
+        document_number: The grant document number (e.g., PAR-25-449)
+        content: The markdown content extracted from the page
+    """
     start_time = time.time()
     async_session_maker = get_session_maker()
 
-    url = f"https://grants.nih.gov/grants/guide/notice-files/{grant_id}.html"
-
+    # Extract description from content (first non-heading paragraphs)
     lines = content.split("\n")
     description_lines = []
     for line in lines:
-        if line.strip() and not line.startswith("#"):
-            description_lines.append(line.strip())
+        stripped = line.strip()
+        # Skip empty lines, headers, and short lines
+        if stripped and not stripped.startswith("#") and len(stripped) > 20:
+            description_lines.append(stripped)
             if len(" ".join(description_lines)) >= 500:
                 break
 
     description = " ".join(description_lines)[:500] if description_lines else ""
-    title = f"NIH Grant: {grant_id}"
+    title = f"Grant: {document_number}"
 
     async with async_session_maker() as session, session.begin():
         try:
             normalized_url = normalize_url(url)
+
+            # Save/update content in rag_sources via rag_urls
             existing_rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == normalized_url))
 
             if existing_rag_url:
-                existing_rag_url.text_content = content
+                # Update existing
+                existing_source = await session.scalar(select(RagSource).where(RagSource.id == existing_rag_url.id))
+                if existing_source:
+                    existing_source.text_content = content
                 existing_rag_url.description = description
                 existing_rag_url.title = title
-                logger.debug("Updated existing RagUrl", url=url, grant_id=grant_id)
+                logger.debug("Updated existing RagUrl", url=url, document_number=document_number)
             else:
+                # Create new
                 rag_url = RagUrl(
                     url=normalized_url,
                     title=title,
                     description=description,
-                    text_content=content,
                 )
                 session.add(rag_url)
-                logger.debug("Created new RagUrl", url=url, grant_id=grant_id)
+                await session.flush()  # Get the ID
+
+                # Create associated rag_source
+                rag_source = RagSource(
+                    id=rag_url.id,
+                    text_content=content,
+                    source_type=RAG_URL,
+                    indexing_status=SourceIndexingStatusEnum.CREATED,
+                )
+                session.add(rag_source)
+                logger.debug("Created new RagUrl and RagSource", url=url, document_number=document_number)
+
+            # Update grant description in grants table
+            await session.execute(
+                update(Grant).where(Grant.document_number == document_number).values(description=description)
+            )
 
             duration = time.time() - start_time
             logger.info(
                 "Saved grant page content to PostgreSQL",
-                grant_id=grant_id,
+                document_number=document_number,
                 url=url,
                 content_length=len(content),
                 description_length=len(description),
@@ -208,7 +238,7 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
             duration = time.time() - start_time
             logger.error(
                 "Failed to save grant page content due to integrity error",
-                grant_id=grant_id,
+                document_number=document_number,
                 url=url,
                 duration_ms=round(duration * 1000, 2),
                 error=str(e),
@@ -218,7 +248,7 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
             duration = time.time() - start_time
             logger.error(
                 "Failed to save grant page content",
-                grant_id=grant_id,
+                document_number=document_number,
                 url=url,
                 duration_ms=round(duration * 1000, 2),
                 error=str(e),
