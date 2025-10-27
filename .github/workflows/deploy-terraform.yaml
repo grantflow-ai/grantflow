@@ -451,8 +451,8 @@ jobs:
           tofu apply -auto-approve tfplan
 
           # Capture outputs
-          echo "app_url=$(tofu output -raw frontend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_OUTPUT
-          echo "backend_url=$(tofu output -raw backend_url 2>/dev/null || echo 'N/A')" >> $GITHUB_OUTPUT
+          echo "app_url=$(tofu output -raw app_hosting_url 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
+          echo "backend_url=$(tofu output -raw backend_url 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
 
       - name: Create Deployment Summary
         if: success()
