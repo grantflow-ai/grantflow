@@ -118,51 +118,73 @@ export function WizardClientComponent({
 		});
 	}, [notifications, organizationId, projectId]);
 
-	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
-		const { identifier, indexing_status } = notification.data;
+	const shownToastMessages = useRef(new Map<string, number>()).current;
 
-		if (indexing_status === SourceIndexingStatus.FAILED) {
-			toast.error(`Failed to process ${identifier}`);
-		} else if (indexing_status === SourceIndexingStatus.FINISHED) {
-			toast.success(`Successfully processed ${identifier}`);
-		} else {
-			toast.info(`Processing ${identifier}...`);
+	const showToastOnce = useCallback((type: "error" | "info" | "success" | "warning", message: string) => {
+		const shouldLimit = type === "info" || type === "success";
+
+		if (shouldLimit) {
+			const count = shownToastMessages.get(message) || 0;
+
+			if (count >= 2) return;
+			shownToastMessages.set(message, count + 1);
 		}
+
+		toast[type](message);
 	}, []);
 
-	const handleAutofillProgress = useCallback((notification: AutofillProgressMessage) => {
-		const { event } = notification;
-		const { autofill_type, data, message } = notification.data;
+	const handleSourceProcessingNotification = useCallback(
+		(notification: SourceProcessingNotificationMessage) => {
+			const { identifier, indexing_status } = notification.data;
 
-		switch (event) {
-			case "autofill_completed": {
-				toast.success("Autofill completed successfully!");
-				useWizardStore.getState().setAutofillLoading(autofill_type, false);
-
-				break;
+			if (indexing_status === SourceIndexingStatus.FAILED) {
+				showToastOnce("error", `Failed to process ${identifier}`);
+			} else if (indexing_status === SourceIndexingStatus.FINISHED) {
+				showToastOnce("success", `Successfully processed ${identifier}`);
+			} else {
+				showToastOnce("info", `Processing ${identifier}...`);
 			}
-			case "autofill_error": {
-				toast.error(`Autofill failed: ${message}`);
-				useWizardStore.getState().setAutofillLoading(autofill_type, false);
+		},
+		[showToastOnce],
+	);
 
-				break;
-			}
-			case "autofill_progress": {
-				if (data?.field_name && typeof data.field_name === "string") {
-					toast.info(`Generating content for ${data.field_name}...`);
+	const handleAutofillProgress = useCallback(
+		(notification: AutofillProgressMessage) => {
+			const { event } = notification;
+			const { autofill_type, data, message } = notification.data;
+
+			switch (event) {
+				case "autofill_completed": {
+					showToastOnce("success", "Autofill completed successfully!");
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
+
+					break;
 				}
+				case "autofill_error": {
+					showToastOnce("error", `Autofill failed: ${message}`);
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
 
-				break;
-			}
-			case "autofill_started": {
-				toast.info(
-					`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
-				);
+					break;
+				}
+				case "autofill_progress": {
+					if (data?.field_name && typeof data.field_name === "string") {
+						showToastOnce("info", `Generating content for ${data.field_name}...`);
+					}
 
-				break;
+					break;
+				}
+				case "autofill_started": {
+					showToastOnce(
+						"info",
+						`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
+					);
+
+					break;
+				}
 			}
-		}
-	}, []);
+		},
+		[showToastOnce],
+	);
 
 	const handleRagProcessingError = useCallback(
 		(notification: RagProcessingErrorMessage) => {
