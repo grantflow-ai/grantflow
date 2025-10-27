@@ -6,6 +6,7 @@ set -e
 # 1. Generating requirements.txt from workspace dependencies
 # 2. Removing workspace package references
 # 3. Copying workspace packages to function directory
+# 4. Creating deployment zip for Terraform
 
 echo "📦 Preparing Cloud Functions for deployment..."
 
@@ -26,5 +27,19 @@ mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements
 # Copy workspace packages to function directory
 echo "📦 Copying workspace packages to dlq_manager function directory..."
 cp -r packages functions/dlq_manager/
+
+# Create zip file for Terraform (matching archive_file data source behavior)
+echo "📦 Creating deployment zip..."
+mkdir -p terraform/modules/cloud_functions/.terraform
+cd functions/dlq_manager
+zip -r ../../terraform/modules/cloud_functions/.terraform/dlq-manager-source.zip . \
+  -x "__pycache__/*" \
+  -x "*.pyc" \
+  -x ".pytest_cache/*" \
+  -x ".mypy_cache/*" \
+  -x ".ruff_cache/*" \
+  -x "tests/*" \
+  -x "*_test.py"
+cd ../..
 
 echo "✅ Cloud Functions prepared for deployment!"
