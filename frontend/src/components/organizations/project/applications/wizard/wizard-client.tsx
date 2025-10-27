@@ -126,7 +126,9 @@ export function WizardClientComponent({
 		if (shouldLimit) {
 			const count = shownToastMessages.get(message) || 0;
 
-			if (count >= 2) return;
+			if (type === "info" && count >= 1) return;
+			if (type === "success" && count >= 1) return;
+
 			shownToastMessages.set(message, count + 1);
 		}
 
