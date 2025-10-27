@@ -176,7 +176,7 @@ def _get_error_details(error: BackendError) -> tuple[str, str]:
             "The uploaded documents don't contain sufficient information for the application sections. Please upload more research documents or refine your research objectives.",
             NotificationEvents.INSUFFICIENT_CONTEXT_ERROR,
         )
-    if isinstance(error, ValidationError) and "indexing timeout" in str(error):
+    if isinstance(error, ValidationError) and "indexing timeout" in str(error).lower():
         return (
             "Document indexing is taking longer than expected. Please wait a few minutes and try again.",
             NotificationEvents.INDEXING_TIMEOUT,
