@@ -77,8 +77,10 @@ export function WizardClientComponent({
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
-	const [generationProgress, setGenerationProgress] = useState(0);
 	const failedSourcesShownRef = useRef(0);
+	const shownToastMessages = useRef(new Map<string, number>());
+
+	const [generationProgress, setGenerationProgress] = useState(0);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplicationId,
@@ -118,51 +120,73 @@ export function WizardClientComponent({
 		});
 	}, [notifications, organizationId, projectId]);
 
-	const handleSourceProcessingNotification = useCallback((notification: SourceProcessingNotificationMessage) => {
-		const { identifier, indexing_status } = notification.data;
+	const showToastOnce = useCallback((type: "error" | "info" | "success" | "warning", message: string) => {
+		const shouldLimit = type === "info" || type === "success";
 
-		if (indexing_status === SourceIndexingStatus.FAILED) {
-			toast.error(`Failed to process ${identifier}`);
-		} else if (indexing_status === SourceIndexingStatus.FINISHED) {
-			toast.success(`Successfully processed ${identifier}`);
-		} else {
-			toast.info(`Processing ${identifier}...`);
+		if (shouldLimit) {
+			const count = shownToastMessages.current.get(message) ?? 0;
+
+			if (type === "info" && count >= 1) return;
+			if (type === "success" && count >= 1) return;
+
+			shownToastMessages.current.set(message, count + 1);
 		}
+
+		toast[type](message);
 	}, []);
 
-	const handleAutofillProgress = useCallback((notification: AutofillProgressMessage) => {
-		const { event } = notification;
-		const { autofill_type, data, message } = notification.data;
+	const handleSourceProcessingNotification = useCallback(
+		(notification: SourceProcessingNotificationMessage) => {
+			const { identifier, indexing_status } = notification.data;
 
-		switch (event) {
-			case "autofill_completed": {
-				toast.success("Autofill completed successfully!");
-				useWizardStore.getState().setAutofillLoading(autofill_type, false);
-
-				break;
+			if (indexing_status === SourceIndexingStatus.FAILED) {
+				showToastOnce("error", `Failed to process ${identifier}`);
+			} else if (indexing_status === SourceIndexingStatus.FINISHED) {
+				showToastOnce("success", `Successfully processed ${identifier}`);
+			} else {
+				showToastOnce("info", `Processing ${identifier}...`);
 			}
-			case "autofill_error": {
-				toast.error(`Autofill failed: ${message}`);
-				useWizardStore.getState().setAutofillLoading(autofill_type, false);
+		},
+		[showToastOnce],
+	);
 
-				break;
-			}
-			case "autofill_progress": {
-				if (data?.field_name && typeof data.field_name === "string") {
-					toast.info(`Generating content for ${data.field_name}...`);
+	const handleAutofillProgress = useCallback(
+		(notification: AutofillProgressMessage) => {
+			const { event } = notification;
+			const { autofill_type, data, message } = notification.data;
+
+			switch (event) {
+				case "autofill_completed": {
+					showToastOnce("success", "Autofill completed successfully!");
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
+
+					break;
 				}
+				case "autofill_error": {
+					showToastOnce("error", `Autofill failed: ${message}`);
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
 
-				break;
-			}
-			case "autofill_started": {
-				toast.info(
-					`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
-				);
+					break;
+				}
+				case "autofill_progress": {
+					if (data?.field_name && typeof data.field_name === "string") {
+						showToastOnce("info", `Generating content for ${data.field_name}...`);
+					}
 
-				break;
+					break;
+				}
+				case "autofill_started": {
+					showToastOnce(
+						"info",
+						`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
+					);
+
+					break;
+				}
 			}
-		}
-	}, []);
+		},
+		[showToastOnce],
+	);
 
 	const handleRagProcessingError = useCallback(
 		(notification: RagProcessingErrorMessage) => {
