@@ -1,14 +1,11 @@
-import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateApplicationButton } from "./create-application-button";
 
 vi.mock("next/navigation");
-vi.mock("sonner");
-vi.mock("@/actions/grant-applications");
-vi.mock("@/utils/logger");
+vi.mock("@/stores/navigation-store");
+vi.mock("@/stores/project-store");
 
 const mockPush = vi.fn();
 const mockRouter = {
@@ -19,23 +16,32 @@ const mockRouter = {
 	refresh: vi.fn(),
 	replace: vi.fn(),
 };
+
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
-const mockToast = vi.mocked(toast);
-const mockCreateApplication = vi.mocked(await import("@/actions/grant-applications").then((m) => m.createApplication));
+const mockUseNavigationStore = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
+const mockUseProjectStore = vi.mocked(await import("@/stores/project-store").then((m) => m.useProjectStore));
 
 describe("CreateApplicationButton", () => {
-	const defaultProps = {
-		organizationId: "org-123",
-		projectId: "project-456",
+	const project = {
+		description: null,
+		grant_applications: [],
+		id: "project-456",
+		logo_url: null,
+		members: [],
+		name: "Test Project",
+		role: "OWNER" as const,
 	};
+	const navigateToProject = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseRouter.mockReturnValue(mockRouter);
+		mockUseProjectStore.mockReturnValue(project);
+		mockUseNavigationStore.mockReturnValue(navigateToProject);
 	});
 
-	it("should render create application button", () => {
-		render(<CreateApplicationButton {...defaultProps} />);
+	it("renders create application button", () => {
+		render(<CreateApplicationButton />);
 
 		const button = screen.getByTestId("create-application-button");
 		expect(button).toBeInTheDocument();
@@ -43,53 +49,34 @@ describe("CreateApplicationButton", () => {
 		expect(button).not.toBeDisabled();
 	});
 
-	it("should create application and navigate to wizard on click", async () => {
+	it("navigates to project context and new application route on click", async () => {
 		const user = userEvent.setup();
-		const application = ApplicationFactory.build({ id: "app-789" });
-		mockCreateApplication.mockResolvedValue(application);
-
-		render(<CreateApplicationButton {...defaultProps} />);
+		render(<CreateApplicationButton />);
 
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
 
-		expect(mockCreateApplication).toHaveBeenCalledWith(defaultProps.organizationId, defaultProps.projectId, {
-			title: "Untitled Application",
-		});
-		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
+		expect(navigateToProject).toHaveBeenCalledWith(project.id, project.name);
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/new");
 	});
 
-	it("should show loading state during creation", async () => {
+	it("handles missing project gracefully", async () => {
 		const user = userEvent.setup();
-		mockCreateApplication.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+		mockUseProjectStore.mockReturnValue(null);
+		mockUseNavigationStore.mockReturnValue(navigateToProject);
 
-		render(<CreateApplicationButton {...defaultProps} />);
+		render(<CreateApplicationButton />);
 
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
 
-		expect(button).toHaveTextContent("Creating...");
-		expect(button).toBeDisabled();
+		expect(navigateToProject).not.toHaveBeenCalled();
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/new");
 	});
 
-	it("should handle creation errors", async () => {
-		const user = userEvent.setup();
-		const error = new Error("Creation failed");
-		mockCreateApplication.mockRejectedValue(error);
-
-		render(<CreateApplicationButton {...defaultProps} />);
-
-		const button = screen.getByTestId("create-application-button");
-		await user.click(button);
-
-		expect(mockToast.error).toHaveBeenCalledWith("Failed to create application");
-		expect(button).toHaveTextContent("New Application");
-		expect(button).not.toBeDisabled();
-	});
-
-	it("should apply custom className", () => {
+	it("applies custom className", () => {
 		const customClass = "custom-button-class";
-		render(<CreateApplicationButton {...defaultProps} className={customClass} />);
+		render(<CreateApplicationButton className={customClass} />);
 
 		const button = screen.getByTestId("create-application-button");
 		expect(button).toHaveClass(customClass);
