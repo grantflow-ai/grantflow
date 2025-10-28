@@ -77,8 +77,10 @@ export function WizardClientComponent({
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections);
 
 	const dialogRef = useRef<null | WizardDialogRef>(null);
-	const [generationProgress, setGenerationProgress] = useState(0);
 	const failedSourcesShownRef = useRef(0);
+	const shownToastMessages = useRef(new Map<string, number>());
+
+	const [generationProgress, setGenerationProgress] = useState(0);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplicationId,
@@ -118,18 +120,16 @@ export function WizardClientComponent({
 		});
 	}, [notifications, organizationId, projectId]);
 
-	const shownToastMessages = useRef(new Map<string, number>()).current;
-
 	const showToastOnce = useCallback((type: "error" | "info" | "success" | "warning", message: string) => {
 		const shouldLimit = type === "info" || type === "success";
 
 		if (shouldLimit) {
-			const count = shownToastMessages.get(message) || 0;
+			const count = shownToastMessages.current.get(message) ?? 0;
 
 			if (type === "info" && count >= 1) return;
 			if (type === "success" && count >= 1) return;
 
-			shownToastMessages.set(message, count + 1);
+			shownToastMessages.current.set(message, count + 1);
 		}
 
 		toast[type](message);
