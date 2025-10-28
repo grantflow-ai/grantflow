@@ -167,7 +167,7 @@ async def handle_grant_template_pipeline(
         elif isinstance(e, LLMTimeoutError):
             user_message = "AI processing took longer than expected. The request will be retried automatically. Please wait a moment and check back."
             event_type = NotificationEvents.LLM_TIMEOUT
-        elif isinstance(e, ValidationError) and "indexing timeout" in str(e):
+        elif isinstance(e, ValidationError) and "indexing timeout" in str(e).lower():
             user_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
             event_type = NotificationEvents.INDEXING_TIMEOUT
         elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():

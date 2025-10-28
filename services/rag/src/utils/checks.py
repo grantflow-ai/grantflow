@@ -36,7 +36,7 @@ async def verify_rag_sources_indexed(
             trace_id=trace_id,
         )
         raise ValidationError(
-            f"Timeout waiting for sources to be indexed after {total_sleep_duration} seconds",
+            f"Indexing Timeout waiting for sources to be indexed after {total_sleep_duration} seconds",
             context={
                 "parent_id": str(parent_id),
                 "entity_type": entity_type.__name__,
@@ -115,7 +115,7 @@ async def verify_rag_sources_indexed(
 
         entity_name = "grant_application" if entity_type == GrantApplication else "grant_template"
         raise ValidationError(
-            "All rag sources have failed to be indexed",
+            "Indexing failed as all rag sources have failed to be indexed",
             context={
                 f"{entity_name}_id": str(parent_id),
                 "failed_sources": len(failed_sources),
