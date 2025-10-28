@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { createApplication } from "@/actions/grant-applications";
 import {
 	createProject,
 	deleteProject as deleteProjectAction,
@@ -19,7 +18,6 @@ import { WelcomeModal } from "@/components/organizations/dashboard/welcome/welco
 import { DeleteProjectModal } from "@/components/organizations/modals/delete-project-modal";
 import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import PaymentLink from "@/components/organizations/payment/payment-link";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useOrganizationValidation } from "@/hooks/use-organization-validation";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
@@ -49,7 +47,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 		validated_organization_id: validatedOrganizationId,
 	});
 
-	const { clearActiveProject, navigateToApplication, navigateToProject, stateHydrated } = useNavigationStore();
+	const { clearActiveProject, navigateToProject, stateHydrated } = useNavigationStore();
 	const { addNotification } = useNotificationStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 
@@ -194,7 +192,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 		try {
 			let targetProjectId = projectId;
-			const targetProjectName = projectName;
+			let targetProjectName = projectName;
 
 			if (isNewProject) {
 				const newProject = await createProject(validatedOrganizationId, {
@@ -202,6 +200,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 					name: projectName,
 				});
 				targetProjectId = newProject.id;
+				targetProjectName = projectName;
 
 				mutate();
 
@@ -213,31 +212,20 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 				return;
 			}
 
-			const application = await createApplication(validatedOrganizationId, targetProjectId, {
-				title: DEFAULT_APPLICATION_TITLE,
-			});
-
-			navigateToApplication(
-				targetProjectId,
-				targetProjectName,
-				application.id,
-				application.title || DEFAULT_APPLICATION_TITLE,
-			);
-
-			const wizardPath = routes.organization.project.application.wizard();
-			router.push(wizardPath);
-
-			toast.success("Application created successfully");
+			navigateToProject(targetProjectId, targetProjectName);
+			closeModal();
+			router.push(routes.organization.project.application.new());
 		} catch (error) {
+			const normalizedError = error instanceof Error ? error : new Error(String(error));
 			log.error("dashboard-create-application", {
 				currentOrganizationId: validatedOrganizationId,
-				error,
+				error: normalizedError,
 				isNewProject,
 				projectId,
 				projectName,
 			});
 
-			toast.error("Failed to create application");
+			toast.error("Failed to start application wizard");
 		}
 	};
 

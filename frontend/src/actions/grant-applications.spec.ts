@@ -65,10 +65,13 @@ describe("grant-applications actions", () => {
 		it("should handle errors during creation", async () => {
 			const mockData = CreateApplicationRequestFactory.build();
 			const mockError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Bad request" }), {
-					status: 400,
-					statusText: "Bad Request",
-				}),
+				Response.json(
+					{ detail: "Bad request" },
+					{
+						status: 400,
+						statusText: "Bad Request",
+					},
+				),
 				new Request("http://test.com"),
 				{
 					method: "POST",
@@ -354,10 +357,13 @@ describe("grant-applications actions", () => {
 
 		it("should handle errors when listing organization applications", async () => {
 			const mockError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Internal server error" }), {
-					status: 500,
-					statusText: "Internal Server Error",
-				}),
+				Response.json(
+					{ detail: "Internal server error" },
+					{
+						status: 500,
+						statusText: "Internal Server Error",
+					},
+				),
 				new Request("http://test.com"),
 				{
 					method: "GET",

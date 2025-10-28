@@ -271,8 +271,9 @@ export namespace API {
 	project_id: string;
 };
 
-	export type RequestBody = {
+export type RequestBody = {
 	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	title: string;
 };
 };

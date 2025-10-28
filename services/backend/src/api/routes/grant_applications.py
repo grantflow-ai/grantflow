@@ -76,6 +76,7 @@ def _sanitize_filename(title: str) -> str:
 
 class CreateApplicationRequestBody(TypedDict):
     title: str
+    grant_type: GrantType
     description: NotRequired[str]
 
 
@@ -329,7 +330,7 @@ async def handle_create_application(
                     {
                         "grant_application_id": application.id,
                         "grant_sections": [],
-                        "grant_type": GrantType.RESEARCH,
+                        "grant_type": data["grant_type"],
                     }
                 )
                 .returning(GrantTemplate)

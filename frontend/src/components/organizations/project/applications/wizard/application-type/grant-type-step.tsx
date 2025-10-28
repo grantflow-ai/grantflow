@@ -1,33 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback } from "react";
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
-import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
-import type { API } from "@/types/api-types";
-
-type GrantTypeValue = NonNullable<API.UpdateGrantTemplate.RequestBody["grant_type"]>;
-
-const GRANT_TYPE_CARDS: {
-	description: string;
-	imageSrc: string;
-	label: string;
-	value: GrantTypeValue;
-}[] = [
-	{
-		description: "Placeholder description for foundational discovery work.",
-		imageSrc: "/assets/research-grants.svg",
-		label: "Basic Science",
-		value: "RESEARCH",
-	},
-	{
-		description: "Placeholder description for translational-focused work.",
-		imageSrc: "/assets/translational-grants.svg",
-		label: "Translational Research",
-		value: "TRANSLATIONAL",
-	},
-];
+import { GRANT_TYPE_OPTIONS, GrantTypeCard, type GrantTypeValue } from "./grant-type-options";
 
 export function GrantTypeStep() {
 	const application = useApplicationStore((state) => state.application);
@@ -61,59 +37,20 @@ export function GrantTypeStep() {
 					</div>
 
 					<div className="flex flex-col gap-4 md:flex-row">
-						{GRANT_TYPE_CARDS.map((card) => (
+						{GRANT_TYPE_OPTIONS.map((option) => (
 							<GrantTypeCard
-								description={card.description}
 								disabled={isSaving}
-								imageSrc={card.imageSrc}
-								isSelected={selectedType === card.value}
-								key={card.value}
-								label={card.label}
+								isSelected={selectedType === option.value}
+								key={option.value}
 								onSelect={() => {
-									handleSelect(card.value);
+									handleSelect(option.value);
 								}}
+								option={option}
 							/>
 						))}
 					</div>
 				</div>
 			</WizardLeftPane>
 		</div>
-	);
-}
-
-function GrantTypeCard({
-	description,
-	disabled,
-	imageSrc,
-	isSelected,
-	label,
-	onSelect,
-}: {
-	description: string;
-	disabled?: boolean;
-	imageSrc: string;
-	isSelected: boolean;
-	label: string;
-	onSelect: () => void;
-}) {
-	return (
-		<button
-			aria-pressed={isSelected}
-			className={cn(
-				"flex w-[377px] h-[438px] flex-col items-center justify-center gap-[21px] rounded-lg border bg-white px-[150px] py-[161px] transition-all",
-				isSelected ? "border-primary shadow-lg shadow-primary/10" : "border-gray-200",
-				disabled && "cursor-not-allowed opacity-60",
-			)}
-			data-testid={`grant-type-card-${label.replaceAll(/\s+/g, "-").toLowerCase()}`}
-			disabled={disabled}
-			onClick={onSelect}
-			type="button"
-		>
-			<Image alt={`${label} illustration`} height={64} src={imageSrc} width={64} />
-			<div className="text-center">
-				<p className="font-heading text-lg font-semibold text-stone-900">{label}</p>
-				<p className="mt-2 text-sm text-muted-foreground-dark">{description}</p>
-			</div>
-		</button>
 	);
 }

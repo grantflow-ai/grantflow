@@ -1,13 +1,7 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import {
-	ApplicationCardDataFactory,
-	ApplicationFactory,
-	ProjectFactory,
-	ProjectMemberFactory,
-} from "::testing/factories";
+import { ApplicationCardDataFactory, ProjectFactory, ProjectMemberFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectDetailClient } from "./project-detail-client";
 
@@ -22,7 +16,6 @@ vi.mock("swr", () => ({
 	mutate: vi.fn(),
 }));
 vi.mock("@/actions/grant-applications", () => ({
-	createApplication: vi.fn(),
 	deleteApplication: vi.fn(),
 	duplicateApplication: vi.fn(),
 	listApplications: vi.fn(),
@@ -38,6 +31,9 @@ vi.mock("@/stores/organization-store", () => ({
 }));
 vi.mock("@/stores/project-store", () => ({
 	useProjectStore: vi.fn(),
+}));
+vi.mock("@/stores/new-application-modal-store", () => ({
+	useNewApplicationModalStore: vi.fn(),
 }));
 vi.mock("@/utils/logger", () => ({
 	log: { error: vi.fn() },
@@ -67,6 +63,8 @@ const mockRouter = {
 	replace: mockReplace,
 };
 const mockNavigateToApplication = vi.fn();
+const mockNavigateToProject = vi.fn();
+const mockCloseModal = vi.fn();
 const mockMutate = vi.fn();
 
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
@@ -76,7 +74,9 @@ const mockUseOrganizationStore = vi.mocked(
 	await import("@/stores/organization-store").then((m) => m.useOrganizationStore),
 );
 const mockUseProjectStore = vi.mocked(await import("@/stores/project-store").then((m) => m.useProjectStore));
-const mockCreateApplication = vi.mocked(await import("@/actions/grant-applications").then((m) => m.createApplication));
+const mockUseNewApplicationModalStore = vi.mocked(
+	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
+);
 const mockGetProjectMembers = vi.mocked(await import("@/actions/project").then((m) => m.getProjectMembers));
 
 const MockDeleteApplicationModal = vi.mocked(
@@ -98,12 +98,21 @@ describe("ProjectDetailClient", () => {
 		setupAuthenticatedTest();
 
 		mockUseRouter.mockReturnValue(mockRouter);
-		mockUseNavigationStore.mockReturnValue({ navigateToApplication: mockNavigateToApplication });
+		mockUseNavigationStore.mockReturnValue({
+			clearActiveApplication: vi.fn(),
+			navigateToApplication: mockNavigateToApplication,
+			navigateToProject: mockNavigateToProject,
+			stateHydrated: true,
+		});
 		mockUseOrganizationStore.mockReturnValue({ selectedOrganizationId: "org-123" });
 		mockUseProjectStore.mockReturnValue({
 			getProjects: vi.fn(),
 			project: mockProject,
 			projects: [],
+		});
+		mockUseNewApplicationModalStore.mockReturnValue({
+			closeModal: mockCloseModal,
+			isModalOpen: false,
 		});
 
 		mockUseSWR.mockImplementation((key) => {
@@ -168,82 +177,17 @@ describe("ProjectDetailClient", () => {
 		expect(screen.getByText("Loading project...")).toBeInTheDocument();
 	});
 
-	it("should handle creating new application", async () => {
+	it("should navigate to grant type selection on create", async () => {
 		const user = userEvent.setup();
-		const newApplication = ApplicationFactory.build({ id: "app-new" });
-		mockCreateApplication.mockResolvedValue(newApplication);
-
-		mockUseSWR
-			.mockReturnValueOnce({
-				data: { applications: mockApplications },
-				error: undefined,
-				isLoading: false,
-				isValidating: false,
-				mutate: mockMutate,
-			})
-			.mockReturnValueOnce({
-				data: mockMembers,
-				error: undefined,
-				isLoading: false,
-				isValidating: false,
-				mutate: vi.fn(),
-			});
 
 		render(<ProjectDetailClient />);
 
 		const createButton = screen.getByTestId("new-application-button");
 		await user.click(createButton);
 
-		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-123", {
-			title: "Untitled Application",
-		});
-		expect(mockNavigateToApplication).toHaveBeenCalledWith(
-			"project-123",
-			"Test Project",
-			"app-new",
-			expect.any(String),
-		);
-		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
-	});
-
-	it("should show creating state when creating application", async () => {
-		const user = userEvent.setup();
-		let resolvePromise: (value: any) => void;
-		mockCreateApplication.mockImplementation(
-			() =>
-				new Promise((resolve) => {
-					resolvePromise = resolve;
-				}),
-		);
-
-		render(<ProjectDetailClient />);
-
-		const createButton = screen.getByTestId("new-application-button");
-
-		const clickPromise = user.click(createButton);
-
-		await clickPromise;
-
-		expect(createButton).toHaveTextContent("New Application");
-		expect(createButton).toBeDisabled();
-
-		const newApplication = ApplicationFactory.build({ id: "app-new" });
-		resolvePromise!(newApplication);
-	});
-
-	it("should handle application creation errors", async () => {
-		const user = userEvent.setup();
-		const error = new Error("Creation failed");
-		mockCreateApplication.mockRejectedValue(error);
-
-		render(<ProjectDetailClient />);
-
-		const createButton = screen.getByTestId("new-application-button");
-		await user.click(createButton);
-
-		expect(toast.error).toHaveBeenCalledWith("Failed to create application");
-		expect(createButton).toHaveTextContent("New Application");
-		expect(createButton).not.toBeDisabled();
+		expect(mockNavigateToProject).toHaveBeenCalledWith("project-123", "Test Project");
+		expect(mockCloseModal).toHaveBeenCalled();
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/new");
 	});
 
 	it("should enable title editing when edit icon is clicked", async () => {

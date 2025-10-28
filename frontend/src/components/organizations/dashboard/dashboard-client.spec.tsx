@@ -16,9 +16,6 @@ vi.mock("@/actions/project", () => ({
 	createProject: vi.fn(),
 	getProjects: vi.fn(),
 }));
-vi.mock("@/actions/grant-applications", () => ({
-	createApplication: vi.fn(),
-}));
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
@@ -48,14 +45,12 @@ vi.mock("@/utils/navigation", () => ({
 		organization: {
 			project: {
 				application: {
+					new: vi.fn(() => "/organization/project/application/new"),
 					wizard: vi.fn(() => "/organization/project/application/wizard"),
 				},
 			},
 		},
 	},
-}));
-vi.mock("@/constants", () => ({
-	DEFAULT_APPLICATION_TITLE: "Untitled Application",
 }));
 vi.mock("sonner", () => ({
 	toast: {
@@ -110,6 +105,7 @@ const mockDeleteProject = vi.fn();
 const mockDuplicateProject = vi.fn();
 const mockAddNotification = vi.fn();
 const mockMutate = vi.fn();
+const mockCloseModal = vi.fn();
 
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
 const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
@@ -129,7 +125,6 @@ const mockUseNewApplicationModalStore = vi.mocked(
 	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
 );
 const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
-const mockCreateApplication = vi.mocked(await import("@/actions/grant-applications").then((m) => m.createApplication));
 
 const MockDashboardStats = vi.mocked(await import("./dashboard-stats").then((m) => m.DashboardStats));
 const MockDashboardProjectCard = vi.mocked(
@@ -157,7 +152,11 @@ describe("DashboardClient", () => {
 		setupAuthenticatedTest();
 
 		mockUseRouter.mockReturnValue(mockRouter);
-		mockUseNavigation.mockReturnValue({ navigateToProject: mockNavigateToProject });
+		mockUseNavigation.mockReturnValue({
+			clearActiveProject: vi.fn(),
+			navigateToProject: mockNavigateToProject,
+			stateHydrated: true,
+		});
 		mockUseOrganizationValidation.mockReturnValue("org-123");
 		mockUseOrganizationStore.mockReturnValue({
 			getOrganization: mockGetOrganization,
@@ -173,7 +172,7 @@ describe("DashboardClient", () => {
 			user: { displayName: "Test User", email: "test@example.com" },
 		});
 		mockUseNewApplicationModalStore.mockReturnValue({
-			closeModal: vi.fn(),
+			closeModal: mockCloseModal,
 			isModalOpen: false,
 			openModal: vi.fn(),
 		});
@@ -187,17 +186,6 @@ describe("DashboardClient", () => {
 		mockCreateProject.mockResolvedValue(
 			ProjectListItemFactory.build({ id: "new-project-id", name: "New Project 1" }),
 		);
-		mockCreateApplication.mockResolvedValue({
-			created_at: "2023-01-01T00:00:00Z",
-			editor_document_id: null,
-			editor_document_init: false,
-			id: "app-123",
-			project_id: "project-123",
-			rag_sources: [],
-			status: "WORKING_DRAFT",
-			title: "Untitled Application",
-			updated_at: "2023-01-01T00:00:00Z",
-		});
 	});
 
 	it("should render dashboard with basic structure", () => {
@@ -397,19 +385,20 @@ describe("DashboardClient", () => {
 	});
 
 	it("should handle application creation with existing project", async () => {
-		const mockNavigateToApplication = vi.fn();
-		const mockPush = vi.fn();
+		const navigateToProject = vi.fn();
+		const push = vi.fn();
 
 		mockUseNavigation.mockReturnValue({
-			navigateToApplication: mockNavigateToApplication,
-			navigateToProject: vi.fn(),
+			clearActiveProject: vi.fn(),
+			navigateToProject,
+			stateHydrated: true,
 		});
 
 		mockUseRouter.mockReturnValue({
 			back: vi.fn(),
 			forward: vi.fn(),
 			prefetch: vi.fn(),
-			push: mockPush,
+			push,
 			refresh: vi.fn(),
 			replace: vi.fn(),
 		});
@@ -419,33 +408,27 @@ describe("DashboardClient", () => {
 		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
 		await createFunction("project-123", "Test Project", false);
 
-		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-123", {
-			title: "Untitled Application",
-		});
-		expect(mockNavigateToApplication).toHaveBeenCalledWith(
-			"project-123",
-			"Test Project",
-			"app-123",
-			"Untitled Application",
-		);
-		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
+		expect(navigateToProject).toHaveBeenCalledWith("project-123", "Test Project");
+		expect(mockCloseModal).toHaveBeenCalled();
+		expect(push).toHaveBeenCalledWith("/organization/project/application/new");
 	});
 
 	it("should handle application creation with new project", async () => {
-		const mockNavigateToApplication = vi.fn();
-		const mockPush = vi.fn();
-		const mockMutate = vi.fn();
+		const navigateToProject = vi.fn();
+		const push = vi.fn();
+		const mutateSpy = vi.fn();
 
 		mockUseNavigation.mockReturnValue({
-			navigateToApplication: mockNavigateToApplication,
-			navigateToProject: vi.fn(),
+			clearActiveProject: vi.fn(),
+			navigateToProject,
+			stateHydrated: true,
 		});
 
 		mockUseRouter.mockReturnValue({
 			back: vi.fn(),
 			forward: vi.fn(),
 			prefetch: vi.fn(),
-			push: mockPush,
+			push,
 			refresh: vi.fn(),
 			replace: vi.fn(),
 		});
@@ -455,23 +438,11 @@ describe("DashboardClient", () => {
 			error: undefined,
 			isLoading: false,
 			isValidating: false,
-			mutate: mockMutate,
+			mutate: mutateSpy,
 		});
 
 		mockCreateProject.mockResolvedValueOnce({
 			id: "project-456",
-		});
-
-		mockCreateApplication.mockResolvedValueOnce({
-			created_at: "2023-01-01T00:00:00Z",
-			editor_document_id: null,
-			editor_document_init: false,
-			id: "app-456",
-			project_id: "project-456",
-			rag_sources: [],
-			status: "WORKING_DRAFT",
-			title: "Untitled Application",
-			updated_at: "2023-01-01T00:00:00Z",
 		});
 
 		render(<DashboardClient {...defaultProps} />);
@@ -483,16 +454,9 @@ describe("DashboardClient", () => {
 			description: "",
 			name: "New Test Project",
 		});
-		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-456", {
-			title: "Untitled Application",
-		});
-		expect(mockNavigateToApplication).toHaveBeenCalledWith(
-			"project-456",
-			"New Test Project",
-			"app-456",
-			"Untitled Application",
-		);
-		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
-		expect(mockMutate).toHaveBeenCalled();
+		expect(navigateToProject).toHaveBeenCalledWith("project-456", "New Test Project");
+		expect(mockCloseModal).toHaveBeenCalled();
+		expect(push).toHaveBeenCalledWith("/organization/project/application/new");
+		expect(mutateSpy).toHaveBeenCalled();
 	});
 });

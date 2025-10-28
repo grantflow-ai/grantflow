@@ -141,7 +141,7 @@ describe("rag-jobs server actions", () => {
 			});
 
 			const error = new HTTPError(
-				new Response(JSON.stringify(errorResponse), {
+				Response.json(errorResponse, {
 					headers: { "Content-Type": "application/json" },
 					status: 404,
 				}),
