@@ -10,36 +10,34 @@ import {
 import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
 import type { GrantSection } from "@/types/grant-sections";
 
-export const createZoneCollisionDetection = (): CollisionDetection => {
-	return (args) => {
-		const { active, droppableRects, pointerCoordinates } = args;
+const detectZoneCollision: CollisionDetection = (args) => {
+	const { active, droppableRects, pointerCoordinates } = args;
 
-		const closestCollisions = closestCenter(args);
+	const closestCollisions = closestCenter(args);
 
-		const defaultCollisions = closestCollisions.length > 0 ? closestCollisions : pointerWithin(args);
+	const defaultCollisions = closestCollisions.length > 0 ? closestCollisions : pointerWithin(args);
 
-		if (!pointerCoordinates || defaultCollisions.length === 0) {
-			return defaultCollisions;
-		}
+	if (!pointerCoordinates || defaultCollisions.length === 0) {
+		return defaultCollisions;
+	}
 
-		const { data: { current: { section: activeSection } = {} } = {} } = active as {
-			data: DataRef<{ section: GrantSection }>;
-		} & Active;
+	const { data: { current: { section: activeSection } = {} } = {} } = active as {
+		data: DataRef<{ section: GrantSection }>;
+	} & Active;
 
-		if (!activeSection) {
-			return defaultCollisions;
-		}
+	if (!activeSection) {
+		return defaultCollisions;
+	}
 
-		const [primaryCollision] = defaultCollisions;
-		const rect = droppableRects.get(primaryCollision.id);
+	const [primaryCollision] = defaultCollisions;
+	const rect = droppableRects.get(primaryCollision.id);
 
-		if (!rect) {
-			return defaultCollisions;
-		}
+	if (!rect) {
+		return defaultCollisions;
+	}
 
-		const {
-			data: { droppableContainer: { data: { current: { section: collidingSection } = {} } = {} } = {} } = {},
-		} = primaryCollision as {
+	const { data: { droppableContainer: { data: { current: { section: collidingSection } = {} } = {} } = {} } = {} } =
+		primaryCollision as {
 			data: Data<{
 				droppableContainer: {
 					data: {
@@ -51,25 +49,26 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 			}>;
 		} & Collision;
 
-		if (!collidingSection) {
-			return defaultCollisions;
-		}
+	if (!collidingSection) {
+		return defaultCollisions;
+	}
 
-		if (collidingSection.parent_id !== null) {
-			return defaultCollisions;
-		}
+	if (collidingSection.parent_id !== null) {
+		return defaultCollisions;
+	}
 
-		const relativeX = pointerCoordinates.x - rect.left;
-		const zonePercent = (relativeX / rect.width) * 100;
-		const zone: ZoneType = zonePercent < 25 ? "sibling" : "child";
+	const relativeX = pointerCoordinates.x - rect.left;
+	const zonePercent = (relativeX / rect.width) * 100;
+	const zone: ZoneType = zonePercent < 25 ? "sibling" : "child";
 
-		return defaultCollisions.map((collision) => ({
-			...collision,
-			data: {
-				...collision.data,
-				zone,
-				zonePercent,
-			},
-		}));
-	};
+	return defaultCollisions.map((collision) => ({
+		...collision,
+		data: {
+			...collision.data,
+			zone,
+			zonePercent,
+		},
+	}));
 };
+
+export const createZoneCollisionDetection = (): CollisionDetection => detectZoneCollision;

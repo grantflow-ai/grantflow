@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import {
-	createApplication,
 	deleteApplication,
 	downloadApplication,
 	duplicateApplication,
@@ -21,7 +20,6 @@ import { ApplicationList } from "@/components/organizations/project/application-
 import { DeleteApplicationModal } from "@/components/organizations/project/delete-application-modal";
 import ProjectActions from "@/components/organizations/project/project-actions";
 import ProjectTitle from "@/components/organizations/project/project-title";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { DOWNLOAD_FORMATS } from "@/constants/download";
 import { useProjectTitleEditing } from "@/hooks/use-project-title-editing";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -40,7 +38,7 @@ export function ProjectDetailClient() {
 	const router = useRouter();
 	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
-	const { clearActiveApplication, navigateToApplication, stateHydrated } = useNavigationStore();
+	const { clearActiveApplication, navigateToApplication, navigateToProject, stateHydrated } = useNavigationStore();
 	const { user } = useUserStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const { getProjects, projects } = useProjectStore();
@@ -222,23 +220,9 @@ export function ProjectDetailClient() {
 				source: "project-actions-header",
 			});
 
-			const application = await createApplication(selectedOrganizationId, project.id, {
-				title: DEFAULT_APPLICATION_TITLE,
-			});
-
-			await mutate(
-				`/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`,
-			);
-			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
-
-			navigateToApplication(
-				project.id,
-				project.name,
-				application.id,
-				application.title || DEFAULT_APPLICATION_TITLE,
-			);
-			const wizardPath = routes.organization.project.application.wizard();
-			router.push(wizardPath);
+			navigateToProject(project.id, project.name);
+			closeModal();
+			router.push(routes.organization.project.application.new());
 		} catch (error) {
 			log.error("create-application-button", error);
 			toast.error("Failed to create application");

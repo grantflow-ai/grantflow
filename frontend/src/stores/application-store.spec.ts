@@ -887,9 +887,12 @@ describe("Application Store", () => {
 		it("should handle grant template validation errors (422 status)", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 			const httpError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Validation failed" }), {
-					status: 422,
-				}),
+				Response.json(
+					{ detail: "Validation failed" },
+					{
+						status: 422,
+					},
+				),
 				{} as any,
 				{} as any,
 			);
@@ -909,9 +912,12 @@ describe("Application Store", () => {
 		it("should handle non-422 errors in template generation", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 			const httpError = new HTTPError(
-				new Response(JSON.stringify({ detail: "Server error" }), {
-					status: 500,
-				}),
+				Response.json(
+					{ detail: "Server error" },
+					{
+						status: 500,
+					},
+				),
 				{} as any,
 				{} as any,
 			);

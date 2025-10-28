@@ -457,13 +457,16 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		},
 
 		handleApplicationInit: async (projectId: string, applicationId?: string) => {
-			const { createApplication, getApplication } = useApplicationStore.getState();
+			const { getApplication } = useApplicationStore.getState();
 			const { selectedOrganizationId } = useOrganizationStore.getState();
 			if (!selectedOrganizationId) return;
 
-			await (applicationId
-				? getApplication(selectedOrganizationId, projectId, applicationId)
-				: createApplication(selectedOrganizationId, projectId));
+			if (!applicationId) {
+				log.error("handleApplicationInit: Missing applicationId for project", { projectId });
+				return;
+			}
+
+			await getApplication(selectedOrganizationId, projectId, applicationId);
 		},
 
 		handleTitleChange: (title: string) => {

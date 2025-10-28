@@ -352,11 +352,11 @@ export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.Req
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
-export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
+export const CreateApplicationRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
+	description: factory.datatype.boolean() ? factory.lorem.sentence() : undefined,
+	grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
 	title: factory.lorem.sentence(),
 }));
-
-export const CreateApplicationRequestFactory = TitleRequestFactory;
 
 export const UpdateApplicationRequestFactory = new Factory<Required<API.UpdateApplication.RequestBody>>((factory) => ({
 	description: factory.lorem.paragraph(),

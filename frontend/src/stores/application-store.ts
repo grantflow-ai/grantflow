@@ -320,7 +320,12 @@ interface ApplicationActions {
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	clearPendingUploads: (sourceType?: SourceType) => void;
 	clearRestoredJobState: () => void;
-	createApplication: (organizationId: string, projectId: string) => Promise<void>;
+	createApplication: (
+		organizationId: string,
+		projectId: string,
+		grantType: API.CreateApplication.RequestBody["grant_type"],
+		title?: string,
+	) => Promise<void>;
 	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<boolean>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
@@ -674,11 +679,17 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 	},
 
-	createApplication: async (organizationId: string, projectId: string) => {
+	createApplication: async (
+		organizationId: string,
+		projectId: string,
+		grantType: API.CreateApplication.RequestBody["grant_type"],
+		title: string = DEFAULT_APPLICATION_TITLE,
+	) => {
 		set({ areAppOperationsInProgress: true });
 		try {
 			const response = await handleCreateApplication(organizationId, projectId, {
-				title: DEFAULT_APPLICATION_TITLE,
+				grant_type: grantType,
+				title,
 			});
 			log.info("[rag_sources_check] Application state updated via createApplication", {
 				application_rag_sources: formatApplicationRagSources(response),

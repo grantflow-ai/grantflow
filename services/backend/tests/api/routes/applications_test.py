@@ -91,6 +91,7 @@ async def test_create_application(
     application_data = {
         "title": "New Application",
         "description": "Test description",
+        "grant_type": GrantType.RESEARCH.value,
     }
 
     response = await test_client.post(
@@ -103,6 +104,7 @@ async def test_create_application(
     data = response.json()
     assert data["title"] == "New Application"
     assert data["description"] == "Test description"
+    assert data["grant_template"]["grant_type"] == GrantType.RESEARCH.value
     assert "id" in data
     assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
 
@@ -114,13 +116,14 @@ async def test_create_application_minimal(
 ) -> None:
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications",
-        json={"title": "Minimal Application"},
+        json={"title": "Minimal Application", "grant_type": GrantType.TRANSLATIONAL.value},
         headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
     data = response.json()
     assert data["title"] == "Minimal Application"
+    assert data["grant_template"]["grant_type"] == GrantType.TRANSLATIONAL.value
     assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
 
 
