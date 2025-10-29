@@ -310,7 +310,7 @@ async def handle_create_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": data.get("description") or None,
-                        "status": ApplicationStatusEnum.WORKING_DRAFT,
+                        "status": ApplicationStatusEnum.IN_PROGRESS,
                     }
                 )
                 .returning(GrantApplication)
