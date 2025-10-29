@@ -132,6 +132,45 @@ resource "google_cloud_scheduler_job" "entity_cleanup" {
   depends_on = [google_project_service.scheduler]
 }
 
+resource "google_cloud_scheduler_job" "orphaned_files_cleanup" {
+  name      = "orphaned-files-cleanup-${var.environment}"
+  region    = var.region
+  schedule  = "0 3 * * *"
+  time_zone = "UTC"
+
+  description = "Daily cleanup of orphaned RAG file records where GCS files no longer exist"
+
+  http_target {
+    uri         = "${var.backend_url}/webhooks/scheduler/orphaned-files-cleanup"
+    http_method = "POST"
+
+    headers = {
+      "Content-Type" = "application/json"
+    }
+
+    body = base64encode(jsonencode({
+      action    = "cleanup_orphaned_files"
+      timestamp = "scheduled"
+    }))
+
+    oidc_token {
+      service_account_email = var.scheduler_invoker_service_account_email
+      audience              = "${var.backend_url}/webhooks/scheduler/orphaned-files-cleanup"
+    }
+  }
+
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "120s"
+    max_backoff_duration = "60s"
+    min_backoff_duration = "10s"
+  }
+
+  attempt_deadline = "900s"
+
+  depends_on = [google_project_service.scheduler]
+}
+
 resource "google_cloud_scheduler_job" "dlq_reconciliation" {
   name      = "dlq-reconciliation-${var.environment}"
   region    = var.region
