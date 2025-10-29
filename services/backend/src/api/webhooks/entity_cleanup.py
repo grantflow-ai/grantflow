@@ -6,6 +6,7 @@ from litestar.response import Response
 from litestar.status_codes import HTTP_201_CREATED, HTTP_500_INTERNAL_SERVER_ERROR
 from packages.db.src.tables import Organization, OrganizationUser
 from packages.shared_utils.src.env import get_env
+from packages.shared_utils.src.gcs import delete_blob
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -83,6 +84,51 @@ async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: da
 
 
 async def _delete_grant_related_data(session: AsyncSession, organization_id: str) -> None:
+    # First, delete GCS files for rag_files before deleting database records
+    rag_files_stmt = text("""
+        SELECT rf.object_path
+        FROM rag_files rf
+        WHERE rf.id IN (
+            SELECT DISTINCT rag_source_id FROM grant_application_sources gas
+            JOIN grant_applications ga ON gas.grant_application_id = ga.id
+            JOIN projects p ON ga.project_id = p.id
+            WHERE p.organization_id = :org_id
+        )
+        OR rf.id IN (
+            SELECT DISTINCT rag_source_id FROM grant_template_sources gts
+            JOIN grant_templates gt ON gts.grant_template_id = gt.id
+            JOIN grant_applications ga ON gt.grant_application_id = ga.id
+            JOIN projects p ON ga.project_id = p.id
+            WHERE p.organization_id = :org_id
+        )
+    """)
+
+    result = await session.execute(rag_files_stmt, {"org_id": organization_id})
+    object_paths = [row[0] for row in result]
+
+    # Delete files from GCS
+    gcs_errors = []
+    for object_path in object_paths:
+        try:
+            await delete_blob(object_path)
+        except Exception as e:
+            gcs_errors.append((object_path, str(e)))
+            logger.warning(
+                "Failed to delete file from GCS during organization cleanup",
+                object_path=object_path,
+                organization_id=organization_id,
+                error=str(e),
+            )
+
+    if gcs_errors:
+        logger.warning(
+            "Some GCS files could not be deleted",
+            organization_id=organization_id,
+            failed_count=len(gcs_errors),
+            total_count=len(object_paths),
+        )
+
+    # Now delete database records
     await session.execute(
         text("""
             DELETE FROM grant_application_sources

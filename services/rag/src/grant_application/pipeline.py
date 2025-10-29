@@ -303,6 +303,21 @@ async def _handle_pipeline_error(
                 "user_message": user_message,
             },
         )
+
+        # Reset application status to IN_PROGRESS so user can fix issues and retry
+        session_maker = job_manager.session_maker
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .values(status=ApplicationStatusEnum.IN_PROGRESS)
+            )
+        logger.info(
+            "Reset application status to IN_PROGRESS after pipeline error",
+            application_id=str(application_id),
+            trace_id=trace_id,
+        )
+
         if event_type in [
             NotificationEvents.INDEXING_TIMEOUT,
             NotificationEvents.INSUFFICIENT_CONTEXT_ERROR,

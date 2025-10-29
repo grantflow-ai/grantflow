@@ -299,12 +299,7 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	research_objectives: factory.datatype.boolean()
 		? ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 }))
 		: undefined,
-	status: factory.helpers.arrayElement<ApplicationStatus>([
-		"WORKING_DRAFT",
-		"IN_PROGRESS",
-		"GENERATING",
-		"CANCELLED",
-	]),
+	status: "IN_PROGRESS",
 	text: factory.datatype.boolean() ? factory.lorem.paragraphs(5) : undefined,
 	title: factory.lorem.sentence(),
 	updated_at: factory.date.recent().toISOString(),
