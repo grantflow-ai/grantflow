@@ -929,6 +929,7 @@ describe.sequential("wizard store", () => {
 				}),
 				id: "app-123",
 				rag_sources: [],
+				status: "IN_PROGRESS",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
@@ -943,6 +944,7 @@ describe.sequential("wizard store", () => {
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
 				research_objectives: [],
+				status: "IN_PROGRESS",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
@@ -964,6 +966,7 @@ describe.sequential("wizard store", () => {
 						title: "Objective 1",
 					},
 				],
+				status: "IN_PROGRESS",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
@@ -986,6 +989,7 @@ describe.sequential("wizard store", () => {
 						title: "Objective 1",
 					},
 				],
+				status: "IN_PROGRESS",
 			});
 			useApplicationStore.setState({ application });
 			const result = determineAppropriateStep("app-123");
@@ -1198,6 +1202,7 @@ describe.sequential("wizard store", () => {
 				id: "app-123",
 				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
 				research_objectives: [],
+				status: "IN_PROGRESS",
 				text: undefined,
 				title: "A Valid Application Title With More Than 10 Chars",
 			});
@@ -1215,6 +1220,7 @@ describe.sequential("wizard store", () => {
 				id: "app-123",
 				rag_sources: [],
 				research_objectives: [],
+				status: "IN_PROGRESS",
 				text: undefined,
 				title: "A Valid Application Title With More Than 10 Chars",
 			});
@@ -1232,6 +1238,7 @@ describe.sequential("wizard store", () => {
 				id: "app-123",
 				rag_sources: [],
 				research_objectives: [],
+				status: "IN_PROGRESS",
 				text: undefined,
 				title: "A Valid Application Title With More Than 10 Chars",
 			});
