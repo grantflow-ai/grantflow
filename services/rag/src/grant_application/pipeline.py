@@ -341,7 +341,7 @@ async def _handle_pipeline_error(
         raise DatabaseError("Failed to record pipeline error in database") from e
 
 
-async def _run_editorial_workflow_if_enabled(
+async def _apply_editorial_workflow(
     *,
     application_id: Any,
     application_text: str,
@@ -781,7 +781,7 @@ async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
                     trace_id=trace_id,
                 )
 
-                application_text = await _run_editorial_workflow_if_enabled(
+                application_text = await _apply_editorial_workflow(
                     application_id=application_id,
                     application_text=application_text,
                     grant_application=grant_application,
