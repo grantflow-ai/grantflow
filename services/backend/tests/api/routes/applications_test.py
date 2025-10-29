@@ -106,7 +106,7 @@ async def test_create_application(
     assert data["description"] == "Test description"
     assert data["grant_template"]["grant_type"] == GrantType.RESEARCH.value
     assert "id" in data
-    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
 
 
 async def test_create_application_minimal(
@@ -124,7 +124,7 @@ async def test_create_application_minimal(
     data = response.json()
     assert data["title"] == "Minimal Application"
     assert data["grant_template"]["grant_type"] == GrantType.TRANSLATIONAL.value
-    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
 
 
 async def test_retrieve_application(
