@@ -108,7 +108,7 @@ async def test_all_sources_failed_grant_application(
             trace_id,
         )
 
-    assert "All rag sources have failed to be indexed" in str(exc_info.value)
+    assert "all rag sources have failed to be indexed" in str(exc_info.value)
     assert exc_info.value.context["grant_application_id"] == str(grant_application.id)
     assert exc_info.value.context["failed_sources"] == 2
     assert exc_info.value.context["total_sources"] == 2
