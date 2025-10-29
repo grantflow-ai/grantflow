@@ -29,6 +29,7 @@ WEBHOOK_PATHS = {
     "/webhooks/pubsub/email-notifications",
     "/webhooks/scheduler/grant-matcher",
     "/webhooks/scheduler/entity-cleanup",
+    "/webhooks/scheduler/orphaned-files-cleanup",
 }
 
 
