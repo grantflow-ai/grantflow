@@ -105,7 +105,9 @@ resource "google_firebase_app_hosting_build" "frontend" {
   project  = google_firebase_app_hosting_backend.frontend.project
   location = google_firebase_app_hosting_backend.frontend.location
   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-  build_id = substr("${local.backend_id}-${formatdate("MMDDhhmm", timestamp())}", 0, 30)
+  # Include first 8 chars of digest in build_id to ensure uniqueness when image changes
+  # This forces Firebase App Hosting to create a truly new build instead of reusing cached builds
+  build_id = var.image_digest != "" ? substr("${local.backend_id}-${substr(replace(var.image_digest, "sha256:", ""), 0, 8)}", 0, 30) : substr("${local.backend_id}-${formatdate("MMDDhhmm", timestamp())}", 0, 30)
 
   source {
     container {
