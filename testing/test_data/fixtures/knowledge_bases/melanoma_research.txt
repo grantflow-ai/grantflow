@@ -1,0 +1,64 @@
+# Scientific Literature - Melanoma Research Knowledge Base
+
+## Document 1: BRAF V600E Mutations in Melanoma
+
+### Source: Cancer Research Journal 2023
+
+BRAF V600E mutations are found in approximately 40-50% of melanoma cases. These mutations lead to constitutive activation of the MAPK pathway, driving uncontrolled cell proliferation. Current targeted therapies (vemurafenib, dabrafenib) show initial response rates of 50-60%, but resistance develops in most patients within 6-12 months.
+
+Key findings:
+- BRAF inhibitors show median progression-free survival of 6.9 months
+- Combination therapy (BRAF + MEK inhibitors) extends PFS to ~11 months
+- Resistance mechanisms include NRAS mutations, MEK mutations, and reactivation of MAPK signaling
+
+### Source: Journal of Clinical Oncology 2022
+
+Recent studies on resistance mechanisms in BRAF-mutant melanoma demonstrate that acquired resistance involves multiple pathways including RTK upregulation, secondary NRAS mutations, and activation of alternative signaling cascades. No studies have successfully demonstrated permanent genetic correction of BRAF mutations in vivo.
+
+## Document 2: CRISPR Gene Editing in Cancer
+
+### Source: Nature Biotechnology 2023
+
+CRISPR-Cas9 technology has shown promise in preclinical cancer models. In vitro studies demonstrate editing efficiencies of 30-60% in cultured cell lines. However, in vivo delivery remains a significant challenge.
+
+Key limitations identified:
+- In vivo editing efficiency typically ranges from 5-15% in solid tumors
+- Off-target effects remain a concern, with rates of 0.1-1% depending on guide RNA design
+- Delivery to solid tumors is limited by poor tissue penetration
+- Immune responses to Cas9 protein can eliminate edited cells
+
+### Source: Cell 2024
+
+Lipid nanoparticle (LNP) delivery systems for CRISPR show promise but face substantial hurdles:
+- LNP accumulation in solid tumors is typically <2% of injected dose
+- LNP-mediated delivery achieves 10-20% editing efficiency in liver (best case)
+- Solid tumor editing efficiency remains below 8% in most published studies
+- HDR (homology-directed repair) is inefficient in non-dividing cells
+- NHEJ (non-homologous end joining) is the predominant repair mechanism, causing insertions/deletions
+
+## Document 3: Patient-Derived Xenograft Models
+
+### Source: Cancer Discovery 2023
+
+Patient-derived xenograft (PDX) models are considered the gold standard for preclinical melanoma research. These models maintain the genetic and histological characteristics of the original patient tumors.
+
+Success criteria for melanoma PDX models:
+- Tumor take rate of 70-90% for melanoma samples
+- Maintenance of BRAF V600E mutation status across passages
+- Response to targeted therapies mirrors clinical outcomes
+- Timeline: 4-8 weeks for initial engraftment, 3-4 weeks per passage
+
+No published studies have demonstrated CRISPR-mediated correction of BRAF V600E in melanoma PDX models. Gene knockout studies using CRISPR show similar resistance patterns to kinase inhibitors.
+
+## Document 4: FDA Regulatory Requirements for Gene Therapy
+
+### Source: FDA Guidance for Industry 2023
+
+Gene therapy products require extensive preclinical and clinical validation:
+- Minimum 2-year toxicology studies in two species
+- Comprehensive biodistribution studies
+- Long-term follow-up for insertional mutagenesis risk
+- Phase 1/2a studies require 12-24 months minimum
+- Manufacturing process validation typically takes 18-24 months
+
+Typical timeline from preclinical to IND (Investigational New Drug) submission: 3-5 years for novel gene therapy platforms. "FDA-ready" status requires completed IND-enabling studies and established manufacturing processes.
