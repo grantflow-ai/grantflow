@@ -412,9 +412,9 @@ async def _run_editorial_workflow_if_enabled(
         logger.info(
             "Editorial workflow completed",
             application_id=str(application_id),
-            approved_changes=workflow_metadata["statistics"]["approved_count"],
-            rejected_changes=workflow_metadata["statistics"]["rejected_count"],
-            word_change=workflow_metadata["statistics"]["word_change"],
+            approved_changes=workflow_metadata["stats"]["approved"],
+            rejected_changes=workflow_metadata["stats"]["rejected"],
+            word_change=workflow_metadata["stats"]["word_change"],
             final_word_count=word_count,
             trace_id=trace_id,
         )
@@ -423,11 +423,11 @@ async def _run_editorial_workflow_if_enabled(
             application_id=str(application_id),
             application_title=grant_application.title,
             original_text=original_application_text,
-            review_letter=workflow_metadata["review_letter"],
-            approved_edits=workflow_metadata["approved_edits"],
+            review_letter=workflow_metadata["review"],
+            approved_edits=workflow_metadata["edits"],
             final_text=application_text,
             timing=workflow_metadata["timing"],
-            statistics=workflow_metadata["statistics"],
+            statistics=workflow_metadata["stats"],
         )
 
     except Exception as e:

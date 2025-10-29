@@ -20,7 +20,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import EDITORIAL_REVIEW_THINKING_BUDGET, SELECTIVE_EDITING_THINKING_BUDGET
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.editorial_types import RedTeamReview, SelectiveEdits
+from services.rag.src.utils.editorial_dto import RedTeamReviewDTO, SelectiveEditsDTO
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
@@ -36,35 +36,49 @@ CRITICAL_REVIEWER_SYSTEM_PROMPT = """You are a scientific grant editor checking 
 **RAG Knowledge Base**: Background literature (current state of science, published studies, existing methods)
 **Proposal**: Scientist's proposed research (their goals, targets, research objectives)
 
-## What to Check
+## Operating Pipeline
 
-### 1. Background Facts from RAG
+### 1. Read
+Read all input materials thoroughly:
+- Grant proposal text (what scientist wrote)
+- CFP requirements (what funder expects)
+- RAG knowledge base (published scientific literature for fact-checking)
 
-When proposal states current facts about the field, verify against RAG:
+Understand the distinction: RAG = past/current facts; Proposal = future goals.
+
+---
+
+### 2. Identify
+Identify issues requiring correction:
+
+**Background Facts from RAG**
+- When proposal states current facts about the field, verify against RAG
 - Check: "Current BRAF inhibitors show 50% response" - is this in RAG?
 - Check: "Previous studies demonstrated X" - is this in RAG?
 - Do not check: "We will achieve 85% efficiency" - this is their goal
 - Do not check: "Expected outcomes include..." - these are hopes, not facts
 
-### 2. Temporal Clarity
+**Temporal Clarity**
+- Check if proposal confuses past published work (should cite RAG), preliminary data (should provide evidence), and future proposed work (research goals)
+- Do not comment on whether goals are achievable
 
-Check if proposal confuses past published work (should cite RAG), preliminary data (should provide evidence), and future proposed work (research goals). Do not comment on whether goals are achievable.
-
-### 3. Writing Quality
-
-Identify AI/marketing phrasing that should be removed:
-- "groundbreaking", "revolutionary", "transformative", "paradigm-shifting"
-- "cutting-edge", "unprecedented", "game-changing", "breakthrough"
+**Writing Quality**
+- AI/marketing phrasing: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
 - Overuse of "novel" (only use once if truly first-of-its-kind)
+- Word repetition in consecutive sentences: "This aims to develop... This project aims to demonstrate..."
 
-Check for word repetition in consecutive sentences:
-- Flag: "This aims to develop... This project aims to demonstrate..."
-- Suggest varying vocabulary or combining sentences
+---
 
-Evaluate clarity, specificity, scientific language, and logical flow.
+### 3. Reason
+For each identified issue, plan your editorial response:
+- Quote the problematic text from proposal
+- Cite specific RAG evidence (for factual issues)
+- Explain the mismatch or problem clearly
+- Draft a specific rewrite that fixes the issue
 
-## Output Format
+---
 
+### 4. Write
 Write 600-1000 word editorial letter focusing only on issues requiring changes. No positive observations. Structure:
 
 1. Opening (50-75 words)
@@ -72,14 +86,20 @@ Write 600-1000 word editorial letter focusing only on issues requiring changes. 
 3. Writing Quality Issues (quote proposal, identify issue, provide specific rewrite)
 4. Closing (summary of changes needed, 50-75 words)
 
-Be thorough: if issue appears multiple times, document all instances with rewrites."""
+Be thorough: if issue appears multiple times, document all instances with rewrites.
+
+## Style and Fidelity
+- Preserve scientific terminology from the proposal
+- Focus on factual accuracy and writing clarity
+- Provide constructive, actionable feedback
+- Maintain professional editorial tone"""
 
 
 CRITICAL_REVIEWER_USER_PROMPT = """# Editorial Review Task
 
-Review the grant proposal for factual accuracy and writing quality. Check background facts against RAG. Do not judge research goals.
+Review the grant proposal for factual accuracy and writing quality using the Read-Identify-Reason-Write pipeline. Check background facts against RAG. Do not judge research goals.
 
-## Materials
+## Input Materials
 
 ### 1. RAG Knowledge Base (Background Literature)
 {knowledge_base}
@@ -90,30 +110,41 @@ Review the grant proposal for factual accuracy and writing quality. Check backgr
 ### 3. CFP Requirements
 {cfp_text}
 
-## Review Framework
+---
 
-### Background Facts Verification
+## Task Instructions
 
-Check if background literature claims match RAG:
+### Step 1: Read
+Read all three materials above. Understand:
+- What the scientist wrote (proposal)
+- What published literature says (RAG)
+- What the funder expects (CFP)
+
+### Step 2: Identify
+Identify issues requiring correction:
+
+**Background Facts Verification**
+- Check if background literature claims match RAG
 - Verify current state-of-field statistics
 - Confirm previous studies mentioned are in RAG
 - Check entity names (proteins, genes, drugs) are correct
+- Do not check research goals or targets (these are what they want to achieve, not facts)
 
-Do not check research goals or targets (these are what they want to achieve, not facts).
+**Writing Quality Check**
+- Flag AI/marketing phrasing: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
+- Use "novel" once maximum
+- Flag word repetition in consecutive sentences: "This aims to develop... This project aims to demonstrate..."
+- Check clarity, specificity, evidence for claims, and flow
 
-### Writing Quality Check
+### Step 3: Reason
+For each issue you identified:
+- Locate exact quote from proposal
+- Find relevant RAG evidence (for factual issues)
+- Determine what's wrong
+- Plan how to fix it
 
-Flag AI/marketing phrasing: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough". Use "novel" once maximum.
-
-Flag word repetition in consecutive sentences:
-- Bad: "This aims to develop... This project aims to demonstrate..."
-- Fix: Vary vocabulary or combine sentences
-
-Check repetition, clarity, specificity, evidence for claims, and flow.
-
-## Output Format
-
-Write 600-1000 word letter focusing only on issues needing changes. No positive observations.
+### Step 4: Write
+Generate 600-1000 word editorial letter focusing only on issues needing changes. No positive observations.
 
 **Opening** (50-75 words): State review purpose
 
@@ -136,13 +167,13 @@ Be thorough: document all instances of repeated issues with specific rewrites.""
 REVIEW_JSON_SCHEMA = {
     "type": "object",
     "properties": {
-        "review_letter": {
+        "review": {
             "type": "string",
             "description": "Editorial review letter (600-1000 words)",
             "minLength": 400,
         },
     },
-    "required": ["review_letter"],
+    "required": ["review"],
 }
 
 
@@ -235,7 +266,7 @@ async def run_critical_review(
     cfp_text: str,
     knowledge_base: str | None = None,
     trace_id: str,
-) -> RedTeamReview:
+) -> RedTeamReviewDTO:
     """
     Run comprehensive editorial review on grant application.
 
@@ -253,7 +284,7 @@ async def run_critical_review(
         trace_id: Trace ID for logging
 
     Returns:
-        RedTeamReview with 600-1000 word editorial letter containing:
+        RedTeamReviewDTO with 600-1000 word editorial letter containing:
         - Data verification issues (numbers, entities, temporal clarity)
         - Writing quality issues (repetition, clarity, specificity)
         - Positive observations
@@ -266,7 +297,7 @@ async def run_critical_review(
         ...     knowledge_base="Scientific papers:\\n\\n1. Paper by Smith et al...",
         ...     trace_id="review-123",
         ... )
-        >>> print(len(review["review_letter"].split()))
+        >>> print(len(review["review"].split()))
         847  # Word count in 600-1000 range
     """
     logger.info(
@@ -303,7 +334,7 @@ You should:
         messages=user_prompt,
         system_prompt=CRITICAL_REVIEWER_SYSTEM_PROMPT,
         response_schema=REVIEW_JSON_SCHEMA,
-        response_type=RedTeamReview,
+        response_type=RedTeamReviewDTO,
         prompt_identifier="editorial_review",
         temperature=0.1,
         top_p=0.9,
@@ -315,8 +346,8 @@ You should:
     logger.info(
         "Editorial review completed",
         trace_id=trace_id,
-        letter_length=len(review["review_letter"]),
-        word_count=len(review["review_letter"].split()),
+        letter_length=len(review["review"]),
+        word_count=len(review["review"].split()),
     )
 
     return review
@@ -324,9 +355,29 @@ You should:
 
 SELECTIVE_EDITOR_SYSTEM_PROMPT = """You are a conservative grant application editor who selectively applies editorial suggestions. RAG knowledge base is ground truth. You protect the scientist's work.
 
-## Decision Process
+## Operating Pipeline
 
-For each suggestion, determine if you should approve or reject:
+### 1. Read
+Read materials in this order:
+- Original proposal (what scientist wrote)
+- Editorial review (what reviewer suggested)
+- RAG knowledge base (ground truth for fact-checking)
+
+Understand the scientist's intent and the reviewer's concerns before making any decisions.
+
+---
+
+### 2. Identify
+For each editorial suggestion, identify:
+- What change is being proposed
+- What section it affects
+- Whether it's about AI/marketing words, word repetition, factual errors, or other issues
+- Whether RAG evidence supports the suggested change
+
+---
+
+### 3. Reason
+For each suggestion, apply decision criteria:
 
 **Always approve (no RAG check needed):**
 - Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
@@ -339,17 +390,7 @@ For each suggestion, determine if you should approve or reject:
 
 Approve only if all 3 are YES. Make minor changes only (1-2 sentences).
 
-## What You Can Change
-
-Always allowed: Remove AI/marketing words, fix word repetition
-
-Allowed with RAG verification: Correct factual errors, remove unsupported claims, clarify ambiguous statements
-
-Not allowed: Rewrite paragraphs, change >2 consecutive sentences, make changes not supported by RAG, change research goals
-
-## Critical Check
-
-Before finalizing any change, check if your proposed wording creates new word repetition in adjacent sentences:
+**Critical Check Before Approval:**
 1. Read surrounding sentences
 2. Check if your edit repeats words from adjacent sentences
 3. If yes, vary vocabulary or combine sentences
@@ -357,27 +398,34 @@ Before finalizing any change, check if your proposed wording creates new word re
 Example bad: "This proposal aims..." followed by "This project aims..." (repetition created)
 Example good: "This proposal aims..." followed by "We will demonstrate..." (varied vocabulary)
 
-## Output Format
+---
 
+### 4. Write
 Return JSON with:
-- `changes`: list of approved sentence-level edits (section, original_sentence, revised_sentence, reason)
-- `rejected_count`: number of suggestions rejected
+- `changes`: list of approved sentence-level edits (section, original, revised, reason)
+- `rejected`: number of suggestions rejected
 - `summary`: brief explanation of what changed and why
 
-Be conservative: when in doubt, reject the change."""
+## Approval Guidelines
+
+**Always allowed:** Remove AI/marketing words, fix word repetition
+
+**Allowed with RAG verification:** Correct factual errors, remove unsupported claims, clarify ambiguous statements
+
+**Not allowed:** Rewrite paragraphs, change >2 consecutive sentences, make changes not supported by RAG, change research goals
+
+## Style and Fidelity
+- Protect the scientist's work and voice
+- Be conservative: when in doubt, reject the change
+- Preserve scientific terminology and technical accuracy
+- Only approve changes that clearly improve the proposal"""
 
 
 SELECTIVE_EDITOR_USER_PROMPT = """# Selective Editing Task
 
-Review editorial suggestions and decide which to apply. Evaluate each using three criteria: correct, RAG-based, and makes proposal better. Approve only if all three are yes.
+Review editorial suggestions and decide which to apply using the Read-Identify-Reason-Write pipeline. Evaluate each using three criteria: correct, RAG-based, and makes proposal better. Approve only if all three are yes.
 
-## Reading Order
-
-1. Original Proposal
-2. Editorial Review
-3. RAG Knowledge Base
-
-## Materials
+## Input Materials
 
 ### 1. Original Proposal
 {application_text}
@@ -388,37 +436,63 @@ Review editorial suggestions and decide which to apply. Evaluate each using thre
 ### 3. RAG Knowledge Base (Ground Truth)
 {knowledge_base}
 
-## Evaluation Process
+---
 
-For each suggestion:
-1. Locate issue in original proposal
-2. Check RAG - does it support the claim?
-3. Evaluate - is correction necessary and beneficial?
-4. Draft proposed change
-5. Check adjacent sentences - does your change create new word repetition?
-6. Decide - approve (1-2 sentences only) or reject
+## Task Instructions
 
-## Approval Criteria
+### Step 1: Read
+Read materials in this specific order:
+1. Original Proposal - understand what the scientist wrote
+2. Editorial Review - understand what changes are being suggested
+3. RAG Knowledge Base - understand what the ground truth says
 
-Reject if:
+### Step 2: Identify
+For each editorial suggestion, identify:
+- What specific change is proposed
+- Which section it affects
+- What type of issue it addresses (AI/marketing words, word repetition, factual error, etc.)
+- Whether RAG evidence exists to support or refute the change
+
+### Step 3: Reason
+For each suggestion, evaluate using decision criteria:
+
+**Always approve (no RAG check needed):**
+- Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
+- Fixing word repetition in consecutive sentences
+
+**For other suggestions, ask three questions:**
+1. Is the comment correct?
+2. Is the comment based on RAG?
+3. Does it make the proposal better?
+
+Approve only if all 3 are YES.
+
+**Rejection Criteria:**
 - Subjective preference
 - RAG doesn't support claim
 - Change too extensive
 - Original is fine
 - Creates new repetition
 
-Approve only if:
+**Approval Criteria:**
 - Factual error contradicted by RAG
 - Unsupported claim not in RAG
 - Clear ambiguity confusing readers
 - Removing AI/marketing words
 - Change doesn't create new problems
 
-## Output
+**Critical Check Before Approval:**
+1. Locate issue in original proposal
+2. Check RAG - does it support the claim?
+3. Evaluate - is correction necessary and beneficial?
+4. Draft proposed change (1-2 sentences only)
+5. Check adjacent sentences - does your change create new word repetition?
+6. Decide - approve or reject
 
+### Step 4: Write
 Return JSON:
-- `changes`: approved sentence-level edits
-- `rejected_count`: number rejected
+- `changes`: approved sentence-level edits (section, original, revised, reason)
+- `rejected`: number rejected
 - `summary`: what changed and why
 
 Be conservative: protect the scientist's work."""
@@ -434,18 +508,18 @@ SELECTIVE_EDITS_JSON_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "section": {"type": "string", "description": "Section name"},
-                    "original_sentence": {"type": "string", "description": "Original sentence"},
-                    "revised_sentence": {"type": "string", "description": "Revised sentence"},
+                    "original": {"type": "string", "description": "Original sentence"},
+                    "revised": {"type": "string", "description": "Revised sentence"},
                     "reason": {"type": "string", "description": "Reason for change"},
                 },
-                "required": ["section", "original_sentence", "revised_sentence", "reason"],
+                "required": ["section", "original", "revised", "reason"],
             },
             "maxItems": 20,
         },
-        "rejected_count": {"type": "integer", "description": "Number of rejected suggestions", "minimum": 0},
+        "rejected": {"type": "integer", "description": "Number of rejected suggestions", "minimum": 0},
         "summary": {"type": "string", "description": "Brief summary of changes", "minLength": 10},
     },
-    "required": ["changes", "rejected_count", "summary"],
+    "required": ["changes", "rejected", "summary"],
 }
 
 
@@ -455,7 +529,7 @@ async def apply_selective_edits(
     review_letter: str,
     knowledge_base: str,
     trace_id: str,
-) -> SelectiveEdits:
+) -> SelectiveEditsDTO:
     """
     Selectively apply editorial suggestions to a grant proposal.
 
@@ -476,14 +550,14 @@ async def apply_selective_edits(
         trace_id: Trace ID for logging
 
     Returns:
-        SelectiveEdits with approved changes, rejected count, and summary
+        SelectiveEditsDTO with approved changes, rejected count, and summary
 
     Example:
         >>> edits = await apply_selective_edits(
         ...     application_text=proposal_text, review_letter=review_text, knowledge_base=rag_kb, trace_id="edit-123"
         ... )
         >>> print(f"Applied {len(edits['changes'])} changes")
-        >>> print(f"Rejected {edits['rejected_count']} suggestions")
+        >>> print(f"Rejected {edits['rejected']} suggestions")
     """
     logger.info(
         "Starting selective editing",
@@ -504,7 +578,7 @@ async def apply_selective_edits(
         messages=user_prompt,
         system_prompt=SELECTIVE_EDITOR_SYSTEM_PROMPT,
         response_schema=SELECTIVE_EDITS_JSON_SCHEMA,
-        response_type=SelectiveEdits,
+        response_type=SelectiveEditsDTO,
         prompt_identifier="selective_editing",
         temperature=0.1,
         top_p=0.9,
@@ -517,7 +591,7 @@ async def apply_selective_edits(
         "Selective editing completed",
         trace_id=trace_id,
         approved_changes=len(edits["changes"]),
-        rejected_count=edits["rejected_count"],
+        rejected_count=edits["rejected"],
     )
 
     return edits
