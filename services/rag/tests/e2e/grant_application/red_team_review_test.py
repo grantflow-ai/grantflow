@@ -67,12 +67,12 @@ async def test_red_team_critical_review_workflow(
     performance_context.end_stage()
 
     # Validate review structure
-    assert "review_letter" in review, "Review missing review_letter"
-    assert len(review["review_letter"]) > 0, "Review letter should not be empty"
+    assert "review" in review, "Review missing review"
+    assert len(review["review"]) > 0, "Review letter should not be empty"
 
-    word_count = len(review["review_letter"].split())
-    logger.info("✓ Review completed: %s words, %s characters", word_count, len(review["review_letter"]))
-    logger.info("  Letter preview: %s...", review["review_letter"][:150])
+    word_count = len(review["review"].split())
+    logger.info("✓ Review completed: %s words, %s characters", word_count, len(review["review"]))
+    logger.info("  Letter preview: %s...", review["review"][:150])
 
     min_review_words = 300
     target_review_words_range = (600, 1000)
@@ -101,7 +101,7 @@ async def test_red_team_critical_review_workflow(
 
 ---
 
-{review["review_letter"]}
+{review["review"]}
 """
 
     review_md_path.write_text(review_md)
@@ -116,6 +116,6 @@ async def test_red_team_critical_review_workflow(
     logger.info("✅ Red team review E2E test completed successfully")
 
     performance_context.set_metadata("word_count", word_count)
-    performance_context.set_metadata("review_length", len(review["review_letter"]))
+    performance_context.set_metadata("review_length", len(review["review"]))
     performance_context.set_metadata("output_file", str(review_md_path))
     performance_context.set_metadata("has_knowledge_base", knowledge_base is not None)

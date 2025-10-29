@@ -17,24 +17,24 @@ import time
 
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.utils.editorial_types import (
-    EditorialWorkflowMetadata,
-    RedTeamReview,
-    SelectiveEdits,
-    SentenceChange,
+from services.rag.src.utils.editorial_dto import (
+    EditorialMetadataDTO,
+    RedTeamReviewDTO,
+    SelectiveEditsDTO,
+    SentenceChangeDTO,
 )
 from services.rag.src.utils.red_team_reviewer import apply_selective_edits, run_critical_review
 
 logger = get_logger(__name__)
 
 
-def apply_text_changes(original_text: str, changes: list[SentenceChange]) -> str:
+def apply_text_changes(original_text: str, changes: list[SentenceChangeDTO]) -> str:
     """
     Apply sentence-level changes to the original text.
 
     Args:
         original_text: Original proposal text
-        changes: List of approved sentence-level changes from SelectiveEdits
+        changes: List of approved sentence-level changes from SelectiveEditsDTO
 
     Returns:
         Text with approved changes applied
@@ -45,8 +45,8 @@ def apply_text_changes(original_text: str, changes: list[SentenceChange]) -> str
     failed_count = 0
 
     for change in changes:
-        original_sentence = change["original_sentence"]
-        revised_sentence = change["revised_sentence"]
+        original_sentence = change["original"]
+        revised_sentence = change["revised"]
         section = change["section"]
 
         if original_sentence in result:
@@ -69,7 +69,7 @@ def apply_text_changes(original_text: str, changes: list[SentenceChange]) -> str
                 result_length=len(result),
             )
 
-    logger.info(
+    logger.debug(
         "Text changes applied",
         applied_count=applied_count,
         failed_count=failed_count,
@@ -85,7 +85,7 @@ async def run_editorial_workflow(
     cfp_text: str,
     knowledge_base: str,
     trace_id: str,
-) -> tuple[str, EditorialWorkflowMetadata]:
+) -> tuple[str, EditorialMetadataDTO]:
     """
     Run two-LLM editorial workflow on generated grant application.
 
@@ -100,7 +100,7 @@ async def run_editorial_workflow(
     """
     workflow_start = time.perf_counter()
 
-    logger.info(
+    logger.debug(
         "Starting editorial workflow",
         application_length=len(application_text),
         application_words=len(application_text.split()),
@@ -112,7 +112,7 @@ async def run_editorial_workflow(
     review_start = time.perf_counter()
     logger.debug("Running editorial review (LLM 1)", trace_id=trace_id)
 
-    review: RedTeamReview = await run_critical_review(
+    review: RedTeamReviewDTO = await run_critical_review(
         application_text=application_text,
         cfp_text=cfp_text,
         knowledge_base=knowledge_base,
@@ -120,11 +120,11 @@ async def run_editorial_workflow(
     )
 
     review_duration = time.perf_counter() - review_start
-    review_words = len(review["review_letter"].split())
+    review_words = len(review["review"].split())
 
-    logger.info(
+    logger.debug(
         "Editorial review completed",
-        duration_seconds=round(review_duration, 2),
+        elapsed_ms=int(review_duration * 1000),
         review_words=review_words,
         trace_id=trace_id,
     )
@@ -132,22 +132,22 @@ async def run_editorial_workflow(
     editing_start = time.perf_counter()
     logger.debug("Running selective editing (LLM 2)", trace_id=trace_id)
 
-    edits: SelectiveEdits = await apply_selective_edits(
+    edits: SelectiveEditsDTO = await apply_selective_edits(
         application_text=application_text,
-        review_letter=review["review_letter"],
+        review_letter=review["review"],
         knowledge_base=knowledge_base,
         trace_id=trace_id,
     )
 
     editing_duration = time.perf_counter() - editing_start
 
-    logger.info(
+    logger.debug(
         "Selective editing completed",
-        duration_seconds=round(editing_duration, 2),
+        elapsed_ms=int(editing_duration * 1000),
         approved_count=len(edits["changes"]),
-        rejected_count=edits["rejected_count"],
-        approval_rate=round(len(edits["changes"]) / (len(edits["changes"]) + edits["rejected_count"]) * 100, 1)
-        if (len(edits["changes"]) + edits["rejected_count"]) > 0
+        rejected_count=edits["rejected"],
+        approval_rate=round(len(edits["changes"]) / (len(edits["changes"]) + edits["rejected"]) * 100, 1)
+        if (len(edits["changes"]) + edits["rejected"]) > 0
         else 0.0,
         trace_id=trace_id,
     )
@@ -170,37 +170,37 @@ async def run_editorial_workflow(
 
     logger.info(
         "Editorial workflow completed",
-        total_duration_seconds=round(workflow_duration, 2),
-        review_duration=round(review_duration, 2),
-        editing_duration=round(editing_duration, 2),
-        apply_duration=round(apply_duration, 2),
+        elapsed_ms=int(workflow_duration * 1000),
+        review_ms=int(review_duration * 1000),
+        editing_ms=int(editing_duration * 1000),
+        apply_ms=int(apply_duration * 1000),
         original_words=original_words,
         edited_words=edited_words,
         word_change=word_change,
         approved_changes=len(edits["changes"]),
-        rejected_suggestions=edits["rejected_count"],
+        rejected_suggestions=edits["rejected"],
         trace_id=trace_id,
     )
 
-    workflow_metadata: EditorialWorkflowMetadata = {
-        "review_letter": review["review_letter"],
-        "approved_edits": edits,
+    workflow_metadata: EditorialMetadataDTO = {
+        "review": review["review"],
+        "edits": edits,
         "timing": {
-            "total_seconds": round(workflow_duration, 2),
-            "review_seconds": round(review_duration, 2),
-            "editing_seconds": round(editing_duration, 2),
-            "apply_seconds": round(apply_duration, 2),
+            "elapsed_ms": int(workflow_duration * 1000),
+            "review_ms": int(review_duration * 1000),
+            "editing_ms": int(editing_duration * 1000),
+            "apply_ms": int(apply_duration * 1000),
         },
-        "statistics": {
+        "stats": {
             "review_words": review_words,
             "original_words": original_words,
             "edited_words": edited_words,
             "word_change": word_change,
-            "approved_count": len(edits["changes"]),
-            "rejected_count": edits["rejected_count"],
-            "total_suggestions": len(edits["changes"]) + edits["rejected_count"],
-            "approval_rate": round(len(edits["changes"]) / (len(edits["changes"]) + edits["rejected_count"]) * 100, 1)
-            if (len(edits["changes"]) + edits["rejected_count"]) > 0
+            "approved": len(edits["changes"]),
+            "rejected": edits["rejected"],
+            "total": len(edits["changes"]) + edits["rejected"],
+            "approval_rate": round(len(edits["changes"]) / (len(edits["changes"]) + edits["rejected"]) * 100, 1)
+            if (len(edits["changes"]) + edits["rejected"]) > 0
             else 0.0,
         },
     }

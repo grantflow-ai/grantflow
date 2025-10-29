@@ -16,10 +16,10 @@ from packages.shared_utils.src.logger import get_logger
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 
-    from services.rag.src.utils.editorial_types import (
-        EditorialWorkflowStatistics,
-        EditorialWorkflowTiming,
-        SelectiveEdits,
+    from services.rag.src.utils.editorial_dto import (
+        EditorialStatsDTO,
+        EditorialTimingDTO,
+        SelectiveEditsDTO,
     )
 
 logger = get_logger(__name__)
@@ -196,10 +196,10 @@ def save_editorial_workflow_output(
     application_title: str,
     original_text: str,
     review_letter: str,
-    approved_edits: SelectiveEdits,
+    approved_edits: SelectiveEditsDTO,
     final_text: str,
-    timing: EditorialWorkflowTiming,
-    statistics: EditorialWorkflowStatistics,
+    timing: EditorialTimingDTO,
+    statistics: EditorialStatsDTO,
     output_dir: str | None = None,
 ) -> Path:
     """
@@ -245,14 +245,14 @@ def save_editorial_workflow_output(
         "",
         "| Metric | Value |",
         "|--------|-------|",
-        f"| **Total Duration** | {timing['total_seconds']:.2f} seconds |",
-        f"| Review Generation (LLM 1) | {timing['review_seconds']:.2f} seconds |",
-        f"| Selective Editing (LLM 2) | {timing['editing_seconds']:.2f} seconds |",
-        f"| Text Application | {timing['apply_seconds']:.2f} seconds |",
+        f"| **Total Duration** | {timing['elapsed_ms'] / 1000:.2f} seconds |",
+        f"| Review Generation (LLM 1) | {timing['review_ms'] / 1000:.2f} seconds |",
+        f"| Selective Editing (LLM 2) | {timing['editing_ms'] / 1000:.2f} seconds |",
+        f"| Text Application | {timing['apply_ms'] / 1000:.2f} seconds |",
         f"| **Review Word Count** | {statistics['review_words']:,} words |",
-        f"| **Suggestions Total** | {statistics['total_suggestions']} |",
-        f"| **Approved Changes** | {statistics['approved_count']} |",
-        f"| **Rejected Changes** | {statistics['rejected_count']} |",
+        f"| **Suggestions Total** | {statistics['total']} |",
+        f"| **Approved Changes** | {statistics['approved']} |",
+        f"| **Rejected Changes** | {statistics['rejected']} |",
         f"| **Approval Rate** | {statistics['approval_rate']:.1f}% |",
         f"| **Original Word Count** | {statistics['original_words']:,} words |",
         f"| **Final Word Count** | {statistics['edited_words']:,} words |",
@@ -266,16 +266,16 @@ def save_editorial_workflow_output(
         "- **Input:** Original Proposal + CFP + RAG Knowledge Base",
         f"- **Output:** {statistics['review_words']:,}-word editorial review",
         "- **Focus:** Background facts verification + Writing quality",
-        f"- **Duration:** {timing['review_seconds']:.2f}s",
+        f"- **Duration:** {timing['review_ms'] / 1000:.2f}s",
         "",
         "### Step 2: Selective Editing (LLM 2 - Great Application Editor)",
         "- **Input:** Original Proposal → Review → RAG Knowledge Base (in order)",
         "- **Decision Criteria:** Correct? RAG-based? Makes it better? (ALL 3 must be YES)",
-        f"- **Output:** {statistics['approved_count']} approved changes, {statistics['rejected_count']} rejected",
-        f"- **Duration:** {timing['editing_seconds']:.2f}s",
+        f"- **Output:** {statistics['approved']} approved changes, {statistics['rejected']} rejected",
+        f"- **Duration:** {timing['editing_ms'] / 1000:.2f}s",
         "",
         "### Step 3: Final Proposal",
-        f"- **Changes applied:** {statistics['approved_count']} sentence-level edits",
+        f"- **Changes applied:** {statistics['approved']} sentence-level edits",
         f"- **Net change:** {statistics['word_change']:+,} words",
         "",
         "---",
@@ -298,10 +298,10 @@ def save_editorial_workflow_output(
                 f"**Reason:** {change['reason']}",
                 "",
                 "**Original:**",
-                f"> {change['original_sentence']}",
+                f"> {change['original']}",
                 "",
                 "**Revised:**",
-                f"> {change['revised_sentence']}",
+                f"> {change['revised']}",
                 "",
                 "---",
                 "",
@@ -346,8 +346,8 @@ def save_editorial_workflow_output(
         "Saved editorial workflow output",
         application_id=application_id,
         output_path=str(output_path),
-        approved_changes=statistics["approved_count"],
-        rejected_changes=statistics["rejected_count"],
+        approved_changes=statistics["approved"],
+        rejected_changes=statistics["rejected"],
     )
 
     return output_path
