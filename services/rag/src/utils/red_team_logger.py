@@ -16,7 +16,7 @@ from packages.shared_utils.src.logger import get_logger
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 
-    from services.rag.src.utils.editorial_dto import (
+    from services.rag.src.editorial_dto import (
         EditorialStatsDTO,
         EditorialTimingDTO,
         SelectiveEditsDTO,

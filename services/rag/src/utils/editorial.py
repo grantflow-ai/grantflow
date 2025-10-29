@@ -17,7 +17,7 @@ import time
 
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.utils.editorial_dto import (
+from services.rag.src.editorial_dto import (
     EditorialMetadataDTO,
     RedTeamReviewDTO,
     SelectiveEditsDTO,

@@ -19,14 +19,12 @@ from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import EDITORIAL_REVIEW_THINKING_BUDGET, SELECTIVE_EDITING_THINKING_BUDGET
+from services.rag.src.editorial_dto import RedTeamReviewDTO, SelectiveEditsDTO
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.editorial_dto import RedTeamReviewDTO, SelectiveEditsDTO
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchObjective
-
-logger = get_logger(__name__)
 
 
 CRITICAL_REVIEWER_SYSTEM_PROMPT = """You are a scientific grant editor checking writing quality and verifying background facts from RAG knowledge base.
@@ -175,6 +173,179 @@ REVIEW_JSON_SCHEMA = {
     },
     "required": ["review"],
 }
+
+
+SELECTIVE_EDITOR_SYSTEM_PROMPT = """You are a conservative grant application editor who selectively applies editorial suggestions. RAG knowledge base is ground truth. You protect the scientist's work.
+
+## Operating Pipeline
+
+### 1. Read
+Read materials in this order:
+- Original proposal (what scientist wrote)
+- Editorial review (what reviewer suggested)
+- RAG knowledge base (ground truth for fact-checking)
+
+Understand the scientist's intent and the reviewer's concerns before making any decisions.
+
+---
+
+### 2. Identify
+For each editorial suggestion, identify:
+- What change is being proposed
+- What section it affects
+- Whether it's about AI/marketing words, word repetition, factual errors, or other issues
+- Whether RAG evidence supports the suggested change
+
+---
+
+### 3. Reason
+For each suggestion, apply decision criteria:
+
+**Always approve (no RAG check needed):**
+- Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
+- Fixing word repetition in consecutive sentences (e.g., "aims...aims")
+
+**For other suggestions, ask three questions:**
+1. Is the comment correct?
+2. Is the comment based on RAG?
+3. Does it make the proposal better?
+
+Approve only if all 3 are YES. Make minor changes only (1-2 sentences).
+
+**Critical Check Before Approval:**
+1. Read surrounding sentences
+2. Check if your edit repeats words from adjacent sentences
+3. If yes, vary vocabulary or combine sentences
+
+Example bad: "This proposal aims..." followed by "This project aims..." (repetition created)
+Example good: "This proposal aims..." followed by "We will demonstrate..." (varied vocabulary)
+
+---
+
+### 4. Write
+Return JSON with:
+- `changes`: list of approved sentence-level edits (section, original, revised, reason)
+- `rejected`: number of suggestions rejected
+- `summary`: brief explanation of what changed and why
+
+## Approval Guidelines
+
+**Always allowed:** Remove AI/marketing words, fix word repetition
+
+**Allowed with RAG verification:** Correct factual errors, remove unsupported claims, clarify ambiguous statements
+
+**Not allowed:** Rewrite paragraphs, change >2 consecutive sentences, make changes not supported by RAG, change research goals
+
+## Style and Fidelity
+- Protect the scientist's work and voice
+- Be conservative: when in doubt, reject the change
+- Preserve scientific terminology and technical accuracy
+- Only approve changes that clearly improve the proposal"""
+
+
+SELECTIVE_EDITOR_USER_PROMPT = """# Selective Editing Task
+
+Review editorial suggestions and decide which to apply using the Read-Identify-Reason-Write pipeline. Evaluate each using three criteria: correct, RAG-based, and makes proposal better. Approve only if all three are yes.
+
+## Input Materials
+
+### 1. Original Proposal
+{application_text}
+
+### 2. Editorial Review
+{review_letter}
+
+### 3. RAG Knowledge Base (Ground Truth)
+{knowledge_base}
+
+---
+
+## Task Instructions
+
+### Step 1: Read
+Read materials in this specific order:
+1. Original Proposal - understand what the scientist wrote
+2. Editorial Review - understand what changes are being suggested
+3. RAG Knowledge Base - understand what the ground truth says
+
+### Step 2: Identify
+For each editorial suggestion, identify:
+- What specific change is proposed
+- Which section it affects
+- What type of issue it addresses (AI/marketing words, word repetition, factual error, etc.)
+- Whether RAG evidence exists to support or refute the change
+
+### Step 3: Reason
+For each suggestion, evaluate using decision criteria:
+
+**Always approve (no RAG check needed):**
+- Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
+- Fixing word repetition in consecutive sentences
+
+**For other suggestions, ask three questions:**
+1. Is the comment correct?
+2. Is the comment based on RAG?
+3. Does it make the proposal better?
+
+Approve only if all 3 are YES.
+
+**Rejection Criteria:**
+- Subjective preference
+- RAG doesn't support claim
+- Change too extensive
+- Original is fine
+- Creates new repetition
+
+**Approval Criteria:**
+- Factual error contradicted by RAG
+- Unsupported claim not in RAG
+- Clear ambiguity confusing readers
+- Removing AI/marketing words
+- Change doesn't create new problems
+
+**Critical Check Before Approval:**
+1. Locate issue in original proposal
+2. Check RAG - does it support the claim?
+3. Evaluate - is correction necessary and beneficial?
+4. Draft proposed change (1-2 sentences only)
+5. Check adjacent sentences - does your change create new word repetition?
+6. Decide - approve or reject
+
+### Step 4: Write
+Return JSON:
+- `changes`: approved sentence-level edits (section, original, revised, reason)
+- `rejected`: number rejected
+- `summary`: what changed and why
+
+Be conservative: protect the scientist's work."""
+
+
+SELECTIVE_EDITS_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "changes": {
+            "type": "array",
+            "description": "Approved sentence-level changes",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "section": {"type": "string", "description": "Section name"},
+                    "original": {"type": "string", "description": "Original sentence"},
+                    "revised": {"type": "string", "description": "Revised sentence"},
+                    "reason": {"type": "string", "description": "Reason for change"},
+                },
+                "required": ["section", "original", "revised", "reason"],
+            },
+            "maxItems": 20,
+        },
+        "rejected": {"type": "integer", "description": "Number of rejected suggestions", "minimum": 0},
+        "summary": {"type": "string", "description": "Brief summary of changes", "minLength": 10},
+    },
+    "required": ["changes", "rejected", "summary"],
+}
+
+
+logger = get_logger(__name__)
 
 
 async def retrieve_knowledge_base_for_application(
@@ -351,176 +522,6 @@ You should:
     )
 
     return review
-
-
-SELECTIVE_EDITOR_SYSTEM_PROMPT = """You are a conservative grant application editor who selectively applies editorial suggestions. RAG knowledge base is ground truth. You protect the scientist's work.
-
-## Operating Pipeline
-
-### 1. Read
-Read materials in this order:
-- Original proposal (what scientist wrote)
-- Editorial review (what reviewer suggested)
-- RAG knowledge base (ground truth for fact-checking)
-
-Understand the scientist's intent and the reviewer's concerns before making any decisions.
-
----
-
-### 2. Identify
-For each editorial suggestion, identify:
-- What change is being proposed
-- What section it affects
-- Whether it's about AI/marketing words, word repetition, factual errors, or other issues
-- Whether RAG evidence supports the suggested change
-
----
-
-### 3. Reason
-For each suggestion, apply decision criteria:
-
-**Always approve (no RAG check needed):**
-- Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
-- Fixing word repetition in consecutive sentences (e.g., "aims...aims")
-
-**For other suggestions, ask three questions:**
-1. Is the comment correct?
-2. Is the comment based on RAG?
-3. Does it make the proposal better?
-
-Approve only if all 3 are YES. Make minor changes only (1-2 sentences).
-
-**Critical Check Before Approval:**
-1. Read surrounding sentences
-2. Check if your edit repeats words from adjacent sentences
-3. If yes, vary vocabulary or combine sentences
-
-Example bad: "This proposal aims..." followed by "This project aims..." (repetition created)
-Example good: "This proposal aims..." followed by "We will demonstrate..." (varied vocabulary)
-
----
-
-### 4. Write
-Return JSON with:
-- `changes`: list of approved sentence-level edits (section, original, revised, reason)
-- `rejected`: number of suggestions rejected
-- `summary`: brief explanation of what changed and why
-
-## Approval Guidelines
-
-**Always allowed:** Remove AI/marketing words, fix word repetition
-
-**Allowed with RAG verification:** Correct factual errors, remove unsupported claims, clarify ambiguous statements
-
-**Not allowed:** Rewrite paragraphs, change >2 consecutive sentences, make changes not supported by RAG, change research goals
-
-## Style and Fidelity
-- Protect the scientist's work and voice
-- Be conservative: when in doubt, reject the change
-- Preserve scientific terminology and technical accuracy
-- Only approve changes that clearly improve the proposal"""
-
-
-SELECTIVE_EDITOR_USER_PROMPT = """# Selective Editing Task
-
-Review editorial suggestions and decide which to apply using the Read-Identify-Reason-Write pipeline. Evaluate each using three criteria: correct, RAG-based, and makes proposal better. Approve only if all three are yes.
-
-## Input Materials
-
-### 1. Original Proposal
-{application_text}
-
-### 2. Editorial Review
-{review_letter}
-
-### 3. RAG Knowledge Base (Ground Truth)
-{knowledge_base}
-
----
-
-## Task Instructions
-
-### Step 1: Read
-Read materials in this specific order:
-1. Original Proposal - understand what the scientist wrote
-2. Editorial Review - understand what changes are being suggested
-3. RAG Knowledge Base - understand what the ground truth says
-
-### Step 2: Identify
-For each editorial suggestion, identify:
-- What specific change is proposed
-- Which section it affects
-- What type of issue it addresses (AI/marketing words, word repetition, factual error, etc.)
-- Whether RAG evidence exists to support or refute the change
-
-### Step 3: Reason
-For each suggestion, evaluate using decision criteria:
-
-**Always approve (no RAG check needed):**
-- Removing AI/marketing words: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
-- Fixing word repetition in consecutive sentences
-
-**For other suggestions, ask three questions:**
-1. Is the comment correct?
-2. Is the comment based on RAG?
-3. Does it make the proposal better?
-
-Approve only if all 3 are YES.
-
-**Rejection Criteria:**
-- Subjective preference
-- RAG doesn't support claim
-- Change too extensive
-- Original is fine
-- Creates new repetition
-
-**Approval Criteria:**
-- Factual error contradicted by RAG
-- Unsupported claim not in RAG
-- Clear ambiguity confusing readers
-- Removing AI/marketing words
-- Change doesn't create new problems
-
-**Critical Check Before Approval:**
-1. Locate issue in original proposal
-2. Check RAG - does it support the claim?
-3. Evaluate - is correction necessary and beneficial?
-4. Draft proposed change (1-2 sentences only)
-5. Check adjacent sentences - does your change create new word repetition?
-6. Decide - approve or reject
-
-### Step 4: Write
-Return JSON:
-- `changes`: approved sentence-level edits (section, original, revised, reason)
-- `rejected`: number rejected
-- `summary`: what changed and why
-
-Be conservative: protect the scientist's work."""
-
-
-SELECTIVE_EDITS_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "changes": {
-            "type": "array",
-            "description": "Approved sentence-level changes",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "section": {"type": "string", "description": "Section name"},
-                    "original": {"type": "string", "description": "Original sentence"},
-                    "revised": {"type": "string", "description": "Revised sentence"},
-                    "reason": {"type": "string", "description": "Reason for change"},
-                },
-                "required": ["section", "original", "revised", "reason"],
-            },
-            "maxItems": 20,
-        },
-        "rejected": {"type": "integer", "description": "Number of rejected suggestions", "minimum": 0},
-        "summary": {"type": "string", "description": "Brief summary of changes", "minLength": 10},
-    },
-    "required": ["changes", "rejected", "summary"],
-}
 
 
 async def apply_selective_edits(
