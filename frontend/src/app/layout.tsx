@@ -8,9 +8,6 @@ import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
 export const metadata: Metadata = {
-	alternates: {
-		canonical: "/",
-	},
 	authors: [{ name: "GrantFlow.AI" }],
 	description:
 		"GrantFlow.ai transforms the complex grant application process into a fast, intelligent workflow. Try it for free!",

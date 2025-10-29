@@ -299,9 +299,6 @@
     place-items: center;
   }
 
-  .progress-circle::after span {
-    display: none;
-  }
 
   .progress-circle:not(.progress-circle) {
     position: relative;
