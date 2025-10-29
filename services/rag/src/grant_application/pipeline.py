@@ -4,7 +4,7 @@ from typing import Any
 
 from packages.db.src.enums import ApplicationStatusEnum, GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.db.src.query_helpers import select_active
-from packages.db.src.tables import GrantApplication, GrantTemplate, RagGenerationJob
+from packages.db.src.tables import GrantApplication, GrantTemplate, GrantTemplateSource, RagGenerationJob, RagSource
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -23,6 +23,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from services.rag.src.constants import ENABLE_EDITORIAL_WORKFLOW
 from services.rag.src.grant_application.constants import GRANT_APPLICATION_STAGES_ORDER
 from services.rag.src.grant_application.dto import StageDTO
 from services.rag.src.grant_application.handlers import (
@@ -40,8 +41,14 @@ from services.rag.src.grant_application.utils import (
     is_generate_research_plan_dto,
 )
 from services.rag.src.utils.checks import verify_rag_sources_indexed
+from services.rag.src.utils.editorial import run_editorial_workflow
 from services.rag.src.utils.job_manager import JobManager
-from services.rag.src.utils.red_team_logger import save_application_output, save_sections_breakdown
+from services.rag.src.utils.red_team_logger import (
+    save_application_output,
+    save_editorial_workflow_output,
+    save_sections_breakdown,
+)
+from services.rag.src.utils.retrieval import retrieve_documents
 
 logger = get_logger(__name__)
 
@@ -332,6 +339,107 @@ async def _handle_pipeline_error(
             )
     except SQLAlchemyError as e:
         raise DatabaseError("Failed to record pipeline error in database") from e
+
+
+async def _run_editorial_workflow_if_enabled(
+    *,
+    application_id: Any,
+    application_text: str,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> str:
+    """
+    Run editorial workflow if enabled, returning potentially modified application text.
+
+    Args:
+        application_id: Grant application ID
+        application_text: Current application text
+        grant_application: Grant application object
+        grant_template: Grant template object
+        session_maker: Database session maker
+        trace_id: Trace ID for logging
+
+    Returns:
+        Application text (modified if editorial workflow was run, unchanged otherwise)
+    """
+    if not ENABLE_EDITORIAL_WORKFLOW:
+        return application_text
+
+    try:
+        logger.info(
+            "Starting editorial workflow",
+            application_id=str(application_id),
+            trace_id=trace_id,
+        )
+
+        cfp_text = ""
+        async with session_maker() as session:
+            result = await session.execute(
+                select_active(RagSource)
+                .join(GrantTemplateSource)
+                .where(GrantTemplateSource.grant_template_id == grant_template.id)
+            )
+            rag_sources = result.scalars().all()
+
+            for source in rag_sources:
+                if source.text_content:
+                    cfp_text = source.text_content
+                    break
+
+        knowledge_base_docs = await retrieve_documents(
+            application_id=str(application_id),
+            search_queries=[grant_application.title]
+            + [obj["title"] for obj in (grant_application.research_objectives or [])],
+            task_description="Editorial review knowledge base retrieval",
+            max_tokens=10000,
+            trace_id=trace_id,
+        )
+        knowledge_base = "\n\n".join(knowledge_base_docs)
+
+        original_application_text = application_text
+
+        application_text, workflow_metadata = await run_editorial_workflow(
+            application_text=application_text,
+            cfp_text=cfp_text,
+            knowledge_base=knowledge_base,
+            trace_id=trace_id,
+        )
+
+        word_count = len(application_text.split()) if application_text else 0
+
+        logger.info(
+            "Editorial workflow completed",
+            application_id=str(application_id),
+            approved_changes=workflow_metadata["statistics"]["approved_count"],
+            rejected_changes=workflow_metadata["statistics"]["rejected_count"],
+            word_change=workflow_metadata["statistics"]["word_change"],
+            final_word_count=word_count,
+            trace_id=trace_id,
+        )
+
+        save_editorial_workflow_output(
+            application_id=str(application_id),
+            application_title=grant_application.title,
+            original_text=original_application_text,
+            review_letter=workflow_metadata["review_letter"],
+            approved_edits=workflow_metadata["approved_edits"],
+            final_text=application_text,
+            timing=workflow_metadata["timing"],
+            statistics=workflow_metadata["statistics"],
+        )
+
+    except Exception as e:
+        logger.error(
+            "Editorial workflow failed (non-fatal)",
+            application_id=str(application_id),
+            error=str(e),
+            error_type=type(e).__name__,
+            trace_id=trace_id,
+        )
+
+    return application_text
 
 
 async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
@@ -673,7 +781,15 @@ async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
                     trace_id=trace_id,
                 )
 
-                # RED TEAM: Save output for review
+                application_text = await _run_editorial_workflow_if_enabled(
+                    application_id=application_id,
+                    application_text=application_text,
+                    grant_application=grant_application,
+                    grant_template=grant_template,
+                    session_maker=session_maker,
+                    trace_id=trace_id,
+                )
+
                 try:
                     save_application_output(
                         application_id=str(application_id),
@@ -692,6 +808,7 @@ async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
                         "Failed to save red team output (non-fatal)",
                         application_id=str(application_id),
                         error=str(e),
+                        error_type=type(e).__name__,
                         trace_id=trace_id,
                     )
 

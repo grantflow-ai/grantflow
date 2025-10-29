@@ -5,6 +5,8 @@ This module provides functionality to save complete grant application text
 after all pipeline stages complete, including NLP evaluation.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,6 +15,12 @@ from packages.shared_utils.src.logger import get_logger
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+
+    from services.rag.src.utils.editorial_types import (
+        EditorialWorkflowStatistics,
+        EditorialWorkflowTiming,
+        SelectiveEdits,
+    )
 
 logger = get_logger(__name__)
 
@@ -37,35 +45,21 @@ def save_application_output(
 
     Returns:
         Path to the saved output file
-
-    Example:
-        >>> path = save_application_output(
-        ...     application_id="123e4567-e89b-12d3-a456-426614174000",
-        ...     application_title="Novel CRISPR Therapeutics",
-        ...     application_text="# Abstract\\n\\nThis proposal...",
-        ...     output_format="md",
-        ... )
-        >>> print(path)
-        testing/results/red_team/2025-01-15/novel_crispr_therapeutics_20250115_143022.md
     """
-    # Determine output directory
     if output_dir is None:
         base_dir = Path(__file__).parents[4] / "testing" / "results" / "red_team"
     else:
         base_dir = Path(output_dir)
 
-    # Create timestamp-based subdirectory
     timestamp = datetime.now(UTC)
     date_dir = base_dir / timestamp.strftime("%Y-%m-%d")
     date_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate filename from title and timestamp
     safe_title = "".join(c if c.isalnum() or c in (" ", "-", "_") else "" for c in application_title)
-    safe_title = safe_title.replace(" ", "_").lower()[:50]  # Limit length
+    safe_title = safe_title.replace(" ", "_").lower()[:50]
     filename = f"{safe_title}_{timestamp.strftime('%Y%m%d_%H%M%S')}.{output_format}"
     output_path = date_dir / filename
 
-    # Add metadata header
     word_count = len(application_text.split())
     char_count = len(application_text)
 
@@ -80,9 +74,18 @@ Output Format: {output_format}
 
 """
 
-    # Write to file
     full_content = header + application_text
-    output_path.write_text(full_content, encoding="utf-8")
+
+    try:
+        output_path.write_text(full_content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write red team output",
+            application_id=application_id,
+            output_path=str(output_path),
+            error=str(e),
+        )
+        raise
 
     logger.info(
         "Saved red team output",
@@ -99,7 +102,7 @@ def save_sections_breakdown(
     *,
     application_id: str,
     application_title: str,
-    grant_sections: list["GrantElement | GrantLongFormSection"],
+    grant_sections: list[GrantElement | GrantLongFormSection],
     section_texts: dict[str, str],
     output_dir: str | None = None,
 ) -> Path:
@@ -115,33 +118,21 @@ def save_sections_breakdown(
 
     Returns:
         Path to the saved breakdown file
-
-    Example:
-        >>> path = save_sections_breakdown(
-        ...     application_id="123e4567-e89b-12d3-a456-426614174000",
-        ...     application_title="Novel CRISPR Therapeutics",
-        ...     grant_sections=[...],
-        ...     section_texts={"abstract": "...", "aims": "..."},
-        ... )
     """
-    # Determine output directory
     if output_dir is None:
         base_dir = Path(__file__).parents[4] / "testing" / "results" / "red_team" / "sections"
     else:
         base_dir = Path(output_dir)
 
-    # Create timestamp-based subdirectory
     timestamp = datetime.now(UTC)
     date_dir = base_dir / timestamp.strftime("%Y-%m-%d")
     date_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate filename
     safe_title = "".join(c if c.isalnum() or c in (" ", "-", "_") else "" for c in application_title)
     safe_title = safe_title.replace(" ", "_").lower()[:50]
     filename = f"{safe_title}_sections_{timestamp.strftime('%Y%m%d_%H%M%S')}.md"
     output_path = date_dir / filename
 
-    # Build breakdown content
     lines = [
         f"# Section Breakdown: {application_title}",
         "",
@@ -153,7 +144,6 @@ def save_sections_breakdown(
         "",
     ]
 
-    # Add each section
     for section in grant_sections:
         section_id = section["id"]
         section_title = section["title"]
@@ -178,13 +168,186 @@ def save_sections_breakdown(
         )
 
     content = "\n".join(lines)
-    output_path.write_text(content, encoding="utf-8")
+
+    try:
+        output_path.write_text(content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write sections breakdown",
+            application_id=application_id,
+            output_path=str(output_path),
+            error=str(e),
+        )
+        raise
 
     logger.info(
         "Saved red team sections breakdown",
         application_id=application_id,
         output_path=str(output_path),
         sections_count=len(section_texts),
+    )
+
+    return output_path
+
+
+def save_editorial_workflow_output(
+    *,
+    application_id: str,
+    application_title: str,
+    original_text: str,
+    review_letter: str,
+    approved_edits: SelectiveEdits,
+    final_text: str,
+    timing: EditorialWorkflowTiming,
+    statistics: EditorialWorkflowStatistics,
+    output_dir: str | None = None,
+) -> Path:
+    """
+    Save complete editorial workflow output: original → review → edits → final.
+
+    Args:
+        application_id: UUID of the grant application
+        application_title: Title of the grant application
+        original_text: Original generated proposal text (before editing)
+        review_letter: Editorial review letter from LLM 1
+        approved_edits: Approved changes from LLM 2 (SelectiveEdits)
+        final_text: Final proposal text after applying approved changes
+        timing: Timing breakdown for workflow steps
+        statistics: Statistics (word counts, approval rates, etc.)
+        output_dir: Optional custom output directory
+
+    Returns:
+        Path to the saved workflow output file
+    """
+    if output_dir is None:
+        base_dir = Path(__file__).parents[4] / "testing" / "results" / "red_team" / "editorial"
+    else:
+        base_dir = Path(output_dir)
+
+    timestamp = datetime.now(UTC)
+    date_dir = base_dir / timestamp.strftime("%Y-%m-%d")
+    date_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_title = "".join(c if c.isalnum() or c in (" ", "-", "_") else "" for c in application_title)
+    safe_title = safe_title.replace(" ", "_").lower()[:50]
+    filename = f"{safe_title}_editorial_{timestamp.strftime('%Y%m%d_%H%M%S')}.md"
+    output_path = date_dir / filename
+
+    lines = [
+        f"# Editorial Workflow Output: {application_title}",
+        "",
+        f"**Application ID**: {application_id}",
+        f"**Generated**: {timestamp.isoformat()}",
+        "",
+        "---",
+        "",
+        "## PERFORMANCE METRICS",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| **Total Duration** | {timing['total_seconds']:.2f} seconds |",
+        f"| Review Generation (LLM 1) | {timing['review_seconds']:.2f} seconds |",
+        f"| Selective Editing (LLM 2) | {timing['editing_seconds']:.2f} seconds |",
+        f"| Text Application | {timing['apply_seconds']:.2f} seconds |",
+        f"| **Review Word Count** | {statistics['review_words']:,} words |",
+        f"| **Suggestions Total** | {statistics['total_suggestions']} |",
+        f"| **Approved Changes** | {statistics['approved_count']} |",
+        f"| **Rejected Changes** | {statistics['rejected_count']} |",
+        f"| **Approval Rate** | {statistics['approval_rate']:.1f}% |",
+        f"| **Original Word Count** | {statistics['original_words']:,} words |",
+        f"| **Final Word Count** | {statistics['edited_words']:,} words |",
+        f"| **Word Change** | {statistics['word_change']:+,} words |",
+        "",
+        "---",
+        "",
+        "## WORKFLOW SUMMARY",
+        "",
+        "### Step 1: Editorial Review (LLM 1 - Scientific Grant Editor)",
+        "- **Input:** Original Proposal + CFP + RAG Knowledge Base",
+        f"- **Output:** {statistics['review_words']:,}-word editorial review",
+        "- **Focus:** Background facts verification + Writing quality",
+        f"- **Duration:** {timing['review_seconds']:.2f}s",
+        "",
+        "### Step 2: Selective Editing (LLM 2 - Great Application Editor)",
+        "- **Input:** Original Proposal → Review → RAG Knowledge Base (in order)",
+        "- **Decision Criteria:** Correct? RAG-based? Makes it better? (ALL 3 must be YES)",
+        f"- **Output:** {statistics['approved_count']} approved changes, {statistics['rejected_count']} rejected",
+        f"- **Duration:** {timing['editing_seconds']:.2f}s",
+        "",
+        "### Step 3: Final Proposal",
+        f"- **Changes applied:** {statistics['approved_count']} sentence-level edits",
+        f"- **Net change:** {statistics['word_change']:+,} words",
+        "",
+        "---",
+        "",
+        "## APPROVED CHANGES SUMMARY",
+        "",
+        approved_edits["summary"],
+        "",
+        "---",
+        "",
+        "## DETAILED APPROVED CHANGES",
+        "",
+    ]
+
+    for i, change in enumerate(approved_edits["changes"], 1):
+        lines.extend(
+            [
+                f"### Change {i}: {change['section']}",
+                "",
+                f"**Reason:** {change['reason']}",
+                "",
+                "**Original:**",
+                f"> {change['original_sentence']}",
+                "",
+                "**Revised:**",
+                f"> {change['revised_sentence']}",
+                "",
+                "---",
+                "",
+            ]
+        )
+
+    # Add full documents
+    lines.extend(
+        [
+            "# ORIGINAL PROPOSAL (Before Editing)",
+            "",
+            original_text,
+            "",
+            "---",
+            "",
+            "# EDITORIAL REVIEW (LLM 1 Output)",
+            "",
+            review_letter,
+            "",
+            "---",
+            "",
+            "# FINAL PROPOSAL (After Editing)",
+            "",
+            final_text,
+        ]
+    )
+
+    content = "\n".join(lines)
+
+    try:
+        output_path.write_text(content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write editorial workflow output",
+            application_id=application_id,
+            output_path=str(output_path),
+            error=str(e),
+        )
+        raise
+
+    logger.info(
+        "Saved editorial workflow output",
+        application_id=application_id,
+        output_path=str(output_path),
+        approved_changes=statistics["approved_count"],
+        rejected_changes=statistics["rejected_count"],
     )
 
     return output_path
