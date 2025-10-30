@@ -41,9 +41,9 @@ from services.rag.src.grant_application.utils import (
     is_generate_research_plan_dto,
 )
 from services.rag.src.utils.checks import verify_rag_sources_indexed
-from services.rag.src.utils.editorial import run_editorial_workflow
+from services.rag.src.utils.editorial import perform_editorial_workflow
 from services.rag.src.utils.job_manager import JobManager
-from services.rag.src.utils.red_team_logger import (
+from services.rag.src.utils.red_team_output import (
     save_application_output,
     save_editorial_workflow_output,
     save_sections_breakdown,
@@ -400,7 +400,7 @@ async def _apply_editorial_workflow(
 
         original_application_text = application_text
 
-        application_text, workflow_metadata = await run_editorial_workflow(
+        application_text, workflow_metadata = await perform_editorial_workflow(
             application_text=application_text,
             cfp_text=cfp_text,
             knowledge_base=knowledge_base,

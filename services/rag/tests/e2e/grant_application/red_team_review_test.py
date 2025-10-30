@@ -1,4 +1,5 @@
 """
+~keep
 E2E test for red team critical review workflow.
 
 Tests the complete flow: Load existing application → Run critical review → Save outputs.
@@ -6,6 +7,7 @@ Tests the complete flow: Load existing application → Run critical review → S
 
 import logging
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 import pytest
@@ -19,8 +21,8 @@ async def test_red_team_critical_review_workflow(
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
-    """Test complete red team review workflow with real application and CFP."""
-    from services.rag.src.utils.red_team_reviewer import run_critical_review
+    """~keep Test complete red team review workflow with real application and CFP."""
+    from services.rag.src.utils.red_team_reviewer import perform_critical_review
 
     performance_context.set_metadata("test_type", "red_team_review_workflow")
     performance_context.set_metadata("includes", "application_load,kb_retrieval,critical_review,markdown_export")
@@ -44,8 +46,6 @@ async def test_red_team_critical_review_workflow(
     cfp_text = cfp_path.read_text()
     logger.info("✓ Loaded CFP (%s characters)", f"{len(cfp_text):,}")
 
-    # Load knowledge base (optional - for testing without real application_id)
-    # In production, use retrieve_knowledge_base_for_application(application_id, trace_id)
     knowledge_base_path = Path("testing/test_data/fixtures/knowledge_bases/melanoma_research.txt")
     knowledge_base = None
     if knowledge_base_path.exists():
@@ -54,10 +54,9 @@ async def test_red_team_critical_review_workflow(
     else:
         logger.info("⚠ No knowledge base file found, proceeding without source verification")
 
-    # Run critical review
     performance_context.start_stage("critical_review")
 
-    review = await run_critical_review(
+    review = await perform_critical_review(
         application_text=application_text,
         cfp_text=cfp_text,
         knowledge_base=knowledge_base,
@@ -66,7 +65,6 @@ async def test_red_team_critical_review_workflow(
 
     performance_context.end_stage()
 
-    # Validate review structure
     assert "review" in review, "Review missing review"
     assert len(review["review"]) > 0, "Review letter should not be empty"
 
@@ -81,7 +79,6 @@ async def test_red_team_critical_review_workflow(
         f"(minimum: {min_review_words}, target: {target_review_words_range[0]}-{target_review_words_range[1]})"
     )
 
-    # Save outputs to demonstrate full workflow
     performance_context.start_stage("save_outputs")
 
     from datetime import UTC, datetime
@@ -90,19 +87,19 @@ async def test_red_team_critical_review_workflow(
     output_dir = Path("testing/results/red_team") / timestamp.strftime("%Y-%m-%d")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build review markdown
     review_md_path = output_dir / f"e2e_test_review_{timestamp.strftime('%H%M%S')}.md"
 
-    review_md = f"""# Red Team Critical Review (E2E Test)
+    review_md = dedent(f"""
+        # Red Team Critical Review (E2E Test)
 
-**Generated:** {timestamp.isoformat()}
-**Word Count:** {word_count}
-**Source Verification:** {"Enabled" if knowledge_base else "Disabled"}
+        **Generated:** {timestamp.isoformat()}
+        **Word Count:** {word_count}
+        **Source Verification:** {"Enabled" if knowledge_base else "Disabled"}
 
----
+        ---
 
-{review["review"]}
-"""
+        {review["review"]}
+    """).strip()
 
     review_md_path.write_text(review_md)
 
@@ -110,7 +107,6 @@ async def test_red_team_critical_review_workflow(
 
     performance_context.end_stage()
 
-    # Assertions
     assert review_md_path.exists(), "Review markdown file should be created"
 
     logger.info("✅ Red team review E2E test completed successfully")

@@ -1,4 +1,5 @@
 """
+~keep
 Scientific Grant Editor - Comprehensive editorial review of grant applications.
 
 Uses Gemini Flash to perform editorial review of generated grant applications with dual focus:
@@ -10,6 +11,7 @@ preservation and writing quality. Output is a 600-1000 word editorial letter wit
 feedback and specific suggestions for improvement.
 """
 
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from packages.db.src.connection import get_session_maker
@@ -19,7 +21,7 @@ from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import EDITORIAL_REVIEW_THINKING_BUDGET, SELECTIVE_EDITING_THINKING_BUDGET
-from services.rag.src.editorial_dto import RedTeamReviewDTO, SelectiveEditsDTO
+from services.rag.src.dto import RedTeamReviewDTO, SelectiveEditsDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.retrieval import retrieve_documents
 
@@ -354,25 +356,6 @@ async def retrieve_knowledge_base_for_application(
     trace_id: str,
     max_tokens: int = 12000,
 ) -> str:
-    """
-    Retrieve the knowledge base (source literature) used to generate an application.
-
-    This retrieves the same RAG context that was used during application generation,
-    allowing the editor to verify that data was accurately preserved from source material.
-
-    Args:
-        application_id: ID of the grant application
-        trace_id: Trace ID for logging
-        max_tokens: Maximum tokens to retrieve (default: 12000)
-
-    Returns:
-        Formatted knowledge base as string
-
-    Example:
-        >>> kb = await retrieve_knowledge_base_for_application(application_id="app-123", trace_id="review-456")
-        >>> print(kb[:100])
-        # Scientific Literature Context...
-    """
     session_maker = get_session_maker()
 
     async with session_maker() as session:
@@ -392,17 +375,14 @@ async def retrieve_knowledge_base_for_application(
             )
             return "No research objectives found - cannot retrieve knowledge base."
 
-    # Build search queries from research objectives
     search_queries = []
     for obj in research_objectives:
         search_queries.append(obj["title"])
         if description := obj.get("description"):
             search_queries.append(description)
 
-        # Extract tasks
         search_queries.extend(task["title"] for task in obj.get("research_tasks", []))
 
-    # Retrieve documents using the same method as application generation
     logger.info(
         "Retrieving knowledge base for editorial review",
         application_id=application_id,
@@ -431,7 +411,7 @@ async def retrieve_knowledge_base_for_application(
     return knowledge_base
 
 
-async def run_critical_review(
+async def perform_critical_review(
     *,
     application_text: str,
     cfp_text: str,
@@ -439,6 +419,7 @@ async def run_critical_review(
     trace_id: str,
 ) -> RedTeamReviewDTO:
     """
+    ~keep
     Run comprehensive editorial review on grant application.
 
     Performs dual-focus editorial review:
@@ -480,20 +461,21 @@ async def run_critical_review(
         knowledge_base_length=len(knowledge_base) if knowledge_base else 0,
     )
 
-    # Format the prompt
     if knowledge_base:
         knowledge_base_text = knowledge_base
     else:
-        knowledge_base_text = """⚠️ NO SOURCE LITERATURE PROVIDED
+        knowledge_base_text = dedent("""
+            NO SOURCE LITERATURE PROVIDED
 
-WARNING: No RAG knowledge base was provided for this review.
-This means DATA VERIFICATION cannot be performed.
+            WARNING: No RAG knowledge base was provided for this review.
+            This means DATA VERIFICATION cannot be performed.
 
-You should:
-1. Clearly state at the beginning of your letter: "Note: This review focuses only on writing quality as no RAG knowledge base was provided for data verification."
-2. Skip all data verification checks (numbers, entities, facts from RAG)
-3. Focus entirely on WRITING SUPERVISION: repetition, clarity, scientific language, specificity
-4. Still provide 600-1000 word editorial letter with constructive feedback"""
+            You should:
+            1. Clearly state at the beginning of your letter: "Note: This review focuses only on writing quality as no RAG knowledge base was provided for data verification."
+            2. Skip all data verification checks (numbers, entities, facts from RAG)
+            3. Focus entirely on WRITING SUPERVISION: repetition, clarity, scientific language, specificity
+            4. Still provide 600-1000 word editorial letter with constructive feedback
+        """).strip()
 
     user_prompt = CRITICAL_REVIEWER_USER_PROMPT.format(
         cfp_text=cfp_text,
@@ -532,6 +514,7 @@ async def apply_selective_edits(
     trace_id: str,
 ) -> SelectiveEditsDTO:
     """
+    ~keep
     Selectively apply editorial suggestions to a grant proposal.
 
     This function acts as a "Great Application Editor" that:
@@ -568,7 +551,6 @@ async def apply_selective_edits(
         knowledge_base_length=len(knowledge_base),
     )
 
-    # Format the prompt
     user_prompt = SELECTIVE_EDITOR_USER_PROMPT.format(
         application_text=application_text,
         review_letter=review_letter,
