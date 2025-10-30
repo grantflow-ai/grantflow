@@ -1,4 +1,5 @@
 """
+~keep
 Editorial Workflow - Two-LLM system for grant proposal review and editing.
 
 This module orchestrates the editorial workflow:
@@ -17,28 +18,16 @@ import time
 
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.editorial_dto import (
+from services.rag.src.dto import (
     EditorialMetadataDTO,
-    RedTeamReviewDTO,
-    SelectiveEditsDTO,
     SentenceChangeDTO,
 )
-from services.rag.src.utils.red_team_reviewer import apply_selective_edits, run_critical_review
+from services.rag.src.utils.red_team_reviewer import apply_selective_edits, perform_critical_review
 
 logger = get_logger(__name__)
 
 
 def apply_text_changes(original_text: str, changes: list[SentenceChangeDTO]) -> str:
-    """
-    Apply sentence-level changes to the original text.
-
-    Args:
-        original_text: Original proposal text
-        changes: List of approved sentence-level changes from SelectiveEditsDTO
-
-    Returns:
-        Text with approved changes applied
-    """
     result = original_text
 
     applied_count = 0
@@ -79,7 +68,7 @@ def apply_text_changes(original_text: str, changes: list[SentenceChangeDTO]) -> 
     return result
 
 
-async def run_editorial_workflow(
+async def perform_editorial_workflow(
     *,
     application_text: str,
     cfp_text: str,
@@ -87,6 +76,7 @@ async def run_editorial_workflow(
     trace_id: str,
 ) -> tuple[str, EditorialMetadataDTO]:
     """
+    ~keep
     Run two-LLM editorial workflow on generated grant application.
 
     Args:
@@ -112,7 +102,7 @@ async def run_editorial_workflow(
     review_start = time.perf_counter()
     logger.debug("Running editorial review (LLM 1)", trace_id=trace_id)
 
-    review: RedTeamReviewDTO = await run_critical_review(
+    review = await perform_critical_review(
         application_text=application_text,
         cfp_text=cfp_text,
         knowledge_base=knowledge_base,
@@ -132,7 +122,7 @@ async def run_editorial_workflow(
     editing_start = time.perf_counter()
     logger.debug("Running selective editing (LLM 2)", trace_id=trace_id)
 
-    edits: SelectiveEditsDTO = await apply_selective_edits(
+    edits = await apply_selective_edits(
         application_text=application_text,
         review_letter=review["review"],
         knowledge_base=knowledge_base,

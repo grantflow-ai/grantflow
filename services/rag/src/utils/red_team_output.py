@@ -1,8 +1,9 @@
 """
-Red Team Logger - Captures final grant application outputs for review and testing.
+~keep
+Red Team Output - Saves grant application outputs for review and testing.
 
-This module provides functionality to save complete grant application text
-after all pipeline stages complete, including NLP evaluation.
+This module provides functionality to export complete grant application text,
+section breakdowns, and editorial workflow outputs after pipeline completion.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from packages.shared_utils.src.logger import get_logger
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 
-    from services.rag.src.editorial_dto import (
+    from services.rag.src.dto import (
         EditorialStatsDTO,
         EditorialTimingDTO,
         SelectiveEditsDTO,
@@ -34,6 +35,7 @@ def save_application_output(
     output_dir: str | None = None,
 ) -> Path:
     """
+    ~keep
     Save final grant application output to file for red team review.
 
     Args:
@@ -107,6 +109,7 @@ def save_sections_breakdown(
     output_dir: str | None = None,
 ) -> Path:
     """
+    ~keep
     Save detailed section-by-section breakdown for analysis.
 
     Args:
@@ -203,6 +206,7 @@ def save_editorial_workflow_output(
     output_dir: str | None = None,
 ) -> Path:
     """
+    ~keep
     Save complete editorial workflow output: original → review → edits → final.
 
     Args:
@@ -308,7 +312,6 @@ def save_editorial_workflow_output(
             ]
         )
 
-    # Add full documents
     lines.extend(
         [
             "# ORIGINAL PROPOSAL (Before Editing)",
