@@ -10,14 +10,14 @@ export const GRANT_TYPE_OPTIONS: {
 	label: string;
 	value: GrantTypeValue;
 }[] = [
-	{
-		description: "Placeholder description for foundational discovery work.",
+{
+		description: "Explores fundamental principles and biological mechanisms.",
 		imageSrc: "/assets/research-grants.svg",
 		label: "Basic Science",
 		value: "RESEARCH",
 	},
 	{
-		description: "Placeholder description for translational-focused work.",
+		description: "Applies scientific findings toward clinical or practical use.",
 		imageSrc: "/assets/translational-grants.svg",
 		label: "Translational Research",
 		value: "TRANSLATIONAL",
@@ -36,8 +36,8 @@ export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantT
 		<button
 			aria-pressed={isSelected}
 			className={cn(
-				"flex w-[377px] h-[438px] flex-col items-center justify-center gap-[21px] rounded-lg border bg-white px-[150px] py-[161px] transition-all",
-				isSelected ? "border-primary shadow-lg shadow-primary/10" : "border-gray-200",
+				"p-8 rounded-xl border flex flex-col items-center justify-between cursor-pointer transition-all",
+				isSelected ? "border-2 border-primary" : "border-app-gray-100 hover:border hover:border-primary",
 				disabled && "cursor-not-allowed opacity-60",
 			)}
 			data-testid={`grant-type-card-${option.label.replaceAll(/\s+/g, "-").toLowerCase()}`}
@@ -45,10 +45,10 @@ export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantT
 			onClick={onSelect}
 			type="button"
 		>
-			<Image alt={`${option.label} illustration`} height={64} src={option.imageSrc} width={64} />
+			<Image alt={`${option.label} illustration`} height={146} src={option.imageSrc} width={146} />
 			<div className="text-center">
-				<p className="font-heading text-lg font-semibold text-stone-900">{option.label}</p>
-				<p className="mt-2 text-sm text-muted-foreground-dark">{option.description}</p>
+				<p className="font-cabin font-medium text-[28px] text-app-black">{option.label}</p>
+				<p className="text-base font-normal font-sans text-app-gray-600">{option.description}</p>
 			</div>
 		</button>
 	);

@@ -19,7 +19,7 @@ const truncateText = (text: string, maxLength: number) => {
 export function FormSummary({ formData }: FormSummaryProps) {
 	return (
 		<div
-			className="w-[378px]  bg-app-gray-20 border border-app-gray-100 rounded-[8px] py-4 px-[25px]"
+			className="w-[378px]  bg-app-gray-20 border border-app-gray-100 rounded-xl py-4 px-[25px]"
 			data-testid="form-summary"
 		>
 			<div className="space-y-6" data-testid="form-summary-content">
