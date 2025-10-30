@@ -15,6 +15,8 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 export function NewApplicationClient() {
 	const router = useRouter();
@@ -39,63 +41,70 @@ export function NewApplicationClient() {
 		);
 	}
 
-	const handleContinue = async () => {
-		if (!selectedGrantType || isCreating) return;
+	const handleGrantTypeSelect = (grantType: GrantTypeValue) => {
+		if (isCreating) return;
 
+		setSelectedGrantType(grantType);
 		setIsCreating(true);
-		try {
-			const application = await createApplication(selectedOrganizationId, project.id, {
-				grant_type: selectedGrantType,
-				title: DEFAULT_APPLICATION_TITLE,
-			});
 
-			setApplication(application);
-			navigateToApplication(
-				project.id,
-				project.name,
-				application.id,
-				application.title || DEFAULT_APPLICATION_TITLE,
-			);
+		setTimeout(async () => {
+			try {
+				const application = await createApplication(selectedOrganizationId, project.id, {
+					grant_type: grantType,
+					title: DEFAULT_APPLICATION_TITLE,
+				});
 
-			router.replace(routes.organization.project.application.wizard());
-		} catch {
-			toast.error("Failed to create application. Please try again.");
-			setIsCreating(false);
-		}
+				setApplication(application);
+				navigateToApplication(
+					project.id,
+					project.name,
+					application.id,
+					application.title || DEFAULT_APPLICATION_TITLE,
+				);
+
+				router.replace(routes.organization.project.application.wizard());
+			} catch {
+				toast.error("Failed to create application. Please try again.");
+				setIsCreating(false);
+				setSelectedGrantType(null);
+			}
+		}, 500);
 	};
 
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-gray-50 px-6 py-12">
-			<div className="text-center space-y-3">
-				<h1 className="text-3xl font-semibold text-gray-900">Choose Application Type</h1>
-				<p className="text-gray-600">
-					Select the grant type to tailor the application workflow for {project.name}.
-				</p>
+		<div className="min-h-screen w-full flex flex-col items-center">
+			<div className="grow flex items-center justify-center w-full">
+				<div className="flex items-center justify-center ">
+					<main className="flex flex-col gap-16">
+						<div className="text-center">
+							<h1 className="font-cabin font-medium text-4xl text-app-black">Application type</h1>
+							<p className="font-sans text-base font-normal text-app-gray-600">
+								Select the focus of your proposal:
+							</p>
+						</div>
+						<div className="flex gap-8 w-[795px]">
+							{cards.map((option) => (
+								<GrantTypeCard
+									disabled={isCreating}
+									isSelected={selectedGrantType === option.value}
+									key={option.value}
+									onSelect={() => {
+										handleGrantTypeSelect(option.value);
+									}}
+									option={option}
+								/>
+							))}
+						</div>
+					</main>
+				</div>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row">
-				{cards.map((option) => (
-					<GrantTypeCard
-						disabled={isCreating}
-						isSelected={selectedGrantType === option.value}
-						key={option.value}
-						onSelect={() => {
-							setSelectedGrantType(option.value);
-						}}
-						option={option}
-					/>
-				))}
-			</div>
-
-			<button
-				className="rounded-md bg-primary px-6 py-3 text-white font-semibold disabled:cursor-not-allowed disabled:bg-primary/40"
-				data-testid="create-application-continue"
-				disabled={!selectedGrantType || isCreating}
-				onClick={handleContinue}
-				type="button"
-			>
-				{isCreating ? "Creating..." : "Continue"}
-			</button>
+			<footer className="border border-app-gray-100 bg-white px-6 py-4 w-full h-[70px]  ">
+					<Button onClick={()=>router.back()}  className="font-sora text-base font-normal text-primary cursor-pointer hover:bg-white hover:border-2 bg-white border border-primary flex gap-1 px-[8] pl-2 pr-4 w-32 rounded-lg">
+						<ChevronLeft className="text-primary"/>
+						Back
+					</Button>
+			</footer>
 		</div>
 	);
 }
