@@ -327,12 +327,12 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 			<DeleteProjectModal isOpen={showDeleteModal} onClose={closeDeleteModal} onConfirm={confirmDeleteProject} />
 
-			<NewApplicationModal
+			{/* <NewApplicationModal
 				isOpen={isModalOpen}
 				onClose={closeModal}
 				onCreate={handleCreateApplication}
 				projects={projects}
-			/>
+			/> */}
 		</div>
 	);
 }
