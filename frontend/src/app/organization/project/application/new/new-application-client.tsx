@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
+import { AppButton } from "@/components/app/buttons/app-button";
 import {
 	GRANT_TYPE_OPTIONS,
 	GrantTypeCard,
@@ -15,19 +17,17 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 
 export function NewApplicationClient() {
 	const router = useRouter();
+
 	const project = useProjectStore((state) => state.project);
 	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
 	const navigateToApplication = useNavigationStore((state) => state.navigateToApplication);
 	const setApplication = useApplicationStore((state) => state.setApplication);
+
 	const [selectedGrantType, setSelectedGrantType] = useState<GrantTypeValue | null>(null);
 	const [isCreating, setIsCreating] = useState(false);
-
-	const cards = useMemo(() => GRANT_TYPE_OPTIONS, []);
 
 	if (!(project && selectedOrganizationId)) {
 		return (
@@ -76,14 +76,14 @@ export function NewApplicationClient() {
 			<div className="grow flex items-center justify-center w-full">
 				<div className="flex items-center justify-center ">
 					<main className="flex flex-col gap-16">
-						<div className="text-center">
+						<div className="text-center space-y-3">
 							<h1 className="font-cabin font-medium text-4xl text-app-black">Application type</h1>
 							<p className="font-sans text-base font-normal text-app-gray-600">
-								Select the focus of your proposal:
+								Select the focus of your proposal
 							</p>
 						</div>
-						<div className="flex gap-8 w-[795px]">
-							{cards.map((option) => (
+						<div className="flex gap-8 w-full">
+							{GRANT_TYPE_OPTIONS.map((option) => (
 								<GrantTypeCard
 									disabled={isCreating}
 									isSelected={selectedGrantType === option.value}
@@ -99,11 +99,20 @@ export function NewApplicationClient() {
 				</div>
 			</div>
 
-			<footer className="border border-app-gray-100 bg-white px-6 py-4 w-full h-[70px]  ">
-					<Button onClick={()=>router.back()}  className="font-sora text-base font-normal text-primary cursor-pointer hover:bg-white hover:border-2 bg-white border border-primary flex gap-1 px-[8] pl-2 pr-4 w-32 rounded-lg">
-						<ChevronLeft className="text-primary"/>
-						Back
-					</Button>
+			<footer className="relative flex h-auto w-full items-center justify-between border-t-1 border-app-gray-100 bg-surface-primary py-4 px-6">
+				<AppButton
+					data-testid="back-button"
+					leftIcon={<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />}
+					onClick={() => {
+						router.back();
+					}}
+					size="lg"
+					theme="dark"
+					variant="secondary"
+				>
+					Back
+				</AppButton>
+				<div />
 			</footer>
 		</div>
 	);
