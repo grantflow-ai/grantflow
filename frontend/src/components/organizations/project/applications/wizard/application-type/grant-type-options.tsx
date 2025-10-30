@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { API } from "@/types/api-types";
 
@@ -26,12 +27,18 @@ export const GRANT_TYPE_OPTIONS: {
 
 interface GrantTypeCardProps {
 	disabled?: boolean;
-	isSelected: boolean;
 	onSelect: () => void;
 	option: (typeof GRANT_TYPE_OPTIONS)[number];
 }
 
-export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantTypeCardProps) {
+export function GrantTypeCard({ disabled, onSelect, option }: GrantTypeCardProps) {
+	const [isSelected, setIsSelected] = useState(false);
+
+	const handleClick = () => {
+		setIsSelected(true);
+		onSelect();
+	};
+
 	return (
 		<button
 			aria-pressed={isSelected}
@@ -42,7 +49,7 @@ export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantT
 			)}
 			data-testid={`grant-type-card-${option.label.replaceAll(/\s+/g, "-").toLowerCase()}`}
 			disabled={disabled}
-			onClick={onSelect}
+			onClick={handleClick}
 			type="button"
 		>
 			<Image alt={`${option.label} illustration`} height={146} src={option.imageSrc} width={146} />
