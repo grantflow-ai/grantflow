@@ -68,6 +68,7 @@ def patch_job_manager(mocker: MockerFixture, fake_manager: FakeJobManager) -> No
 class FakeJobManager:
     def __init__(self, *, current_stage: GrantApplicationStageEnum, checkpoint: Any = None) -> None:
         self.current_stage = current_stage
+        self.session_maker = None
         self.get_or_create_job_for_stage = AsyncMock(
             return_value=SimpleNamespace(id=UUID(int=1), status=RagGenerationStatusEnum.PENDING)
         )

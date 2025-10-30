@@ -18,3 +18,8 @@ MISSING_INFO_INSTRUCTION: Final[str] = (
     "If information is insufficient, indicate with "
     "`**[MISSING INFORMATION: concise but detailed description of the missing information based on the provided context and task requirements]**`"
 )
+
+ENABLE_EDITORIAL_WORKFLOW: Final[bool] = False
+
+EDITORIAL_REVIEW_THINKING_BUDGET: Final[int] = 8000
+SELECTIVE_EDITING_THINKING_BUDGET: Final[int] = 12000
