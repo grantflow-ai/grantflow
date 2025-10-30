@@ -21,7 +21,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 
 function ProjectLayoutClient({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
-	const isWizardRoute = pathname.includes("/wizard");
+	const isWizardRoute = pathname.includes("/wizard") || pathname.includes("/new");
 
 	return (
 		<SidebarProvider defaultOpen={false}>

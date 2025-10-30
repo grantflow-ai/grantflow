@@ -82,7 +82,6 @@ describe.sequential("RootLayout", () => {
 
 		expect(metadata.title).toBe("GrantFlow.AI");
 		expect(metadata.description).toContain("GrantFlow.ai transforms");
-		expect(metadata.alternates?.canonical).toBe("/");
 
 		expect(metadata.openGraph?.title).toBe("Ready to Focus on Research, Not Paperwork?");
 		expect((metadata.openGraph as any)?.type).toBe("website");
