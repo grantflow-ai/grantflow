@@ -10,7 +10,7 @@ export const GRANT_TYPE_OPTIONS: {
 	label: string;
 	value: GrantTypeValue;
 }[] = [
-{
+	{
 		description: "Explores fundamental principles and biological mechanisms.",
 		imageSrc: "/assets/research-grants.svg",
 		label: "Basic Science",
@@ -36,7 +36,7 @@ export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantT
 		<button
 			aria-pressed={isSelected}
 			className={cn(
-				"p-8 rounded-xl border flex flex-col items-center justify-between cursor-pointer transition-all",
+				"w-96 h-80 p-8 rounded-lg border flex flex-col items-center justify-between cursor-pointer transition-all gap-4",
 				isSelected ? "border-2 border-primary" : "border-app-gray-100 hover:border hover:border-primary",
 				disabled && "cursor-not-allowed opacity-60",
 			)}
@@ -46,10 +46,8 @@ export function GrantTypeCard({ disabled, isSelected, onSelect, option }: GrantT
 			type="button"
 		>
 			<Image alt={`${option.label} illustration`} height={146} src={option.imageSrc} width={146} />
-			<div className="text-center">
-				<p className="font-cabin font-medium text-[28px] text-app-black">{option.label}</p>
-				<p className="text-base font-normal font-sans text-app-gray-600">{option.description}</p>
-			</div>
+			<p className="font-heading font-medium text-3xl text-app-black leading-8">{option.label}</p>
+			<p className="font-normal text-app-gray-600">{option.description}</p>
 		</button>
 	);
 }
