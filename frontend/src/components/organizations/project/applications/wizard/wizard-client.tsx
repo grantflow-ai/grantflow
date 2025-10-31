@@ -29,7 +29,6 @@ import {
 import { log } from "@/utils/logger/client";
 import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
-import { GrantTypeStep } from "./application-type/grant-type-step";
 import { GenerateCompleteStep } from "./generate-and-complete/generate-complete-step";
 import { KnowledgeBaseStep } from "./knowledge-base/knowledge-base-step";
 import { createRagSourcesDialog } from "./modal/rag-sources-dialog-utils";
@@ -97,7 +96,6 @@ export function WizardClientComponent({
 			/>
 		),
 		"Application Structure": <ApplicationStructureStep dialogRef={dialogRef} key="Application Structure" />,
-		"Application Type": <GrantTypeStep key="Application Type" />,
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" progress={generationProgress} />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
@@ -354,7 +352,7 @@ export function WizardClientComponent({
 			<section className="flex-1 overflow-hidden" data-testid="step-content-container">
 				{stepComponents[currentStep]}
 			</section>
-			<WizardFooter dialogRef={dialogRef} />
+			<WizardFooter />
 
 			{latestRagNotification && <RagNotificationHandler notification={latestRagNotification} />}
 			<WizardDialog ref={dialogRef} />
