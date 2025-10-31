@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { ThemeBadge } from "@/components/shared/theme-badge";
 import { APPLICATION_STATUS } from "@/constants/download";
 import type { API } from "@/types/api-types";
 import type { DownloadFormat } from "@/types/download";
@@ -11,36 +12,32 @@ import { ApplicationDownloadMenu } from "./application-download-menu";
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
 interface StatusStyle {
-	bg: string;
+	className?: string;
+	color?: "betaBadge" | "light" | "primary" | "secondary";
 	icon: string;
 	label: string;
-	text: string;
 }
 
 const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 	CANCELLED: {
-		bg: "bg-red-500",
+		className: "bg-red-500 text-white",
 		icon: "/icons/close.svg",
 		label: "Cancelled",
-		text: "text-white",
 	},
 	GENERATING: {
-		bg: "bg-primary",
+		color: "primary",
 		icon: "/icons/piechart.svg",
 		label: "Generating",
-		text: "text-white",
 	},
 	IN_PROGRESS: {
-		bg: "bg-app-gray-200",
+		className: "bg-app-gray-300 text-app-dark-blue",
 		icon: "/icons/draft-in-progress.svg",
 		label: "In Progress",
-		text: "text-app-dark-blue",
 	},
 	WORKING_DRAFT: {
-		bg: "bg-app-dark-blue",
+		color: "secondary",
 		icon: "/icons/working-draft-white.svg",
 		label: "Working Draft",
-		text: "text-white",
 	},
 };
 
@@ -72,20 +69,21 @@ export function ApplicationCard({
 			<header className="flex flex-col gap-3">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-1">
-						<div
-							className={`flex w-fit items-center gap-2 rounded-[20px] px-2 py-1 ${statusStyles.bg}`}
+						<ThemeBadge
+							className={statusStyles.className}
+							color={statusStyles.color}
 							data-testid={`application-card-status-${application.id}`}
-						>
-							<div className="size-3 rounded-full">
+							leftIcon={
 								<Image
 									alt={`${statusStyles.label} icon`}
 									height={12}
 									src={statusStyles.icon}
 									width={12}
 								/>
-							</div>
-							<span className={`text-xs font-normal ${statusStyles.text}`}>{statusStyles.label}</span>
-						</div>
+							}
+						>
+							{statusStyles.label}
+						</ThemeBadge>
 						<div className="flex flex-col gap-1">
 							<span className="text-[10px] font-normal text-app-gray-600">
 								Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
