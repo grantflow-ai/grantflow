@@ -1,7 +1,10 @@
+import { createRequire } from "node:module";
 import type { StorybookConfig } from "@storybook/react-vite";
 import react from "@vitejs/plugin-react";
 import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+const require = createRequire(import.meta.url);
 
 const storybookEnv = {
 	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",

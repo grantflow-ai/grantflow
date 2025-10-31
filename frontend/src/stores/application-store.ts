@@ -325,7 +325,7 @@ interface ApplicationActions {
 		projectId: string,
 		grantType: API.CreateApplication.RequestBody["grant_type"],
 		title?: string,
-	) => Promise<void>;
+	) => Promise<ApplicationType>;
 	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<boolean>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
@@ -703,10 +703,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				application: response,
 				areAppOperationsInProgress: false,
 			});
-		} catch (e: unknown) {
-			log.error("createApplication", e);
-			toast.error("Failed to initialize application");
+			return response;
+		} catch (error: unknown) {
+			log.error("createApplication", error);
 			set({ areAppOperationsInProgress: false });
+			throw error instanceof Error ? error : new Error("Failed to create application");
 		}
 	},
 

@@ -49,25 +49,34 @@ export function NewApplicationClient() {
 		if (creatingApplication) return;
 		setCreatingApplication(true);
 
+		let creationSucceeded = false;
+
 		try {
 			toast.loading("Creating application...", { id: "create-application" });
 
-			await createApplication(selectedOrganizationId, project.id, grantType, DEFAULT_APPLICATION_TITLE);
-			const currentApplication = useApplicationStore.getState().application;
+			const createdApplication = await createApplication(
+				selectedOrganizationId,
+				project.id,
+				grantType,
+				DEFAULT_APPLICATION_TITLE,
+			);
 
-			if (!currentApplication) {
+			if (!createdApplication) {
 				throw new Error("Application not created in store");
 			}
 
 			toast.success("Application created successfully", { id: "create-application" });
 
-			navigateToApplication(project.id, project.name, currentApplication.id, currentApplication.title);
-
+			navigateToApplication(project.id, project.name, createdApplication.id, createdApplication.title);
+			creationSucceeded = true;
 			router.replace(routes.organization.project.application.wizard());
 		} catch (error) {
 			log.error("create-application", error);
 			toast.error("Failed to create application. Please try again.", { id: "create-application" });
-			setCreatingApplication(false);
+		} finally {
+			if (!creationSucceeded) {
+				setCreatingApplication(false);
+			}
 		}
 	};
 
