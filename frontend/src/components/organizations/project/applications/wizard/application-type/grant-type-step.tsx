@@ -10,8 +10,6 @@ export function GrantTypeStep() {
 	const updateGrantType = useApplicationStore((state) => state.updateGrantType);
 	const isSaving = useApplicationStore((state) => state.isSaving);
 
-	const selectedType: GrantTypeValue = application?.grant_template?.grant_type ?? "RESEARCH";
-
 	const handleSelect = useCallback(
 		(value: GrantTypeValue) => {
 			if (value === application?.grant_template?.grant_type) {
@@ -40,7 +38,6 @@ export function GrantTypeStep() {
 						{GRANT_TYPE_OPTIONS.map((option) => (
 							<GrantTypeCard
 								disabled={isSaving}
-								isSelected={selectedType === option.value}
 								key={option.value}
 								onSelect={() => {
 									handleSelect(option.value);

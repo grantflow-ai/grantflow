@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { createApplication } from "@/actions/grant-applications";
+import { AppButton } from "@/components/app/buttons/app-button";
 import {
 	GRANT_TYPE_OPTIONS,
 	GrantTypeCard,
@@ -14,20 +15,18 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 
 export function NewApplicationClient() {
 	const router = useRouter();
+
 	const project = useProjectStore((state) => state.project);
 	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
 	const navigateToApplication = useNavigationStore((state) => state.navigateToApplication);
-	const setApplication = useApplicationStore((state) => state.setApplication);
-	const [selectedGrantType, setSelectedGrantType] = useState<GrantTypeValue | null>(null);
-	const [isCreating, setIsCreating] = useState(false);
+	const createApplication = useApplicationStore((state) => state.createApplication);
 
-	const cards = useMemo(() => GRANT_TYPE_OPTIONS, []);
+	const [creatingApplication, setCreatingApplication] = useState<boolean>(false);
 
 	if (!(project && selectedOrganizationId)) {
 		return (
@@ -41,69 +40,77 @@ export function NewApplicationClient() {
 		);
 	}
 
-	const handleGrantTypeSelect = (grantType: GrantTypeValue) => {
-		if (isCreating) return;
+	const handleGrantTypeSelect = async (grantType: GrantTypeValue) => {
+		if (!selectedOrganizationId) {
+			toast.error("Missing organization information");
+			return;
+		}
 
-		setSelectedGrantType(grantType);
-		setIsCreating(true);
+		if (creatingApplication) return;
+		setCreatingApplication(true);
 
-		setTimeout(async () => {
-			try {
-				const application = await createApplication(selectedOrganizationId, project.id, {
-					grant_type: grantType,
-					title: DEFAULT_APPLICATION_TITLE,
-				});
+		try {
+			toast.loading("Creating application...", { id: "create-application" });
 
-				setApplication(application);
-				navigateToApplication(
-					project.id,
-					project.name,
-					application.id,
-					application.title || DEFAULT_APPLICATION_TITLE,
-				);
+			await createApplication(selectedOrganizationId, project.id, grantType, DEFAULT_APPLICATION_TITLE);
+			const currentApplication = useApplicationStore.getState().application;
 
-				router.replace(routes.organization.project.application.wizard());
-			} catch {
-				toast.error("Failed to create application. Please try again.");
-				setIsCreating(false);
-				setSelectedGrantType(null);
+			if (!currentApplication) {
+				throw new Error("Application not created in store");
 			}
-		}, 500);
+
+			toast.success("Application created successfully", { id: "create-application" });
+
+			navigateToApplication(project.id, project.name, currentApplication.id, currentApplication.title);
+
+			router.replace(routes.organization.project.application.wizard());
+		} catch (error) {
+			log.error("create-application", error);
+			toast.error("Failed to create application. Please try again.", { id: "create-application" });
+			setCreatingApplication(false);
+		}
 	};
 
 	return (
 		<div className="min-h-screen w-full flex flex-col items-center">
 			<div className="grow flex items-center justify-center w-full">
-				<div className="flex items-center justify-center ">
-					<main className="flex flex-col gap-16">
-						<div className="text-center">
-							<h1 className="font-cabin font-medium text-4xl text-app-black">Application type</h1>
-							<p className="font-sans text-base font-normal text-app-gray-600">
-								Select the focus of your proposal:
-							</p>
-						</div>
-						<div className="flex gap-8 w-[795px]">
-							{cards.map((option) => (
-								<GrantTypeCard
-									disabled={isCreating}
-									isSelected={selectedGrantType === option.value}
-									key={option.value}
-									onSelect={() => {
-										handleGrantTypeSelect(option.value);
-									}}
-									option={option}
-								/>
-							))}
-						</div>
-					</main>
-				</div>
+				<main className="flex flex-col gap-16">
+					<div className="text-center space-y-3">
+						<h1 className="font-cabin font-medium text-4xl text-app-black">Application type</h1>
+						<p className="font-sans text-base font-normal text-app-gray-600">
+							Select the focus of your proposal
+						</p>
+					</div>
+					<div className="flex gap-8 w-full" data-testid="grant-type-options">
+						{GRANT_TYPE_OPTIONS.map((option) => (
+							<GrantTypeCard
+								disabled={creatingApplication}
+								key={option.value}
+								onSelect={() => {
+									void handleGrantTypeSelect(option.value);
+								}}
+								option={option}
+							/>
+						))}
+					</div>
+				</main>
 			</div>
 
-			<footer className="border border-app-gray-100 bg-white px-6 py-4 w-full h-[70px]  ">
-					<Button onClick={()=>router.back()}  className="font-sora text-base font-normal text-primary cursor-pointer hover:bg-white hover:border-2 bg-white border border-primary flex gap-1 px-[8] pl-2 pr-4 w-32 rounded-lg">
-						<ChevronLeft className="text-primary"/>
-						Back
-					</Button>
+			<footer className="relative flex h-auto w-full items-center justify-between border-t-1 border-app-gray-100 bg-surface-primary py-4 px-6">
+				<AppButton
+					data-testid="back-button"
+					disabled={creatingApplication}
+					leftIcon={<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />}
+					onClick={() => {
+						router.back();
+					}}
+					size="lg"
+					theme="dark"
+					variant="secondary"
+				>
+					Back
+				</AppButton>
+				<div />
 			</footer>
 		</div>
 	);
