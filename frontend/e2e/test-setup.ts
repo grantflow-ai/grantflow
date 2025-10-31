@@ -3,6 +3,22 @@ import { test as base } from "@playwright/test";
 export const test = base.extend({
 	page: async ({ page }, use) => {
 		await page.addInitScript(() => {
+			const consentValue = encodeURIComponent(
+				JSON.stringify({
+					consentGiven: true,
+					hasInteracted: true,
+					preferences: {
+						analytics: true,
+						essential: true,
+					},
+				}),
+			);
+
+			// biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in Playwright init scripts
+			document.cookie = `grantflow_cookie_consent=${consentValue}; path=/; SameSite=Strict`;
+		});
+
+		await page.addInitScript(() => {
 			localStorage.clear();
 			sessionStorage.clear();
 		});

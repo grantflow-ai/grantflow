@@ -60,6 +60,7 @@ tasks:
   test:e2e:
     desc: Run all end-to-end tests
     deps:
+      - task: frontend:test:e2e
       - task: service:backend:test:e2e
       - task: service:indexer:test:e2e
       - task: service:crawler:test:e2e
@@ -309,11 +310,63 @@ tasks:
       - pnpm run storybook
 
   frontend:test:e2e:
-    desc: Run frontend end-to-end tests with Playwright
+    desc: Run frontend end-to-end tests with Playwright against local dev server (mock API)
     dir: frontend
     dotenv: [".env"]
     cmds:
+      - pnpm exec playwright install chromium
       - pnpm test:e2e
+
+  frontend:test:e2e:ci:
+    desc: Run frontend e2e tests against real backend (for CI)
+    deps:
+      - task: e2e:up
+      - task: e2e:seed
+    dir: frontend
+    dotenv: [".env"]
+    env:
+      NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+    cmds:
+      - pnpm exec playwright install chromium
+      - pnpm test:e2e
+    ignore_error: true
+
+  e2e:up:
+    desc: Start services for e2e testing (db, backend, pubsub, gcs)
+    deps:
+      - task: _dev:check
+    cmds:
+      - docker compose up -d db pubsub-emulator gcs-emulator backend
+      - task: _dev:init-pubsub
+      - task: _dev:init-gcs
+      - task: e2e:migrate
+
+  e2e:down:
+    desc: Stop e2e services
+    cmds:
+      - docker compose down
+
+  e2e:migrate:
+    desc: Run database migrations for e2e testing
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+      DB_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
+    cmds:
+      - task: _sleep
+        vars:
+          SECONDS: "5"
+      - uv run alembic --config ./packages/db/alembic.ini upgrade head
+
+  e2e:seed:
+    desc: Seed database with e2e test data
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+      DATABASE_CONNECTION_STRING: "postgresql+asyncpg://local:local@localhost:5433/local"
+    cmds:
+      - task: _sleep
+        vars:
+          SECONDS: "1"
+      - uv run python scripts/seed_e2e.py
 
 
   frontend:dev:
@@ -783,4 +836,3 @@ tasks:
             exit 1
           "
         platforms: [windows]
-

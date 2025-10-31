@@ -10,7 +10,7 @@
 		"test-results/**",
 		".storybook/**",
 		"testing/**",
-		"tests/**",
+		"e2e/**",
 		"**/*.spec.ts",
 		"**/*.spec.tsx",
 		"**/*.stories.tsx",

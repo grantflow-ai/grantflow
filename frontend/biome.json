@@ -246,7 +246,7 @@
 				"**/*.test.tsx",
 				"**/*.stories.ts",
 				"**/*.stories.tsx",
-				"**/tests/**/*"
+				"**/e2e/**/*"
 			],
 			"linter": {
 				"rules": {

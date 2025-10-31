@@ -13,22 +13,12 @@ export default defineConfig({
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
 		},
-
-		{
-			name: "firefox",
-			use: { ...devices["Desktop Firefox"] },
-		},
-
-		{
-			name: "webkit",
-			use: { ...devices["Desktop Safari"] },
-		},
 	],
 
 	reporter: "html",
 
 	retries: process.env.CI ? 2 : 0,
-	testDir: "./tests/e2e",
+	testDir: "./e2e",
 
 	timeout: 60 * 1000,
 

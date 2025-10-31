@@ -1,12 +1,21 @@
 import asyncio
 import os
+import sys
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import functions_framework
 import structlog
 from flask import Request
 from google.cloud import pubsub_v1
+
+# Ensure local workspace packages are importable when deployed.
+CURRENT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(CURRENT_DIR / "packages"))
+sys.path.insert(0, str(CURRENT_DIR))
+
+# ruff: noqa: E402
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplicationSource,

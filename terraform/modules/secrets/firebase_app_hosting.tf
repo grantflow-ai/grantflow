@@ -36,16 +36,29 @@ resource "google_secret_manager_secret" "firebase_app_hosting" {
   }
 }
 
-resource "google_secret_manager_secret_iam_binding" "firebase_app_hosting_access" {
+resource "google_secret_manager_secret_iam_member" "firebase_appspot_access" {
   for_each = google_secret_manager_secret.firebase_app_hosting
 
   project   = var.project_id
   secret_id = each.value.secret_id
   role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+}
 
-  members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
-    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
-  ]
+resource "google_secret_manager_secret_iam_member" "firebase_compute_access" {
+  for_each = google_secret_manager_secret.firebase_app_hosting
+
+  project   = var.project_id
+  secret_id = each.value.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
+resource "google_secret_manager_secret_iam_member" "firebase_hosting_service_access" {
+  for_each = google_secret_manager_secret.firebase_app_hosting
+
+  project   = var.project_id
+  secret_id = each.value.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
 }
