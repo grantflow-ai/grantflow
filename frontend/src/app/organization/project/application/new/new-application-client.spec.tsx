@@ -99,6 +99,7 @@ describe("NewApplicationClient", () => {
 
 			const mockCreateApplication = vi.fn().mockImplementation(async () => {
 				useApplicationStore.setState({ application: mockApplication });
+				return mockApplication;
 			});
 
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
@@ -131,12 +132,10 @@ describe("NewApplicationClient", () => {
 
 			const mockCreateApplication = vi.fn().mockImplementation(async () => {
 				useApplicationStore.setState({ application: mockApplication });
+				return mockApplication;
 			});
 
-			const mockNavigateToApplication = vi.fn();
-
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
-			useNavigationStore.setState({ navigateToApplication: mockNavigateToApplication });
 
 			render(<NewApplicationClient />);
 
@@ -149,27 +148,21 @@ describe("NewApplicationClient", () => {
 				});
 			});
 
-			expect(mockNavigateToApplication).toHaveBeenCalledWith(
-				mockProject.id,
-				mockProject.name,
-				mockApplication.id,
-				mockApplication.title,
-			);
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeProjectId).toBe(mockProject.id);
+			expect(navigationState.activeProjectName).toBe(mockProject.name);
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
+			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
 			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
 		});
 
 		it("disables both cards during creation", async () => {
 			const user = userEvent.setup();
-			const mockApplication = ApplicationWithTemplateFactory.build();
-
 			const mockCreateApplication = vi.fn().mockImplementation(
 				() =>
-					new Promise((resolve) =>
-						setTimeout(() => {
-							useApplicationStore.setState({ application: mockApplication });
-							resolve(undefined);
-						}, 100),
-					),
+					new Promise(() => {
+						/* intentionally never resolve to simulate pending request */
+					}),
 			);
 
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
@@ -196,8 +189,8 @@ describe("NewApplicationClient", () => {
 
 			const mockCreateApplication = vi.fn().mockImplementation(async () => {
 				useApplicationStore.setState({ application: mockApplication });
+				return mockApplication;
 			});
-
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
 
 			render(<NewApplicationClient />);
@@ -217,6 +210,19 @@ describe("NewApplicationClient", () => {
 					"Untitled Application",
 				);
 			});
+
+			await waitFor(() => {
+				expect(mockToast.success).toHaveBeenCalledWith("Application created successfully", {
+					id: "create-application",
+				});
+			});
+
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeProjectId).toBe(mockProject.id);
+			expect(navigationState.activeProjectName).toBe(mockProject.name);
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
+			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
+			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
 		});
 
 		it("navigates to wizard after successful creation", async () => {
@@ -228,12 +234,10 @@ describe("NewApplicationClient", () => {
 
 			const mockCreateApplication = vi.fn().mockImplementation(async () => {
 				useApplicationStore.setState({ application: mockApplication });
+				return mockApplication;
 			});
 
-			const mockNavigateToApplication = vi.fn();
-
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
-			useNavigationStore.setState({ navigateToApplication: mockNavigateToApplication });
 
 			render(<NewApplicationClient />);
 
@@ -246,12 +250,11 @@ describe("NewApplicationClient", () => {
 				});
 			});
 
-			expect(mockNavigateToApplication).toHaveBeenCalledWith(
-				mockProject.id,
-				mockProject.name,
-				mockApplication.id,
-				mockApplication.title,
-			);
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeProjectId).toBe(mockProject.id);
+			expect(navigationState.activeProjectName).toBe(mockProject.name);
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
+			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
 			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
 		});
 	});
@@ -270,10 +273,7 @@ describe("NewApplicationClient", () => {
 			const error = new Error("Network error");
 
 			const mockCreateApplication = vi.fn().mockRejectedValue(error);
-			const mockNavigateToApplication = vi.fn();
-
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
-			useNavigationStore.setState({ navigateToApplication: mockNavigateToApplication });
 
 			render(<NewApplicationClient />);
 
@@ -287,7 +287,9 @@ describe("NewApplicationClient", () => {
 			});
 
 			expect(mockRouterReplace).not.toHaveBeenCalled();
-			expect(mockNavigateToApplication).not.toHaveBeenCalled();
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeApplicationId).toBeNull();
+			expect(navigationState.activeProjectId).toBeNull();
 		});
 
 		it("re-enables cards after creation failure", async () => {
