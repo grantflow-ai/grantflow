@@ -387,7 +387,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-      issues: write
       deployments: write
     env:
       TF_VAR_project_id: grantflow
@@ -483,22 +482,35 @@ jobs:
 
       - name: Notify on Failure
         if: failure()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const message = `## ❌ Deployment Failed
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL not configured; skipping Discord notification."
+            exit 0
+          fi
 
-            **Environment:** ${{ env.ENVIRONMENT }}
-            **Commit:** ${{ github.sha }}
-            **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          commit_short="$(echo "$GITHUB_SHA" | cut -c1-7)"
+          commit_markdown="[$commit_short]($commit_url)"
+          workflow_markdown="[View Run]($run_url)"
+          actor="@${GITHUB_ACTOR}"
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
 
-            Please check the logs for details.`;
-
-            // Create an issue for the failure
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Deployment Failed: ${{ env.ENVIRONMENT }} - ${new Date().toISOString()}`,
-              body: message,
-              labels: ['deployment-failure', 'infrastructure']
-            });
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "❌ Terraform Deployment Failed",
+                   "description": "Terraform apply failed for environment '"$ENVIRONMENT"'.",
+                   "color": 16711680,
+                   "fields": [
+                     {"name": "Environment", "value": "'"$ENVIRONMENT"'", "inline": true},
+                     {"name": "Actor", "value": "'"$actor"'", "inline": true},
+                     {"name": "Commit", "value": "'"$commit_markdown"'", "inline": true},
+                     {"name": "Workflow", "value": "'"$workflow_markdown"'", "inline": false}
+                   ],
+                   "timestamp": "'"$timestamp"'"
+                 }]
+               }' \
+               "$DISCORD_WEBHOOK_URL"
