@@ -152,7 +152,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
@@ -167,7 +167,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
@@ -181,7 +181,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_PLAN });
@@ -196,7 +196,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_DEEP_DIVE });
@@ -210,7 +210,7 @@ describe.sequential("WizardClientComponent", () => {
 			renderWizardClient();
 
 			await waitFor(() => {
-				expect(screen.getByTestId("grant-type-step")).toBeInTheDocument();
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 			});
 
 			useWizardStore.setState({ currentStep: WizardStep.GENERATE_AND_COMPLETE });

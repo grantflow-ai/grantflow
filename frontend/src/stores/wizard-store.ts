@@ -15,15 +15,7 @@ import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } fr
 const DEBOUNCE_DELAY_MS = 2000;
 export const MIN_TITLE_LENGTH = 10;
 
-const WIZARD_STEP_ORDER: WizardStep[] = [
-	WizardStep.APPLICATION_TYPE,
-	WizardStep.APPLICATION_DETAILS,
-	WizardStep.APPLICATION_STRUCTURE,
-	WizardStep.KNOWLEDGE_BASE,
-	WizardStep.RESEARCH_PLAN,
-	WizardStep.RESEARCH_DEEP_DIVE,
-	WizardStep.GENERATE_AND_COMPLETE,
-];
+const WIZARD_STEP_ORDER = Object.values(WizardStep);
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
@@ -151,7 +143,7 @@ const initialWizardState: WizardState = {
 	applicationGenerationFailed: false,
 	autofillMessageId: null,
 	autofillType: null,
-	currentStep: WizardStep.APPLICATION_TYPE,
+	currentStep: WizardStep.APPLICATION_DETAILS,
 	isAutofillLoading: {
 		research_deep_dive: false,
 		research_plan: false,
@@ -919,12 +911,6 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					return {
 						isValid: true,
 						reason: "All requirements met.",
-					};
-				}
-				case WizardStep.APPLICATION_TYPE: {
-					return {
-						isValid: true,
-						reason: ApplicationDetailsValidationReason.VALID,
 					};
 				}
 				case WizardStep.GENERATE_AND_COMPLETE: {
