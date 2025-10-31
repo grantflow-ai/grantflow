@@ -51,10 +51,18 @@ function CTASection() {
 					</p>
 				</div>
 				<div className="flex w-full items-center justify-between gap-6 md:w-auto  md:justify-end">
-					<LandingPageButton className="bg-white" size="lg" theme="dark" variant="secondary">
+					<LandingPageButton
+						asChild
+						className="bg-white"
+						data-testid="cta-contact-link"
+						size="lg"
+						theme="dark"
+						variant="secondary"
+					>
 						<Link href="mailto:contact@grantflow.ai">Contact us</Link>
 					</LandingPageButton>
 					<LandingPageScrollButton
+						data-testid="cta-priority-access-button"
 						desktopTargetId="waitlist"
 						mobileTargetId="waitlist-form-container"
 						offset={10}

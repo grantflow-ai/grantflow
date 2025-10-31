@@ -56,7 +56,7 @@ export default defineConfig({
 		},
 		environment: "jsdom",
 		exclude: [
-			"tests/e2e/**",
+			"e2e/**",
 			"**/node_modules/**",
 			"**/dist/**",
 			"**/.{idea,git,cache,output,temp}/**",

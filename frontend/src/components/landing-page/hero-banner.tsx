@@ -17,7 +17,10 @@ export function HeroBanner() {
 			/>
 			<div className="lg:mx-15 lg:mb-15 items-between relative z-30 mb-5 mt-20 flex items-center justify-between px-4 py-5 md:mx-5 md:mb-10 md:px-5 xl:m-20 xl:px-10 ">
 				<div className="flex max-w-md flex-col md:max-w-lg lg:max-w-xl ">
-					<h1 className="font-heading text-app-black text-5xl leading-[1.2] sm:text-6xl sm:leading-[1.15] md:text-[4.215rem] md:leading-[1.1]">
+					<h1
+						className="font-heading text-app-black text-5xl leading-[1.2] sm:text-6xl sm:leading-[1.15] md:text-[4.215rem] md:leading-[1.1]"
+						data-testid="hero-heading"
+					>
 						Where Research Meets Funding, Seamlessly.
 					</h1>
 					<div className="mt-10">

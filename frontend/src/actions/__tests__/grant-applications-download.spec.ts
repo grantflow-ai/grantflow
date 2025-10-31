@@ -15,7 +15,7 @@ describe("Grant Applications Download API Actions", () => {
 
 	describe("downloadApplication", () => {
 		it("should download application in markdown format", async () => {
-			const mockBlob = new Blob(["# Test Application\\n\\nContent"], { type: "text/markdown" });
+			const mockBlob = new Blob(["# Test Application\n\nContent"], { type: "text/markdown" });
 			const mockDownloadApplication = vi.mocked(grantApplicationActions.downloadApplication);
 			mockDownloadApplication.mockResolvedValue(mockBlob);
 

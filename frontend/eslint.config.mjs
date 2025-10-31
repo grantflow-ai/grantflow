@@ -291,7 +291,7 @@ export default eslintTS.config(
 		},
 	},
 	{
-		files: ["**/tests/e2e/**/*.{ts,tsx}"],
+		files: ["**/e2e/**/*.{ts,tsx}"],
 		rules: {
 			"react-hooks/rules-of-hooks": "off",
 		},
