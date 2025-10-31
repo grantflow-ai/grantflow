@@ -153,7 +153,10 @@ describe("NewApplicationClient", () => {
 			expect(navigationState.activeProjectName).toBe(mockProject.name);
 			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			await waitFor(() => {
+				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+			});
 		});
 
 		it("disables both cards during creation", async () => {
@@ -222,7 +225,10 @@ describe("NewApplicationClient", () => {
 			expect(navigationState.activeProjectName).toBe(mockProject.name);
 			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			await waitFor(() => {
+				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+			});
 		});
 
 		it("navigates to wizard after successful creation", async () => {
@@ -255,7 +261,10 @@ describe("NewApplicationClient", () => {
 			expect(navigationState.activeProjectName).toBe(mockProject.name);
 			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			await waitFor(() => {
+				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+			});
 		});
 	});
 

@@ -68,11 +68,27 @@ export function NewApplicationClient() {
 			toast.success("Application created successfully", { id: "create-application" });
 
 			navigateToApplication(project.id, project.name, createdApplication.id, createdApplication.title);
-			creationSucceeded = true;
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			const currentAppId = useNavigationStore.getState().activeApplicationId;
+			if (currentAppId !== createdApplication.id) {
+				throw new Error("Failed to persist navigation state");
+			}
+
 			router.replace(routes.organization.project.application.wizard());
+			creationSucceeded = true;
 		} catch (error) {
 			log.error("create-application", error);
-			toast.error("Failed to create application. Please try again.", { id: "create-application" });
+
+			if (error instanceof Error && error.message.includes("persist")) {
+				toast.error("Your application was created! Please return to the applications list to open it.", {
+					duration: 8000,
+					id: "create-application",
+				});
+			} else {
+				toast.error("Failed to create application. Please try again.", { id: "create-application" });
+			}
 		} finally {
 			if (!creationSucceeded) {
 				setCreatingApplication(false);
