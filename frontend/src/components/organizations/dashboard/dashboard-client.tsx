@@ -16,11 +16,11 @@ import { DashboardProjectCard } from "@/components/organizations/dashboard/dashb
 import { DashboardStats } from "@/components/organizations/dashboard/dashboard-stats";
 import { WelcomeModal } from "@/components/organizations/dashboard/welcome/welcome-modal";
 import { DeleteProjectModal } from "@/components/organizations/modals/delete-project-modal";
-import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
+// import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import PaymentLink from "@/components/organizations/payment/payment-link";
 import { useOrganizationValidation } from "@/hooks/use-organization-validation";
 import { useNavigationStore } from "@/stores/navigation-store";
-import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
+// import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
@@ -49,7 +49,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 	const { clearActiveProject, navigateToProject, stateHydrated } = useNavigationStore();
 	const { addNotification } = useNotificationStore();
-	const { closeModal, isModalOpen } = useNewApplicationModalStore();
+	// const { closeModal, isModalOpen } = useNewApplicationModalStore();
 
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
@@ -184,50 +184,50 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 		router.push(routes.organization.project.application.new());
 	};
 
-	const handleCreateApplication = async (projectId: null | string, projectName: string, isNewProject: boolean) => {
-		if (!validatedOrganizationId) {
-			toast.error("No organization selected");
-			return;
-		}
+	// const handleCreateApplication = async (projectId: null | string, projectName: string, isNewProject: boolean) => {
+	// 	if (!validatedOrganizationId) {
+	// 		toast.error("No organization selected");
+	// 		return;
+	// 	}
 
-		try {
-			let targetProjectId = projectId;
-			let targetProjectName = projectName;
+	// 	try {
+	// 		let targetProjectId = projectId;
+	// 		let targetProjectName = projectName;
 
-			if (isNewProject) {
-				const newProject = await createProject(validatedOrganizationId, {
-					description: "",
-					name: projectName,
-				});
-				targetProjectId = newProject.id;
-				targetProjectName = projectName;
+	// 		if (isNewProject) {
+	// 			const newProject = await createProject(validatedOrganizationId, {
+	// 				description: "",
+	// 				name: projectName,
+	// 			});
+	// 			targetProjectId = newProject.id;
+	// 			targetProjectName = projectName;
 
-				mutate();
+	// 			mutate();
 
-				toast.success(`Project "${projectName}" created successfully`);
-			}
+	// 			toast.success(`Project "${projectName}" created successfully`);
+	// 		}
 
-			if (!targetProjectId) {
-				toast.error("Project ID is required");
-				return;
-			}
+	// 		if (!targetProjectId) {
+	// 			toast.error("Project ID is required");
+	// 			return;
+	// 		}
 
-			navigateToProject(targetProjectId, targetProjectName);
-			closeModal();
-			router.push(routes.organization.project.application.new());
-		} catch (error) {
-			const normalizedError = error instanceof Error ? error : new Error(String(error));
-			log.error("dashboard-create-application", {
-				currentOrganizationId: validatedOrganizationId,
-				error: normalizedError,
-				isNewProject,
-				projectId,
-				projectName,
-			});
+	// 		navigateToProject(targetProjectId, targetProjectName);
+	// 		closeModal();
+	// 		router.push(routes.organization.project.application.new());
+	// 	} catch (error) {
+	// 		const normalizedError = error instanceof Error ? error : new Error(String(error));
+	// 		log.error("dashboard-create-application", {
+	// 			currentOrganizationId: validatedOrganizationId,
+	// 			error: normalizedError,
+	// 			isNewProject,
+	// 			projectId,
+	// 			projectName,
+	// 		});
 
-			toast.error("Failed to start application wizard");
-		}
-	};
+	// 		toast.error("Failed to start application wizard");
+	// 	}
+	// };
 
 	return (
 		<div className="relative size-full overflow-y-scroll bg-preview-bg">
