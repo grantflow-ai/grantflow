@@ -60,16 +60,8 @@ const LinkMain: React.FC<LinkMainProps> = ({ url, setUrl, setLink, removeLink, o
 	};
 
 	return (
-		<Card
-			style={{
-				...(isMobile ? { border: 0, boxShadow: "none" } : {}),
-			}}
-		>
-			<CardBody
-				style={{
-					...(isMobile ? { padding: 0 } : {}),
-				}}
-			>
+		<Card style={isMobile ? { border: 0, boxShadow: "none" } : {}}>
+			<CardBody style={isMobile ? { padding: 0 } : {}}>
 				<CardItemGroup orientation="horizontal">
 					<InputGroup>
 						<Input

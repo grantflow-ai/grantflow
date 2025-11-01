@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.3.2
+    hooks:
+      - id: biome-format
+      - id: biome-lint
+  - repo: https://github.com/oxc-project/mirrors-oxlint
+    rev: v1.24.0
+    hooks:
+      - args:
+          - --fix
+        id: oxlint
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.3
+    hooks:
+      - args:
+          - --fix
+          - --unsafe-fixes
+        id: ruff
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: eslint
+        entry: pnpm run eslint --fix
+        files: ^services|^packages
+        language: system
+        name: eslint
+        require_serial: true
+        types:
+          - javascript

@@ -56,11 +56,11 @@ async def test_grant_application_generation(performance_context: PerformanceTest
     performance_context.start_stage("data_preparation")
     # ... do work ...
     performance_context.end_stage()
-    
+
     performance_context.start_stage("generation")
     # ... generate content ...
     performance_context.end_stage()
-    
+
     # Add metadata
     performance_context.set_metadata("sections_generated", 5)
 ```
@@ -184,7 +184,7 @@ If you're migrating tests from the old structure:
    ```python
    # Old
    from services.rag.tests.e2e.performance_framework import PerformanceTestContext
-   
+
    # New
    from testing.performance_framework import PerformanceTestContext
    ```
@@ -193,7 +193,7 @@ If you're migrating tests from the old structure:
    ```python
    # Old
    from testing.e2e_utils import e2e_test
-   
+
    # New
    from testing.performance_framework import performance_test
    ```

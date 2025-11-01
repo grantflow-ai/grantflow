@@ -37,7 +37,7 @@ Part B1: Extended Synopsis (5 pages maximum)
 
 Part B2: Scientific Proposal (15 pages maximum including references)
 Section a: State-of-the-art and objectives (4 pages)
-Section b: Methodology (6 pages) 
+Section b: Methodology (6 pages)
 Section c: Resources and project management (3 pages)
 Section d: Ethical and safety issues (2 pages)
 

@@ -115,5 +115,3 @@ runs:
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi
-
-        

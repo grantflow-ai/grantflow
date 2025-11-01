@@ -163,7 +163,7 @@ Firebase App Hosting is configured using three main Terraform resources:
 ### Files to Never Use
 
 - `apphosting.yaml` - Not used in Terraform setup
-- `apphosting.staging.yaml` - Not used in Terraform setup  
+- `apphosting.staging.yaml` - Not used in Terraform setup
 - `apphosting.production.yaml` - Not used in Terraform setup
 
 All configuration is managed through the `terraform/modules/app_hosting/` module.

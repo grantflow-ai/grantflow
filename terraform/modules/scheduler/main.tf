@@ -24,7 +24,7 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
   name      = "scraper-daily"
   region    = var.region
   schedule  = "0 2 * * *"
-  time_zone = "UTC"
+  time_zone = var.timezone
 
   description = "Daily NIH grant scraping job"
 
@@ -62,7 +62,7 @@ resource "google_cloud_scheduler_job" "grant_matcher" {
   name      = "grant-matcher-${var.environment}"
   region    = var.region
   schedule  = "0 9 * * *"
-  time_zone = "UTC"
+  time_zone = var.timezone
 
   description = "Daily grant matching and notification job"
 
@@ -97,7 +97,7 @@ resource "google_cloud_scheduler_job" "entity_cleanup" {
   name      = "entity-cleanup-${var.environment}"
   region    = var.region
   schedule  = "0 2 * * *"
-  time_zone = "UTC"
+  time_zone = var.timezone
 
   description = "Daily cleanup of users and organizations with expired soft deletes"
 
@@ -136,7 +136,7 @@ resource "google_cloud_scheduler_job" "orphaned_files_cleanup" {
   name      = "orphaned-files-cleanup-${var.environment}"
   region    = var.region
   schedule  = "0 3 * * *"
-  time_zone = "UTC"
+  time_zone = var.timezone
 
   description = "Daily cleanup of orphaned RAG file records where GCS files no longer exist"
 
@@ -175,7 +175,7 @@ resource "google_cloud_scheduler_job" "dlq_reconciliation" {
   name      = "dlq-reconciliation-${var.environment}"
   region    = var.region
   schedule  = "*/5 * * * *"
-  time_zone = "UTC"
+  time_zone = var.timezone
 
   description = "DLQ reconciliation - runs every 5 minutes to check stuck jobs"
 

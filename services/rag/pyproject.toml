@@ -10,10 +10,10 @@ requires-python = "==3.13.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 dependencies = [
   "db",
-  "shared-utils[server,ai,embeddings,gcs,nlp,pubsub]",
+  "shared-utils[ai,embeddings,gcs,nlp,pubsub,server]",
 ]
 
 [dependency-groups]
 dev = [
-  "shared-utils[server,ai,embeddings,gcs,nlp,pubsub,extraction]",
+  "shared-utils[ai,embeddings,extraction,gcs,nlp,pubsub,server]",
 ]

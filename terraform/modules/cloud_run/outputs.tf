@@ -79,4 +79,3 @@ output "crdt_service_id" {
   description = "The ID of the CRDT server service"
   value       = google_cloud_run_v2_service.crdt.name
 }
-

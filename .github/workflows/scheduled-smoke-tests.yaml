@@ -35,7 +35,7 @@ jobs:
     env:
       DEBUG: "True"
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -130,7 +130,7 @@ jobs:
           rag_status="${{ steps.rag_tests.outcome }}"
           crawler_status="${{ steps.crawler_tests.outcome }}"
           # frontend_status="${{ steps.frontend_tests.outcome }}"
-          
+
           # Count failures
           failures=0
           if [ "$scraper_status" = "failure" ]; then failures=$((failures + 1)); fi
@@ -138,7 +138,7 @@ jobs:
           if [ "$rag_status" = "failure" ]; then failures=$((failures + 1)); fi
           if [ "$crawler_status" = "failure" ]; then failures=$((failures + 1)); fi
           # if [ "$frontend_status" = "failure" ]; then failures=$((failures + 1)); fi
-          
+
           # Set color and title based on results
           if [ $failures -eq 0 ]; then
             color=65280  # Green
@@ -149,14 +149,14 @@ jobs:
             title="❌ Smoke Test Failures Detected"
             description="$failures out of 4 smoke test suites failed"
           fi
-          
+
           # Create status indicators
           scraper_icon="✅"; if [ "$scraper_status" = "failure" ]; then scraper_icon="❌"; fi
           indexer_icon="✅"; if [ "$indexer_status" = "failure" ]; then indexer_icon="❌"; fi
           rag_icon="✅"; if [ "$rag_status" = "failure" ]; then rag_icon="❌"; fi
           crawler_icon="✅"; if [ "$crawler_status" = "failure" ]; then crawler_icon="❌"; fi
           # frontend_icon="✅"; if [ "$frontend_status" = "failure" ]; then frontend_icon="❌"; fi
-          
+
           curl -H "Content-Type: application/json" \
                -d '{
                  "embeds": [{

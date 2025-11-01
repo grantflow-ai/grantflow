@@ -20,7 +20,6 @@ const bytea = customType<{ data: null | Uint8Array; driverData: Buffer | null }>
 	},
 });
 
- 
 export const editorDocuments = pgTable("editor_documents", {
 	crdt: bytea("crdt"),
 	createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),

@@ -11,7 +11,7 @@ The editor is a standalone React application that provides rich text editing cap
 - **Framework**: Vite + React 19 + TypeScript
 - **Editor**: TipTap (Prosemirror-based)
 - **Styling**: Tailwind CSS 4
-- **Components**: Radix UI primitives  
+- **Components**: Radix UI primitives
 - **Testing**: Vitest + Testing Library + Playwright
 - **Linting**: Biome + ESLint
 - **Storybook**: Component development and documentation
@@ -53,7 +53,7 @@ From the repository root, you can use the Taskfile commands:
 task editor:dev       # Start editor dev server
 task editor:build     # Build editor
 
-# Testing  
+# Testing
 task editor:test      # Run editor tests
 task editor:test:watch    # Run tests in watch mode
 task editor:test:coverage # Run tests with coverage

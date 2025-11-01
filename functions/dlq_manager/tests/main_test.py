@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -671,7 +671,8 @@ def test_handle_dlq_reconciliation_success(
     mock_reconcile.return_value = "Reconciliation completed: {'stuck_indexing': 0}"
 
     mock_request = MagicMock()
-    result, status_code = handle_dlq_reconciliation(mock_request)
+    response = handle_dlq_reconciliation(mock_request)
+    result, status_code = cast("tuple[str, int]", response)
 
     assert status_code == 200
     assert "Reconciliation completed" in result
@@ -688,7 +689,8 @@ def test_handle_dlq_reconciliation_error(
     mock_reconcile.side_effect = Exception("Database error")
 
     mock_request = MagicMock()
-    result, status_code = handle_dlq_reconciliation(mock_request)
+    response = handle_dlq_reconciliation(mock_request)
+    result, status_code = cast("tuple[str, int]", response)
 
     assert status_code == 500
     assert "Error" in result

@@ -3,7 +3,7 @@
 This framework provides comprehensive benchmarking for vector database performance across different dimensions and configurations. The key insight is that we use **synthetic migrations** to modify your production schema temporarily, allowing us to test your real RAG code with different vector configurations.
 
 **Important**: These tests require:
-- `E2E_TESTS=1` environment variable 
+- `E2E_TESTS=1` environment variable
 - `PYTHONPATH=.` for proper imports
 - Must be run from the repository root directory
 - Use the `@performance_test` decorator with appropriate execution speed and domain
@@ -55,11 +55,11 @@ from .synthetic_migrations import VectorTableModifier
 
 async with session_maker() as session:
     modifier = VectorTableModifier(session)
-    
+
     # Test with 256d vectors instead of 384d
     await modifier.modify_vector_dimension(256)
     # Now all your production RAG code uses 256d vectors!
-    
+
     # Test with faster index parameters
     await modifier.modify_index_parameters(m=32, ef_construction=128)
     # Now HNSW index prioritizes speed over accuracy
@@ -104,7 +104,7 @@ generator = BenchmarkDataGenerator(session)
 # Create proper database entities
 entities = await generator.create_test_entities()
 user = entities["users"][0]
-project = entities["projects"][0]  
+project = entities["projects"][0]
 rag_source = entities["rag_sources"][0]
 
 # Generate realistic content
@@ -129,7 +129,7 @@ framework = VectorBenchmarkFramework(session_maker)
 result = await framework.benchmark_vector_insertion(vectors)
 print(f"Insertion rate: {result.throughput:.1f} vectors/sec")
 
-# Test search performance  
+# Test search performance
 result = await framework.benchmark_similarity_search(query_vectors)
 print(f"Search rate: {result.throughput:.1f} queries/sec")
 
@@ -184,7 +184,7 @@ async def test_my_dimension_benchmark(async_session_maker, benchmark_entities, l
     async with async_session_maker() as session:
         modifier = VectorTableModifier(session)
         await modifier.modify_vector_dimension(512)
-    
+
     # Your production RAG code now uses 512d vectors!
     # Test insertion, search, whatever you need
     framework = VectorBenchmarkFramework(async_session_maker)
@@ -200,7 +200,7 @@ async def test_custom_index_params(async_session_maker, logger):
         modifier = VectorTableModifier(session)
         # Test super fast index
         await modifier.modify_index_parameters(m=12, ef_construction=64)
-    
+
     # Now test your production code with this fast index
     framework = VectorBenchmarkFramework(async_session_maker)
     # Schema automatically restored after test
@@ -213,14 +213,14 @@ async def test_custom_index_params(async_session_maker, logger):
 async def test_with_dataset(small_dataset, async_session_maker, logger):
     # small_dataset fixture provides vectors ready to use
     vectors = small_dataset["vectors"]
-    
+
     framework = VectorBenchmarkFramework(async_session_maker)
-    
-    # Test search performance  
+
+    # Test search performance
     generator = small_dataset["generator"]
     query_vectors = await generator.generate_query_vectors(100, 384)
     result = await framework.benchmark_similarity_search(query_vectors)
-    
+
     assert result.throughput > 10
 ```
 
@@ -258,7 +258,7 @@ class VectorBenchmarkFramework:
         async with PerformanceMetrics("my_test", dataset_size) as metrics:
             # Your benchmark code here
             pass
-        
+
         result = metrics.get_result("my_operation", vector_dimension)
         return result
 ```
@@ -273,7 +273,7 @@ async def test_my_benchmark(async_session_maker, benchmark_entities, logger):
         # Create test data
         chunks = await generator.generate_test_chunks(1000, benchmark_entities["rag_source"].id)
         vectors = await generator.create_test_vectors(chunks, benchmark_entities["rag_source"].id, 384)
-        
+
         framework = VectorBenchmarkFramework(async_session_maker)
         # Run benchmark
         result = await framework.benchmark_vector_insertion(vectors)
