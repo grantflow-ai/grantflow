@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppDialogDescription, AppDialogTitle } from "@/components/app/app-dialog";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { PROGRESS_BAR_STEPS } from "@/constants";
+import { WIZARD_STEPS } from "@/constants";
 import { useUserStore } from "@/stores/user-store";
 import { routes } from "@/utils/navigation";
 import { WelcomeModalContent } from "./modal-overlay";
@@ -26,7 +26,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 		if (!open) return;
 
 		const interval = setInterval(() => {
-			setStep((prev) => (prev < PROGRESS_BAR_STEPS.length ? prev + 1 : 1));
+			setStep((prev) => (prev < WIZARD_STEPS.length ? prev + 1 : 1));
 		}, 2000);
 
 		return () => {

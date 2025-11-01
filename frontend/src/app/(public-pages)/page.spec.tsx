@@ -115,15 +115,15 @@ describe.sequential("LandingPage", () => {
 		const ctaSection = screen.getByLabelText("cta-section");
 		expect(ctaSection).toBeDefined();
 
-		const contactButton = screen.getByRole("button", { name: /contact us/i });
-		expect(contactButton).toBeDefined();
+		const contactLink = screen.getByRole("link", { name: /contact us/i });
+		expect(contactLink).toBeDefined();
 
 		const tryButton = screen.getByRole("button", { name: /Secure Priority Access/i });
 		expect(tryButton).toBeDefined();
 
 		const mockOnClickContact = vi.fn();
-		contactButton.addEventListener("click", mockOnClickContact);
-		fireEvent.click(contactButton);
+		contactLink.addEventListener("click", mockOnClickContact);
+		fireEvent.click(contactLink);
 		expect(mockOnClickContact).toHaveBeenCalled();
 
 		const mockScrollFn = vi.fn();
@@ -137,13 +137,13 @@ describe.sequential("LandingPage", () => {
 	it("CTA section buttons exist and are clickable", async () => {
 		render(await LandingPage());
 
-		const contactButton = screen.getByRole("button", { name: /contact us/i });
-		expect(contactButton).toBeDefined();
+		const contactLink = screen.getByRole("link", { name: /contact us/i });
+		expect(contactLink).toBeDefined();
 
 		const tryButton = screen.getByRole("button", { name: /Secure Priority Access/i });
 		expect(tryButton).toBeDefined();
 
-		fireEvent.click(contactButton);
+		fireEvent.click(contactLink);
 		fireEvent.click(tryButton);
 	});
 
