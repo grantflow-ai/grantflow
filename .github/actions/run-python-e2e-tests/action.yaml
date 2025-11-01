@@ -73,7 +73,7 @@ runs:
 
         - name: Install Hugging Face CLI
           shell: bash
-          run: pip install huggingface-hub[cli] hf-transfer
+          run: uv pip install huggingface-hub[cli] hf-transfer
 
         - name: Download and cache embedding model
           shell: bash
@@ -85,7 +85,7 @@ runs:
               if [ ! -f "$HOME/hf_models/config.json" ] || [ ! -f "$HOME/hf_models/pytorch_model.bin" ]; then
                 echo "Downloading model sentence-transformers/all-MiniLM-L12-v2 to $HOME/hf_models"
                 # Download all model files to the specified directory without symlinks
-                huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir $HOME/hf_models --local-dir-use-symlinks False
+                uv run huggingface-cli download sentence-transformers/all-MiniLM-L12-v2 --local-dir $HOME/hf_models --local-dir-use-symlinks False
                 echo "Model download completed"
               else
                 echo "Model already cached at $HOME/hf_models"
