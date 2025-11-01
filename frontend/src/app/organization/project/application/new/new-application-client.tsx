@@ -18,6 +18,20 @@ import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
+const handleCreationError = (error: unknown) => {
+	log.error("create-application", error);
+
+	const isPersistenceError = error instanceof Error && error.message.includes("persist");
+	const errorMessage = isPersistenceError
+		? "Your application was created! Please return to the applications list to open it."
+		: "Failed to create application. Please try again.";
+
+	toast.error(errorMessage, {
+		duration: isPersistenceError ? 8000 : undefined,
+		id: "create-application",
+	});
+};
+
 export function NewApplicationClient() {
 	const router = useRouter();
 
@@ -39,6 +53,15 @@ export function NewApplicationClient() {
 			</div>
 		);
 	}
+
+	const verifyNavigationState = async (expectedAppId: string) => {
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		const currentAppId = useNavigationStore.getState().activeApplicationId;
+
+		if (currentAppId !== expectedAppId) {
+			throw new Error("Failed to persist navigation state");
+		}
+	};
 
 	const handleGrantTypeSelect = async (grantType: GrantTypeValue) => {
 		if (!selectedOrganizationId) {
@@ -65,30 +88,13 @@ export function NewApplicationClient() {
 				throw new Error("Application not created in store");
 			}
 
-			toast.success("Application created successfully", { id: "create-application" });
-
 			navigateToApplication(project.id, project.name, createdApplication.id, createdApplication.title);
-
-			await new Promise((resolve) => setTimeout(resolve, 100));
-
-			const currentAppId = useNavigationStore.getState().activeApplicationId;
-			if (currentAppId !== createdApplication.id) {
-				throw new Error("Failed to persist navigation state");
-			}
+			await verifyNavigationState(createdApplication.id);
 
 			router.replace(routes.organization.project.application.wizard());
 			creationSucceeded = true;
 		} catch (error) {
-			log.error("create-application", error);
-
-			if (error instanceof Error && error.message.includes("persist")) {
-				toast.error("Your application was created! Please return to the applications list to open it.", {
-					duration: 8000,
-					id: "create-application",
-				});
-			} else {
-				toast.error("Failed to create application. Please try again.", { id: "create-application" });
-			}
+			handleCreationError(error);
 		} finally {
 			if (!creationSucceeded) {
 				setCreatingApplication(false);
