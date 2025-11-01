@@ -88,8 +88,6 @@ export function NewApplicationClient() {
 				throw new Error("Application not created in store");
 			}
 
-			toast.success("Application created successfully", { id: "create-application" });
-
 			navigateToApplication(project.id, project.name, createdApplication.id, createdApplication.title);
 			await verifyNavigationState(createdApplication.id);
 
