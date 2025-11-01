@@ -121,37 +121,37 @@
         <div class="header">
             <h1>🎯 New Grant Opportunities</h1>
         </div>
-        
+
         <div class="content">
             <div class="greeting">
                 Hello!
             </div>
-            
+
             <div class="grant-count">
                 <strong>{{ grants|length }} new grant{{ 's' if grants|length != 1 else '' }}</strong> matching your search criteria {{ 'have' if grants|length != 1 else 'has' }} been found!
             </div>
-            
+
             <div class="frequency-info">
                 📅 You're receiving {{ frequency }} notifications based on your subscription preferences.
             </div>
-            
+
             <div class="grant-list">
                 {% for grant in grants %}
                 <div class="grant-item">
                     <div class="grant-title">{{ grant.title }}</div>
-                    
+
                     {% if grant.amount %}
                     <div class="grant-details">
                         <strong>Amount:</strong> {{ grant.amount }}
                     </div>
                     {% endif %}
-                    
+
                     {% if grant.deadline %}
                     <div class="grant-details">
                         <strong>Deadline:</strong> {{ grant.deadline }}
                     </div>
                     {% endif %}
-                    
+
                     {% if grant.url %}
                     <a href="{{ grant.url }}" class="grant-link" target="_blank">
                         View Grant Details →
@@ -160,14 +160,14 @@
                 </div>
                 {% endfor %}
             </div>
-            
+
             <div style="text-align: center; margin-top: 30px;">
                 <a href="https://grantflow.ai/grants" class="cta-button">
                     Browse All Grants
                 </a>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>
                 You're receiving this email because you subscribed to grant alerts on GrantFlow.

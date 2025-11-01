@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 5.0.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = ">= 2.4.0"
+    }
   }
 }
 
@@ -102,14 +106,15 @@ resource "google_cloudfunctions2_function" "dlq_manager" {
     service_account_email            = google_service_account.dlq_manager.email
 
     environment_variables = {
-      GCP_PROJECT_ID = var.project_id
-      ENVIRONMENT    = var.environment
+      GCP_PROJECT_ID           = var.project_id
+      ENVIRONMENT              = var.environment
+      DATABASE_CONNECTION_NAME = var.database_connection_name
     }
 
     secret_environment_variables {
       key        = "DATABASE_URL"
       project_id = var.project_id
-      secret     = "DATABASE_CONNECTION_STRING"
+      secret     = var.database_connection_string_secret_id
       version    = "latest"
     }
   }

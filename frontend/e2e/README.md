@@ -279,4 +279,3 @@ await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
 - **Debug Mode**: `pnpm test:e2e -- --debug --trace on`
 - **Headed Mode**: `pnpm test:e2e -- --headed`
 - **Run specific test**: `pnpm test:e2e -- e2e/dashboard.spec.ts -g "should display dashboard"`
-

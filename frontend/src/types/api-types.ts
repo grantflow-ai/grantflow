@@ -552,7 +552,7 @@ export type RequestBody = {
 	email: string;
 	frequency?: string;
 	search_params?: {
-	
+
 };
 };
 };
@@ -1251,7 +1251,7 @@ export type RequestBody = {
 	export type RequestBody = {
 	message: {
 	attributes?: null | {
-	
+
 };
 	data?: null | string;
 	messageId?: null | string;
@@ -1337,7 +1337,7 @@ export type RequestBody = {
 	dismissed: boolean;
 	expires_at?: string;
 	extra_data?: {
-	
+
 };
 	id: string;
 	message: string;
@@ -1926,18 +1926,18 @@ export type RequestBody = {
 	created_at: string;
 	current_stage: null | string;
 	error_details?: {
-	
+
 };
 	error_message?: string;
 	extracted_metadata?: {
-	
+
 };
 	extracted_sections?: {
-	
+
 }[];
 	failed_at?: string;
 	generated_sections?: {
-	
+
 };
 	grant_application_id?: string;
 	grant_template_id?: string;
@@ -1948,7 +1948,7 @@ export type RequestBody = {
 	status: "CANCELLED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
 	updated_at: string;
 	validation_results?: {
-	
+
 };
 };
 };
@@ -1995,7 +1995,7 @@ export type RequestBody = {
 	export type RequestBody = {
 	autofill_type: "research_deep_dive" | "research_plan";
 	context?: {
-	
+
 };
 	field_name?: string;
 };

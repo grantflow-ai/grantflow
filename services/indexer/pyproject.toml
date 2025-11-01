@@ -10,5 +10,5 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "db",
-  "shared-utils[server,embeddings,extraction,gcs,pubsub]",
+  "shared-utils[embeddings,extraction,gcs,pubsub,server]",
 ]

@@ -983,7 +983,7 @@ sources of institutional support that the applicant will utilize in
 conducting the project. MRA recognizes that unconscious bias can
 manifest in such support letters and therefore strongly recommends
 considering these or similar guidelines when preparing such letters:
-https://tinyurl.com/ 
+https://tinyurl.com/
 ii. Applicant Eligibility Checklist: Required to confirm eligibility.
 Requires signature of the Department Chair, Division Head, or Dean.
 Young Investigator checklist can be accessed here

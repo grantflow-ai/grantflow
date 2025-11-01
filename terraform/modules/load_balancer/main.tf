@@ -11,13 +11,14 @@ terraform {
 
 locals {
   backend_service_name = split("-", split("//", var.backend_url)[1])[0]
-  backend_region       = "us-central1"
+  backend_region       = var.region
 }
 
 resource "google_compute_region_network_endpoint_group" "backend_neg" {
   name                  = "backend-neg-${var.environment}"
   network_endpoint_type = "SERVERLESS"
   region                = local.backend_region
+  project               = var.project_id
 
   cloud_run {
     service = local.backend_service_name
@@ -31,7 +32,8 @@ resource "google_compute_region_network_endpoint_group" "backend_neg" {
 resource "google_compute_region_network_endpoint_group" "crdt_neg_us_central1" {
   name                  = "crdt-neg-us-central1"
   network_endpoint_type = "SERVERLESS"
-  region                = "us-central1"
+  region                = local.backend_region
+  project               = var.project_id
 
   cloud_run {
     service = "crdt"
@@ -48,6 +50,7 @@ resource "google_compute_backend_service" "backend" {
   protocol    = "HTTPS"
   port_name   = "http"
   timeout_sec = 30
+  project     = var.project_id
 
   enable_cdn = var.enable_cdn
 
@@ -70,6 +73,7 @@ resource "google_compute_backend_service" "crdt_backend" {
   protocol    = "HTTPS"
   port_name   = "http"
   timeout_sec = 30
+  project     = var.project_id
 
   enable_cdn = var.enable_cdn
 
@@ -90,6 +94,7 @@ resource "google_compute_backend_service" "crdt_backend" {
 resource "google_compute_url_map" "backend_url_map" {
   name            = "backend-url-map-${var.environment}"
   default_service = google_compute_backend_service.backend.id
+  project         = var.project_id
 
   host_rule {
     hosts        = [var.domain]
@@ -124,7 +129,8 @@ resource "google_compute_url_map" "backend_url_map" {
 resource "google_compute_managed_ssl_certificate" "backend_ssl" {
   count = var.enable_ssl ? 1 : 0
 
-  name = "backend-ssl-${var.environment}"
+  name    = "backend-ssl-${var.environment}"
+  project = var.project_id
 
   managed {
     domains = [var.domain]
@@ -138,7 +144,8 @@ resource "google_compute_managed_ssl_certificate" "backend_ssl" {
 resource "google_compute_managed_ssl_certificate" "crdt_ssl" {
   count = var.enable_ssl ? 1 : 0
 
-  name = "crdt-ssl-${var.environment}"
+  name    = "crdt-ssl-${var.environment}"
+  project = var.project_id
 
   managed {
     domains = [var.crdt_domain]
@@ -154,6 +161,7 @@ resource "google_compute_target_https_proxy" "backend_https_proxy" {
 
   name    = "backend-https-proxy-${var.environment}"
   url_map = google_compute_url_map.backend_url_map.id
+  project = var.project_id
   ssl_certificates = [
     google_compute_managed_ssl_certificate.backend_ssl[0].id,
     google_compute_managed_ssl_certificate.crdt_ssl[0].id
@@ -163,10 +171,12 @@ resource "google_compute_target_https_proxy" "backend_https_proxy" {
 resource "google_compute_target_http_proxy" "backend_http_proxy" {
   name    = "backend-http-proxy-${var.environment}"
   url_map = google_compute_url_map.backend_url_map.id
+  project = var.project_id
 }
 
 resource "google_compute_global_address" "backend_ip" {
-  name = "backend-ip-${var.environment}"
+  name    = "backend-ip-${var.environment}"
+  project = var.project_id
 }
 
 resource "google_compute_global_forwarding_rule" "backend_https" {
@@ -176,6 +186,7 @@ resource "google_compute_global_forwarding_rule" "backend_https" {
   target     = google_compute_target_https_proxy.backend_https_proxy[0].id
   port_range = "443"
   ip_address = google_compute_global_address.backend_ip.address
+  project    = var.project_id
 }
 
 resource "google_compute_global_forwarding_rule" "backend_http" {
@@ -183,12 +194,14 @@ resource "google_compute_global_forwarding_rule" "backend_http" {
   target     = google_compute_target_http_proxy.backend_http_proxy.id
   port_range = "80"
   ip_address = google_compute_global_address.backend_ip.address
+  project    = var.project_id
 }
 
 resource "google_compute_security_policy" "backend_security" {
   count = var.environment == "production" ? 1 : 0
 
-  name = "backend-security-${var.environment}"
+  name    = "backend-security-${var.environment}"
+  project = var.project_id
 
   rule {
     action   = "allow"

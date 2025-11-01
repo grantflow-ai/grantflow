@@ -264,26 +264,26 @@ flowchart TB
     FAH --> LB
     FAH -.->|WebSocket| CRDT
     LB --> Backend
-    
+
     Backend --> CloudSQL
     Backend --> GCS
     Backend --> SecretMgr
     Backend --> URLCrawl
     Backend --> RAGProc
     Backend --> Notify
-    
+
     CRDT --> CloudSQL
     CRDT --> SecretMgr
-    
+
     GCS --> FileIndex
     FileIndex --> Indexer
     URLCrawl --> Crawler
     RAGProc --> RAG
-    
+
     Crawler --> GCS
     Indexer --> CloudSQL
     RAG --> CloudSQL
-    
+
     Alerts --> Discord
     Alerts --> Functions
 ```

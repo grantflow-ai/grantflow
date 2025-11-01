@@ -114,22 +114,17 @@ module "cloud_run" {
   indexer_concurrency_limit     = 50    # ~keep Optimized concurrency for indexer (10 instances × 50 = 500 concurrent)
   discord_webhook_url           = var.discord_webhook_url
 
-  enable_cpu_throttling = false
-  enable_http2          = true
-  request_timeout       = 300
-  concurrency_limit     = 100
+  request_timeout   = 300
+  concurrency_limit = 100
 }
 
 module "pubsub" {
   source                               = "../../modules/pubsub"
   project_id                           = var.project_id
-  region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
   rag_service_account_email            = module.iam.rag_service_account_email
 
   message_retention_duration = "604800s"
-  ack_deadline_seconds       = 600 # ~keep 10 minutes (maximum allowed by Google Cloud)
-  enable_dead_letter         = true
 
   # ~keep Specific timeouts for different subscription types (max 600s per Google Cloud)
   file_indexing_ack_deadline  = 600 # ~keep 10 minutes for file processing (max allowed)

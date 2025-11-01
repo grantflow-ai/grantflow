@@ -138,24 +138,19 @@ module "cloud_run" {
 
   crdt_memory_limit = "2Gi"
 
-  discord_webhook_url   = var.discord_webhook_url
-  enable_cpu_throttling = true
-  enable_http2          = false
-  request_timeout       = 300
-  concurrency_limit     = 80
-  debug                 = "1"
+  discord_webhook_url = var.discord_webhook_url
+  request_timeout     = 300
+  concurrency_limit   = 80
+  debug               = "1"
 
 }
 
 module "pubsub" {
   source                               = "../../modules/pubsub"
   project_id                           = var.project_id
-  region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
   rag_service_account_email            = module.iam.rag_service_account_email
   message_retention_duration           = "86400s"
-  ack_deadline_seconds                 = 600  # ~keep 10 minutes maximum allowed by Google Cloud
-  enable_dead_letter                   = true # ~keep Enable DLQ for better error handling
 
   # ~keep Specific timeouts for different subscription types (max 600s per Google Cloud)
   file_indexing_ack_deadline  = 600 # ~keep 10 minutes for file processing (max allowed)
@@ -174,8 +169,6 @@ module "pubsub" {
 
   backend_service_account_email    = module.iam.backend_service_account_email
   email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
-  fn_alerts_apphosting_staging_url = ""
-  fn_alerts_budget_staging_url     = ""
 }
 
 module "cloud_functions" {
@@ -202,9 +195,8 @@ module "scheduler" {
 
 
 module "additional_resources" {
-  source      = "../../modules/additional_resources"
-  project_id  = var.project_id
-  environment = var.environment
+  source     = "../../modules/additional_resources"
+  project_id = var.project_id
 }
 
 

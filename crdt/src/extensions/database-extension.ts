@@ -22,7 +22,10 @@ export const databaseExtension = new Database({
 	},
 	store: async ({ documentName, state }) => {
 		try {
-			await db.update(editorDocuments).set({ crdt: state as Uint8Array }).where(eq(editorDocuments.id, documentName));
+			await db
+				.update(editorDocuments)
+				.set({ crdt: state as Uint8Array })
+				.where(eq(editorDocuments.id, documentName));
 			logger.info({ documentId: documentName }, "crdt_state_persisted");
 		} catch (err) {
 			logger.error({ documentId: documentName, err }, "crdt_state_persist_failed");

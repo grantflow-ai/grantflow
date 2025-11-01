@@ -147,7 +147,7 @@ After installing Task, run:
 task setup
 ```
 
-This will install all dependencies and set up git hooks using Lefthook.
+This will install all dependencies and set up git hooks using `prek`.
 
 ## Local Development
 

@@ -1,0 +1,9 @@
+# ~keep Mirror root .trivyignore so terraform namespace hooks share exemptions
+# ~keep Allows temporary public ingress while connectivity tunnels land
+AVD-GCP-0017
+# ~keep Skip DB SSL requirement until Cloud SQL Auth Proxy rollout
+AVD-GCP-0015
+# ~keep Permit statement logging for debugging until audit pipeline stabilizes
+AVD-GCP-0021
+# ~keep Accept default Google-managed encryption for function source buckets
+AVD-GCP-0066

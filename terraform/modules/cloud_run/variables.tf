@@ -188,18 +188,6 @@ variable "scraper_memory_limit" {
   default     = ""
 }
 
-variable "enable_cpu_throttling" {
-  description = "Enable CPU throttling"
-  type        = bool
-  default     = true
-}
-
-variable "enable_http2" {
-  description = "Enable HTTP/2"
-  type        = bool
-  default     = false
-}
-
 variable "request_timeout" {
   description = "Request timeout in seconds"
   type        = number
@@ -214,30 +202,6 @@ variable "concurrency_limit" {
 
 variable "custom_domain" {
   description = "Custom domain for backend service (e.g., api.grantflow.ai)"
-  type        = string
-  default     = ""
-}
-
-variable "crawler_custom_domain" {
-  description = "Custom domain for crawler service"
-  type        = string
-  default     = ""
-}
-
-variable "indexer_custom_domain" {
-  description = "Custom domain for indexer service"
-  type        = string
-  default     = ""
-}
-
-variable "rag_custom_domain" {
-  description = "Custom domain for rag service"
-  type        = string
-  default     = ""
-}
-
-variable "scraper_custom_domain" {
-  description = "Custom domain for scraper service"
   type        = string
   default     = ""
 }

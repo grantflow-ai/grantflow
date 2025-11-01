@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.0.0"
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -11,6 +13,10 @@ resource "google_cloud_run_v2_service" "before_create" {
   name     = "before-create"
   location = var.region
   project  = var.project_id
+  labels = {
+    environment = var.environment
+    managed_by  = "terraform"
+  }
 
   template {
     service_account = google_service_account.firebase_auth_functions.email
@@ -42,6 +48,10 @@ resource "google_cloud_run_v2_service" "before_sign_in" {
   name     = "before-sign-in"
   location = var.region
   project  = var.project_id
+  labels = {
+    environment = var.environment
+    managed_by  = "terraform"
+  }
 
   template {
     service_account = google_service_account.firebase_auth_functions.email

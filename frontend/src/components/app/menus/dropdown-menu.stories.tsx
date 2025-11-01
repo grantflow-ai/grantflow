@@ -47,12 +47,12 @@ export const FigmaSpecPreview: Story = {
 
 			<DropdownMenuContent
 				className={`
-          w-[208px] 
-          h-[223px] 
-          p-1 
-          rounded-[4px] 
-          border border-[#E1DFEB] 
-          bg-popover 
+          w-[208px]
+          h-[223px]
+          p-1
+          rounded-[4px]
+          border border-[#E1DFEB]
+          bg-popover
           shadow-none
         `}
 			>

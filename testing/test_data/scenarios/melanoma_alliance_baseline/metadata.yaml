@@ -16,7 +16,7 @@ research_objectives:
       - number: 2
         title: "In vitro validation"
         description: "Test CAR-T cell efficacy in models"
-  
+
   - number: 2
     title: "Evaluate treatment efficacy"
     description: "Assess therapeutic potential in models"
@@ -27,21 +27,21 @@ research_objectives:
 
 form_inputs:
   background_context: "Melanoma remains one of the most aggressive forms of skin cancer with limited treatment options for advanced stages."
-  
+
   hypothesis: "CAR-T cell therapy targeting specific melanoma antigens can provide effective treatment for advanced melanoma patients."
-  
+
   rationale: "Current immunotherapy approaches have shown promise but require further optimization for melanoma-specific applications."
-  
+
   novelty_and_innovation: "Novel CAR construct design targeting previously unexplored melanoma-associated antigens."
-  
+
   team_excellence: "Multidisciplinary team with expertise in immunology, cancer biology, and translational research."
-  
+
   preliminary_data: "Preliminary studies demonstrate successful CAR construct expression and initial efficacy signals."
-  
+
   research_feasibility: "Strong institutional support and established research infrastructure enable successful project completion."
-  
+
   impact: "Potential to improve treatment outcomes for melanoma patients with advanced disease."
-  
+
   scientific_infrastructure: "Access to flow cytometry, cell culture facilities, and in vivo testing capabilities."
 
 cfp_mapping:
