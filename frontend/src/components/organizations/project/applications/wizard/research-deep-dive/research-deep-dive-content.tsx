@@ -56,7 +56,6 @@ export function ResearchDeepDiveContent() {
 	const formInputs = useApplicationStore((state) => state.application?.form_inputs) ?? {};
 	const grantType = useApplicationStore((state) => state.application?.grant_template?.grant_type);
 
-	// Determine which question set and placeholders to use based on grant type
 	const isTranslational = grantType === "TRANSLATIONAL";
 	const questions = isTranslational ? TRANSLATIONAL_RESEARCH_QUESTIONS : BASIC_SCIENCE_QUESTIONS;
 	const placeholders = isTranslational ? TRANSLATIONAL_RESEARCH_PLACEHOLDERS : BASIC_SCIENCE_PLACEHOLDERS;
