@@ -14,8 +14,8 @@ tasks:
       - task: backend:install
       - uv tool install ai-rulez
       - task: generate:ai-rules
-      - uv tool install lefthook
-      - lefthook install
+      - uv tool install prek
+      - uvx prek install
 
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)
