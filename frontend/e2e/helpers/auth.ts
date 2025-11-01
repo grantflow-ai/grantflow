@@ -207,7 +207,6 @@ export async function setupAuthenticatedSession(page: Page): Promise<void> {
  * Useful after login or page navigation
  */
 export async function waitForAuth(page: Page): Promise<void> {
-	// Wait for user store to be populated
 	await page.waitForFunction(() => {
 		const userStore = localStorage.getItem("user-store");
 		if (!userStore) return false;
@@ -216,7 +215,8 @@ export async function waitForAuth(page: Page): Promise<void> {
 			if (typeof parsed === "object" && parsed !== null && "state" in parsed) {
 				const { state } = parsed as { state?: unknown };
 				if (typeof state === "object" && state !== null && "isAuthenticated" in state) {
-					return (state as { isAuthenticated?: boolean }).isAuthenticated === true;
+					const typedState = state as { isAuthenticated?: boolean };
+					return typedState.isAuthenticated ?? false;
 				}
 			}
 			return false;
