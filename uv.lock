@@ -1082,7 +1082,6 @@ dev = [
     { name = "firebase-admin" },
     { name = "google-cloud-pubsub" },
     { name = "greenlet" },
-    { name = "lefthook" },
     { name = "litestar" },
     { name = "mypy" },
     { name = "opentelemetry-api" },
@@ -1133,7 +1132,6 @@ dev = [
     { name = "firebase-admin", specifier = ">=7.0.0" },
     { name = "google-cloud-pubsub", specifier = ">=2.31.0" },
     { name = "greenlet", specifier = ">=3.2.4" },
-    { name = "lefthook", specifier = ">=1.11.14" },
     { name = "litestar", specifier = ">=2.16.0" },
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "opentelemetry-api", specifier = ">=1.35.0" },
@@ -1641,15 +1639,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/dd/ce/3f144716a9f2cbf42aa86ebc8b085a184be25c80aa453eea17c294d239c1/language_data-1.3.0.tar.gz", hash = "sha256:7600ef8aa39555145d06c89f0c324bf7dab834ea0b0a439d8243762e3ebad7ec", size = 5129310, upload-time = "2024-11-19T10:21:37.912Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/e9/5a5ffd9b286db82be70d677d0a91e4d58f7912bb8dd026ddeeb4abe70679/language_data-1.3.0-py3-none-any.whl", hash = "sha256:e2ee943551b5ae5f89cd0e801d1fc3835bb0ef5b7e9c3a4e8e17b2b214548fbf", size = 5385760, upload-time = "2024-11-19T10:21:36.005Z" },
-]
-
-[[package]]
-name = "lefthook"
-version = "2.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/c5/1a7c2bc4528d553f2e6fd66af6e79c9b25fb812d308494f1a54477a39132/lefthook-2.0.2.tar.gz", hash = "sha256:af6c2d057bac162aa3e5c0340f71a40bf10d0a54ff414536be2e2f83477865b2", size = 54460598, upload-time = "2025-10-29T07:44:24.358Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/8e/c3041e8d3ab48079686919a5e656b36180c2afab7ac4e3689386e178837c/lefthook-2.0.2-py3-none-any.whl", hash = "sha256:11744a9fa58e43f12e8d882e7ffa8074101ce504d57e68090297760b25d5b275", size = 54717709, upload-time = "2025-10-29T07:44:21.337Z" },
 ]
 
 [[package]]

@@ -1,0 +1,162 @@
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.3.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [ commit-msg ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.24.1
+    hooks:
+      - id: validate-pyproject
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.11.0
+    hooks:
+      - id: pyproject-fmt
+
+  - repo: local
+    hooks:
+      - id: biome
+        name: Biome (frontend + editor)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement biome hook"'
+        files: ^(frontend|editor)/.*\.(js|jsx|ts|tsx|mjs|mts|json|jsonc|css)$
+        pass_filenames: false
+
+      - id: eslint
+        name: ESLint (frontend + editor)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement eslint hook"'
+        files: ^(frontend|editor)/.*\.(js|jsx|ts|tsx|mjs|mts)$
+        pass_filenames: false
+
+      - id: typescript
+        name: TypeScript type-check (frontend + editor)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement typescript hook"'
+        files: ^(frontend|editor)/.*\.(ts|tsx|mts)$
+        pass_filenames: false
+
+      - id: ruff
+        name: Ruff (lint + format)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement ruff hook"'
+        pass_filenames: false
+        types: [python]
+
+      - id: mypy
+        name: MyPy type-check
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement mypy hook"'
+        pass_filenames: false
+        types: [python]
+
+      - id: ai-rulez
+        name: Regenerate AI rule files
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement ai-rulez hook"'
+        files: (^|/)ai-rulez\.yaml$
+        pass_filenames: false
+
+      - id: codespell
+        name: Codespell
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement codespell hook"'
+        types_or: [text, rst, markdown]
+        exclude: >
+          (?x)(
+            packages/.*/tests/.*
+            |services/.*/tests/.*
+            |testing/test_data/.*
+            |test_data/.*
+            |pnpm-lock\.yaml
+            |.*\.spec\.tsx?
+            |.*_test\.py
+          )
+        pass_filenames: false
+
+      - id: pyproject-fmt
+        name: pyproject.toml formatter
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement pyproject-fmt hook"'
+        files: (^|/)pyproject\.toml$
+        pass_filenames: false
+
+      - id: rename-tests
+        name: Enforce *_test.py naming
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement rename-tests hook"'
+        files: ^(packages|services)/.*/tests/.*\.py$
+        pass_filenames: false
+
+      - id: tofu-fmt
+        name: Terraform fmt (tofu)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement tofu fmt hook"'
+        files: ^terraform/.*\.tf$
+        pass_filenames: false
+
+      - id: tofu-validate
+        name: Terraform validate (tofu)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement tofu validate hook"'
+        files: ^terraform/.*\.tf$
+        pass_filenames: false
+
+      - id: tflint
+        name: Terraform lint (tflint)
+        language: system
+        entry: bash
+        args:
+          - -lc
+          - 'echo "[placeholder] implement tflint hook"'
+        files: ^terraform/.*\.tf$
+        pass_filenames: false

@@ -380,10 +380,11 @@ This project uses multiple tools to ensure code quality:
 
 ### Git Hooks
 
-We use [Lefthook](https://github.com/evilmartians/lefthook) to run pre-commit checks automatically:
+We manage Git hooks with [Prek](https://github.com/j178/prek):
 
-- Linters run on staged files with auto-fix
-- Commit messages are validated against conventional commits format
+- `task setup` installs Prek via `uv tool` and wires the hooks
+- Hooks execute the same validations we run in CI (linters, formatters, commitlint)
+- You can run the full suite manually with `uvx prek run --all-files`
 
 ## Testing
 
