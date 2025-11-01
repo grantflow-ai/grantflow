@@ -6,6 +6,8 @@
  * feature being tested rather than the login process.
  */
 
+/* eslint-disable @typescript-eslint/unified-signatures */
+
 import type { Page } from "@playwright/test";
 
 /**
@@ -216,7 +218,7 @@ export async function waitForAuth(page: Page): Promise<void> {
 			if (typeof parsed === "object" && parsed !== null && "state" in parsed) {
 				const { state } = parsed as { state?: unknown };
 				if (typeof state === "object" && state !== null && "isAuthenticated" in state) {
-					return (state as { isAuthenticated?: boolean }).isAuthenticated === true;
+					return (state as { isAuthenticated?: boolean }).isAuthenticated;
 				}
 			}
 			return false;

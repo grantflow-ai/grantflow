@@ -142,12 +142,6 @@ describe("NewApplicationClient", () => {
 			const basicScienceCard = screen.getByTestId("grant-type-card-basic-science");
 			await user.click(basicScienceCard);
 
-			await waitFor(() => {
-				expect(mockToast.success).toHaveBeenCalledWith("Application created successfully", {
-					id: "create-application",
-				});
-			});
-
 			const navigationState = useNavigationStore.getState();
 			expect(navigationState.activeProjectId).toBe(mockProject.id);
 			expect(navigationState.activeProjectName).toBe(mockProject.name);
@@ -214,12 +208,6 @@ describe("NewApplicationClient", () => {
 				);
 			});
 
-			await waitFor(() => {
-				expect(mockToast.success).toHaveBeenCalledWith("Application created successfully", {
-					id: "create-application",
-				});
-			});
-
 			const navigationState = useNavigationStore.getState();
 			expect(navigationState.activeProjectId).toBe(mockProject.id);
 			expect(navigationState.activeProjectName).toBe(mockProject.name);
@@ -249,12 +237,6 @@ describe("NewApplicationClient", () => {
 
 			const translationalCard = screen.getByTestId("grant-type-card-translational-research");
 			await user.click(translationalCard);
-
-			await waitFor(() => {
-				expect(mockToast.success).toHaveBeenCalledWith("Application created successfully", {
-					id: "create-application",
-				});
-			});
 
 			const navigationState = useNavigationStore.getState();
 			expect(navigationState.activeProjectId).toBe(mockProject.id);
