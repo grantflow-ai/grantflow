@@ -5,20 +5,18 @@ export const BACKOFFICE_ADMIN_COOKIE = "grantflow_backoffice_admin";
 export const COOKIE_CONSENT = "grantflow_cookie_consent";
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
-export enum WizardStep {
-	APPLICATION_DETAILS = "Application Details",
-	APPLICATION_STRUCTURE = "Application Structure",
-	GENERATE_AND_COMPLETE = "Generate and Complete",
-	KNOWLEDGE_BASE = "Knowledge Base",
-	RESEARCH_DEEP_DIVE = "Research Deep Dive",
-	RESEARCH_PLAN = "Research Plan",
-}
+/* eslint-disable perfectionist/sort-objects */
+// biome-ignore assist/source/useSortedKeys: Generate step must fall last in the list
+export const WizardStep = {
+	APPLICATION_DETAILS: "Application Details",
+	APPLICATION_STRUCTURE: "Application Structure",
+	KNOWLEDGE_BASE: "Knowledge Base",
+	RESEARCH_PLAN: "Research Plan",
+	RESEARCH_DEEP_DIVE: "Research Deep Dive",
+	GENERATE_AND_COMPLETE: "Generate and Complete",
+} as const;
+/* eslint-enable perfectionist/sort-objects */
 
-export const PROGRESS_BAR_STEPS = [
-	WizardStep.APPLICATION_DETAILS,
-	WizardStep.APPLICATION_STRUCTURE,
-	WizardStep.KNOWLEDGE_BASE,
-	WizardStep.RESEARCH_PLAN,
-	WizardStep.RESEARCH_DEEP_DIVE,
-	WizardStep.GENERATE_AND_COMPLETE,
-] as const;
+export type WizardStep = (typeof WizardStep)[keyof typeof WizardStep];
+
+export const WIZARD_STEPS = Object.values(WizardStep);

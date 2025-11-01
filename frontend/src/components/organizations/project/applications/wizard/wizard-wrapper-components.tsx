@@ -6,7 +6,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ThemeBadge } from "@/components/shared/theme-badge";
-import { WizardStep } from "@/constants";
+import { WIZARD_STEPS, WizardStep } from "@/constants";
 import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore, type ValidationResult } from "@/stores/wizard-store";
@@ -14,8 +14,6 @@ import { routes } from "@/utils/navigation";
 import { TrackingEvents } from "@/utils/tracking";
 import { Autosave } from "./autosave";
 import { Deadline } from "./deadline";
-
-const WIZARD_STEP_ORDER = Object.values(WizardStep);
 
 type IndicatorStatus = "active" | "done" | "inactive";
 
@@ -65,8 +63,8 @@ export function WizardHeader() {
 	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
 
-	const showHeaderInfo = ![WizardStep.APPLICATION_DETAILS].includes(currentStep);
 	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
+	const showHeaderInfo = !isFirstStep;
 
 	const handleExit = () => {
 		router.push(routes.organization.project.detail());
@@ -118,8 +116,8 @@ export function WizardHeader() {
 			</div>
 
 			<div className="space-y-2">
-				<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
-				<ProgressTitles currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
+				<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEPS} />
+				<ProgressTitles currentStep={currentStep} stepTitles={WIZARD_STEPS} />
 			</div>
 		</header>
 	);

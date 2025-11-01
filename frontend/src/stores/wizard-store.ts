@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { create } from "zustand";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
-import { WizardStep } from "@/constants";
+import { WIZARD_STEPS, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
@@ -14,8 +14,6 @@ import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } fr
 
 const DEBOUNCE_DELAY_MS = 2000;
 export const MIN_TITLE_LENGTH = 10;
-
-const WIZARD_STEP_ORDER = Object.values(WizardStep);
 
 export type ResearchObjective = NonNullable<API.UpdateApplication.RequestBody["research_objectives"]>[0];
 
@@ -690,7 +688,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				}));
 			}
 
-			const nextStep = WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1];
+			const nextStep = WIZARD_STEPS[WIZARD_STEPS.indexOf(currentStep) + 1];
 
 			set((state) => ({
 				...state,
@@ -713,7 +711,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 		toPreviousStep: () => {
 			const { currentStep, isGeneratingTemplate } = get();
-			const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
+			const currentIndex = WIZARD_STEPS.indexOf(currentStep);
 
 			if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 				return;
@@ -730,7 +728,7 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 			set((state) => ({
 				...state,
-				currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
+				currentStep: WIZARD_STEPS[Math.max(0, currentIndex - 1)],
 			}));
 		},
 
