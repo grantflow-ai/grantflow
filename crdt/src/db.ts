@@ -8,7 +8,6 @@ export const db = drizzle({
 	},
 });
 
-// eslint-disable-next-line @typescript-eslint/unified-signatures
 const bytea = customType<{ data: null | Uint8Array; driverData: Buffer | null }>({
 	dataType() {
 		return "bytea";
