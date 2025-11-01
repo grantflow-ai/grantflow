@@ -1,5 +1,8 @@
 packages:
-  - "editor"
-  - "frontend"
-  - "frontend/packages/*"
-  - "crdt"
+  - editor
+  - frontend
+  - frontend/packages/*
+  - crdt
+
+onlyBuiltDependencies:
+  - esbuild
