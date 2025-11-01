@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { PROGRESS_BAR_STEPS } from "@/constants";
+import { WIZARD_STEPS } from "@/constants";
 
 interface ProgressBarLabelProps {
 	currentStep: number;
@@ -29,18 +29,18 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
 	return (
 		<figure className="flex flex-col items-center justify-center gap-4">
 			<main className="flex items-center">
-				{PROGRESS_BAR_STEPS.map((_, index) => (
+				{WIZARD_STEPS.map((_, index) => (
 					<ProgressBarStep
 						currentStep={currentStep}
 						index={index}
-						isLast={index === PROGRESS_BAR_STEPS.length - 1}
+						isLast={index === WIZARD_STEPS.length - 1}
 						key={index}
 					/>
 				))}
 			</main>
 
 			<main className="flex w-[839px] items-center justify-between">
-				{PROGRESS_BAR_STEPS.map((label, index) => (
+				{WIZARD_STEPS.map((label, index) => (
 					<ProgressBarLabel currentStep={currentStep} index={index} key={index} label={label} />
 				))}
 			</main>
