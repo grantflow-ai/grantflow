@@ -386,6 +386,12 @@ We manage Git hooks with [Prek](https://github.com/j178/prek):
 - Hooks execute the same validations we run in CI (linters, formatters, commitlint)
 - You can run the full suite manually with `uvx prek run --all-files`
 
+**Migration from Lefthook**: If you're experiencing errors about `lefthook` not being found, you may have old Lefthook hooks installed. Clean them up with:
+
+```bash
+rm -rf .git/hooks && uvx prek install
+```
+
 ## Testing
 
 The project uses different testing strategies optimized for performance and reliability:
