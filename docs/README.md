@@ -6,24 +6,17 @@ GrantFlow.AI is a grant application management platform that leverages AI to str
 ## Documentation Structure
 
 ### 📚 Technical Documentation
-- [Cloud Architecture](./cloud-architecture.md) - System design and infrastructure
+- [Technical Architecture](./grantflow-technical-architecture.md) - Comprehensive system overview and innovations
+- [Architecture Pitch](./grantflow-architecture-pitch.md) - Executive summary for stakeholders
+- [Cloud Architecture](./cloud-architecture.md) - GCP infrastructure design and deployment
 - [CI/CD Architecture](./ci-cd-architecture.md) - Build, test, and deployment pipelines
-- [API Reference](./api.md) - Backend API endpoints and contracts
-- [Database Schema](./database.md) - Data models and relationships
-- [Services Overview](./services.md) - Microservices architecture and responsibilities
-
-### 🔧 Operations
-- [Infrastructure](./infrastructure.md) - Cloud resources and Terraform modules
-- [Monitoring & Alerts](./monitoring.md) - Observability and incident response
-- [Deployment Guide](./deployment.md) - Deployment procedures and rollback
+- [Cloud Functions](./cloud-functions.md) - Serverless monitoring and automation
 
 ### 🔒 Security & Compliance
 - [Security Architecture](./security-architecture.md) - Comprehensive security measures and best practices
-- [Data Privacy](./data-privacy.md) - GDPR compliance and data handling
 
-### 📊 Business & Product
-- [Product Overview](./product.md) - Features and user journeys
-- [Technical Decisions](./decisions.md) - ADRs and technical choices
+### 📊 Product Analytics
+- [Segment Events](./segment_analytics_events.md) - Analytics event tracking specification
 
 ## Quick Links
 

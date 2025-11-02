@@ -23,14 +23,13 @@ GrantFlow uses a modern GitOps approach with GitHub Actions for continuous integ
 
 ## Workflow Categories
 
-### Build & Deploy Workflows (`build-service-*.yaml`)
+### Build & Deploy Workflows
 
 These workflows handle the complete build and deployment pipeline for each service:
 
-```yaml
-Pattern: build-service-{service}.yaml
-Services: backend, crawler, indexer, rag, scraper, frontend, crdt
-```
+**Standard Workflow Files:**
+- `build-{service}.yaml` for each service (backend, crawler, indexer, rag, scraper, frontend, crdt)
+- `build-service.yaml` - Reusable workflow template
 
 **Key Features:**
 - Triggered on push to main/development branches
