@@ -81,6 +81,7 @@ Web Crawl → Crawler Service → Pub/Sub → RAG Processing Service
   - `url-crawling`: Web content extraction
   - `rag-processing`: AI/ML processing
   - `frontend-notifications`: WebSocket updates
+  - `email-notifications`: Transactional email delivery
 - Dead letter queues for error handling
 - Push subscriptions with retry policies
 
