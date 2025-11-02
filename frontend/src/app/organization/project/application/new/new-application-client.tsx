@@ -91,6 +91,7 @@ export function NewApplicationClient() {
 			navigateToApplication(project.id, project.name, createdApplication.id, createdApplication.title);
 			await verifyNavigationState(createdApplication.id);
 
+			toast.dismiss("create-application");
 			router.replace(routes.organization.project.application.wizard());
 			creationSucceeded = true;
 		} catch (error) {
