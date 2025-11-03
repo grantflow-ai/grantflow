@@ -13,6 +13,7 @@ import { NewApplicationClient } from "./new-application-client";
 const mockRouterReplace = vi.fn();
 const mockRouterBack = vi.fn();
 const mockToast = vi.hoisted(() => ({
+	dismiss: vi.fn(),
 	error: vi.fn(),
 	loading: vi.fn(),
 	success: vi.fn(),
@@ -142,15 +143,14 @@ describe("NewApplicationClient", () => {
 			const basicScienceCard = screen.getByTestId("grant-type-card-basic-science");
 			await user.click(basicScienceCard);
 
-			const navigationState = useNavigationStore.getState();
-			expect(navigationState.activeProjectId).toBe(mockProject.id);
-			expect(navigationState.activeProjectName).toBe(mockProject.name);
-			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
-			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-
 			await waitFor(() => {
-				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+				expect(mockToast.dismiss).toHaveBeenCalledWith("create-application");
 			});
+
+			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 		});
 
 		it("disables both cards during creation", async () => {
@@ -208,15 +208,14 @@ describe("NewApplicationClient", () => {
 				);
 			});
 
-			const navigationState = useNavigationStore.getState();
-			expect(navigationState.activeProjectId).toBe(mockProject.id);
-			expect(navigationState.activeProjectName).toBe(mockProject.name);
-			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
-			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-
 			await waitFor(() => {
-				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+				expect(mockToast.dismiss).toHaveBeenCalledWith("create-application");
 			});
+
+			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 		});
 
 		it("navigates to wizard after successful creation", async () => {
@@ -238,15 +237,14 @@ describe("NewApplicationClient", () => {
 			const translationalCard = screen.getByTestId("grant-type-card-translational-research");
 			await user.click(translationalCard);
 
-			const navigationState = useNavigationStore.getState();
-			expect(navigationState.activeProjectId).toBe(mockProject.id);
-			expect(navigationState.activeProjectName).toBe(mockProject.name);
-			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
-			expect(navigationState.activeApplicationTitle).toBe(mockApplication.title);
-
 			await waitFor(() => {
-				expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+				expect(mockToast.dismiss).toHaveBeenCalledWith("create-application");
 			});
+
+			expect(mockRouterReplace).toHaveBeenCalledWith(routes.organization.project.application.wizard());
+
+			const navigationState = useNavigationStore.getState();
+			expect(navigationState.activeApplicationId).toBe(mockApplication.id);
 		});
 	});
 
