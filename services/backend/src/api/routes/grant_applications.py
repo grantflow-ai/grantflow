@@ -81,7 +81,7 @@ class CreateApplicationRequestBody(TypedDict):
 
 
 class UpdateApplicationRequestBody(TypedDict):
-    form_inputs: NotRequired[ResearchDeepDive]
+    form_inputs: NotRequired[ResearchDeepDive | TranslationalResearchDeepDive]
     research_objectives: NotRequired[list[ResearchObjective]]
     status: NotRequired[ApplicationStatusEnum]
     text: NotRequired[str]
