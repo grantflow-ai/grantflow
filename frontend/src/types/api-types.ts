@@ -167,12 +167,15 @@ export namespace API {
 	research_feasibility?: string;
 	scientific_infrastructure?: string;
 	team_excellence?: string;
+	type: "RESEARCH";
+} | {
 	commercialization_plan?: string;
 	core_concept?: string;
 	proof_of_concept?: string;
 	team_translation_capability?: string;
 	translational_impact?: string;
 	translational_potential?: string;
+	type: "TRANSLATIONAL";
 	unique_approach?: string;
 	unmet_need_context?: string;
 };
@@ -271,7 +274,7 @@ export namespace API {
 	project_id: string;
 };
 
-export type RequestBody = {
+	export type RequestBody = {
 	description?: string;
 	grant_type: "RESEARCH" | "TRANSLATIONAL";
 	title: string;
@@ -803,23 +806,26 @@ export type RequestBody = {
 	editor_document_id: null | string;
 	editor_document_init: boolean;
 	form_inputs?: {
-	background_context?: string;
-	hypothesis?: string;
-	impact?: string;
-	novelty_and_innovation?: string;
-	preliminary_data?: string;
-	rationale?: string;
-	research_feasibility?: string;
-	scientific_infrastructure?: string;
-	team_excellence?: string;
-	commercialization_plan?: string;
-	core_concept?: string;
-	proof_of_concept?: string;
-	team_translation_capability?: string;
-	translational_impact?: string;
-	translational_potential?: string;
-	unique_approach?: string;
-	unmet_need_context?: string;
+	background_context?: null | string;
+	hypothesis?: null | string;
+	impact?: null | string;
+	novelty_and_innovation?: null | string;
+	preliminary_data?: null | string;
+	rationale?: null | string;
+	research_feasibility?: null | string;
+	scientific_infrastructure?: null | string;
+	team_excellence?: null | string;
+	type: "RESEARCH";
+} | {
+	commercialization_plan?: null | string;
+	core_concept?: null | string;
+	proof_of_concept?: null | string;
+	team_translation_capability?: null | string;
+	translational_impact?: null | string;
+	translational_potential?: null | string;
+	type: "TRANSLATIONAL";
+	unique_approach?: null | string;
+	unmet_need_context?: null | string;
 };
 	grant_template?: {
 	created_at: string;
@@ -1625,6 +1631,17 @@ export type RequestBody = {
 };
 };
 
+	export namespace OrphanedFilesCleanupWebhook {
+	export namespace Http201 {
+	export type ResponseBody = any | {
+	errors: number;
+	files_checked: number;
+	orphaned_records_deleted: number;
+	status: "error" | "success";
+};
+};
+};
+
 	export namespace RemoveMember {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
@@ -1703,23 +1720,26 @@ export type RequestBody = {
 	editor_document_id: null | string;
 	editor_document_init: boolean;
 	form_inputs?: {
-	background_context?: string;
-	hypothesis?: string;
-	impact?: string;
-	novelty_and_innovation?: string;
-	preliminary_data?: string;
-	rationale?: string;
-	research_feasibility?: string;
-	scientific_infrastructure?: string;
-	team_excellence?: string;
-	commercialization_plan?: string;
-	core_concept?: string;
-	proof_of_concept?: string;
-	team_translation_capability?: string;
-	translational_impact?: string;
-	translational_potential?: string;
-	unique_approach?: string;
-	unmet_need_context?: string;
+	background_context?: null | string;
+	hypothesis?: null | string;
+	impact?: null | string;
+	novelty_and_innovation?: null | string;
+	preliminary_data?: null | string;
+	rationale?: null | string;
+	research_feasibility?: null | string;
+	scientific_infrastructure?: null | string;
+	team_excellence?: null | string;
+	type: "RESEARCH";
+} | {
+	commercialization_plan?: null | string;
+	core_concept?: null | string;
+	proof_of_concept?: null | string;
+	team_translation_capability?: null | string;
+	translational_impact?: null | string;
+	translational_potential?: null | string;
+	type: "TRANSLATIONAL";
+	unique_approach?: null | string;
+	unmet_need_context?: null | string;
 };
 	grant_template?: {
 	created_at: string;
@@ -2031,23 +2051,26 @@ export type RequestBody = {
 	editor_document_id: null | string;
 	editor_document_init: boolean;
 	form_inputs?: {
-	background_context?: string;
-	hypothesis?: string;
-	impact?: string;
-	novelty_and_innovation?: string;
-	preliminary_data?: string;
-	rationale?: string;
-	research_feasibility?: string;
-	scientific_infrastructure?: string;
-	team_excellence?: string;
-	commercialization_plan?: string;
-	core_concept?: string;
-	proof_of_concept?: string;
-	team_translation_capability?: string;
-	translational_impact?: string;
-	translational_potential?: string;
-	unique_approach?: string;
-	unmet_need_context?: string;
+	background_context?: null | string;
+	hypothesis?: null | string;
+	impact?: null | string;
+	novelty_and_innovation?: null | string;
+	preliminary_data?: null | string;
+	rationale?: null | string;
+	research_feasibility?: null | string;
+	scientific_infrastructure?: null | string;
+	team_excellence?: null | string;
+	type: "RESEARCH";
+} | {
+	commercialization_plan?: null | string;
+	core_concept?: null | string;
+	proof_of_concept?: null | string;
+	team_translation_capability?: null | string;
+	translational_impact?: null | string;
+	translational_potential?: null | string;
+	type: "TRANSLATIONAL";
+	unique_approach?: null | string;
+	unmet_need_context?: null | string;
 };
 	grant_template?: {
 	created_at: string;
@@ -2148,23 +2171,26 @@ export type RequestBody = {
 	export type RequestBody = {
 	description?: string;
 	form_inputs?: {
-	background_context?: string;
-	hypothesis?: string;
-	impact?: string;
-	novelty_and_innovation?: string;
-	preliminary_data?: string;
-	rationale?: string;
-	research_feasibility?: string;
-	scientific_infrastructure?: string;
-	team_excellence?: string;
-	commercialization_plan?: string;
-	core_concept?: string;
-	proof_of_concept?: string;
-	team_translation_capability?: string;
-	translational_impact?: string;
-	translational_potential?: string;
-	unique_approach?: string;
-	unmet_need_context?: string;
+	background_context?: null | string;
+	hypothesis?: null | string;
+	impact?: null | string;
+	novelty_and_innovation?: null | string;
+	preliminary_data?: null | string;
+	rationale?: null | string;
+	research_feasibility?: null | string;
+	scientific_infrastructure?: null | string;
+	team_excellence?: null | string;
+	type: "RESEARCH";
+} | {
+	commercialization_plan?: null | string;
+	core_concept?: null | string;
+	proof_of_concept?: null | string;
+	team_translation_capability?: null | string;
+	translational_impact?: null | string;
+	translational_potential?: null | string;
+	type: "TRANSLATIONAL";
+	unique_approach?: null | string;
+	unmet_need_context?: null | string;
 };
 	research_objectives?: {
 	description?: string;

@@ -191,6 +191,7 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 	team_translation_capability: factory.lorem.paragraph(),
 	translational_impact: factory.lorem.paragraph(),
 	translational_potential: factory.lorem.paragraph(),
+	type: "RESEARCH",
 	unique_approach: factory.lorem.paragraph(),
 	unmet_need_context: factory.lorem.paragraphs(2),
 }));
@@ -198,9 +199,7 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 export const EmptyFormInputsFactory = {
 	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
 		const defaults: FormInputs = {
-			// Basic Science fields
 			background_context: "",
-			// Translational Research fields
 			commercialization_plan: "",
 			core_concept: "",
 			hypothesis: "",
@@ -215,6 +214,7 @@ export const EmptyFormInputsFactory = {
 			team_translation_capability: "",
 			translational_impact: "",
 			translational_potential: "",
+			type: "RESEARCH",
 			unique_approach: "",
 			unmet_need_context: "",
 		};

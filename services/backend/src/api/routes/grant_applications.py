@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
+import msgspec
 from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import Parameter
@@ -371,10 +372,16 @@ async def handle_update_application(
             if not application:
                 raise ValidationException("Application not found")
 
+            update_data = dict(data)
+            if "form_inputs" in update_data and update_data["form_inputs"] is not None:
+                form_input = update_data["form_inputs"]
+                if isinstance(form_input, msgspec.Struct):
+                    update_data["form_inputs"] = msgspec.structs.asdict(form_input)
+
             await session.execute(
                 update(GrantApplication)
                 .where(GrantApplication.id == application_id, GrantApplication.deleted_at.is_(None))
-                .values(**data)
+                .values(**update_data)
             )
             await session.commit()
         except ValidationException:

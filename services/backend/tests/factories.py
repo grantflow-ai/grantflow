@@ -221,14 +221,20 @@ class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
     description = faker.paragraph
 
 
-class ResearchDeepDiveFactory(TypedDictFactory[ResearchDeepDive]):
-    __model__ = ResearchDeepDive
-
-    executive_summary = faker.paragraph
-
+class ResearchDeepDiveFactory:
     @classmethod
-    def research_objectives(cls) -> list[ResearchObjective]:
-        return [ResearchObjectiveFactory.build() for _ in range(3)]
+    def build(cls) -> ResearchDeepDive:
+        return ResearchDeepDive(
+            background_context=faker.paragraph(),
+            hypothesis=faker.paragraph(),
+            rationale=faker.paragraph(),
+            novelty_and_innovation=faker.paragraph(),
+            team_excellence=faker.paragraph(),
+            preliminary_data="\n\n".join(faker.paragraphs(2)),
+            research_feasibility=faker.paragraph(),
+            impact=faker.paragraph(),
+            scientific_infrastructure=faker.paragraph(),
+        )
 
 
 class GrantElementFactory(TypedDictFactory[GrantElement]):
