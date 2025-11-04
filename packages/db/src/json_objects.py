@@ -1,5 +1,7 @@
 from typing import Literal, NotRequired, TypedDict
 
+import msgspec
+
 from packages.db.src.enums import GrantTemplateStageEnum
 
 
@@ -74,27 +76,27 @@ class GrantLongFormSection(GrantElement):
     definition: NotRequired[str | None]
 
 
-class ResearchDeepDive(TypedDict):
-    background_context: NotRequired[str]
-    hypothesis: NotRequired[str]
-    rationale: NotRequired[str]
-    novelty_and_innovation: NotRequired[str]
-    team_excellence: NotRequired[str]
-    preliminary_data: NotRequired[str]
-    research_feasibility: NotRequired[str]
-    impact: NotRequired[str]
-    scientific_infrastructure: NotRequired[str]
+class ResearchDeepDive(msgspec.Struct, tag="RESEARCH"):
+    background_context: str | None = None
+    hypothesis: str | None = None
+    rationale: str | None = None
+    novelty_and_innovation: str | None = None
+    team_excellence: str | None = None
+    preliminary_data: str | None = None
+    research_feasibility: str | None = None
+    impact: str | None = None
+    scientific_infrastructure: str | None = None
 
 
-class TranslationalResearchDeepDive(TypedDict):
-    unmet_need_context: NotRequired[str]
-    core_concept: NotRequired[str]
-    translational_potential: NotRequired[str]
-    unique_approach: NotRequired[str]
-    translational_impact: NotRequired[str]
-    team_translation_capability: NotRequired[str]
-    commercialization_plan: NotRequired[str]
-    proof_of_concept: NotRequired[str]
+class TranslationalResearchDeepDive(msgspec.Struct, tag="TRANSLATIONAL"):
+    unmet_need_context: str | None = None
+    core_concept: str | None = None
+    translational_potential: str | None = None
+    unique_approach: str | None = None
+    translational_impact: str | None = None
+    team_translation_capability: str | None = None
+    commercialization_plan: str | None = None
+    proof_of_concept: str | None = None
 
 
 class GrantTemplateRagJobCheckpoint(TypedDict):

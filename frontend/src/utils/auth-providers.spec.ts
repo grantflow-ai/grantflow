@@ -17,8 +17,8 @@ vi.mock("firebase/auth", () => {
 	});
 
 	return {
-		getAdditionalUserInfo: vi.fn(),
 		GoogleAuthProvider: GoogleAuthProviderMock,
+		getAdditionalUserInfo: vi.fn(),
 		OAuthProvider: OAuthProviderMock,
 		signInWithPopup: vi.fn(),
 	};
