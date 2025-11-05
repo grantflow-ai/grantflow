@@ -1,0 +1,32 @@
+institutions:
+  - name: National Institutes of Health
+    guidelines:
+      - subdir: nih
+        filename: NIH- Instructions for Research (R).pdf
+      - subdir: null
+        filename: NIH- Comprehensive General (G) Instructions.pdf
+      - subdir: null
+        filename: NIH- Instructions for Career Development (K) Grants.pdf
+      - subdir: null
+        filename: NIH- Instructions for Fellowship (F) Grants.pdf
+      - subdir: null
+        filename: NIH- Instructions for Multi-Project (M) Grants.pdf
+      - subdir: null
+        filename: NIH- Instructions for SBIR_STTR Grants.pdf
+      - subdir: null
+        filename: NIH- Instructions for Training (T) Grants.pdf
+
+  - name: National Science Foundation
+    guidelines:
+      - subdir: nsf
+        filename: NSF- Proposal And Award Policies and Procedures Guide.pdf
+
+  - name: European Research Council
+    guidelines:
+      - subdir: erc
+        filename: ERC- Information for Applicants PoC.pdf
+
+  - name: National Aeronautics and Space Administration
+    guidelines:
+      - subdir: nasa
+        filename: NASA- NASA GRANT AND COOPERATIVE AGREEMENT MANUAL (GCAM).pdf
