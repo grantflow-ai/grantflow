@@ -66,13 +66,6 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 						>
 							Research plan
 						</h2>
-						<AiAutofillButton
-							isLoading={isAutofillLoading}
-							onCancel={() => {
-								cancelAutofill("research_plan");
-							}}
-							onClick={() => triggerAutofill("research_plan")}
-						/>
 					</div>
 					<p className="text-muted-foreground-dark leading-tight" data-testid="research-plan-description">
 						Define your key objectives and break them into actionable tasks. This structure forms the
