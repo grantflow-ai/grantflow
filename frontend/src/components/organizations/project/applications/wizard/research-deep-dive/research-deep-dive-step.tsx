@@ -78,15 +78,6 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 						🔄 Reset (Dev)
 					</AppButton>
 				)}
-				{
-					<AiAutofillButton
-						isLoading={isAutofillLoading}
-						onCancel={() => {
-							cancelAutofill("research_deep_dive");
-						}}
-						onClick={() => triggerAutofill("research_deep_dive")}
-					/>
-				}
 			</div>
 		</div>
 	);
