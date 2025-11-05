@@ -50,6 +50,7 @@ export default eslintTS.config(
 			"@typescript-eslint/array-type": ["error", { default: "array" }],
 			"@typescript-eslint/consistent-indexed-object-style": "error",
 			"@typescript-eslint/consistent-type-definitions": "warn",
+			"@typescript-eslint/unified-signatures": "off",
 			"@typescript-eslint/naming-convention": [
 				"error",
 				{
