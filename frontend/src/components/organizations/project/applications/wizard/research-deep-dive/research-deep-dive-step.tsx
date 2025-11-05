@@ -8,7 +8,6 @@ import {
 } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { log } from "@/utils/logger/client";
-import { AiAutofillButton } from "../ai-autofill-button";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
 const getEmptyFormInputs = () => {
@@ -40,9 +39,6 @@ export function ResearchDeepDiveStep() {
 
 function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () => void }) {
 	const isDevelopment = process.env.NODE_ENV === "development";
-	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
-	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
-	const cancelAutofill = useWizardStore((state) => state.cancelAutofill);
 	const grantType = useApplicationStore((state) => state.application?.grant_template?.grant_type);
 
 	const isTranslational = grantType === "TRANSLATIONAL";
@@ -78,15 +74,6 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 						🔄 Reset (Dev)
 					</AppButton>
 				)}
-				{
-					<AiAutofillButton
-						isLoading={isAutofillLoading}
-						onCancel={() => {
-							cancelAutofill("research_deep_dive");
-						}}
-						onClick={() => triggerAutofill("research_deep_dive")}
-					/>
-				}
 			</div>
 		</div>
 	);
