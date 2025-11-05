@@ -4,9 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 vi.mock("next/navigation", () => ({
-	// usePathname: vi.fn(() => "/"),
 	useRouter: vi.fn(),
-	// useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 vi.mock("@/stores/navigation-store", () => ({
@@ -196,8 +194,6 @@ describe.sequential("AppSidebar", () => {
 
 	it("should handle application creation with new project", async () => {
 		const navigateToProject = vi.fn();
-		// const push = vi.fn();
-		// const mutateSpy = vi.fn();
 
 		mockUseNavigation.mockReturnValue({
 			clearActiveProject: vi.fn(),
