@@ -37,9 +37,6 @@ vi.mock("@/stores/project-store", () => ({
 vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),
 }));
-vi.mock("@/stores/new-application-modal-store", () => ({
-	useNewApplicationModalStore: vi.fn(),
-}));
 vi.mock("@/utils/navigation", () => ({
 	routes: {
 		organization: {
@@ -66,9 +63,6 @@ vi.mock("./dashboard-project-card", () => ({
 }));
 vi.mock("@/components/organizations/modals/delete-project-modal", () => ({
 	DeleteProjectModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
-}));
-vi.mock("@/components/organizations/modals/new-application-modal", () => ({
-	default: vi.fn(() => <div data-testid="mock-new-application-modal" />),
 }));
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
@@ -105,7 +99,6 @@ const mockDeleteProject = vi.fn();
 const mockDuplicateProject = vi.fn();
 const mockAddNotification = vi.fn();
 const mockMutate = vi.fn();
-const mockCloseModal = vi.fn();
 
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
 const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
@@ -121,9 +114,7 @@ const mockUseNotificationStore = vi.mocked(
 	await import("@/stores/notification-store").then((m) => m.useNotificationStore),
 );
 const mockUseUserStore = vi.mocked(await import("@/stores/user-store").then((m) => m.useUserStore));
-const mockUseNewApplicationModalStore = vi.mocked(
-	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
-);
+
 const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
 
 const MockDashboardStats = vi.mocked(await import("./dashboard-stats").then((m) => m.DashboardStats));
@@ -134,9 +125,7 @@ const MockWelcomeModal = vi.mocked(await import("./welcome/welcome-modal").then(
 const MockPaymentLink = vi.mocked(
 	await import("@/components/organizations/payment/payment-link").then((m) => m.default),
 );
-const MockNewApplicationModal = vi.mocked(
-	await import("@/components/organizations/modals/new-application-modal").then((m) => m.default),
-);
+
 const MockDeleteProjectModal = vi.mocked(
 	await import("@/components/organizations/modals/delete-project-modal").then((m) => m.DeleteProjectModal),
 );
@@ -170,11 +159,6 @@ describe("DashboardClient", () => {
 		mockUseNotificationStore.mockReturnValue({ addNotification: mockAddNotification });
 		mockUseUserStore.mockReturnValue({
 			user: { displayName: "Test User", email: "test@example.com" },
-		});
-		mockUseNewApplicationModalStore.mockReturnValue({
-			closeModal: mockCloseModal,
-			isModalOpen: false,
-			openModal: vi.fn(),
 		});
 		mockUseSWR.mockReturnValue({
 			data: defaultProps.initialProjects,
@@ -333,26 +317,7 @@ describe("DashboardClient", () => {
 		expect(screen.getByTestId("dashboard-title")).toBeInTheDocument();
 	});
 
-	it("should render new application modal when open", () => {
-		mockUseNewApplicationModalStore.mockReturnValue({
-			closeModal: vi.fn(),
-			isModalOpen: true,
-			openModal: vi.fn(),
-		});
-
-		render(<DashboardClient {...defaultProps} />);
-
-		expect(MockNewApplicationModal).toHaveBeenCalledWith(
-			{
-				isOpen: true,
-				onClose: expect.any(Function),
-				onCreate: expect.any(Function),
-				projects: defaultProps.initialProjects,
-			},
-			undefined,
-		);
-	});
-
+	
 	it("should render delete project modal", () => {
 		render(<DashboardClient {...defaultProps} />);
 
@@ -384,79 +349,4 @@ describe("DashboardClient", () => {
 		});
 	});
 
-	it("should handle application creation with existing project", async () => {
-		const navigateToProject = vi.fn();
-		const push = vi.fn();
-
-		mockUseNavigation.mockReturnValue({
-			clearActiveProject: vi.fn(),
-			navigateToProject,
-			stateHydrated: true,
-		});
-
-		mockUseRouter.mockReturnValue({
-			back: vi.fn(),
-			forward: vi.fn(),
-			prefetch: vi.fn(),
-			push,
-			refresh: vi.fn(),
-			replace: vi.fn(),
-		});
-
-		render(<DashboardClient {...defaultProps} />);
-
-		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
-		await createFunction("project-123", "Test Project", false);
-
-		expect(navigateToProject).toHaveBeenCalledWith("project-123", "Test Project");
-		expect(mockCloseModal).toHaveBeenCalled();
-		expect(push).toHaveBeenCalledWith("/organization/project/application/new");
-	});
-
-	it("should handle application creation with new project", async () => {
-		const navigateToProject = vi.fn();
-		const push = vi.fn();
-		const mutateSpy = vi.fn();
-
-		mockUseNavigation.mockReturnValue({
-			clearActiveProject: vi.fn(),
-			navigateToProject,
-			stateHydrated: true,
-		});
-
-		mockUseRouter.mockReturnValue({
-			back: vi.fn(),
-			forward: vi.fn(),
-			prefetch: vi.fn(),
-			push,
-			refresh: vi.fn(),
-			replace: vi.fn(),
-		});
-
-		mockUseSWR.mockReturnValue({
-			data: defaultProps.initialProjects,
-			error: undefined,
-			isLoading: false,
-			isValidating: false,
-			mutate: mutateSpy,
-		});
-
-		mockCreateProject.mockResolvedValueOnce({
-			id: "project-456",
-		});
-
-		render(<DashboardClient {...defaultProps} />);
-
-		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
-		await createFunction(null, "New Test Project", true);
-
-		expect(mockCreateProject).toHaveBeenCalledWith("org-123", {
-			description: "",
-			name: "New Test Project",
-		});
-		expect(navigateToProject).toHaveBeenCalledWith("project-456", "New Test Project");
-		expect(mockCloseModal).toHaveBeenCalled();
-		expect(push).toHaveBeenCalledWith("/organization/project/application/new");
-		expect(mutateSpy).toHaveBeenCalled();
-	});
 });
