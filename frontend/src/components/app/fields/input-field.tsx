@@ -40,6 +40,7 @@ const getInputClasses = (
 		(icon ?? showCountTypeTag) && "pr-10",
 		"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
 		"focus-visible:border focus-visible:border-primary",
+		"[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
 		className,
 	);
 };
