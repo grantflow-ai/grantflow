@@ -305,44 +305,44 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
 
-					<div className="gap-4 h-12 2xl:mt-4">
-						<div className="flex flex-col w-64">
-							<InputField
-								countType={formData.limitType === "words" ? "words" : "chars"}
-								label={`Max ${formData.limitType === "words" ? "words" : "characters"}`}
-								onChange={(e) => {
-									const parsedValue = Number.parseInt(e.target.value, 10);
-									setFormData({
-										...formData,
-										lengthLimit: Number.isNaN(parsedValue) ? 0 : parsedValue,
-									});
-								}}
-								placeholder={formData.limitType === "words" ? "3,000" : "20,000"}
-								showCountTypeTag
-								testId={`max-count-${section.id}`}
-								type="number"
-								value={formData.lengthLimit}
-							/>
-							<p className="mt-1 text-xs font-normal text-app-gray-500">
-								{formData.limitType === "words"
-									? `≈ ${wordsToCharacters(formData.lengthLimit).toLocaleString()} characters`
-									: `≈ ${charactersToWords(formData.lengthLimit).toLocaleString()} words`}
-							</p>
-						</div>
+					<div className="flex flex-col w-64">
+						<InputField
+							countType={formData.limitType === "words" ? "words" : "chars"}
+							label={`Max ${formData.limitType === "words" ? "words" : "characters"}`}
+							onChange={(e) => {
+								const parsedValue = Number.parseInt(e.target.value, 10);
+								setFormData({
+									...formData,
+									lengthLimit: Number.isNaN(parsedValue) ? 0 : parsedValue,
+								});
+							}}
+							placeholder={formData.limitType === "words" ? "3,000" : "20,000"}
+							showCountTypeTag
+							testId={`max-count-${section.id}`}
+							type="number"
+							value={formData.lengthLimit}
+						/>
+						<p className="text-xs font-normal text-app-gray-500">
+							{formData.limitType === "words"
+								? `≈ ${wordsToCharacters(formData.lengthLimit).toLocaleString()} characters`
+								: `≈ ${charactersToWords(formData.lengthLimit).toLocaleString()} words`}
+						</p>
+						{/*</div>*/}
 					</div>
 				</div>
 
-				{!isSubsection && (
-					<div className="space-y-2">
-						<h3 className="font-heading leading-snug text-base font-semibold text-app-black">AI Prompt</h3>
-						<p className="text-app-gray-600 text-base font-normal leading-tight">
-							Your AI assistant will follow this instruction. Modify the prompt to reflect your topic and
-							goals for a more relevant draft.
-						</p>
-					</div>
-				)}
-
-				<div className="mt-5">
+				<div className="space-y-2 2xl:space-y-3">
+					{!isSubsection && (
+						<>
+							<h3 className="font-heading leading-snug text-base font-semibold text-app-black">
+								AI Prompt
+							</h3>
+							<p className="text-app-gray-600 text-base font-normal leading-tight">
+								Your AI assistant will follow this instruction. Modify the prompt to reflect your topic
+								and goals for a more relevant draft.
+							</p>
+						</>
+					)}
 					<Label
 						className="block text-start text-xs font-light text-input-label mb-1"
 						htmlFor={`ai-prompt-${section.id}`}
