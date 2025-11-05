@@ -10,7 +10,6 @@ import { WizardLeftPane } from "@/components/organizations/project/applications/
 import { useWizardAnalytics } from "@/hooks/use-wizard-analytics";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { AiAutofillButton } from "../ai-autofill-button";
 import { ObjectiveForm, type ObjectiveFormData } from "./objective-form";
 import { PreviewLoadingComponent } from "./preview-loading";
 import { ResearchPlanPreview } from "./research-plan-preview";
@@ -24,8 +23,6 @@ interface ResearchPlanStepProps {
 export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const application = useApplicationStore((state) => state.application);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
-	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
-	const cancelAutofill = useWizardStore((state) => state.cancelAutofill);
 	const showResearchPlanInfoBanner = useWizardStore((state) => state.showResearchPlanInfoBanner);
 	const setShowResearchPlanInfoBanner = useWizardStore((state) => state.setShowResearchPlanInfoBanner);
 	const { trackContentAdd } = useWizardAnalytics();
