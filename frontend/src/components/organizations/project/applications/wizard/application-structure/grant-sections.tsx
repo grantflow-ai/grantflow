@@ -250,29 +250,9 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 		});
 	}, [formData, setFormData]);
 
-	const handleLimitTypeChange = useCallback(
-		(newType: "characters" | "words") => {
-			if (newType === formData.limitType) {
-				return;
-			}
-
-			const newValue =
-				newType === "characters"
-					? wordsToCharacters(formData.lengthLimit)
-					: charactersToWords(formData.lengthLimit);
-
-			setFormData({
-				...formData,
-				lengthLimit: newValue,
-				limitType: newType,
-			});
-		},
-		[formData, setFormData],
-	);
-
 	return (
 		<div className="px-6 py-3">
-			<div className="space-y-4 2xl:space-y-5">
+			<div className="flex flex-col space-y-4 2xl:space-y-5">
 				<div className="space-y-2 2xl:space-y-3">
 					<h3
 						className="font-heading leading-snug text-base font-semibold text-app-black"
@@ -291,7 +271,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 					/>
 				</div>
 
-				<div className="space-y-2">
+				<div className="space-y-2 2xl:space-y-3">
 					<div className="flex items-center gap-1.5">
 						<h3
 							className="font-heading leading-snug text-base font-semibold text-app-black"
@@ -315,8 +295,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 								<TooltipContent className="max-w-xs" side="top" sideOffset={5}>
 									<p>
 										We&apos;ve converted the application&apos;s length limit into words or
-										characters (whichever is most precise); you can adjust this now or later in the
-										editor.
+										characters (whichever is most precise).
 									</p>
 								</TooltipContent>
 							</TooltipPrimitive.Root>
@@ -326,31 +305,8 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
 
-					<div className="flex items-center gap-2 pt-2">
-						<AppButton
-							data-testid="length-type-words"
-							onClick={() => {
-								handleLimitTypeChange("words");
-							}}
-							type="button"
-							variant={formData.limitType === "words" ? "secondary" : "ghost"}
-						>
-							Words
-						</AppButton>
-						<AppButton
-							data-testid="length-type-characters"
-							onClick={() => {
-								handleLimitTypeChange("characters");
-							}}
-							type="button"
-							variant={formData.limitType === "characters" ? "secondary" : "ghost"}
-						>
-							Characters
-						</AppButton>
-					</div>
-
 					<div className="gap-4 h-12 2xl:mt-4">
-						<div className="w-64">
+						<div className="flex flex-col w-64">
 							<InputField
 								countType={formData.limitType === "words" ? "words" : "chars"}
 								label={`Max ${formData.limitType === "words" ? "words" : "characters"}`}
@@ -386,7 +342,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 					</div>
 				)}
 
-				<div>
+				<div className="mt-5">
 					<Label
 						className="block text-start text-xs font-light text-input-label mb-1"
 						htmlFor={`ai-prompt-${section.id}`}
