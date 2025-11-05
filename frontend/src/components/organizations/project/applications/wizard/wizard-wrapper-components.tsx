@@ -165,13 +165,14 @@ function generateFooterRightButtonProps(
 	currentStep: WizardStep,
 	hasApplicationText?: boolean,
 	shouldRegenerate?: boolean,
+	isGeneratingApplication?: boolean,
 ) {
 	const isStep1 = currentStep === WizardStep.APPLICATION_DETAILS;
 	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
 	const isResearchDeepDiveStep = currentStep === WizardStep.RESEARCH_DEEP_DIVE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
-	const shouldShowGenerate = isResearchDeepDiveStep && !hasApplicationText;
+	const shouldShowGenerate = isResearchDeepDiveStep && !hasApplicationText && !isGeneratingApplication;
 	const shouldShowRegenerate = isStep1 && shouldRegenerate;
 
 	return {
@@ -336,6 +337,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
 	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
+	const isGeneratingApplication = useWizardStore((state) => state.isGeneratingApplication);
 
 	const title = useApplicationStore((state) => state.application?.title);
 	const applicationText = useApplicationStore((state) => state.application?.text);
@@ -350,8 +352,9 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	const shouldRegenerate = hasSections && shouldTriggerTemplateGeneration();
 
 	const { leftIcon, rightButtonText, rightIcon } = useMemo(
-		() => generateFooterRightButtonProps(currentStep, hasApplicationText, shouldRegenerate),
-		[currentStep, hasApplicationText, shouldRegenerate],
+		() =>
+			generateFooterRightButtonProps(currentStep, hasApplicationText, shouldRegenerate, isGeneratingApplication),
+		[currentStep, hasApplicationText, shouldRegenerate, isGeneratingApplication],
 	);
 
 	const validation = validateStepNext();
@@ -382,7 +385,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 	}, [grantTemplate, trackEvent, trackNavigation]);
 
 	const handleDeepDiveStep = useCallback(async () => {
-		if (hasApplicationText) {
+		if (hasApplicationText || isGeneratingApplication) {
 			await trackNavigation("next");
 			useWizardStore.getState().toNextStep();
 			return;
@@ -395,7 +398,7 @@ function RightButton({ currentStep }: { currentStep: WizardStep }) {
 		if (success) {
 			useWizardStore.getState().toNextStep();
 		}
-	}, [hasApplicationText, trackEvent, trackNavigation]);
+	}, [hasApplicationText, trackEvent, trackNavigation, isGeneratingApplication]);
 
 	const handleCompleteStep = useCallback(() => {
 		router.push(routes.organization.root());
