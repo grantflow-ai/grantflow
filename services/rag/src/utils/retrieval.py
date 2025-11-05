@@ -131,7 +131,7 @@ async def retrieve_vectors_for_embedding(
     iteration: int = 1,
     limit: int = MAX_RESULTS,
     metadata_filter: MetadataFilterParams | None = None,
-    organization_id: str | None = None,
+    granting_institution_id: str | None = None,
     search_queries: list[str] | None = None,
     trace_id: str,
 ) -> list[TextVector]:
@@ -151,7 +151,7 @@ async def retrieve_vectors_for_embedding(
                 .where(
                     file_table_cls.grant_application_id == application_id
                     if hasattr(file_table_cls, "grant_application_id")
-                    else file_table_cls.granting_institution_id == organization_id
+                    else file_table_cls.granting_institution_id == granting_institution_id
                 )
                 .where(or_(*similarity_conditions))
             )
@@ -165,7 +165,7 @@ async def retrieve_vectors_for_embedding(
             .where(
                 file_table_cls.grant_application_id == application_id
                 if hasattr(file_table_cls, "grant_application_id")
-                else file_table_cls.granting_institution_id == organization_id
+                else file_table_cls.granting_institution_id == granting_institution_id
             )
         )
 
@@ -227,7 +227,7 @@ async def retrieve_vectors_for_embedding(
         return await retrieve_vectors_for_embedding(
             file_table_cls=file_table_cls,
             application_id=application_id,
-            organization_id=organization_id,
+            granting_institution_id=granting_institution_id,
             embeddings=embeddings,
             search_queries=search_queries,
             metadata_filter=metadata_filter,
@@ -246,7 +246,7 @@ async def handle_retrieval(
     *,
     application_id: str | None = None,
     max_results: int,
-    organization_id: str | None = None,
+    granting_institution_id: str | None = None,
     search_queries: list[str],
     model_name: str | None = None,
     trace_id: str,
@@ -262,7 +262,7 @@ async def handle_retrieval(
         await retrieve_vectors_for_embedding(
             file_table_cls=file_table_cls,
             application_id=application_id,
-            organization_id=organization_id,
+            granting_institution_id=granting_institution_id,
             embeddings=query_embeddings,
             search_queries=search_queries,
             limit=max_results,
@@ -279,7 +279,7 @@ async def retrieve_documents(
     max_results: int = MAX_RESULTS,
     max_tokens: int = 4000,
     model: str = GENERATION_MODEL,
-    organization_id: str | None = None,
+    granting_institution_id: str | None = None,
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
     with_guided_retrieval: bool = False,
@@ -292,7 +292,7 @@ async def retrieve_documents(
         max_results=max_results,
         max_tokens=max_tokens,
         model=model,
-        organization_id=organization_id,
+        granting_institution_id=granting_institution_id,
         search_queries_tuple=tuple(search_queries) if search_queries else None,
         task_description=str(task_description),
         with_guided_retrieval=with_guided_retrieval,
@@ -308,7 +308,7 @@ async def _retrieve_documents_cached(
     max_results: int = MAX_RESULTS,
     max_tokens: int = 4000,
     model: str = GENERATION_MODEL,
-    organization_id: str | None = None,
+    granting_institution_id: str | None = None,
     search_queries_tuple: tuple[str, ...] | None = None,
     task_description: str,
     with_guided_retrieval: bool = False,
@@ -323,7 +323,7 @@ async def _retrieve_documents_cached(
         max_results=max_results,
         max_tokens=max_tokens,
         model=model,
-        organization_id=organization_id,
+        granting_institution_id=granting_institution_id,
         search_queries_tuple=search_queries_tuple,
         task_description=task_description,
         with_guided_retrieval=with_guided_retrieval,
@@ -336,11 +336,11 @@ async def _retrieve_documents_cached(
         return cached_documents
 
     start_time = time.time()
-    entity_id = application_id or organization_id
-    entity_type = "application" if application_id else "organization"
+    entity_id = application_id or granting_institution_id
+    entity_type = "application" if application_id else "granting_institution"
 
-    if not application_id and not organization_id:
-        raise ValueError("Either application_id or organization_id must be provided.")
+    if not application_id and not granting_institution_id:
+        raise ValueError("Either application_id or granting_institution_id must be provided.")
 
     search_queries = list(search_queries_tuple) if search_queries_tuple else None
 
@@ -349,7 +349,7 @@ async def _retrieve_documents_cached(
     )
     vectors = await handle_retrieval(
         application_id=application_id,
-        organization_id=organization_id,
+        granting_institution_id=granting_institution_id,
         search_queries=search_queries,
         max_results=max_results,
         model_name=embedding_model,

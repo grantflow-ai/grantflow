@@ -236,7 +236,7 @@ async def handle_cfp_analysis(
             trace_id=trace_id,
         )
         rag_results = await retrieve_documents(
-            organization_id=organization["id"],
+            granting_institution_id=organization["id"],
             search_queries=list(ORGANIZATION_GUIDELINES_SEARCH_QUERIES),
             task_description="Retrieve organization-specific grant application guidelines and formatting requirements",
             trace_id=trace_id,

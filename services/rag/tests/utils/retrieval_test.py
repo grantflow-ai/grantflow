@@ -203,7 +203,7 @@ async def test_handle_retrieval_with_organization_id(
     mock_retrieve_vectors.return_value = mock_text_vectors
 
     result = await handle_retrieval(
-        organization_id="test-org-id",
+        granting_institution_id="test-org-id",
         max_results=10,
         search_queries=["test query"],
         trace_id=trace_id,
