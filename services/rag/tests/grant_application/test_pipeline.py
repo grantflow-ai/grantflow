@@ -45,6 +45,9 @@ class FakeSession:
     async def execute(self, *_: Any, **__: Any) -> FakeResult:
         return FakeResult(self._jobs)
 
+    def begin(self) -> Self:
+        return self
+
 
 def make_session_maker(jobs: Sequence[JobRecord]) -> Any:
     def _session() -> FakeSession:
@@ -68,7 +71,7 @@ def patch_job_manager(mocker: MockerFixture, fake_manager: FakeJobManager) -> No
 class FakeJobManager:
     def __init__(self, *, current_stage: GrantApplicationStageEnum, checkpoint: Any = None) -> None:
         self.current_stage = current_stage
-        self.session_maker = None
+        self.session_maker = make_session_maker([])
         self.get_or_create_job_for_stage = AsyncMock(
             return_value=SimpleNamespace(id=UUID(int=1), status=RagGenerationStatusEnum.PENDING)
         )
