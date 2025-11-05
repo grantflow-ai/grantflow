@@ -2,12 +2,11 @@ import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "./app-sidebar";
 
 vi.mock("next/navigation", () => ({
-	usePathname: vi.fn(() => "/"),
+	// usePathname: vi.fn(() => "/"),
 	useRouter: vi.fn(),
-	useSearchParams: vi.fn(() => new URLSearchParams()),
+	// useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 vi.mock("@/stores/navigation-store", () => ({
@@ -20,7 +19,7 @@ vi.mock("@/stores/new-application-modal-store", () => ({
 	useNewApplicationModalStore: vi.fn(),
 }));
 vi.mock("@/components/organizations/modals/new-application-modal", () => ({
-	default: vi.fn(() => null),
+	default: vi.fn(() => <div data-testid="mock-new-application-modal" />),
 }));
 vi.mock("@/actions/project", () => ({
 	createProject: vi.fn(),
@@ -36,6 +35,22 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+import { AppSidebar } from "./app-sidebar";
+
+const MockNewApplicationModal = vi.mocked(
+	await import("@/components/organizations/modals/new-application-modal").then((m) => m.default),
+);
+const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
+const mockUseNavigation = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
+const mockUseOrganizationStore = vi.mocked(
+	await import("@/stores/organization-store").then((m) => m.useOrganizationStore),
+);
+const mockUseNewApplicationModalStore = vi.mocked(
+	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
+);
+const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
+const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
+
 const mockPush = vi.fn();
 const mockRouter = {
 	back: vi.fn(),
@@ -46,26 +61,12 @@ const mockRouter = {
 	replace: vi.fn(),
 };
 
-const mockUseNavigation = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
-const mockUseOrganizationStore = vi.mocked(
-	await import("@/stores/organization-store").then((m) => m.useOrganizationStore),
-);
-const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
-const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
-const MockNewApplicationModal = vi.mocked(
-	await import("@/components/organizations/modals/new-application-modal").then((m) => m.default),
-);
 const mockNavigateToProject = vi.fn();
-const mockUseNewApplicationModalStore = vi.mocked(
-	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
-);
-const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
+const mockCloseModal = vi.fn();
 const mockMutate = vi.fn();
 
-const mockCloseModal = vi.fn();
-
-const mockProjects = [{ id: "project-123", name: "Test Project" }];
 const mockOrganization = { id: "org-123", name: "Test Org" };
+const mockProjects = [{ id: "project-123", name: "Test Project" }];
 
 describe.sequential("AppSidebar", () => {
 	afterEach(() => {
@@ -82,13 +83,20 @@ describe.sequential("AppSidebar", () => {
 			stateHydrated: true,
 		});
 
-		mockUseNewApplicationModalStore.mockReturnValue({
-			closeModal: mockCloseModal,
-			isModalOpen: false,
-			openModal: vi.fn(),
-		});
-
 		mockUseOrganizationStore.mockReturnValue({ organization: mockOrganization });
+	});
+	mockUseNewApplicationModalStore.mockReturnValue({
+		closeModal: mockCloseModal,
+		isModalOpen: false,
+		openModal: vi.fn(),
+	});
+
+	mockUseSWR.mockReturnValue({
+		data: mockProjects,
+		error: undefined,
+		isLoading: false,
+		isValidating: false,
+		mutate: mockMutate,
 	});
 
 	function renderWithProvider(props = {}) {
@@ -154,7 +162,7 @@ describe.sequential("AppSidebar", () => {
 		mockUseRouter.mockReturnValue(mockRouter);
 
 		mockUseSWR.mockReturnValue({
-			data: mockProjects,
+			data: [],
 			error: undefined,
 			isLoading: false,
 			isValidating: false,
@@ -164,6 +172,7 @@ describe.sequential("AppSidebar", () => {
 		mockUseNewApplicationModalStore.mockReturnValue({
 			closeModal: mockCloseModal,
 			isModalOpen: true,
+			openModal: vi.fn(),
 		});
 
 		mockCreateProject.mockResolvedValueOnce({
@@ -173,8 +182,12 @@ describe.sequential("AppSidebar", () => {
 		renderWithProvider();
 
 		const createFunction = MockNewApplicationModal.mock.calls[0][0].onCreate;
-		await createFunction(null, "New Test Project", true);
+		await createFunction("project-456", "New Test Project", true);
 
+		expect(mockCreateProject).toHaveBeenCalledWith("org-123", {
+			description: "",
+			name: "New Test Project",
+		});
 		expect(navigateToProject).toHaveBeenCalledWith("project-456", "New Test Project");
 		expect(mockCloseModal).toHaveBeenCalled();
 		expect(mockRouter.push).toHaveBeenCalledWith("/organization/project/application/new");
