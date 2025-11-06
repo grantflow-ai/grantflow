@@ -11,21 +11,33 @@ import type { Page } from "@playwright/test";
 /**
  * Accept cookie consent to enable authentication features
  * Many auth features are disabled without cookie consent
+ *
+ * This sets a cookie that persists across page navigations
  */
 export async function acceptCookieConsent(page: Page): Promise<void> {
-	// Set cookie consent in localStorage before page loads
-	await page.addInitScript(() => {
-		localStorage.setItem(
-			"cookie-consent-store",
-			JSON.stringify({
-				state: {
-					hasConsent: true,
-					isHydrated: true,
-				},
-				version: 0,
-			}),
-		);
-	});
+	// Set cookie consent cookie with proper structure
+	const consentData = {
+		consentGiven: true,
+		hasInteracted: true,
+		preferences: {
+			analytics: true,
+			essential: true,
+		},
+	};
+
+	// Set the cookie in the browser context
+	await page.context().addCookies([
+		{
+			domain: "localhost",
+			expires: Date.now() / 1000 + 365 * 24 * 60 * 60, // 1 year
+			httpOnly: false,
+			name: "grantflow_cookie_consent",
+			path: "/",
+			sameSite: "Strict",
+			secure: false,
+			value: encodeURIComponent(JSON.stringify(consentData)),
+		},
+	]);
 }
 
 /**
