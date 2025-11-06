@@ -143,4 +143,61 @@ describe("login", () => {
 
 		await expect(login(loginRequest.id_token)).rejects.toThrow(redirectError);
 	});
+
+	describe("new user signup flow", () => {
+		beforeEach(() => {
+			vi.useFakeTimers();
+		});
+
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		it("should delay backend call for new users", async () => {
+			const loginPromise = login(loginRequest.id_token, true);
+
+			// Should not call backend immediately
+			expect(mockPost).not.toHaveBeenCalled();
+
+			// Advance timers by 1.5 seconds
+			await vi.advanceTimersByTimeAsync(1500);
+
+			// Wait for login to complete
+			await loginPromise;
+
+			// Should call backend after delay
+			expect(mockPost).toHaveBeenCalled();
+		});
+
+		it("should not delay backend call for existing users", async () => {
+			await login(loginRequest.id_token, false);
+
+			// Should call backend immediately
+			expect(mockPost).toHaveBeenCalled();
+		});
+
+		it("should not delay when isNewUser is not provided", async () => {
+			await login(loginRequest.id_token);
+
+			// Should call backend immediately (defaults to false)
+			expect(mockPost).toHaveBeenCalled();
+		});
+
+		it("should complete successfully after delay for new users", async () => {
+			const loginPromise = login(loginRequest.id_token, true);
+
+			// Advance timers
+			await vi.advanceTimersByTimeAsync(1500);
+
+			const result = await loginPromise;
+
+			expect(result).toEqual({ is_backoffice_admin: false });
+			expect(mockPost).toHaveBeenCalledWith(
+				expect.any(URL),
+				expect.objectContaining({
+					json: { id_token: loginRequest.id_token },
+				}),
+			);
+		});
+	});
 });
