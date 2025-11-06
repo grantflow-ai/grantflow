@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -113,22 +114,33 @@ export function NewApplicationClient() {
 							Select the focus of your proposal
 						</p>
 					</div>
-					<div className="flex gap-8 w-full" data-testid="grant-type-options">
-						{GRANT_TYPE_OPTIONS.map((option) => (
-							<GrantTypeCard
-								disabled={creatingApplication}
-								key={option.value}
-								onSelect={() => {
-									void handleGrantTypeSelect(option.value);
-								}}
-								option={option}
-							/>
-						))}
+					<div className="space-y-2.5">
+						<div className="flex gap-8 w-full" data-testid="grant-type-options">
+							{GRANT_TYPE_OPTIONS.map((option) => (
+								<GrantTypeCard
+									disabled={creatingApplication}
+									key={option.value}
+									onSelect={() => {
+										void handleGrantTypeSelect(option.value);
+									}}
+									option={option}
+								/>
+							))}
+						</div>
+						<p className="font-normal font-cabin text-[8px] text-black">
+							Free illustrations from{" "}
+							<Link
+								className="text-app-gray-600 underline cursor-pointer"
+								href="https://www.streamlinehq.com"
+							>
+								Streamline
+							</Link>{" "}
+						</p>
 					</div>
 				</main>
 			</div>
 
-			<footer className="relative flex h-auto w-full items-center justify-between border-t-1 border-app-gray-100 bg-surface-primary py-4 px-6">
+			<footer className="relative flex h-auto w-full items-center justify-between border-t border-app-gray-100 bg-surface-primary py-4 px-6">
 				<AppButton
 					data-testid="back-button"
 					disabled={creatingApplication}

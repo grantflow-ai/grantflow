@@ -1,3 +1,5 @@
+ 
+
 /**
  * Authentication helpers for e2e tests
  *
@@ -206,6 +208,7 @@ export async function setupAuthenticatedSession(page: Page): Promise<void> {
  * Wait for authentication to complete
  * Useful after login or page navigation
  */
+
 export async function waitForAuth(page: Page): Promise<void> {
 	await page.waitForFunction(() => {
 		const userStore = localStorage.getItem("user-store");
