@@ -102,6 +102,9 @@ jobs:
             - name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v2
 
+            - name: Set up Docker Compose
+              uses: docker/setup-compose-action@v1
+
             - name: Create .env file for E2E
               run: cp .env.example .env
 
