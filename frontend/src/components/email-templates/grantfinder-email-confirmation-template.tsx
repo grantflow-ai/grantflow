@@ -43,7 +43,7 @@ export default function GrantfinderEmailConfirmationTemplate({
               .paragraph {
                 font-size: 16px !important;
                 line-height: 24px !important;
-			
+
               }
             }
           `}
