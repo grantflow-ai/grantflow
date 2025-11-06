@@ -102,7 +102,7 @@ jobs:
             - name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v2
               with:
-                  version: ">= 546.0"
+                  version: ">= 546.0.0"
 
             - name: Create .env file for E2E
               run: cp .env.example .env
