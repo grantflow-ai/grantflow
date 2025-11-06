@@ -703,6 +703,29 @@ tasks:
           Copy from example: cp .env.example .env
     silent: true
 
+  _e2e:check:
+    internal: true
+    deps:
+      - task: _e2e:check-tools
+      - task: _dev:check-env
+    cmds:
+      - echo "✅ E2E environment is ready"
+
+  _e2e:check-tools:
+    internal: true
+    preconditions:
+      - sh: command -v docker
+        msg: "Docker is required. Please install from https://docs.docker.com/get-docker/"
+      - sh: command -v docker-compose || command -v docker compose
+        msg: "Docker Compose is required. Please install Docker Desktop"
+      - sh: command -v uv
+        msg: "uv is required. Please install from https://github.com/astral-sh/uv"
+      - sh: command -v pnpm
+        msg: "pnpm is required. Please install from https://pnpm.io/installation"
+      - sh: command -v gcloud
+        msg: "gcloud CLI is required. Please install from https://cloud.google.com/sdk/docs/install"
+    silent: true
+
   _dev:init-pubsub:
     internal: true
     env:
