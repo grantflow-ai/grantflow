@@ -21,8 +21,8 @@ export const E2E_TEST_USER = {
 } as const;
 
 /**
- * Mock Firebase Auth API responses for login testing
- * Use this when you actually want to test the login flow itself.
+ * Setup Firebase Auth Emulator mocking for login/signup testing
+ * This mocks the backend endpoints but uses real Firebase Auth Emulator for authentication.
  *
  * @example
  * test('should login successfully', async ({ page }) => {
@@ -34,73 +34,153 @@ export const E2E_TEST_USER = {
  *   await expect(page).toHaveURL('/projects');
  * });
  */
-export async function mockFirebaseAuth(page: Page): Promise<void> {
-	const mockToken = generateMockIdToken();
+export async function mockFirebaseAuth(page: Page, _options?: { isNewUser?: boolean }): Promise<void> {
+	// Mock backend /login API endpoint
+	await mockBackendLogin(page);
 
-	// Intercept Firebase Auth API calls
+	// Mock backend /organizations API endpoint
+	await mockBackendOrganizations(page);
+}
+
+/**
+ * Mock Google OAuth popup flow for social login testing
+ */
+export async function mockGoogleOAuth(page: Page, options?: { isNewUser?: boolean }): Promise<void> {
+	const mockToken = generateMockIdToken();
+	const isNewUser = options?.isNewUser ?? false;
+
+	// Intercept popup window creation and auto-complete auth
+	await page.addInitScript(
+		({ token, user, isNewUser }) => {
+			// Override window.open to simulate OAuth popup completion
+			const originalOpen = window.open;
+			window.open = (...args) => {
+				const popup = originalOpen.apply(window, args);
+
+				// Simulate successful OAuth completion
+				setTimeout(() => {
+					// Trigger Firebase auth state change
+					const event = new CustomEvent("firebaseAuthStateChanged", {
+						detail: {
+							displayName: user.displayName,
+							email: user.email,
+							emailVerified: true,
+							isNewUser,
+							photoURL: null,
+							providerId: "google.com",
+							uid: user.uid,
+						},
+					});
+					window.dispatchEvent(event);
+				}, 100);
+
+				return popup;
+			};
+		},
+		{
+			isNewUser,
+			token: mockToken,
+			user: E2E_TEST_USER,
+		},
+	);
+
+	// Intercept Firebase popup auth endpoints
 	await page.route("**/identitytoolkit.googleapis.com/**", async (route) => {
 		const url = route.request().url();
 
-		if (url.includes("accounts:signInWithPassword")) {
-			// Mock successful login
+		if (url.includes("signInWithIdp") || url.includes("SignInWithIdp")) {
 			await route.fulfill({
 				body: JSON.stringify({
 					displayName: E2E_TEST_USER.displayName,
 					email: E2E_TEST_USER.email,
 					expiresIn: "3600",
+					federatedId: `https://accounts.google.com/${E2E_TEST_USER.uid}`,
 					idToken: mockToken,
-					kind: "identitytoolkit#VerifyPasswordResponse",
+					kind: "identitytoolkit#VerifyAssertionResponse",
 					localId: E2E_TEST_USER.uid,
+					oauthAccessToken: "mock-oauth-access-token",
+					oauthExpireIn: 3600,
+					photoUrl: null,
+					providerId: "google.com",
+					rawUserInfo: JSON.stringify({
+						email: E2E_TEST_USER.email,
+						email_verified: true,
+						name: E2E_TEST_USER.displayName,
+						sub: E2E_TEST_USER.uid,
+					}),
 					refreshToken: "mock-refresh-token",
-					registered: true,
-				}),
-				contentType: "application/json",
-			});
-		} else if (url.includes("accounts:lookup")) {
-			// Mock user info lookup
-			await route.fulfill({
-				body: JSON.stringify({
-					kind: "identitytoolkit#GetAccountInfoResponse",
-					users: [
-						{
-							displayName: E2E_TEST_USER.displayName,
-							email: E2E_TEST_USER.email,
-							emailVerified: true,
-							localId: E2E_TEST_USER.uid,
-							providerUserInfo: [
-								{
-									email: E2E_TEST_USER.email,
-									federatedId: E2E_TEST_USER.email,
-									providerId: "password",
-									rawId: E2E_TEST_USER.email,
-								},
-							],
-						},
-					],
+					...(isNewUser ? { isNewUser: true } : { registered: true }),
 				}),
 				contentType: "application/json",
 			});
 		} else {
-			// Pass through other requests
 			await route.continue();
 		}
 	});
+}
 
-	// Also intercept token refresh calls
-	await page.route("**/securetoken.googleapis.com/**", async (route) => {
-		await route.fulfill({
-			body: JSON.stringify({
-				access_token: mockToken,
-				expires_in: "3600",
-				id_token: mockToken,
-				project_id: "grantflow",
-				refresh_token: "mock-refresh-token",
-				token_type: "Bearer",
-				user_id: E2E_TEST_USER.uid,
-			}),
-			contentType: "application/json",
-		});
+/**
+ * Mock backend login API endpoint
+ */
+export async function mockBackendLogin(page: Page): Promise<void> {
+	const mockJwt = generateMockJWT();
+
+	await page.route("**/login", async (route) => {
+		if (route.request().method() === "POST") {
+			await route.fulfill({
+				body: JSON.stringify({
+					is_backoffice_admin: false,
+					jwt_token: mockJwt,
+				}),
+				contentType: "application/json",
+				status: 201,
+			});
+		} else {
+			await route.continue();
+		}
 	});
+}
+
+/**
+ * Mock backend organizations API endpoint
+ */
+export async function mockBackendOrganizations(page: Page): Promise<void> {
+	await page.route("**/organizations", async (route) => {
+		if (route.request().method() === "GET") {
+			await route.fulfill({
+				body: JSON.stringify([
+					{
+						created_at: new Date().toISOString(),
+						id: E2E_TEST_USER.organizationId,
+						name: "E2E Test Organization",
+						role: "OWNER",
+						updated_at: new Date().toISOString(),
+					},
+				]),
+				contentType: "application/json",
+				status: 200,
+			});
+		} else {
+			await route.continue();
+		}
+	});
+}
+
+/**
+ * Generate a mock JWT token for backend responses
+ */
+function generateMockJWT(): string {
+	const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+	const payload = btoa(
+		JSON.stringify({
+			exp: Math.floor(Date.now() / 1000) + 3600,
+			iat: Math.floor(Date.now() / 1000),
+			organization_id: E2E_TEST_USER.organizationId,
+			role: "OWNER",
+			sub: E2E_TEST_USER.uid,
+		}),
+	);
+	return `${header}.${payload}.mock-signature`;
 }
 
 /**

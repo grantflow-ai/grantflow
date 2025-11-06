@@ -76,3 +76,55 @@ jobs:
 
             - name: Lint
               run: cd frontend && pnpm lint
+
+    e2e:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Setup workspace
+              uses: ./.github/actions/setup-node-workspace
+
+            - name: Install Task
+              run: |
+                  sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            - name: Install UV
+              run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+            - name: Start E2E services
+              run: task e2e:up
+
+            - name: Seed E2E database
+              run: task e2e:seed
+
+            - name: Build editor
+              run: cd editor && pnpm build
+
+            - name: Install Playwright browsers
+              run: cd frontend && pnpm exec playwright install chromium --with-deps
+
+            - name: Run E2E tests
+              run: cd frontend && pnpm test:e2e
+              env:
+                  NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
+                  NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+
+            - name: Upload Playwright report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: frontend/playwright-report/
+                  retention-days: 30
+
+            - name: Stop E2E services
+              if: always()
+              run: task e2e:down

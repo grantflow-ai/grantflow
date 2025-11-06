@@ -2,7 +2,15 @@
 
 import { type Analytics, getAnalytics as getFirebaseAnalytics, isSupported } from "firebase/analytics";
 import { type FirebaseApp, initializeApp } from "firebase/app";
-import { type Auth, browserSessionPersistence, getAuth, setPersistence, type User, updateProfile } from "firebase/auth";
+import {
+	type Auth,
+	browserSessionPersistence,
+	connectAuthEmulator,
+	getAuth,
+	setPersistence,
+	type User,
+	updateProfile,
+} from "firebase/auth";
 import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
 import type { UserInfo } from "@/types/user";
@@ -151,6 +159,13 @@ export function getFirebaseAuth(): Auth {
 		const app = getFirebaseApp();
 		const auth = getAuth(app);
 		void setPersistence(auth, browserSessionPersistence);
+
+		// Connect to Firebase Auth Emulator if the environment variable is set
+		const emulatorHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
+		if (emulatorHost) {
+			log.info("Connecting to Firebase Auth Emulator", { host: emulatorHost });
+			connectAuthEmulator(auth, emulatorHost, { disableWarnings: true });
+		}
 
 		instanceRef.auth = auth;
 	}
