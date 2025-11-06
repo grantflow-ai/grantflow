@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { E2E_TEST_USER, mockBackendLogin, mockBackendOrganizations } from "./helpers/auth";
+import { acceptCookieConsent, mockBackendLogin, mockBackendOrganizations } from "./helpers/auth";
 
 /**
  * Signup E2E Tests
@@ -10,6 +10,8 @@ import { E2E_TEST_USER, mockBackendLogin, mockBackendOrganizations } from "./hel
 
 test.describe("Signup Flow", () => {
 	test.beforeEach(async ({ page }) => {
+		// Accept cookie consent to enable auth features
+		await acceptCookieConsent(page);
 		// Mock backend endpoints before navigating
 		await mockBackendLogin(page);
 		await mockBackendOrganizations(page);
@@ -84,6 +86,10 @@ test.describe("Signup Flow", () => {
 });
 
 test.describe("Signup Page Accessibility", () => {
+	test.beforeEach(async ({ page }) => {
+		await acceptCookieConsent(page);
+	});
+
 	test("should have proper heading hierarchy", async ({ page }) => {
 		await page.goto("/signup");
 
@@ -94,19 +100,23 @@ test.describe("Signup Page Accessibility", () => {
 	test("should have visible form labels", async ({ page }) => {
 		await page.goto("/signup");
 
-		// Check for form field labels
-		await expect(page.getByLabelText(/first name/i)).toBeVisible();
-		await expect(page.getByLabelText(/last name/i)).toBeVisible();
-		await expect(page.getByLabelText(/email/i)).toBeVisible();
+		// Check for form field inputs
+		await expect(page.locator('input[name="firstName"]')).toBeVisible();
+		await expect(page.locator('input[name="lastName"]')).toBeVisible();
+		await expect(page.locator('input[name="email"]')).toBeVisible();
 	});
 });
 
 test.describe("Signup with Email Link", () => {
+	test.beforeEach(async ({ page }) => {
+		await acceptCookieConsent(page);
+	});
+
 	test("should show email form for passwordless signup", async ({ page }) => {
 		await page.goto("/signup");
 
-		// Verify email input fields are present
-		const emailInput = page.getByLabelText(/email/i);
+		// Verify email input fields are present using label text selector
+		const emailInput = page.locator('input[name="email"]');
 		await expect(emailInput).toBeVisible();
 
 		// Verify form can be filled
@@ -117,7 +127,7 @@ test.describe("Signup with Email Link", () => {
 	test("should validate email format", async ({ page }) => {
 		await page.goto("/signup");
 
-		const emailInput = page.getByLabelText(/email/i);
+		const emailInput = page.locator('input[name="email"]');
 		await emailInput.fill("invalid-email");
 
 		// Try to submit or blur to trigger validation
