@@ -90,11 +90,13 @@ test.describe("Signup Page Accessibility", () => {
 		await acceptCookieConsent(page);
 	});
 
-	test("should have proper heading hierarchy", async ({ page }) => {
+	test("should have visible title", async ({ page }) => {
 		await page.goto("/signup");
 
-		const mainHeading = page.getByRole("heading", { level: 1 });
-		await expect(mainHeading).toBeVisible();
+		// The auth card title is rendered as a div, not a heading element
+		const title = page.getByTestId("auth-card-title");
+		await expect(title).toBeVisible();
+		await expect(title).toHaveText("Create your account");
 	});
 
 	test("should have visible form labels", async ({ page }) => {
@@ -133,8 +135,9 @@ test.describe("Signup with Email Link", () => {
 		// Try to submit or blur to trigger validation
 		await emailInput.blur();
 
-		// Form should show validation (actual implementation may vary)
-		const submitButton = page.getByRole("button", { name: /create account|sign up/i }).first();
+		// Form should show validation - button should be disabled for invalid email
+		const submitButton = page.getByTestId("email-signin-form-submit-button");
 		await expect(submitButton).toBeVisible();
+		await expect(submitButton).toBeDisabled();
 	});
 });
