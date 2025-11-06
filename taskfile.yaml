@@ -326,17 +326,18 @@ tasks:
     dotenv: [".env"]
     env:
       NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
     cmds:
       - pnpm exec playwright install chromium
       - pnpm test:e2e
     ignore_error: true
 
   e2e:up:
-    desc: Start services for e2e testing (db, backend, pubsub, gcs)
+    desc: Start services for e2e testing (db, backend, pubsub, gcs, firebase-auth-emulator)
     deps:
       - task: _dev:check
     cmds:
-      - docker compose up -d db pubsub-emulator gcs-emulator backend
+      - docker compose up -d db pubsub-emulator gcs-emulator firebase-auth-emulator backend
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
       - task: e2e:migrate
