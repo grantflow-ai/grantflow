@@ -250,7 +250,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					value={formData.description}
 				/>
 
-				<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks (Recommended)</h3>
+				<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
 				<p className="text-muted-foreground-dark leading-tight">
 					Describe steps to achieve this objective. You can add more than one!
 				</p>
