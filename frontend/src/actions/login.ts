@@ -9,9 +9,15 @@ import { getEnv } from "@/utils/env";
 import { getOrganizationFromJWT } from "@/utils/jwt";
 import { log } from "@/utils/logger/server";
 
-export async function login(idToken: string) {
+export async function login(idToken: string, isNewUser = false) {
 	const started = Date.now();
-	log.info("action_start", { action: "login" });
+	log.info("action_start", { action: "login", is_new_user: isNewUser });
+
+	// For new users, add a small delay to allow Firebase to propagate user data
+	if (isNewUser) {
+		log.info("New user detected, waiting for Firebase propagation", { action: "login" });
+		await sleep(1500);
+	}
 
 	try {
 		const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
@@ -87,4 +93,8 @@ export async function login(idToken: string) {
 		}
 		throw new Error("Login failed");
 	}
+}
+
+async function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
