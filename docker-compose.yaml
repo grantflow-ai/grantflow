@@ -8,6 +8,7 @@ services:
       - backend
       - scraper
       - crdt
+      - e2e
     image: pgvector/pgvector:pg18
     restart: always
     environment:
@@ -70,6 +71,7 @@ services:
       - crawler
       - backend
       - scraper
+      - e2e
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
     restart: always
     ports:
