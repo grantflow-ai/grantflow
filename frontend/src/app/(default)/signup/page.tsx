@@ -59,7 +59,7 @@ export default function Signup() {
 
 				setUser(convertFirebaseUser(user));
 
-				await login(idToken);
+				await login(idToken, isNewUser);
 
 				checkProfileAndRedirect(user.displayName);
 				return;
