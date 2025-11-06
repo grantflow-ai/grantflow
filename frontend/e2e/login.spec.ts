@@ -197,11 +197,13 @@ test.describe("Login Page Accessibility", () => {
 		await acceptCookieConsent(page);
 	});
 
-	test("should have proper heading hierarchy", async ({ page }) => {
+	test("should have visible title", async ({ page }) => {
 		await page.goto("/login");
 
-		const mainHeading = page.getByRole("heading", { name: /welcome back/i });
-		await expect(mainHeading).toBeVisible();
+		// The auth card title is rendered as a div, not a heading element
+		const title = page.getByTestId("auth-card-title");
+		await expect(title).toBeVisible();
+		await expect(title).toHaveText("Welcome back!");
 	});
 
 	test("should have visible form labels", async ({ page }) => {
