@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { E2E_TEST_USER, mockBackendLogin, mockBackendOrganizations, mockFirebaseAuth } from "./helpers/auth";
+import { acceptCookieConsent, E2E_TEST_USER, mockFirebaseAuth } from "./helpers/auth";
 
 /**
  * Login E2E Tests
@@ -16,6 +16,8 @@ const TEST_USER_EMAIL = E2E_TEST_USER.email;
 
 test.describe("Login Flow", () => {
 	test.beforeEach(async ({ page }) => {
+		// Accept cookie consent to enable auth features
+		await acceptCookieConsent(page);
 		// Set up Firebase Auth mocking before navigating to login
 		await mockFirebaseAuth(page);
 	});
@@ -191,6 +193,10 @@ test.describe("Login Flow", () => {
 });
 
 test.describe("Login Page Accessibility", () => {
+	test.beforeEach(async ({ page }) => {
+		await acceptCookieConsent(page);
+	});
+
 	test("should have proper heading hierarchy", async ({ page }) => {
 		await page.goto("/login");
 

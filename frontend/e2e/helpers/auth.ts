@@ -9,6 +9,26 @@
 import type { Page } from "@playwright/test";
 
 /**
+ * Accept cookie consent to enable authentication features
+ * Many auth features are disabled without cookie consent
+ */
+export async function acceptCookieConsent(page: Page): Promise<void> {
+	// Set cookie consent in localStorage before page loads
+	await page.addInitScript(() => {
+		localStorage.setItem(
+			"cookie-consent-store",
+			JSON.stringify({
+				state: {
+					hasConsent: true,
+					isHydrated: true,
+				},
+				version: 0,
+			}),
+		);
+	});
+}
+
+/**
  * Test user credentials that match the seeded e2e data
  */
 export const E2E_TEST_USER = {
