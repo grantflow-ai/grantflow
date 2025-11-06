@@ -333,11 +333,11 @@ tasks:
     ignore_error: true
 
   e2e:up:
-    desc: Start services for e2e testing (db, backend, pubsub, gcs, firebase-auth-emulator)
+    desc: Start services for e2e testing using e2e profile
     deps:
       - task: _dev:check
     cmds:
-      - docker compose up -d db pubsub-emulator gcs-emulator firebase-auth-emulator backend
+      - docker compose --profile e2e up -d
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
       - task: e2e:migrate
