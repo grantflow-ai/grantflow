@@ -1,5 +1,3 @@
- 
-
 /**
  * Authentication helpers for e2e tests
  *
