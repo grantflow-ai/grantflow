@@ -684,7 +684,7 @@ tasks:
     preconditions:
       - sh: command -v docker
         msg: "Docker is required. Please install from https://docs.docker.com/get-docker/"
-      - sh: command -v docker-compose || command -v docker compose
+      - sh: command -v docker-compose || docker compose version
         msg: "Docker Compose is required. Please install Docker Desktop"
       - sh: command -v uv
         msg: "uv is required. Please install from https://github.com/astral-sh/uv"
