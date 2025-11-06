@@ -12,7 +12,8 @@ on:
             - "pnpm-lock.yaml"
             - ".github/workflows/ci-frontend.yaml"
             - ".github/actions/setup-node-workspace/**"
-            - "Taskfile.yaml"
+            - "taskfile.yaml"
+            - "docker-compose.yaml"
     push:
         branches:
             - main
@@ -24,7 +25,8 @@ on:
             - "pnpm-lock.yaml"
             - ".github/workflows/ci-frontend.yaml"
             - ".github/actions/setup-node-workspace/**"
-            - "Taskfile.yaml"
+            - "taskfile.yaml"
+            - "docker-compose.yaml"
 
 env:
     NODE_OPTIONS: "--max_old_space_size=4096"
