@@ -94,7 +94,8 @@ test.describe("Signup Page Accessibility", () => {
 		await page.goto("/signup");
 
 		// The auth card title is rendered as a div, not a heading element
-		const title = page.getByTestId("auth-card-title");
+		// Use .first() since the page has two auth-card-title elements (one for each card)
+		const title = page.getByTestId("auth-card-title").first();
 		await expect(title).toBeVisible();
 		await expect(title).toHaveText("Create your account");
 	});
