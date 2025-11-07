@@ -153,7 +153,6 @@ export function ApplicationCard({
 									to the deadline
 								</>
 							)}
-							to the deadline
 						</p>
 					</div>
 				)}
