@@ -14,7 +14,7 @@ from services.rag.src.autofill.research_deep_dive_handler import (
 )
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
+    from packages.db.src.json_objects import ResearchObjective
 
 
 @pytest.fixture
@@ -83,20 +83,21 @@ def test_validate_research_deep_dive_draft() -> None:
 
 
 def test_validate_research_deep_dive_refined() -> None:
-    refined = cast(
-        "ResearchDeepDive",
-        {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
-    )
+    from packages.db.src.json_objects import ResearchDeepDive
+
+    refined = ResearchDeepDive(**{key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING})
     _validate_research_deep_dive_refined(refined)
 
-    too_long: ResearchDeepDive = refined.copy()
-    too_long["impact"] = _make_text("long", 480)
+    too_long_dict = {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING}
+    too_long_dict["impact"] = _make_text("long", 480)
+    too_long = ResearchDeepDive(**too_long_dict)
 
     with pytest.raises(ValidationError, match="impact answer should be 200-420 words"):
         _validate_research_deep_dive_refined(too_long)
 
-    empty_answer: ResearchDeepDive = refined.copy()
-    empty_answer["impact"] = " "
+    empty_answer_dict = {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING}
+    empty_answer_dict["impact"] = " "
+    empty_answer = ResearchDeepDive(**empty_answer_dict)
 
     with pytest.raises(ValidationError, match="impact answer empty after refinement"):
         _validate_research_deep_dive_refined(empty_answer)
@@ -106,16 +107,14 @@ async def test_generate_research_deep_dive_content_with_mocks(
     mock_logger: MagicMock,
     trace_id: str,
 ) -> None:
+    from packages.db.src.json_objects import ResearchDeepDive
     from packages.db.src.tables import GrantApplication
 
     draft_response = cast(
         "ResearchDeepDiveDraft",
         {key: _make_text("draft", 150) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
     )
-    refined_response = cast(
-        "ResearchDeepDive",
-        {key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING},
-    )
+    refined_response = ResearchDeepDive(**{key: _make_text("refined", 260) for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING})
 
     with (
         patch(
@@ -142,9 +141,10 @@ async def test_generate_research_deep_dive_content_with_mocks(
             trace_id=trace_id,
         )
 
-        assert isinstance(result, dict)
-        assert "background_context" in result
-        assert result["hypothesis"].startswith("refined_")
+        assert isinstance(result, ResearchDeepDive)
+        assert result.background_context is not None
+        assert result.hypothesis is not None
+        assert result.hypothesis.startswith("refined_")
 
         assert mock_completion.call_count == 2
         first_call_kwargs = mock_completion.await_args_list[0].kwargs

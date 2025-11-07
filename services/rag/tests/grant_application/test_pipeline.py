@@ -45,6 +45,10 @@ class FakeSession:
     async def execute(self, *_: Any, **__: Any) -> FakeResult:
         return FakeResult(self._jobs)
 
+    def begin(self) -> Self:
+        """Return self as a transaction context manager."""
+        return self
+
 
 def make_session_maker(jobs: Sequence[JobRecord]) -> Any:
     def _session() -> FakeSession:
@@ -60,6 +64,8 @@ def patch_job_manager(mocker: MockerFixture, fake_manager: FakeJobManager) -> No
             return _JobManagerFactory
 
         def __new__(cls, *args: Any, **kwargs: Any) -> FakeJobManager:
+            if "session_maker" in kwargs:
+                fake_manager.session_maker = kwargs["session_maker"]
             return fake_manager
 
     mocker.patch("services.rag.src.grant_application.pipeline.JobManager", _JobManagerFactory)
