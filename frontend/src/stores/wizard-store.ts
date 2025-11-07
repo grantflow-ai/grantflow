@@ -122,7 +122,8 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 
 	const formInputs = application.form_inputs;
 	const hasFilledFormInputs =
-		formInputs && Object.values(formInputs).some((value) => value && value.trim().length > 0);
+		formInputs &&
+		Object.entries(formInputs).some(([key, value]) => key !== "type" && value && value.trim().length > 0);
 	if (!hasFilledFormInputs) {
 		return WizardStep.RESEARCH_PLAN;
 	}
