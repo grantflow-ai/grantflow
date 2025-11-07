@@ -174,9 +174,7 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
 export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
-	// Basic Science fields
 	background_context: factory.lorem.paragraphs(2),
-	// Translational Research fields
 	commercialization_plan: factory.lorem.paragraph(),
 	core_concept: factory.lorem.paragraph(),
 	hypothesis: factory.lorem.paragraph(),
@@ -198,27 +196,35 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 
 export const EmptyFormInputsFactory = {
 	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
+		const type = overrides.type ?? "RESEARCH";
+
+		if (type === "RESEARCH") {
+			const defaults: FormInputs = {
+				background_context: "",
+				hypothesis: "",
+				impact: "",
+				novelty_and_innovation: "",
+				preliminary_data: "",
+				rationale: "",
+				research_feasibility: "",
+				scientific_infrastructure: "",
+				team_excellence: "",
+				type: "RESEARCH",
+			};
+			return { ...defaults, ...overrides } as FormInputs;
+		}
 		const defaults: FormInputs = {
-			background_context: "",
 			commercialization_plan: "",
 			core_concept: "",
-			hypothesis: "",
-			impact: "",
-			novelty_and_innovation: "",
-			preliminary_data: "",
 			proof_of_concept: "",
-			rationale: "",
-			research_feasibility: "",
-			scientific_infrastructure: "",
-			team_excellence: "",
 			team_translation_capability: "",
 			translational_impact: "",
 			translational_potential: "",
-			type: "RESEARCH",
+			type: "TRANSLATIONAL",
 			unique_approach: "",
 			unmet_need_context: "",
 		};
-		return { ...defaults, ...overrides };
+		return { ...defaults, ...overrides } as FormInputs;
 	},
 };
 

@@ -109,6 +109,7 @@ export const EMPTY_RESEARCH_DEEP_DIVE_FORM_INPUTS: ApplicationFormInputs = {
 	research_feasibility: "",
 	scientific_infrastructure: "",
 	team_excellence: "",
+	type: "RESEARCH",
 };
 
 export const EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS: ApplicationFormInputs = {
@@ -118,6 +119,7 @@ export const EMPTY_TRANSLATIONAL_RESEARCH_FORM_INPUTS: ApplicationFormInputs = {
 	team_translation_capability: "",
 	translational_impact: "",
 	translational_potential: "",
+	type: "TRANSLATIONAL",
 	unique_approach: "",
 	unmet_need_context: "",
 };
