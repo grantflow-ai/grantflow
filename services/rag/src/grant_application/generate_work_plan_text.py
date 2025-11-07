@@ -2,6 +2,7 @@ import math
 import re
 from typing import TYPE_CHECKING, Any, Final, cast
 
+import msgspec
 from packages.db.src.json_objects import (
     GrantLongFormSection,
     ResearchDeepDive,
@@ -252,6 +253,8 @@ async def adjust_component_length(
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
+    form_inputs_dict = msgspec.structs.asdict(form_inputs) if isinstance(form_inputs, msgspec.Struct) else form_inputs
+
     min_words, max_words = _component_word_bounds(component)
     component_section = cast(
         "GrantLongFormSection",
@@ -311,7 +314,7 @@ async def adjust_component_length(
                 job_manager,
                 section_config=component_section,
                 rag_context=rag_results,
-                research_objectives=form_inputs.get("research_objectives"),
+                research_objectives=form_inputs_dict.get("research_objectives"),
             ),
         )
 
@@ -353,7 +356,7 @@ async def adjust_component_length(
                 job_manager,
                 section_config=component_section,
                 rag_context=rag_results,
-                research_objectives=form_inputs.get("research_objectives"),
+                research_objectives=form_inputs_dict.get("research_objectives"),
             ),
         )
 
@@ -389,6 +392,8 @@ async def generate_work_plan_component_text(
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
+    form_inputs_dict = msgspec.structs.asdict(form_inputs) if isinstance(form_inputs, msgspec.Struct) else form_inputs
+
     object_type_specific_guidance = (
         TASK_CONTENT_GUIDELINES if component["type"] == "task" else OBJECTIVE_CONTENT_GUIDELINES
     )
@@ -467,7 +472,7 @@ async def generate_work_plan_component_text(
                 job_manager,
                 section_config=None,
                 rag_context=rag_results,
-                research_objectives=form_inputs.get("research_objectives"),
+                research_objectives=form_inputs_dict.get("research_objectives"),
             ),
         )
         if component_text and isinstance(component_text, str) and not component_text.lstrip().startswith("["):

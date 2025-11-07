@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Final, cast
 
+from packages.db.src.json_objects import ResearchDeepDive, TranslationalResearchDeepDive
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
@@ -193,11 +194,16 @@ async def handle_extract_relationships_stage(
     if not work_plan_section:
         raise ValidationError("Work plan section not found in grant template")
 
+    if grant_application.form_inputs is None:
+        form_inputs: ResearchDeepDive | TranslationalResearchDeepDive = ResearchDeepDive()
+    else:
+        form_inputs = grant_application.form_inputs
+
     relationships = await handle_extract_relationships(
         application_id=str(grant_application.id),
         research_objectives=grant_application.research_objectives or [],
         grant_section=work_plan_section,
-        form_inputs=grant_application.form_inputs or {},
+        form_inputs=form_inputs,
         trace_id=trace_id,
         job_manager=job_manager,
     )
@@ -226,11 +232,16 @@ async def handle_enrich_objectives_stage(
 ) -> EnrichObjectivesStageDTO:
     await job_manager.ensure_not_cancelled()
 
+    if grant_application.form_inputs is None:
+        form_inputs_for_enrich: ResearchDeepDive | TranslationalResearchDeepDive = ResearchDeepDive()
+    else:
+        form_inputs_for_enrich = grant_application.form_inputs
+
     enrichment_responses = await handle_batch_enrich_objectives(
         research_objectives=grant_application.research_objectives or [],
         grant_section=dto["work_plan_section"],
         application_id=str(grant_application.id),
-        form_inputs=grant_application.form_inputs or {},
+        form_inputs=form_inputs_for_enrich,
         trace_id=trace_id,
         job_manager=job_manager,
     )
@@ -369,9 +380,14 @@ async def handle_generate_research_plan_stage(
 
     total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
 
+    if grant_application.form_inputs is None:
+        form_inputs_for_workplan: ResearchDeepDive | TranslationalResearchDeepDive = ResearchDeepDive()
+    else:
+        form_inputs_for_workplan = grant_application.form_inputs
+
     work_plan_text = await generate_workplan_section(
         application_id=str(grant_application.id),
-        form_inputs=grant_application.form_inputs or {},
+        form_inputs=form_inputs_for_workplan,
         components=dtos,
         trace_id=trace_id,
         job_manager=job_manager,

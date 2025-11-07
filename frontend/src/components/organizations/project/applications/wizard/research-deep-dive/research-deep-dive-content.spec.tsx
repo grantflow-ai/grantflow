@@ -448,8 +448,8 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			render(<ResearchDeepDiveContent />);
 
-			const thirdQuestionCard = screen.getByTestId("question-card-2");
-			await user.click(thirdQuestionCard);
+			const secondQuestionCard = screen.getByTestId("question-card-1");
+			await user.click(secondQuestionCard);
 
 			expect(screen.getByTestId("back-button")).toBeInTheDocument();
 		});

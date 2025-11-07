@@ -279,7 +279,6 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			resetButton.click();
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
-				type: "RESEARCH",
 				background_context: "",
 				hypothesis: "",
 				impact: "",
@@ -289,6 +288,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 				research_feasibility: "",
 				scientific_infrastructure: "",
 				team_excellence: "",
+				type: "RESEARCH",
 			});
 		});
 
@@ -312,13 +312,13 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			resetButton.click();
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
-				type: "TRANSLATIONAL",
 				commercialization_plan: "",
 				core_concept: "",
 				proof_of_concept: "",
 				team_translation_capability: "",
 				translational_impact: "",
 				translational_potential: "",
+				type: "TRANSLATIONAL",
 				unique_approach: "",
 				unmet_need_context: "",
 			});
