@@ -1,13 +1,10 @@
-import type { API } from "@/types/api-types";
+import type { FormInputKeys } from "@/types/grant-sections";
 
 export interface QuestionConfig {
-	key: keyof FormInputs;
+	key: Exclude<FormInputKeys, "type">;
 	question: string;
 }
 
-type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
-
-// Basic Science Research Questions
 export const BASIC_SCIENCE_QUESTIONS: QuestionConfig[] = [
 	{
 		key: "background_context",
@@ -43,7 +40,6 @@ export const BASIC_SCIENCE_QUESTIONS: QuestionConfig[] = [
 	},
 ];
 
-// Translational Research Questions
 export const TRANSLATIONAL_RESEARCH_QUESTIONS: QuestionConfig[] = [
 	{
 		key: "unmet_need_context",
@@ -82,8 +78,7 @@ export const TRANSLATIONAL_RESEARCH_QUESTIONS: QuestionConfig[] = [
 	},
 ];
 
-// Basic Science Placeholders
-export const BASIC_SCIENCE_PLACEHOLDERS: Partial<Record<keyof FormInputs, string>> = {
+export const BASIC_SCIENCE_PLACEHOLDERS: Partial<Record<FormInputKeys, string>> = {
 	background_context: "Provide context and background of your research project...",
 	hypothesis: "Describe your central hypothesis or key research question...",
 	impact: "Describe how your research will contribute to the field and society...",
@@ -95,8 +90,7 @@ export const BASIC_SCIENCE_PLACEHOLDERS: Partial<Record<keyof FormInputs, string
 	team_excellence: "Explain what makes your team uniquely qualified for this project...",
 };
 
-// Translational Research Placeholders
-export const TRANSLATIONAL_RESEARCH_PLACEHOLDERS: Partial<Record<keyof FormInputs, string>> = {
+export const TRANSLATIONAL_RESEARCH_PLACEHOLDERS: Partial<Record<FormInputKeys, string>> = {
 	commercialization_plan: "Outline your development and commercialization plan...",
 	core_concept: "Outline the core concept or technology you aim to develop or validate...",
 	proof_of_concept: "Share any proof-of-concept, pilot data, or early validation you have obtained...",

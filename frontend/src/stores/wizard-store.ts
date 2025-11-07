@@ -96,7 +96,6 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 		return null;
 	}
 
-	// If application is generating, show the final step with progress indicator
 	if (application.status === "GENERATING") {
 		return WizardStep.GENERATE_AND_COMPLETE;
 	}

@@ -158,26 +158,26 @@ export namespace API {
 	editor_document_id: null | string;
 	editor_document_init: boolean;
 	form_inputs?: {
-	background_context?: string;
-	hypothesis?: string;
-	impact?: string;
-	novelty_and_innovation?: string;
-	preliminary_data?: string;
-	rationale?: string;
-	research_feasibility?: string;
-	scientific_infrastructure?: string;
-	team_excellence?: string;
+	background_context?: null | string;
+	hypothesis?: null | string;
+	impact?: null | string;
+	novelty_and_innovation?: null | string;
+	preliminary_data?: null | string;
+	rationale?: null | string;
+	research_feasibility?: null | string;
+	scientific_infrastructure?: null | string;
+	team_excellence?: null | string;
 	type: "RESEARCH";
 } | {
-	commercialization_plan?: string;
-	core_concept?: string;
-	proof_of_concept?: string;
-	team_translation_capability?: string;
-	translational_impact?: string;
-	translational_potential?: string;
+	commercialization_plan?: null | string;
+	core_concept?: null | string;
+	proof_of_concept?: null | string;
+	team_translation_capability?: null | string;
+	translational_impact?: null | string;
+	translational_potential?: null | string;
 	type: "TRANSLATIONAL";
-	unique_approach?: string;
-	unmet_need_context?: string;
+	unique_approach?: null | string;
+	unmet_need_context?: null | string;
 };
 	grant_template?: {
 	created_at: string;

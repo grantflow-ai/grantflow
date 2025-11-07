@@ -279,6 +279,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			resetButton.click();
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				type: "RESEARCH",
 				background_context: "",
 				hypothesis: "",
 				impact: "",
@@ -311,6 +312,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			resetButton.click();
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				type: "TRANSLATIONAL",
 				commercialization_plan: "",
 				core_concept: "",
 				proof_of_concept: "",

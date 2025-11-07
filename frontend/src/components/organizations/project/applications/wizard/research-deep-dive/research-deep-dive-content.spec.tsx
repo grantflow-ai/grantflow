@@ -1,7 +1,7 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory, EmptyFormInputsFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
@@ -84,7 +84,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 
 		it("selects last question when all questions are answered", () => {
-			const formInputs = EmptyFormInputsFactory.build();
+			const formInputs = EmptyFormInputsFactory.build({ type: "RESEARCH" });
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});
@@ -95,7 +95,9 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			const textarea = screen.getByTestId("research-deep-dive-answer");
 			expect(textarea).toBeInTheDocument();
-			expect(textarea).toHaveValue(formInputs.preliminary_data);
+			if (formInputs.type === "RESEARCH") {
+				expect(textarea).toHaveValue(formInputs.preliminary_data);
+			}
 		});
 	});
 
@@ -123,6 +125,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				rationale: undefined,
 				research_feasibility: undefined,
 				team_excellence: undefined,
+				type: "RESEARCH" as const,
 			};
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
@@ -152,6 +155,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				rationale: "Rationale",
 				research_feasibility: undefined,
 				team_excellence: undefined,
+				type: "RESEARCH" as const,
 			};
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
@@ -382,6 +386,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
 				background_context: "New research content",
+				type: "RESEARCH",
 			});
 		});
 
@@ -412,6 +417,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
 				background_context: "Content with spaces",
+				type: "RESEARCH",
 			});
 		});
 	});
@@ -500,6 +506,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		it("shows checkmark icon for answered questions", () => {
 			const formInputs = EmptyFormInputsFactory.build({
 				background_context: "Some background",
+				type: "RESEARCH",
 			});
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
@@ -510,7 +517,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			render(<ResearchDeepDiveContent />);
 
 			const firstQuestionCard = screen.getByTestId("question-card-0");
-			const checkmarkImage = firstQuestionCard.querySelector('img[alt="Done"]');
+			const checkmarkImage = within(firstQuestionCard).getByAltText("Done");
 			expect(checkmarkImage).toBeInTheDocument();
 		});
 
@@ -656,6 +663,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			await user.click(nextButton);
 
 			expect(mockUpdateFormInputs).toHaveBeenCalledWith({
+				type: "TRANSLATIONAL",
 				unmet_need_context: "Addressing gap in cancer immunotherapy",
 			});
 		});
@@ -669,6 +677,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 					team_translation_capability: "Team capability",
 					translational_impact: "Impact",
 					translational_potential: "Potential",
+					type: "TRANSLATIONAL",
 					unique_approach: "Approach",
 					unmet_need_context: "Need context",
 				}),
@@ -682,7 +691,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			render(<ResearchDeepDiveContent />);
 
-			// Navigate to last question
 			const lastQuestionCard = screen.getByTestId("question-card-7");
 			await user.click(lastQuestionCard);
 
@@ -706,7 +714,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const firstQuestionCard = screen.getByTestId("question-card-0");
 			expect(firstQuestionCard).toHaveTextContent("background");
 
-			// Change grant type
 			const updatedApplication = ApplicationWithTemplateFactory.build({
 				form_inputs: undefined,
 				grant_template: {
