@@ -150,6 +150,7 @@ export function ApplicationCard({
 									{deadlineInfo.timeBreakdown.days > 0 && (
 										<span className="font-semibold">{deadlineInfo.timeBreakdown.days} days </span>
 									)}
+									to the deadline
 								</>
 							)}
 							to the deadline
