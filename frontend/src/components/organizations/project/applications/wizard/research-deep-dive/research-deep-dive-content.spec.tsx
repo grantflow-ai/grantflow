@@ -1,5 +1,5 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationWithTemplateFactory, EmptyFormInputsFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, EmptyFormInputsFactory, FormInputsFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -84,7 +84,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 
 		it("selects last question when all questions are answered", () => {
-			const formInputs = EmptyFormInputsFactory.build({ type: "RESEARCH" });
+			const formInputs = FormInputsFactory.build({ type: "RESEARCH" });
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
 			});

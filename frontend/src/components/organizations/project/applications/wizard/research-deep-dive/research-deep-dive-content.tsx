@@ -34,7 +34,7 @@ const getQuestionFlowState = (formInputs: FormInputs, questions: QuestionConfig[
 
 	for (const [i, question] of questions.entries()) {
 		const answer = formInputs[question.key as Exclude<keyof FormInputs, "type">] as null | string | undefined;
-		const hasAnswer = !isNullish(answer);
+		const hasAnswer = !isNullish(answer) && answer.trim().length > 0;
 
 		if (hasAnswer) {
 			lastAnsweredIndex = i;
