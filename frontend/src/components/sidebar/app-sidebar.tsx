@@ -6,6 +6,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
+import { toast } from "sonner";
+import useSWR from "swr";
+import { createProject, getProjects } from "@/actions/project";
+import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import { SupportModal } from "@/components/support/support-modal";
 import {
 	Sidebar,
@@ -21,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
@@ -31,12 +36,66 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 	hidden?: boolean;
 }
 
+const EMPTY_PROJECTS_ARRAY: API.ListProjects.Http200.ResponseBody[number][] = [];
+
 export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
 	const isBackofficeAdmin = useUserStore((state) => state.isBackofficeAdmin);
 	const user = useUserStore((state) => state.user);
 	const organization = useOrganizationStore((state) => state.organization);
+
+	const { closeModal, isModalOpen } = useNewApplicationModalStore();
+
+	const { data: projects = EMPTY_PROJECTS_ARRAY, mutate } = useSWR(
+		organization?.id && isModalOpen ? ["projects", organization.id] : null,
+		([, orgId]: [string, string]) => getProjects(orgId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
+	const handleCreateApplication = async (projectId: null | string, projectName: string, isNewProject: boolean) => {
+		if (!organization?.id) {
+			toast.error("No organization selected");
+			return;
+		}
+
+		try {
+			let targetProjectId = projectId;
+
+			if (isNewProject) {
+				const newProject = await createProject(organization.id, {
+					description: "",
+					name: projectName,
+				});
+				targetProjectId = newProject.id;
+
+				mutate();
+
+				toast.success(`Project "${projectName}" created successfully`);
+			}
+
+			if (!targetProjectId) {
+				toast.error("Project ID is required");
+				return;
+			}
+
+			closeModal();
+			router.push(routes.organization.project.application.new());
+		} catch (error) {
+			const normalizedError = error instanceof Error ? error : new Error(String(error));
+			log.error("dashboard-create-application", {
+				currentOrganizationId: organization.id,
+				error: normalizedError,
+				isNewProject,
+				projectId,
+				projectName,
+			});
+
+			toast.error("Failed to start application wizard");
+		}
+	};
 
 	log.info("AppSidebar rendering with admin status", {
 		component: "AppSidebar",
@@ -220,6 +279,12 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 				onClose={() => {
 					setIsSupportModalOpen(false);
 				}}
+			/>
+			<NewApplicationModal
+				isOpen={isModalOpen}
+				onClose={closeModal}
+				onCreate={handleCreateApplication}
+				projects={projects}
 			/>
 		</>
 	);
