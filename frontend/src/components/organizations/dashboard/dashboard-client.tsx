@@ -278,7 +278,6 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 			</section>
 
 			<DeleteProjectModal isOpen={showDeleteModal} onClose={closeDeleteModal} onConfirm={confirmDeleteProject} />
-
 		</div>
 	);
 }
