@@ -317,7 +317,6 @@ describe("DashboardClient", () => {
 		expect(screen.getByTestId("dashboard-title")).toBeInTheDocument();
 	});
 
-	
 	it("should render delete project modal", () => {
 		render(<DashboardClient {...defaultProps} />);
 
@@ -348,5 +347,4 @@ describe("DashboardClient", () => {
 			type: "warning",
 		});
 	});
-
 });

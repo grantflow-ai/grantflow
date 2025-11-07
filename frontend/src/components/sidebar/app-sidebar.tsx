@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
@@ -35,6 +36,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 	hidden?: boolean;
 }
 
+const EMPTY_PROJECTS_ARRAY: API.ListProjects.Http200.ResponseBody[number][] = [];
+
 export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
@@ -44,7 +47,7 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 
-	const { data: projects = [], mutate } = useSWR(
+	const { data: projects = EMPTY_PROJECTS_ARRAY, mutate } = useSWR(
 		organization?.id && isModalOpen ? ["projects", organization.id] : null,
 		([, orgId]: [string, string]) => getProjects(orgId),
 		{
