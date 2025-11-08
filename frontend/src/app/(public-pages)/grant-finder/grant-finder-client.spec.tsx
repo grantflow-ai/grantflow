@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GrantFinderClient } from "./grant-finder-client";
 
-// Mock child components to isolate the GrantFinderClient component
 vi.mock("@/components/grant-finder/search-wizard", () => ({
 	SearchWizard: () => <div data-testid="search-wizard-mock" />,
 }));

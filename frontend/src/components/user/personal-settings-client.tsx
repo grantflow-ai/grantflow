@@ -102,7 +102,7 @@ export function PersonalSettingsClient() {
 
 			const auth = getFirebaseAuth();
 			await signOut(auth);
-			clearUser(); // Clears user, auth status, and admin status
+			clearUser();
 
 			addNotification({
 				message: `${result.message} You have ${result.grace_period_days} days to restore your account if needed.`,

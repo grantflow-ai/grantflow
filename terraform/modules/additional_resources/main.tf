@@ -72,39 +72,6 @@ resource "google_cloud_run_v2_service" "production_frontend" {
   }
 }
 
-# Managed by Firebase App Hosting - do not enable
-# resource "google_cloud_run_v2_service" "staging_frontend" {
-#   name     = "staging"
-#   location = "us-central1"
-#   project  = var.project_id
-#
-#   template {
-#     containers {
-#       image = "us-docker.pkg.dev/cloudrun/container/hello"
-#
-#       resources {
-#         limits = {
-#           cpu    = "1"
-#           memory = "512Mi"
-#         }
-#       }
-#     }
-#
-#     scaling {
-#       min_instance_count = 0
-#       max_instance_count = 100
-#     }
-#   }
-#
-#   traffic {
-#     percent = 100
-#     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
-#   }
-#
-#   lifecycle {
-#     ignore_changes = [template[0].containers[0].image]
-#   }
-# }
 
 resource "google_cloud_run_v2_service_iam_member" "production_frontend_public" {
   name     = google_cloud_run_v2_service.production_frontend.name
@@ -113,12 +80,3 @@ resource "google_cloud_run_v2_service_iam_member" "production_frontend_public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
-
-# Managed by Firebase App Hosting - do not enable
-# resource "google_cloud_run_v2_service_iam_member" "staging_frontend_public" {
-#   name     = google_cloud_run_v2_service.staging_frontend.name
-#   location = google_cloud_run_v2_service.staging_frontend.location
-#   project  = var.project_id
-#   role     = "roles/run.invoker"
-#   member   = "allUsers"
-# }

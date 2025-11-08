@@ -46,7 +46,6 @@ class FakeSession:
         return FakeResult(self._jobs)
 
     def begin(self) -> Self:
-        """Return self as a transaction context manager."""
         return self
 
 

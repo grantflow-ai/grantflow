@@ -172,15 +172,12 @@ async def cleanup_orphaned_test_databases(connection_string: str) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_container() -> Generator[PostgresContainer | None]:
-    """PostgreSQL testcontainer with pgvector extension."""
-    # Check if DATABASE_URL is set (for local dev with existing DB)
     if os.getenv("DATABASE_URL"):
         logger.info("DATABASE_URL is set, skipping testcontainer")
         yield None
         return
 
     logger.info("Starting PostgreSQL testcontainer with pgvector (random port)...")
-    # Use pgvector image with PostgreSQL 17, testcontainers will assign random port
     container = PostgresContainer("pgvector/pgvector:pg17", driver="asyncpg")
     container.start()
 
@@ -194,7 +191,6 @@ def postgres_container() -> Generator[PostgresContainer | None]:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str, postgres_container: PostgresContainer | None) -> AsyncGenerator[str]:
-    # Use DATABASE_URL if provided, otherwise use testcontainer
     if os.getenv("DATABASE_URL"):
         base_connection_string = os.getenv("DATABASE_URL")
         logger.info("Using local database from DATABASE_URL")
@@ -301,7 +297,6 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
     f"test_snapshot_{os.getpid()}"
 
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
     base_path = str(urlparse(str(os.getenv("DATABASE_URL", ""))).path if os.getenv("DATABASE_URL") else "/postgres")
     admin_connection_string = str(urlunparse(parsed._replace(path=base_path)))
 
@@ -353,7 +348,6 @@ async def restore_database_snapshot(
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
-    # Get the default database name - use "postgres" for testcontainer or extract from DATABASE_URL
     base_path = str(urlparse(str(os.getenv("DATABASE_URL", ""))).path if os.getenv("DATABASE_URL") else "/postgres")
     admin_connection_string = str(urlunparse(parsed._replace(path=base_path)))
     db_name = parsed.path.lstrip("/")

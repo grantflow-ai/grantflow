@@ -130,7 +130,6 @@ DEFAULT_CSS: Final[str] = """
 
 async def html_to_pdf(html_content: str) -> bytes:
     try:
-        # Lazy import to avoid loading weasyprint dependencies at module import time
         from weasyprint import CSS, HTML  # noqa: PLC0415
         from weasyprint.text.fonts import FontConfiguration  # noqa: PLC0415
 

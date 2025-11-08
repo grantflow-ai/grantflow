@@ -5,10 +5,6 @@ import { Suspense, useEffect } from "react";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { trackGA4PageView, updateGA4Consent } from "@/utils/tracking/ga4";
 
-/**
- * Tracks page views in Google Analytics 4 when route changes
- * Respects cookie consent preferences
- */
 export function GA4PageViewTracker() {
 	return (
 		<Suspense fallback={null}>

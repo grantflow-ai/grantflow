@@ -104,7 +104,6 @@ module "cloud_run" {
   scraper_service_account_email = module.iam.scraper_service_account_email
   rag_service_account_email     = module.iam.rag_service_account_email
 
-  # Image digests from CI/CD (passed via TF_VAR environment variables)
   backend_image_digest = var.backend_image_digest
   crawler_image_digest = var.crawler_image_digest
   indexer_image_digest = var.indexer_image_digest

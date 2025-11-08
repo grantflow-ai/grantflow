@@ -242,7 +242,6 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			expect(screen.getByTestId("research-deep-dive-header")).toHaveTextContent("Research Deep Dive");
 
-			// Change grant type
 			const updatedApplication = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,

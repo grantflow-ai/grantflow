@@ -594,7 +594,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 			render(<ResearchDeepDiveContent />);
 
-			// Should show 8 question cards
 			expect(screen.getByTestId("question-card-0")).toBeInTheDocument();
 			expect(screen.getByTestId("question-card-7")).toBeInTheDocument();
 			expect(screen.queryByTestId("question-card-8")).not.toBeInTheDocument();

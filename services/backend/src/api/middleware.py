@@ -121,9 +121,8 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             project_id = connection.path_params.get("project_id")
             granting_institution_id = connection.path_params.get("granting_institution_id")
 
-            # If granting institution path without organization, skip to requires_backoffice_admin check
             if not organization_id and granting_institution_id:
-                pass  # Let requires_backoffice_admin handle authentication
+                pass
             else:
                 if not organization_id:
                     logger.error("Organization context required", path=path)

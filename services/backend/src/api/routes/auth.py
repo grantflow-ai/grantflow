@@ -187,7 +187,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             default_organization_id = default_org_user.organization_id
             default_role = default_org_user.role
 
-        # Check if user is a backoffice admin (by firebase_uid or email)
         firebase_user = await get_user(firebase_uid)
         user_email = firebase_user.get("email") if firebase_user else None
 
@@ -212,7 +211,6 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             admin_email=admin.email if admin else None,
         )
 
-        # Update the firebase_uid if admin found by email
         if is_backoffice_admin and admin and not admin.firebase_uid:
             logger.info("Updating firebase_uid for backoffice admin", email=admin.email, firebase_uid=firebase_uid)
             admin.firebase_uid = firebase_uid

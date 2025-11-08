@@ -63,12 +63,12 @@ def sample_grant_section() -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_form_inputs() -> dict[str, Any]:
-    return {
-        "background_context": "This is a cancer research project focusing on biomarker discovery",
-        "institution": "University of Research",
-        "duration": "3 years",
-    }
+def sample_form_inputs() -> ResearchDeepDive:
+    return ResearchDeepDive(
+        background_context="This is a cancer research project focusing on biomarker discovery",
+        hypothesis="Biomarker discovery improves precision oncology outcomes",
+        rationale="Leveraging AI to analyze biomarker data can reveal novel therapeutic targets.",
+    )
 
 
 @patch("services.rag.src.grant_application.extract_relationships.retrieve_documents")
@@ -288,7 +288,7 @@ async def test_handle_extract_relationships_no_form_inputs(
         application_id=str(uuid4()),
         research_objectives=sample_research_objectives,
         grant_section=sample_grant_section,
-        form_inputs={},
+        form_inputs=ResearchDeepDive(),
         trace_id=str(uuid4()),
         job_manager=mock_job_manager,
     )
@@ -357,7 +357,6 @@ async def test_handle_extract_relationships_with_translational_form_inputs(
     sample_grant_section: GrantLongFormSection,
     sample_translational_form_inputs: TranslationalResearchDeepDive,
 ) -> None:
-    """Test that handle_extract_relationships works with TranslationalResearchDeepDive form inputs."""
     mock_relationships_response = {
         "relationships": [
             {

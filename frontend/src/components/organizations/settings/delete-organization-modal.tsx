@@ -46,7 +46,7 @@ export function DeleteOrganizationModal({
 
 			const auth = getFirebaseAuth();
 			await signOut(auth);
-			clearUser(); // Clears user, auth status, and admin status
+			clearUser();
 			router.push(routes.home());
 		} catch (error) {
 			log.error("Error deleting organization", error);

@@ -233,14 +233,12 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await user.click(modalQueries.getByTestId("permission-dropdown"));
 		await user.click(await modalQueries.findByText("Collaborator"));
 
-		// Select all projects individually
 		await user.click(modalQueries.getByTestId("project-access-dropdown"));
 		await user.click(await modalQueries.findByText("Project 1"));
 
 		await user.click(modalQueries.getByTestId("project-access-dropdown"));
 		await user.click(await modalQueries.findByText("Project 2"));
 
-		// Wait for both projects to be displayed as chips
 		await waitFor(() => {
 			expect(modalQueries.getByText("Project 1")).toBeInTheDocument();
 			expect(modalQueries.getByText("Project 2")).toBeInTheDocument();
@@ -394,7 +392,6 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
-		// Verify toast.error was called with the validation message
 		await waitFor(() => {
 			expect(toastErrorSpy).toHaveBeenCalledWith("Please select at least one project for Collaborator role.");
 		});

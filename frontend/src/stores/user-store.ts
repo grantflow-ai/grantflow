@@ -24,7 +24,6 @@ export const useUserStore = create<UserStore>()(
 	devtools(
 		persist(
 			(set, get) => {
-				// Log initial state on store creation
 				log.info("UserStore initialized", {
 					component: "UserStore",
 					initial_is_backoffice_admin: false,

@@ -17,7 +17,6 @@ presets:
   - popular
 
 rules:
-  # Critical Security & Architecture Rules
   - name: Multi-tenant Security
     priority: critical
     content: All endpoints must include organization_id in URL path. Use @allowed_roles decorator from services.backend.src.auth. Never check auth manually. Firebase JWT claims must include organization_id and role. Use UserRoleEnum (OWNER, ADMIN, COLLABORATOR) for role-based access.
@@ -50,7 +49,6 @@ rules:
     priority: critical
     content: "All JSON schemas for Gemini structured output must follow official best practices: (1) Short property names - single words preferred (name, type, source, quote) not verbose (section_name, measurement_type, cfp_source_reference, quote_from_source). (2) Minimize nesting - max 2 levels deep, flatten arrays where possible. (3) Reduce required fields - 2-6 required fields per object, use NotRequired for rest. (4) Object arrays over tuples - always use named properties [{source, target, desc}] not [[s,t,d]]. (5) Concise descriptions - 1-2 sentences max in schema, move details to prompts. (6) Strategic constraints - use minItems/maxItems (3-10 typical), avoid over-constraining. (7) Property ordering - match example order in prompts. Use transformation layer to convert optimized pipeline schemas to DB format. See services/rag/README.md § 'JSON Schema Design Principles'."
 
-  # High Priority Patterns
   - name: Type Safety and Serialization
     priority: high
     content: "Python: Use msgspec TypedDict with NotRequired[], never Optional. Use packages.shared_utils.src.serialization serialize/deserialize functions, never stdlib json. TypeScript: Ban 'any' type, use strict type checking. All API responses must use msgspec models."
@@ -79,7 +77,6 @@ rules:
     priority: high
     content: "All prompts targeting Gemini models (Flash 2.5, 1M context) must follow official guidelines: (1) Clear, concise instructions - say things once, no repetition or shouting. (2) NO JSON examples in prompts - schema provides structure, prompt provides context. (3) Hierarchical structure - use ## headers and numbered lists. (4) JSON prompts: provide schema separately, focus on task description and requirements. (5) Text prompts: Requirements → Materials → Guidelines → Format. (6) Avoid: excessive verbosity, ALL CAPS, emoji warnings, contradictory instructions. (7) Use model's thinking mode - don't prescribe chain-of-thought. Target: <100 lines for complex prompts, <50 for simple. See services/rag/README.md for RAG-specific guidelines."
 
-  # Medium Priority Patterns
   - name: Service Communication
     priority: medium
     content: "Use Pub/Sub topics (url-crawling, file-indexing, rag-processing, frontend-notifications, autofill-requests) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only."
@@ -96,7 +93,6 @@ rules:
     priority: medium
     content: "Use async with session.begin() for transactions. Batch Pub/Sub messages with ON CONFLICT DO NOTHING for duplicates. Frontend: Use withAuthRedirect() wrapper for all API calls."
 
-  # Low Priority Documentation
   - name: Structured Logging
     priority: low
     content: "Use structlog with key=value pairs: logger.info('Created grant', grant_id=str(id)). Convert UUIDs to strings, datetime to .isoformat(). Never use f-strings in log messages."

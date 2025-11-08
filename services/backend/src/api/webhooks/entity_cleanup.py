@@ -84,7 +84,6 @@ async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: da
 
 
 async def _delete_grant_related_data(session: AsyncSession, organization_id: str) -> None:
-    # First, delete GCS files for rag_files before deleting database records
     rag_files_stmt = text("""
         SELECT rf.object_path
         FROM rag_files rf
@@ -106,7 +105,6 @@ async def _delete_grant_related_data(session: AsyncSession, organization_id: str
     result = await session.execute(rag_files_stmt, {"org_id": organization_id})
     object_paths = [row[0] for row in result]
 
-    # Delete files from GCS
     gcs_errors = []
     for object_path in object_paths:
         try:
@@ -128,7 +126,6 @@ async def _delete_grant_related_data(session: AsyncSession, organization_id: str
             total_count=len(object_paths),
         )
 
-    # Now delete database records
     await session.execute(
         text("""
             DELETE FROM grant_application_sources

@@ -364,9 +364,6 @@ export function useApplicationNotifications({
 			projectId,
 		});
 
-		// This effect subscribes to WebSocket messages and updates state in response to external events,
-		// which is a valid use case for setState in an effect
-
 		if (isWebsocketMessage(lastJsonMessage)) {
 			handleValidMessage(lastJsonMessage);
 		} else {

@@ -29,7 +29,6 @@ async def seed_db() -> None:
 
     async with session_maker() as session, session.begin():
         try:
-            # Seed granting institutions
             granting_institutions = deserialize(granting_institutions_json.read_bytes(), list[dict[str, Any]])
 
             stmt = insert(GrantingInstitution).values(granting_institutions)
@@ -38,7 +37,6 @@ async def seed_db() -> None:
             result = await session.execute(stmt)
             logger.info(f"Granting institutions seeded: {result.rowcount} new entries")
 
-            # Seed backoffice admins
             backoffice_admins_data = [
                 {"email": "asaf@grantflow.ai"},
                 {"email": "naaman@grantflow.ai"},

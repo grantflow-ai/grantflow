@@ -59,7 +59,6 @@ async def handle_retrieve_organizations(
     session_maker: async_sessionmaker[Any],
 ) -> list[GrantingInstitutionResponse]:
     async with session_maker() as session:
-        # Query with source count
         source_count_subquery = (
             select(
                 GrantingInstitutionSource.granting_institution_id,
@@ -105,7 +104,6 @@ async def handle_get_organization(
     session_maker: async_sessionmaker[Any],
 ) -> GrantingInstitutionResponse:
     async with session_maker() as session:
-        # Get institution with source count
         result = await session.execute(
             select(
                 GrantingInstitution,
@@ -164,7 +162,6 @@ async def handle_update_organization(
             logger.error("Error updating granting institution", exc_info=e)
             raise DatabaseError("Error updating granting institution", context=str(e)) from e
 
-        # Get source count
         source_count = await session.scalar(
             select(func.count(GrantingInstitutionSource.rag_source_id)).where(
                 GrantingInstitutionSource.granting_institution_id == organization_id

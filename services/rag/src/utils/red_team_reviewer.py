@@ -392,7 +392,7 @@ async def retrieve_knowledge_base_for_application(
 
     retrieval_results = await retrieve_documents(
         application_id=application_id,
-        search_queries=search_queries[:15],  # Limit to top 15 queries
+        search_queries=search_queries[:15],
         task_description="Retrieve source literature for editorial review data verification",
         max_tokens=max_tokens,
         trace_id=trace_id,

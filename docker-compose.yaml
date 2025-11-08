@@ -96,8 +96,8 @@ services:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
     restart: always
     ports:
-      - "9099:9099"  # Auth Emulator
-      - "4000:4000"  # Emulator UI
+      - "9099:9099"
+      - "4000:4000"
     environment:
       FIREBASE_PROJECT_ID: grantflow
     volumes:

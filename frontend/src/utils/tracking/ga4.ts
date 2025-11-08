@@ -4,9 +4,6 @@ import { logEvent, setConsent, setUserId, setUserProperties } from "firebase/ana
 import { getGA4Analytics } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 
-/**
- * Identify user in Google Analytics 4
- */
 export async function identifyGA4User(userId: string, userProperties?: Record<string, string>): Promise<void> {
 	try {
 		const analytics = await getGA4Analytics();
@@ -27,9 +24,6 @@ export async function identifyGA4User(userId: string, userProperties?: Record<st
 	}
 }
 
-/**
- * Track a custom event in Google Analytics 4
- */
 export async function trackGA4Event(eventName: string, eventParams?: Record<string, unknown>): Promise<void> {
 	try {
 		const analytics = await getGA4Analytics();
@@ -45,9 +39,6 @@ export async function trackGA4Event(eventName: string, eventParams?: Record<stri
 	}
 }
 
-/**
- * Track page view in Google Analytics 4
- */
 export async function trackGA4PageView(pagePath: string, pageTitle?: string): Promise<void> {
 	await trackGA4Event("page_view", {
 		page_path: pagePath,
@@ -55,9 +46,6 @@ export async function trackGA4PageView(pagePath: string, pageTitle?: string): Pr
 	});
 }
 
-/**
- * Update GA4 consent mode based on user preferences
- */
 export async function updateGA4Consent(analyticsConsent: boolean): Promise<void> {
 	try {
 		const analytics = await getGA4Analytics();

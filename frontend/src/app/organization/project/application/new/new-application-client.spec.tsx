@@ -155,12 +155,7 @@ describe("NewApplicationClient", () => {
 
 		it("disables both cards during creation", async () => {
 			const user = userEvent.setup();
-			const mockCreateApplication = vi.fn().mockImplementation(
-				() =>
-					new Promise(() => {
-						/* intentionally never resolve to simulate pending request */
-					}),
-			);
+			const mockCreateApplication = vi.fn().mockImplementation(() => new Promise(() => {}));
 
 			useApplicationStore.setState({ createApplication: mockCreateApplication });
 

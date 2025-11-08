@@ -11,11 +11,6 @@ logger = get_logger(__name__)
 
 
 async def download_and_save_pages(*, grants_info: list[tuple[str, str]]) -> None:
-    """Download and save grant pages.
-
-    Args:
-        grants_info: List of (url, document_number) tuples
-    """
     urls = [url for url, _ in grants_info]
     html_pages = await gather(*(download_page_html(url=url) for url in urls))
 
@@ -41,13 +36,11 @@ async def save_markdown_page(*, html: str, url: str, document_number: str) -> No
 
 
 async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:
-    # Build list of (url, document_number) for grants that need downloading
     grants_to_download: list[tuple[str, str]] = []
     for result in search_results:
         url = result.get("url", "")
         document_number = result.get("document_number", "")
 
-        # Skip if no URL, no document number, or already exists
         if not url or not document_number or document_number in existing_file_identifiers:
             continue
 
@@ -56,7 +49,6 @@ async def download_grant_pages(*, search_results: list[GrantInfo], existing_file
     logger.info("Found %d total search results", len(search_results))
     logger.info("Will download %d new search results not in storage", len(grants_to_download))
 
-    # Download in chunks of 100
     for i in range(0, len(grants_to_download), 100):
         chunk = grants_to_download[i : i + 100]
         logger.info("Downloading chunk starting at index %d", i + 1)

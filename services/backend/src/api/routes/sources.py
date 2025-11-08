@@ -478,8 +478,6 @@ async def handle_delete_rag_source(
                     )
                 )
             else:
-                # For granting institutions, we don't log to organization_audit_logs
-                # since they don't belong to any organization
                 audit_org_id = None
 
             if audit_org_id:

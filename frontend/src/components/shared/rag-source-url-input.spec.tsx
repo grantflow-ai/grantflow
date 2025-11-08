@@ -382,10 +382,8 @@ describe("RagSourceUrlInput", () => {
 			await user.type(input, "https://example.com");
 			await user.keyboard("{Enter}");
 
-			// Input should not be cleared on error, so user can see what they typed
 			expect(input).toHaveValue("https://example.com");
 
-			// Error message should be displayed
 			expect(screen.getByText("Network error")).toBeInTheDocument();
 		});
 

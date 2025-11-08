@@ -314,7 +314,6 @@ async def test_handle_batch_enrich_objectives_with_translational_form_inputs(
     sample_grant_section: GrantLongFormSection,
     sample_translational_form_inputs: TranslationalResearchDeepDive,
 ) -> None:
-    """Test that handle_batch_enrich_objectives works with TranslationalResearchDeepDive form inputs."""
     mock_perform_shared_retrieval.return_value = "Shared context from retrieval"
     mock_batched_gather.return_value = [{"research_objective": {}, "research_tasks": []}] * 2
 

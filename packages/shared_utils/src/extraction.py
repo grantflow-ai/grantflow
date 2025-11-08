@@ -87,7 +87,6 @@ def filter_keywords_by_score(
 
 
 def normalize_spacy_entity_type(spacy_type: str) -> str:
-    """Normalize spaCy entity types to consistent schema."""
     type_mapping = {
         "ORG": "ORGANIZATION",
         "PERSON": "PERSON",
@@ -112,7 +111,6 @@ def normalize_spacy_entity_type(spacy_type: str) -> str:
 
 
 def extract_entities_with_spacy(text: str) -> list[Entity]:
-    """Extract entities using spaCy NER model."""
     from packages.shared_utils.src.nlp import get_spacy_model
 
     try:
@@ -140,7 +138,6 @@ def enrich_metadata_with_entities_keywords(
 ) -> tuple[int, int]:
     entities_count = 0
     try:
-        # First try to get entities from Kreuzberg
         kreuzberg_entities = (
             extraction_result.entities if extraction_result.entities else []
         )
@@ -148,7 +145,6 @@ def enrich_metadata_with_entities_keywords(
             Entity(type=entity.type, text=entity.text) for entity in kreuzberg_entities
         ]
 
-        # If we have the extracted text content, also extract entities using spaCy for better coverage
         if hasattr(extraction_result, "content") and extraction_result.content:
             spacy_entities = extract_entities_with_spacy(extraction_result.content)
             raw_entities.extend(spacy_entities)
@@ -308,11 +304,9 @@ def _extract_chunks_from_result(result: ExtractionResult) -> list[str] | None:
 def classify_document_content(
     content: str, keywords: list[Keyword]
 ) -> tuple[str | None, list[str]]:
-    """Classify document type and categories based on content and keywords."""
     content_lower = content.lower()
     keyword_texts = [kw["keyword"].lower() for kw in keywords]
 
-    # Check for scientific/research papers
     research_indicators = [
         "abstract",
         "introduction",
@@ -414,9 +408,7 @@ async def extract_file_content(
         else:
             entities_count, keywords_count = 0, 0
 
-        # Add document classification if enabled and not already present
         if enable_document_classification:
-            # Use Kreuzberg's document_type if available, otherwise classify ourselves
             if not metadata.get("document_type") and not metadata.get("categories"):
                 doc_type, categories = classify_document_content(
                     result.content, metadata.get("keywords", [])

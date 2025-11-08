@@ -180,7 +180,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		it("should not load data without institution ID", async () => {
-			// Reset store to ensure no institution ID
 			useGrantingInstitutionStore.getState().reset();
 
 			const { loadData } = useGrantingInstitutionStore.getState();
@@ -196,7 +195,6 @@ describe("Granting Institution Store", () => {
 		const originalNodeEnv = process.env.NODE_ENV;
 
 		beforeEach(() => {
-			// Mock NODE_ENV to trigger development mode
 			(process.env as any).NODE_ENV = "development";
 
 			vi.mocked(getEnv).mockReturnValue({
@@ -214,7 +212,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		afterEach(() => {
-			// Restore original NODE_ENV
 			(process.env as any).NODE_ENV = originalNodeEnv;
 		});
 
@@ -282,7 +279,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		it("should not upload without institution ID", async () => {
-			// Reset store to ensure no institution ID
 			useGrantingInstitutionStore.getState().reset();
 
 			const file = createMockFileWithId("test.pdf", "file-1");
@@ -372,7 +368,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		it("should not add URL without institution ID", async () => {
-			// Reset store to ensure no institution ID
 			useGrantingInstitutionStore.getState().reset();
 
 			const { addUrl } = useGrantingInstitutionStore.getState();
@@ -417,7 +412,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		it("should not delete source without institution ID", async () => {
-			// Reset store to ensure no institution ID
 			useGrantingInstitutionStore.getState().reset();
 
 			const { deleteSource } = useGrantingInstitutionStore.getState();
@@ -442,7 +436,6 @@ describe("Granting Institution Store", () => {
 			});
 
 			it("should add multiple files to pending uploads", () => {
-				// Reset store to ensure clean state
 				useGrantingInstitutionStore.getState().reset();
 
 				const file1 = createMockFileWithId("test1.pdf", "file-1");
@@ -459,7 +452,6 @@ describe("Granting Institution Store", () => {
 			});
 
 			it("should handle duplicate file additions", () => {
-				// Reset store to ensure clean state
 				useGrantingInstitutionStore.getState().reset();
 
 				const file = createMockFileWithId("test.pdf", "file-1");
@@ -475,7 +467,6 @@ describe("Granting Institution Store", () => {
 
 		describe("removePendingUpload", () => {
 			it("should remove file from pending uploads by ID", () => {
-				// Reset store to ensure clean state
 				useGrantingInstitutionStore.getState().reset();
 
 				const file = createMockFileWithId("test.pdf", "file-1");
@@ -492,7 +483,6 @@ describe("Granting Institution Store", () => {
 			});
 
 			it("should handle non-existent file ID gracefully", () => {
-				// Reset store to ensure clean state
 				useGrantingInstitutionStore.getState().reset();
 
 				const file = createMockFileWithId("test.pdf", "file-1");
@@ -507,7 +497,6 @@ describe("Granting Institution Store", () => {
 			});
 
 			it("should remove only the specified file when multiple exist", () => {
-				// Reset store to ensure clean state
 				useGrantingInstitutionStore.getState().reset();
 
 				const file1 = createMockFileWithId("test1.pdf", "file-1");
@@ -594,7 +583,6 @@ describe("Granting Institution Store", () => {
 		});
 
 		it("should handle files with same name but different IDs", () => {
-			// Reset store to ensure clean state
 			useGrantingInstitutionStore.getState().reset();
 
 			const file1 = createMockFileWithId("test.pdf", "file-1");

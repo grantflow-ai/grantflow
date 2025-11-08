@@ -13,7 +13,6 @@ export async function login(idToken: string, isNewUser = false) {
 	const started = Date.now();
 	log.info("action_start", { action: "login", is_new_user: isNewUser });
 
-	// For new users, add a small delay to allow Firebase to propagate user data
 	if (isNewUser) {
 		log.info("New user detected, waiting for Firebase propagation", { action: "login" });
 		await sleep(1500);
@@ -33,7 +32,6 @@ export async function login(idToken: string, isNewUser = false) {
 		});
 
 		const cookieStore = await cookies();
-		// Store JWT in httpOnly cookie
 		cookieStore.set({
 			httpOnly: true,
 			maxAge: 60 * 60 * 24 * 7,
@@ -67,7 +65,6 @@ export async function login(idToken: string, isNewUser = false) {
 
 			log.info("action_success", { action: "login", duration_ms: Date.now() - started });
 
-			// Return admin status to client
 			return { is_backoffice_admin };
 		} catch (verifyError) {
 			const cookieStore = await cookies();

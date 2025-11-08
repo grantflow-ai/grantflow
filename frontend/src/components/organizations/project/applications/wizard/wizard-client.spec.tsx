@@ -343,7 +343,6 @@ describe.sequential("WizardClientComponent", () => {
 				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
 			});
 
-			// Update with same failed count
 			useApplicationStore.setState({ application });
 			rerender(
 				<WizardClientComponent
@@ -353,7 +352,6 @@ describe.sequential("WizardClientComponent", () => {
 				/>,
 			);
 
-			// Should still be called only once
 			expect(mockDialogOpen).toHaveBeenCalledTimes(1);
 		});
 
@@ -369,7 +367,6 @@ describe.sequential("WizardClientComponent", () => {
 				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
 			});
 
-			// Add second failed source
 			const application2 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
 					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
@@ -446,7 +443,6 @@ describe.sequential("WizardClientComponent", () => {
 		});
 
 		it("shows modal when failed count decreases then increases", async () => {
-			// Start with 2 failed
 			const application1 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
 					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
@@ -461,7 +457,6 @@ describe.sequential("WizardClientComponent", () => {
 				expect(mockDialogOpen).toHaveBeenCalledTimes(1);
 			});
 
-			// Decrease to 1 failed (user deleted one)
 			const application2 = ApplicationWithTemplateFactory.build({
 				rag_sources: [{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" }],
 			});
@@ -472,7 +467,6 @@ describe.sequential("WizardClientComponent", () => {
 				expect(mockDialogOpen).toHaveBeenCalledTimes(2);
 			});
 
-			// Increase back to 2 failed
 			const application3 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
 					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
@@ -488,7 +482,6 @@ describe.sequential("WizardClientComponent", () => {
 		});
 
 		it("shows modal only after INDEXING completes and failure detected", async () => {
-			// Start with INDEXING
 			const application1 = ApplicationWithTemplateFactory.build({
 				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "INDEXING" }],
 			});
@@ -500,7 +493,6 @@ describe.sequential("WizardClientComponent", () => {
 
 			expect(mockDialogOpen).not.toHaveBeenCalled();
 
-			// Update to FAILED
 			const application2 = ApplicationWithTemplateFactory.build({
 				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "FAILED" }],
 			});
