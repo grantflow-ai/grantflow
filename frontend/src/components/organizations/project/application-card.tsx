@@ -138,7 +138,7 @@ export function ApplicationCard({
 							<Image alt="Application deadline" height={16} src="/icons/deadline.svg" width={16} />
 						</div>
 						<p className="text-sm font-normal font-sans text-app-black">
-							{deadlineInfo.status === "passed" && <span>Deadline passed</span>}
+							{deadlineInfo.status === "passed" && <span>Deadline passed ({deadlineInfo.formattedDate}) </span>}
 							{deadlineInfo.status === "active" && deadlineInfo.timeBreakdown && (
 								<>
 									{deadlineInfo.timeBreakdown.weeks > 0 && (
@@ -150,9 +150,9 @@ export function ApplicationCard({
 									{deadlineInfo.timeBreakdown.days > 0 && (
 										<span className="font-semibold">{deadlineInfo.timeBreakdown.days} days </span>
 									)}
+									to the deadline
 								</>
 							)}
-							to the deadline
 						</p>
 					</div>
 				)}
