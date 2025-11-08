@@ -312,7 +312,6 @@ async def _handle_pipeline_error(
             },
         )
 
-        # Reset application status to IN_PROGRESS so user can fix issues and retry
         session_maker = job_manager.session_maker
         async with session_maker() as session, session.begin():
             await session.execute(
@@ -365,20 +364,6 @@ async def _apply_editorial_workflow(
     session_maker: async_sessionmaker[Any],
     trace_id: str,
 ) -> str:
-    """
-    Run editorial workflow if enabled, returning potentially modified application text.
-
-    Args:
-        application_id: Grant application ID
-        application_text: Current application text
-        grant_application: Grant application object
-        grant_template: Grant template object
-        session_maker: Database session maker
-        trace_id: Trace ID for logging
-
-    Returns:
-        Application text (modified if editorial workflow was run, unchanged otherwise)
-    """
     if not ENABLE_EDITORIAL_WORKFLOW:
         return application_text
 

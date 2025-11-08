@@ -433,7 +433,6 @@ async def test_create_download_url_not_found(
     grant_application: GrantApplication,
     project_member_user: OrganizationUser,
 ) -> None:
-    # Use a non-existent UUID
     source_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
     response = await test_client.get(

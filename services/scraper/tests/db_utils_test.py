@@ -162,7 +162,6 @@ async def test_save_grant_page_content(async_session_maker: async_sessionmaker[A
     document_number = "PAR-24-001"
     content = "# Test Grant Page\n\nThis is the content of a test grant page."
 
-    # First create a grant with this document_number so the update doesn't fail
     from packages.db.src.tables import Grant
 
     async with async_session_maker() as session, session.begin():
@@ -194,10 +193,8 @@ async def test_save_grant_page_content(async_session_maker: async_sessionmaker[A
         assert rag_url is not None
         assert rag_url.title == f"Grant: {document_number}"
         assert "This is the content" in rag_url.description
-        # RagUrl inherits from RagSource, so text_content is on the same object
         assert rag_url.text_content == content
 
-        # Check grant description was updated
         grant = await session.scalar(select(Grant).where(Grant.document_number == document_number))
         assert grant is not None
         assert "This is the content" in grant.description
@@ -209,7 +206,6 @@ async def test_save_grant_page_content_update_existing(async_session_maker: asyn
     initial_content = "# Initial Content\n\nThis is the initial content."
     updated_content = "# Updated Content\n\nThis is the updated content with more information."
 
-    # Create a grant with this document_number
     from packages.db.src.tables import Grant
 
     async with async_session_maker() as session, session.begin():
@@ -244,5 +240,4 @@ async def test_save_grant_page_content_update_existing(async_session_maker: asyn
         assert len(rag_url_list) == 1
         rag_url = rag_url_list[0]
         assert "updated content" in rag_url.description
-        # RagUrl inherits from RagSource, so text_content is on the same object
         assert rag_url.text_content == updated_content

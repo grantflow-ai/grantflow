@@ -207,7 +207,6 @@ async def handle_create_subscription(
                 "unsubscribed": False,
             }
 
-            # Use ON CONFLICT to update existing subscription or insert new one
             stmt = (
                 insert(GrantMatchingSubscription)
                 .values(**subscription_data)

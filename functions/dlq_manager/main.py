@@ -10,7 +10,6 @@ import structlog
 from flask import Request
 from google.cloud import pubsub_v1
 
-# Ensure local workspace packages are importable when deployed.
 CURRENT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(CURRENT_DIR / "packages"))
 sys.path.insert(0, str(CURRENT_DIR))
@@ -154,17 +153,10 @@ def check_dlq_message_count(subscriber: pubsub_v1.SubscriberClient, subscription
 async def republish_source_to_indexing(
     publisher: pubsub_v1.PublisherClient, session_maker: async_sessionmaker[AsyncSession], source: RagSource
 ) -> None:
-    """Republish stuck source to indexing/crawling topic.
-
-    For RagFile: Publishes GCS-style notification with attributes.
-    For RagUrl: Publishes CrawlingRequest with serialized message body after querying entity info.
-    """
     if isinstance(source, RagFile):
-        # Indexer expects GCS notification attributes, not serialized body
         topic_name = TOPIC_FILE_INDEXING
         topic_path = publisher.topic_path(PROJECT_ID, topic_name)
 
-        # GCS notifications use attributes, empty body
         attributes = {
             "bucketId": source.bucket_name,
             "objectId": source.object_path,
@@ -183,10 +175,7 @@ async def republish_source_to_indexing(
         )
 
     elif isinstance(source, RagUrl):
-        # Crawler expects CrawlingRequest with source_id, url, entity_type, entity_id, trace_id
-        # Query join tables to find actual entity
         async with session_maker() as session:
-            # Check GrantApplicationSource
             if app_id := await session.scalar(
                 select(GrantApplicationSource.grant_application_id).where(
                     GrantApplicationSource.rag_source_id == source.id
@@ -194,13 +183,11 @@ async def republish_source_to_indexing(
             ):
                 entity_type = "grant_application"
                 entity_id = str(app_id)
-            # Check GrantTemplateSource
             elif template_id := await session.scalar(
                 select(GrantTemplateSource.grant_template_id).where(GrantTemplateSource.rag_source_id == source.id)
             ):
                 entity_type = "grant_template"
                 entity_id = str(template_id)
-            # Check GrantingInstitutionSource
             elif institution_id := await session.scalar(
                 select(GrantingInstitutionSource.granting_institution_id).where(
                     GrantingInstitutionSource.rag_source_id == source.id
@@ -289,19 +276,15 @@ async def reconcile_stuck_jobs() -> str:
         "dlq_alerts": 0,
     }
 
-    # Get IDs of stuck items
     async with session_maker() as session, session.begin():
-        # Get stuck source IDs
         stuck_indexing_ids = [s.id for s in await check_stuck_indexing_sources(session, now)]
         stuck_created_ids = [s.id for s in await check_stuck_created_sources(session, now)]
         stuck_processing_ids = [j.id for j in await check_stuck_processing_jobs(session, now)]
         stuck_pending_ids = [j.id for j in await check_stuck_pending_jobs(session, now)]
 
-    # Republish stuck sources
     poly_source = with_polymorphic(RagSource, "*")
     for source_id in stuck_indexing_ids:
         async with session_maker() as session:
-            # Use with_polymorphic to eagerly load all subclass attributes
             result = await session.execute(select(poly_source).where(poly_source.id == source_id))
             if source := result.scalar_one_or_none():
                 await republish_source_to_indexing(publisher, session_maker, source)
@@ -309,13 +292,11 @@ async def reconcile_stuck_jobs() -> str:
 
     for source_id in stuck_created_ids:
         async with session_maker() as session:
-            # Use with_polymorphic to eagerly load all subclass attributes
             result = await session.execute(select(poly_source).where(poly_source.id == source_id))
             if source := result.scalar_one_or_none():
                 await republish_source_to_indexing(publisher, session_maker, source)
                 stats["stuck_created"] += 1
 
-    # Republish stuck jobs
     for job_id in stuck_processing_ids:
         async with session_maker() as session:
             if job := await session.get(RagGenerationJob, job_id):

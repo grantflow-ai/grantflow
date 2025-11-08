@@ -256,12 +256,6 @@ def test_fuzzy_match_partial_name_no_match() -> None:
 
 
 async def test_llm_identify_organization_prompt_template_parameters() -> None:
-    """Test that llm_identify_organization uses correct prompt template parameters.
-
-    This test verifies the fix for the InvalidTemplateKeysError that occurred when
-    preview_length was incorrectly passed to the prompt template. The template only
-    accepts cfp_preview and organizations parameters.
-    """
     sample_organizations = create_sample_organizations()
     cfp_text = "This is a test CFP text that should be truncated to preview length. " * 100
 
@@ -283,28 +277,22 @@ async def test_llm_identify_organization_prompt_template_parameters() -> None:
             trace_id="test_trace_template_params",
         )
 
-        # Verify the function was called
         assert mock_completion.called
 
-        # Verify the result
         assert result["organization_id"] == "nih-id"
         assert result["confidence"] == 0.95
         assert result["method"] == "llm"
 
-        # Verify the prompt was constructed correctly (no InvalidTemplateKeysError)
-        # The fact that this test runs without error proves the template parameters are correct
         call_args = mock_completion.call_args
         assert call_args is not None
         assert "messages" in call_args.kwargs
 
-        # The prompt should contain truncated CFP text and organizations
         prompt_text = call_args.kwargs["messages"]
         assert isinstance(prompt_text, str)
         assert len(prompt_text) > 0
 
 
 async def test_llm_identify_organization_handles_llm_failure() -> None:
-    """Test that llm_identify_organization handles LLM failures gracefully."""
     sample_organizations = create_sample_organizations()
     cfp_text = "Test CFP text for error handling."
 
@@ -320,7 +308,6 @@ async def test_llm_identify_organization_handles_llm_failure() -> None:
             trace_id="test_trace_error",
         )
 
-        # Should return none result on error
         assert result["organization_id"] is None
         assert result["confidence"] == 0.0
         assert result["method"] == "none"

@@ -327,7 +327,7 @@ function SectionEditForm({ formData, isSubsection, onDelete, section, setFormDat
 								? `≈ ${wordsToCharacters(formData.lengthLimit).toLocaleString()} characters`
 								: `≈ ${charactersToWords(formData.lengthLimit).toLocaleString()} words`}
 						</p>
-						{/*</div>*/}
+						{}
 					</div>
 				</div>
 

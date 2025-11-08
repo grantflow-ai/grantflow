@@ -44,7 +44,6 @@ export function GrantingInstitutionListWrapper({ institutions }: GrantingInstitu
 		router.push(routes.admin.grantingInstitutions.detail(id));
 	};
 
-	// Filter out the institution being deleted for optimistic UI
 	const visibleInstitutions = deletingId ? institutions.filter((inst) => inst.id !== deletingId) : institutions;
 
 	return (

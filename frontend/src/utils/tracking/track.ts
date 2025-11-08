@@ -59,7 +59,6 @@ export async function trackEvent<T extends TrackableEvent>(
 			timestamp: new Date().toISOString(),
 		};
 
-		// Track to Segment
 		const analyticsInstance = getAnalytics();
 		if (analyticsInstance) {
 			await analyticsInstance.track(event, fullProperties);
@@ -67,7 +66,6 @@ export async function trackEvent<T extends TrackableEvent>(
 			log.warn("Segment analytics not initialized", { event });
 		}
 
-		// Track to GA4
 		await trackGA4Event(event, fullProperties);
 
 		log.info("Analytics event tracked", { event, properties: fullProperties });

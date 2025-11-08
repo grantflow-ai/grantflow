@@ -52,9 +52,6 @@ def metadata_has_categories(
 
     if match_mode == "all":
         return metadata_column["categories"].op("@>")(categories_json)
-    # For "any" match mode, check if categories JSONB array has any overlap with our list
-    # Use ?| operator which checks if any of the provided keys/values exist
-    # We need to check each category individually with OR
     conditions = [
         metadata_column["categories"].op("@>")(func.jsonb_build_array(func.to_jsonb(cat))) for cat in categories
     ]

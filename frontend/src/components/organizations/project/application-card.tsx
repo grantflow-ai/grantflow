@@ -138,7 +138,9 @@ export function ApplicationCard({
 							<Image alt="Application deadline" height={16} src="/icons/deadline.svg" width={16} />
 						</div>
 						<p className="text-sm font-normal font-sans text-app-black">
-							{deadlineInfo.status === "passed" && <span>Deadline passed ({deadlineInfo.formattedDate}) </span>}
+							{deadlineInfo.status === "passed" && (
+								<span>Deadline passed ({deadlineInfo.formattedDate}) </span>
+							)}
 							{deadlineInfo.status === "active" && deadlineInfo.timeBreakdown && (
 								<>
 									{deadlineInfo.timeBreakdown.weeks > 0 && (

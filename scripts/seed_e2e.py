@@ -1,15 +1,3 @@
-"""Seed database with test data for e2e tests.
-
-This script creates deterministic test data that e2e tests can rely on:
-- Test organization with known ID
-- Test project with known ID
-- Test grant application with known ID
-- Test user associations
-
-Unlike seed_db.py which seeds production-like data, this creates minimal
-test fixtures with predictable IDs for use in CI/local e2e test runs.
-"""
-
 import asyncio
 from datetime import UTC, datetime
 from os import environ
@@ -35,7 +23,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
 
-# Deterministic test IDs that e2e tests can reference
 TEST_ORG_ID = UUID("00000000-0000-0000-0000-000000000001")
 TEST_PROJECT_ID = UUID("00000000-0000-0000-0000-000000000002")
 TEST_APPLICATION_ID = UUID("00000000-0000-0000-0000-000000000003")
@@ -45,7 +32,6 @@ TEST_USER_EMAIL = "e2e.playwright+ci@grantflow.ai"
 
 
 async def seed_e2e_data() -> None:
-    """Seed minimal e2e test data with deterministic IDs."""
     load_dotenv()
 
     if "DATABASE_CONNECTION_STRING" not in environ:
@@ -58,7 +44,6 @@ async def seed_e2e_data() -> None:
 
     async with session_maker() as session, session.begin():
         try:
-            # Clean up any existing e2e test data
             logger.info("Cleaning up existing e2e test data")
             await session.execute(
                 delete(OrganizationUser).where(OrganizationUser.firebase_uid == TEST_USER_FIREBASE_UID)
@@ -68,7 +53,6 @@ async def seed_e2e_data() -> None:
             await session.execute(delete(Organization).where(Organization.id == TEST_ORG_ID))
             await session.execute(delete(GrantingInstitution).where(GrantingInstitution.id == TEST_INSTITUTION_ID))
 
-            # Create test granting institution
             institution_data = {
                 "id": TEST_INSTITUTION_ID,
                 "full_name": "E2E Test Granting Institution",
@@ -80,7 +64,6 @@ async def seed_e2e_data() -> None:
             await session.execute(stmt)
             logger.info("Created test granting institution", institution_id=str(TEST_INSTITUTION_ID))
 
-            # Create test organization
             org_data = {
                 "id": TEST_ORG_ID,
                 "name": "E2E Test Organization",
@@ -91,7 +74,6 @@ async def seed_e2e_data() -> None:
             await session.execute(stmt)
             logger.info("Created test organization", organization_id=str(TEST_ORG_ID))
 
-            # Create test organization user
             user_data = {
                 "organization_id": TEST_ORG_ID,
                 "firebase_uid": TEST_USER_FIREBASE_UID,
@@ -105,7 +87,6 @@ async def seed_e2e_data() -> None:
             await session.execute(stmt)
             logger.info("Created test organization member", firebase_uid=TEST_USER_FIREBASE_UID)
 
-            # Create test project
             project_data = {
                 "id": TEST_PROJECT_ID,
                 "organization_id": TEST_ORG_ID,
@@ -119,7 +100,6 @@ async def seed_e2e_data() -> None:
             await session.execute(stmt)
             logger.info("Created test project", project_id=str(TEST_PROJECT_ID))
 
-            # Create test grant application
             app_data = {
                 "id": TEST_APPLICATION_ID,
                 "project_id": TEST_PROJECT_ID,

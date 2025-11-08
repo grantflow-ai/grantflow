@@ -38,7 +38,6 @@ export default function GrantingInstitutionDetailPage() {
 		sources,
 	} = useGrantingInstitutionStore();
 
-	// Initialize store with institution ID
 	useEffect(() => {
 		if (id) {
 			setInstitutionId(id);
@@ -50,7 +49,6 @@ export default function GrantingInstitutionDetailPage() {
 		};
 	}, [id, setInstitutionId, loadData, reset]);
 
-	// Poll for source status updates when there are indexing sources
 	useEffect(() => {
 		const hasIndexingSources = sources.some(
 			(source) =>
@@ -64,7 +62,7 @@ export default function GrantingInstitutionDetailPage() {
 
 		const pollInterval = setInterval(() => {
 			void loadData();
-		}, 3000); // Poll every 3 seconds
+		}, 3000);
 
 		return () => {
 			clearInterval(pollInterval);

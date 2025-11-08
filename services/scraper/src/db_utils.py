@@ -160,22 +160,13 @@ async def batch_save_grants(grants: Sequence[dict[str, Any] | GrantInfo]) -> int
 
 
 async def save_grant_page_content(url: str, document_number: str, content: str) -> None:
-    """Save grant page content to rag_sources and update grant description.
-
-    Args:
-        url: The actual grants.gov URL that was downloaded
-        document_number: The grant document number (e.g., PAR-25-449)
-        content: The markdown content extracted from the page
-    """
     start_time = time.time()
     async_session_maker = get_session_maker()
 
-    # Extract description from content (first non-heading paragraphs)
     lines = content.split("\n")
     description_lines = []
     for line in lines:
         stripped = line.strip()
-        # Skip empty lines, headers, and short lines
         if stripped and not stripped.startswith("#") and len(stripped) > 20:
             description_lines.append(stripped)
             if len(" ".join(description_lines)) >= 500:
@@ -188,17 +179,14 @@ async def save_grant_page_content(url: str, document_number: str, content: str) 
         try:
             normalized_url = normalize_url(url)
 
-            # Save/update content in rag_sources via rag_urls
             existing_rag_url = await session.scalar(select(RagUrl).where(RagUrl.url == normalized_url))
 
             if existing_rag_url:
-                # Update existing - RagUrl inherits from RagSource, so we can update both
                 existing_rag_url.text_content = content
                 existing_rag_url.description = description
                 existing_rag_url.title = title
                 logger.debug("Updated existing RagUrl", url=url, document_number=document_number)
             else:
-                # Create new RagUrl - it inherits from RagSource so both tables are populated
                 rag_url = RagUrl(
                     url=normalized_url,
                     title=title,
@@ -210,7 +198,6 @@ async def save_grant_page_content(url: str, document_number: str, content: str) 
                 session.add(rag_url)
                 logger.debug("Created new RagUrl", url=url, document_number=document_number)
 
-            # Update grant description in grants table
             await session.execute(
                 update(Grant).where(Grant.document_number == document_number).values(description=description)
             )

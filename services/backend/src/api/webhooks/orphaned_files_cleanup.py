@@ -1,10 +1,3 @@
-"""
-Webhook for cleaning up orphaned RAG file records where the GCS file no longer exists.
-
-This can be triggered by Cloud Scheduler to run periodically and clean up inconsistencies
-between the database and GCS storage.
-"""
-
 from typing import Any, Literal, TypedDict
 
 from litestar import post
@@ -35,19 +28,12 @@ class OrphanedFilesCleanupResponse(TypedDict):
 async def handle_orphaned_files_cleanup_webhook(
     session_maker: async_sessionmaker[Any],
 ) -> OrphanedFilesCleanupResponse | Response[OrphanedFilesCleanupResponse]:
-    """
-    Clean up orphaned RAG file records where the GCS file no longer exists.
-
-    This webhook should be called periodically (e.g., daily) by Cloud Scheduler.
-    It checks all rag_files records and deletes those where the corresponding GCS blob doesn't exist.
-    """
     try:
         files_checked = 0
         orphaned_records_deleted = 0
         errors = 0
 
         async with session_maker() as session:
-            # Get all non-deleted rag_files
             stmt = select(RagFile).where(RagFile.deleted_at.is_(None))
             rag_files = await session.scalars(stmt)
 
@@ -58,7 +44,6 @@ async def handle_orphaned_files_cleanup_webhook(
             for rag_file in rag_files:
                 files_checked += 1
                 try:
-                    # Check if the GCS file exists by trying to get its metadata
                     blob = bucket.blob(rag_file.object_path)
                     exists = blob.exists()
 
@@ -80,7 +65,6 @@ async def handle_orphaned_files_cleanup_webhook(
                         error=str(e),
                     )
 
-            # Soft delete orphaned records
             if orphaned_file_ids:
                 for file_id in orphaned_file_ids:
                     rag_file = await session.get(RagFile, file_id)

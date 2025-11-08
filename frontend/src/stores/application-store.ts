@@ -1199,7 +1199,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			await updateGrantTemplateAPI(application, { grant_type: grantType });
 			log.info("updateGrantType: Success", { grant_type: grantType });
 
-			// Reset deep dive form inputs if flag is set
 			if (shouldResetDeepDiveOnGrantTypeChange) {
 				const emptyFormInputs =
 					grantType === "TRANSLATIONAL"

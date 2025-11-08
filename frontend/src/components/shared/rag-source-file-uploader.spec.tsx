@@ -269,7 +269,6 @@ describe("RagSourceFileUploader", () => {
 			randomUUID: vi.fn(() => `test-uuid-${++callCount}`),
 		});
 
-		// Make uploads take time to simulate concurrent behavior
 		mockOnFileAdd.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 10)));
 
 		render(<RagSourceFileUploader onFileAdd={mockOnFileAdd} />);

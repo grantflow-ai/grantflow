@@ -160,7 +160,6 @@ export function getFirebaseAuth(): Auth {
 		const auth = getAuth(app);
 		void setPersistence(auth, browserSessionPersistence);
 
-		// Connect to Firebase Auth Emulator if the environment variable is set
 		const emulatorHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
 		if (emulatorHost) {
 			log.info("Connecting to Firebase Auth Emulator", { host: emulatorHost });
@@ -185,7 +184,6 @@ export function getFirebaseStorage(): FirebaseStorage {
 
 export async function getGA4Analytics(): Promise<Analytics | null> {
 	if (!instanceRef.analytics) {
-		// Check if analytics is supported in this environment
 		const analyticsSupported = await isSupported();
 		if (!analyticsSupported) {
 			log.warn("Firebase Analytics is not supported in this environment");

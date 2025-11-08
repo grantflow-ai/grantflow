@@ -731,7 +731,7 @@ async def test_create_signed_download_url(
         mock_bucket.blob.assert_called_once_with(object_path)
         mock_blob.generate_signed_url.assert_called_once_with(
             version="v4",
-            expiration=ONE_MINUTE_SECONDS * 60,  # Default 1 hour
+            expiration=ONE_MINUTE_SECONDS * 60,
             method="GET",
             response_disposition=f'inline; filename="{filename}"',
         )

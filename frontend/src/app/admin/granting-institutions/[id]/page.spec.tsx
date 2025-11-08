@@ -7,12 +7,10 @@ import type { API } from "@/types/api-types";
 
 import GrantingInstitutionDetailPage from "./page";
 
-// Mock Next.js navigation
 vi.mock("next/navigation", () => ({
 	useParams: vi.fn(),
 }));
 
-// Mock the store actions
 const mockStore = {
 	addFile: vi.fn(),
 	addUrl: vi.fn(),
@@ -31,7 +29,6 @@ vi.mock("@/stores/granting-institution-store", () => ({
 	useGrantingInstitutionStore: vi.fn(() => mockStore),
 }));
 
-// Mock child components to simplify testing
 vi.mock("@/components/organizations/project/applications/wizard/wizard-left-pane", () => ({
 	WizardLeftPane: ({ children, testId }: { children: React.ReactNode; testId: string }) => (
 		<div data-testid={testId}>{children}</div>
@@ -166,7 +163,6 @@ describe("GrantingInstitutionDetailPage", () => {
 		resetAllStores();
 		vi.clearAllMocks();
 
-		// Reset mock store to default state
 		mockStore.institution = null;
 		mockStore.isLoading = false;
 		mockStore.sources = [];
@@ -423,15 +419,12 @@ describe("GrantingInstitutionDetailPage", () => {
 
 			render(<GrantingInstitutionDetailPage />);
 
-			// Clear initial loadData calls
 			vi.clearAllMocks();
 
-			// Advance time by 3 seconds
 			vi.advanceTimersByTime(3000);
 
 			expect(mockStore.loadData).toHaveBeenCalledTimes(1);
 
-			// Advance another 3 seconds
 			vi.advanceTimersByTime(3000);
 
 			expect(mockStore.loadData).toHaveBeenCalledTimes(2);
@@ -443,13 +436,10 @@ describe("GrantingInstitutionDetailPage", () => {
 
 			render(<GrantingInstitutionDetailPage />);
 
-			// Clear initial loadData calls
 			vi.clearAllMocks();
 
-			// Advance time by 10 seconds
 			vi.advanceTimersByTime(10_000);
 
-			// Should not have polled
 			expect(mockStore.loadData).not.toHaveBeenCalled();
 		});
 
@@ -464,15 +454,12 @@ describe("GrantingInstitutionDetailPage", () => {
 
 			const { unmount } = render(<GrantingInstitutionDetailPage />);
 
-			// Clear initial loadData calls
 			vi.clearAllMocks();
 
 			unmount();
 
-			// Advance time by 10 seconds after unmount
 			vi.advanceTimersByTime(10_000);
 
-			// Should not have polled after unmount
 			expect(mockStore.loadData).not.toHaveBeenCalled();
 		});
 	});

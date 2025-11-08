@@ -106,14 +106,8 @@ def _match_deadline(grant: GrantData, deadline_after: str | float | None, deadli
 
 
 def _match_query(grant: GrantData, query: str | float | None) -> bool:
-    """Match query against grant title, description, and eligibility using simple contains.
-
-    For better performance, this uses simple string matching. The database GIN index
-    is available for more sophisticated full-text search if needed in the future.
-    """
     if query and isinstance(query, str):
         query_lower = query.lower()
-        # Search in title, description, and eligibility
         searchable_text = (
             grant.get("title", "").lower()
             + " "
@@ -121,7 +115,6 @@ def _match_query(grant: GrantData, query: str | float | None) -> bool:
             + " "
             + (grant.get("eligibility") or "").lower()
         )
-        # Support multi-word queries by checking if all words are present
         query_words = query_lower.split()
         return all(word in searchable_text for word in query_words)
     return True
@@ -161,17 +154,9 @@ def should_send_notification(subscription: SubscriptionData, frequency: str) -> 
 
 
 async def _fetch_active_grants(session_maker: async_sessionmaker[AsyncSession]) -> list[GrantData]:
-    """Fetch all non-expired grants from the database.
-
-    Returns grants that haven't expired yet (expired_date >= today).
-    This allows matching against the full catalog of active grants,
-    not just recently added ones.
-    """
     async with session_maker() as session:
         today = datetime.now(UTC).date().isoformat()
 
-        # Fetch non-expired grants (where expired_date >= today)
-        # Note: expired_date is stored as string in YYYY-MM-DD format
         result = await session.execute(
             select(Grant)
             .where(Grant.deleted_at.is_(None))
@@ -292,15 +277,8 @@ async def process_subscriptions_batch(
     tags=["Webhooks"],
 )
 async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -> MatcherResponse:
-    """Match active grants against user subscriptions and send notifications.
-
-    Changed from processing only grants from last 24h to processing ALL non-expired grants.
-    This ensures users get notified about relevant grants even if they subscribed after
-    the grants were added to the database.
-    """
     logger.info("Starting grant matcher webhook")
 
-    # Fetch ALL active (non-expired) grants, not just recent ones
     active_grants = await _fetch_active_grants(session_maker)
 
     logger.info("Found active grants", count=len(active_grants))
@@ -331,7 +309,6 @@ async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -
     total_notifications = 0
     subscription_count = len(all_subscriptions)
 
-    # Process subscriptions in batches
     subscriptions = []
     for subscription in all_subscriptions:
         subscriptions.append(subscription)

@@ -57,10 +57,8 @@ describe("AuthProvider", () => {
 			</AuthProvider>,
 		);
 
-		// Initially nothing should render (loading state)
 		expect(container.querySelector('[data-testid="child"]')).toBeNull();
 
-		// Trigger auth callback with null user
 		authCallback(null);
 
 		await waitFor(() => {

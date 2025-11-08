@@ -176,7 +176,6 @@ export const useGrantingInstitutionStore = create<GrantingInstitutionActions & G
 				institutionId: institution.id,
 			});
 
-			// Add to pending uploads immediately
 			get().addPendingUpload(file);
 
 			try {
@@ -211,13 +210,11 @@ export const useGrantingInstitutionStore = create<GrantingInstitutionActions & G
 					fileName: file.name,
 					institutionId: institution.id,
 				});
-				// Remove from pending uploads on error
 				get().removePendingUpload(file.id);
 				toast.error("Failed to upload file. Please try again.");
 				throw error;
 			}
 
-			// Reload data after upload (this will clean up pending uploads automatically)
 			await get().loadData();
 		},
 
@@ -305,7 +302,6 @@ export const useGrantingInstitutionStore = create<GrantingInstitutionActions & G
 					handleGetSources(institution.id),
 				]);
 
-				// Clean up pending uploads if they now exist in the sources
 				const { pendingUploads } = get();
 				const newPendingUploads = new Set(pendingUploads);
 				let removedCount = 0;

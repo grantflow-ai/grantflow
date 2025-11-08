@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -39,10 +39,13 @@ async def test_generate_erc_application_for_drug_synthesis(
 
     performance_context.start_stage("load_scenario_metadata")
 
-    form_inputs = scenario.form_inputs
+    form_inputs = cast("dict[str, str | None]", scenario.form_inputs)
 
-    assert "drug synthesis" in form_inputs["background_context"], "Scenario should be about drug synthesis"
-    assert "peptide" in form_inputs["hypothesis"], "Scenario should mention peptides"
+    background_context = form_inputs.get("background_context") or ""
+    hypothesis = form_inputs.get("hypothesis") or ""
+
+    assert "drug synthesis" in background_context, "Scenario should be about drug synthesis"
+    assert "peptide" in hypothesis, "Scenario should mention peptides"
 
     performance_context.end_stage()
 
@@ -173,7 +176,7 @@ async def test_validate_drug_synthesis_scenario_structure(
 
     performance_context.start_stage("validate_form_inputs")
 
-    form_inputs = scenario.form_inputs
+    form_inputs = cast("dict[str, str | None]", scenario.form_inputs)
     required_fields = ["background_context", "hypothesis", "rationale", "novelty_and_innovation"]
     for field in required_fields:
         assert field in form_inputs, f"Missing required form input field: {field}"

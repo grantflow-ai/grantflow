@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock
 
 from packages.db.src.tables import GrantApplication
@@ -176,7 +176,7 @@ async def test_validate_melanoma_scenario_structure(
 
     performance_context.start_stage("validate_form_inputs")
 
-    form_inputs = scenario.form_inputs
+    form_inputs = cast("dict[str, str | None]", scenario.form_inputs)
     required_fields = ["background_context", "hypothesis", "rationale", "novelty_and_innovation"]
     for field in required_fields:
         assert field in form_inputs, f"Missing required form input field: {field}"

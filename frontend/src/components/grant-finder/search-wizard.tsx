@@ -54,7 +54,6 @@ export function SearchWizard() {
 	};
 
 	const handleSubmit = async () => {
-		// Validate email and terms
 		const validation = emailAlertsSchema.safeParse({
 			agreeToTerms: formData.agreeToTerms,
 			email: formData.email,
@@ -69,7 +68,6 @@ export function SearchWizard() {
 		try {
 			setLoading(true);
 
-			// Create subscription
 			const requestBody: API.CreateSubscription.RequestBody = {
 				email: formData.email,
 				search_params: {
@@ -96,7 +94,6 @@ export function SearchWizard() {
 				duration: 6000,
 			});
 
-			// Redirect to homepage
 			router.push("/");
 		} catch {
 			toast.error("Failed to create subscription. Please try again.");
@@ -120,7 +117,6 @@ export function SearchWizard() {
 				return formData.careerStage.length > 0;
 			}
 			case 4: {
-				// Use zod validation for final step
 				const validation = emailAlertsSchema.safeParse({
 					agreeToTerms: formData.agreeToTerms,
 					email: formData.email,

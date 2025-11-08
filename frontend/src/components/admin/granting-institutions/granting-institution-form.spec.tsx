@@ -7,7 +7,6 @@ import type { API } from "@/types/api-types";
 
 import { GrantingInstitutionForm } from "./granting-institution-form";
 
-// Mock router
 const mockPush = vi.fn();
 const mockBack = vi.fn();
 const mockRefresh = vi.fn();
@@ -375,7 +374,6 @@ describe("GrantingInstitutionForm", () => {
 			expect(cancelButton).toBeDisabled();
 			expect(submitButton).toHaveTextContent("Saving...");
 
-			// Resolve the promise
 			resolveCreate!({
 				abbreviation: null,
 				full_name: "Test Institution",
@@ -412,7 +410,6 @@ describe("GrantingInstitutionForm", () => {
 			expect(confirmDeleteButton).toBeDisabled();
 			expect(confirmDeleteButton).toHaveTextContent("Deleting...");
 
-			// Resolve the promise
 			resolveDelete!();
 		});
 

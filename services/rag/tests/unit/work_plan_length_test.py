@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 
 import pytest
+from packages.db.src.json_objects import ResearchDeepDive
 
 from services.rag.src.grant_application.generate_work_plan_text import (
     MAX_LENGTH_ADJUST_ATTEMPTS,
@@ -46,7 +47,7 @@ async def test_adjust_component_length_includes_work_plan_context(mocker: Mocker
         component=component,
         component_text=component_text,
         rag_results=["Context snippet"],
-        form_inputs={},
+        form_inputs=ResearchDeepDive(),
         work_plan_text=work_plan_so_far,
         trace_id="test-trace",
         job_manager=job_manager,
@@ -91,7 +92,7 @@ async def test_adjust_component_length_fallback_truncation_evaluated(mocker: Moc
         component=component,
         component_text=long_text,
         rag_results=["Reference context"],
-        form_inputs={},
+        form_inputs=ResearchDeepDive(),
         work_plan_text="Existing work plan content.",
         trace_id="test-trace",
         job_manager=job_manager,
