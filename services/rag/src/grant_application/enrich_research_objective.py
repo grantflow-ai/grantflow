@@ -1,6 +1,7 @@
 from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
+import msgspec
 from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
@@ -365,11 +366,17 @@ async def handle_enrich_objective(
 ) -> ObjectiveEnrichmentDTO:
     await job_manager.ensure_not_cancelled()
 
+    form_inputs_dict = (
+        msgspec.structs.asdict(dto["form_inputs"])
+        if isinstance(dto["form_inputs"], msgspec.Struct)
+        else dto["form_inputs"]
+    )
+
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
         objective_and_tasks=dto["research_objective"],
         keywords=dto["keywords"],
         topics=dto["topics"],
-        form_inputs=dto["form_inputs"],
+        form_inputs=form_inputs_dict,
     )
 
     compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)

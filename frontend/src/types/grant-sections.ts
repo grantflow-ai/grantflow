@@ -29,3 +29,8 @@ export const hasLengthConstraint = (section: GrantSection) => hasConstraint(sect
 
 export const sectionWordLimit = (section: GrantSection | UpdateGrantSection) =>
 	hasConstraint(section) ? constraintToWordLimit(section.length_constraint) : null;
+
+export type AllKeys<T> = T extends unknown ? keyof T : never;
+
+export type FormInputKeys = AllKeys<FormInputs>;
+export type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;

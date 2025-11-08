@@ -96,7 +96,6 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 		return null;
 	}
 
-	// If application is generating, show the final step with progress indicator
 	if (application.status === "GENERATING") {
 		return WizardStep.GENERATE_AND_COMPLETE;
 	}
@@ -123,7 +122,8 @@ export function determineAppropriateStep(applicationId: string): null | WizardSt
 
 	const formInputs = application.form_inputs;
 	const hasFilledFormInputs =
-		formInputs && Object.values(formInputs).some((value) => value && value.trim().length > 0);
+		formInputs &&
+		Object.entries(formInputs).some(([key, value]) => key !== "type" && value && value.trim().length > 0);
 	if (!hasFilledFormInputs) {
 		return WizardStep.RESEARCH_PLAN;
 	}
@@ -796,13 +796,19 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 		updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
 			const { application, updateApplication } = useApplicationStore.getState();
 
-			if (!application) {
-				log.error("updateFormInputs: No application found");
+			if (!application?.grant_template) {
+				log.error("updateFormInputs: No application or grant template found");
 				return;
 			}
 
 			const currentFormInputs = application.form_inputs ?? {};
-			const mergedFormInputs = { ...currentFormInputs, ...formInputs };
+			const grantType = application.grant_template.grant_type;
+
+			const mergedFormInputs = {
+				...currentFormInputs,
+				...formInputs,
+				type: grantType,
+			};
 
 			await updateApplication({
 				form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],

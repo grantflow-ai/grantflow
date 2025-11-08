@@ -1,5 +1,6 @@
 "use client";
 
+import { isNullish } from "@tool-belt/type-predicates";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppCard } from "@/components/app/app-card";
@@ -7,7 +8,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import TextareaField from "@/components/app/fields/textarea-field";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { API } from "@/types/api-types";
+import type { FormInputKeys, FormInputs } from "@/types/grant-sections";
 import { useDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
 import {
@@ -17,8 +18,6 @@ import {
 	TRANSLATIONAL_RESEARCH_PLACEHOLDERS,
 	TRANSLATIONAL_RESEARCH_QUESTIONS,
 } from "./questions";
-
-type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
 
 const getDisabledTextColorClass = (): string => "text-app-gray-400";
 const getEnabledTextColorClass = (): string => "text-app-black";
@@ -34,8 +33,8 @@ const getQuestionFlowState = (formInputs: FormInputs, questions: QuestionConfig[
 	const answeredQuestions = new Set<number>();
 
 	for (const [i, question] of questions.entries()) {
-		const answer = formInputs[question.key];
-		const hasAnswer = answer != null;
+		const answer = formInputs[question.key as Exclude<keyof FormInputs, "type">] as null | string | undefined;
+		const hasAnswer = !isNullish(answer) && answer.trim().length > 0;
 
 		if (hasAnswer) {
 			lastAnsweredIndex = i;
@@ -53,13 +52,17 @@ const getQuestionFlowState = (formInputs: FormInputs, questions: QuestionConfig[
 };
 
 export function ResearchDeepDiveContent() {
-	const formInputs = useApplicationStore((state) => state.application?.form_inputs) ?? {};
+	const rawFormInputs =
+		useApplicationStore((state) => state.application?.form_inputs) ?? ({ type: "RESEARCH" } as FormInputs);
 	const grantType = useApplicationStore((state) => state.application?.grant_template?.grant_type);
 
-	// Determine which question set and placeholders to use based on grant type
 	const isTranslational = grantType === "TRANSLATIONAL";
 	const questions = isTranslational ? TRANSLATIONAL_RESEARCH_QUESTIONS : BASIC_SCIENCE_QUESTIONS;
 	const placeholders = isTranslational ? TRANSLATIONAL_RESEARCH_PLACEHOLDERS : BASIC_SCIENCE_PLACEHOLDERS;
+
+	const formInputs: FormInputs = isTranslational
+		? ({ ...rawFormInputs, type: "TRANSLATIONAL" } as Extract<FormInputs, { type: "TRANSLATIONAL" }>)
+		: ({ ...rawFormInputs, type: "RESEARCH" } as Extract<FormInputs, { type: "RESEARCH" }>);
 
 	log.info("Form inputs", { formInputs, grantType, isTranslational });
 
@@ -113,7 +116,7 @@ function AnswerCard({
 	formInputs: FormInputs;
 	onBack: () => void;
 	onNext: () => void;
-	placeholders: Partial<Record<keyof FormInputs, string>>;
+	placeholders: Partial<Record<FormInputKeys, string>>;
 	questions: QuestionConfig[];
 	selectedQuestion: number;
 	setDirtyQuestion: (index: null | number) => void;
@@ -121,7 +124,8 @@ function AnswerCard({
 	showNext: boolean;
 }) {
 	const { key: questionKey, question } = questions[selectedQuestion];
-	const formInputsAnswer = formInputs[questionKey] ?? "";
+	const formInputsAnswer =
+		(formInputs[questionKey as Exclude<keyof FormInputs, "type">] as null | string | undefined) ?? "";
 
 	const [answerValue, setAnswerValue] = useState(formInputsAnswer);
 

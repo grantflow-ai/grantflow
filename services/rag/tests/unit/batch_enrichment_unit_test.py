@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, patch
 
+from packages.db.src.json_objects import ResearchDeepDive
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
+    from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 
 logger = get_logger(__name__)
 
@@ -46,7 +47,7 @@ async def test_batch_enrichment_calls_single_llm_request(mock_job_manager: Async
         "evidence": "CFP evidence for Test Section",
     }
 
-    mock_form_inputs: ResearchDeepDive = {}
+    mock_form_inputs = ResearchDeepDive()
 
     def mock_enrich_side_effect(*args: Any, **kwargs: Any) -> dict[str, Any]:
         input_payload = args[0]

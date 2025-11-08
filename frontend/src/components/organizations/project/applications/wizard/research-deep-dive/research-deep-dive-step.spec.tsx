@@ -288,6 +288,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 				research_feasibility: "",
 				scientific_infrastructure: "",
 				team_excellence: "",
+				type: "RESEARCH",
 			});
 		});
 
@@ -317,6 +318,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 				team_translation_capability: "",
 				translational_impact: "",
 				translational_potential: "",
+				type: "TRANSLATIONAL",
 				unique_approach: "",
 				unmet_need_context: "",
 			});
