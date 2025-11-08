@@ -319,6 +319,9 @@ class GrantingInstitution(BaseWithUUIDPK):
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="granting_institution"
     )
+    predefined_templates: Relationship[list["PredefinedGrantTemplate"]] = relationship(
+        "PredefinedGrantTemplate", back_populates="granting_institution"
+    )
     rag_sources: Relationship[list["GrantingInstitutionSource"]] = relationship(
         "GrantingInstitutionSource",
         back_populates="granting_institution",
@@ -490,6 +493,12 @@ class GrantTemplate(BaseWithUUIDPK):
     granting_institution: Relationship[GrantingInstitution | None] = relationship(
         "GrantingInstitution", back_populates="grant_templates"
     )
+    predefined_template_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("predefined_grant_templates.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    predefined_template: Relationship["PredefinedGrantTemplate | None"] = relationship(
+        "PredefinedGrantTemplate", back_populates="grant_templates"
+    )
     rag_sources: Relationship[list["GrantTemplateSource"]] = relationship(
         "GrantTemplateSource", back_populates="grant_template", cascade="all, delete-orphan"
     )
@@ -501,6 +510,30 @@ class GrantTemplate(BaseWithUUIDPK):
     )
 
     cfp_analysis: Mapped[CFPAnalysis | None] = mapped_column(JSON, nullable=True)
+
+
+class PredefinedGrantTemplate(BaseWithUUIDPK):
+    __tablename__ = "predefined_grant_templates"
+
+    name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    activity_code: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    grant_type: Mapped[GrantType] = mapped_column(Enum(GrantType), default=GrantType.RESEARCH)
+    grant_sections: Mapped[list[GrantLongFormSection | GrantElement]] = mapped_column(JSON)
+    guideline_source: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    guideline_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    guideline_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    additional_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    granting_institution_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("granting_institutions.id", ondelete="CASCADE"), index=True
+    )
+
+    granting_institution: Relationship[GrantingInstitution] = relationship(
+        "GrantingInstitution", back_populates="predefined_templates"
+    )
+    grant_templates: Relationship[list["GrantTemplate"]] = relationship(
+        "GrantTemplate", back_populates="predefined_template"
+    )
 
 
 class GrantTemplateSource(Base):
