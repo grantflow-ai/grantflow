@@ -2,6 +2,7 @@ from collections import defaultdict
 from functools import partial
 from typing import TYPE_CHECKING, Final, TypedDict
 
+import msgspec
 from packages.db.src.json_objects import (
     GrantLongFormSection,
     ResearchDeepDive,
@@ -342,6 +343,8 @@ async def handle_extract_relationships(
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> ResearchRelationships:
+    form_inputs_dict = msgspec.structs.asdict(form_inputs) if isinstance(form_inputs, msgspec.Struct) else form_inputs
+
     prompt = EXTRACT_RELATIONSHIPS_USER_PROMPT.substitute(
         research_objectives=[
             {
@@ -359,7 +362,7 @@ async def handle_extract_relationships(
             }
             for objective in research_objectives
         ],
-        form_inputs=form_inputs,
+        form_inputs=form_inputs_dict,
     )
 
     rag_results = await retrieve_documents(

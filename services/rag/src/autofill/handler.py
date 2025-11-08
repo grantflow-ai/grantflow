@@ -1,6 +1,7 @@
 import traceback
 from typing import Any
 
+import msgspec
 from packages.db.src.json_objects import ResearchDeepDive
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.constants import NotificationEvents
@@ -119,10 +120,15 @@ async def _save_research_deep_dive_to_database(
                 .values(form_inputs=research_deep_dive)
             )
 
+        fields_dict = (
+            msgspec.structs.asdict(research_deep_dive)
+            if isinstance(research_deep_dive, msgspec.Struct)
+            else research_deep_dive
+        )
         logger.info(
             "Successfully saved research deep dive to database",
             application_id=str(application_id),
-            fields_count=len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]),
+            fields_count=len([k for k, v in fields_dict.items() if v and not str(v).startswith("[Failed")]),
             trace_id=trace_id,
         )
     except SQLAlchemyError as e:
@@ -267,15 +273,20 @@ async def handle_autofill_request(
             )
             research_deep_dive = await generate_research_deep_dive_content(application=application, trace_id=trace_id)
 
+            fields_dict = (
+                msgspec.structs.asdict(research_deep_dive)
+                if isinstance(research_deep_dive, msgspec.Struct)
+                else research_deep_dive
+            )
             logger.info(
                 "Research deep dive content generated successfully",
                 application_id=str(application_id),
-                fields_count=len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")]),
+                fields_count=len([k for k, v in fields_dict.items() if v and not str(v).startswith("[Failed")]),
                 trace_id=trace_id,
             )
 
             await _save_research_deep_dive_to_database(research_deep_dive, application_id, session_maker, trace_id)
-            fields_generated = len([k for k, v in research_deep_dive.items() if v and not str(v).startswith("[Failed")])
+            fields_generated = len([k for k, v in fields_dict.items() if v and not str(v).startswith("[Failed")])
             await _send_autofill_success_notification(
                 application_id, "research_deep_dive", trace_id, fields_generated=fields_generated
             )

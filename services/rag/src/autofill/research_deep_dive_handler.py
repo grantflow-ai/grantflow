@@ -1,4 +1,4 @@
-from typing import Final, Literal, TypedDict, cast
+from typing import Final, Literal, TypedDict
 
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
@@ -189,7 +189,9 @@ def _validate_research_deep_dive_draft(response: ResearchDeepDiveDraft) -> None:
 
 def _validate_research_deep_dive_refined(response: ResearchDeepDive) -> None:
     for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING:
-        answer = response[key]
+        answer = getattr(response, key)
+        if answer is None:
+            answer = ""
         normalized = answer.strip()
         if not normalized:
             raise ValidationError(
@@ -277,7 +279,7 @@ async def _refine_research_deep_dive_answers(
 
     logger.info(
         "Refined research deep dive answers",
-        fields=len(refined),
+        fields=len(RESEARCH_DEEP_DIVE_FIELD_MAPPING),
         trace_id=trace_id,
     )
 
@@ -333,6 +335,20 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
         trace_id=trace_id,
     )
 
-    cleaned_answers = {key: refined_answers[key].strip() for key in RESEARCH_DEEP_DIVE_FIELD_MAPPING}
-
-    return cast("ResearchDeepDive", cleaned_answers)
+    return ResearchDeepDive(
+        background_context=refined_answers.background_context.strip() if refined_answers.background_context else None,
+        hypothesis=refined_answers.hypothesis.strip() if refined_answers.hypothesis else None,
+        rationale=refined_answers.rationale.strip() if refined_answers.rationale else None,
+        novelty_and_innovation=refined_answers.novelty_and_innovation.strip()
+        if refined_answers.novelty_and_innovation
+        else None,
+        impact=refined_answers.impact.strip() if refined_answers.impact else None,
+        team_excellence=refined_answers.team_excellence.strip() if refined_answers.team_excellence else None,
+        research_feasibility=refined_answers.research_feasibility.strip()
+        if refined_answers.research_feasibility
+        else None,
+        preliminary_data=refined_answers.preliminary_data.strip() if refined_answers.preliminary_data else None,
+        scientific_infrastructure=refined_answers.scientific_infrastructure.strip()
+        if refined_answers.scientific_infrastructure
+        else None,
+    )

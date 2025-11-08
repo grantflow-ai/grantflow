@@ -113,6 +113,7 @@ describe("ApplicationWizardPageClient", () => {
 					research_feasibility: "",
 					scientific_infrastructure: "",
 					team_excellence: "",
+					type: "RESEARCH",
 				},
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [
@@ -202,6 +203,7 @@ describe("ApplicationWizardPageClient", () => {
 					research_feasibility: "",
 					scientific_infrastructure: "",
 					team_excellence: "",
+					type: "RESEARCH",
 				},
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [
