@@ -173,26 +173,36 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
-export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
-	background_context: factory.lorem.paragraphs(2),
-	commercialization_plan: factory.lorem.paragraph(),
-	core_concept: factory.lorem.paragraph(),
-	hypothesis: factory.lorem.paragraph(),
-	impact: factory.lorem.paragraph(),
-	novelty_and_innovation: factory.lorem.paragraph(),
-	preliminary_data: factory.lorem.paragraphs(2),
-	proof_of_concept: factory.lorem.paragraphs(2),
-	rationale: factory.lorem.paragraph(),
-	research_feasibility: factory.lorem.paragraph(),
-	scientific_infrastructure: factory.lorem.paragraph(),
-	team_excellence: factory.lorem.paragraph(),
-	team_translation_capability: factory.lorem.paragraph(),
-	translational_impact: factory.lorem.paragraph(),
-	translational_potential: factory.lorem.paragraph(),
-	type: "RESEARCH",
-	unique_approach: factory.lorem.paragraph(),
-	unmet_need_context: factory.lorem.paragraphs(2),
-}));
+export const FormInputsFactory = new Factory<FormInputs>((factory, _, kwargs) => {
+	const type = kwargs?.type ?? "RESEARCH";
+
+	if (type === "RESEARCH") {
+		return {
+			background_context: factory.lorem.paragraphs(2),
+			hypothesis: factory.lorem.paragraph(),
+			impact: factory.lorem.paragraph(),
+			novelty_and_innovation: factory.lorem.paragraph(),
+			preliminary_data: factory.lorem.paragraphs(2),
+			rationale: factory.lorem.paragraph(),
+			research_feasibility: factory.lorem.paragraph(),
+			scientific_infrastructure: factory.lorem.paragraph(),
+			team_excellence: factory.lorem.paragraph(),
+			type: "RESEARCH",
+		};
+	}
+
+	return {
+		commercialization_plan: factory.lorem.paragraph(),
+		core_concept: factory.lorem.paragraph(),
+		proof_of_concept: factory.lorem.paragraphs(2),
+		team_translation_capability: factory.lorem.paragraph(),
+		translational_impact: factory.lorem.paragraph(),
+		translational_potential: factory.lorem.paragraph(),
+		type: "TRANSLATIONAL",
+		unique_approach: factory.lorem.paragraph(),
+		unmet_need_context: factory.lorem.paragraphs(2),
+	};
+});
 
 export const EmptyFormInputsFactory = {
 	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
@@ -605,20 +615,28 @@ export const ApplicationListItemFactory = new Factory<ApplicationListItem>((fact
 	title: factory.lorem.sentence(),
 }));
 
-export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.Http201.ResponseBody>(() => {
-	const baseApplication = ApplicationFactory.build({
-		text: undefined,
-	});
-	const grantTemplate = GrantTemplateFactory.build({
-		grant_application_id: baseApplication.id,
-	});
-	return {
-		...baseApplication,
-		editor_document_id: "123",
-		editor_document_init: false,
-		grant_template: grantTemplate,
-	};
-});
+export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.Http201.ResponseBody>(
+	(_factory, _iteration, kwargs) => {
+		const baseApplication = ApplicationFactory.build({
+			text: undefined,
+		});
+
+		const formInputs = kwargs?.form_inputs;
+		const grantType = formInputs?.type ?? "RESEARCH";
+
+		const grantTemplate = GrantTemplateFactory.build({
+			grant_application_id: baseApplication.id,
+			grant_type: grantType,
+		});
+		return {
+			...baseApplication,
+			editor_document_id: "123",
+			editor_document_init: false,
+			form_inputs: formInputs,
+			grant_template: grantTemplate,
+		};
+	},
+);
 
 export const FileWithIdFactory = new Factory<FileWithId>((factory) => {
 	const filename = `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt", "rtf"])}`;
