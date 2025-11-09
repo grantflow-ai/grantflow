@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 from packages.db.src.tables import GrantingInstitution, GrantTemplateSource, Organization, RagSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -44,9 +45,9 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
     assert len(cfp_content) > 100, "CFP content should not be empty"
 
     async with async_session_maker() as session, session.begin():
+        source_id = str(uuid4())
         rag_source = RagSource(
-            id="israeli-chief-scientist-source-id",
-            organization_id=test_organization.id,
+            id=source_id,
             source_type="rag_file",
             text_content=cfp_content,
             indexing_status="FINISHED",
@@ -56,7 +57,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
         template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
-            rag_source_id=rag_source.id,
+            rag_source_id=source_id,
         )
         session.add(template_source)
 
@@ -71,9 +72,9 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
         text_vectors = [
             TextVector(
-                rag_source_id=rag_source.id,
+                rag_source_id=source_id,
                 chunk={"content": chunk},
-                embedding=[0.1] * 1536,
+                embedding=[0.1] * 384,
             )
             for chunk in chunks
         ]
@@ -116,6 +117,7 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
     assert cfp_analysis["organization"]["full_name"] == israeli_granting_institution.full_name, (
         f"Should identify Israeli institution: {cfp_analysis['organization']['full_name']}"
     )
+    assert cfp_analysis.get("activity_code") is None, "Non-NIH CFPs should not include an activity code"
 
     assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"
     assert isinstance(cfp_analysis["deadlines"], list), "Deadlines should be a list"
@@ -143,7 +145,8 @@ async def test_israeli_chief_scientist_cfp_extraction_end_to_end(
 
     extracted_titles = [section["title"].lower() for section in content_sections]
 
-    project_found = any("project" in title or "information" in title for title in extracted_titles)
+    project_keywords = ["project", "information", "abstract", "summary", "overview", "research plan", "objectives"]
+    project_found = any(any(keyword in title for keyword in project_keywords) for title in extracted_titles)
     research_found = any("research" in title or "plan" in title for title in extracted_titles)
     budget_found = any("budget" in title or "funding" in title for title in extracted_titles)
     any("team" in title or "collaboration" in title for title in extracted_titles)

@@ -2,10 +2,12 @@ import os
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantTemplate
+from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.tables import GrantTemplate, RagGenerationJob
 from packages.shared_utils.src.exceptions import BackendError
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.factories import PredefinedGrantTemplateFactory
 
 from services.rag.src.grant_template.pipeline import handle_grant_template_pipeline
 
@@ -100,3 +102,118 @@ async def test_handle_grant_template_pipeline_propagates_backend_error(
     )
 
     generation_mock.assert_called()
+
+
+async def test_handle_grant_template_pipeline_clones_predefined_based_on_activity_code(
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    if not grant_template.granting_institution_id:
+        pytest.skip("grant_template fixture missing granting institution")
+
+    async with async_session_maker() as session:
+        predefined = PredefinedGrantTemplateFactory.build(
+            granting_institution_id=grant_template.granting_institution_id,
+            activity_code="R21",
+            grant_sections=[
+                {
+                    "id": "specific-aims",
+                    "title": "Specific Aims (Predefined)",
+                    "order": 1,
+                    "evidence": "",
+                    "parent_id": None,
+                    "needs_applicant_writing": True,
+                }
+            ],
+        )
+        session.add(predefined)
+        cfp_job = RagGenerationJob(
+            grant_template_id=grant_template.id,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
+            status=RagGenerationStatusEnum.COMPLETED,
+            checkpoint_data={
+                "cfp_analysis": {
+                    "subject": "NIH Clinical Trial Readiness",
+                    "sections": [],
+                    "deadlines": [],
+                    "global_constraints": [],
+                    "organization": {
+                        "id": str(grant_template.granting_institution_id),
+                        "full_name": "National Institutes of Health",
+                        "abbreviation": "NIH",
+                    },
+                    "activity_code": "r21",
+                }
+            },
+        )
+        session.add(cfp_job)
+        await session.commit()
+        predefined_id = predefined.id
+
+    result = await handle_grant_template_pipeline(
+        grant_template=grant_template,
+        session_maker=async_session_maker,
+        trace_id=trace_id,
+    )
+
+    assert result is not None
+
+    async with async_session_maker() as session:
+        refreshed = await session.get(GrantTemplate, grant_template.id)
+
+    assert refreshed is not None
+    assert refreshed.predefined_template_id == predefined_id
+    assert refreshed.grant_sections[0]["title"] == "Specific Aims (Predefined)"
+
+
+async def test_handle_grant_template_pipeline_clones_predefined_when_activity_code_missing(
+    grant_template: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    if not grant_template.granting_institution_id:
+        pytest.skip("grant_template fixture missing granting institution")
+
+    async with async_session_maker() as session:
+        predefined = PredefinedGrantTemplateFactory.build(
+            granting_institution_id=grant_template.granting_institution_id,
+            activity_code=None,
+        )
+        session.add(predefined)
+        cfp_job = RagGenerationJob(
+            grant_template_id=grant_template.id,
+            template_stage=GrantTemplateStageEnum.CFP_ANALYSIS,
+            status=RagGenerationStatusEnum.COMPLETED,
+            checkpoint_data={
+                "cfp_analysis": {
+                    "subject": "NIH Clinical Trial Readiness",
+                    "sections": [],
+                    "deadlines": [],
+                    "global_constraints": [],
+                    "organization": {
+                        "id": str(grant_template.granting_institution_id),
+                        "full_name": "National Institutes of Health",
+                        "abbreviation": "NIH",
+                    },
+                    "activity_code": None,
+                }
+            },
+        )
+        session.add(cfp_job)
+        await session.commit()
+        predefined_id = predefined.id
+
+    result = await handle_grant_template_pipeline(
+        grant_template=grant_template,
+        session_maker=async_session_maker,
+        trace_id=trace_id,
+    )
+
+    assert result is not None
+
+    async with async_session_maker() as session:
+        refreshed = await session.get(GrantTemplate, grant_template.id)
+
+    assert refreshed is not None
+    assert refreshed.predefined_template_id == predefined_id

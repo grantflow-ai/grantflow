@@ -1,7 +1,9 @@
 import traceback
 from typing import Any, cast
+from uuid import UUID
 
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.json_objects import CFPAnalysis
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
@@ -25,7 +27,11 @@ from services.rag.src.grant_template.handlers import (
     handle_save_grant_template,
     handle_template_generation_stage,
 )
-from services.rag.src.grant_template.predefined import apply_predefined_template, get_predefined_template_by_id
+from services.rag.src.grant_template.predefined import (
+    apply_predefined_template,
+    get_predefined_template,
+    get_predefined_template_by_id,
+)
 from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
@@ -66,6 +72,81 @@ async def _determine_current_stage(template_id: Any, session_maker: async_sessio
                 return stage
 
         return GRANT_TEMPLATE_PIPELINE_STAGES[-1]
+
+
+async def _clone_predefined_template_from_analysis(
+    *,
+    cfp_analysis: CFPAnalysis,
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    job_manager: JobManager[StageDTO],
+    trace_id: str,
+) -> bool:
+    organization = cfp_analysis.get("organization")
+    if not organization:
+        return False
+
+    organization_id = organization.get("id")
+    if not organization_id:
+        return False
+
+    try:
+        granting_institution_id = UUID(str(organization_id))
+    except ValueError:
+        logger.warning(
+            "CFP analysis returned invalid granting institution id",
+            organization_id=organization_id,
+            template_id=str(grant_template.id),
+            trace_id=trace_id,
+        )
+        return False
+
+    activity_code = cfp_analysis.get("activity_code")
+    normalized_activity_code = activity_code.strip().upper() if isinstance(activity_code, str) else None
+
+    predefined = await get_predefined_template(
+        session_maker=session_maker,
+        granting_institution_id=granting_institution_id,
+        activity_code=normalized_activity_code,
+    )
+
+    if not predefined:
+        logger.info(
+            "No predefined template matched CFP analysis",
+            template_id=str(grant_template.id),
+            granting_institution_id=str(granting_institution_id),
+            activity_code=normalized_activity_code,
+            trace_id=trace_id,
+        )
+        return False
+
+    await apply_predefined_template(
+        session_maker=session_maker,
+        grant_template=grant_template,
+        predefined_template=predefined,
+    )
+
+    await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+    await job_manager.add_notification(
+        event=NotificationEvents.GRANT_TEMPLATE_CREATED,
+        message="Grant template cloned from predefined catalog",
+        notification_type="success",
+        data={
+            "template_id": str(grant_template.id),
+            "predefined_template_id": str(predefined.id),
+            "activity_code": predefined.activity_code,
+        },
+    )
+
+    logger.info(
+        "Grant template auto-cloned from predefined catalog",
+        template_id=str(grant_template.id),
+        predefined_template_id=str(predefined.id),
+        activity_code=predefined.activity_code,
+        trace_id=trace_id,
+    )
+
+    return True
 
 
 async def handle_grant_template_pipeline(
@@ -146,6 +227,17 @@ async def handle_grant_template_pipeline(
                     raise ValidationError("Missing checkpoint data for template generation stage")
 
                 cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
+
+                auto_cloned = await _clone_predefined_template_from_analysis(
+                    cfp_analysis=cfp_analysis_result["cfp_analysis"],
+                    grant_template=grant_template,
+                    session_maker=session_maker,
+                    job_manager=job_manager,
+                    trace_id=trace_id,
+                )
+                if auto_cloned:
+                    return grant_template
+
                 template_generation_result = await handle_template_generation_stage(
                     cfp_analysis_result=cfp_analysis_result,
                     job_manager=job_manager,

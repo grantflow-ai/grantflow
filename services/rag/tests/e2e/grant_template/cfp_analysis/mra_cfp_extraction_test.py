@@ -129,6 +129,7 @@ async def test_mra_cfp_extraction_end_to_end(
     assert cfp_analysis["organization"]["full_name"] == mra_granting_institution.full_name, (  # type: ignore[index]
         f"Should identify MRA: {cfp_analysis['organization']['full_name']}"  # type: ignore[index]
     )
+    assert cfp_analysis.get("activity_code") is None, "Non-NIH CFPs should not include an activity code"
 
     assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"
     assert isinstance(cfp_analysis["deadlines"], list), "Deadlines should be a list"

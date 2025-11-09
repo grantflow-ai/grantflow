@@ -1,32 +1,9 @@
-# NIH Predefined Templates TODO
+# NIH Predefined Template Auto-Selection
 
-## Legend
-- [ ] not started
-- [~] in progress
-- [x] complete
-
-## Tasks
-
-### Schema & Data Model
-- [x] Design schema for predefined templates (table structure, parent linkage)
-- [x] Generate Alembic migration via Taskfile to add new table/columns
-- [x] Update SQLAlchemy models and enums to reflect new schema
-
-### RAG Service Updates
-- [x] Add ability to persist/load predefined templates in grant_template pipeline
-- [x] Implement clone/attach workflow when creating NIH grant templates
-- [x] Extend API responses to surface parent template metadata
-
-### Bulk Generation Script
-- [x] Add config manifest describing NIH R-series guidelines + overrides
-- [x] Implement `python -m services.rag.src.predefined` command-line entrypoint
-- [x] Wire CLI to reuse the RAG template pipeline directly (guideline ingestion + prompts)
-- [x] Add tests covering CLI behavior and predefined template cloning
-
-### CI / Developer Workflow
-- [x] Document workflow in README / docs
-- [x] Add optional Taskfile target to run the script locally
-
-## Notes
-- Scripts live under `/scripts`; keep dependencies minimal and reuse existing helpers.
-- Track progress by updating the status markers above as work proceeds.
+- [x] Update `services/rag/src/grant_template/cfp_analysis/metadata_extraction.py` (prompt, schema, `CFPMetadataResult`) so the metadata step outputs `activity_code` alongside the granting institution.
+- [x] Adjust RAG pipeline wiring (`services/rag/src/grant_template/pipeline.py`) to short-circuit via `clone_predefined_template_if_possible`:
+  * first attempt to match predefined templates by `(institution_id, activity_code)`
+  * fall back to the most recent predefined template for that institution when no activity code is inferred
+- [x] Extend unit coverage (`services/rag/tests/grant_template/pipeline_test.py`, `services/rag/tests/grant_template/metadata_extraction_test.py`) to cover activity-code normalization + cloning behavior.
+- [x] Update E2E/functional tests around CFP analysis to assert the new metadata field and the auto-clone flow (`services/rag/tests/e2e/...`).
+- [x] Document the backend-only auto-selection behavior (README/task docs) once implementation stabilizes.
