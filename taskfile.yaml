@@ -330,17 +330,17 @@ tasks:
       - pnpm run storybook
 
   frontend:test:e2e:
-    desc: Run frontend end-to-end tests with Playwright against local dev server (mock API)
+    desc: Run frontend end-to-end tests with Playwright (mocked backend API)
     dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm exec playwright install chromium
       - pnpm test:e2e
 
-  frontend:test:e2e:ci:
-    desc: Run frontend e2e tests against real backend (for CI)
+  frontend:test:e2e:full:
+    desc: Run frontend e2e tests against real backend+frontend stack (full integration)
     deps:
-      - task: e2e:up
+      - task: e2e:up:full
       - task: e2e:seed
     dir: frontend
     dotenv: [".env"]
@@ -353,11 +353,21 @@ tasks:
     ignore_error: true
 
   e2e:up:
-    desc: Start services for e2e testing using e2e profile
+    desc: Start emulators for e2e testing (database, pubsub, gcs, firebase auth)
     deps:
       - task: _dev:check
     cmds:
       - docker compose --profile e2e up -d
+      - task: _dev:init-pubsub
+      - task: _dev:init-gcs
+      - task: e2e:migrate
+
+  e2e:up:full:
+    desc: Start full stack for e2e testing (emulators + backend + frontend)
+    deps:
+      - task: _dev:check
+    cmds:
+      - docker compose --profile e2e-full up -d
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
       - task: e2e:migrate
