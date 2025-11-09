@@ -1,7 +1,6 @@
 import os
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from services.crawler.src.dev_indexing_bypass import (
     is_development_environment,
     trigger_dev_indexing,
@@ -30,7 +29,6 @@ class TestIsDevelopmentEnvironment:
             assert is_development_environment() is True
 
 
-@pytest.mark.asyncio
 class TestTriggerDevIndexing:
     async def test_skips_in_production(self) -> None:
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):

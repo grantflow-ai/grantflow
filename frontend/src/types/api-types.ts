@@ -226,6 +226,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -277,6 +287,7 @@ export namespace API {
 	export type RequestBody = {
 	description?: string;
 	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	predefined_template_id?: string;
 	title: string;
 };
 };
@@ -874,6 +885,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1788,6 +1809,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -2119,6 +2150,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;

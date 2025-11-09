@@ -25,6 +25,7 @@ from services.rag.src.grant_template.handlers import (
     handle_save_grant_template,
     handle_template_generation_stage,
 )
+from services.rag.src.grant_template.predefined import apply_predefined_template, get_predefined_template_by_id
 from services.rag.src.utils.job_manager import JobManager
 
 logger = get_logger(__name__)
@@ -101,6 +102,33 @@ async def handle_grant_template_pipeline(
 
     try:
         checkpoint_data = await job_manager.get_checkpoint_data()
+
+        if grant_template.predefined_template_id is not None:
+            predefined = await get_predefined_template_by_id(
+                session_maker=session_maker,
+                predefined_template_id=grant_template.predefined_template_id,
+            )
+            if not predefined:
+                raise ValidationError("Selected predefined template no longer exists")
+
+            await apply_predefined_template(
+                session_maker=session_maker,
+                grant_template=grant_template,
+                predefined_template=predefined,
+            )
+
+            await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
+            await job_manager.add_notification(
+                event=NotificationEvents.GRANT_TEMPLATE_CREATED,
+                message="Grant template cloned from predefined catalog",
+                notification_type="success",
+                data={
+                    "template_id": str(grant_template.id),
+                    "predefined_template_id": str(predefined.id),
+                    "activity_code": predefined.activity_code,
+                },
+            )
+            return grant_template
 
         match current_stage:
             case GrantTemplateStageEnum.CFP_ANALYSIS:
