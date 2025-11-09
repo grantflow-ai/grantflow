@@ -40,15 +40,16 @@ async def _fetch_latest_for_institution(
     session: AsyncSession,
     *,
     granting_institution_id: UUID,
+    only_null_activity: bool = False,
 ) -> PredefinedGrantTemplate | None:
-    stmt = (
-        select(PredefinedGrantTemplate)
-        .where(
-            PredefinedGrantTemplate.granting_institution_id == granting_institution_id,
-            PredefinedGrantTemplate.deleted_at.is_(None),
-        )
-        .order_by(PredefinedGrantTemplate.created_at.desc())
-    )
+    conditions: list[Any] = [
+        PredefinedGrantTemplate.granting_institution_id == granting_institution_id,
+        PredefinedGrantTemplate.deleted_at.is_(None),
+    ]
+    if only_null_activity:
+        conditions.append(PredefinedGrantTemplate.activity_code.is_(None))
+
+    stmt = select(PredefinedGrantTemplate).where(*conditions).order_by(PredefinedGrantTemplate.created_at.desc())
 
     result: ScalarResult[PredefinedGrantTemplate] = await session.scalars(stmt)
     return result.first()
@@ -70,9 +71,18 @@ async def get_predefined_template(
             if template:
                 return template
 
+        fallback_template = await _fetch_latest_for_institution(
+            session,
+            granting_institution_id=granting_institution_id,
+            only_null_activity=True,
+        )
+        if fallback_template:
+            return fallback_template
+
         return await _fetch_latest_for_institution(
             session,
             granting_institution_id=granting_institution_id,
+            only_null_activity=False,
         )
 
 

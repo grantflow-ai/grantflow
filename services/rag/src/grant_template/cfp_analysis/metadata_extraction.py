@@ -1,3 +1,4 @@
+import re
 from typing import Final, TypedDict
 
 from packages.db.src.json_objects import LengthConstraint, OrganizationNamespace
@@ -15,6 +16,33 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
+
+_NIH_ACTIVITY_PREFIXES: Final[frozenset[str]] = frozenset(
+    {
+        "R",
+        "P",
+        "U",
+        "K",
+        "F",
+        "T",
+        "D",
+        "C",
+        "G",
+        "H",
+        "S",
+        "M",
+        "I",
+        "L",
+        "Y",
+        "X",
+        "Z",
+        "E",
+        "N",
+        "O",
+        "B",
+    }
+)
+_ACTIVITY_CODE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\b([A-Z]{1,2}\d{2})\b")
 
 CFP_METADATA_SYSTEM_PROMPT: Final[str] = (
     "You are an expert in analyzing grant application Calls for Proposals (CFPs). "
@@ -43,6 +71,7 @@ Extract metadata from CFP.
 2. **deadlines**: List of submission deadlines (YYYY-MM-DD format). Extract all deadlines mentioned (e.g., LOI deadline, full application deadline, different award type deadlines)
 3. **subject**: One-sentence funding opportunity summary
 4. **constraints**: Application-wide length requirements ONLY (single constraint for the entire narrative)
+5. **activity_code**: NIH activity/mechanism code (e.g., R01, R21, U01). Return null if the CFP is not NIH-specific or the code is not explicitly stated.
 
 ### Length Constraint Rules
 - Convert page limits to words using 415 words/page
@@ -83,6 +112,7 @@ Review and improve extracted metadata.
 2. Verify all deadlines are in YYYY-MM-DD format and find any missing deadlines
 3. Confirm organization identification
 4. Ensure the global length constraint is correct and normalized (convert pages to words, choose strictest limit, provide source)
+5. Capture the NIH activity code when sources reference a specific mechanism (R01/R21/etc.); otherwise keep it null.
 
 ### Output
 Return validated/corrected metadata with complete deadlines and a normalized length constraint.
@@ -97,6 +127,10 @@ cfp_metadata_schema = {
         "deadlines": {
             "type": "array",
             "items": {"type": "string"},
+        },
+        "activity_code": {
+            "type": "string",
+            "nullable": True,
         },
         "constraints": {
             "type": "array",
@@ -121,6 +155,29 @@ class CFPMetadataResult(TypedDict):
     subject: str
     deadlines: list[str]
     constraints: list[LengthConstraint]
+    activity_code: str | None
+
+
+def _match_activity_code(candidate: str | None) -> str | None:
+    if not candidate:
+        return None
+
+    for match in _ACTIVITY_CODE_PATTERN.finditer(candidate.upper()):
+        code = match.group(1)
+        if code[0] in _NIH_ACTIVITY_PREFIXES:
+            return code
+    return None
+
+
+def normalize_activity_code(value: str | None, *, fallback_texts: tuple[str | None, ...] = ()) -> str | None:
+    if match := _match_activity_code(value):
+        return match
+
+    for extra in fallback_texts:
+        if match := _match_activity_code(extra):
+            return match
+
+    return None
 
 
 def validate_cfp_metadata(response: CFPMetadataResult) -> None:
@@ -248,5 +305,20 @@ async def extract_metadata_with_org_identification(
                 method=method,
                 trace_id=trace_id,
             )
+
+    resolved_org = next((org for org in organizations if org["id"] == metadata_result["org_id"]), None)
+    is_nih_document = False
+    if resolved_org:
+        abbreviation = (resolved_org.get("abbreviation") or "").upper()
+        full_name = (resolved_org.get("full_name") or "").lower()
+        is_nih_document = abbreviation == "NIH" or "national institutes of health" in full_name
+
+    if is_nih_document:
+        metadata_result["activity_code"] = normalize_activity_code(
+            metadata_result.get("activity_code"),
+            fallback_texts=(metadata_result.get("subject"), full_cfp_text),
+        )
+    else:
+        metadata_result["activity_code"] = None
 
     return metadata_result

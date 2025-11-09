@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 from packages.db.src.tables import GrantingInstitution, GrantTemplateSource, Organization, RagSource, TextVector
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -43,9 +44,9 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     cfp_content = "NIH RFA-AI-25-027 Tuberculosis Research Units P01 CFP content placeholder"
 
     async with async_session_maker() as session, session.begin():
+        source_id = str(uuid4())
         rag_source = RagSource(
-            id="nih-tuberculosis-source-id",
-            organization_id=test_organization.id,
+            id=source_id,
             source_type="rag_file",
             text_content=cfp_content,
             indexing_status="FINISHED",
@@ -55,7 +56,7 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
         template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
-            rag_source_id=rag_source.id,
+            rag_source_id=source_id,
         )
         session.add(template_source)
 
@@ -70,9 +71,9 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
 
         text_vectors = [
             TextVector(
-                rag_source_id=rag_source.id,
+                rag_source_id=source_id,
                 chunk={"content": chunk},
-                embedding=[0.1] * 1536,
+                embedding=[0.1] * 384,
             )
             for chunk in chunks
         ]
@@ -112,6 +113,9 @@ async def test_nih_tuberculosis_cfp_extraction_end_to_end(
     assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
     assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
         f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
+    )
+    assert cfp_analysis.get("activity_code") == "P01", (
+        f"Should extract NIH activity code P01, got {cfp_analysis.get('activity_code')}"
     )
 
     assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"
@@ -205,9 +209,9 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
     cfp_content = "NIH RFA-DK-26-315 Digital Health Technology Type 2 Diabetes R01 CFP content placeholder"
 
     async with async_session_maker() as session, session.begin():
+        source_id = str(uuid4())
         rag_source = RagSource(
-            id="nih-diabetes-source-id",
-            organization_id=test_organization.id,
+            id=source_id,
             source_type="rag_file",
             text_content=cfp_content,
             indexing_status="FINISHED",
@@ -217,7 +221,7 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
         template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
-            rag_source_id=rag_source.id,
+            rag_source_id=source_id,
         )
         session.add(template_source)
 
@@ -232,9 +236,9 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
 
         text_vectors = [
             TextVector(
-                rag_source_id=rag_source.id,
+                rag_source_id=source_id,
                 chunk={"content": chunk},
-                embedding=[0.1] * 1536,
+                embedding=[0.1] * 384,
             )
             for chunk in chunks
         ]
@@ -276,6 +280,9 @@ async def test_nih_diabetes_cfp_extraction_end_to_end(
     assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
     assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
         f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
+    )
+    assert cfp_analysis.get("activity_code") == "R01", (
+        f"Should extract NIH activity code R01, got {cfp_analysis.get('activity_code')}"
     )
 
     assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"

@@ -125,3 +125,4 @@ class CFPAnalysis(TypedDict):
     deadlines: list[str]
     global_constraints: list[LengthConstraint]
     organization: NotRequired[OrganizationNamespace | None]
+    activity_code: NotRequired[str | None]
