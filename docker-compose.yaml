@@ -122,6 +122,7 @@ services:
       - all
       - services
       - backend
+      - e2e-full
     build:
       dockerfile: services/backend/Dockerfile
     environment:
@@ -255,6 +256,7 @@ services:
     profiles:
       - all
       - frontend
+      - e2e-full
     build:
       context: .
       dockerfile: frontend/Dockerfile
