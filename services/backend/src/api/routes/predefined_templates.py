@@ -26,9 +26,9 @@ logger = get_logger(__name__)
 
 class CreatePredefinedTemplateBody(TypedDict):
     name: str
-    grant_type: GrantType | str
+    grant_type: str
     granting_institution_id: UUID
-    grant_sections: list[GrantLongFormSection | GrantElement]
+    grant_sections: list[dict[str, Any]]
     description: NotRequired[str | None]
     activity_code: NotRequired[str | None]
     guideline_source: NotRequired[str | None]
@@ -40,13 +40,13 @@ class CreatePredefinedTemplateBody(TypedDict):
 class UpdatePredefinedTemplateBody(TypedDict, total=False):
     name: str
     description: str | None
-    grant_type: GrantType | str
+    grant_type: str | None
     activity_code: str | None
     guideline_source: str | None
     guideline_version: str | None
     guideline_hash: str | None
     granting_institution_id: UUID
-    grant_sections: list[GrantLongFormSection | GrantElement]
+    grant_sections: list[dict[str, Any]]
     additional_metadata: dict[str, Any] | None
 
 
@@ -133,7 +133,7 @@ async def handle_create_predefined_template(
     data: CreatePredefinedTemplateBody,
     session_maker: async_sessionmaker[Any],
 ) -> PredefinedTemplateResponse:
-    grant_type = GrantType(data["grant_type"]) if isinstance(data["grant_type"], str) else data["grant_type"]
+    grant_type = GrantType(data["grant_type"])
 
     async with session_maker() as session, session.begin():
         try:
@@ -221,7 +221,7 @@ async def handle_update_predefined_template(
     if not data:
         raise ValidationException("Request body is empty")
 
-    if "grant_type" in data and isinstance(data["grant_type"], str):
+    if "grant_type" in data and data["grant_type"] is not None:
         data["grant_type"] = GrantType(data["grant_type"])
 
     async with session_maker() as session, session.begin():

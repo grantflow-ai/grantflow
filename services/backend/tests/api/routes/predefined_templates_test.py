@@ -8,10 +8,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import PredefinedGrantTemplateFactory
 
-from services.backend.tests.api.routes.granting_institutions_test import (  # noqa: F401
+from services.backend.tests.api.routes.granting_institutions_test import (
     backoffice_admin_firebase_uid as backoffice_admin_firebase_uid_fixture,
 )
+from services.backend.tests.api.routes.granting_institutions_test import (
+    sample_granting_institution as sample_granting_institution_fixture,
+)
 from services.backend.tests.conftest import TestingClientType
+
+backoffice_admin_firebase_uid = backoffice_admin_firebase_uid_fixture
+sample_granting_institution = sample_granting_institution_fixture
 
 
 def build_section(title: str, *, parent_id: str | None = None) -> dict[str, Any]:

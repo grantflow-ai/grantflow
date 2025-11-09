@@ -189,35 +189,6 @@ task lint:terraform:tflint   # Lint Terraform best practices
 task lint:terraform:trivy    # Security scan Terraform code
 ```
 
-### NIH Predefined Templates
-
-GrantFlow ships with a lightweight CLI for generating cataloged NIH templates directly from guideline PDFs. The
-manifest lives in `scripts/config/predefined_templates.yaml` and each entry describes the granting institution, optional
-activity code, and the source document to ingest. Use the Taskfile target to run the pipeline:
-
-```bash
-# Generate every manifest entry (writes to predefined_grant_templates)
-task rag:predefined
-
-# Dry run a specific template without persisting
-task rag:predefined KEYS="nih_r01_standard" DRY_RUN=true
-
-# Overwrite an existing catalog entry
-task rag:predefined KEYS="nih_r01_standard" FORCE=true
-
-# Bulk-generate from the NIH activity code catalog (requires the NIH CSV)
-task rag:predefined ACTIVITY_CODES_CSV=testing/test_data/sources/guidelines/nih/nih_activity_codes.csv FORCE=true
-```
-
-When creating a grant application you can pass `predefined_template_id` in the payload (or use the
-`/grant-template/{id}/predefined` endpoint) to clone one of these catalog templates directly into the new application. The
-backend automatically tracks the parent relationship so later duplicates keep their predefined provenance.
-
-When a CFP is ingested the backend now auto-selects these catalog templates whenever it confidently identifies both the
-granting institution and (for NIH) the activity code. If a code-specific match exists we clone that template immediately;
-otherwise we fall back to the most recent institution-level template. This entire flow happens server-side—no extra UI
-steps are required.
-
 ### Database Management
 
 ```bash

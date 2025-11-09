@@ -23,8 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate predefined grant templates from institutional guidelines.")
     parser.add_argument(
         "--config",
-        default="scripts/config/predefined_templates.yaml",
-        help="Path to the predefined template manifest (YAML).",
+        type=Path,
+        help="Optional path to a predefined template manifest (YAML).",
     )
     parser.add_argument(
         "--keys",
@@ -44,7 +44,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--activity-codes-csv",
         type=Path,
-        help="Optional path to an NIH activity codes CSV for bulk generation.",
+        default=Path("testing/test_data/sources/guidelines/nih/nih_activity_codes.csv"),
+        help="Path to an NIH activity codes CSV for bulk generation.",
     )
     parser.add_argument(
         "--guidelines-root",
@@ -97,8 +98,11 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    manifest_path = Path(args.config).resolve()
-    spec_map: dict[str, TemplateSpec] = {spec.key: spec for spec in load_manifest(manifest_path)}
+    spec_map: dict[str, TemplateSpec] = {}
+
+    if args.config:
+        manifest_path = Path(args.config).resolve()
+        spec_map.update({spec.key: spec for spec in load_manifest(manifest_path)})
 
     if args.activity_codes_csv:
         csv_specs = load_activity_code_specs(

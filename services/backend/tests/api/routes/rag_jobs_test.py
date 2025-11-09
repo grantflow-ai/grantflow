@@ -437,7 +437,6 @@ async def test_retrieve_job_with_multiple_stages(
 ) -> None:
     stages = [
         GrantTemplateStageEnum.CFP_ANALYSIS,
-        GrantTemplateStageEnum.CFP_ANALYSIS,
         GrantTemplateStageEnum.TEMPLATE_GENERATION,
     ]
 
