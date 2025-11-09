@@ -9,6 +9,7 @@ services:
       - scraper
       - crdt
       - e2e
+      - rag-predefined
     image: pgvector/pgvector:pg18
     restart: always
     environment:

@@ -1,6 +1,5 @@
 import textwrap
 
-import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.utils.evaluation.text.structure import (
@@ -251,7 +250,6 @@ class TestHeaderStructure:
 
 
 class TestStructureAdvanced:
-    @pytest.mark.asyncio
     async def test_evaluate_structure_high_quality(self) -> None:
         content = textwrap.dedent("""
         # Research Methodology
@@ -326,7 +324,6 @@ class TestStructureAdvanced:
             f"Expected reasonable header structure for well-formatted content, got {result['header_structure']}"
         )
 
-    @pytest.mark.asyncio
     async def test_evaluate_structure_poor_quality(self) -> None:
         content = """
         bad writing here
@@ -359,7 +356,6 @@ class TestStructureAdvanced:
         assert result["academic_formatting"] < 0.4, f"Expected low formatting, got {result['academic_formatting']}"
         assert result["header_structure"] == 0.0, f"Expected no header structure, got {result['header_structure']}"
 
-    @pytest.mark.asyncio
     async def test_evaluate_structure_word_count_exceeded(self) -> None:
         content = "This is a test sentence with ten words exactly. " * 20
 
@@ -385,7 +381,6 @@ class TestStructureAdvanced:
             f"Expected low word count compliance, got {result['word_count_compliance']}"
         )
 
-    @pytest.mark.asyncio
     async def test_evaluate_structure_empty_content(self) -> None:
         section_config = GrantLongFormSection(
             id="test",

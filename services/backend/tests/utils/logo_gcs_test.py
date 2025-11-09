@@ -79,7 +79,6 @@ def test_validate_logo_file_too_large() -> None:
         assert "Logo file too large" in str(exc_info.value)
 
 
-@pytest.mark.asyncio
 async def test_upload_organization_logo_success() -> None:
     org_id = uuid4()
     file_content = b"fake png data"
@@ -112,7 +111,6 @@ async def test_upload_organization_logo_success() -> None:
         mock_bucket.blob.assert_called_once_with(f"organizations/{org_id}/logo.png")
 
 
-@pytest.mark.asyncio
 async def test_cleanup_old_logo_formats() -> None:
     org_id = uuid4()
     current_extension = "png"
@@ -144,7 +142,6 @@ async def test_cleanup_old_logo_formats() -> None:
         assert mock_bucket.blob.call_count == expected_calls
 
 
-@pytest.mark.asyncio
 async def test_delete_organization_logo_success() -> None:
     org_id = uuid4()
 
@@ -174,7 +171,6 @@ async def test_delete_organization_logo_success() -> None:
         assert mock_bucket.blob.call_count == len(LOGO_MIME_TYPES.values())
 
 
-@pytest.mark.asyncio
 async def test_get_organization_logo_info_exists() -> None:
     org_id = uuid4()
 
@@ -212,7 +208,6 @@ async def test_get_organization_logo_info_exists() -> None:
         assert result["content_type"] == "image/png"
 
 
-@pytest.mark.asyncio
 async def test_get_organization_logo_info_not_exists() -> None:
     org_id = uuid4()
 
@@ -240,7 +235,6 @@ async def test_get_organization_logo_info_not_exists() -> None:
         assert result is None
 
 
-@pytest.mark.asyncio
 async def test_create_signed_logo_upload_url_success() -> None:
     org_id = uuid4()
     content_type = "image/png"
@@ -268,7 +262,6 @@ async def test_create_signed_logo_upload_url_success() -> None:
         mock_bucket.blob.assert_called_once_with(f"organizations/{org_id}/logo.png")
 
 
-@pytest.mark.asyncio
 async def test_create_signed_logo_upload_url_invalid_mime_type() -> None:
     org_id = uuid4()
     content_type = "application/pdf"

@@ -71,6 +71,7 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
             select(GrantApplication)
             .options(
                 selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution),
+                selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.predefined_template),
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)
                 .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)),

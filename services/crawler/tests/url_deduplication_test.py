@@ -5,7 +5,6 @@ from unittest.mock import patch
 from uuid import uuid4
 import base64
 
-import pytest
 from litestar.testing import AsyncTestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -27,7 +26,6 @@ def encode_crawling_request(
     return base64.b64encode(serialize(data)).decode()
 
 
-@pytest.mark.asyncio
 async def test_concurrent_url_claim_first_wins(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],
@@ -67,7 +65,6 @@ async def test_concurrent_url_claim_first_wins(
         assert source.indexing_started_at is not None
 
 
-@pytest.mark.asyncio
 async def test_concurrent_url_claim_second_returns_fast(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],
@@ -94,7 +91,6 @@ async def test_concurrent_url_claim_second_returns_fast(
         assert not mock_crawl.called
 
 
-@pytest.mark.asyncio
 async def test_already_finished_url_returns_fast(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],
@@ -121,7 +117,6 @@ async def test_already_finished_url_returns_fast(
         assert not mock_crawl.called
 
 
-@pytest.mark.asyncio
 async def test_stuck_job_recovery(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],
@@ -162,7 +157,6 @@ async def test_stuck_job_recovery(
         assert source.indexing_started_at > datetime.now(UTC) - timedelta(minutes=1)
 
 
-@pytest.mark.asyncio
 async def test_failed_source_can_be_retried(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],
@@ -207,7 +201,6 @@ class RetriableCrawlError(Exception):
     category = "retriable"
 
 
-@pytest.mark.asyncio
 async def test_retriable_error_skips_failure_notification(
     async_session_maker: async_sessionmaker[Any],
     test_client: AsyncTestClient[Any],

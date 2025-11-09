@@ -7,8 +7,10 @@ from uuid import UUID
 from packages.db.src.enums import GrantType, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
+    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
+    PredefinedGrantTemplate,
     Project,
     RagFile,
 )
@@ -293,6 +295,123 @@ async def test_generate_grant_template_failed_sources_only(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "No rag sources found" in response.text
+
+
+async def test_apply_predefined_grant_template_success(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        institution = GrantingInstitution(full_name="Catalog Org", abbreviation="CO")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH R01",
+            description="Test",
+            activity_code="R01",
+            grant_type=GrantType.RESEARCH,
+            grant_sections=[
+                {
+                    "id": "section-1",
+                    "order": 1,
+                    "title": "Specific Aims",
+                    "parent_id": None,
+                    "needs_applicant_writing": False,
+                }
+            ],
+            granting_institution_id=institution.id,
+            guideline_source="dummy.pdf",
+        )
+        session.add(predefined)
+        await session.flush()
+
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[],
+            grant_type=GrantType.TRANSLATIONAL,
+        )
+        session.add(grant_template)
+        await session.commit()
+        template_id = grant_template.id
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{template_id}/predefined",
+        json={"predefined_template_id": str(predefined.id)},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    async with async_session_maker() as session:
+        updated = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == template_id))
+
+    assert updated is not None
+    assert updated.predefined_template_id == predefined.id
+    assert updated.granting_institution_id == predefined.granting_institution_id
+    assert updated.grant_sections[0]["title"] == "Specific Aims"
+    assert updated.grant_type == GrantType.RESEARCH
+
+
+async def test_apply_predefined_grant_template_rejects_existing_sections(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        institution = GrantingInstitution(full_name="Catalog Org 2", abbreviation="CO2")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH R21",
+            description=None,
+            activity_code="R21",
+            grant_type=GrantType.RESEARCH,
+            grant_sections=[
+                {
+                    "id": "section-1",
+                    "order": 1,
+                    "title": "Specific Aims",
+                    "parent_id": None,
+                    "needs_applicant_writing": False,
+                }
+            ],
+            granting_institution_id=institution.id,
+            guideline_source="dummy.pdf",
+        )
+        session.add(predefined)
+        await session.flush()
+
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[
+                {
+                    "id": "existing",
+                    "order": 1,
+                    "title": "Existing",
+                    "parent_id": None,
+                }
+            ],
+            grant_type=GrantType.RESEARCH,
+        )
+        session.add(grant_template)
+        await session.commit()
+        template_id = grant_template.id
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{template_id}/predefined",
+        json={"predefined_template_id": str(predefined.id)},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "already contains sections" in response.text
 
 
 async def test_update_grant_template_unauthorized(

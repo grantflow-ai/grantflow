@@ -6,9 +6,11 @@ from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
     OrganizationUser,
+    PredefinedGrantTemplate,
     Project,
     RagFile,
 )
@@ -266,6 +268,69 @@ async def test_duplicate_project_preserves_rag_sources(
         )
         assert len(template_sources) == 1
         assert template_sources[0].rag_source_id == rag_file_id
+
+
+async def test_duplicate_project_preserves_predefined_template(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    project: Project,
+    project_owner_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        institution = GrantingInstitution(full_name="NIH", abbreviation="NIH")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH Catalog",
+            grant_sections=[
+                {"id": "intro", "order": 1, "title": "Intro", "parent_id": None, "needs_applicant_writing": False}
+            ],
+            grant_type=GrantType.RESEARCH,
+            granting_institution_id=institution.id,
+        )
+        session.add(predefined)
+        await session.flush()
+
+        app = GrantApplication(
+            project_id=project.id,
+            title="Catalog Application",
+            status=ApplicationStatusEnum.IN_PROGRESS,
+        )
+        session.add(app)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=app.id,
+            grant_sections=predefined.grant_sections,
+            grant_type=GrantType.RESEARCH,
+            predefined_template_id=predefined.id,
+        )
+        session.add(template)
+        await session.commit()
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/duplicate",
+        json={"title": "Catalog Copy"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == 201
+    duplicated = response.json()
+    new_project_id = duplicated["id"]
+
+    async with async_session_maker() as session:
+        new_app = await session.scalar(
+            select(GrantApplication)
+            .where(GrantApplication.project_id == new_project_id)
+            .where(GrantApplication.title == "Catalog Application")
+        )
+        assert new_app is not None
+        new_template = await session.scalar(
+            select(GrantTemplate).where(GrantTemplate.grant_application_id == new_app.id)
+        )
+        assert new_template is not None
+        assert new_template.predefined_template_id == predefined.id
 
 
 async def test_duplicate_project_not_found(

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Self, cast
 from unittest.mock import AsyncMock, call
 from uuid import UUID
 
-import pytest
 from packages.db.src.enums import GrantApplicationStageEnum, RagGenerationStatusEnum
 
 from services.rag.src.grant_application.pipeline import handle_grant_application_pipeline
@@ -79,7 +78,6 @@ class FakeJobManager:
         self.clear_checkpoint_data = AsyncMock()
 
 
-@pytest.mark.asyncio
 async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),
@@ -166,7 +164,6 @@ async def test_blueprint_prep_resumes_from_extract_relationships(mocker: MockerF
     )
 
 
-@pytest.mark.asyncio
 async def test_blueprint_prep_resumes_from_enrich_objectives(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),
@@ -257,7 +254,6 @@ async def test_blueprint_prep_resumes_from_enrich_objectives(mocker: MockerFixtu
     fake_job_manager.save_substage_checkpoint.assert_awaited_once_with("enrich_terminology", mocker.ANY)
 
 
-@pytest.mark.asyncio
 async def test_blueprint_prep_executes_all_substages_when_no_checkpoint(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),

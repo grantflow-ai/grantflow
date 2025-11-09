@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
@@ -22,7 +21,6 @@ if TYPE_CHECKING:
     )
 
 
-@pytest.mark.asyncio
 async def test_coherence_quality_correlation() -> None:
     high_quality_content: str = """
     # Systematic Biomarker Analysis
@@ -88,7 +86,6 @@ async def test_coherence_quality_correlation() -> None:
     assert coherence_diff > 0
 
 
-@pytest.mark.asyncio
 async def test_structure_coherence_interaction() -> None:
     structured_content: str = """
     # Research Methodology
@@ -163,7 +160,6 @@ async def test_structure_coherence_interaction() -> None:
     assert coherence_poor["overall"] < 0.8
 
 
-@pytest.mark.asyncio
 async def test_source_grounding_quality_interaction() -> None:
     content: str = """
     # Evidence-Based Research Analysis
@@ -237,7 +233,6 @@ async def test_source_grounding_quality_interaction() -> None:
     assert quality_poor["overall"] < 0.5
 
 
-@pytest.mark.asyncio
 async def test_keyword_coverage_across_components() -> None:
     section_config: GrantLongFormSection = GrantLongFormSection(
         id="keyword_test",
@@ -293,7 +288,6 @@ async def test_keyword_coverage_across_components() -> None:
     assert grounding_low["search_query_integration"] < grounding_high["search_query_integration"]
 
 
-@pytest.mark.asyncio
 async def test_clinical_trial_weighting_consistency() -> None:
     clinical_content: str = """
     # Clinical Trial Results

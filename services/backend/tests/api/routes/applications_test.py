@@ -8,13 +8,16 @@ from packages.db.src.json_objects import ResearchObjective
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
     OrganizationUser,
+    PredefinedGrantTemplate,
     Project,
     RagFile,
     RagUrl,
 )
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
@@ -125,6 +128,79 @@ async def test_create_application_minimal(
     assert data["title"] == "Minimal Application"
     assert data["grant_template"]["grant_type"] == GrantType.TRANSLATIONAL.value
     assert data["status"] == ApplicationStatusEnum.IN_PROGRESS.value
+
+
+async def test_create_application_with_predefined_template(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: OrganizationUser,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        institution = GrantingInstitution(full_name="NIH", abbreviation="NIH")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH R01 Standard",
+            description="Specific aims with template guidance",
+            activity_code="R01",
+            grant_type=GrantType.RESEARCH,
+            grant_sections=[
+                {
+                    "id": "specific-aims",
+                    "order": 1,
+                    "title": "Specific Aims",
+                    "parent_id": None,
+                    "needs_applicant_writing": False,
+                }
+            ],
+            granting_institution_id=institution.id,
+            guideline_source="nih/r01.pdf",
+        )
+        session.add(predefined)
+        await session.flush()
+        predefined_id = predefined.id
+
+    application_data = {
+        "title": "NIH Application",
+        "description": "Testing predefined template clone",
+        "grant_type": GrantType.RESEARCH.value,
+        "predefined_template_id": str(predefined_id),
+    }
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        json=application_data,
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    data = response.json()
+    template = data["grant_template"]
+    assert template["predefined_template_id"] == str(predefined_id)
+    assert template["grant_sections"][0]["title"] == "Specific Aims"
+    assert template["predefined_template"]["name"] == "NIH R01 Standard"
+    assert template["predefined_template"]["activity_code"] == "R01"
+
+
+async def test_create_application_with_invalid_predefined_template(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
+        json={
+            "title": "Invalid Template",
+            "grant_type": GrantType.RESEARCH.value,
+            "predefined_template_id": str(uuid4()),
+        },
+        headers={"Authorization": f"Bearer {project_member_user.firebase_uid}"},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "Predefined template not found" in response.text
 
 
 async def test_retrieve_application(
@@ -552,6 +628,7 @@ async def test_download_application_pdf(
     project: Project,
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
+    mocker: MockerFixture,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
@@ -563,6 +640,11 @@ async def test_download_application_pdf(
         )
         session.add(app)
         await session.commit()
+
+    mocker.patch(
+        "services.backend.src.api.routes.grant_applications.html_to_pdf",
+        return_value=b"%PDF-1.4\n%Generated in tests\n",
+    )
 
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{app.id}/download?format=pdf",

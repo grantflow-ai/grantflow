@@ -18,7 +18,7 @@ from packages.db.src.tables import (
     TextVector,
 )
 from packages.shared_utils.src.extraction import extract_file_content
-from packages.shared_utils.src.serialization import deserialize, serialize
+from packages.shared_utils.src.serialization import deserialize, serialize, to_builtins
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -258,8 +258,8 @@ async def create_funding_application(
                         "id": fixture_id,
                         "project_id": project_id,
                         "title": title,
-                        "research_objectives": research_objectives,
-                        "form_inputs": form_inputs,
+                        "research_objectives": to_builtins(research_objectives),
+                        "form_inputs": to_builtins(form_inputs),
                     }
                 )
                 .returning(GrantApplication.id)

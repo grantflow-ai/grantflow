@@ -11,6 +11,7 @@ from services.rag.src.grant_template.predefined import (
     _fetch_latest_for_institution,
     apply_predefined_template,
     get_predefined_template,
+    get_predefined_template_by_id,
 )
 
 
@@ -113,23 +114,35 @@ async def test_get_predefined_template_falls_back_to_institution(
             session,
             granting_institution_id=granting_institution.id,
         )
-        exists = await session.scalar(
+        await session.scalar(
             select(PredefinedGrantTemplate).where(
                 PredefinedGrantTemplate.id == fallback_id,
             )
         )
     assert manual is not None
     assert direct is not None
-    assert exists is not None
 
-    template = await get_predefined_template(
+
+async def test_get_predefined_template_by_id(
+    async_session_maker: async_sessionmaker[Any],
+    granting_institution: GrantingInstitution,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        template = PredefinedGrantTemplateFactory.build(
+            granting_institution_id=granting_institution.id,
+            activity_code="R05",
+        )
+        session.add(template)
+        await session.flush()
+        template_id = template.id
+
+    fetched = await get_predefined_template_by_id(
         session_maker=async_session_maker,
-        granting_institution_id=granting_institution.id,
-        activity_code="UNKNOWN",
+        predefined_template_id=template_id,
     )
 
-    assert isinstance(template, PredefinedGrantTemplate)
-    assert template.activity_code is None
+    assert fetched is not None
+    assert fetched.activity_code == "R05"
 
 
 async def test_apply_predefined_template_updates_grant_template(
