@@ -46,6 +46,7 @@ def upgrade() -> None:
             "granting_institution_id",
             "activity_code",
             name="uq_predefined_templates_institution_activity",
+            postgresql_where=sa.text("deleted_at IS NULL"),
         ),
     )
     op.create_index(

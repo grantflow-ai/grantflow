@@ -194,7 +194,6 @@ async def handle_delete_organization(organization_id: UUID, session_maker: async
                 raise ValidationException("Granting institution not found")
 
             institution.soft_delete()
-            await session.commit()
 
         except SQLAlchemyError as e:
             logger.error("Error deleting granting institution", exc_info=e)
