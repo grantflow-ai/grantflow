@@ -24,6 +24,19 @@ import { routes } from "@/utils/navigation";
 
 const GRANT_TYPES: API.CreatePredefinedGrantTemplate.RequestBody["grant_type"][] = ["RESEARCH", "TRANSLATIONAL"];
 
+const validateName = (name: string): null | string => {
+	const trimmedName = name.trim();
+	if (!trimmedName) return "Template name is required";
+	if (trimmedName.length < 2) return "Template name must be at least 2 characters";
+	if (trimmedName.length > 255) return "Template name must not exceed 255 characters";
+	return null;
+};
+
+const validateActivityCode = (code: string): null | string => {
+	if (code && code.length > 50) return "Activity code must not exceed 50 characters";
+	return null;
+};
+
 interface AdminInstitution {
 	abbreviation: null | string;
 	full_name: string;
@@ -117,10 +130,31 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 		setFormState((prev) => ({ ...prev, [field]: value }));
 	};
 
+	const validateForm = (): boolean => {
+		const errors: string[] = [];
+
+		const nameError = validateName(formState.name);
+		if (nameError) errors.push(nameError);
+
+		if (!formState.grant_type) errors.push("Grant type is required");
+		if (!formState.granting_institution_id) errors.push("Granting institution is required");
+		if (sections.length === 0) errors.push("At least one section is required");
+
+		const codeError = validateActivityCode(formState.activity_code);
+		if (codeError) errors.push(codeError);
+
+		if (errors.length > 0) {
+			toast.error(errors.join(". "));
+			return false;
+		}
+
+		return true;
+	};
+
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!formState.granting_institution_id) {
-			toast.error("Select a granting institution before saving");
+
+		if (!validateForm()) {
 			return;
 		}
 

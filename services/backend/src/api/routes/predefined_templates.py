@@ -1,25 +1,21 @@
-from __future__ import annotations
-
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
+from uuid import UUID
 
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import GrantType
+from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+from packages.db.src.query_helpers import select_active_by_id, update_active_by_id
 from packages.db.src.tables import GrantingInstitution, PredefinedGrantTemplate
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.serialization import to_builtins
-from sqlalchemy import insert, select, update
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import insert, select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-    from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
 
@@ -37,17 +33,17 @@ class CreatePredefinedTemplateBody(TypedDict):
     additional_metadata: NotRequired[dict[str, Any] | None]
 
 
-class UpdatePredefinedTemplateBody(TypedDict, total=False):
-    name: str
-    description: str | None
-    grant_type: str | None
-    activity_code: str | None
-    guideline_source: str | None
-    guideline_version: str | None
-    guideline_hash: str | None
-    granting_institution_id: UUID
-    grant_sections: list[dict[str, Any]]
-    additional_metadata: dict[str, Any] | None
+class UpdatePredefinedTemplateBody(TypedDict):
+    name: NotRequired[str]
+    description: NotRequired[str | None]
+    grant_type: NotRequired[str | None]
+    activity_code: NotRequired[str | None]
+    guideline_source: NotRequired[str | None]
+    guideline_version: NotRequired[str | None]
+    guideline_hash: NotRequired[str | None]
+    granting_institution_id: NotRequired[UUID]
+    grant_sections: NotRequired[list[dict[str, Any]]]
+    additional_metadata: NotRequired[dict[str, Any] | None]
 
 
 class PredefinedTemplateListItem(TypedDict):
@@ -112,9 +108,9 @@ async def _fetch_template(
 ) -> PredefinedGrantTemplate:
     async with session_maker() as session:
         template = await session.scalar(
-            select(PredefinedGrantTemplate)
-            .where(PredefinedGrantTemplate.id == template_id, PredefinedGrantTemplate.deleted_at.is_(None))
-            .options(selectinload(PredefinedGrantTemplate.granting_institution))
+            select_active_by_id(PredefinedGrantTemplate, template_id).options(
+                selectinload(PredefinedGrantTemplate.granting_institution)
+            )
         )
 
         if not template:
@@ -144,6 +140,14 @@ async def handle_create_predefined_template(
             )
             await session.flush()
             await session.refresh(template, attribute_names=["granting_institution"])
+        except IntegrityError as exc:
+            if "uq_predefined_templates_institution_activity" in str(exc):
+                logger.warning("Duplicate predefined template creation attempted", exc_info=exc)
+                raise ValidationException(
+                    "A template with this granting institution and activity code already exists"
+                ) from exc
+            logger.error("Failed to create predefined template", exc_info=exc)
+            raise DatabaseError("Failed to create predefined template", context=str(exc)) from exc
         except SQLAlchemyError as exc:
             logger.error("Failed to create predefined template", exc_info=exc)
             raise DatabaseError("Failed to create predefined template", context=str(exc)) from exc
@@ -156,6 +160,8 @@ async def handle_list_predefined_templates(
     session_maker: async_sessionmaker[Any],
     granting_institution_id: UUID | None = None,
     activity_code: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
 ) -> list[PredefinedTemplateListItem]:
     async with session_maker() as session:
         stmt = (
@@ -163,6 +169,8 @@ async def handle_list_predefined_templates(
             .join(GrantingInstitution, GrantingInstitution.id == PredefinedGrantTemplate.granting_institution_id)
             .where(PredefinedGrantTemplate.deleted_at.is_(None))
             .order_by(PredefinedGrantTemplate.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         )
 
         if granting_institution_id:
@@ -227,8 +235,7 @@ async def handle_update_predefined_template(
     async with session_maker() as session, session.begin():
         try:
             template = await session.scalar(
-                update(PredefinedGrantTemplate)
-                .where(PredefinedGrantTemplate.id == template_id, PredefinedGrantTemplate.deleted_at.is_(None))
+                update_active_by_id(PredefinedGrantTemplate, template_id)
                 .values(data)
                 .returning(PredefinedGrantTemplate)
             )
@@ -237,6 +244,14 @@ async def handle_update_predefined_template(
 
             await session.flush()
             await session.refresh(template, attribute_names=["granting_institution"])
+        except IntegrityError as exc:
+            if "uq_predefined_templates_institution_activity" in str(exc):
+                logger.warning("Duplicate predefined template update attempted", exc_info=exc)
+                raise ValidationException(
+                    "A template with this granting institution and activity code already exists"
+                ) from exc
+            logger.error("Failed to update predefined template", exc_info=exc)
+            raise DatabaseError("Failed to update predefined template", context=str(exc)) from exc
         except SQLAlchemyError as exc:
             logger.error("Failed to update predefined template", exc_info=exc)
             raise DatabaseError("Failed to update predefined template", context=str(exc)) from exc
@@ -257,8 +272,7 @@ async def handle_delete_predefined_template(
     async with session_maker() as session, session.begin():
         try:
             deleted = await session.scalar(
-                update(PredefinedGrantTemplate)
-                .where(PredefinedGrantTemplate.id == template_id, PredefinedGrantTemplate.deleted_at.is_(None))
+                update_active_by_id(PredefinedGrantTemplate, template_id)
                 .values(deleted_at=datetime.now(UTC))
                 .returning(PredefinedGrantTemplate.id)
             )

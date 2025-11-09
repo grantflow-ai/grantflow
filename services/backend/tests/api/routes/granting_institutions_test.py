@@ -227,7 +227,7 @@ async def test_backoffice_admin_can_create_granting_institution(
         },
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     data = response.json()
     assert data["full_name"] == "New Test Institution"
     assert data["abbreviation"] == "NTI"
