@@ -80,6 +80,13 @@ from services.backend.src.api.routes.organizations_members import (
 from services.backend.src.api.routes.organizations_members import (
     handle_update_member_role as handle_update_organization_member_role,
 )
+from services.backend.src.api.routes.predefined_templates import (
+    handle_create_predefined_template,
+    handle_delete_predefined_template,
+    handle_get_predefined_template,
+    handle_list_predefined_templates,
+    handle_update_predefined_template,
+)
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
     handle_create_invitation_redirect_url,
@@ -176,6 +183,11 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_get_granting_institution,
     handle_update_granting_institution,
     handle_delete_granting_institution,
+    handle_list_predefined_templates,
+    handle_create_predefined_template,
+    handle_get_predefined_template,
+    handle_update_predefined_template,
+    handle_delete_predefined_template,
     handle_create_download_url,
     handle_create_upload_url,
     handle_crawl_url,
