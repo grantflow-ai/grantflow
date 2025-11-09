@@ -117,7 +117,7 @@ describe("PredefinedTemplateForm", () => {
 		});
 	});
 
-	it("shows an error when no institution is selected", async () => {
+	it("shows validation errors when required fields are missing", async () => {
 		render(
 			<PredefinedTemplateForm
 				institutions={[] as unknown as API.ListGrantingInstitutions.Http200.ResponseBody}
@@ -128,7 +128,9 @@ describe("PredefinedTemplateForm", () => {
 		fireEvent.submit(screen.getByTestId("predefined-template-form"));
 
 		await waitFor(() => {
-			expect(toastError).toHaveBeenCalledWith("Select a granting institution before saving");
+			expect(toastError).toHaveBeenCalledWith(
+				"Template name is required. Grant type is required. Granting institution is required. At least one section is required",
+			);
 		});
 		expect(mockCreate).not.toHaveBeenCalled();
 	});
