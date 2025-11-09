@@ -8,7 +8,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import PredefinedGrantTemplateFactory
 
-from services.backend.tests.api.routes.granting_institutions_test import backoffice_admin_firebase_uid  # noqa: F401
+from services.backend.tests.api.routes.granting_institutions_test import (  # noqa: F401
+    backoffice_admin_firebase_uid as backoffice_admin_firebase_uid_fixture,
+)
 from services.backend.tests.conftest import TestingClientType
 
 
@@ -35,13 +37,14 @@ def sample_sections() -> list[dict[str, Any]]:
     return [build_section("Specific Aims"), build_section("Research Strategy")]
 
 
-@pytest.mark.usefixtures("backoffice_admin_firebase_uid")
 async def test_backoffice_admin_can_create_predefined_template(
     test_client: TestingClientType,
+    backoffice_admin_firebase_uid: str,
     sample_granting_institution: GrantingInstitution,
     otp_code: str,
     sample_sections: list[dict[str, Any]],
 ) -> None:
+    assert backoffice_admin_firebase_uid
     response = await test_client.post(
         "/predefined-templates",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -62,13 +65,14 @@ async def test_backoffice_admin_can_create_predefined_template(
     assert len(data["grant_sections"]) == 2
 
 
-@pytest.mark.usefixtures("backoffice_admin_firebase_uid")
 async def test_list_predefined_templates_filters(
     test_client: TestingClientType,
+    backoffice_admin_firebase_uid: str,
     sample_granting_institution: GrantingInstitution,
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
+    assert backoffice_admin_firebase_uid
     async with async_session_maker() as session, session.begin():
         other_institution = GrantingInstitution(full_name="Other", abbreviation="OTH")
         session.add(other_institution)
@@ -99,13 +103,14 @@ async def test_list_predefined_templates_filters(
     assert data[0]["granting_institution"]["id"] == str(sample_granting_institution.id)
 
 
-@pytest.mark.usefixtures("backoffice_admin_firebase_uid")
 async def test_get_predefined_template(
     test_client: TestingClientType,
+    backoffice_admin_firebase_uid: str,
     sample_granting_institution: GrantingInstitution,
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
+    assert backoffice_admin_firebase_uid
     async with async_session_maker() as session, session.begin():
         template = PredefinedGrantTemplateFactory.build(
             granting_institution_id=sample_granting_institution.id,
@@ -126,13 +131,14 @@ async def test_get_predefined_template(
     assert data["grant_sections"]
 
 
-@pytest.mark.usefixtures("backoffice_admin_firebase_uid")
 async def test_update_predefined_template(
     test_client: TestingClientType,
+    backoffice_admin_firebase_uid: str,
     sample_granting_institution: GrantingInstitution,
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
+    assert backoffice_admin_firebase_uid
     async with async_session_maker() as session, session.begin():
         template = PredefinedGrantTemplateFactory.build(
             granting_institution_id=sample_granting_institution.id,
@@ -161,13 +167,14 @@ async def test_update_predefined_template(
     assert len(data["grant_sections"]) == 1
 
 
-@pytest.mark.usefixtures("backoffice_admin_firebase_uid")
 async def test_delete_predefined_template(
     test_client: TestingClientType,
+    backoffice_admin_firebase_uid: str,
     sample_granting_institution: GrantingInstitution,
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
+    assert backoffice_admin_firebase_uid
     async with async_session_maker() as session, session.begin():
         template = PredefinedGrantTemplateFactory.build(
             granting_institution_id=sample_granting_institution.id,
