@@ -123,19 +123,19 @@ tasks:
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     vars:
-      CONFIG: '{{default "scripts/config/predefined_templates.yaml" .CONFIG}}'
+      CONFIG: "{{.CONFIG}}"
       KEYS: "{{.KEYS}}"
       DRY_RUN: '{{default "false" .DRY_RUN}}'
       FORCE: '{{default "false" .FORCE}}'
-      ACTIVITY_CODES_CSV: "{{.ACTIVITY_CODES_CSV}}"
+      ACTIVITY_CODES_CSV: '{{default "testing/test_data/sources/guidelines/nih/nih_activity_codes.csv" .ACTIVITY_CODES_CSV}}'
       GUIDELINES_ROOT: '{{default "testing/test_data/sources/guidelines/nih" .GUIDELINES_ROOT}}'
     cmds:
       - docker compose --profile rag-predefined up -d db
       - task: _db:wait-for-ready
       - |
         DATABASE_CONNECTION_STRING="postgresql+asyncpg://local:local@localhost:5433/local" \
-        uv run python scripts/generate_predefined_templates.py \
-          --config {{.CONFIG}}{{if .KEYS}} --keys {{.KEYS}}{{end}}{{if .ACTIVITY_CODES_CSV}} --activity-codes-csv {{.ACTIVITY_CODES_CSV}}{{end}} \
+        uv run python -m services.rag.src.predefined.cli \
+          {{if .CONFIG}}--config {{.CONFIG}}{{end}}{{if .KEYS}} --keys {{.KEYS}}{{end}}{{if .ACTIVITY_CODES_CSV}} --activity-codes-csv {{.ACTIVITY_CODES_CSV}}{{end}} \
           --guidelines-root {{.GUIDELINES_ROOT}}{{if eq .DRY_RUN "true"}} --dry-run{{end}}{{if eq .FORCE "true"}} --force{{end}}
 
   db:up:

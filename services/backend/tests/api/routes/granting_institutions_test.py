@@ -329,17 +329,12 @@ async def test_non_admin_gets_401_on_delete_endpoint(
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-async def test_anyone_can_list_granting_institutions(
+async def test_list_granting_institutions_requires_auth(
     test_client: TestingClientType,
-    sample_granting_institution: GrantingInstitution,
 ) -> None:
     response = await test_client.get("/granting-institutions")
 
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
-    assert any(inst["id"] == str(sample_granting_institution.id) for inst in data)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 async def test_missing_firebase_uid_gets_401(
@@ -372,7 +367,7 @@ async def test_soft_deleted_backoffice_admin_gets_401(
             "abbreviation": "TBD",
         },
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     async with async_session_maker() as session, session.begin():
         admin = await session.scalar(

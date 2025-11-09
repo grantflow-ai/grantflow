@@ -7,7 +7,6 @@ from litestar.di import Provide
 from litestar.status_codes import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
 )
 from litestar.testing import AsyncTestClient
@@ -284,9 +283,10 @@ async def test_create_subscription_duplicate_email(
         json={"email": "grants-duplicate@example.com", "frequency": "daily", "search_params": {"category": "Health"}},
     )
 
-    assert response.status_code == HTTP_400_BAD_REQUEST
+    assert response.status_code == HTTP_201_CREATED
     data = response.json()
-    assert "already exists" in data["detail"]
+    assert data["message"] == "Subscription created successfully."
+    assert "id" in data
 
 
 async def test_create_subscription_invalid_email(test_client: TestingClientType) -> None:

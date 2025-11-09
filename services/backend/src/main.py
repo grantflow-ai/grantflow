@@ -21,6 +21,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_update_application,
 )
 from services.backend.src.api.routes.grant_templates import (
+    handle_apply_predefined_grant_template,
     handle_generate_grant_template,
     handle_update_grant_template,
 )
@@ -178,6 +179,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_grant_application_notifications,
     handle_generate_grant_template,
     handle_update_grant_template,
+    handle_apply_predefined_grant_template,
     handle_create_granting_institution,
     handle_retrieve_granting_institutions,
     handle_get_granting_institution,

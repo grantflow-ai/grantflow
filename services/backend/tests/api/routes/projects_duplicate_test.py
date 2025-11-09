@@ -98,7 +98,7 @@ async def test_duplicate_project_success(
     async with async_session_maker() as session:
         new_project = await session.get(Project, new_project_id)
         assert new_project is not None
-        assert new_project.name == f"Copy of {project.name}"
+        assert new_project.name == expected_name
 
         new_apps = list(
             await session.scalars(

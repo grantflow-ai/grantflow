@@ -37,11 +37,18 @@ async def pull_notifications(
             )
             app_data = build_application_response(application)
 
+            status_value = None
+            updated_at_value = None
+            if isinstance(app_data, dict):
+                status_field = app_data.get("status")
+                status_value = status_field.value if isinstance(status_field, ApplicationStatusEnum) else status_field
+                updated_at_value = app_data.get("updated_at")
+
             logger.debug(
                 "Fetched fresh application data for notifications",
                 application_id=str(application_id),
-                status=app_data["status"].value,
-                updated_at=app_data["updated_at"],
+                status=status_value,
+                updated_at=updated_at_value,
             )
         except ValidationError as e:
             logger.error(
@@ -131,12 +138,20 @@ async def handle_grant_application_notifications(
                     )
 
                     for message in notifications_to_send:
+                        application_data = message.get("application_data")
+                        app_status = None
+                        app_updated_at = None
+                        if isinstance(application_data, dict):
+                            status = application_data.get("status")
+                            app_status = status.value if isinstance(status, ApplicationStatusEnum) else status
+                            app_updated_at = application_data.get("updated_at")
+
                         logger.debug(
                             "Sending notification to WebSocket client",
                             notification_event=message.get("event"),
                             application_id=str(application_id),
-                            app_status=message["application_data"]["status"].value,
-                            app_updated_at=message["application_data"]["updated_at"],
+                            app_status=app_status,
+                            app_updated_at=app_updated_at,
                         )
                         yield message
                 else:
