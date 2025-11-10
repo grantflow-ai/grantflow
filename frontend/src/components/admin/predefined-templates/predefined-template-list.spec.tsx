@@ -19,7 +19,9 @@ const mockRouter = {
 const toastSuccess = toast.success as unknown as Mock;
 const toastError = toast.error as unknown as Mock;
 
-const buildTemplate = (overrides: Partial<API.ListPredefinedGrantTemplates.Http200.ResponseBody[number]> = {}) =>
+const buildTemplate = (
+	overrides: Partial<API.ListGrantingInstitutionPredefinedTemplates.Http200.ResponseBody[number]> = {},
+) =>
 	({
 		activity_code: "R21",
 		created_at: new Date().toISOString(),
@@ -34,7 +36,7 @@ const buildTemplate = (overrides: Partial<API.ListPredefinedGrantTemplates.Http2
 		sections_count: 2,
 		updated_at: new Date().toISOString(),
 		...overrides,
-	}) satisfies API.ListPredefinedGrantTemplates.Http200.ResponseBody[number];
+	}) satisfies API.ListGrantingInstitutionPredefinedTemplates.Http200.ResponseBody[number];
 
 describe("PredefinedTemplateList", () => {
 	beforeEach(() => {

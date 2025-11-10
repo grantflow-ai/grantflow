@@ -11,13 +11,8 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
-type TemplateListItem = API.ListPredefinedGrantTemplates.Http200.ResponseBody[number];
-
-const getInstitutionName = (institution: TemplateListItem["granting_institution"]) =>
-	(institution as { full_name?: null | string }).full_name ?? "Unassigned";
-
 interface PredefinedTemplateListProps {
-	templates: API.ListPredefinedGrantTemplates.Http200.ResponseBody;
+	templates: API.ListGrantingInstitutionPredefinedTemplates.Http200.ResponseBody;
 }
 
 export function PredefinedTemplateList({ templates }: PredefinedTemplateListProps) {
@@ -56,7 +51,9 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 							<p className="text-base font-semibold">{template.name}</p>
 							<p className="text-sm text-muted-foreground">
 								{template.activity_code ? `${template.activity_code} · ` : ""}
-								{getInstitutionName(template.granting_institution)}
+								{/* API type for granting_institution is incomplete - it should have full_name property */}
+								{(template.granting_institution as { full_name?: string } | undefined)?.full_name ??
+									"Unassigned"}
 							</p>
 							<p className="text-xs text-muted-foreground">
 								{template.sections_count} sections · {template.grant_type}

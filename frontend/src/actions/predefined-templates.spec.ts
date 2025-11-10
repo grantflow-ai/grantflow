@@ -42,9 +42,8 @@ vi.mock("@/utils/server-side", async () => {
 
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
-const sampleTemplate: API.GetPredefinedGrantTemplate.Http200.ResponseBody = {
+const sampleTemplate: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody = {
 	activity_code: "R21",
-	additional_metadata: null,
 	created_at: new Date().toISOString(),
 	description: "Sample",
 	grant_sections: [],
@@ -54,9 +53,6 @@ const sampleTemplate: API.GetPredefinedGrantTemplate.Http200.ResponseBody = {
 		full_name: "National Institutes of Health",
 		id: "inst-123",
 	},
-	guideline_hash: null,
-	guideline_source: null,
-	guideline_version: null,
 	id: "tpl-123",
 	name: "Template",
 	sections_count: 0,
@@ -110,15 +106,13 @@ describe("predefined template actions", () => {
 
 	describe("createPredefinedTemplate", () => {
 		it("posts the payload", async () => {
-			const payload = {
-				activity_code: "R21",
+			const payload: API.CreateGrantingInstitutionPredefinedTemplate.RequestBody = {
 				grant_sections: [],
 				grant_type: "RESEARCH",
-				granting_institution_id: "inst-123",
 				name: "New Template",
-			} satisfies Partial<API.CreatePredefinedGrantTemplate.RequestBody>;
+			};
 
-			await createPredefinedTemplate(payload as API.CreatePredefinedGrantTemplate.RequestBody);
+			await createPredefinedTemplate(payload);
 
 			expect(mockPost).toHaveBeenCalledWith("/predefined-templates", {
 				headers: mockAuthHeaders,
@@ -129,7 +123,7 @@ describe("predefined template actions", () => {
 
 	describe("updatePredefinedTemplate", () => {
 		it("patches the resource", async () => {
-			const payload: API.UpdatePredefinedGrantTemplate.RequestBody = {
+			const payload: API.UpdateGrantingInstitutionPredefinedTemplate.RequestBody = {
 				description: "Updated",
 				grant_sections: [],
 			};

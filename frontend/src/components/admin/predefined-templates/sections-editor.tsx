@@ -13,10 +13,9 @@ import {
 	hasDetailedResearchPlan,
 	hasDetailedResearchPlanUpdate,
 	hasGenerationInstructions,
-	hasKeywords,
 	hasLengthConstraint,
-	hasSearchQueries,
 } from "@/types/grant-sections";
+import { hasKeywords, hasSearchQueries } from "@/utils/grant-section-guards";
 import { createLengthConstraint, type SectionLengthConstraint } from "@/utils/length-constraint";
 
 const DEFAULT_WORD_LIMIT = 500;
@@ -52,46 +51,20 @@ export const createPredefinedTemplateSection = (parentId: null | string = null):
 });
 
 const ensureEditableSection = (section: GrantSection): EditableGrantSection => {
-	const base = createPredefinedTemplateSection(section.parent_id);
-
-	let generationInstructions = base.generation_instructions;
-	if (hasGenerationInstructions(section)) {
-		const withInstructions = section as { generation_instructions?: null | string } & GrantSection;
-		generationInstructions = withInstructions.generation_instructions ?? generationInstructions;
-	}
-
-	let detailedResearchPlan = base.is_detailed_research_plan;
-	if (hasDetailedResearchPlan(section)) {
-		const withResearchPlan = section as { is_detailed_research_plan?: boolean | null } & GrantSection;
-		detailedResearchPlan = withResearchPlan.is_detailed_research_plan ?? detailedResearchPlan;
-	}
-
-	let { keywords } = base;
-	if (hasKeywords(section)) {
-		const withKeywords = section as { keywords?: null | string[] } & GrantSection;
-		keywords = withKeywords.keywords ?? keywords;
-	}
-
-	let lengthConstraint = base.length_constraint;
-	if (hasLengthConstraint(section)) {
-		const withLengthConstraint = section as { length_constraint?: SectionLengthConstraint } & GrantSection;
-		lengthConstraint = withLengthConstraint.length_constraint ?? lengthConstraint;
-	}
-
-	let searchQueries = base.search_queries;
-	if (hasSearchQueries(section)) {
-		const withSearchQueries = section as { search_queries?: null | string[] } & GrantSection;
-		searchQueries = withSearchQueries.search_queries ?? searchQueries;
-	}
+	const defaults = createPredefinedTemplateSection(section.parent_id);
 
 	return {
-		...base,
+		...defaults,
 		...section,
-		generation_instructions: generationInstructions,
-		is_detailed_research_plan: detailedResearchPlan,
-		keywords,
-		length_constraint: lengthConstraint,
-		search_queries: searchQueries,
+		generation_instructions: hasGenerationInstructions(section)
+			? section.generation_instructions
+			: defaults.generation_instructions,
+		is_detailed_research_plan: hasDetailedResearchPlan(section)
+			? (section.is_detailed_research_plan ?? defaults.is_detailed_research_plan)
+			: defaults.is_detailed_research_plan,
+		keywords: hasKeywords(section) ? section.keywords : defaults.keywords,
+		length_constraint: hasLengthConstraint(section) ? section.length_constraint : defaults.length_constraint,
+		search_queries: hasSearchQueries(section) ? section.search_queries : defaults.search_queries,
 	};
 };
 
@@ -116,16 +89,6 @@ const normalizeSections = (sections: GrantSection[]): EditableGrantSection[] => 
 
 const splitSiblings = (sections: EditableGrantSection[], parentId: null | string) =>
 	sections.filter((section) => section.parent_id === parentId).toSorted((a, b) => a.order - b.order);
-
-const resolveLengthConstraint = (section: EditableGrantSection) => section.length_constraint;
-
-const resolveGenerationInstructions = (section: EditableGrantSection) => section.generation_instructions;
-
-const resolveKeywords = (section: EditableGrantSection) => section.keywords;
-
-const resolveSearchQueries = (section: EditableGrantSection) => section.search_queries;
-
-const resolveIsResearchPlan = (section: EditableGrantSection) => section.is_detailed_research_plan;
 
 interface SectionsEditorProps {
 	onChange: (nextSections: GrantSection[]) => void;
@@ -215,11 +178,6 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 	};
 
 	const renderSection = (section: EditableGrantSection, isSubsection = false) => {
-		const lengthConstraint = resolveLengthConstraint(section);
-		const generationInstructions = resolveGenerationInstructions(section);
-		const keywords = resolveKeywords(section);
-		const searchQueries = resolveSearchQueries(section);
-		const isResearchPlan = resolveIsResearchPlan(section);
 		const siblings = splitSiblings(normalizedSections, section.parent_id);
 		const index = siblings.findIndex((item) => item.id === section.id);
 		const isExpanded = expandedId === section.id;
@@ -307,13 +265,13 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 									onChange={(event) => {
 										handleSectionUpdate(section.id, {
 											length_constraint: createLengthConstraint(
-												lengthConstraint.value,
+												section.length_constraint.value,
 												event.target.value as "characters" | "words",
-												lengthConstraint.source,
+												section.length_constraint.source,
 											),
 										});
 									}}
-									value={lengthConstraint.type}
+									value={section.length_constraint.type}
 								>
 									{LENGTH_TYPES.map((option) => (
 										<option key={option.value} value={option.value}>
@@ -329,14 +287,14 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 										handleSectionUpdate(section.id, {
 											length_constraint: createLengthConstraint(
 												Number(event.target.value) || 0,
-												lengthConstraint.type,
-												lengthConstraint.source,
+												section.length_constraint.type,
+												section.length_constraint.source,
 											),
 										});
 									}}
 									testId={`section-length-value-${section.id}`}
 									type="number"
-									value={lengthConstraint.value}
+									value={section.length_constraint.value}
 								/>
 							</div>
 						</div>
@@ -348,7 +306,7 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 									handleSectionUpdate(section.id, { generation_instructions: event.target.value });
 								}}
 								placeholder="Provide detailed generation instructions"
-								value={generationInstructions}
+								value={section.generation_instructions}
 							/>
 						</div>
 						<div className="flex items-center justify-between rounded border border-dashed p-3">
@@ -359,7 +317,7 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 								</p>
 							</div>
 							<Switch
-								checked={isResearchPlan}
+								checked={section.is_detailed_research_plan}
 								data-testid={`section-research-plan-${section.id}`}
 								onCheckedChange={(checked) => {
 									handleSectionUpdate(section.id, {
@@ -382,7 +340,7 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 										});
 									}}
 									placeholder="Specific aims, impact, innovation"
-									value={keywords.join(", ")}
+									value={section.keywords.join(", ")}
 								/>
 							</div>
 							<div className="space-y-1">
@@ -398,7 +356,7 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 										});
 									}}
 									placeholder="research strategy guidance\nbiomarker validation plan"
-									value={searchQueries.join("\n")}
+									value={section.search_queries.join("\n")}
 								/>
 							</div>
 						</div>
