@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
+from sqlalchemy import select, update
+
 from packages.db.src.enums import GrantType
 from packages.db.src.tables import GrantTemplate, PredefinedGrantTemplate
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import select, update
 
 if TYPE_CHECKING:
     from uuid import UUID

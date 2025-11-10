@@ -1,18 +1,17 @@
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantingInstitution, GrantTemplate, PredefinedGrantTemplate
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.factories import GrantingInstitutionFactory, PredefinedGrantTemplateFactory
-
-from services.rag.src.grant_template.predefined import (
+from packages.db.src.predefined_templates import (
     _fetch_latest_by_activity,
     _fetch_latest_for_institution,
     apply_predefined_template,
     get_predefined_template,
     get_predefined_template_by_id,
 )
+from packages.db.src.tables import GrantingInstitution, GrantTemplate, PredefinedGrantTemplate
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.factories import GrantingInstitutionFactory, PredefinedGrantTemplateFactory
 
 
 @pytest.fixture

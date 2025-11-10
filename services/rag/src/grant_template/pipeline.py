@@ -4,6 +4,7 @@ from uuid import UUID
 
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
 from packages.db.src.json_objects import CFPAnalysis
+from packages.db.src.predefined_templates import get_predefined_template, get_predefined_template_by_id
 from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantTemplate, PredefinedGrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
@@ -26,10 +27,6 @@ from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
     handle_save_grant_template,
     handle_template_generation_stage,
-)
-from services.rag.src.grant_template.predefined import (
-    get_predefined_template,
-    get_predefined_template_by_id,
 )
 from services.rag.src.utils.job_manager import JobManager
 
