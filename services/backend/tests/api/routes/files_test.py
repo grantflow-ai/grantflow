@@ -1,15 +1,9 @@
 from unittest.mock import patch
 
-import pytest
-
-from services.backend.src.utils.pdf import is_weasyprint_runtime_available
 from services.backend.tests.conftest import TestingClientType
 
 
 async def test_convert_file_pdf(test_client: TestingClientType) -> None:
-    if not is_weasyprint_runtime_available():
-        pytest.skip("WeasyPrint runtime dependencies are not available.")
-
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},

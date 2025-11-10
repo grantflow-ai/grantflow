@@ -47,12 +47,7 @@ async def handle_generate_grant_template(
     trace_id = get_trace_id(request)
 
     async with session_maker() as session:
-        grant_template = await session.scalar(
-            select(GrantTemplate).where(
-                GrantTemplate.id == grant_template_id,
-                GrantTemplate.deleted_at.is_(None),
-            )
-        )
+        grant_template = await session.scalar(select_active_by_id(GrantTemplate, grant_template_id))
 
         if not grant_template:
             raise ValidationException("Grant template not found")
@@ -111,32 +106,21 @@ async def handle_update_grant_template(
     get_trace_id(request)
 
     async with session_maker() as session, session.begin():
-        try:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(
-                    GrantTemplate.id == grant_template_id,
-                    GrantTemplate.deleted_at.is_(None),
-                )
-            )
+        grant_template = await session.scalar(select_active_by_id(GrantTemplate, grant_template_id))
 
-            if not grant_template:
-                raise ValidationException("Grant template not found")
+        if not grant_template:
+            raise ValidationException("Grant template not found")
 
-            update_values: dict[str, Any] = dict(data)
+        update_values: dict[str, Any] = dict(data)
 
-            if "grant_type" in update_values and update_values["grant_type"] is not None:
-                update_values["grant_type"] = GrantType(update_values["grant_type"])
+        if "grant_type" in update_values and update_values["grant_type"] is not None:
+            update_values["grant_type"] = GrantType(update_values["grant_type"])
 
-            await session.execute(
-                update(GrantTemplate)
-                .where(GrantTemplate.id == grant_template.id, GrantTemplate.deleted_at.is_(None))
-                .values(**update_values)
-            )
-        except ValidationException:
-            raise
-        except SQLAlchemyError as e:
-            logger.error("Error updating grant template", exc_info=e)
-            raise DatabaseError("Error updating grant template", context=str(e)) from e
+        await session.execute(
+            update(GrantTemplate)
+            .where(GrantTemplate.id == grant_template.id, GrantTemplate.deleted_at.is_(None))
+            .values(**update_values)
+        )
 
 
 @post(
@@ -169,12 +153,8 @@ async def handle_apply_predefined_grant_template(
         if not predefined:
             raise ValidationException("Predefined template not found")
 
-        try:
-            await apply_predefined_template(
-                session=session,
-                grant_template=grant_template,
-                predefined_template=predefined,
-            )
-        except SQLAlchemyError as exc:
-            logger.error("Error applying predefined grant template", exc_info=exc)
-            raise DatabaseError("Error applying predefined grant template", context=str(exc)) from exc
+        await apply_predefined_template(
+            session=session,
+            grant_template=grant_template,
+            predefined_template=predefined,
+        )
