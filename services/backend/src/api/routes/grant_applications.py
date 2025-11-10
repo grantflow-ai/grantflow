@@ -23,6 +23,7 @@ from packages.db.src.json_objects import (
     ResearchObjective,
     TranslationalResearchDeepDive,
 )
+from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
@@ -376,10 +377,7 @@ async def handle_create_application(
             predefined_template_id = data.get("predefined_template_id")
             if predefined_template_id:
                 predefined_template = await session.scalar(
-                    select(PredefinedGrantTemplate).where(
-                        PredefinedGrantTemplate.id == predefined_template_id,
-                        PredefinedGrantTemplate.deleted_at.is_(None),
-                    )
+                    select_active_by_id(PredefinedGrantTemplate, predefined_template_id)
                 )
                 if not predefined_template:
                     raise ValidationException("Predefined template not found")
