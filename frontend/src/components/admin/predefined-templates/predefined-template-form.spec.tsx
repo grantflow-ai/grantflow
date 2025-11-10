@@ -29,7 +29,7 @@ const institutions: API.ListGrantingInstitutions.Http200.ResponseBody = [
 
 const renderForm = (
 	mode: PredefinedTemplateFormMode,
-	initialTemplate?: API.GetPredefinedGrantTemplate.Http200.ResponseBody,
+	initialTemplate?: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody,
 ) => render(<PredefinedTemplateForm initialTemplate={initialTemplate} institutions={institutions} mode={mode} />);
 
 describe("PredefinedTemplateForm", () => {
@@ -62,9 +62,8 @@ describe("PredefinedTemplateForm", () => {
 	});
 
 	it("updates an existing template", async () => {
-		const template: API.GetPredefinedGrantTemplate.Http200.ResponseBody = {
+		const template: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody = {
 			activity_code: "R01",
-			additional_metadata: null,
 			created_at: new Date().toISOString(),
 			description: "Existing",
 			grant_sections: [
@@ -77,6 +76,7 @@ describe("PredefinedTemplateForm", () => {
 					is_detailed_research_plan: false,
 					keywords: [],
 					length_constraint: { source: null, type: "words", value: 500 },
+					needs_applicant_writing: false,
 					order: 0,
 					parent_id: null,
 					search_queries: [],
@@ -90,9 +90,6 @@ describe("PredefinedTemplateForm", () => {
 				full_name: "National Institutes of Health",
 				id: "inst-1",
 			},
-			guideline_hash: null,
-			guideline_source: null,
-			guideline_version: null,
 			id: "tpl-1",
 			name: "Existing Template",
 			sections_count: 1,
@@ -128,9 +125,7 @@ describe("PredefinedTemplateForm", () => {
 		fireEvent.submit(screen.getByTestId("predefined-template-form"));
 
 		await waitFor(() => {
-			expect(toastError).toHaveBeenCalledWith(
-				"Template name is required. Grant type is required. Granting institution is required. At least one section is required",
-			);
+			expect(toastError).toHaveBeenCalledWith("Template name is required. Granting institution is required");
 		});
 		expect(mockCreate).not.toHaveBeenCalled();
 	});

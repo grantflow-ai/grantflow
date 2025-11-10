@@ -4,7 +4,6 @@ import { DeletePredefinedTemplateButton } from "@/components/admin/predefined-te
 import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { API } from "@/types/api-types";
 import type { GrantSection } from "@/types/grant-sections";
 import { hasGenerationInstructions, hasLengthConstraint } from "@/types/grant-sections";
 import { routes } from "@/utils/navigation";
@@ -24,9 +23,6 @@ const buildSectionTree = (sections: GrantSection[] | undefined) => {
 	});
 	return { children, mains: sorted.filter((section) => section.parent_id === null) };
 };
-
-const getInstitutionName = (institution: API.GetPredefinedGrantTemplate.Http200.ResponseBody["granting_institution"]) =>
-	(institution as { full_name?: null | string }).full_name ?? "Unassigned";
 
 const describeLength = (section: GrantSection) => {
 	if (hasLengthConstraint(section)) {
@@ -70,7 +66,9 @@ export default async function PredefinedTemplateDetailPage({ params }: PageProps
 	const { id } = await params;
 	const template = await getPredefinedTemplate(id);
 	const { children, mains } = buildSectionTree(template.grant_sections);
-	const institutionName = getInstitutionName(template.granting_institution);
+	// API type for granting_institution is incomplete - it should have full_name property
+	const institutionName =
+		(template.granting_institution as { full_name?: string } | undefined)?.full_name ?? "Unassigned";
 	const sectionCount = template.grant_sections.length;
 
 	return (

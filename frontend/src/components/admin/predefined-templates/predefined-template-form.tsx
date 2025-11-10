@@ -22,7 +22,10 @@ import type { GrantSection } from "@/types/grant-sections";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
-const GRANT_TYPES: API.CreatePredefinedGrantTemplate.RequestBody["grant_type"][] = ["RESEARCH", "TRANSLATIONAL"];
+const GRANT_TYPES: API.CreateGrantingInstitutionPredefinedTemplate.RequestBody["grant_type"][] = [
+	"RESEARCH",
+	"TRANSLATIONAL",
+];
 
 const validateName = (name: string): null | string => {
 	const trimmedName = name.trim();
@@ -37,44 +40,21 @@ const validateActivityCode = (code: string): null | string => {
 	return null;
 };
 
-interface AdminInstitution {
-	abbreviation: null | string;
-	full_name: string;
-	id: string;
+interface PersistTemplateArgs {
+	initialTemplate?: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody;
+	mode: "create" | "edit";
+	requestBody: API.UpdateGrantingInstitutionPredefinedTemplate.RequestBody;
+	router: ReturnType<typeof useRouter>;
 }
 
 interface TemplateFormState {
 	activity_code: string;
 	description: string;
-	grant_type: API.CreatePredefinedGrantTemplate.RequestBody["grant_type"];
+	grant_type: API.CreateGrantingInstitutionPredefinedTemplate.RequestBody["grant_type"];
 	granting_institution_id: string;
 	guideline_source: string;
 	guideline_version: string;
 	name: string;
-}
-
-const mapInstitution = (institution: API.ListGrantingInstitutions.Http200.ResponseBody[number]): AdminInstitution => {
-	const abbreviationValue = (institution as { abbreviation?: null | string }).abbreviation;
-
-	return {
-		abbreviation: typeof abbreviationValue === "string" ? abbreviationValue : null,
-		full_name: typeof institution.full_name === "string" ? institution.full_name : "Unnamed institution",
-		id: typeof institution.id === "string" ? institution.id : "",
-	};
-};
-
-const extractTemplateInstitutionId = (
-	template?: API.GetPredefinedGrantTemplate.Http200.ResponseBody,
-): string | undefined => {
-	const institution = template?.granting_institution as { id?: string } | undefined;
-	return typeof institution?.id === "string" ? institution.id : undefined;
-};
-
-interface PersistTemplateArgs {
-	initialTemplate?: API.GetPredefinedGrantTemplate.Http200.ResponseBody;
-	mode: "create" | "edit";
-	requestBody: API.UpdatePredefinedGrantTemplate.RequestBody;
-	router: ReturnType<typeof useRouter>;
 }
 
 export const PREDEFINED_TEMPLATE_FORM_MODE = {
@@ -86,33 +66,31 @@ export type PredefinedTemplateFormMode =
 	(typeof PREDEFINED_TEMPLATE_FORM_MODE)[keyof typeof PREDEFINED_TEMPLATE_FORM_MODE];
 
 interface PredefinedTemplateFormProps {
-	initialTemplate?: API.GetPredefinedGrantTemplate.Http200.ResponseBody;
+	initialTemplate?: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody;
 	institutions: API.ListGrantingInstitutions.Http200.ResponseBody;
 	mode: PredefinedTemplateFormMode;
 }
 
 interface TemplateMetadataPanelProps {
-	adminInstitutions: AdminInstitution[];
 	formState: TemplateFormState;
 	handleChange: (field: keyof TemplateFormState, value: string) => void;
+	institutions: API.ListGrantingInstitutions.Http200.ResponseBody;
 	isEditable: boolean;
-	selectedInstitution?: AdminInstitution;
+	selectedInstitution?: API.ListGrantingInstitutions.Http200.ResponseBody[number];
 }
 
 export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: PredefinedTemplateFormProps) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
-	const adminInstitutions = useMemo(
-		() => institutions.map(mapInstitution).filter((institution) => Boolean(institution.id)),
-		[institutions],
-	);
-	const defaultInstitutionId = adminInstitutions[0]?.id ?? "";
+	const defaultInstitutionId = institutions[0]?.id ?? "";
 
 	const [formState, setFormState] = useState<TemplateFormState>({
 		activity_code: initialTemplate?.activity_code ?? "",
 		description: initialTemplate?.description ?? "",
 		grant_type: initialTemplate?.grant_type ?? "RESEARCH",
-		granting_institution_id: extractTemplateInstitutionId(initialTemplate) ?? defaultInstitutionId,
+		// API type for granting_institution is incomplete - it should have id property
+		granting_institution_id:
+			(initialTemplate?.granting_institution as { id?: string } | undefined)?.id ?? defaultInstitutionId,
 		guideline_source: initialTemplate?.guideline_source ?? "",
 		guideline_version: initialTemplate?.guideline_version ?? "",
 		name: initialTemplate?.name ?? "",
@@ -124,41 +102,20 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 			: [createPredefinedTemplateSection()];
 	const [sections, setSections] = useState<GrantSection[]>(initialSections);
 
-	const isEditable = adminInstitutions.length > 0;
+	const isEditable = institutions.length > 0;
 
 	const handleChange = (field: keyof TemplateFormState, value: string) => {
 		setFormState((prev) => ({ ...prev, [field]: value }));
 	};
 
-	const validateForm = (): boolean => {
-		const errors: string[] = [];
-
-		const nameError = validateName(formState.name);
-		if (nameError) errors.push(nameError);
-
-		if (!formState.grant_type) errors.push("Grant type is required");
-		if (!formState.granting_institution_id) errors.push("Granting institution is required");
-		if (sections.length === 0) errors.push("At least one section is required");
-
-		const codeError = validateActivityCode(formState.activity_code);
-		if (codeError) errors.push(codeError);
-
-		if (errors.length > 0) {
-			toast.error(errors.join(". "));
-			return false;
-		}
-
-		return true;
-	};
-
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		if (!validateForm()) {
+		if (!validateTemplateForm(formState, sections)) {
 			return;
 		}
 
-		const requestBody: API.UpdatePredefinedGrantTemplate.RequestBody = {
+		const requestBody: API.UpdateGrantingInstitutionPredefinedTemplate.RequestBody = {
 			...formState,
 			grant_sections: sections.map((section, index) => ({
 				...section,
@@ -172,26 +129,17 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 	};
 
 	const selectedInstitution = useMemo(
-		() => adminInstitutions.find((institution) => institution.id === formState.granting_institution_id),
-		[formState.granting_institution_id, adminInstitutions],
+		() => institutions.find((institution) => institution.id === formState.granting_institution_id),
+		[formState.granting_institution_id, institutions],
 	);
-
-	const getSubmitLabel = () => {
-		if (isPending) {
-			return "Saving...";
-		}
-		return mode === PREDEFINED_TEMPLATE_FORM_MODE.CREATE ? "Create template" : "Save changes";
-	};
-
-	const submitLabel = getSubmitLabel();
 
 	return (
 		<form className="flex flex-col gap-6" data-testid="predefined-template-form" onSubmit={handleSubmit}>
 			<div className="grid gap-6 lg:grid-cols-[360px_1fr]">
 				<TemplateMetadataPanel
-					adminInstitutions={adminInstitutions}
 					formState={formState}
 					handleChange={handleChange}
+					institutions={institutions}
 					isEditable={isEditable}
 					selectedInstitution={selectedInstitution}
 				/>
@@ -211,7 +159,10 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 					disabled={isPending || !isEditable}
 					type="submit"
 				>
-					{submitLabel}
+					{(() => {
+						if (isPending) return "Saving...";
+						return mode === PREDEFINED_TEMPLATE_FORM_MODE.CREATE ? "Create template" : "Save changes";
+					})()}
 				</Button>
 			</div>
 		</form>
@@ -222,7 +173,7 @@ async function persistTemplate({ initialTemplate, mode, requestBody, router }: P
 	try {
 		if (mode === PREDEFINED_TEMPLATE_FORM_MODE.CREATE) {
 			const created = await createPredefinedTemplate(
-				requestBody as API.CreatePredefinedGrantTemplate.RequestBody,
+				requestBody as API.CreateGrantingInstitutionPredefinedTemplate.RequestBody,
 			);
 			toast.success("Predefined template created");
 			router.push(routes.admin.predefinedTemplates.detail(created.id));
@@ -243,9 +194,9 @@ async function persistTemplate({ initialTemplate, mode, requestBody, router }: P
 }
 
 function TemplateMetadataPanel({
-	adminInstitutions,
 	formState,
 	handleChange,
+	institutions,
 	isEditable,
 	selectedInstitution,
 }: TemplateMetadataPanelProps) {
@@ -295,7 +246,7 @@ function TemplateMetadataPanel({
 								<SelectValue placeholder="Select institution" />
 							</SelectTrigger>
 							<SelectContent>
-								{adminInstitutions.map((institution) => (
+								{institutions.map((institution) => (
 									<SelectItem key={institution.id} value={institution.id}>
 										{institution.full_name}
 									</SelectItem>
@@ -356,4 +307,25 @@ function TemplateMetadataPanel({
 			)}
 		</WizardLeftPane>
 	);
+}
+
+function validateTemplateForm(formState: TemplateFormState, sections: GrantSection[]): boolean {
+	const errors: string[] = [];
+
+	const nameError = validateName(formState.name);
+	if (nameError) errors.push(nameError);
+
+	if (!formState.grant_type) errors.push("Grant type is required");
+	if (!formState.granting_institution_id) errors.push("Granting institution is required");
+	if (sections.length === 0) errors.push("At least one section is required");
+
+	const codeError = validateActivityCode(formState.activity_code);
+	if (codeError) errors.push(codeError);
+
+	if (errors.length > 0) {
+		toast.error(errors.join(". "));
+		return false;
+	}
+
+	return true;
 }

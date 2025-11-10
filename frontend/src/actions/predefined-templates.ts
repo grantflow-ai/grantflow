@@ -9,14 +9,14 @@ export interface ListPredefinedTemplatesFilters {
 	grantingInstitutionId?: string;
 }
 
-export async function createPredefinedTemplate(data: API.CreatePredefinedGrantTemplate.RequestBody) {
+export async function createPredefinedTemplate(data: API.CreateGrantingInstitutionPredefinedTemplate.RequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.post("/predefined-templates", {
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<API.CreatePredefinedGrantTemplate.Http201.ResponseBody>(),
+			.json<API.CreateGrantingInstitutionPredefinedTemplate.Http201.ResponseBody>(),
 	);
 }
 
@@ -36,7 +36,7 @@ export async function getPredefinedTemplate(templateId: string) {
 			.get(`/predefined-templates/${templateId}`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.GetPredefinedGrantTemplate.Http200.ResponseBody>(),
+			.json<API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody>(),
 	);
 }
 
@@ -59,13 +59,13 @@ export async function listPredefinedTemplates(filters: ListPredefinedTemplatesFi
 			.get(path, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.ListPredefinedGrantTemplates.Http200.ResponseBody>(),
+			.json<API.ListGrantingInstitutionPredefinedTemplates.Http200.ResponseBody>(),
 	);
 }
 
 export async function updatePredefinedTemplate(
 	templateId: string,
-	data: API.UpdatePredefinedGrantTemplate.RequestBody,
+	data: API.UpdateGrantingInstitutionPredefinedTemplate.RequestBody,
 ) {
 	return withAuthRedirect(
 		getClient()
@@ -73,6 +73,6 @@ export async function updatePredefinedTemplate(
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<API.UpdatePredefinedGrantTemplate.Http200.ResponseBody>(),
+			.json<API.UpdateGrantingInstitutionPredefinedTemplate.Http200.ResponseBody>(),
 	);
 }

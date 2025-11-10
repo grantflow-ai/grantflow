@@ -30,18 +30,6 @@ export const hasLengthConstraint = (section: GrantSection) => hasConstraint(sect
 export const sectionWordLimit = (section: GrantSection | UpdateGrantSection) =>
 	hasConstraint(section) ? constraintToWordLimit(section.length_constraint) : null;
 
-export const hasKeywords = (
-	section: GrantSection | UpdateGrantSection,
-): section is { keywords: string[] } & (GrantSection | UpdateGrantSection) => {
-	return Object.hasOwn(section, "keywords");
-};
-
-export const hasSearchQueries = (
-	section: GrantSection | UpdateGrantSection,
-): section is { search_queries: string[] } & (GrantSection | UpdateGrantSection) => {
-	return Object.hasOwn(section, "search_queries");
-};
-
 export type AllKeys<T> = T extends unknown ? keyof T : never;
 
 export type FormInputKeys = AllKeys<FormInputs>;
