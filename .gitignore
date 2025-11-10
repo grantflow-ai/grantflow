@@ -3,10 +3,9 @@
 **/.venv
 **/__pycache__/
 **/http-client.private.env.json
-**/TODO.md
-**/todo.md
-**/*TODO*.md
-**/*todo*.md
+# Temporary scratch planning docs (TODO, implementation plans)
+**/*[Tt][Oo][Dd][Oo]*.md
+**/*[Ii][Mm][Pp][Ll][Ee][Mm][Ee][Nn][Tt][Aa][Tt][Ii][Oo][Nn]_[Pp][Ll][Aa][Nn]*.md
 *.iml
 *.pem
 *.plan

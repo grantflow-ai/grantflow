@@ -225,6 +225,7 @@ async def handle_cfp_analysis(
     await job_manager.ensure_not_cancelled()
 
     organization = None
+    activity_code = metadata_result.get("activity_code")
     organization_guidelines = ""
     if metadata_result["org_id"] and (orgs := [org for org in organizations if org["id"] == metadata_result["org_id"]]):
         organization = orgs[0]
@@ -291,4 +292,5 @@ async def handle_cfp_analysis(
         deadlines=metadata_result["deadlines"],
         global_constraints=metadata_result["constraints"],
         organization=organization,
+        activity_code=activity_code,
     )

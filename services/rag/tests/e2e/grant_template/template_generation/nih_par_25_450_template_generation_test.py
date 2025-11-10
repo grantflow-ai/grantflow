@@ -30,6 +30,7 @@ async def test_nih_par_25_450_template_generation_end_to_end(
 
     cfp_analysis = CFPAnalysis(
         subject="Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed)",
+        activity_code="R21",
         sections=[
             CFPSection(
                 id="research_strategy",

@@ -23,11 +23,13 @@ from packages.db.src.json_objects import (
     ResearchObjective,
     TranslationalResearchDeepDive,
 )
+from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
     GrantApplicationSource,
     GrantTemplate,
+    PredefinedGrantTemplate,
     RagFile,
     RagSource,
     RagUrl,
@@ -52,6 +54,7 @@ from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
 from services.backend.src.utils.docx import markdown_to_docx
 from services.backend.src.utils.pdf import html_to_pdf
+from services.rag.src.grant_template.predefined import apply_predefined_template
 
 logger = get_logger(__name__)
 
@@ -79,6 +82,7 @@ class CreateApplicationRequestBody(TypedDict):
     title: str
     grant_type: GrantType
     description: NotRequired[str]
+    predefined_template_id: NotRequired[UUID]
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -133,6 +137,7 @@ class GrantTemplateResponse(TypedDict):
     grant_type: GrantType
     created_at: str
     updated_at: str
+    predefined_template_id: NotRequired[str]
 
 
 class ApplicationResponse(TypedDict):
@@ -267,6 +272,9 @@ def build_application_response(grant_application: GrantApplication) -> Applicati
                 source_response = _build_source_response(template_rag_source.rag_source)
                 template_response["rag_sources"].append(source_response)
 
+        if template.predefined_template_id:
+            template_response["predefined_template_id"] = str(template.predefined_template_id)
+
         response["grant_template"] = template_response
 
     if grant_application.rag_sources:
@@ -325,7 +333,7 @@ async def handle_create_application(
                 )
             )
 
-            await session.scalar(
+            template = await session.scalar(
                 insert(GrantTemplate)
                 .values(
                     {
@@ -336,6 +344,20 @@ async def handle_create_application(
                 )
                 .returning(GrantTemplate)
             )
+
+            predefined_template_id = data.get("predefined_template_id")
+            if predefined_template_id:
+                predefined_template = await session.scalar(
+                    select_active_by_id(PredefinedGrantTemplate, predefined_template_id)
+                )
+                if not predefined_template:
+                    raise ValidationException("Predefined template not found")
+
+                await apply_predefined_template(
+                    session=session,
+                    grant_template=template,
+                    predefined_template=predefined_template,
+                )
 
             await session.commit()
         except SQLAlchemyError as e:
@@ -729,6 +751,7 @@ async def handle_duplicate_application(
                             "granting_institution_id": template.granting_institution_id,
                             "submission_date": template.submission_date,
                             "grant_type": template.grant_type,
+                            "predefined_template_id": template.predefined_template_id,
                         }
                     )
                     .returning(GrantTemplate)

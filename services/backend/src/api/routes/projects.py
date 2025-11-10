@@ -996,6 +996,7 @@ async def handle_duplicate_project(
                                 "granting_institution_id": template.granting_institution_id,
                                 "submission_date": template.submission_date,
                                 "grant_type": template.grant_type or GrantType.RESEARCH,
+                                "predefined_template_id": template.predefined_template_id,
                             }
                         )
                         .returning(GrantTemplate)

@@ -11,6 +11,48 @@ declare module "vitest" {
 
 expect.extend(matchers);
 
+class MemoryStorage implements Storage {
+	get length(): number {
+		return this.store.size;
+	}
+
+	private store = new Map<string, string>();
+
+	clear(): void {
+		this.store.clear();
+	}
+
+	getItem(key: string): null | string {
+		return this.store.has(key) ? this.store.get(key)! : null;
+	}
+
+	key(index: number): null | string {
+		return [...this.store.keys()][index] ?? null;
+	}
+
+	removeItem(key: string): void {
+		this.store.delete(key);
+	}
+
+	setItem(key: string, value: string): void {
+		this.store.set(key, value);
+	}
+}
+
+const mockLocalStorage = new MemoryStorage();
+const mockSessionStorage = new MemoryStorage();
+
+const defineStorage = (key: "localStorage" | "sessionStorage", storage: Storage): void => {
+	Object.defineProperty(globalThis, key, {
+		configurable: true,
+		value: storage,
+		writable: true,
+	});
+};
+
+defineStorage("localStorage", mockLocalStorage);
+defineStorage("sessionStorage", mockSessionStorage);
+
 vi.mock("@/components/ui/select", async () => {
 	const mocks = await import("./radix-ui-mocks");
 	return {
@@ -77,6 +119,11 @@ beforeAll(() => {
 		const counter = (++uuidCounter).toString(16).padStart(12, "0");
 		return `${counter.slice(0, 8)}-${counter.slice(8, 12)}-4000-8000-${counter.padEnd(12, "0")}` as `${string}-${string}-${string}-${string}-${string}`;
 	});
+});
+
+beforeEach(() => {
+	mockLocalStorage.clear();
+	mockSessionStorage.clear();
 });
 
 vi.mock("react", async (importOriginal) => {

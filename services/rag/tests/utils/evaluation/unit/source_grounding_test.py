@@ -1,4 +1,3 @@
-import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
@@ -198,7 +197,6 @@ class TestContentSourceOverlap:
 
 
 class TestSourceGroundingAdvanced:
-    @pytest.mark.asyncio
     async def test_evaluate_source_grounding_high_grounding(self) -> None:
         content = """
         # Biomarker Analysis Methodology
@@ -249,7 +247,6 @@ class TestSourceGroundingAdvanced:
         )
         assert 0.0 <= result["context_citation_density"] <= 1.0
 
-    @pytest.mark.asyncio
     async def test_evaluate_source_grounding_no_context(self) -> None:
         content = "Biomarker analysis methodology for research applications."
         rag_context: list[DocumentDTO] = []
@@ -280,7 +277,6 @@ class TestSourceGroundingAdvanced:
             f"No context should result in low overall score, got {result['overall']}"
         )
 
-    @pytest.mark.asyncio
     async def test_evaluate_source_grounding_empty_content(self) -> None:
         rag_context = [DocumentDTO(content="Biomarker research demonstrates clinical efficacy")]
 

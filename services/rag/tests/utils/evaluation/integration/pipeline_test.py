@@ -110,7 +110,6 @@ def poor_quality_content() -> str:
     """
 
 
-@pytest.mark.asyncio
 async def test_fast_evaluate_high_quality_content(
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
@@ -139,7 +138,6 @@ async def test_fast_evaluate_high_quality_content(
     assert result["coherence_metrics"]["overall"] > 0.3, "Coherence score too low"
 
 
-@pytest.mark.asyncio
 async def test_fast_evaluate_poor_quality_content(
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
@@ -162,7 +160,6 @@ async def test_fast_evaluate_poor_quality_content(
     assert result["execution_time_ms"] < 10000, f"Execution too slow: {result['execution_time_ms']}ms"
 
 
-@pytest.mark.asyncio
 async def test_fast_evaluate_empty_content(
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
@@ -183,7 +180,6 @@ async def test_fast_evaluate_empty_content(
     )
 
 
-@pytest.mark.asyncio
 async def test_fast_evaluate_no_rag_context(
     sample_grant_section: GrantLongFormSection,
     sample_research_objectives: list[ResearchObjective],
@@ -202,7 +198,6 @@ async def test_fast_evaluate_no_rag_context(
     assert result["structural_metrics"]["overall"] > 0.2, "Structural analysis should still work"
 
 
-@pytest.mark.asyncio
 async def test_evaluation_components_functional() -> None:
     content = "This is a research methodology for analyzing biomarkers using statistical methods."
 

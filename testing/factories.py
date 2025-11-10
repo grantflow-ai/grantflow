@@ -29,6 +29,7 @@ from packages.db.src.tables import (
     Organization,
     OrganizationInvitation,
     OrganizationUser,
+    PredefinedGrantTemplate,
     Project,
     ProjectAccess,
     RagFile,
@@ -95,6 +96,7 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
             ),
         ]
     )
+    predefined_template_id = None
 
 
 class RagSourceFactory(SQLAlchemyFactory[RagSource]):
@@ -164,6 +166,19 @@ class GrantingInstitutionSourceFactory(SQLAlchemyFactory[GrantingInstitutionSour
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
+    deleted_at = None
+
+
+class PredefinedGrantTemplateFactory(SQLAlchemyFactory[PredefinedGrantTemplate]):
+    __model__ = PredefinedGrantTemplate
+
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+    grant_type = GrantType.RESEARCH
+    grant_sections = GrantTemplateFactory.grant_sections  # reuse default sections
+    guideline_source = "testing/test_data/sources/guidelines/nih/NIH- Instructions for Research (R).pdf"
+    guideline_version = "Forms-H"
+    activity_code = "R01"
     deleted_at = None
 
 

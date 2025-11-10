@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 
-import pytest
 from packages.db.src.json_objects import ResearchDeepDive
 
 from services.rag.src.grant_application.generate_work_plan_text import (
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import ResearchComponentGenerationDTO
 
 
-@pytest.mark.asyncio
 async def test_adjust_component_length_includes_work_plan_context(mocker: MockerFixture) -> None:
     component: ResearchComponentGenerationDTO = {
         "number": "1.1",
@@ -62,7 +60,6 @@ async def test_adjust_component_length_includes_work_plan_context(mocker: Mocker
     assert _truncate_to_word_limit(result, max_words) == result, "Result must respect max words."
 
 
-@pytest.mark.asyncio
 async def test_adjust_component_length_fallback_truncation_evaluated(mocker: MockerFixture) -> None:
     component: ResearchComponentGenerationDTO = {
         "number": "1.1",

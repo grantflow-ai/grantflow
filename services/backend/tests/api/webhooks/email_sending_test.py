@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
@@ -162,6 +162,7 @@ async def test_email_notification_webhook_success_multiple_users(
     test_client: TestingClientType,
     mock_pubsub_event: PubSubEvent,
     project_owner_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     with (
         patch("services.backend.src.api.webhooks.email_sending.get_user") as mock_get_user,
@@ -171,6 +172,14 @@ async def test_email_notification_webhook_success_multiple_users(
         mock_get_user.return_value = {"email": "webhook-owner@example.com", "display_name": "Owner User"}
         mock_send_email.return_value = None
         mock_verify_token.return_value = True
+
+        assert mock_pubsub_event.message.attributes is not None
+        application_id = UUID(mock_pubsub_event.message.attributes["application_id"])
+
+        async with async_session_maker() as session, session.begin():
+            application = await session.get(GrantApplication, application_id)
+            assert application is not None
+            application.completion_email_sent_at = None
 
         response = await test_client.post(
             "/webhooks/pubsub/email-notifications",
@@ -245,9 +254,7 @@ async def test_email_notification_webhook_authentication_required(test_client: T
         }
     }
 
-    with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
-        mock_get_env.return_value = "test-webhook-token"
-        response = await test_client.post("/webhooks/pubsub/email-notifications", json=event_data)
+    response = await test_client.post("/webhooks/pubsub/email-notifications", json=event_data)
 
     assert response.status_code == 401
 

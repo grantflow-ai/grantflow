@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-import pytest
-
 from services.rag.src.utils.evaluation.text.coherence import (
     analyze_paragraph_unity,
     analyze_sentence_transitions,
@@ -135,7 +133,6 @@ def test_analyze_paragraph_unity_fragmented_paragraphs() -> None:
     assert score < 0.3, f"Expected low unity score, got {score}"
 
 
-@pytest.mark.asyncio
 async def test_calculate_repetition_penalty_unique_sentences() -> None:
     content: str = """
     The research methodology involves systematic analysis of biomarkers.
@@ -146,7 +143,6 @@ async def test_calculate_repetition_penalty_unique_sentences() -> None:
     assert score > 0.6, f"Expected good penalty score for unique content, got {score}"
 
 
-@pytest.mark.asyncio
 async def test_calculate_repetition_penalty_repeated_sentences() -> None:
     content: str = """
     The research methodology involves analysis.
@@ -157,13 +153,11 @@ async def test_calculate_repetition_penalty_repeated_sentences() -> None:
     assert score < 0.6, f"Expected low penalty score for repeated content, got {score}"
 
 
-@pytest.mark.asyncio
 async def test_calculate_repetition_penalty_empty_content() -> None:
     score: float = await calculate_repetition_penalty("")
     assert score == 1.0, f"Empty content should score 1.0, got {score}"
 
 
-@pytest.mark.asyncio
 async def test_evaluate_coherence_high_quality() -> None:
     content: str = """
     # Research Methodology
@@ -197,7 +191,6 @@ async def test_evaluate_coherence_high_quality() -> None:
     assert 0.0 <= result["repetition_penalty"] <= 1.0
 
 
-@pytest.mark.asyncio
 async def test_evaluate_coherence_poor_quality() -> None:
     content: str = """
     Bad writing here. No connections. Random sentences.
@@ -218,7 +211,6 @@ async def test_evaluate_coherence_poor_quality() -> None:
     assert 0.0 <= result["overall"] <= 1.0
 
 
-@pytest.mark.asyncio
 async def test_evaluate_coherence_empty_content() -> None:
     result: CoherenceMetrics = await evaluate_coherence("")
 

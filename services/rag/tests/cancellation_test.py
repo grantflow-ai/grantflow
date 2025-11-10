@@ -62,7 +62,6 @@ async def create_and_cancel_application_job(
         return job
 
 
-@pytest.mark.asyncio
 async def test_template_job_manager_detects_cancelled_job(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
@@ -83,7 +82,6 @@ async def test_template_job_manager_detects_cancelled_job(
         await manager.get_or_create_job_for_stage()
 
 
-@pytest.mark.asyncio
 async def test_application_job_manager_detects_cancelled_job(
     async_session_maker: async_sessionmaker[Any],
     test_application_with_template: GrantApplication,
@@ -104,7 +102,6 @@ async def test_application_job_manager_detects_cancelled_job(
         await manager.get_or_create_job_for_stage()
 
 
-@pytest.mark.asyncio
 async def test_template_pipeline_stops_when_job_cancelled(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
@@ -150,7 +147,6 @@ async def test_template_pipeline_stops_when_job_cancelled(
         assert job.status in [RagGenerationStatusEnum.CANCELLED, RagGenerationStatusEnum.FAILED]
 
 
-@pytest.mark.asyncio
 async def test_application_pipeline_stops_when_job_cancelled(
     async_session_maker: async_sessionmaker[Any],
     test_application_with_template: GrantApplication,
@@ -189,7 +185,6 @@ async def test_application_pipeline_stops_when_job_cancelled(
         ]
 
 
-@pytest.mark.asyncio
 async def test_concurrent_job_cancellation(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,
@@ -229,7 +224,6 @@ async def test_concurrent_job_cancellation(
         await manager.ensure_not_cancelled()
 
 
-@pytest.mark.asyncio
 async def test_job_remains_active_when_not_cancelled(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sections: GrantTemplate,

@@ -178,7 +178,7 @@ async def test_grant_matcher_webhook_with_matches(
     assert "clinical@hospital.org" not in call_args_list
 
 
-async def test_grant_matcher_webhook_no_new_grants(
+async def test_grant_matcher_webhook_no_active_grants(
     grant_matcher_test_client: AsyncTestClient[Any],
     mock_send_grant_alert_email: AsyncMock,
 ) -> None:
@@ -190,7 +190,7 @@ async def test_grant_matcher_webhook_no_new_grants(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["message"] == "No new grants to process"
+    assert data["message"] == "No active grants to process"
     assert data["grants_processed"] == 0
     assert data["subscriptions_processed"] == 0
     assert data["notifications_sent"] == 0
@@ -198,7 +198,7 @@ async def test_grant_matcher_webhook_no_new_grants(
     mock_send_grant_alert_email.assert_not_called()
 
 
-async def test_grant_matcher_webhook_old_grant(
+async def test_grant_matcher_webhook_processes_existing_grant(
     grant_matcher_test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     granting_institution: GrantingInstitution,
@@ -236,10 +236,10 @@ async def test_grant_matcher_webhook_old_grant(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["message"] == "No new grants to process"
-    assert data["grants_processed"] == 0
-
-    mock_send_grant_alert_email.assert_not_called()
+    assert data["message"] == "Grant matching completed"
+    assert data["grants_processed"] == 1
+    assert data["notifications_sent"] == mock_send_grant_alert_email.call_count
+    assert data["notifications_sent"] > 0
 
 
 async def test_grant_matcher_webhook_frequency_filtering(

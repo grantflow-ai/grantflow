@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
@@ -6,10 +7,13 @@ from packages.db.src.tables import (
     EditorDocument,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
     GrantTemplate,
     OrganizationUser,
+    PredefinedGrantTemplate,
     Project,
 )
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
@@ -113,9 +117,7 @@ async def test_duplicate_with_grant_template(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    async with async_session_maker() as session:
-        from sqlalchemy import select
-
+    async with async_session_maker() as session, session.begin():
         existing_template = await session.execute(
             select(GrantTemplate).where(
                 GrantTemplate.grant_application_id == grant_application.id, GrantTemplate.deleted_at.is_(None)
@@ -134,16 +136,32 @@ async def test_duplicate_with_grant_template(
             }
         ]
 
+        # Create predefined template
+        institution = GrantingInstitution(full_name="NIH", abbreviation="NIH")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH Catalog",
+            grant_sections=test_grant_sections,
+            grant_type=GrantType.RESEARCH,
+            granting_institution_id=institution.id,
+        )
+        session.add(predefined)
+        await session.flush()
+
         new_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=test_grant_sections,
             granting_institution_id=None,
             grant_type=GrantType.RESEARCH,
+            predefined_template_id=predefined.id,
         )
         session.add(new_template)
-        await session.commit()
+        await session.flush()
 
         template_id = new_template.id
+        predefined_id = predefined.id
 
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, grant_application.id)
@@ -157,13 +175,14 @@ async def test_duplicate_with_grant_template(
         headers={"Authorization": "Bearer some_token"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == HTTPStatus.CREATED
     data = response.json()
 
     assert "grant_template" in data
     assert data["grant_template"]["id"] != str(template_id)
     assert data["grant_template"]["grant_sections"] == test_grant_sections
     assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
+    assert data["grant_template"]["predefined_template_id"] == str(predefined_id)
 
 
 async def test_duplicate_preserves_rag_sources(

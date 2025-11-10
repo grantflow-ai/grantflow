@@ -39,7 +39,6 @@ async def handle_create_organization(
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(insert(GrantingInstitution).values(data).returning(GrantingInstitution))
-            await session.commit()
         except SQLAlchemyError as e:
             logger.error("Error creating granting institution", exc_info=e)
             raise DatabaseError("Error creating granting institution", context=str(e)) from e
@@ -157,7 +156,6 @@ async def handle_update_organization(
                 .returning(GrantingInstitution)
                 .where(GrantingInstitution.id == organization_id, GrantingInstitution.deleted_at.is_(None))
             )
-            await session.commit()
         except SQLAlchemyError as e:
             logger.error("Error updating granting institution", exc_info=e)
             raise DatabaseError("Error updating granting institution", context=str(e)) from e
@@ -196,7 +194,6 @@ async def handle_delete_organization(organization_id: UUID, session_maker: async
                 raise ValidationException("Granting institution not found")
 
             institution.soft_delete()
-            await session.commit()
 
         except SQLAlchemyError as e:
             logger.error("Error deleting granting institution", exc_info=e)
