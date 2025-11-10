@@ -74,7 +74,12 @@ async def test_pipeline_runs_cfp_analysis_even_with_predefined(
 ) -> None:
     from sqlalchemy import update
 
-    predefined = PredefinedGrantTemplateFactory.build()
+    if not grant_template.granting_institution_id:
+        pytest.skip("grant_template fixture missing granting institution")
+
+    predefined = PredefinedGrantTemplateFactory.build(
+        granting_institution_id=grant_template.granting_institution_id,
+    )
 
     async with async_session_maker() as session:
         session.add(predefined)
