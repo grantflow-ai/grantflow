@@ -33,40 +33,61 @@ export const E2E_TEST_USER = {
 	uid: "e2e-test-user-uid",
 } as const;
 
+const DEFAULT_BACKEND_ORIGIN = "http://localhost:8000";
+const backendOrigin = process.env.E2E_BACKEND_ORIGIN ?? DEFAULT_BACKEND_ORIGIN;
+const backendUrl = new URL(backendOrigin);
+const backendHostname = backendUrl.hostname;
+const backendPort = backendUrl.port || (backendUrl.protocol === "https:" ? "443" : "80");
+
+function isBackendRequest(url: URL, pathname: string): boolean {
+	const requestPort = url.port || (url.protocol === "https:" ? "443" : "80");
+	return url.hostname === backendHostname && requestPort === backendPort && url.pathname === pathname;
+}
+
 export async function mockBackendLogin(page: Page): Promise<void> {
 	const mockJwt = generateMockJWT();
 
 	await page.route("**/login", async (route) => {
-		await (route.request().method() === "POST"
-			? route.fulfill({
-					body: JSON.stringify({
-						is_backoffice_admin: false,
-						jwt_token: mockJwt,
-					}),
-					contentType: "application/json",
-					status: 201,
-				})
-			: route.continue());
+		const requestUrl = new URL(route.request().url());
+
+		if (isBackendRequest(requestUrl, "/login") && route.request().method() === "POST") {
+			await route.fulfill({
+				body: JSON.stringify({
+					is_backoffice_admin: false,
+					jwt_token: mockJwt,
+				}),
+				contentType: "application/json",
+				status: 201,
+			});
+			return;
+		}
+
+		await route.continue();
 	});
 }
 
 export async function mockBackendOrganizations(page: Page): Promise<void> {
 	await page.route("**/organizations", async (route) => {
-		await (route.request().method() === "GET"
-			? route.fulfill({
-					body: JSON.stringify([
-						{
-							created_at: new Date().toISOString(),
-							id: E2E_TEST_USER.organizationId,
-							name: "E2E Test Organization",
-							role: "OWNER",
-							updated_at: new Date().toISOString(),
-						},
-					]),
-					contentType: "application/json",
-					status: 200,
-				})
-			: route.continue());
+		const requestUrl = new URL(route.request().url());
+
+		if (isBackendRequest(requestUrl, "/organizations") && route.request().method() === "GET") {
+			await route.fulfill({
+				body: JSON.stringify([
+					{
+						created_at: new Date().toISOString(),
+						id: E2E_TEST_USER.organizationId,
+						name: "E2E Test Organization",
+						role: "OWNER",
+						updated_at: new Date().toISOString(),
+					},
+				]),
+				contentType: "application/json",
+				status: 200,
+			});
+			return;
+		}
+
+		await route.continue();
 	});
 }
 
