@@ -6,6 +6,7 @@ from litestar import patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import GrantType, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.predefined_templates import apply_predefined_template
 from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, PredefinedGrantTemplate, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
@@ -18,7 +19,6 @@ from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
-from services.rag.src.grant_template.predefined import apply_predefined_template
 
 logger = get_logger(__name__)
 

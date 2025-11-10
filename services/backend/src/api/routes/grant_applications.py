@@ -23,6 +23,7 @@ from packages.db.src.json_objects import (
     ResearchObjective,
     TranslationalResearchDeepDive,
 )
+from packages.db.src.predefined_templates import apply_predefined_template
 from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import (
     EditorDocument,
@@ -54,7 +55,6 @@ from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
 from services.backend.src.utils.docx import markdown_to_docx
 from services.backend.src.utils.pdf import html_to_pdf
-from services.rag.src.grant_template.predefined import apply_predefined_template
 
 logger = get_logger(__name__)
 
