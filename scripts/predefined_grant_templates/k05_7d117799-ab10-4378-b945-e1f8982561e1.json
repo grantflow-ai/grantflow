@@ -1,0 +1,395 @@
+{
+	"activity_code": "K05",
+	"description": "For the support of a research scientist qualified to pursue independent research which would extend the research program of the sponsoring institution, or to direct an essential part of this research program.",
+	"grant_sections": [
+		{
+			"evidence": "",
+			"id": "1",
+			"needs_applicant_writing": false,
+			"order": 1,
+			"parent_id": null,
+			"title": "Project Summary and Relevance"
+		},
+		{
+			"evidence": "",
+			"id": "1.1",
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": "1",
+			"title": "Project Summary/Abstract"
+		},
+		{
+			"evidence": "",
+			"id": "1.2",
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": "1",
+			"title": "Public Health Relevance Statement"
+		},
+		{
+			"evidence": "",
+			"id": "2",
+			"needs_applicant_writing": false,
+			"order": 4,
+			"parent_id": null,
+			"title": "Research Plan Narrative"
+		},
+		{
+			"evidence": "",
+			"id": "2.1",
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": "2",
+			"title": "Specific Aims"
+		},
+		{
+			"definition": "The detailed narrative describing the background, rationale, methodology, and expected impact of the proposed research.",
+			"depends_on": ["2.1"],
+			"evidence": "",
+			"generation_instructions": "Organize the narrative strictly into three sections: Significance, Innovation, and Approach (SIA). **Significance:** Explain the importance of the problem and how the project will advance scientific knowledge. **Innovation:** Describe how the project challenges current research paradigms or uses novel methods/tools. **Approach:** Detail the experimental design, methods, and procedures for each Specific Aim. Include preliminary data supporting feasibility. Crucially, discuss potential pitfalls, limitations, and explicit alternative strategies for each major experiment. Describe the statistical plan and measures for ensuring rigor and reproducibility. Maintain a data-driven, persuasive tone.",
+			"guidelines": [
+				"Organize the narrative into three distinct sections: Significance, Innovation, and Approach.",
+				"The Significance section must explain the importance of the problem and how the project will improve scientific knowledge.",
+				"The Innovation section must describe how the project challenges current research paradigms or uses novel methods.",
+				"The Approach section must detail the methodology, including potential problems and alternative strategies."
+			],
+			"id": "2.2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Experimental design",
+				"Preliminary data",
+				"Potential problems",
+				"Alternative strategies",
+				"Rigor and reproducibility",
+				"Statistical analysis plan",
+				"Methodology"
+			],
+			"needs_applicant_writing": true,
+			"order": 6,
+			"parent_id": "2",
+			"search_queries": [
+				"NIH Research Strategy Significance Innovation Approach examples",
+				"Rigor and reproducibility NIH grant writing",
+				"Statistical analysis plan for biomedical research grant",
+				"Preliminary data requirements NIH K award",
+				"Risk mitigation strategies experimental design"
+			],
+			"title": "Research Strategy (Significance, Innovation, Approach)",
+			"topics": [
+				"Knowledge gap justification",
+				"Novelty and paradigm shift",
+				"Detailed experimental protocols",
+				"Risk mitigation and alternatives",
+				"Data interpretation and analysis"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "3",
+			"needs_applicant_writing": false,
+			"order": 7,
+			"parent_id": null,
+			"title": "Career Development Narrative"
+		},
+		{
+			"definition": "Narrative detailing the applicant's professional history, qualifications, and future career aspirations.",
+			"depends_on": ["1.2"],
+			"evidence": "",
+			"generation_instructions": "Detail the candidate's educational and research history, highlighting experiences relevant to the proposed project. Clearly articulate the long-term career goal (e.g., R01-funded independent investigator). Justify the need for the K award mechanism, specifically identifying the skills or knowledge gaps that require structured training and mentorship to achieve independence. The narrative must be persuasive, demonstrating strong potential while acknowledging the need for further development.",
+			"guidelines": [
+				"Describe the candidate's past training and experience relevant to the proposed research and career goals.",
+				"Clearly articulate the long-term career goals and how the K award will facilitate achieving them.",
+				"Justify the need for further career development and training."
+			],
+			"id": "3.1",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Career trajectory",
+				"Professional qualifications",
+				"Past training",
+				"Research experience",
+				"Long-term goals",
+				"K award justification",
+				"Transition to independence",
+				"Skill gaps analysis"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": "3",
+			"search_queries": [
+				"NIH K award Candidate Background section examples",
+				"Justifying need for K award funding",
+				"Transition to research independence plan",
+				"NIH K award career goals narrative"
+			],
+			"title": "Candidate Background and Career Goals",
+			"topics": [
+				"Academic and research history",
+				"Relevant productivity summary",
+				"5-year career plan",
+				"Justification for mentored support"
+			]
+		},
+		{
+			"definition": "Detailed description of the formal and informal training activities the candidate will undertake during the award period.",
+			"depends_on": ["3.1"],
+			"evidence": "",
+			"generation_instructions": "Provide a detailed, structured plan for training activities that directly supports the research plan (2.2) and career goals (3.1). List specific didactic courses, workshops, or specialized laboratory training. Specify the time commitment, ensuring it meets NIH requirements (typically 75% effort dedicated to research/training). Explain precisely how the training activities are integrated with the research aims (e.g., 'Course X will enable the statistical analysis required for Aim 2'). Include plans for professional development, such as grant writing and presentation skills.",
+			"guidelines": [
+				"Provide a detailed plan for structured training activities, including coursework, workshops, and skill development.",
+				"Explain how the training plan integrates with and supports the proposed research project.",
+				"Specify the time commitment dedicated to research and training activities."
+			],
+			"id": "3.2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Structured training",
+				"Skill development",
+				"Didactic coursework",
+				"Research integration",
+				"Time commitment",
+				"Professional development",
+				"Responsible conduct of research",
+				"Grant writing skills"
+			],
+			"needs_applicant_writing": true,
+			"order": 9,
+			"parent_id": "3",
+			"search_queries": [
+				"NIH K award training plan requirements",
+				"Integrating training plan with research aims",
+				"Didactic training activities for K award",
+				"NIH required time commitment K award"
+			],
+			"title": "Training Plan",
+			"topics": [
+				"Specific training objectives",
+				"Formal coursework schedule",
+				"Research skill acquisition",
+				"Time allocation (research vs. training)"
+			]
+		},
+		{
+			"definition": "Documentation and narrative justifying the suitability of the mentor(s) and the institutional environment for the candidate's training and research.",
+			"depends_on": ["3.2"],
+			"evidence": "",
+			"generation_instructions": "Include a statement detailing the primary mentor's qualifications, funding history, and experience mentoring K awardees. Describe the specific plan for supervision, including the frequency (e.g., weekly one-on-one meetings) and nature of interaction. Justify the institutional environment, detailing the availability of necessary facilities, equipment, and patient populations. Provide evidence of institutional commitment to the candidate's career development (e.g., protected time, space, financial support). Ensure the mentor's plan directly addresses the candidate's identified skill gaps.",
+			"guidelines": [
+				"Include a statement from the primary mentor detailing their commitment, qualifications, and plan for supervision.",
+				"Justify the institutional environment, demonstrating adequate facilities, resources, and commitment to the candidate's career development.",
+				"Describe the frequency and nature of interaction between the candidate and the mentor(s)."
+			],
+			"id": "3.3",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Primary mentor qualifications",
+				"Mentorship plan",
+				"Institutional commitment",
+				"Research facilities",
+				"Resource availability",
+				"Frequency of interaction",
+				"Advisory committee",
+				"Institutional support"
+			],
+			"needs_applicant_writing": true,
+			"order": 10,
+			"parent_id": "3",
+			"search_queries": [
+				"NIH K award mentor statement requirements",
+				"Institutional commitment letter K award",
+				"Frequency of mentor-mentee interaction NIH",
+				"Justifying research environment suitability K award"
+			],
+			"title": "Mentor/Sponsor Statement and Environment Justification",
+			"topics": [
+				"Mentor expertise alignment",
+				"Supervision structure and frequency",
+				"Institutional resources description",
+				"Departmental commitment statement"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "4",
+			"needs_applicant_writing": false,
+			"order": 11,
+			"parent_id": null,
+			"title": "Budget and Resources"
+		},
+		{
+			"definition": "Narrative explanation detailing the necessity and calculation of all requested budget items.",
+			"depends_on": ["2.2"],
+			"evidence": "",
+			"generation_instructions": "Provide a clear, itemized justification for all requested budget items. **Personnel:** Justify the role and percentage effort for all key personnel, linking their tasks directly to the Specific Aims (2.1) and Training Plan (3.2). **Supplies:** Itemize major supply categories and justify their necessity. **Travel:** Justify travel costs, typically for one scientific meeting per year relevant to the research or training. If using a modular budget, provide a detailed justification for personnel and consortium costs, explaining why the requested module amount is appropriate.",
+			"guidelines": [
+				"Provide a detailed justification for all personnel, supplies, travel, and other direct costs.",
+				"Explain why each cost item is necessary for the proposed research and training.",
+				"If a modular budget is used, provide a justification for personnel and consortium costs."
+			],
+			"id": "4.1",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Personnel justification",
+				"Direct costs",
+				"Modular budget justification",
+				"Consortium costs",
+				"Supplies itemization",
+				"Travel justification",
+				"Cost necessity",
+				"Effort allocation"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": "4",
+			"search_queries": [
+				"NIH K award budget justification examples",
+				"Justifying personnel effort NIH grant",
+				"Modular budget justification requirements NIH",
+				"Allowable direct costs NIH K award"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Personnel effort justification",
+				"Supply cost breakdown",
+				"Equipment necessity rationale",
+				"Cost calculation methodology"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "4.2",
+			"needs_applicant_writing": true,
+			"order": 13,
+			"parent_id": "4",
+			"title": "Facilities and Other Resources"
+		},
+		{
+			"evidence": "",
+			"id": "4.3",
+			"needs_applicant_writing": true,
+			"order": 14,
+			"parent_id": "4",
+			"title": "Equipment"
+		},
+		{
+			"evidence": "",
+			"id": "4.4",
+			"needs_applicant_writing": true,
+			"order": 15,
+			"parent_id": "4",
+			"title": "Project/Performance Location(s)"
+		},
+		{
+			"evidence": "",
+			"id": "5",
+			"needs_applicant_writing": false,
+			"order": 16,
+			"parent_id": null,
+			"title": "Regulatory and Data Plans"
+		},
+		{
+			"definition": "Required documentation detailing the involvement of human subjects and/or clinical trials in the proposed research.",
+			"depends_on": ["2.2"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information form (K.500). If human subjects are involved, describe the protection measures, recruitment plan, and inclusion/exclusion criteria. If a clinical trial is proposed, provide the detailed protocol, including specific aims, study design, outcome measures, and statistical analysis plan. Explicitly address how PHI will be handled to meet strict regulatory requirements, ensuring no sensitive PII/PHI is included in the application narrative itself.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information form (K.500).",
+				"If applicable, provide detailed protocol information for any proposed clinical trials.",
+				"Ensure strict handling requirements are met regarding Protected Health Information (PHI)."
+			],
+			"id": "5.1",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human subjects research",
+				"Clinical trial protocol",
+				"PHS K.500 form",
+				"Regulatory compliance",
+				"IRB approval",
+				"Recruitment plan",
+				"Protected health information (PHI)",
+				"Risk assessment",
+				"Inclusion criteria"
+			],
+			"needs_applicant_writing": true,
+			"order": 17,
+			"parent_id": "5",
+			"search_queries": [
+				"NIH PHS Human Subjects and Clinical Trials Information K.500",
+				"Clinical trial protocol requirements NIH",
+				"Data Safety Monitoring Plan NIH grant",
+				"Handling Protected Health Information in NIH application"
+			],
+			"title": "Human Subjects and Clinical Trials Information",
+			"topics": [
+				"Human subjects involvement determination",
+				"Clinical trial phase and design",
+				"Data safety monitoring plan",
+				"PHI handling procedures"
+			]
+		},
+		{
+			"definition": "A detailed plan outlining the management, preservation, and sharing of scientific data generated by the research.",
+			"depends_on": ["2.2", "5.1"],
+			"evidence": "",
+			"generation_instructions": "Develop a detailed plan describing the types of scientific data that will be generated and shared. Identify the specific repository (e.g., institutional, public) where data will be stored. Specify the metadata standards and persistent identifiers that will be used. Outline the timeline for data sharing (e.g., no later than publication). Address any factors that may restrict sharing, such as privacy concerns or informed consent limitations, and detail mitigation strategies. Ensure full compliance with the 2023 NIH Data Management and Sharing Policy.",
+			"guidelines": [
+				"Describe how scientific data will be managed, preserved, and shared during and after the project.",
+				"Address the types of data to be shared, the standards used, and timelines for sharing.",
+				"Outline any factors that may restrict data sharing, such as privacy concerns or ethical considerations."
+			],
+			"id": "5.2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Scientific data management",
+				"Data preservation",
+				"Data sharing plan",
+				"Metadata standards",
+				"Data repository",
+				"Data access timeline",
+				"Privacy concerns",
+				"NIH DMSP policy"
+			],
+			"needs_applicant_writing": true,
+			"order": 18,
+			"parent_id": "5",
+			"search_queries": [
+				"NIH Data Management and Sharing Plan requirements 2023",
+				"Selecting data repository NIH grant",
+				"Metadata standards for biomedical data sharing",
+				"Ethical considerations data sharing plan"
+			],
+			"title": "Data Management and Sharing (DMS) Plan",
+			"topics": [
+				"Data types to be shared",
+				"Repository selection and standards",
+				"Timeline for data sharing",
+				"Restrictions and mitigation strategies"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "5.3",
+			"needs_applicant_writing": true,
+			"order": 19,
+			"parent_id": "5",
+			"title": "Resource Sharing Plan(s)"
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "86107a2f82d83e330ff6ee23eea75da18929e5de2eef702c01be7af1ea7650bd",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for Career Development (K) Grants.pdf",
+	"guideline_version": "Forms-H",
+	"id": "7d117799-ab10-4378-b945-e1f8982561e1",
+	"name": "Research Scientist Award"
+}

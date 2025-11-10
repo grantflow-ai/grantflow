@@ -1,0 +1,332 @@
+{
+	"activity_code": "T14",
+	"description": "For support of international and national meetings, conferences and workshops.",
+	"grant_sections": [
+		{
+			"evidence": "",
+			"id": "R1",
+			"needs_applicant_writing": false,
+			"order": 1,
+			"parent_id": null,
+			"title": "Project Overview and Summary"
+		},
+		{
+			"evidence": "",
+			"id": "R1.1",
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": "R1",
+			"title": "Project Summary/Abstract"
+		},
+		{
+			"evidence": "",
+			"id": "R1.2",
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": "R1",
+			"title": "Public Health Relevance Statement"
+		},
+		{
+			"depends_on": ["R1.1", "R1.2", "R3", "R4.1"],
+			"evidence": "",
+			"generation_instructions": "Develop a comprehensive Research Training Program Plan following the specific instructions outlined in T.420. Detail the program's objectives, the scientific areas of focus, and the specific curriculum (didactic coursework, research rotations). Describe the mentorship model, including faculty selection criteria and oversight mechanisms. Outline the recruitment strategy, emphasizing efforts to enhance diversity and inclusion. Define measurable evaluation metrics for trainee progress and program success (e.g., time to degree, publication rate, career placement). Provide strong, evidence-based documentation of institutional commitment (e.g., protected time, financial support, facilities). Ensure all required components specific to the PHS 398 Training Program Plan are addressed.",
+			"guidelines": [
+				"Follow the specific instructions outlined in section T.420 of the application guide for the PHS 398 Research Training Program Plan Form.",
+				"The plan must detail the structure, goals, and environment of the research training program.",
+				"Address all required components specific to the PHS 398 Training Program Plan.",
+				"Ensure the plan demonstrates the institutional commitment to training and career development."
+			],
+			"id": "R2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": true,
+			"keywords": [
+				"PHS 398 Training Program Plan",
+				"Trainee recruitment strategy",
+				"Mentorship structure",
+				"Curriculum design",
+				"Institutional commitment",
+				"Responsible conduct of research (RCR)",
+				"Rigor and reproducibility training",
+				"Program evaluation metrics",
+				"Career development outcomes",
+				"Diversity enhancement plan",
+				"Faculty qualifications",
+				"Didactic components"
+			],
+			"needs_applicant_writing": true,
+			"order": 4,
+			"parent_id": null,
+			"search_queries": [
+				"PHS 398 Research Training Program Plan requirements T.420",
+				"NIH T32 grant evaluation metrics",
+				"Best practices for RCR training NIH guidelines",
+				"Institutional commitment letter requirements NIH training grant",
+				"Trainee recruitment and diversity enhancement strategies NIH",
+				"Curriculum design for biomedical research training programs",
+				"NIH rigor and reproducibility training requirements T-series",
+				"T.420 PHS 398 Research Training Program Plan components"
+			],
+			"title": "PHS 398 Research Training Program Plan",
+			"topics": [
+				"Program structure and administration",
+				"Trainee selection and retention",
+				"Didactic and research components",
+				"Faculty qualifications and oversight",
+				"Program evaluation and tracking",
+				"Institutional support and resources",
+				"RCR and scientific rigor training"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "R3",
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": null,
+			"title": "Key Personnel and Biosketches"
+		},
+		{
+			"evidence": "",
+			"id": "R4",
+			"needs_applicant_writing": false,
+			"order": 6,
+			"parent_id": null,
+			"title": "Budget and Resources"
+		},
+		{
+			"depends_on": ["R1.1", "R1.2"],
+			"evidence": "",
+			"generation_instructions": "Prepare a detailed justification for all requested costs, ensuring they are necessary, reasonable, and allocable to the proposed training activities. Clearly distinguish between modular and detailed budget requirements based on the FOA. If using a detailed budget, specify calculations for personnel effort, supplies, and travel. Justify trainee stipends, tuition, and institutional allowance based on current NIH guidelines. Ensure the justification directly supports the scope of the training plan (R2) and adheres to the cost inclusion guidance in T.110.",
+			"guidelines": [
+				"Justify all requested costs clearly and specifically, linking them directly to the proposed training activities.",
+				"Distinguish between modular and detailed budget requirements based on the Funding Opportunity Announcement (FOA).",
+				"Explain the kinds of costs included in the budget submission (T.110)."
+			],
+			"id": "R4.1",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Detailed budget justification",
+				"Modular budget",
+				"Allowable costs",
+				"Trainee stipends",
+				"Tuition and fees",
+				"Institutional allowance",
+				"Budget categories",
+				"NIH cost principles",
+				"T.300 R&R Budget Form"
+			],
+			"needs_applicant_writing": true,
+			"order": 7,
+			"parent_id": "R4",
+			"search_queries": [
+				"NIH Training Grant budget justification examples",
+				"Allowable costs PHS 398 Training Budget Form T.330",
+				"Modular vs detailed budget NIH T-series",
+				"Justifying trainee stipends and tuition NIH",
+				"R&R Budget Form T.300 instructions"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Cost justification methodology",
+				"Budget structure (modular vs. detailed)",
+				"Direct and indirect costs calculation",
+				"Alignment with training activities"
+			]
+		},
+		{
+			"depends_on": ["R2"],
+			"evidence": "",
+			"generation_instructions": "Provide a detailed description of the physical and intellectual environment available to support the proposed training program. List and describe key research facilities, specialized equipment, and core laboratories (e.g., genomics, imaging). Explain how trainees will access and utilize these resources effectively. If multiple performance sites are involved (T.230), describe the resources at each location and how collaboration will be managed. Emphasize the suitability of the environment for high-quality research training and its contribution to the program's success.",
+			"guidelines": [
+				"Describe the facilities, resources, and environment available to support the proposed training program.",
+				"Detail how the institutional setting is appropriate for the scope and complexity of the training activities.",
+				"Ensure the description covers all project/performance site locations (T.230)."
+			],
+			"id": "R4.2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Institutional resources",
+				"Training environment",
+				"Project performance sites",
+				"Core facilities access",
+				"Research infrastructure",
+				"Computational resources",
+				"T.230 site location",
+				"Institutional support"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": "R4",
+			"search_queries": [
+				"NIH Facilities and Resources description training grant",
+				"Institutional environment description NIH T-series",
+				"Core facility access for trainees NIH",
+				"T.230 Project/Performance Site Location requirements",
+				"Describing computational resources for NIH grants"
+			],
+			"title": "Facilities and Other Resources",
+			"topics": [
+				"Adequacy of facilities",
+				"Availability of specialized resources",
+				"Institutional commitment to training",
+				"Project site description and suitability"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "R5",
+			"needs_applicant_writing": false,
+			"order": 9,
+			"parent_id": null,
+			"title": "Compliance and Data Plans"
+		},
+		{
+			"depends_on": ["R2"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information form (T.500) thoroughly. If human subjects are involved in the research component of the training, provide detailed protocols, risk/benefit assessments, and protection plans. If a clinical trial is proposed, describe the study design (e.g., randomization, blinding, endpoints), participant recruitment, and the Data Safety Monitoring Plan (DSMP). Ensure compliance with all relevant NIH policies regarding human subjects research and explicitly state that no Protected Health Information (PHI) is included in the application documents.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information form (T.500).",
+				"Provide detailed information regarding human subjects involvement and clinical trial design, if applicable.",
+				"Do not include Protected Health Information (PHI) in the application documents.",
+				"Ensure compliance with all relevant NIH policies regarding human subjects research."
+			],
+			"id": "R5.1",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human Subjects Research",
+				"Clinical Trials Information Form T.500",
+				"Regulatory compliance",
+				"IRB approval status",
+				"Patient cohort description",
+				"Data safety monitoring plan (DSMP)",
+				"Protected health information (PHI)",
+				"Inclusion criteria",
+				"Risk assessment",
+				"Trainee involvement"
+			],
+			"needs_applicant_writing": true,
+			"order": 10,
+			"parent_id": "R5",
+			"search_queries": [
+				"PHS Human Subjects and Clinical Trials Information T.500 guidance",
+				"NIH definition of clinical trial",
+				"Data Safety Monitoring Plan requirements NIH",
+				"Inclusion of women and minorities NIH policy",
+				"IRB approval process NIH grant application",
+				"Trainee involvement in human subjects research protocols",
+				"Avoiding PHI in NIH grant submissions"
+			],
+			"title": "Human Subjects and Clinical Trials Information",
+			"topics": [
+				"Human subjects protection protocols",
+				"Clinical trial design elements",
+				"Regulatory oversight and compliance",
+				"PHI exclusion requirements",
+				"Ethical considerations in training research"
+			]
+		},
+		{
+			"depends_on": ["R2", "R5.1"],
+			"evidence": "",
+			"generation_instructions": "Develop a detailed Data Management and Sharing Plan (DMS) adhering to the NIH DMS Policy requirements. Specify the types of scientific data to be generated, the standards used (e.g., metadata), the repository selected for preservation and sharing, the timeline for data access, and the procedures for oversight and management. Ensure the plan aligns with the budget justification (R4.1) regarding data sharing costs. Emphasize how trainees will be educated in responsible data stewardship and data security.",
+			"guidelines": [
+				"Describe how scientific data generated by the project will be managed, preserved, and shared.",
+				"Ensure the plan adheres to the NIH Data Management and Sharing (DMS) Policy requirements.",
+				"Specify the timelines and methods for data access and distribution."
+			],
+			"id": "R5.2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"NIH Data Management and Sharing Policy (DMS)",
+				"Scientific data preservation",
+				"Data sharing repositories",
+				"Metadata standards",
+				"Data access timelines",
+				"Data security protocols",
+				"Data curation",
+				"Responsible data stewardship"
+			],
+			"needs_applicant_writing": true,
+			"order": 11,
+			"parent_id": "R5",
+			"search_queries": [
+				"NIH Data Management and Sharing Policy required elements",
+				"Selecting NIH-approved data repositories",
+				"Budgeting for data management and sharing NIH",
+				"Data curation and metadata standards for biomedical research"
+			],
+			"title": "Data Management and Sharing (DMS) Plan",
+			"topics": [
+				"Data lifecycle management",
+				"Data sharing mechanisms and repositories",
+				"NIH DMS policy compliance",
+				"Budgeting for data sharing"
+			]
+		},
+		{
+			"depends_on": ["R2", "R5.1", "R5.2"],
+			"evidence": "",
+			"generation_instructions": "Describe any unique research resources (e.g., cell lines, animal models, novel software, specialized databases) that will be generated or utilized by the trainees. Detail the plan for making these resources available to the broader scientific community, adhering to relevant NIH policies (e.g., Model Organism Sharing Policy). Clearly state the mechanism and timeline for distribution. If there are any limitations due to intellectual property or licensing, these must be explicitly explained and justified in detail.",
+			"guidelines": [
+				"Detail plans for sharing research resources, such as unique reagents, model organisms, or software.",
+				"Address specific resource sharing policies (e.g., Model Organism Sharing Policy) if relevant.",
+				"Explain any limitations or restrictions on resource sharing."
+			],
+			"id": "R5.3",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Research resource sharing",
+				"Unique reagents",
+				"Model organisms sharing policy",
+				"Software distribution plan",
+				"Intellectual property limitations",
+				"Resource availability",
+				"NIH sharing policies"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": "R5",
+			"search_queries": [
+				"NIH Research Resource Sharing Plan requirements",
+				"Model Organism Sharing Policy NIH guidance",
+				"Sharing unique reagents and software NIH",
+				"Intellectual property restrictions resource sharing"
+			],
+			"title": "Resource Sharing Plan(s)",
+			"topics": [
+				"Resource identification and availability",
+				"Sharing mechanisms and timelines",
+				"Policy adherence (e.g., Model Organism)",
+				"Limitations on distribution justification"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "R6",
+			"needs_applicant_writing": false,
+			"order": 13,
+			"parent_id": null,
+			"title": "Institutional Training Data Tables"
+		},
+		{
+			"evidence": "",
+			"id": "R7",
+			"needs_applicant_writing": false,
+			"order": 14,
+			"parent_id": null,
+			"title": "Reference Letters and Institutional Commitments"
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "299f4422891da46756c9680b15df1a2b4de054a4afb46a04659f5a66fbe76641",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for Training (T) Grants.pdf",
+	"guideline_version": "Forms-H",
+	"id": "9fe10d9d-cbe6-41ba-a997-9e4cacbce39b",
+	"name": "Conferences"
+}
