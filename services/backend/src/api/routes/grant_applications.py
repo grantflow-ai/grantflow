@@ -138,17 +138,6 @@ class GrantTemplateResponse(TypedDict):
     created_at: str
     updated_at: str
     predefined_template_id: NotRequired[str]
-    predefined_template: NotRequired["PredefinedTemplateResponse"]
-
-
-class PredefinedTemplateResponse(TypedDict):
-    id: str
-    name: str
-    grant_type: GrantType
-    description: NotRequired[str]
-    activity_code: NotRequired[str]
-    guideline_source: NotRequired[str]
-    guideline_version: NotRequired[str]
 
 
 class ApplicationResponse(TypedDict):
@@ -285,24 +274,6 @@ def build_application_response(grant_application: GrantApplication) -> Applicati
 
         if template.predefined_template_id:
             template_response["predefined_template_id"] = str(template.predefined_template_id)
-
-        if template.predefined_template:
-            predefined = template.predefined_template
-            predefined_response: PredefinedTemplateResponse = {
-                "id": str(predefined.id),
-                "name": predefined.name,
-                "grant_type": predefined.grant_type,
-            }
-            if predefined.description:
-                predefined_response["description"] = predefined.description
-            if predefined.activity_code:
-                predefined_response["activity_code"] = predefined.activity_code
-            if predefined.guideline_source:
-                predefined_response["guideline_source"] = predefined.guideline_source
-            if predefined.guideline_version:
-                predefined_response["guideline_version"] = predefined.guideline_version
-
-            template_response["predefined_template"] = predefined_response
 
         response["grant_template"] = template_response
 

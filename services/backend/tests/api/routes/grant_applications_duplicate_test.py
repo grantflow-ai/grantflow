@@ -117,7 +117,7 @@ async def test_duplicate_with_grant_template(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    async with async_session_maker() as session:
+    async with async_session_maker() as session, session.begin():
         existing_template = await session.execute(
             select(GrantTemplate).where(
                 GrantTemplate.grant_application_id == grant_application.id, GrantTemplate.deleted_at.is_(None)
@@ -136,16 +136,32 @@ async def test_duplicate_with_grant_template(
             }
         ]
 
+        # Create predefined template
+        institution = GrantingInstitution(full_name="NIH", abbreviation="NIH")
+        session.add(institution)
+        await session.flush()
+
+        predefined = PredefinedGrantTemplate(
+            name="NIH Catalog",
+            grant_sections=test_grant_sections,
+            grant_type=GrantType.RESEARCH,
+            granting_institution_id=institution.id,
+        )
+        session.add(predefined)
+        await session.flush()
+
         new_template = GrantTemplate(
             grant_application_id=grant_application.id,
             grant_sections=test_grant_sections,
             granting_institution_id=None,
             grant_type=GrantType.RESEARCH,
+            predefined_template_id=predefined.id,
         )
         session.add(new_template)
-        await session.commit()
+        await session.flush()
 
         template_id = new_template.id
+        predefined_id = predefined.id
 
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, grant_application.id)
@@ -159,69 +175,14 @@ async def test_duplicate_with_grant_template(
         headers={"Authorization": "Bearer some_token"},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == HTTPStatus.CREATED
     data = response.json()
 
     assert "grant_template" in data
     assert data["grant_template"]["id"] != str(template_id)
     assert data["grant_template"]["grant_sections"] == test_grant_sections
     assert data["grant_template"]["grant_type"] == GrantType.RESEARCH
-
-
-async def test_duplicate_with_predefined_template(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    grant_application: GrantApplication,
-    project_owner_user: OrganizationUser,
-) -> None:
-    async with async_session_maker() as session, session.begin():
-        institution = GrantingInstitution(full_name="NIH", abbreviation="NIH")
-        session.add(institution)
-        await session.flush()
-
-        predefined = PredefinedGrantTemplate(
-            name="NIH Catalog",
-            grant_sections=[
-                {"id": "overview", "order": 1, "title": "Overview", "parent_id": None, "needs_applicant_writing": False}
-            ],
-            grant_type=GrantType.RESEARCH,
-            granting_institution_id=institution.id,
-        )
-        session.add(predefined)
-        await session.flush()
-
-        existing_templates = await session.execute(
-            select(GrantTemplate).where(
-                GrantTemplate.grant_application_id == grant_application.id,
-                GrantTemplate.deleted_at.is_(None),
-            )
-        )
-        for existing in existing_templates.scalars():
-            existing.soft_delete()
-
-        template = GrantTemplate(
-            grant_application_id=grant_application.id,
-            grant_sections=predefined.grant_sections,
-            grant_type=GrantType.RESEARCH,
-            predefined_template_id=predefined.id,
-        )
-        session.add(template)
-        await session.flush()
-
-    async with async_session_maker() as session:
-        project = await session.get(Project, grant_application.project_id)
-        organization_id = project.organization_id
-
-    response = await test_client.post(
-        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications/{grant_application.id}/duplicate",
-        json={"title": "Copy with Catalog"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.CREATED
-    data = response.json()
-    assert data["grant_template"]["predefined_template_id"] == str(predefined.id)
-    assert data["grant_template"]["grant_sections"][0]["title"] == "Overview"
+    assert data["grant_template"]["predefined_template_id"] == str(predefined_id)
 
 
 async def test_duplicate_preserves_rag_sources(
