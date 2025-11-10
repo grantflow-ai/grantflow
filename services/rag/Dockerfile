@@ -3,6 +3,15 @@ ENV HF_HOME="/app/hf-cache" \
     HUGGINGFACE_HUB_CACHE="/app/hf-cache" \
     SENTENCE_TRANSFORMERS_HOME="/app/hf-cache"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    g++ \
+    libpq-dev \
+    curl \
+    pkg-config \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 FROM base AS model-download
 RUN mkdir -p "${HF_HOME}"
@@ -13,11 +22,6 @@ RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer sentence-trans
 FROM base AS install
 WORKDIR /app/
 ENV UV_LINK_MODE=copy
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    g++ \
-    libpq-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY pyproject.toml uv.lock ./
 COPY services/rag/pyproject.toml services/rag/pyproject.toml
 COPY packages packages

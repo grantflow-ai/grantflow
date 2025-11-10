@@ -166,6 +166,14 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 raise NotAuthorizedException
 
         if connection.route_handler.opt.get("requires_backoffice_admin"):
+            admin_code = get_env("ADMIN_ACCESS_CODE", fallback="", raise_on_missing=False)
+            if admin_code and auth_header and auth_header == admin_code:
+                logger.info(
+                    "Backoffice admin authenticated via admin access code",
+                    path=path,
+                )
+                return AuthenticationResult(user="backoffice_admin", auth="admin_access_code")
+
             if not firebase_uid:
                 logger.error("Firebase UID required for backoffice admin", path=path)
                 raise NotAuthorizedException("Firebase UID required")

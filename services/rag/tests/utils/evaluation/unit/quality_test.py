@@ -1,4 +1,3 @@
-import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
@@ -180,7 +179,6 @@ class TestHypothesisMethodologyAlignment:
 
 
 class TestScientificQualityAdvanced:
-    @pytest.mark.asyncio
     async def test_evaluate_scientific_quality_high_quality(self) -> None:
         content = """
         # Biomarker Analysis Methodology
@@ -228,7 +226,6 @@ class TestScientificQualityAdvanced:
         assert result["evidence_based_claims_ratio"] > 0.3
         assert 0.0 <= result["hypothesis_methodology_alignment"] <= 1.0
 
-    @pytest.mark.asyncio
     async def test_evaluate_scientific_quality_clinical_trial_weighting(self) -> None:
         content = """
         The clinical trial demonstrates significant efficacy of the biomarker panel.
@@ -265,7 +262,6 @@ class TestScientificQualityAdvanced:
         )
         assert result["overall"] >= 0.3, f"Expected reasonable overall quality, got {result['overall']}"
 
-    @pytest.mark.asyncio
     async def test_evaluate_scientific_quality_empty_content(self) -> None:
         rag_context: list[DocumentDTO] = []
 

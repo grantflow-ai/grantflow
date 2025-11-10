@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import CFPAnalysis, GrantElement, GrantLongFormSection
-from packages.db.src.tables import GrantTemplate
+from packages.db.src.tables import GrantTemplate, PredefinedGrantTemplate
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -117,13 +118,25 @@ async def handle_save_grant_template(
     job_manager: JobManager[StageDTO],
     session_maker: async_sessionmaker[Any],
     trace_id: str,
+    predefined_template: PredefinedGrantTemplate | None = None,
+    notification_message: str = "Grant template ready",
 ) -> GrantTemplate:
     await job_manager.ensure_not_cancelled()
 
     try:
         async with session_maker() as session, session.begin():
             organization = cfp_analysis.get("organization")
-            granting_institution_id = organization["id"] if organization else None
+            granting_institution_id: UUID | None = None
+            if organization and organization.get("id"):
+                try:
+                    granting_institution_id = UUID(str(organization["id"]))
+                except (TypeError, ValueError):
+                    logger.warning(
+                        "CFP analysis returned invalid granting institution id during save",
+                        grant_template_id=str(grant_template.id),
+                        organization_id=organization.get("id"),
+                        trace_id=trace_id,
+                    )
 
             submission_date = None
             if cfp_analysis.get("deadlines"):
@@ -134,16 +147,29 @@ async def handle_save_grant_template(
                 except (ValueError, IndexError):
                     logger.warning("Invalid or missing deadline", extra={"trace_id": trace_id})
 
+            update_values: dict[str, Any] = {
+                "cfp_analysis": cfp_analysis,
+                "grant_sections": grant_sections,
+                "granting_institution_id": granting_institution_id,
+                "submission_date": submission_date,
+            }
+
+            if predefined_template:
+                update_values["predefined_template_id"] = predefined_template.id
+                update_values["grant_type"] = predefined_template.grant_type
+
             await session.execute(
-                update(GrantTemplate)
-                .where(GrantTemplate.id == grant_template.id)
-                .values(
-                    cfp_analysis=cfp_analysis,
-                    grant_sections=grant_sections,
-                    granting_institution_id=granting_institution_id,
-                    submission_date=submission_date,
-                )
+                update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(update_values)
             )
+
+            grant_template.cfp_analysis = cfp_analysis
+            grant_template.grant_sections = grant_sections
+            grant_template.granting_institution_id = granting_institution_id
+            grant_template.submission_date = submission_date
+
+            if predefined_template:
+                grant_template.predefined_template_id = predefined_template.id
+                grant_template.grant_type = predefined_template.grant_type
 
             logger.info(
                 "Grant template saved successfully",
@@ -155,7 +181,7 @@ async def handle_save_grant_template(
         await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
         await job_manager.add_notification(
             event=NotificationEvents.GRANT_TEMPLATE_CREATED,
-            message="Grant template ready",
+            message=notification_message,
             notification_type="success",
             data={
                 "template_id": str(grant_template.id),

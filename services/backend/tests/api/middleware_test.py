@@ -391,6 +391,40 @@ async def test_authenticate_collaborator_with_all_projects_access(
     session.scalar.assert_not_called()
 
 
+async def test_authenticate_backoffice_admin_with_access_code(app: MagicMock, mock_get_env: MagicMock) -> None:
+    middleware = AuthMiddleware(app=app)
+
+    connection = MockASGIConnection(
+        url_path="/admin/some-path",
+        headers={"Authorization": "test-admin-code"},
+        route_handler_opt={"requires_backoffice_admin": True},
+        app=app,
+    )
+
+    result: AuthenticationResult = await middleware.authenticate_request(connection)
+
+    assert result.user == "backoffice_admin"
+    assert result.auth == "admin_access_code"
+    mock_get_env.assert_called_once_with("ADMIN_ACCESS_CODE", fallback="", raise_on_missing=False)
+
+
+async def test_authenticate_backoffice_admin_with_wrong_access_code(
+    app: MagicMock, mock_get_env: MagicMock, mock_verify_jwt_token: MagicMock
+) -> None:
+    middleware = AuthMiddleware(app=app)
+    mock_verify_jwt_token.side_effect = NotAuthorizedException("Invalid token")
+
+    connection = MockASGIConnection(
+        url_path="/admin/some-path",
+        headers={"Authorization": "wrong-code"},
+        route_handler_opt={"requires_backoffice_admin": True},
+        app=app,
+    )
+
+    with pytest.raises(NotAuthorizedException):
+        await middleware.authenticate_request(connection)
+
+
 async def test_trace_id_middleware_http_request() -> None:
     app = AsyncMock()
     middleware = TraceIdMiddleware()

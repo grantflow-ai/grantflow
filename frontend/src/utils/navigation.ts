@@ -16,6 +16,12 @@ export const routes = {
 			list: () => "/admin/granting-institutions",
 			new: () => "/admin/granting-institutions/new",
 		},
+		predefinedTemplates: {
+			detail: (id: string) => `/admin/predefined-templates/${id}`,
+			edit: (id: string) => `/admin/predefined-templates/${id}/edit`,
+			list: () => "/admin/predefined-templates",
+			new: () => "/admin/predefined-templates/new",
+		},
 		root: () => "/admin",
 	},
 	finishEmailSignin: () => "/signup/email",

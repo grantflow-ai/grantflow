@@ -51,6 +51,31 @@ export namespace API {
 };
 };
 
+	export namespace ApplyPredefinedGrantTemplate {
+	export namespace Http201 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	application_id: string;
+	grant_template_id: string;
+	organization_id: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	predefined_template_id: string;
+};
+};
+
 	export namespace CancelRagJob {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
@@ -226,6 +251,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -277,6 +312,7 @@ export namespace API {
 	export type RequestBody = {
 	description?: string;
 	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	predefined_template_id?: string;
 	title: string;
 };
 };
@@ -380,6 +416,84 @@ export namespace API {
 	export type RequestBody = {
 	abbreviation: null | string;
 	full_name: string;
+};
+};
+
+	export namespace CreateGrantingInstitutionPredefinedTemplate {
+	export namespace Http201 {
+	export type ResponseBody = {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: string;
+};
+
+	export type RequestBody = {
+	activity_code?: string;
+	description?: string;
+	grant_sections: {
+
+}[];
+	grant_type: string;
+	guideline_source?: string;
+	guideline_version?: string;
+	name: string;
 };
 };
 
@@ -641,6 +755,25 @@ export namespace API {
 };
 };
 
+	export namespace DeleteGrantingInstitutionPredefinedTemplate {
+	export namespace Http204 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: string;
+	template_id: string;
+};
+};
+
 	export namespace DeleteGrantingInstitutionRagSource {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
@@ -874,6 +1007,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -1088,6 +1231,73 @@ export namespace API {
 
 	export interface PathParameters {
 	organization_id: string;
+};
+};
+
+	export namespace GetGrantingInstitutionPredefinedTemplate {
+	export namespace Http200 {
+	export type ResponseBody = {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: string;
+	template_id: string;
 };
 };
 
@@ -1319,6 +1529,41 @@ export namespace API {
 	search?: null | string;
 	sort?: string;
 	status?: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT" | null;
+};
+};
+
+	export namespace ListGrantingInstitutionPredefinedTemplates {
+	export namespace Http200 {
+	export type ResponseBody = {
+	activity_code?: string;
+	created_at: string;
+	grant_type: string;
+	granting_institution?: {
+
+};
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: string;
+};
+
+	export interface QueryParameters {
+	activity_code?: null | string;
+	limit?: number;
+	offset?: number;
 };
 };
 
@@ -1788,6 +2033,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -2119,6 +2374,16 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	description?: string;
+	grant_type: "RESEARCH" | "TRANSLATIONAL";
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+};
+	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
@@ -2288,6 +2553,86 @@ export namespace API {
 	export type RequestBody = {
 	abbreviation?: null | string;
 	full_name?: string;
+};
+};
+
+	export namespace UpdateGrantingInstitutionPredefinedTemplate {
+	export namespace Http200 {
+	export type ResponseBody = {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: string;
+	template_id: string;
+};
+
+	export type RequestBody = {
+	activity_code?: string;
+	description?: string;
+	grant_sections?: {
+
+}[];
+	grant_type?: string;
+	granting_institution_id?: string;
+	guideline_source?: string;
+	guideline_version?: string;
+	name?: string;
 };
 };
 

@@ -1,9 +1,11 @@
 import traceback
 from typing import Any, cast
+from uuid import UUID
 
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
+from packages.db.src.json_objects import CFPAnalysis
 from packages.db.src.query_helpers import select_active
-from packages.db.src.tables import GrantTemplate, RagGenerationJob
+from packages.db.src.tables import GrantTemplate, PredefinedGrantTemplate, RagGenerationJob
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import (
     BackendError,
@@ -24,6 +26,10 @@ from services.rag.src.grant_template.handlers import (
     handle_cfp_analysis_stage,
     handle_save_grant_template,
     handle_template_generation_stage,
+)
+from services.rag.src.grant_template.predefined import (
+    get_predefined_template,
+    get_predefined_template_by_id,
 )
 from services.rag.src.utils.job_manager import JobManager
 
@@ -65,6 +71,62 @@ async def _determine_current_stage(template_id: Any, session_maker: async_sessio
                 return stage
 
         return GRANT_TEMPLATE_PIPELINE_STAGES[-1]
+
+
+async def _get_predefined_template_from_analysis(
+    *,
+    cfp_analysis: CFPAnalysis,
+    grant_template: GrantTemplate,
+    session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> PredefinedGrantTemplate | None:
+    organization = cfp_analysis.get("organization")
+    if not organization:
+        return None
+
+    organization_id = organization.get("id")
+    if not organization_id:
+        return None
+
+    try:
+        granting_institution_id = UUID(str(organization_id))
+    except ValueError:
+        logger.warning(
+            "CFP analysis returned invalid granting institution id",
+            organization_id=organization_id,
+            template_id=str(grant_template.id),
+            trace_id=trace_id,
+        )
+        return None
+
+    activity_code = cfp_analysis.get("activity_code")
+    normalized_activity_code = activity_code.strip().upper() if isinstance(activity_code, str) else None
+
+    predefined = await get_predefined_template(
+        session_maker=session_maker,
+        granting_institution_id=granting_institution_id,
+        activity_code=normalized_activity_code,
+    )
+
+    if not predefined:
+        logger.info(
+            "No predefined template matched CFP analysis",
+            template_id=str(grant_template.id),
+            granting_institution_id=str(granting_institution_id),
+            activity_code=normalized_activity_code,
+            trace_id=trace_id,
+        )
+        return None
+
+    logger.info(
+        "Matched predefined template from CFP analysis",
+        template_id=str(grant_template.id),
+        predefined_template_id=str(predefined.id),
+        activity_code=normalized_activity_code,
+        trace_id=trace_id,
+    )
+
+    return predefined
 
 
 async def handle_grant_template_pipeline(
@@ -118,6 +180,41 @@ async def handle_grant_template_pipeline(
                     raise ValidationError("Missing checkpoint data for template generation stage")
 
                 cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
+                cfp_analysis = cfp_analysis_result["cfp_analysis"]
+
+                predefined_template: PredefinedGrantTemplate | None = None
+                notification_message = "Grant template ready"
+
+                if grant_template.predefined_template_id is not None:
+                    predefined_template = await get_predefined_template_by_id(
+                        session_maker=session_maker,
+                        predefined_template_id=grant_template.predefined_template_id,
+                    )
+                    if not predefined_template:
+                        raise ValidationError("Selected predefined template no longer exists")
+                    notification_message = "Grant template cloned from predefined catalog"
+                else:
+                    predefined_template = await _get_predefined_template_from_analysis(
+                        cfp_analysis=cfp_analysis,
+                        grant_template=grant_template,
+                        session_maker=session_maker,
+                        trace_id=trace_id,
+                    )
+                    if predefined_template:
+                        notification_message = "Grant template cloned from predefined catalog"
+
+                if predefined_template:
+                    return await handle_save_grant_template(
+                        cfp_analysis=cfp_analysis,
+                        grant_sections=predefined_template.grant_sections,
+                        grant_template=grant_template,
+                        job_manager=job_manager,
+                        session_maker=session_maker,
+                        trace_id=trace_id,
+                        predefined_template=predefined_template,
+                        notification_message=notification_message,
+                    )
+
                 template_generation_result = await handle_template_generation_stage(
                     cfp_analysis_result=cfp_analysis_result,
                     job_manager=job_manager,

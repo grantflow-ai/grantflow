@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 from packages.db.src.tables import (
     GrantingInstitution,
@@ -150,13 +151,17 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
 
     cfp_content = ""
     if nih_par_25_450_cfp_file.suffix == ".pdf":
-        cfp_content = "NIH PAR-25-450 Clinical Trial Readiness for Rare Diseases CFP content placeholder"
+        cfp_content = (
+            "NIH PAR-25-450 Clinical Trial Readiness for Rare Diseases CFP content placeholder "
+            "(R21 Clinical Trial Not Allowed)"
+        )
     else:
         cfp_content = nih_par_25_450_cfp_file.read_text()
 
     async with async_session_maker() as session, session.begin():
+        source_id = str(uuid4())
         rag_source = RagSource(
-            id="nih-par-25-450-source-id",
+            id=source_id,
             source_type="rag_file",
             text_content=cfp_content,
             indexing_status="FINISHED",
@@ -166,7 +171,7 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
 
         template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
-            rag_source_id=rag_source.id,
+            rag_source_id=source_id,
         )
         session.add(template_source)
 
@@ -181,9 +186,9 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
 
         text_vectors = [
             TextVector(
-                rag_source_id=rag_source.id,
+                rag_source_id=source_id,
                 chunk={"content": chunk},
-                embedding=[0.1] * 1536,
+                embedding=[0.1] * 384,
             )
             for chunk in chunks
         ]
@@ -223,6 +228,9 @@ async def test_nih_par_25_450_cfp_extraction_end_to_end(
     assert cfp_analysis["organization"] is not None, "CFP analysis should identify organization"
     assert cfp_analysis["organization"]["full_name"] == nih_granting_institution.full_name, (
         f"Should identify NIH: {cfp_analysis['organization']['full_name']}"
+    )
+    assert cfp_analysis.get("activity_code") == "R21", (
+        f"Should extract NIH activity code R21, got {cfp_analysis.get('activity_code')}"
     )
 
     assert "deadlines" in cfp_analysis, "CFP analysis should contain deadlines"

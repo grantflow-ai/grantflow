@@ -179,7 +179,6 @@ async def generic_cancer_research_source(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_retrieval_without_metadata_filter(
     nih_research_paper_source: RagUrl,
     generic_cancer_research_source: RagUrl,
@@ -207,7 +206,6 @@ async def test_retrieval_without_metadata_filter(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_retrieval_with_organization_entity_filter(
     nih_research_paper_source: RagUrl,
     generic_cancer_research_source: RagUrl,
@@ -248,7 +246,6 @@ async def test_retrieval_with_organization_entity_filter(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_retrieval_with_category_filter(
     nih_research_paper_source: RagUrl,
     generic_cancer_research_source: RagUrl,
@@ -284,7 +281,6 @@ async def test_retrieval_with_category_filter(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_retrieval_with_quality_score_filter(
     nih_research_paper_source: RagUrl,
     generic_cancer_research_source: RagUrl,
@@ -320,7 +316,6 @@ async def test_retrieval_with_quality_score_filter(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_retrieval_with_combined_filters(
     nih_research_paper_source: RagUrl,
     generic_cancer_research_source: RagUrl,
@@ -363,7 +358,6 @@ async def test_retrieval_with_combined_filters(
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 async def test_metadata_extraction_completeness(
     nih_research_paper_source: RagUrl,
     logger: logging.Logger,

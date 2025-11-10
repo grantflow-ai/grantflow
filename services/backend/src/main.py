@@ -21,6 +21,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_update_application,
 )
 from services.backend.src.api.routes.grant_templates import (
+    handle_apply_predefined_grant_template,
     handle_generate_grant_template,
     handle_update_grant_template,
 )
@@ -79,6 +80,13 @@ from services.backend.src.api.routes.organizations_members import (
 )
 from services.backend.src.api.routes.organizations_members import (
     handle_update_member_role as handle_update_organization_member_role,
+)
+from services.backend.src.api.routes.predefined_templates import (
+    handle_create_predefined_template,
+    handle_delete_predefined_template,
+    handle_get_predefined_template,
+    handle_list_predefined_templates,
+    handle_update_predefined_template,
 )
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
@@ -171,11 +179,17 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_grant_application_notifications,
     handle_generate_grant_template,
     handle_update_grant_template,
+    handle_apply_predefined_grant_template,
     handle_create_granting_institution,
     handle_retrieve_granting_institutions,
     handle_get_granting_institution,
     handle_update_granting_institution,
     handle_delete_granting_institution,
+    handle_list_predefined_templates,
+    handle_create_predefined_template,
+    handle_get_predefined_template,
+    handle_update_predefined_template,
+    handle_delete_predefined_template,
     handle_create_download_url,
     handle_create_upload_url,
     handle_crawl_url,

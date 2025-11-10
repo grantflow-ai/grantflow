@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Self, cast
 from unittest.mock import AsyncMock
 from uuid import UUID
 
-import pytest
 from packages.db.src.enums import ApplicationStatusEnum, GrantApplicationStageEnum, RagGenerationStatusEnum
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 
@@ -86,7 +85,6 @@ class FakeJobManager:
         self.clear_checkpoint_data = AsyncMock()
 
 
-@pytest.mark.asyncio
 async def test_determine_current_stage_resumes_pending_stage() -> None:
     jobs: tuple[JobRecord, ...] = (
         SimpleNamespace(
@@ -105,13 +103,11 @@ async def test_determine_current_stage_resumes_pending_stage() -> None:
     assert stage is GrantApplicationStageEnum.WORKPLAN_GENERATION
 
 
-@pytest.mark.asyncio
 async def test_determine_current_stage_returns_first_when_no_jobs() -> None:
     stage = await _determine_current_stage(UUID(int=0), make_session_maker(()))
     assert stage is GrantApplicationStageEnum.BLUEPRINT_PREP
 
 
-@pytest.mark.asyncio
 async def test_pipeline_blueprint_stage_executes_all_substeps(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),
@@ -189,7 +185,6 @@ async def test_pipeline_blueprint_stage_executes_all_substeps(mocker: MockerFixt
     fake_job_manager.transition_to_next_stage.assert_awaited_once_with(terminology_dto)
 
 
-@pytest.mark.asyncio
 async def test_pipeline_raises_when_checkpoint_missing(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),
@@ -236,7 +231,6 @@ async def test_pipeline_raises_when_checkpoint_missing(mocker: MockerFixture) ->
     fake_job_manager.transition_to_next_stage.assert_not_awaited()
 
 
-@pytest.mark.asyncio
 async def test_pipeline_handles_stage_error(mocker: MockerFixture) -> None:
     grant_template = SimpleNamespace(
         id=UUID(int=1),

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-import pytest
 from packages.db.src.json_objects import GrantLongFormSection
 
 from services.rag.src.dto import DocumentDTO
@@ -10,7 +9,6 @@ if TYPE_CHECKING:
     from services.rag.src.utils.evaluation.dto import EvaluationResult
 
 
-@pytest.mark.asyncio
 async def test_complete_evaluation_workflow_biomedical_research() -> None:
     content: str = """
     # Biomarker Discovery and Validation in Cardiovascular Disease
@@ -173,7 +171,6 @@ async def test_complete_evaluation_workflow_biomedical_research() -> None:
     assert "coherence_metrics" in result
 
 
-@pytest.mark.asyncio
 async def test_complete_evaluation_workflow_clinical_trial() -> None:
     content: str = """
     # Phase III Randomized Controlled Trial Results: Novel Biomarker-Guided Therapy
@@ -277,7 +274,6 @@ async def test_complete_evaluation_workflow_clinical_trial() -> None:
     assert "quality_metrics" in result
 
 
-@pytest.mark.asyncio
 async def test_complete_evaluation_workflow_poor_content() -> None:
     content: str = """
     stuff about biomarkers
@@ -337,7 +333,6 @@ async def test_complete_evaluation_workflow_poor_content() -> None:
     assert "coherence_metrics" in result
 
 
-@pytest.mark.asyncio
 async def test_evaluation_workflow_with_word_limit_violation() -> None:
     base_content: str = """
     The systematic analysis of biomarker patterns in cardiovascular disease research employs
@@ -382,7 +377,6 @@ async def test_evaluation_workflow_with_word_limit_violation() -> None:
     assert result["overall_score"] < 70.0
 
 
-@pytest.mark.asyncio
 async def test_evaluation_workflow_edge_case_empty_content() -> None:
     content: str = ""
 
