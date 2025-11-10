@@ -1,0 +1,555 @@
+{
+	"activity_code": "R00",
+	"description": "To support the second phase of a Career/Research Transition award program that provides 1 -3 years of independent research support (R00) contingent on securing an independent research position. Award recipients will be expected to compete successfully for independent R01 support from the NIH during the R00 research transition award period.",
+	"grant_sections": [
+		{
+			"definition": "Narrative summary of the proposed activity.",
+			"depends_on": ["specific_aims", "research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Write a concise, self-contained summary (typically 30 lines or less) of the proposed activity. The summary must clearly state the central hypothesis, the specific aims, and the overall methodology. Emphasize the novelty and expected contribution to the field. Maintain a professional, accessible tone, suitable for publication on NIH RePORTER if funded. Ensure strict adherence to NIH formatting requirements (R.110) and absolutely exclude any Personal Identifiable Information (PII) or Protected Health Information (PHI) (R.100, Step 4).",
+			"guidelines": [
+				"Ensure the content is suitable for public release via NIH RePORTER if the application is funded (R.5).",
+				"Do not include Personal Identifiable Information (PII) or Protected Health Information (PHI) in the summary (R.100, Step 4).",
+				"Follow requirements for PDF files, fonts, margins, headers, footers, and citations (R.110)."
+			],
+			"id": "project_summary_abstract",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Central hypothesis",
+				"Specific aims",
+				"Research methodology overview",
+				"Expected outcomes",
+				"Public dissemination",
+				"NIH RePORTER",
+				"Scientific abstract",
+				"Project goals"
+			],
+			"needs_applicant_writing": true,
+			"order": 1,
+			"parent_id": null,
+			"search_queries": [
+				"NIH RePORTER project summary examples",
+				"Writing NIH abstract for public release",
+				"Format requirements for NIH Project Summary/Abstract",
+				"Key elements of a successful NIH abstract",
+				"NIH R.5 public information requirements"
+			],
+			"title": "Project Summary/Abstract",
+			"topics": [
+				"Research objectives and scope",
+				"Summary of experimental approach",
+				"Anticipated scientific contribution",
+				"Suitability for public release"
+			]
+		},
+		{
+			"definition": "Statement explaining the relevance of the research to public health.",
+			"depends_on": ["specific_aims", "research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Write a brief, non-technical statement (typically 2-3 sentences) explaining how the proposed research addresses a public health problem. Clearly articulate the potential benefits to human health, disease prevention, or health promotion. This statement must be easily understood by the general public and suitable for publication on NIH RePORTER. Focus on the 'why it matters' rather than the 'how it works.'",
+			"guidelines": [
+				"Explain how the research relates to public health, disease prevention, or health promotion.",
+				"Ensure the content is suitable for public release via NIH RePORTER if the application is funded (R.5).",
+				"Do not include Personal Identifiable Information (PII) or Protected Health Information (PHI) (R.100, Step 4)."
+			],
+			"id": "public_health_relevance",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Disease prevention",
+				"Health promotion",
+				"Public health impact",
+				"Translational potential",
+				"Societal benefit",
+				"Disease burden"
+			],
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": null,
+			"search_queries": [
+				"NIH public health relevance statement examples",
+				"Translational research impact statement NIH",
+				"How to write public health relevance for grant",
+				"NIH RePORTER public health relevance"
+			],
+			"title": "Public Health Relevance Statement",
+			"topics": [
+				"Linkage to public health problem",
+				"Clinical application potential",
+				"Mechanism of public benefit"
+			]
+		},
+		{
+			"definition": "Description of the facilities, equipment, and resources available for the project.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Detail the physical and intellectual environment where the research will be conducted. List all relevant facilities (e.g., lab space, animal housing, clinical research units), major equipment (>$5,000), and institutional resources (e.g., computational clusters, core labs). For multi-site projects, clearly delineate resources available at each performance site. The tone should be factual and emphasize the adequacy and suitability of the resources for the proposed work to successfully execute the Research Strategy.",
+			"guidelines": [
+				"Describe the facilities, equipment, and resources available to perform the proposed research.",
+				"Detail the organizational setting and environment where the work will be conducted."
+			],
+			"id": "facilities_resources",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Institutional capacity",
+				"Core facilities",
+				"Specialized equipment",
+				"Laboratory space",
+				"Organizational setting",
+				"Resource availability",
+				"Computational resources"
+			],
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": null,
+			"search_queries": [
+				"NIH Facilities and Other Resources template",
+				"Institutional core facility description NIH",
+				"Listing specialized equipment in NIH grant",
+				"Organizational setting description for research"
+			],
+			"title": "Facilities & Other Resources",
+			"topics": [
+				"Description of physical infrastructure",
+				"Major equipment inventory",
+				"Access to specialized cores",
+				"Institutional commitment and environment"
+			]
+		},
+		{
+			"definition": "Detailed justification for all requested costs.",
+			"depends_on": [
+				"research_strategy",
+				"consortium_arrangements",
+				"facilities_resources"
+			],
+			"evidence": "",
+			"generation_instructions": "Provide a detailed, year-by-year justification for all requested costs. For personnel, specify the role, name (if known), and exact person-months (or FTE) dedicated to the project, linking their effort directly to specific aims. Justify all non-personnel costs, especially equipment and high-cost supplies, demonstrating necessity for the proposed research. If using a Modular Budget (R.320), justify the modules and provide detailed personnel and consortium justifications separately. The tone must be precise, factual, and fiscally responsible.",
+			"guidelines": [
+				"Provide a detailed justification for all personnel, supplies, equipment, and travel costs requested.",
+				"Adhere to the specific instructions for either the R&R Budget Form (R.300) or the PHS 398 Modular Budget Form (R.320)."
+			],
+			"id": "budget_justification",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Personnel effort (person months)",
+				"Equipment justification",
+				"Supply costs breakdown",
+				"Travel expenses",
+				"Subaward budget",
+				"Modular budget justification",
+				"Cost allocation",
+				"R&R Budget Form (R.300)"
+			],
+			"needs_applicant_writing": true,
+			"order": 4,
+			"parent_id": null,
+			"search_queries": [
+				"NIH R&R Budget justification examples",
+				"Justifying personnel effort in NIH grant",
+				"Modular budget justification requirements NIH R.320",
+				"Allowable and unallowable costs NIH",
+				"Detailed supply cost breakdown grant"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Detailed personnel roles and effort",
+				"Non-personnel cost breakdown",
+				"Justification for high-cost items",
+				"Alignment of costs with specific aims"
+			]
+		},
+		{
+			"definition": "Detailed information required for research involving human subjects or clinical trials (R.500).",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Complete this section following the detailed instructions provided in R.500. If a clinical trial is involved, provide a detailed description of the study design (e.g., randomization, blinding, endpoints), intervention, and statistical analysis plan. Describe the study population, inclusion/exclusion criteria, and the recruitment plan, ensuring compliance with NIH policies on inclusion of women and minorities. Detail the procedures for protecting human subjects, assessing risks and benefits, and establishing a Data Safety Monitoring Plan (DSMP). The tone must be rigorous, ethical, and compliant with federal regulations.",
+			"guidelines": [
+				"Complete this section following the detailed instructions provided in R.500.",
+				"Provide all required information regarding human subjects research and clinical trial design."
+			],
+			"id": "human_subjects_clinical_trials",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human subjects protection",
+				"Clinical trial design",
+				"Regulatory compliance (IRB)",
+				"Inclusion criteria",
+				"Recruitment plan",
+				"Risk/benefit assessment",
+				"Data safety monitoring plan (DSMP)",
+				"R.500 requirements",
+				"Study endpoints",
+				"Informed consent"
+			],
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": null,
+			"search_queries": [
+				"NIH R.500 Human Subjects and Clinical Trials instructions",
+				"Data Safety Monitoring Plan requirements NIH",
+				"Inclusion of women and minorities NIH policy",
+				"Defining clinical trial endpoints NIH guidance",
+				"Statistical analysis plan for clinical trial grant",
+				"IRB approval process NIH grant",
+				"Recruitment strategies for diverse cohorts"
+			],
+			"title": "PHS Human Subjects and Clinical Trials Information",
+			"topics": [
+				"Study population and recruitment strategy",
+				"Ethical considerations and protections",
+				"Clinical trial phase and design methodology",
+				"Data and safety monitoring procedures",
+				"Regulatory oversight and compliance"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "research_plan_ph398",
+			"needs_applicant_writing": false,
+			"order": 6,
+			"parent_id": null,
+			"title": "PHS 398 Research Plan"
+		},
+		{
+			"definition": "Concise statement of the goals and objectives of the proposed research.",
+			"depends_on": [],
+			"evidence": "",
+			"generation_instructions": "Write a concise, one-page document. Begin with a brief introductory paragraph establishing the problem, the current knowledge gap, and the central hypothesis. Follow this with 2 to 4 distinct, measurable Specific Aims. Each aim should clearly state what will be accomplished and how it will test a component of the central hypothesis. Ensure the aims are highly focused and achievable within the proposed timeline and budget. The tone must be direct, ambitious yet achievable, and highly focused.",
+			"guidelines": [
+				"Clearly state the goals of the project and the specific objectives the research intends to accomplish.",
+				"Ensure the aims are concise and measurable."
+			],
+			"id": "specific_aims",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Central hypothesis",
+				"Measurable objectives",
+				"Research goals",
+				"Project scope",
+				"Specific aims",
+				"Feasibility",
+				"Knowledge gap",
+				"Expected outcomes",
+				"Hypothesis testing"
+			],
+			"needs_applicant_writing": true,
+			"order": 7,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"Examples of strong NIH Specific Aims page",
+				"How to structure NIH Specific Aims",
+				"Writing measurable objectives for grant proposal",
+				"Central hypothesis formulation for NIH R01",
+				"One-page specific aims template"
+			],
+			"title": "Specific Aims",
+			"topics": [
+				"Overarching goal statement",
+				"Primary research objectives",
+				"Hypothesis testing framework",
+				"Linkage to research strategy",
+				"Scientific premise"
+			]
+		},
+		{
+			"definition": "The core scientific narrative detailing Significance, Innovation, and Approach.",
+			"depends_on": ["specific_aims"],
+			"evidence": "",
+			"generation_instructions": "Develop a compelling narrative organized strictly under the headings: Significance, Innovation, and Approach. Significance must establish the importance of the problem and the potential impact. Innovation must describe how the project challenges current paradigms or uses novel methods/tools. Approach must detail the experimental design, methods, data analysis, and expected results for each Specific Aim, supported by preliminary data. Include a dedicated section on potential pitfalls and alternative strategies, and explicitly address plans for ensuring scientific rigor and reproducibility. The tone must be authoritative, evidence-based, and persuasive, adhering strictly to page limits (R.110).",
+			"guidelines": [
+				"The narrative must be organized into three distinct parts: Significance, Innovation, and Approach.",
+				"Provide sufficient detail for reviewers to evaluate the scientific merit of the application (R.100, Step 6).",
+				"Follow requirements for PDF files, fonts, margins, headers, footers, and citations (R.110)."
+			],
+			"id": "research_strategy",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": true,
+			"keywords": [
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Preliminary data",
+				"Experimental design",
+				"Data analysis plan",
+				"Potential pitfalls",
+				"Alternative strategies",
+				"Rigor and reproducibility",
+				"Scientific premise",
+				"Statistical power",
+				"Methodology validation"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Research Strategy Significance section best practices",
+				"Writing NIH Innovation section examples",
+				"Detailed experimental approach NIH R01",
+				"Rigor and reproducibility plan NIH guidance",
+				"Preliminary data presentation in NIH grant",
+				"Statistical analysis plan for grant proposal",
+				"Addressing potential pitfalls and alternative strategies",
+				"NIH R.400 Research Strategy requirements"
+			],
+			"title": "Research Strategy (Significance, Innovation, Approach)",
+			"topics": [
+				"Scientific premise and knowledge gap",
+				"Conceptual or methodological novelty",
+				"Detailed experimental procedures",
+				"Statistical power and analysis",
+				"Risk mitigation and contingency planning",
+				"Rigor and transparency"
+			]
+		},
+		{
+			"definition": "Detailed plan addressing the use of vertebrate animals.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "If vertebrate animals are used, provide a detailed description of the procedures, including the species, strain, age, sex, and number of animals. Justify the appropriateness of the species selected and the necessity of using animals. Describe the procedures for minimizing pain, distress, and discomfort, including the use of analgesia and anesthesia. Detail the method of euthanasia. Ensure the plan aligns with institutional IACUC policies and NIH guidelines, demonstrating commitment to animal welfare.",
+			"guidelines": [
+				"If applicable, describe the procedures for minimizing pain, distress, and discomfort in animals.",
+				"Justify the use of vertebrate animals and the appropriateness of the species selected."
+			],
+			"id": "vertebrate_animals",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Vertebrate animals",
+				"IACUC approval",
+				"Pain minimization",
+				"Distress mitigation",
+				"Species justification",
+				"Euthanasia methods",
+				"Animal welfare assurance",
+				"Anesthesia protocols"
+			],
+			"needs_applicant_writing": true,
+			"order": 9,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Vertebrate Animals Section requirements",
+				"Justification for animal model selection NIH",
+				"Minimizing pain and distress in research animals",
+				"IACUC protocol description for NIH grant"
+			],
+			"title": "Vertebrate Animals",
+			"topics": [
+				"Justification for animal model",
+				"Detailed procedures involving animals",
+				"Veterinary care and monitoring",
+				"Minimization of pain and distress"
+			]
+		},
+		{
+			"definition": "Detailed plan addressing the use of select agents.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "If the research involves select agents (as defined by CDC/APHIS), clearly identify the agents and the proposed experiments. Describe the facilities where the work will be conducted, including the required biosafety level (e.g., BSL-3) and institutional registration status. Detail the procedures for containment, security, and personnel training. The tone must be highly technical, focused on regulatory compliance and risk mitigation, ensuring all federal guidelines are met.",
+			"guidelines": [
+				"If applicable, describe the select agents to be used in the proposed research.",
+				"Detail the facilities, procedures, and safety measures for containment."
+			],
+			"id": "select_agent_research",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Select agents",
+				"Biosafety level (BSL)",
+				"Containment facilities",
+				"Risk assessment",
+				"Security plan",
+				"Regulatory compliance (CDC/APHIS)",
+				"Facility registration",
+				"Personnel training"
+			],
+			"needs_applicant_writing": true,
+			"order": 10,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Select Agent Research requirements",
+				"CDC/APHIS select agent list",
+				"Biosafety level requirements for select agents",
+				"Security plan for select agent research"
+			],
+			"title": "Select Agent Research",
+			"topics": [
+				"Agent identification and classification",
+				"Facility description and certification",
+				"Personnel training and safety protocols",
+				"Security and inventory control"
+			]
+		},
+		{
+			"definition": "Description of collaborative arrangements and subaward roles.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "For each consortium site or subaward, clearly define the specific scientific tasks they will perform (Statement of Work). Identify the key personnel at the collaborating institution and their respective roles and effort (person-months). Describe the administrative and fiscal arrangements, including how funds will be managed and how scientific progress will be coordinated and monitored between the lead institution and the consortium partner(s). Demonstrate that the arrangement is necessary and well-managed.",
+			"guidelines": [
+				"Describe the roles and responsibilities of all collaborating institutions and personnel.",
+				"Detail the administrative, fiscal, and scientific arrangements for the consortium."
+			],
+			"id": "consortium_arrangements",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Consortium agreement",
+				"Subaward roles",
+				"Collaborating institutions",
+				"Administrative oversight",
+				"Fiscal management",
+				"Scientific coordination",
+				"Statement of Work (SOW)",
+				"Key personnel effort"
+			],
+			"needs_applicant_writing": true,
+			"order": 11,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Consortium Arrangements description requirements",
+				"Writing Statement of Work for subaward",
+				"Administrative and fiscal arrangements for NIH consortium",
+				"Roles and responsibilities in multi-site grant"
+			],
+			"title": "Consortium/Contractual Arrangements",
+			"topics": [
+				"Roles of key personnel at collaborating sites",
+				"Scientific contribution of subawards",
+				"Administrative structure and communication",
+				"Budget allocation for consortium"
+			]
+		},
+		{
+			"definition": "Plan outlining how research resources will be shared.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Detail the plan for sharing research resources generated by the project, such as unique reagents, cell lines, animal models, and specialized software. Specify the mechanism (e.g., public repository, MTA) and timeline for making these resources available to the scientific community. Ensure the plan explicitly addresses compliance with relevant NIH policies (e.g., Model Organism Sharing Policy, Genomic Data Sharing Policy, if applicable) and addresses any potential intellectual property issues.",
+			"guidelines": [
+				"Outline the plan for sharing research resources (e.g., model organisms, reagents) generated by the project.",
+				"Ensure the plan complies with NIH policies regarding resource dissemination."
+			],
+			"id": "resource_sharing_plans",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Resource dissemination",
+				"Model organisms sharing",
+				"Reagents sharing",
+				"Data sharing policy compliance",
+				"Intellectual property",
+				"Material transfer agreement (MTA)",
+				"NIH sharing policies",
+				"Unique research tools"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Model Organism Sharing Policy",
+				"Writing NIH Resource Sharing Plan",
+				"Material Transfer Agreement (MTA) requirements NIH",
+				"Sharing unique research reagents NIH"
+			],
+			"title": "Resource Sharing Plan(s)",
+			"topics": [
+				"Types of resources to be shared",
+				"Mechanism of resource distribution",
+				"Timelines for sharing",
+				"Compliance with NIH resource policies"
+			]
+		},
+		{
+			"definition": "Plan detailing the management and sharing of scientific data.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Provide a concise yet comprehensive plan (typically two pages) addressing the six required elements of the NIH DMS Policy. Specify the types of scientific data to be generated, the standards (metadata) to be applied, the repository chosen for preservation (e.g., NCBI, institutional), the timeline for data sharing, and the methods for oversight and compliance. Explicitly state how data sharing costs are reflected in the budget justification. The tone must be technical, policy-compliant, and demonstrate a robust strategy for maximizing data utility.",
+			"guidelines": [
+				"Detail how scientific data will be managed, preserved, and accessed.",
+				"Specify the timelines and methods for sharing data with the broader research community."
+			],
+			"id": "dms_plan",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Data Management and Sharing (DMS) Policy",
+				"Scientific data",
+				"Data preservation",
+				"Metadata standards",
+				"Data repository selection",
+				"Access controls",
+				"Data curation",
+				"Sharing timeline",
+				"Budget justification"
+			],
+			"needs_applicant_writing": true,
+			"order": 13,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Data Management and Sharing Policy 2023 requirements",
+				"Selecting NIH-approved data repository",
+				"Budgeting for NIH DMS Plan costs",
+				"Metadata standards for scientific data sharing",
+				"Writing a compliant NIH DMS Plan",
+				"Six required elements of NIH DMS Plan"
+			],
+			"title": "Data Management and Sharing (DMS) Plan",
+			"topics": [
+				"Data types and volume",
+				"Selected repository and metadata standards",
+				"Data preservation and access plan",
+				"Roles and responsibilities for DMS oversight",
+				"Budget justification for data sharing costs"
+			]
+		},
+		{
+			"definition": "Placeholder for any additional required plans specified by the FOA.",
+			"depends_on": ["dms_plan", "resource_sharing_plans"],
+			"evidence": "",
+			"generation_instructions": "Use this section to address any required plans not covered elsewhere, such as the mandatory Authentication of Key Biological and/or Chemical Resources. If required, detail the methods used to verify the identity and validity of key resources (e.g., cell lines, antibodies, chemical compounds) used in the research, ensuring rigor and reproducibility. Also, address compliance with the Sex as a Biological Variable (SABV) policy if not covered in the Research Strategy. Ensure all specific mandates from the Funding Opportunity Announcement (FOA) are addressed here clearly and concisely.",
+			"guidelines": [
+				"Address any additional required plans mandated by the specific Funding Opportunity Announcement (FOA).",
+				"Ensure compliance with any specific NIH policy requirements not covered in standard sections (e.g., Authentication of Key Biological and/or Chemical Resources)."
+			],
+			"id": "research_other_plans",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Authentication of Key Resources",
+				"FOA specific requirements",
+				"Rigor and reproducibility",
+				"Chemical resources validation",
+				"Biological resources validation",
+				"Sex as a biological variable (SABV)",
+				"Training plan (if required)"
+			],
+			"needs_applicant_writing": true,
+			"order": 14,
+			"parent_id": "research_plan_ph398",
+			"search_queries": [
+				"NIH Authentication of Key Biological and/or Chemical Resources plan",
+				"Sex as a Biological Variable (SABV) policy NIH",
+				"Required research plans NIH FOA specific",
+				"Guidelines for authenticating cell lines and antibodies"
+			],
+			"title": "Other Plan(s)",
+			"topics": [
+				"Authentication procedures for key resources",
+				"Compliance with SABV policy",
+				"Specific FOA mandates",
+				"Institutional review of key resources"
+			]
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "a24466e236337514df0d3e64ef568f69744c15d2b4df7be4e2dde5f41dbd1fb5",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for Research (R).pdf",
+	"guideline_version": "Forms-H",
+	"id": "8560a03e-baee-49a3-81b3-58ed7f337956",
+	"name": "Research Transition Award"
+}

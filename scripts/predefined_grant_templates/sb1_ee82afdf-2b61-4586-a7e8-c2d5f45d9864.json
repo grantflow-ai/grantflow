@@ -1,0 +1,334 @@
+{
+	"activity_code": "SB1",
+	"description": "To support follow-on awards to small businesses for technology development, testing, evaluation, and commercialization assistance for SBIR or STTR Phase II technologies or for awards to small businesses to support the progress of research, research and development, and commercialization conducted under the SBIR or STTR programs to Phase III.",
+	"grant_sections": [
+		{
+			"evidence": "",
+			"id": "project_info",
+			"needs_applicant_writing": false,
+			"order": 1,
+			"parent_id": null,
+			"title": "Project Information (SF424 R&R)"
+		},
+		{
+			"evidence": "",
+			"id": "project_summary_abstract",
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": "project_info",
+			"title": "Project Summary/Abstract"
+		},
+		{
+			"evidence": "",
+			"id": "public_health_relevance",
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": "project_info",
+			"title": "Public Health Relevance Statement"
+		},
+		{
+			"evidence": "",
+			"id": "project_narrative_brief",
+			"needs_applicant_writing": true,
+			"order": 4,
+			"parent_id": "project_info",
+			"title": "Project Narrative (Brief)"
+		},
+		{
+			"evidence": "",
+			"id": "research_plan",
+			"needs_applicant_writing": false,
+			"order": 5,
+			"parent_id": null,
+			"title": "Research Plan (PHS 398)"
+		},
+		{
+			"evidence": "",
+			"id": "specific_aims",
+			"needs_applicant_writing": true,
+			"order": 6,
+			"parent_id": "research_plan",
+			"title": "Specific Aims"
+		},
+		{
+			"definition": "The detailed narrative describing the background, methods, and significance of the proposed research.",
+			"depends_on": ["specific_aims"],
+			"evidence": "",
+			"generation_instructions": "Develop a compelling narrative structured into three required sections: Significance, Innovation, and Approach. **Significance:** Establish the critical need, scientific gap, and potential impact. **Innovation:** Describe novel concepts, methods, or applications that challenge current paradigms. **Approach:** Detail the experimental design, methods, data analysis plan, and statistical power. Explicitly address potential pitfalls, limitations, and alternative strategies. Integrate preliminary data to demonstrate feasibility and rigor. Strictly adhere to NIH page limits and formatting requirements (B.400).",
+			"guidelines": [
+				"Develop a strong application that helps reviewers evaluate its science and merit.",
+				"Must include Significance, Innovation, and Approach sections (standard NIH structure).",
+				"Adhere strictly to page limits specified in the Funding Opportunity Announcement (FOA).",
+				"Follow NIH formatting requirements for PDF files, fonts, margins, and citations."
+			],
+			"id": "research_strategy",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Preliminary data",
+				"Experimental design",
+				"Rigor and reproducibility",
+				"Statistical analysis plan",
+				"Potential pitfalls",
+				"Alternative strategies",
+				"Timeline",
+				"NIH review criteria"
+			],
+			"needs_applicant_writing": true,
+			"order": 7,
+			"parent_id": "research_plan",
+			"search_queries": [
+				"NIH Research Strategy Significance Innovation Approach",
+				"Rigor and reproducibility NIH guidelines",
+				"Statistical analysis plan NIH grant",
+				"SBIR Phase II research strategy requirements",
+				"Preliminary data integration NIH grant",
+				"Risk mitigation strategies experimental design",
+				"NIH formatting requirements for Research Strategy"
+			],
+			"title": "Research Strategy",
+			"topics": [
+				"Scientific premise and background",
+				"Technical feasibility demonstration",
+				"Detailed methodology and protocols",
+				"Risk mitigation and contingency planning",
+				"Expected results and interpretation",
+				"Project timeline and milestones",
+				"Alignment with SBIR/STTR objectives",
+				"Data analysis methods"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "citations_references",
+			"needs_applicant_writing": false,
+			"order": 8,
+			"parent_id": "research_plan",
+			"title": "Citations/References"
+		},
+		{
+			"evidence": "",
+			"id": "personnel_qualifications",
+			"needs_applicant_writing": false,
+			"order": 9,
+			"parent_id": null,
+			"title": "Senior/Key Person Profile"
+		},
+		{
+			"evidence": "",
+			"id": "biosketches",
+			"needs_applicant_writing": false,
+			"order": 10,
+			"parent_id": "personnel_qualifications",
+			"title": "Biosketches"
+		},
+		{
+			"evidence": "",
+			"id": "reference_letters",
+			"needs_applicant_writing": false,
+			"order": 11,
+			"parent_id": "personnel_qualifications",
+			"title": "Reference Letters (If Applicable)"
+		},
+		{
+			"evidence": "",
+			"id": "budget_resources",
+			"needs_applicant_writing": false,
+			"order": 12,
+			"parent_id": null,
+			"title": "Budget and Resources (R&R Budget Form)"
+		},
+		{
+			"definition": "Narrative explanation detailing how requested funds will be used.",
+			"depends_on": ["budget_resources", "research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Provide a clear, itemized justification for all requested costs. For personnel, define the role, effort (person months), and specific tasks related to the project aims. If using a modular budget, provide a justification for the personnel and consortium costs clearly. Explain why major equipment, travel, and supplies are essential for the proposed research. Ensure the justification aligns precisely with the R&R Budget Form (B.300).",
+			"guidelines": [
+				"Provide a detailed justification for all requested costs.",
+				"Explain the roles and effort of all personnel listed.",
+				"If using a modular budget, provide a justification for the personnel and consortium/contractual costs."
+			],
+			"id": "budget_justification",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Personnel effort",
+				"Cost justification",
+				"Modular budget justification",
+				"Consortium costs",
+				"Equipment justification",
+				"Travel costs",
+				"Supplies breakdown"
+			],
+			"needs_applicant_writing": true,
+			"order": 13,
+			"parent_id": "budget_resources",
+			"search_queries": [
+				"NIH modular budget justification requirements",
+				"Personnel effort justification NIH grant",
+				"Allowable costs NIH SBIR",
+				"Justifying consortium costs NIH B.310"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Personnel roles and effort percentage",
+				"Justification for non-personnel costs",
+				"Subaward/consortium cost breakdown",
+				"Alignment of budget with specific aims"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "subaward_budgets",
+			"needs_applicant_writing": false,
+			"order": 14,
+			"parent_id": "budget_resources",
+			"title": "Subaward Budget Attachment(s)"
+		},
+		{
+			"evidence": "",
+			"id": "facilities_resources",
+			"needs_applicant_writing": true,
+			"order": 15,
+			"parent_id": "budget_resources",
+			"title": "Facilities & Other Resources"
+		},
+		{
+			"evidence": "",
+			"id": "compliance_plans",
+			"needs_applicant_writing": false,
+			"order": 16,
+			"parent_id": null,
+			"title": "Compliance and Policy Plans"
+		},
+		{
+			"definition": "Required forms and attachments detailing the involvement of human subjects and clinical trials.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information form (B.500). Detail the risks and benefits, the procedures for protecting subjects (e.g., informed consent, confidentiality), and the plan for inclusion of diverse populations (women, minorities, children). If a clinical trial is proposed, provide the protocol synopsis, including primary outcomes, intervention details, and the Data Safety Monitoring Plan (DSMP). Ensure compliance with all NIH policies regarding human subjects research.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information form (B.500).",
+				"Provide detailed information on protection of human subjects and inclusion of women, minorities, and children.",
+				"If a clinical trial is proposed, complete all required sections including the protocol synopsis.",
+				"Ensure compliance with all NIH policies regarding human subjects research."
+			],
+			"id": "human_subjects_info",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human subjects protection",
+				"IRB approval",
+				"Inclusion criteria",
+				"Clinical trial protocol",
+				"Recruitment plan",
+				"Data safety monitoring plan (DSMP)",
+				"Informed consent",
+				"Vulnerable populations",
+				"PHS 398 B.500",
+				"Inclusion of women and minorities"
+			],
+			"needs_applicant_writing": true,
+			"order": 17,
+			"parent_id": "compliance_plans",
+			"search_queries": [
+				"PHS Human Subjects and Clinical Trials Information form guidance",
+				"Inclusion of women and minorities NIH policy",
+				"Data Safety Monitoring Plan requirements NIH",
+				"Clinical trial protocol synopsis NIH B.500",
+				"IRB approval process grant application",
+				"Vulnerable populations NIH research"
+			],
+			"title": "Human Subjects and Clinical Trials Information (PHS 500)",
+			"topics": [
+				"Protection of human subjects",
+				"Inclusion of women/minorities/children",
+				"Clinical trial design synopsis",
+				"Recruitment and retention strategies",
+				"Risk/benefit assessment",
+				"Regulatory oversight and compliance",
+				"Data monitoring"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "data_management_sharing",
+			"needs_applicant_writing": true,
+			"order": 18,
+			"parent_id": "compliance_plans",
+			"title": "Data Management and Sharing Plan"
+		},
+		{
+			"evidence": "",
+			"id": "foreign_disclosure",
+			"needs_applicant_writing": true,
+			"order": 19,
+			"parent_id": "compliance_plans",
+			"title": "Disclosure Regarding Ties to Foreign Countries"
+		},
+		{
+			"evidence": "",
+			"id": "sbir_sttr_content",
+			"needs_applicant_writing": false,
+			"order": 20,
+			"parent_id": null,
+			"title": "SBIR/STTR Information (B.440)"
+		},
+		{
+			"definition": "A detailed plan outlining the strategy for commercializing the research product or service.",
+			"depends_on": ["research_strategy"],
+			"evidence": "",
+			"generation_instructions": "Develop a robust plan detailing the path to market, required only for Phase II, Phase IIB, and Fast-Track applications. **Market:** Quantify the market size, customer segment, and unmet clinical need. **IP:** Describe the current IP status (patents, licenses) and future strategy for protection. **Team:** Highlight the management team's relevant business and technical expertise. **Financial:** Provide realistic financial projections and identify necessary follow-on funding sources. Define clear, measurable commercialization milestones linked to the Phase II research outcomes.",
+			"guidelines": [
+				"Required only for Phase II, Phase IIB, and Fast-Track applications.",
+				"Must detail the market opportunity, company/team, intellectual property, and financial plan.",
+				"Provide a clear strategy for transitioning the technology to commercial use."
+			],
+			"id": "commercialization_plan",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Commercialization strategy",
+				"Market opportunity",
+				"Intellectual property (IP)",
+				"Regulatory pathway",
+				"Financial plan",
+				"Management team",
+				"Competitive analysis",
+				"Phase II milestones",
+				"Technology transition",
+				"Reimbursement strategy"
+			],
+			"needs_applicant_writing": true,
+			"order": 21,
+			"parent_id": "sbir_sttr_content",
+			"search_queries": [
+				"SBIR Phase II Commercialization Plan requirements",
+				"Market analysis for SBIR grant",
+				"Intellectual property strategy SBIR",
+				"Regulatory pathway FDA medical device",
+				"Financial projections for technology commercialization",
+				"SBIR commercialization plan template"
+			],
+			"title": "Commercialization Plan (Phase II, IIB, Fast-Track)",
+			"topics": [
+				"Market size and unmet need",
+				"Company structure and team expertise",
+				"Intellectual property status and strategy",
+				"Regulatory and reimbursement strategy",
+				"Financial projections and funding sources",
+				"Detailed commercialization milestones",
+				"Competitive landscape analysis"
+			]
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "d0f1884d9c98d3de179fc9d21f2423cfb466aadbc430d382c28e36bb3c003bd1",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for SBIR_STTR Grants.pdf",
+	"guideline_version": "Forms-H",
+	"id": "ee82afdf-2b61-4586-a7e8-c2d5f45d9864",
+	"name": "Commercialization Readiness Program"
+}

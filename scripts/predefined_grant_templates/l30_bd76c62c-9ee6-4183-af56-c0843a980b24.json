@@ -1,0 +1,520 @@
+{
+	"activity_code": "L30",
+	"description": "To provide for the repayment of the educational loan debt of qualified health professionals involved in clinical research.   Qualified health professionals who contractually agree to conduct qualified clinical research are eligible to apply for this program.",
+	"grant_sections": [
+		{
+			"definition": "A concise summary of the proposed research project.",
+			"depends_on": [],
+			"evidence": "",
+			"generation_instructions": "Generate a concise, self-contained summary of the entire proposed project, suitable for public release via NIH RePORTER. The summary must clearly state the central hypothesis, the specific aims, the overall methodology, and the expected results. Maintain a professional, objective tone. Ensure the text is accessible yet scientifically accurate. Strictly adhere to NIH formatting and character limits (typically 30 lines or 4000 characters). Avoid including any Personal Identifiable Information (PII) or Protected Health Information (PHI). This section must function as a standalone description of the research scope.",
+			"guidelines": [
+				"The Project Summary/Abstract will be made available to the public through the NIH Research Portfolio Online Reporting Tool (RePORTER).",
+				"Do not include sensitive Personal Identifiable Information (PII) or Protected Health Information (PHI) in this section."
+			],
+			"id": "s1",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Project Summary",
+				"Abstract",
+				"Specific Aims",
+				"Research Objectives",
+				"RePORTER",
+				"Public Dissemination",
+				"Scientific Scope"
+			],
+			"needs_applicant_writing": true,
+			"order": 1,
+			"parent_id": null,
+			"search_queries": [
+				"NIH Project Summary character limit",
+				"Example NIH R01 abstract structure",
+				"RePORTER project summary guidelines",
+				"Writing specific aims for NIH grants"
+			],
+			"title": "Project Summary/Abstract",
+			"topics": [
+				"Project Goals and Hypotheses",
+				"Methodology Overview",
+				"Expected Outcomes and Impact",
+				"Public Health Relevance Summary"
+			]
+		},
+		{
+			"definition": "A brief explanation of the relevance of the proposed research to public health.",
+			"depends_on": ["s1"],
+			"evidence": "",
+			"generation_instructions": "Draft a brief, compelling statement explaining the relevance of the proposed research to public health, suitable for public release via RePORTER. This statement must be written in plain language, understandable to a lay audience, while accurately reflecting the scientific goals. Clearly articulate how the project's findings will contribute to the prevention, diagnosis, treatment, or cure of human diseases, or how they will advance health equity. Do not repeat the abstract; focus solely on the broader societal implications and health outcomes. Avoid PII/PHI.",
+			"guidelines": [
+				"The statement will be made available to the public through the NIH Research Portfolio Online Reporting Tool (RePORTER).",
+				"Do not include sensitive Personal Identifiable Information (PII) or Protected Health Information (PHI) in this section."
+			],
+			"id": "s2",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Public Health Impact",
+				"Disease Burden",
+				"Translational Research",
+				"Societal Benefit",
+				"Clinical Relevance",
+				"Health Disparity"
+			],
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": null,
+			"search_queries": [
+				"NIH Public Health Relevance statement examples",
+				"Translational research impact metrics",
+				"Writing for a lay audience NIH grants",
+				"Linking basic science to public health outcomes"
+			],
+			"title": "Public Health Relevance Statement",
+			"topics": [
+				"Disease Context and Significance",
+				"Gap in Knowledge Addressed",
+				"Translational Potential",
+				"Benefit to Public Health"
+			]
+		},
+		{
+			"definition": "The main detailed description of the proposed research, methodology, and scientific rationale.",
+			"depends_on": ["s2", "s4"],
+			"evidence": "",
+			"generation_instructions": "Develop the comprehensive Research Plan following the NIH structure: Specific Aims, Significance, Innovation, and Approach. The Approach section must be highly detailed, covering experimental design, methods, data analysis, and plans to address potential pitfalls and alternative strategies. Emphasize the scientific premise and preliminary data supporting feasibility. Explicitly address the criteria for Rigor and Reproducibility, including blinding, randomization, and sample size justification. Maintain a formal, evidence-based, and persuasive scientific tone. Ensure strict adherence to the page limits specified in the Funding Opportunity Announcement (FOA).",
+			"guidelines": [
+				"Follow the standard instruction for the PHS 398 Research Plan Form (G.400), as well as any additional program-specific instructions.",
+				"Ensure all attachments adhere to formatting requirements for PDF files, fonts, margins, headers, and footers.",
+				"Remember that the Funding Opportunity Announcement (FOA) instructions always supersede these general application instructions."
+			],
+			"id": "s3",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": true,
+			"keywords": [
+				"Specific Aims",
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Preliminary Data",
+				"Rigor and Reproducibility",
+				"Experimental Design",
+				"Statistical Analysis Plan",
+				"Anticipated Pitfalls",
+				"Alternative Strategies",
+				"PHS 398 Research Plan"
+			],
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": null,
+			"search_queries": [
+				"NIH R01 Specific Aims examples",
+				"Guidelines for Rigor and Reproducibility NIH",
+				"Statistical power calculation for preclinical studies",
+				"Preliminary data requirements for NIH R series",
+				"Addressing pitfalls and alternative strategies in research plan",
+				"PHS 398 Research Plan structure G.400",
+				"Best practices for experimental design justification"
+			],
+			"title": "Research Plan",
+			"topics": [
+				"Specific Aims and Hypotheses",
+				"Scientific Premise and Significance",
+				"Innovation and Novelty",
+				"Detailed Methodology and Approach",
+				"Data Analysis and Interpretation",
+				"Rigor, Feasibility, and Risk Mitigation"
+			]
+		},
+		{
+			"definition": "A required narrative plan detailing how scientific data will be managed, preserved, and shared.",
+			"depends_on": ["s1"],
+			"evidence": "",
+			"generation_instructions": "Construct a detailed narrative addressing the eight required elements of the NIH Data Management and Sharing (DMS) Policy. Specify the types of scientific data to be generated, the standards (metadata) that will be applied, and the designated repository (e.g., dbGaP, GEO, institutional repository). Define the timeline for data sharing and the procedures for access and preservation. Clearly state who is responsible for DMS activities and justify the associated costs within the budget. The tone must be compliant and technically precise.",
+			"guidelines": [
+				"Detail the strategies for managing and sharing scientific data generated during the project period.",
+				"Ensure the plan aligns with NIH policy regarding data management and sharing requirements."
+			],
+			"id": "s4",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"NIH DMS Policy",
+				"Scientific Data",
+				"Data Repository",
+				"Metadata Standards",
+				"Data Preservation",
+				"Access Controls",
+				"FAIR Principles",
+				"Data Curation",
+				"Sharing Timeline"
+			],
+			"needs_applicant_writing": true,
+			"order": 4,
+			"parent_id": null,
+			"search_queries": [
+				"NIH Data Management and Sharing Policy required elements",
+				"Selecting appropriate NIH data repository",
+				"Budgeting for data curation and sharing costs",
+				"FAIR principles implementation in biomedical research"
+			],
+			"title": "Data Management and Sharing (DMS) Plan",
+			"topics": [
+				"Data Types and Volume",
+				"Repository Selection and Curation",
+				"Data Preservation and Access",
+				"Roles and Responsibilities",
+				"Budget for Data Sharing"
+			]
+		},
+		{
+			"definition": "Narrative detailing the involvement of human subjects and the design/protocol of any proposed clinical trials.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information section (G.500). If a clinical trial is proposed, provide the full protocol details, including specific aims, background, study design (e.g., randomization, blinding), outcome measures, and statistical analysis plan. For all human subjects research, detail the protection of human subjects, including risk/benefit ratio, recruitment methods, and informed consent procedures. Ensure strict regulatory compliance language (e.g., IRB, IND/IDE status). Absolutely exclude Protected Health Information (PHI) from the narrative.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information section (G.500).",
+				"Provide detailed protocols and justification if human subjects or clinical trials are involved.",
+				"Must not include Protected Health Information (PHI) in the application documents."
+			],
+			"id": "s5",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human Subjects Research",
+				"Clinical Trial Protocol",
+				"Inclusion/Exclusion Criteria",
+				"Risk/Benefit Assessment",
+				"IRB Approval",
+				"Adverse Events Reporting",
+				"Regulatory Compliance",
+				"Phase II Design",
+				"Data Safety Monitoring Plan"
+			],
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": null,
+			"search_queries": [
+				"PHS Human Subjects and Clinical Trials Information G.500",
+				"NIH definition of a clinical trial",
+				"Data Safety Monitoring Plan requirements NIH",
+				"Justification for inclusion/exclusion criteria in clinical trials",
+				"IRB approval process NIH grants"
+			],
+			"title": "Human Subjects and Clinical Trials Narrative",
+			"topics": [
+				"Study Design and Intervention",
+				"Subject Recruitment and Protection",
+				"Risk Assessment and Mitigation",
+				"Statistical Methods for Clinical Outcomes",
+				"Regulatory Status and Oversight"
+			]
+		},
+		{
+			"definition": "A narrative justification explaining the necessity and calculation of all requested budget items.",
+			"depends_on": ["s2"],
+			"evidence": "",
+			"generation_instructions": "Provide a clear, itemized justification for all requested funds. For personnel, specify the role, percentage of effort, and convert this to person-months, justifying the necessity of their time commitment relative to the Specific Aims. For non-personnel costs (supplies, travel, equipment), detail the items and explain why they are essential for the project's success. If a modular budget is used, justify the modules and any exceptions. If a detailed budget is required, ensure every line item is explained. The tone must be factual and fiscally responsible.",
+			"guidelines": [
+				"Develop the budget justification based on the kinds of costs allowable (G.300/G.320 context).",
+				"Justify costs clearly, distinguishing between modular and detailed budget requirements.",
+				"Provide sufficient detail to allow reviewers to evaluate the necessity and appropriateness of the requested funds."
+			],
+			"id": "s6",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Personnel Justification",
+				"Person Months Effort",
+				"Modular Budget",
+				"Detailed Budget",
+				"Equipment Justification",
+				"Travel Costs",
+				"Consortium/Subaward Costs",
+				"Supply Justification",
+				"Cost Necessity"
+			],
+			"needs_applicant_writing": true,
+			"order": 6,
+			"parent_id": null,
+			"search_queries": [
+				"Converting FTE to person months NIH",
+				"NIH modular budget justification guidelines",
+				"Allowable costs for NIH research grants",
+				"Justifying equipment costs in grant budget"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Personnel Roles and Effort Calculation",
+				"Non-Personnel Cost Breakdown",
+				"Justification of High-Cost Items",
+				"Subaward Budget Explanation"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "s7",
+			"needs_applicant_writing": false,
+			"order": 7,
+			"parent_id": null,
+			"title": "Personnel Qualifications (Biosketches)"
+		},
+		{
+			"definition": "Supplemental narrative required for Career Development (K) awards, focusing on the applicant's career goals and training environment.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Generate the supplemental narrative required for Career Development (K) awards. Detail the candidate's career goals, demonstrating a clear path toward research independence. Describe the specific training activities (didactic, experiential) planned. Provide a robust description of the mentorship team, including their qualifications and the frequency/nature of interaction. The institutional commitment to the candidate's protected time and resources must be explicitly stated. Follow instructions specific to PHS 398 Career Development Award Supplemental Form (G.410).",
+			"guidelines": [
+				"Follow instructions specific to the PHS 398 Career Development Award Supplemental Form (G.410).",
+				"Consult the G.130 Program Overview section for context regarding program-specific instructions.",
+				"Provide a detailed plan for career development, mentorship, and training."
+			],
+			"id": "s8",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"K Award",
+				"Career Development Plan",
+				"Mentorship Team",
+				"Protected Time",
+				"Research Independence",
+				"Didactic Training",
+				"Institutional Commitment",
+				"G.410 Supplemental Form"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": null,
+			"search_queries": [
+				"NIH K award career development plan examples",
+				"Justifying protected time for K award",
+				"Mentor statement requirements K award",
+				"G.410 PHS 398 Career Development Award instructions"
+			],
+			"title": "Career Development Award Supplemental Narrative",
+			"topics": [
+				"Candidate Background and Goals",
+				"Research Plan Summary (K Award)",
+				"Training Activities and Curriculum",
+				"Mentor Qualifications and Plan",
+				"Institutional Environment and Commitment"
+			]
+		},
+		{
+			"definition": "Supplemental narrative required for Research Training (T) programs, detailing the training environment and curriculum.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Develop the comprehensive Research Training Program Plan (T Award supplement). Describe the program's structure, objectives, and the quality of the training faculty. Detail the recruitment and selection process for trainees, emphasizing efforts to enhance diversity. Provide a thorough description of the didactic and research curriculum, including specific modules for Responsible Conduct of Research (RCR) and professional skills development. Outline the mechanisms for program evaluation and tracking trainee outcomes. Follow instructions specific to PHS 398 Research Training Program Plan Form (G.420).",
+			"guidelines": [
+				"Follow instructions specific to the PHS 398 Research Training Program Plan Form (G.420).",
+				"Consult the G.130 Program Overview section for context regarding program-specific instructions.",
+				"Describe the structure, curriculum, and faculty involved in the research training program."
+			],
+			"id": "s9",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"T32 Program",
+				"Research Training",
+				"Training Curriculum",
+				"Trainee Recruitment",
+				"Responsible Conduct of Research (RCR)",
+				"Program Evaluation",
+				"Faculty Mentorship",
+				"G.420 Supplemental Form"
+			],
+			"needs_applicant_writing": true,
+			"order": 9,
+			"parent_id": null,
+			"search_queries": [
+				"NIH T32 program plan examples",
+				"Responsible Conduct of Research training requirements NIH",
+				"Trainee selection and diversity plan T awards",
+				"G.420 PHS 398 Research Training Program Plan instructions"
+			],
+			"title": "Research Training Program Plan Narrative",
+			"topics": [
+				"Program Structure and Objectives",
+				"Training Faculty and Environment",
+				"Trainee Selection and Diversity",
+				"RCR and Professional Skills Training",
+				"Program Outcomes and Evaluation"
+			]
+		},
+		{
+			"definition": "Supplemental narrative required for Fellowship (F) applications, detailing the research and training plan.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Prepare the supplemental narrative for Fellowship (F) applications. Focus on the applicant's potential and the quality of the proposed research training experience. Summarize the research project and detail the specific training goals that will be achieved under the fellowship. Clearly define the role of the sponsor/mentor, including their expertise and commitment to the applicant's development. Ensure the narrative demonstrates that the institutional environment is conducive to the proposed training. Follow instructions specific to PHS Fellowship Supplemental Form (G.430).",
+			"guidelines": [
+				"Follow instructions specific to the PHS Fellowship Supplemental Form (G.430).",
+				"Consult the G.130 Program Overview section for context regarding program-specific instructions.",
+				"Detail the proposed research training experience and the role of the sponsor/mentor."
+			],
+			"id": "s10",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Fellowship Award",
+				"F31/F32 Mechanism",
+				"Sponsor Statement",
+				"Research Training Plan",
+				"Applicant Potential",
+				"Institutional Environment",
+				"G.430 Supplemental Form"
+			],
+			"needs_applicant_writing": true,
+			"order": 10,
+			"parent_id": null,
+			"search_queries": [
+				"NIH F32 research training plan guidelines",
+				"Sponsor statement requirements NIH fellowship",
+				"G.430 PHS Fellowship Supplemental Form instructions",
+				"Writing the research proposal for an NIH F award"
+			],
+			"title": "Fellowship Supplemental Narrative",
+			"topics": [
+				"Applicant Qualifications and Goals",
+				"Proposed Research Project Summary",
+				"Training Goals and Activities",
+				"Sponsor/Mentor Relationship",
+				"Institutional Resources for Training"
+			]
+		},
+		{
+			"definition": "A compliance narrative detailing how research resources generated by the project will be made available to the scientific community.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Describe the plan for sharing research resources generated by the project (e.g., unique reagents, cell lines, animal models, software, or specialized data tools). Specify which resources will be shared and the mechanism (e.g., institutional core, public repository, commercial vendor). Detail the timeline for availability and any associated costs or restrictions (e.g., Material Transfer Agreements). Ensure the plan complies fully with NIH policies regarding the timely and broad dissemination of research resources.",
+			"guidelines": [
+				"Describe the plan for sharing research resources, such as model organisms, reagents, or software.",
+				"Ensure the plan complies with NIH policies regarding the sharing of research resources."
+			],
+			"id": "s11",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Research Resource Sharing",
+				"Model Organisms",
+				"Reagents",
+				"Software Distribution",
+				"Intellectual Property (IP)",
+				"Material Transfer Agreement (MTA)",
+				"NIH Sharing Policy",
+				"Data Tools"
+			],
+			"needs_applicant_writing": true,
+			"order": 11,
+			"parent_id": null,
+			"search_queries": [
+				"NIH Research Resource Sharing Plan guidelines",
+				"Sharing model organisms NIH policy",
+				"Material Transfer Agreement requirements for reagents",
+				"Software sharing best practices NIH grants"
+			],
+			"title": "Resource Sharing Plan(s)",
+			"topics": [
+				"Resource Types Generated",
+				"Sharing Mechanism and Timeline",
+				"Distribution Costs and Fees",
+				"Compliance with IP/MTA Policies"
+			]
+		},
+		{
+			"definition": "A narrative description of the facilities, laboratory space, and institutional resources available for the project.",
+			"depends_on": ["s3"],
+			"evidence": "",
+			"generation_instructions": "Provide a narrative description of the institutional environment and facilities. Detail the laboratory space, animal facilities, and specialized core facilities (e.g., genomics, imaging, computing) available to the project team. Explain how the scientific environment is conducive to the success of the proposed research and fosters collaboration. Focus on the *relevance* and *adequacy* of the resources, avoiding generic institutional boilerplate. Ensure the description aligns with the Project/Performance Site Location(s) Form (G.230).",
+			"guidelines": [
+				"Describe the institutional environment where the research will be conducted.",
+				"Detail the facilities, resources, and services available to the project team.",
+				"Explain how the scientific environment contributes to the probability of success."
+			],
+			"id": "s12",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Institutional Environment",
+				"Core Facilities",
+				"Laboratory Space",
+				"Animal Facilities",
+				"Computational Resources",
+				"Resource Adequacy",
+				"Scientific Environment"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": null,
+			"search_queries": [
+				"Writing Facilities and Other Resources section NIH",
+				"Describing core facility access in grant application",
+				"Institutional environment description examples",
+				"Computational resources justification NIH"
+			],
+			"title": "Facilities and Other Resources",
+			"topics": [
+				"Physical Facilities Description",
+				"Access to Core Resources",
+				"Institutional Support and Collaboration",
+				"Adequacy for Proposed Research"
+			]
+		},
+		{
+			"definition": "A description of major equipment items necessary for the project.",
+			"depends_on": ["s2", "s3"],
+			"evidence": "",
+			"generation_instructions": "List and describe all major items of equipment (typically defined as costing over $5,000) that are essential for the proposed research. For each item, specify its location and confirm its availability and accessibility to the project team. If the equipment is shared, briefly describe the scheduling or access mechanism to demonstrate that the project will not be hindered by limited availability. Do not list equipment requested in the budget unless it is already owned and available.",
+			"guidelines": [
+				"List and describe major items of equipment that are available for use in the proposed research.",
+				"If equipment is shared, specify the location and extent of availability to the project."
+			],
+			"id": "s13",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Major Equipment List",
+				"Instrument Location",
+				"Shared Access Policy",
+				"Utilization Plan",
+				"Capital Investment",
+				"Equipment Necessity"
+			],
+			"needs_applicant_writing": true,
+			"order": 13,
+			"parent_id": null,
+			"search_queries": [
+				"NIH major equipment definition",
+				"Equipment list format for grant application",
+				"Justifying shared equipment access"
+			],
+			"title": "Equipment",
+			"topics": [
+				"Equipment Necessity",
+				"Availability and Location",
+				"Shared Use and Scheduling"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "s14",
+			"needs_applicant_writing": false,
+			"order": 14,
+			"parent_id": null,
+			"title": "Other Support"
+		},
+		{
+			"evidence": "",
+			"id": "s15",
+			"needs_applicant_writing": false,
+			"order": 15,
+			"parent_id": null,
+			"title": "Letters of Support/Reference Letters"
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "3e9daf3fe95f26d0501f3f1bac9c57b654d0ee10d3d928f869cb08552aff1465",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Comprehensive General (G) Instructions.pdf",
+	"guideline_version": "Forms-H",
+	"id": "bd76c62c-9ee6-4183-af56-c0843a980b24",
+	"name": "Loan Repayment Program for Clinical Researchers"
+}

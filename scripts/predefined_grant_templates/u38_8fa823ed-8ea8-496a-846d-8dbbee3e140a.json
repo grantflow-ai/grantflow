@@ -1,0 +1,484 @@
+{
+	"activity_code": "U38",
+	"description": "In cooperation with the States to operate a uniform national health program reporting system, which is to provide data for analytical purposes to assist health planners and health program managers in their decision-making processes.",
+	"grant_sections": [
+		{
+			"evidence": "",
+			"id": "P_SUMMARY",
+			"needs_applicant_writing": false,
+			"order": 1,
+			"parent_id": null,
+			"title": "Project Summary and Relevance"
+		},
+		{
+			"evidence": "",
+			"id": "P_ABSTRACT",
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": "P_SUMMARY",
+			"title": "Project Summary/Abstract"
+		},
+		{
+			"evidence": "",
+			"id": "P_RELEVANCE",
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": "P_SUMMARY",
+			"title": "Public Health Relevance Statement"
+		},
+		{
+			"evidence": "",
+			"id": "R_PLAN",
+			"needs_applicant_writing": false,
+			"order": 4,
+			"parent_id": null,
+			"title": "PHS 398 Research Plan"
+		},
+		{
+			"definition": "Required only for Resubmission or Revision applications, detailing changes made in response to previous critiques.",
+			"depends_on": [],
+			"evidence": "",
+			"generation_instructions": "This section is mandatory only for Resubmission (A1) or Revision applications. Begin with a concise summary of the major changes made in response to the previous scientific review group (SRG) critique. Follow with a respectful, point-by-point response to all critiques (including scored and unscored comments). Clearly delineate changes made in the application text (e.g., using bolding, italics, or change bars) and provide a strong rationale for any critiques that were not addressed.",
+			"guidelines": [
+				"Only include this section if the application is a Resubmission or Revision type.",
+				"Address the summary of the previous scientific review group critique.",
+				"Clearly delineate changes made to the application in response to the critiques.",
+				"If no changes were made, provide a rationale for not making changes."
+			],
+			"id": "R_INTRO",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Resubmission Critique Response",
+				"Summary Statement Review",
+				"Reviewer Comments",
+				"Delineated Changes",
+				"Revision Rationale",
+				"Scientific Review Group (SRG)",
+				"A1 Application",
+				"Grant Introduction"
+			],
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH A1 resubmission introduction requirements",
+				"Responding to NIH Summary Statement critiques",
+				"Formatting changes in NIH revision application",
+				"Rationale for not addressing specific reviewer comments",
+				"Tone and style for NIH introduction to resubmission"
+			],
+			"title": "Introduction to Application (Resubmission/Revision)",
+			"topics": [
+				"Summary of Previous Critiques",
+				"Point-by-Point Response Strategy",
+				"Description of Application Modifications",
+				"Justification for Unchanged Elements"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "R_AIMS",
+			"needs_applicant_writing": true,
+			"order": 6,
+			"parent_id": "R_PLAN",
+			"title": "Specific Aims"
+		},
+		{
+			"definition": "The detailed description of the research, organized into Significance, Innovation, and Approach.",
+			"depends_on": ["R_AIMS"],
+			"evidence": "",
+			"generation_instructions": "Structure the narrative strictly into three subsections: Significance, Innovation, and Approach. Significance must establish the scientific premise and explain the importance of the problem. Innovation must describe how the project challenges current paradigms. Approach must detail the methodology for each Specific Aim, including controls, sample sizes, and statistical methods. Explicitly address rigor and reproducibility. Crucially, dedicate a subsection within Approach to potential problems, limitations, and robust alternative strategies for every major experimental step. Adhere strictly to the FOA's page limits.",
+			"guidelines": [
+				"Must be organized into three distinct sections: Significance, Innovation, and Approach.",
+				"The Approach section must detail the methodology, potential problems, and alternative strategies.",
+				"Clearly articulate the scientific premise for the proposed research.",
+				"Adhere strictly to the page limits specified in the funding opportunity announcement (FOA)."
+			],
+			"id": "R_STRATEGY",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": true,
+			"keywords": [
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Scientific Premise",
+				"Preliminary Data",
+				"Experimental Design",
+				"Potential Pitfalls",
+				"Alternative Strategies",
+				"Data Analysis Plan",
+				"Rigor and Reproducibility",
+				"Statistical Power",
+				"Methodology Validation",
+				"Research Environment",
+				"Specific Aim Methodology"
+			],
+			"needs_applicant_writing": true,
+			"order": 7,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH Research Strategy Significance Innovation Approach structure",
+				"Addressing rigor and reproducibility in NIH Approach section",
+				"Preliminary data requirements for R01 grant",
+				"Detailed experimental design and statistical analysis plan",
+				"Mitigating potential pitfalls and alternative strategies NIH",
+				"Scientific premise definition and inclusion in research strategy",
+				"Page limits for NIH Research Strategy section",
+				"Justification of statistical power and sample size",
+				"Validation of key biological and chemical resources"
+			],
+			"title": "Research Strategy",
+			"topics": [
+				"Scientific Rationale and Importance",
+				"Novelty and Impact on Field",
+				"Detailed Experimental Protocols",
+				"Risk Mitigation and Contingency Planning",
+				"Data Management and Statistical Methods",
+				"Preliminary Results Supporting Feasibility",
+				"Rigor and Reproducibility Standards",
+				"Research Team Expertise"
+			]
+		},
+		{
+			"definition": "A required plan detailing the roles, responsibilities, and administrative structure when multiple Principal Investigators (PD/PIs) are involved.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "If the application involves multiple PD/PIs, provide a detailed plan. Justify the necessity of the multi-PI approach over a single PI model. Clearly define the roles, responsibilities, and specific expertise contribution of each PD/PI relative to the Specific Aims. Outline the administrative structure, including the process for decision-making, budget allocation, and resolving scientific or administrative conflicts among the leadership team. Ensure the plan demonstrates seamless coordination.",
+			"guidelines": [
+				"Only include this section if the application involves multiple PD/PIs.",
+				"Describe the rationale for choosing a multiple PD/PI approach.",
+				"Clearly define the roles, responsibilities, and administrative structure for each PD/PI.",
+				"Outline the process for decision-making, conflict resolution, and communication among the leadership team."
+			],
+			"id": "R_LEAD",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Multiple PD/PI",
+				"Leadership Rationale",
+				"Administrative Structure",
+				"Roles and Responsibilities",
+				"Decision-Making Process",
+				"Conflict Resolution",
+				"Communication Plan",
+				"Team Science"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH Multiple PD/PI leadership plan requirements",
+				"Administrative structure for multi-PI grant",
+				"Conflict resolution process in team science grants",
+				"Defining roles and responsibilities for co-PIs NIH",
+				"Rationale for choosing multiple PD/PI approach"
+			],
+			"title": "Multiple PD/PI Leadership Plan",
+			"topics": [
+				"Justification for Multi-PI Model",
+				"Defined Roles and Expertise Contribution",
+				"Governance and Management Structure",
+				"Inter-PI Communication Strategy"
+			]
+		},
+		{
+			"definition": "Required section detailing the involvement, care, and procedures related to vertebrate animals in the proposed research.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "Address the five required points: 1) Detailed procedures involving animals, 2) Justification for species, strains, ages, sexes, and numbers used, 3) Adequacy of veterinary care, 4) Methods for minimizing pain and distress (including use of tranquilizers, analgesics, and anesthetics), and 5) Method of euthanasia. Ensure the description aligns with institutional IACUC standards and the Guide for the Care and Use of Laboratory Animals.",
+			"guidelines": [
+				"Provide a description of the proposed procedures involving vertebrate animals.",
+				"Justify the use of animals, the species, strains, ages, sexes, and numbers to be used.",
+				"Address methods for minimizing pain and distress, including the use of tranquilizers, analgesics, and anesthetics.",
+				"Describe the veterinary care and housing facilities."
+			],
+			"id": "R_VET",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Vertebrate Animals Section (VAS)",
+				"Justification of Species",
+				"Minimizing Pain and Distress",
+				"Anesthesia and Analgesia",
+				"Euthanasia Methods",
+				"Veterinary Care Program",
+				"IACUC Protocol",
+				"Animal Numbers Justification"
+			],
+			"needs_applicant_writing": true,
+			"order": 9,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH Vertebrate Animals Section five required points",
+				"Justification for animal species and numbers in grant",
+				"Methods for minimizing pain and distress in research animals",
+				"IACUC protocol alignment NIH grant writing",
+				"Description of veterinary care and housing facilities NIH"
+			],
+			"title": "Vertebrate Animals",
+			"topics": [
+				"Justification and Procedures",
+				"Animal Welfare and Housing",
+				"Pain and Distress Mitigation",
+				"Institutional Compliance (IACUC)"
+			]
+		},
+		{
+			"definition": "Required section if the research involves the use of select agents or toxins regulated by the CDC or USDA.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "If the research involves select agents or toxins, clearly list the specific agents. Detail the institutional registration status with the CDC or USDA Federal Select Agent Program (FSAP). Describe the security measures, containment facilities (e.g., BSL-3), and handling protocols used to prevent unauthorized access, theft, or release. Confirm oversight by the Institutional Biosafety Committee (IBC).",
+			"guidelines": [
+				"Only include if the research involves the use of select agents or toxins.",
+				"Provide a description of the select agents to be used.",
+				"Detail the registration status of the entity with the CDC or USDA.",
+				"Describe the procedures for securing and handling the select agents."
+			],
+			"id": "R_SELECT",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Select Agents and Toxins",
+				"CDC/USDA Registration",
+				"Biosafety Level (BSL)",
+				"Security Procedures",
+				"Handling Protocols",
+				"Risk Mitigation",
+				"Institutional Biosafety Committee (IBC)",
+				"Federal Select Agent Program (FSAP)"
+			],
+			"needs_applicant_writing": true,
+			"order": 10,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH Select Agents and Toxins research requirements",
+				"CDC/USDA Select Agent Program registration status",
+				"Biosafety procedures for handling select toxins",
+				"Institutional Biosafety Committee oversight select agents",
+				"Security measures for select agents research"
+			],
+			"title": "Select Agent Research",
+			"topics": [
+				"Agent Identification and Use",
+				"Regulatory Compliance Status",
+				"Security and Containment Measures",
+				"Institutional Oversight"
+			]
+		},
+		{
+			"definition": "A plan outlining how scientific data will be managed, preserved, and shared during and after the research project.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "Develop a comprehensive Data Management and Sharing (DMS) Plan compliant with the NIH 2023 Policy. Describe the scientific data to be managed and shared (data types, formats, volume). Specify the metadata and standards applied (e.g., FAIR principles). Name the chosen repository (e.g., GEO, dbGaP) and define the preservation and access timelines (no later than publication). Detail the roles, responsibilities, and oversight mechanisms for implementing the plan, including any costs associated with data sharing.",
+			"guidelines": [
+				"Describe the scientific data to be managed and shared, including data types and formats.",
+				"Specify the standards to be applied to the scientific data.",
+				"Outline the preservation, access, and associated timelines for data sharing.",
+				"Detail the roles, responsibilities, and oversight for DMS plan implementation."
+			],
+			"id": "R_DMS",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Data Management Plan (DMP)",
+				"Scientific Data Sharing",
+				"Data Preservation",
+				"Metadata Standards",
+				"Data Access Timelines",
+				"Data Repositories",
+				"FAIR Principles",
+				"Data Curation",
+				"NIH 2023 DMS Policy",
+				"Roles and Responsibilities"
+			],
+			"needs_applicant_writing": true,
+			"order": 11,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH 2023 Data Management and Sharing Policy requirements",
+				"Selecting appropriate NIH data repositories",
+				"Metadata standards for scientific data sharing plan",
+				"Budgeting for data management and sharing costs",
+				"Timeline for data access and preservation NIH DMS",
+				"Roles and responsibilities for DMS plan implementation",
+				"FAIR principles application in NIH grant writing",
+				"Data curation and quality control plan"
+			],
+			"title": "Data Management and Sharing Plan",
+			"topics": [
+				"Data Types and Volume",
+				"Standards for Data Description",
+				"Repository Selection and Preservation Strategy",
+				"Access, Distribution, and Reuse Provisions",
+				"Oversight and Monitoring of DMS Plan",
+				"Budgeting for Data Sharing Costs",
+				"Ethical Considerations in Data Sharing"
+			]
+		},
+		{
+			"definition": "Required plans addressing the sharing of research resources (e.g., unique reagents, model organisms) developed during the project.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "Describe all unique research resources (e.g., novel antibodies, cell lines, animal models) developed during the project that will be shared. Detail the mechanism for sharing (e.g., public repository, MTA). If genomic data is generated, include a separate Genomic Data Sharing (GDS) Plan addressing data submission to NIH repositories (e.g., dbGaP) and consent requirements. If sharing of any resource is restricted, provide a detailed, compelling justification.",
+			"guidelines": [
+				"Address the sharing of research resources such as unique reagents, cell lines, or model organisms.",
+				"If applicable, include a Genomic Data Sharing (GDS) Plan.",
+				"Explain how the resources will be made available to the scientific community.",
+				"If sharing is restricted, provide a detailed justification for the limitations."
+			],
+			"id": "R_RESOURCE",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Research Resource Sharing",
+				"Unique Reagents",
+				"Model Organisms",
+				"Cell Lines",
+				"Genomic Data Sharing (GDS) Plan",
+				"Resource Dissemination",
+				"Material Transfer Agreement (MTA)",
+				"Justification for Restrictions",
+				"NIH Resource Sharing Policy"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": "R_PLAN",
+			"search_queries": [
+				"NIH Research Resource Sharing Plan requirements",
+				"Genomic Data Sharing (GDS) Plan components NIH",
+				"Sharing unique reagents and model organisms policy",
+				"Material Transfer Agreement (MTA) for resource sharing",
+				"Justification for restricting research resource availability",
+				"Timeline for making research resources available",
+				"NIH policy on sharing cell lines and plasmids"
+			],
+			"title": "Resource Sharing Plan(s)",
+			"topics": [
+				"Types of Resources to be Shared",
+				"Mechanism for Resource Distribution",
+				"Compliance with GDS Policy",
+				"Justification for Limited Sharing",
+				"Timelines for Resource Availability"
+			]
+		},
+		{
+			"definition": "A dedicated form (PHS Human Subjects and Clinical Trials Information, R.500) used to provide detailed information on the involvement of human subjects and/or clinical trials.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information form (R.500). Provide detailed narrative attachments covering the study population, recruitment strategies, and inclusion/exclusion criteria. Describe the protections of human subjects from research risks, including the informed consent process and IRB status. If a clinical trial is proposed, include the required protocol synopsis, primary/secondary outcome measures, and a robust Data and Safety Monitoring Plan (DSMP). Ensure compliance with NIH policies regarding the inclusion of women, minorities, and children.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information form (R.500).",
+				"Provide detailed information regarding human subjects involvement, even if exempt.",
+				"If a clinical trial is proposed, include the required protocol synopsis and outcome measures.",
+				"Describe the protections of human subjects from research risks."
+			],
+			"id": "C_HUMAN",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human Subjects Protection",
+				"Clinical Trial Protocol",
+				"IRB Approval",
+				"Inclusion/Exclusion Criteria",
+				"Recruitment Methods",
+				"Outcome Measures",
+				"Risk/Benefit Assessment",
+				"Data and Safety Monitoring Plan (DSMP)",
+				"Regulatory Compliance",
+				"PHS 398 R.500 Form",
+				"Informed Consent Process",
+				"Vulnerable Populations"
+			],
+			"needs_applicant_writing": true,
+			"order": 13,
+			"parent_id": null,
+			"search_queries": [
+				"PHS Human Subjects and Clinical Trials Information R.500 completion guide",
+				"NIH clinical trial protocol synopsis requirements",
+				"Data and Safety Monitoring Plan (DSMP) for clinical trials",
+				"Inclusion of women minorities and children NIH policy",
+				"IRB approval and informed consent process documentation",
+				"Risk/benefit assessment for human subjects research",
+				"Defining primary and secondary outcome measures for NIH trials",
+				"Recruitment and retention strategies for clinical trials"
+			],
+			"title": "Human Subjects and Clinical Trials Information",
+			"topics": [
+				"Subject Recruitment and Retention",
+				"Risk Assessment and Protection Measures",
+				"Clinical Trial Design and Methodology",
+				"Data and Safety Monitoring",
+				"Regulatory and Ethical Compliance (IRB)",
+				"Inclusion of Women, Minorities, and Children",
+				"Protocol Synopsis and Outcome Measures"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "B_RES",
+			"needs_applicant_writing": false,
+			"order": 14,
+			"parent_id": null,
+			"title": "Budget and Resources"
+		},
+		{
+			"evidence": "",
+			"id": "B_FACIL",
+			"needs_applicant_writing": true,
+			"order": 15,
+			"parent_id": "B_RES",
+			"title": "Facilities & Other Resources"
+		},
+		{
+			"definition": "A narrative justification explaining and defending all requested costs listed in the budget forms.",
+			"depends_on": ["R_STRATEGY"],
+			"evidence": "",
+			"generation_instructions": "Provide a detailed narrative justification for all requested costs. For personnel, list each individual (or position), their role, and the exact effort level in person months (calendar, academic, or summer). Justify the necessity of their effort relative to the Specific Aims. For non-personnel costs (supplies, travel, equipment), provide itemized explanations, ensuring alignment with the R&R Budget or Modular Budget forms. If a modular budget is used, provide detailed justification for personnel and consortium costs separately.",
+			"guidelines": [
+				"Provide detailed justification for all requested personnel, including roles and effort levels (person months).",
+				"Justify all major cost categories (e.g., equipment, travel, supplies).",
+				"If using a detailed budget, ensure justification aligns with the R&R Budget Form (R.300).",
+				"If using a modular budget, justify personnel and consortium costs separately."
+			],
+			"id": "B_JUST",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Personnel Justification",
+				"Person Months Effort",
+				"Modular Budget Justification",
+				"Detailed Budget Explanation",
+				"Equipment Costs",
+				"Supply Categories",
+				"Travel Justification",
+				"Consortium Costs",
+				"Cost Alignment"
+			],
+			"needs_applicant_writing": true,
+			"order": 16,
+			"parent_id": "B_RES",
+			"search_queries": [
+				"Justifying personnel effort in NIH grant person months",
+				"Modular budget justification requirements NIH",
+				"Detailed justification for equipment and supply costs",
+				"Narrative justification for consortium/subaward costs",
+				"Guidelines for travel justification NIH grant"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Personnel Roles and Effort Justification",
+				"Explanation of Non-Personnel Costs",
+				"Justification for Subaward/Consortium Expenses",
+				"Alignment with Specific Aims"
+			]
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "a24466e236337514df0d3e64ef568f69744c15d2b4df7be4e2dde5f41dbd1fb5",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for Research (R).pdf",
+	"guideline_version": "Forms-H",
+	"id": "8fa823ed-8ea8-496a-846d-8dbbee3e140a",
+	"name": "Uniform National Health Program Reporting System"
+}

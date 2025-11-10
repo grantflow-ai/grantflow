@@ -1,0 +1,484 @@
+{
+	"activity_code": "F37",
+	"description": "To provide training to individuals in the synthesis, organization, and management of knowledge. The training should be interdisciplinary - involving medicine, biotechnology, and cognitive sciences, information science, and computer science.",
+	"grant_sections": [
+		{
+			"evidence": "",
+			"id": "project_overview_narratives",
+			"needs_applicant_writing": false,
+			"order": 1,
+			"parent_id": null,
+			"title": "Project Overview Narratives"
+		},
+		{
+			"depends_on": [
+				"research_plan_narrative",
+				"public_health_relevance_statement"
+			],
+			"evidence": "",
+			"generation_instructions": "Write a self-contained, 30-line maximum abstract summarizing the Specific Aims, Research Strategy (methods), and anticipated results. Maintain a professional, accessible tone suitable for public release. Explicitly state the central hypothesis and the significance of the findings. Crucially, ensure no Personal Identifiable Information (PII) or Protected Health Information (PHI) is included, as this content will be made public via RePORTER upon funding. Adhere strictly to NIH formatting guidelines for PDF attachments.",
+			"guidelines": [
+				"The content will be made available to the public through the NIH Research Portfolio Online Reporting Tool (RePORTER) if the application is funded.",
+				"Must summarize the project's aims, methodology, and expected outcomes.",
+				"Do not include Personal Identifiable Information (PII) or Protected Health Information (PHI) in the abstract."
+			],
+			"id": "project_summary_abstract",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Scientific abstract",
+				"Specific Aims summary",
+				"Research methodology overview",
+				"Expected outcomes",
+				"NIH RePORTER disclosure",
+				"Public summary",
+				"Hypothesis statement",
+				"Research design"
+			],
+			"needs_applicant_writing": true,
+			"order": 2,
+			"parent_id": "project_overview_narratives",
+			"search_queries": [
+				"NIH project summary abstract requirements F series",
+				"Example NIH abstract structure aims methodology",
+				"Formatting guidelines NIH 30 line abstract",
+				"PII PHI exclusion NIH grant application",
+				"NIH RePORTER public abstract guidelines"
+			],
+			"title": "Project Summary/Abstract",
+			"topics": [
+				"Project goals and objectives",
+				"Experimental approach overview",
+				"Anticipated scientific contribution",
+				"Public dissemination requirements"
+			]
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "Write a concise, non-technical statement (2-3 sentences typically) explaining how the proposed research addresses a critical public health problem or advances public health knowledge. Clearly articulate the connection between the scientific aims and the ultimate benefit to human health or disease prevention. Avoid jargon and technical details. This statement must be suitable for public release via RePORTER; strictly exclude all PII and PHI.",
+			"guidelines": [
+				"The content will be made available to the public through RePORTER if the application is funded.",
+				"Must clearly articulate how the proposed research relates to public health needs.",
+				"Do not include Personal Identifiable Information (PII) or Protected Health Information (PHI)."
+			],
+			"id": "public_health_relevance_statement",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Public health impact",
+				"Disease burden reduction",
+				"Translational potential",
+				"Clinical significance",
+				"Societal benefit",
+				"NIH RePORTER disclosure",
+				"Health disparity",
+				"Biomedical advancement"
+			],
+			"needs_applicant_writing": true,
+			"order": 3,
+			"parent_id": "project_overview_narratives",
+			"search_queries": [
+				"NIH public health relevance statement examples",
+				"Translational research impact statement NIH",
+				"How to write public health relevance for F grant",
+				"NIH RePORTER public health relevance guidelines",
+				"NIH relevance statement length"
+			],
+			"title": "Public Health Relevance Statement",
+			"topics": [
+				"Linkage to specific health problems",
+				"Mechanism of translational research",
+				"Potential for clinical application",
+				"Broad societal implications"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "research_compliance_plans",
+			"needs_applicant_writing": false,
+			"order": 4,
+			"parent_id": null,
+			"title": "Research, Training, and Compliance Plans"
+		},
+		{
+			"depends_on": [],
+			"evidence": "",
+			"generation_instructions": "Develop a comprehensive narrative covering Specific Aims (1 page) and the Research Strategy (Significance, Innovation, Approach). The Approach section must detail experimental design, methods, data analysis plans, and include preliminary data supporting feasibility. Emphasize rigor, reproducibility, and statistical justification for all proposed experiments. Maintain a formal, scientific tone. Ensure strict adherence to the FOA's page limits and NIH formatting standards (e.g., font size, margins). Do not include sensitive PII or PHI.",
+			"guidelines": [
+				"Must include Specific Aims and a detailed Research Strategy.",
+				"Ensure the narrative adheres to page limits specified in the Funding Opportunity Announcement (FOA).",
+				"Follow standard NIH formatting requirements for attachments (fonts, margins, headers/footers).",
+				"Do not include sensitive PII or PHI in the narrative."
+			],
+			"id": "research_plan_narrative",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": true,
+			"keywords": [
+				"Specific Aims",
+				"Research Strategy",
+				"Significance",
+				"Innovation",
+				"Approach",
+				"Preliminary data",
+				"Experimental design",
+				"Statistical power analysis",
+				"Rigor and reproducibility",
+				"Anticipated pitfalls",
+				"Alternative strategies",
+				"Data analysis plan",
+				"Methodology validation"
+			],
+			"needs_applicant_writing": true,
+			"order": 5,
+			"parent_id": "research_compliance_plans",
+			"search_queries": [
+				"NIH Research Strategy structure Significance Innovation Approach",
+				"Specific Aims page limit NIH F series",
+				"Rigor and reproducibility guidelines NIH grant",
+				"Statistical analysis plan requirements NIH research",
+				"Preliminary data integration in NIH grant application",
+				"Addressing anticipated pitfalls and alternative strategies NIH",
+				"NIH formatting requirements PDF attachments",
+				"NIH F series Research Plan page limits"
+			],
+			"title": "Research Plan Narrative (e.g., Specific Aims, Strategy)",
+			"topics": [
+				"Hypothesis formulation and testing",
+				"Detailed methodology and protocols",
+				"Justification of sample size and statistical methods",
+				"Assessment of potential risks and mitigation",
+				"Scientific premise and literature review",
+				"Timeline and milestones",
+				"Research environment suitability"
+			]
+		},
+		{
+			"depends_on": [
+				"research_plan_narrative",
+				"facilities_other_resources",
+				"team_support_narratives",
+				"sponsor_co_sponsor_statements"
+			],
+			"evidence": "",
+			"generation_instructions": "Construct a detailed training plan that clearly links the proposed research project to the applicant's long-term career goals (e.g., becoming an independent investigator). Specify didactic coursework, practical research training, and professional development activities (e.g., grant writing, presentation skills). Describe the frequency and nature of interaction with the sponsor/co-sponsor. Include a dedicated section on the plan for instruction in the Responsible Conduct of Research (RCR), detailing subject matter, format, frequency, and duration.",
+			"guidelines": [
+				"This narrative is mandatory for Fellowship Awards (F series).",
+				"Must detail the applicant's proposed training activities and career development goals.",
+				"Adhere to NIH formatting requirements for PDF attachments."
+			],
+			"id": "training_plan_narrative",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Career development plan",
+				"Didactic training",
+				"Research skill acquisition",
+				"Mentorship structure",
+				"Professional development",
+				"Responsible Conduct of Research (RCR)",
+				"F-series fellowship requirements",
+				"Skill mastery timeline"
+			],
+			"needs_applicant_writing": true,
+			"order": 6,
+			"parent_id": "research_compliance_plans",
+			"search_queries": [
+				"NIH F series training plan requirements",
+				"Responsible Conduct of Research instruction NIH fellowship",
+				"Career development goals for NIH F award",
+				"Mentorship plan structure NIH fellowship application",
+				"Didactic training components NIH F series"
+			],
+			"title": "Training Plan Narrative (Required for Fellowship Awards)",
+			"topics": [
+				"Applicant's long-term career objectives",
+				"Specific training components (courses, workshops)",
+				"Plan for RCR instruction",
+				"Timeline for skill mastery",
+				"Integration of research and training"
+			]
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "Complete the PHS Human Subjects and Clinical Trials Information form (F.500) comprehensively. If a clinical trial is involved, detail the study design (e.g., phase, randomization, blinding), primary outcomes, and statistical analysis plan. For all HSR, describe the risks, benefits, and procedures for protecting participants, including the informed consent process and IRB status. Strictly ensure that no sensitive PII or PHI is entered into any part of this form or associated attachments.",
+			"guidelines": [
+				"Complete the PHS Human Subjects and Clinical Trials Information form (F.500).",
+				"Must detail all aspects related to the involvement of human subjects or clinical trials.",
+				"Ensure strict handling of data by not including sensitive PII or PHI."
+			],
+			"id": "human_subjects_clinical_trials_info",
+			"is_clinical_trial": true,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Human Subjects Research (HSR)",
+				"Clinical Trial definition",
+				"PHS F.500 form",
+				"Inclusion criteria",
+				"Exclusion criteria",
+				"Recruitment plan",
+				"Regulatory compliance",
+				"IRB approval status",
+				"Data safety monitoring plan (DSMP)",
+				"Informed consent process"
+			],
+			"needs_applicant_writing": true,
+			"order": 7,
+			"parent_id": "research_compliance_plans",
+			"search_queries": [
+				"NIH PHS Human Subjects and Clinical Trials Information F.500",
+				"Definition of NIH clinical trial",
+				"Data Safety Monitoring Plan requirements NIH HSR",
+				"Inclusion of women and minorities NIH policy",
+				"Informed consent process NIH grant application"
+			],
+			"title": "Human Subjects and Clinical Trials Information (PHS F.500)",
+			"topics": [
+				"Protection of human subjects",
+				"Clinical trial design (if applicable)",
+				"Data and safety monitoring",
+				"Subject recruitment and retention strategies"
+			]
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "Develop a concise, two-page maximum plan detailing the management and sharing of scientific data in compliance with the NIH DMS Policy. Specify the data types, formats, and metadata standards that will be used. Identify the chosen repository (e.g., NCBI, institutional repository) and the timeline for data sharing (no later than publication). Clearly outline the roles and responsibilities for DMS activities and confirm that the budget justification includes associated costs. Address privacy, confidentiality, and any restrictions on sharing.",
+			"guidelines": [
+				"Must describe how scientific data will be managed and shared.",
+				"The plan must adhere to NIH Data Management and Sharing Policy requirements.",
+				"Specify the types of data to be shared and the timelines for sharing."
+			],
+			"id": "dms_plan",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Data Management and Sharing (DMS) Policy",
+				"Scientific data",
+				"Metadata standards",
+				"Data repository selection",
+				"Data preservation",
+				"Access and sharing timelines",
+				"Data governance",
+				"Privacy protection",
+				"DMS budget justification"
+			],
+			"needs_applicant_writing": true,
+			"order": 8,
+			"parent_id": "research_compliance_plans",
+			"search_queries": [
+				"NIH Data Management and Sharing Policy requirements",
+				"Selecting NIH approved data repository",
+				"Budgeting for NIH DMS plan costs",
+				"Scientific data definition NIH grant",
+				"NIH DMS plan template"
+			],
+			"title": "Data Management and Sharing (DMS) Plan",
+			"topics": [
+				"Data types and volume",
+				"Standards for data collection and metadata",
+				"Chosen repository and access procedures",
+				"Roles and responsibilities for DMS",
+				"Budget justification for DMS costs"
+			]
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "Detail the plan for making unique research resources (e.g., cell lines, antibodies, novel software, animal models) available to the broader scientific community. If the project generates large-scale human genomic data, include a specific statement confirming compliance with the NIH Genomic Data Sharing (GDS) Policy. Specify the mechanism (e.g., through a repository, MTA) and timeline for resource distribution. If no unique resources are generated, state this explicitly and briefly explain why the standard DMS plan is sufficient.",
+			"guidelines": [
+				"Describe the plan for sharing research resources, such as unique reagents or model organisms.",
+				"If applicable, include plans for sharing genomic data (GDS Policy).",
+				"Ensure compliance with NIH policies regarding resource availability."
+			],
+			"id": "resource_sharing_plans",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Research resource sharing",
+				"Unique reagents",
+				"Model organisms",
+				"Genomic Data Sharing (GDS) Policy",
+				"Software dissemination",
+				"Material Transfer Agreement (MTA)",
+				"NIH resource policies",
+				"Data availability statement"
+			],
+			"needs_applicant_writing": true,
+			"order": 9,
+			"parent_id": "research_compliance_plans",
+			"search_queries": [
+				"NIH resource sharing plan requirements",
+				"Genomic Data Sharing Policy NIH compliance",
+				"Sharing unique research reagents NIH",
+				"Material Transfer Agreement guidelines NIH",
+				"NIH model organism sharing policy"
+			],
+			"title": "Resource Sharing Plan(s)",
+			"topics": [
+				"Availability of unique research materials",
+				"Compliance with GDS policy (if applicable)",
+				"Mechanism for resource distribution",
+				"Timeline for resource availability"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "data_tables",
+			"needs_applicant_writing": false,
+			"order": 10,
+			"parent_id": "research_compliance_plans",
+			"title": "Data Tables (Institutional Training Applications)"
+		},
+		{
+			"evidence": "",
+			"id": "team_support_narratives",
+			"needs_applicant_writing": false,
+			"order": 11,
+			"parent_id": null,
+			"title": "Team and Sponsor Support Narratives"
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "The sponsor must provide a statement detailing their qualifications, previous experience mentoring trainees (especially NIH fellows), and their commitment to the applicant's training plan. The statement must explicitly describe the research environment, institutional resources, and financial support available to the fellow. It should outline the frequency and nature of supervision and the process for evaluating the fellow's progress, ensuring the environment is conducive to the fellow's success.",
+			"guidelines": [
+				"This statement is mandatory for Fellowship Awards.",
+				"Must detail the sponsor's commitment to the applicant's training and research.",
+				"The statement should describe the resources and environment available to the fellow."
+			],
+			"id": "sponsor_co_sponsor_statements",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Sponsor commitment",
+				"Mentorship quality",
+				"Research environment",
+				"Institutional support",
+				"F-series sponsor requirements",
+				"Co-sponsor role definition",
+				"Trainee supervision plan",
+				"Mentoring history"
+			],
+			"needs_applicant_writing": true,
+			"order": 12,
+			"parent_id": "team_support_narratives",
+			"search_queries": [
+				"NIH F series sponsor statement requirements",
+				"Example sponsor statement NIH fellowship",
+				"Sponsor mentoring history NIH grant",
+				"Institutional resources description for NIH fellow",
+				"Sponsor evaluation plan for F awardee"
+			],
+			"title": "Sponsor/Co-Sponsor Statements (Required for Fellowship Awards)",
+			"topics": [
+				"Sponsor's qualifications and mentoring history",
+				"Description of available research facilities",
+				"Plan for trainee supervision and evaluation",
+				"Financial and resource commitment"
+			]
+		},
+		{
+			"evidence": "",
+			"id": "budget_and_resources",
+			"needs_applicant_writing": false,
+			"order": 13,
+			"parent_id": null,
+			"title": "Budget and Resources"
+		},
+		{
+			"depends_on": [
+				"research_plan_narrative",
+				"training_plan_narrative",
+				"team_support_narratives",
+				"facilities_other_resources"
+			],
+			"evidence": "",
+			"generation_instructions": "Provide a clear, itemized justification for every requested cost, linking expenditures directly to the Specific Aims and methodology described in the Research Plan. If using a detailed budget, justify the percentage of effort (FTE) for all personnel. If using a modular budget, justify the overall module amount and any significant variations. Ensure costs for Data Management and Sharing (DMS) are included and justified. Maintain consistency with institutional salary caps and NIH policy.",
+			"guidelines": [
+				"Justify all requested costs clearly and specifically.",
+				"Distinguish between modular and detailed budget requirements based on the FOA.",
+				"Explain the necessity of personnel, equipment, and supply costs relative to the project aims."
+			],
+			"id": "budget_justification",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Detailed budget",
+				"Modular budget justification",
+				"Personnel justification",
+				"Equipment costs",
+				"Supply costs breakdown",
+				"Travel justification",
+				"Cost necessity",
+				"DMS costs justification",
+				"NIH salary cap"
+			],
+			"needs_applicant_writing": true,
+			"order": 14,
+			"parent_id": "budget_and_resources",
+			"search_queries": [
+				"NIH detailed budget justification requirements",
+				"Modular budget justification NIH guidelines",
+				"Justifying personnel effort FTE NIH grant",
+				"Allowable costs NIH fellowship budget",
+				"Budgeting for publication costs NIH"
+			],
+			"title": "Budget Justification",
+			"topics": [
+				"Justification of personnel effort (FTE)",
+				"Explanation of non-standard equipment needs",
+				"Detailed breakdown of consumable supplies",
+				"Travel necessity for training/dissemination"
+			]
+		},
+		{
+			"depends_on": ["research_plan_narrative"],
+			"evidence": "",
+			"generation_instructions": "Describe the physical and intellectual environment where the research will be conducted. Detail the available laboratory space, major equipment, and access to institutional core facilities (e.g., sequencing, imaging). Explicitly state how the environment is conducive to both the proposed research and the applicant's training goals, demonstrating strong institutional support for the fellowship. Focus on resources essential for the project's success and the fellow's development.",
+			"guidelines": [
+				"Describe the facilities available for the proposed research.",
+				"Detail the institutional support and resources provided to the project team.",
+				"Explain how the research environment is suitable for the proposed work and training."
+			],
+			"id": "facilities_other_resources",
+			"is_clinical_trial": false,
+			"is_detailed_research_plan": false,
+			"keywords": [
+				"Research facilities description",
+				"Institutional support",
+				"Major equipment inventory",
+				"Research environment suitability",
+				"Core facilities access",
+				"Laboratory space adequacy",
+				"Computational resources",
+				"Animal facilities"
+			],
+			"needs_applicant_writing": true,
+			"order": 15,
+			"parent_id": "budget_and_resources",
+			"search_queries": [
+				"NIH Facilities and Other Resources description",
+				"Institutional support statement NIH fellowship",
+				"Describing core facilities access NIH grant",
+				"Suitability of research environment NIH F award",
+				"Major equipment list NIH grant"
+			],
+			"title": "Facilities & Other Resources",
+			"topics": [
+				"Adequacy of laboratory and office space",
+				"Availability of specialized equipment and core facilities",
+				"Institutional commitment to the fellow",
+				"Suitability for proposed research and training"
+			]
+		}
+	],
+	"grant_type": "RESEARCH",
+	"granting_institution_full_name": "National Institutes of Health",
+	"guideline_hash": "385d87363f4ed937fda31f30197ad05f9d959b64eb8886ab17562c71c7bc9cbe",
+	"guideline_source": "/Users/naamanhirschfeld/workspace/grantflow/testing/test_data/sources/guidelines/nih/NIH- Instructions for Fellowship (F) Grants.pdf",
+	"guideline_version": "Forms-H",
+	"id": "f33ade6f-84d1-42ef-b3f1-d41c3692d4f3",
+	"name": "Medical Informatics Fellowships"
+}
