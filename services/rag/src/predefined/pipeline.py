@@ -219,13 +219,6 @@ async def persist_predefined_template(
     guideline_hash = guideline_hash or hashlib.sha256(guideline_path.read_bytes()).hexdigest()
     guideline_version = spec.guideline_version or "unspecified"
 
-    additional_metadata = {
-        "manifest_key": spec.key,
-        "description": spec.description,
-        "overrides": spec.overrides,
-        "guideline_version": guideline_version,
-    }
-
     if dry_run:
         logger.info(
             "[dry-run] Generated predefined template",
@@ -274,7 +267,6 @@ async def persist_predefined_template(
             guideline_source=str(spec.guideline_source),
             guideline_version=guideline_version,
             guideline_hash=guideline_hash,
-            additional_metadata=additional_metadata,
             granting_institution_id=institution.id,
         )
         session.add(record)

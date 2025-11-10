@@ -6,6 +6,7 @@ from litestar import patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import GrantType, SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import GrantTemplate, GrantTemplateSource, PredefinedGrantTemplate, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -153,40 +154,27 @@ async def handle_apply_predefined_grant_template(
     get_trace_id(request)
 
     async with session_maker() as session, session.begin():
+        grant_template = await session.scalar(select_active_by_id(GrantTemplate, grant_template_id))
+
+        if not grant_template:
+            raise ValidationException("Grant template not found")
+
+        if grant_template.grant_sections:
+            raise ValidationException(
+                "Grant template already contains sections; clear them before applying a predefined template"
+            )
+
+        predefined = await session.scalar(select_active_by_id(PredefinedGrantTemplate, data["predefined_template_id"]))
+
+        if not predefined:
+            raise ValidationException("Predefined template not found")
+
         try:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(
-                    GrantTemplate.id == grant_template_id,
-                    GrantTemplate.deleted_at.is_(None),
-                )
-            )
-
-            if not grant_template:
-                raise ValidationException("Grant template not found")
-
-            if grant_template.grant_sections:
-                raise ValidationException(
-                    "Grant template already contains sections; clear them before applying a predefined template"
-                )
-
-            predefined = await session.scalar(
-                select(PredefinedGrantTemplate).where(
-                    PredefinedGrantTemplate.id == data["predefined_template_id"],
-                    PredefinedGrantTemplate.deleted_at.is_(None),
-                )
-            )
-
-            if not predefined:
-                raise ValidationException("Predefined template not found")
-
             await apply_predefined_template(
                 session=session,
                 grant_template=grant_template,
                 predefined_template=predefined,
             )
-
-        except ValidationException:
-            raise
         except SQLAlchemyError as exc:
             logger.error("Error applying predefined grant template", exc_info=exc)
             raise DatabaseError("Error applying predefined grant template", context=str(exc)) from exc

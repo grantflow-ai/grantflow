@@ -523,7 +523,6 @@ class PredefinedGrantTemplate(BaseWithUUIDPK):
     guideline_source: Mapped[str | None] = mapped_column(String(255), nullable=True)
     guideline_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     guideline_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    additional_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     granting_institution_id: Mapped[UUID] = mapped_column(
         SA_UUID(), ForeignKey("granting_institutions.id", ondelete="CASCADE"), index=True
     )
