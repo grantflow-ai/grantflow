@@ -132,7 +132,7 @@ module "cloud_run" {
   rag_cpu_limit         = "1"   # ~keep Single CPU sufficient for async I/O operations
   rag_concurrency_limit = 1     # ~keep ONE message per instance for AI workloads
   rag_min_instances     = 1     # ~keep Always have at least 1 instance for availability
-  rag_max_instances     = 2     # ~keep Updated for staging environment
+  rag_max_instances     = 3     # ~keep Increased for handling cold start issues and concurrent requests
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
 
