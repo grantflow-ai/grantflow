@@ -47,7 +47,8 @@ async def seed_db() -> None:
                 {"email": "tsveta@grantflow.ai"},
                 {"email": "varun@grantflow.ai"},
                 {"email": "luca@grantflow.ai"},
-                {"email": "yatanvesh@grantflow.ai"},
+                {"email": "danielle@grantflow.ai"},
+                {"email": "yiftach@grantflow.ai"},
             ]
 
             stmt = insert(BackofficeAdmin).values(backoffice_admins_data)
