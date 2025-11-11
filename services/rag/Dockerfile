@@ -7,17 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
     libpq-dev \
-    curl \
-    pkg-config \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-FROM base AS model-download
-RUN mkdir -p "${HF_HOME}"
-RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer sentence-transformers keybert && \
-    python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')" && \
-    python3 -c "from keybert import KeyBERT; KeyBERT()"
 
 FROM base AS install
 WORKDIR /app/
@@ -27,6 +17,14 @@ COPY services/rag/pyproject.toml services/rag/pyproject.toml
 COPY packages packages
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --all-packages --all-extras --no-editable --no-dev --compile-bytecode
+
+FROM install AS model-download
+RUN mkdir -p "${HF_HOME}"
+# Install model download dependencies (keybert + sentence-transformers from shared-utils)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --package rag --group models
+COPY scripts/download_models.py /tmp/download_models.py
+RUN /app/.venv/bin/python /tmp/download_models.py
 
 FROM base AS app
 WORKDIR /app/

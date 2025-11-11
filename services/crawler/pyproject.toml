@@ -16,5 +16,10 @@ dependencies = [
   "trafilatura>=2",
 ]
 
+[dependency-groups]
+models = [
+  "keybert>=0.8",
+]
+
 [tool.ruff]
 lint.per-file-ignores = { "tests/main_test.py" = [ "PLC0415" ] }

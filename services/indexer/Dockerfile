@@ -3,26 +3,28 @@ ENV HF_HOME="/app/hf-cache" \
     HUGGINGFACE_HUB_CACHE="/app/hf-cache" \
     SENTENCE_TRANSFORMERS_HOME="/app/hf-cache"
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
-
-FROM base AS model-download
-RUN mkdir -p "${HF_HOME}"
-RUN pip install --no-cache-dir "huggingface-hub[cli]" hf-transfer sentence-transformers keybert && \
-    python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')" && \
-    python3 -c "from keybert import KeyBERT; KeyBERT()"
-
-FROM base AS install
-WORKDIR /app/
-ENV UV_LINK_MODE=copy
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
     libpq-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+FROM base AS install
+WORKDIR /app/
+ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
 COPY services/indexer/pyproject.toml services/indexer/pyproject.toml
 COPY packages packages
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --all-packages --all-extras --no-editable --no-dev --compile-bytecode
+
+FROM install AS model-download
+RUN mkdir -p "${HF_HOME}"
+# Install model download dependencies (keybert + sentence-transformers from shared-utils)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --package indexer --group models
+COPY scripts/download_models.py /tmp/download_models.py
+RUN /app/.venv/bin/python /tmp/download_models.py
 
 FROM base AS app
 WORKDIR /app/

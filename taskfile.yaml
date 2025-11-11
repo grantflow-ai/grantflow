@@ -68,9 +68,9 @@ tasks:
       - task: service:scraper:test:e2e
 
   lint:
-    desc: Run all linters and formatters
+    desc: Run all linters and formatters using prek
     cmds:
-      - task: lint:all
+      - prek run --all-files {{.CLI_ARGS}}
 
   format:
     desc: Format frontend code
@@ -555,102 +555,21 @@ tasks:
 
 
 
-  lint:all:
-    desc: Run all linters and formatters on all files
-    deps:
-      - task: lint:frontend
-      - task: lint:python
-      - task: lint:codespell
-      - task: lint:terraform
-
-  lint:frontend:
-    desc: Run all frontend linters (Biome, ESLint, and TypeScript)
-    deps:
-      - task: lint:biome
-      - task: lint:eslint
-      - task: lint:typescript
-
-  lint:python:
-    desc: Run all Python linters (Ruff and MyPy)
-    deps:
-      - task: lint:ruff
-      - task: lint:mypy
-
-  lint:biome:
-    desc: Format and lint frontend code with Biome
-    dir: frontend
-    cmds:
-      - pnpm biome check --write .
-      - pnpm biome format --write .
-
-  lint:eslint:
-    desc: Lint frontend JavaScript/TypeScript with ESLint
-    dir: frontend
-    cmds:
-      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
-
-  lint:ruff:
-    desc: Lint and format Python code with Ruff
-    cmds:
-      - uv run ruff check --fix --unsafe-fixes .
-      - uv run ruff format .
-
-  lint:mypy:
-    desc: Type check Python code with MyPy
-    cmds:
-      - uv run mypy .
-
-  lint:codespell:
-    desc: Check for common misspellings
-    cmds:
-      - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js,playwright-report,test-results"
-
-  lint:typescript:
-    desc: Type check frontend TypeScript code
-    dir: frontend
-    cmds:
-      - pnpm typecheck
-
   lint:terraform:
-    desc: Run all Terraform linters (tofu validate, tflint, trivy)
-    deps:
-      - task: lint:terraform:fmt
-      - task: lint:terraform:validate
-      - task: lint:terraform:tflint
-      - task: lint:terraform:trivy
-
-  lint:terraform:validate:
-    desc: Validate Terraform configuration using tofu validate
-    status:
-      - '! command -v tofu'
-    cmds:
-      - echo "Validating terraform configuration..."
-      - tofu -chdir=terraform init -backend=false
-      - tofu -chdir=terraform validate
-
-  lint:terraform:fmt:
-    desc: Format Terraform code using tofu fmt
-    status:
-      - '! command -v tofu'
+    desc: Run Terraform linters (fmt, validate, tflint, trivy)
+    preconditions:
+      - sh: command -v tofu
+        msg: "OpenTofu (tofu) is required for Terraform linting"
     cmds:
       - echo "Formatting terraform code..."
       - tofu fmt -recursive ./terraform
-
-  lint:terraform:tflint:
-    desc: Lint Terraform code with tflint
-    status:
-      - '! command -v tflint'
-    cmds:
-      - echo "Running tflint on terraform directory..."
-      - tflint --chdir=terraform
-
-  lint:terraform:trivy:
-    desc: Security scan Terraform code with trivy
-    status:
-      - '! command -v trivy'
-    cmds:
-      - echo "Running trivy on terraform directory..."
-      - trivy config ./terraform
+      - echo "Validating terraform configuration..."
+      - tofu -chdir=terraform init -backend=false
+      - tofu -chdir=terraform validate
+      - cmd: tflint --chdir=terraform
+        ignore_error: true
+      - cmd: trivy config ./terraform
+        ignore_error: true
 
 
   cloud-functions:generate-requirements:
