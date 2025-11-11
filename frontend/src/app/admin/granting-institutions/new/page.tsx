@@ -15,12 +15,10 @@ export default function NewGrantingInstitutionPage() {
 					</Button>
 				</Link>
 				<div className="flex flex-col gap-2">
-					<h1 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
+					<h1 className="font-heading font-medium text-2xl leading-[30px] text-app-black">
 						Create Granting Institution
 					</h1>
-					<p className="text-[14px] text-app-gray-700 font-body">
-						Add a new granting institution to the system
-					</p>
+					<p className="text-sm text-app-gray-700 font-body">Add a new granting institution to the system</p>
 				</div>
 			</div>
 
