@@ -60,6 +60,10 @@
 		"full_name": "European Research Council"
 	},
 	{
+		"abbreviation": "EIC",
+		"full_name": "European Innovation Council"
+	},
+	{
 		"abbreviation": "BMGF",
 		"full_name": "Bill & Melinda Gates Foundation"
 	},
