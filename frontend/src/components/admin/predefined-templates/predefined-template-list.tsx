@@ -60,7 +60,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 							</p>
 						</div>
 						<div className="flex gap-2">
-							<Link href={routes.admin.predefinedTemplates.detail(template.id)}>
+							<Link href={routes.admin.grantingInstitutions.predefinedTemplates.detail(template.id)}>
 								<Button
 									data-testid={`predefined-template-card-view-${template.id}`}
 									size="sm"
@@ -69,7 +69,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 									View
 								</Button>
 							</Link>
-							<Link href={routes.admin.predefinedTemplates.edit(template.id)}>
+							<Link href={routes.admin.grantingInstitutions.predefinedTemplates.edit(template.id)}>
 								<Button
 									data-testid={`predefined-template-card-edit-${template.id}`}
 									size="sm"

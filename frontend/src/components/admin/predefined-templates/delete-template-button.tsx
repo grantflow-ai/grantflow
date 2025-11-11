@@ -22,7 +22,7 @@ export function DeletePredefinedTemplateButton({ templateId, variant = "ghost" }
 			try {
 				await deletePredefinedTemplate(templateId);
 				toast.success("Template deleted");
-				router.push(routes.admin.predefinedTemplates.list());
+				router.push(routes.admin.grantingInstitutions.predefinedTemplates.list());
 			} catch (error) {
 				log.error("Failed to delete predefined template", { error, templateId });
 				toast.error("Failed to delete template");

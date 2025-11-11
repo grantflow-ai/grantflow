@@ -117,13 +117,13 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 	return (
 		<form className="flex flex-col gap-6" onSubmit={handleSubmit}>
 			<div className="flex flex-col gap-3 w-[340px]">
-				<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">
+				<h3 className="font-semibold text-base leading-[22px] text-app-black">
 					Full Name <span className="text-error">*</span>
 				</h3>
 				<input
 					aria-describedby={errors.fullName ? "full_name-error" : undefined}
 					aria-invalid={!!errors.fullName}
-					className={`w-full h-10 px-3 border rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+					className={`w-full h-10 px-3 border rounded bg-white text-sm font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
 						errors.fullName ? "border-error focus:border-error" : "border-app-gray-300 focus:border-primary"
 					} ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
 					data-testid="full-name-input"
@@ -141,18 +141,18 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					value={fullName}
 				/>
 				{errors.fullName ? (
-					<p className="text-[14px] text-error" id="full_name-error">
+					<p className="text-sm text-error" id="full_name-error">
 						{errors.fullName}
 					</p>
 				) : null}
 			</div>
 
 			<div className="flex flex-col gap-3 w-[340px]">
-				<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Abbreviation</h3>
+				<h3 className="font-semibold text-base leading-[22px] text-app-black">Abbreviation</h3>
 				<input
 					aria-describedby={errors.abbreviation ? "abbreviation-error" : undefined}
 					aria-invalid={!!errors.abbreviation}
-					className={`w-full h-10 px-3 border rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+					className={`w-full h-10 px-3 border rounded bg-white text-sm font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
 						errors.abbreviation
 							? "border-error focus:border-error"
 							: "border-app-gray-300 focus:border-primary"
@@ -172,7 +172,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					value={abbreviation}
 				/>
 				{errors.abbreviation ? (
-					<p className="text-[14px] text-error" id="abbreviation-error">
+					<p className="text-sm text-error" id="abbreviation-error">
 						{errors.abbreviation}
 					</p>
 				) : null}
@@ -182,7 +182,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 				<div>
 					{mode === "edit" && (
 						<button
-							className="cursor-pointer flex items-center gap-1 px-2 py-1 border border-error rounded bg-white text-error text-[14px] font-button hover:bg-error hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							className="cursor-pointer flex items-center gap-1 px-2 py-1 border border-error rounded bg-white text-error text-sm font-button hover:bg-error hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							data-testid="delete-button"
 							disabled={isLoading}
 							onClick={() => {
@@ -196,7 +196,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 				</div>
 				<div className="flex gap-3">
 					<button
-						className="px-4 py-2 border border-app-gray-300 rounded bg-white text-app-black text-[14px] font-button hover:bg-app-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-4 py-2 border border-app-gray-300 rounded bg-white text-app-black text-sm font-button hover:bg-app-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						data-testid="cancel-button"
 						disabled={isLoading}
 						onClick={() => {
@@ -207,7 +207,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 						Cancel
 					</button>
 					<button
-						className="px-4 py-2 border border-primary rounded bg-primary text-white text-[14px] font-button hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-4 py-2 border border-primary rounded bg-primary text-white text-sm font-button hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						data-testid="submit-button"
 						disabled={isLoading}
 						type="submit"

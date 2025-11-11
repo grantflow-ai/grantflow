@@ -176,7 +176,7 @@ async function persistTemplate({ initialTemplate, mode, requestBody, router }: P
 				requestBody as API.CreateGrantingInstitutionPredefinedTemplate.RequestBody,
 			);
 			toast.success("Predefined template created");
-			router.push(routes.admin.predefinedTemplates.detail(created.id));
+			router.push(routes.admin.grantingInstitutions.predefinedTemplates.detail(created.id));
 			return;
 		}
 
