@@ -179,6 +179,15 @@ async def handle_grant_template_pipeline(
                 cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
                 cfp_analysis = cfp_analysis_result["cfp_analysis"]
 
+                # Reload grant_template from database to get latest predefined_template_id
+                # This handles cases where the template was updated between pipeline stages
+                async with session_maker() as session:
+                    refreshed_template = await session.scalar(
+                        select_active(GrantTemplate).where(GrantTemplate.id == grant_template.id)
+                    )
+                    if refreshed_template:
+                        grant_template = refreshed_template
+
                 predefined_template: PredefinedGrantTemplate | None = None
                 notification_message = "Grant template ready"
 
