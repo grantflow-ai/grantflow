@@ -117,7 +117,7 @@ module "cloud_run" {
   cpu_limit     = "1"
   memory_limit  = "1Gi"
 
-  indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
+  indexer_memory_limit      = "4Gi" # ~keep Indexer needs memory for document processing (increased from 2Gi due to OOM errors)
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
   indexer_min_instances     = 1     # ~keep Always have at least 1 instance for availability
   indexer_max_instances     = 2     # ~keep Updated for staging environment
