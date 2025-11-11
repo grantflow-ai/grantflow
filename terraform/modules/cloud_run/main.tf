@@ -467,6 +467,7 @@ resource "google_cloud_run_v2_service" "rag" {
           cpu    = var.rag_cpu_limit != "" ? var.rag_cpu_limit : var.cpu_limit
           memory = var.rag_memory_limit != "" ? var.rag_memory_limit : var.memory_limit
         }
+        startup_cpu_boost = true
       }
 
       ports {
