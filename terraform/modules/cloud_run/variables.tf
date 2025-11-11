@@ -224,6 +224,12 @@ variable "rag_service_account_email" {
   default     = ""
 }
 
+variable "crdt_service_account_email" {
+  description = "Service account email for the CRDT service"
+  type        = string
+  default     = ""
+}
+
 variable "debug" {
   description = "Enable debug logging (set to '1' to enable)"
   type        = string

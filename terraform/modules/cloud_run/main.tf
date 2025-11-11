@@ -778,6 +778,8 @@ resource "google_cloud_run_v2_service" "crdt" {
   deletion_protection = false
 
   template {
+    service_account = var.crdt_service_account_email != "" ? var.crdt_service_account_email : null
+
     containers {
       image = var.crdt_image_digest != "" ? "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt@${var.crdt_image_digest}" : "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt:${var.image_tag_suffix}"
 
@@ -827,6 +829,18 @@ resource "google_cloud_run_v2_service" "crdt" {
             version = "latest"
           }
         }
+      }
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.database_connection_name]
       }
     }
 

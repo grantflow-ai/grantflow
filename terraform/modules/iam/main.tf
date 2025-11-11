@@ -409,3 +409,47 @@ resource "google_service_account_iam_member" "github_actions_act_as_rag" {
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
+
+
+resource "google_service_account" "crdt" {
+  account_id   = "crdt-service"
+  display_name = "CRDT Service Account"
+  description  = "Service account for the CRDT Cloud Run service"
+}
+
+
+resource "google_project_iam_member" "crdt_cloudsql_client" {
+  project = "grantflow"
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.crdt.email}"
+}
+
+resource "google_project_iam_member" "crdt_secret_accessor" {
+  project = "grantflow"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.crdt.email}"
+}
+
+resource "google_project_iam_member" "crdt_logging_writer" {
+  project = "grantflow"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.crdt.email}"
+}
+
+resource "google_project_iam_member" "crdt_monitoring_metric_writer" {
+  project = "grantflow"
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.crdt.email}"
+}
+
+resource "google_project_iam_member" "crdt_trace_agent" {
+  project = "grantflow"
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${google_service_account.crdt.email}"
+}
+
+resource "google_service_account_iam_member" "github_actions_act_as_crdt" {
+  service_account_id = google_service_account.crdt.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
+}
