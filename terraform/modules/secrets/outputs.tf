@@ -1,6 +1,6 @@
 output "database_connection_string_id" {
   description = "The ID of the database connection string secret"
-  value       = google_secret_manager_secret.database_connection_string.id
+  value       = google_secret_manager_secret.database_connection_string.secret_id
 }
 
 output "firebase_service_account_credentials_id" {

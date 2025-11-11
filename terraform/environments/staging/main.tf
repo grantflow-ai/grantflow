@@ -103,6 +103,7 @@ module "cloud_run" {
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
   rag_service_account_email     = module.iam.rag_service_account_email
+  crdt_service_account_email    = module.iam.crdt_service_account_email
 
   backend_image_digest = var.backend_image_digest
   crawler_image_digest = var.crawler_image_digest

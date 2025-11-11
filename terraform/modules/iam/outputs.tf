@@ -57,3 +57,13 @@ output "rag_service_account_name" {
   description = "The fully-qualified name of the rag service account"
   value       = google_service_account.rag.name
 }
+
+output "crdt_service_account_email" {
+  description = "The email of the CRDT service account"
+  value       = google_service_account.crdt.email
+}
+
+output "crdt_service_account_name" {
+  description = "The fully-qualified name of the CRDT service account"
+  value       = google_service_account.crdt.name
+}
