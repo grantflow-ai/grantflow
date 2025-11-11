@@ -11,8 +11,11 @@ interface AdminGrantingInstitutionLayoutProps {
 
 export function AdminGrantingInstitutionLayout({ activeTab, children }: AdminGrantingInstitutionLayoutProps) {
 	return (
-		<div className="flex flex-col gap-8 font-cabin" data-testid="admin-granting-institution-layout">
-			<nav className="flex items-center gap-6" data-testid="admin-granting-institution-tabs">
+		<div className="flex flex-col flex-1 min-h-0 font-cabin" data-testid="admin-granting-institution-layout">
+			<nav
+				className="flex items-center gap-6 border-b-1 border-gray-100 px-4 sm:px-6 md:px-8 lg:px-10 pb-8"
+				data-testid="admin-granting-institution-tabs"
+			>
 				{GRANTING_INSTITUTION_TABS.map((tab) => (
 					<Link
 						className={cn(
@@ -30,7 +33,7 @@ export function AdminGrantingInstitutionLayout({ activeTab, children }: AdminGra
 				))}
 			</nav>
 
-			<div className="w-full" data-testid="admin-granting-institution-content">
+			<div className="flex-1 min-h-0 w-full" data-testid="admin-granting-institution-content">
 				{children}
 			</div>
 		</div>

@@ -8,17 +8,16 @@ import {
 	deleteGrantingInstitution,
 	updateGrantingInstitution,
 } from "@/actions/granting-institutions";
+import {
+	AppDialog,
+	AppDialogContent,
+	AppDialogDescription,
+	AppDialogFooter,
+	AppDialogHeader,
+	AppDialogTitle,
+} from "@/components/app/app-dialog";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { AppInput } from "@/components/app/fields/app-input";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -216,27 +215,34 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 				</div>
 			</div>
 
-			<Dialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Delete Granting Institution</DialogTitle>
-						<DialogDescription>
+			<AppDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+				<AppDialogContent className="w-fit min-w-3xl rounded outline-1 outline-primary p-8 border-0">
+					<AppDialogHeader>
+						<AppDialogTitle className="text-app-black text-2xl font-medium font-heading leading-loose">
+							Delete Granting Institution
+						</AppDialogTitle>
+						<AppDialogDescription className="text-app-gray-600 text-base font-normal leading-tight">
 							Are you sure you want to delete &ldquo;{institution?.full_name}&rdquo;? This action cannot
 							be undone.
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter>
-						<DialogClose asChild>
-							<AppButton disabled={isLoading} type="button" variant="link">
-								Cancel
-							</AppButton>
-						</DialogClose>
+						</AppDialogDescription>
+					</AppDialogHeader>
+					<AppDialogFooter className="mt-6">
+						<AppButton
+							disabled={isLoading}
+							onClick={() => {
+								setShowDeleteDialog(false);
+							}}
+							type="button"
+							variant="link"
+						>
+							Cancel
+						</AppButton>
 						<AppButton disabled={isLoading} onClick={handleDelete} type="button" variant="secondary">
 							{isLoading ? "Deleting..." : "Delete"}
 						</AppButton>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+					</AppDialogFooter>
+				</AppDialogContent>
+			</AppDialog>
 		</form>
 	);
 }
