@@ -17,3 +17,6 @@ dependencies = [
 dev = [
   "shared-utils[ai,embeddings,extraction,gcs,nlp,pubsub,server]",
 ]
+models = [
+  "keybert>=0.8",
+]
