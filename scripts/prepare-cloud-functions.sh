@@ -26,6 +26,7 @@ mv functions/dlq_manager/requirements.txt.tmp functions/dlq_manager/requirements
 
 # Copy workspace packages to function directory
 echo "📦 Copying workspace packages to dlq_manager function directory..."
+rm -rf functions/dlq_manager/packages
 cp -r packages functions/dlq_manager/
 
 # Create zip file for Terraform (matching archive_file data source behavior)
