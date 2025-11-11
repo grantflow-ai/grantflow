@@ -14,13 +14,7 @@ export function AdminBreadcrumb({ institutionName, tabLabel }: AdminBreadcrumbPr
 		<nav aria-label="Breadcrumb" data-testid="admin-breadcrumb">
 			<ol className="flex items-center gap-2 text-sm text-app-gray-600">
 				<li>
-					<Link
-						className="hover:text-app-gray-900 transition-colors"
-						data-testid="breadcrumb-admin"
-						href={routes.admin.root()}
-					>
-						Admin
-					</Link>
+					<span data-testid="breadcrumb-admin">Admin</span>
 				</li>
 				<li>
 					<ChevronRight className="h-4 w-4" />
