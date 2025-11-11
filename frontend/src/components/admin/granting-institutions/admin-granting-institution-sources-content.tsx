@@ -118,10 +118,10 @@ export function AdminGrantingInstitutionSourcesContent() {
 	const hasBothFilesAndUrls = (files.length > 0 || pendingUploadsArray.length > 0) && urls.length > 0;
 
 	return (
-		<div className="flex flex-1 h-full" data-testid="admin-sources-content">
+		<div className="flex h-full" data-testid="admin-sources-content">
 			<WizardLeftPane testId="admin-sources-left-pane">
 				<div>
-					<h2 className="font-heading text-2xl font-medium leading-loose">Source Materials</h2>
+					<h2 className="font-heading text-2xl font-medium text-app-black leading-loose">Source Materials</h2>
 					<p className="text-muted-foreground-dark leading-tight">
 						Upload documents and add URLs for this granting institution to build knowledge base for grant
 						template analysis and generation.
@@ -130,7 +130,9 @@ export function AdminGrantingInstitutionSourcesContent() {
 
 				<div className="space-y-6">
 					<div>
-						<h3 className="font-heading mb-5 text-base font-semibold leading-snug">Documents</h3>
+						<h3 className="font-heading mb-5 text-base font-semibold text-app-black leading-snug">
+							Documents
+						</h3>
 						<RagSourceFileUploader
 							onFileAdd={handleFileAdd}
 							onFileRemove={removePendingUpload}
@@ -139,7 +141,7 @@ export function AdminGrantingInstitutionSourcesContent() {
 					</div>
 
 					<div>
-						<h3 className="font-heading text-base font-semibold leading-snug">Links</h3>
+						<h3 className="font-heading text-base font-semibold text-app-black leading-snug">Links</h3>
 						<p className="text-muted-foreground-dark mb-5 text-sm leading-none">
 							Use a static link that doesn&apos;t require login, so we can retrieve the information.
 						</p>

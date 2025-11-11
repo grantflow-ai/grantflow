@@ -34,8 +34,8 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 
 	if (templates.length === 0) {
 		return (
-			<Card>
-				<CardContent className="py-10 text-center text-sm text-muted-foreground">
+			<Card className="h-full flex items-center justify-center">
+				<CardContent className="py-10 text-center text-sm text-app-gray-600">
 					No predefined templates yet. Create one to seed the catalog.
 				</CardContent>
 			</Card>
@@ -43,7 +43,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 	}
 
 	return (
-		<div className="space-y-3" data-testid="predefined-template-list">
+		<div className="space-y-3 h-full" data-testid="predefined-template-list">
 			{templates.map((template) => (
 				<Card data-testid={`predefined-template-card-${template.id}`} key={template.id}>
 					<CardContent className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">

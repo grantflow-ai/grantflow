@@ -35,7 +35,7 @@ export function AdminGrantingInstitutionClient({ activeTab, children }: AdminGra
 	}
 
 	return (
-		<main className="flex flex-col min-h-screen bg-preview-bg" data-testid="admin-granting-institution-container">
+		<main className="flex flex-col h-screen bg-preview-bg" data-testid="admin-granting-institution-container">
 			<header
 				className="flex flex-col px-4 sm:px-6 md:px-8 lg:px-10 py-6"
 				data-testid="admin-granting-institution-header"
@@ -50,7 +50,7 @@ export function AdminGrantingInstitutionClient({ activeTab, children }: AdminGra
 			</header>
 
 			<div
-				className="flex flex-col flex-1 mb-6 mx-4 sm:mx-6 md:mx-8 lg:mx-10 gap-10 py-14 px-4 sm:px-6 md:px-8 lg:px-10 rounded-lg border border-app-gray-100 bg-white"
+				className="flex flex-col flex-1 min-h-0 mb-6 mx-4 sm:mx-6 md:mx-8 lg:mx-10 pt-10 rounded-lg border border-app-gray-100 bg-white"
 				data-testid="admin-granting-institution-main-content"
 			>
 				<AdminGrantingInstitutionLayout activeTab={activeTab}>{children}</AdminGrantingInstitutionLayout>
