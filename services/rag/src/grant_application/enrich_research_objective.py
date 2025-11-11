@@ -334,24 +334,28 @@ async def enrich_objective_generation(
 
 async def refine_objective_enrichment(
     *,
-    draft: ObjectiveEnrichmentDTO,
     dto: EnrichObjectiveInputDTO,
 ) -> ObjectiveEnrichmentDTO:
-    objective_summary = {
-        "number": dto["research_objective"]["number"],
-        "title": dto["research_objective"]["title"],
-        "keywords": dto.get("keywords", []),
-        "topics": dto.get("topics", []),
-    }
-
-    refinement_prompt = ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT.to_string(
-        objective=objective_summary,
-        draft=draft,
+    form_inputs_dict = (
+        msgspec.structs.asdict(dto["form_inputs"])
+        if isinstance(dto["form_inputs"], msgspec.Struct)
+        else dto["form_inputs"]
     )
+
+    compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)
+
+    refinement_prompt = ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT.substitute(
+        objective_and_tasks=dto["research_objective"],
+        keywords=dto["keywords"],
+        topics=dto["topics"],
+        form_inputs=form_inputs_dict,
+    )
+
+    full_refinement_prompt = refinement_prompt.to_string(rag_results=compressed_context)
 
     return await handle_completions_request(
         prompt_identifier="refine_enrich_objective",
-        messages=refinement_prompt,
+        messages=full_refinement_prompt,
         response_type=ObjectiveEnrichmentDTO,
         response_schema=research_objective_enrichment_schema,
         model=GEMINI_FLASH_MODEL,
@@ -399,6 +403,6 @@ async def handle_enrich_objective(
 
     await job_manager.ensure_not_cancelled()
 
-    refined = await refine_objective_enrichment(draft=draft, dto=dto)
+    refined = await refine_objective_enrichment(dto=dto)
 
     return refined or draft
