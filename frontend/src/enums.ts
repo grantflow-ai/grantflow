@@ -3,4 +3,5 @@ export enum SourceIndexingStatus {
 	FAILED = "FAILED",
 	FINISHED = "FINISHED",
 	INDEXING = "INDEXING",
+	PENDING_UPLOAD = "PENDING_UPLOAD",
 }

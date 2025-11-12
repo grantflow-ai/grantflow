@@ -5,6 +5,7 @@ from unittest.mock import ANY, AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
@@ -91,6 +92,95 @@ async def test_retrieve_application_sources_empty(
     assert sources == []
 
 
+async def test_retrieve_application_sources_includes_pending_upload(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        rag_file_pending = RagFileFactory.build(
+            filename="pending_upload.pdf",
+            indexing_status=SourceIndexingStatusEnum.PENDING_UPLOAD,
+        )
+        session.add(rag_file_pending)
+        await session.flush()
+
+        junction = GrantApplicationSource(
+            grant_application_id=grant_application.id,
+            rag_source_id=rag_file_pending.id,
+        )
+        session.add(junction)
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    sources = response.json()
+    assert len(sources) == 1
+
+    source = sources[0]
+    assert source["filename"] == "pending_upload.pdf"
+    assert source["indexing_status"] == SourceIndexingStatusEnum.PENDING_UPLOAD.value
+
+
+async def test_retrieve_application_sources_mixed_statuses(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        rag_file_pending = RagFileFactory.build(
+            filename="pending.pdf",
+            indexing_status=SourceIndexingStatusEnum.PENDING_UPLOAD,
+        )
+        rag_file_indexing = RagFileFactory.build(
+            filename="indexing.pdf",
+            indexing_status=SourceIndexingStatusEnum.INDEXING,
+        )
+        rag_file_finished = RagFileFactory.build(
+            filename="finished.pdf",
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add_all([rag_file_pending, rag_file_indexing, rag_file_finished])
+        await session.flush()
+
+        junctions = [
+            GrantApplicationSource(
+                grant_application_id=grant_application.id,
+                rag_source_id=rag_file_pending.id,
+            ),
+            GrantApplicationSource(
+                grant_application_id=grant_application.id,
+                rag_source_id=rag_file_indexing.id,
+            ),
+            GrantApplicationSource(
+                grant_application_id=grant_application.id,
+                rag_source_id=rag_file_finished.id,
+            ),
+        ]
+        session.add_all(junctions)
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    sources = response.json()
+    assert len(sources) == 3
+
+    filenames_to_statuses = {s["filename"]: s["indexing_status"] for s in sources}
+    assert filenames_to_statuses["pending.pdf"] == SourceIndexingStatusEnum.PENDING_UPLOAD.value
+    assert filenames_to_statuses["indexing.pdf"] == SourceIndexingStatusEnum.INDEXING.value
+    assert filenames_to_statuses["finished.pdf"] == SourceIndexingStatusEnum.FINISHED.value
+
+
 async def test_retrieve_granting_institution_sources(
     test_client: TestingClientType,
     project: Project,
@@ -146,6 +236,42 @@ async def test_retrieve_template_sources(
     assert url_source["title"] == rag_url.title
     assert url_source["description"] == rag_url.description
     assert url_source["indexing_status"] == rag_url.indexing_status.value
+
+
+async def test_retrieve_template_sources_includes_pending_upload(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    project_member_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        rag_file_pending = RagFileFactory.build(
+            filename="template_pending.docx",
+            indexing_status=SourceIndexingStatusEnum.PENDING_UPLOAD,
+        )
+        session.add(rag_file_pending)
+        await session.flush()
+
+        junction = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_file_pending.id,
+        )
+        session.add(junction)
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    sources = response.json()
+    assert len(sources) == 1
+
+    source = sources[0]
+    assert source["filename"] == "template_pending.docx"
+    assert source["indexing_status"] == SourceIndexingStatusEnum.PENDING_UPLOAD.value
 
 
 async def test_retrieve_grant_application_sources_unauthorized(
@@ -374,6 +500,50 @@ async def test_create_upload_url(
         trace_id=ANY,
         content_type="application/pdf",
     )
+
+
+async def test_create_upload_url_creates_source_with_pending_upload_status(
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
+    mocker.patch(
+        "services.backend.src.api.routes.sources.create_signed_upload_url",
+        return_value=mock_signed_url,
+    )
+    test_blob_name = "pending_upload_test.pdf"
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    source_id = UUID(result["source_id"])
+
+    async with async_session_maker() as session:
+        source = await session.get(RagSource, source_id)
+        assert source is not None
+        assert source.indexing_status == SourceIndexingStatusEnum.PENDING_UPLOAD
+
+        rag_file = await session.get(RagFile, source_id)
+        assert rag_file is not None
+        await session.refresh(rag_file)  # Ensure all attributes are loaded
+        assert rag_file.filename == test_blob_name
+
+        junction = await session.get(
+            GrantApplicationSource,
+            {
+                "grant_application_id": grant_application.id,
+                "rag_source_id": source_id,
+            },
+        )
+        assert junction is not None
 
 
 async def test_create_download_url(

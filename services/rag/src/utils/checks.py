@@ -74,9 +74,31 @@ async def verify_rag_sources_indexed(
             )
             raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
 
+    # Filter out sources that haven't been uploaded yet
+    active_sources = [
+        source for source in rag_sources if source.indexing_status != SourceIndexingStatusEnum.PENDING_UPLOAD
+    ]
+
+    # Check if only PENDING_UPLOAD sources exist
+    if not active_sources and rag_sources:
+        logger.warning(
+            "No uploaded sources found",
+            parent_id=str(parent_id),
+            entity_type=entity_type.__name__,
+            pending_upload_count=len(rag_sources),
+            trace_id=trace_id,
+        )
+        raise ValidationError(
+            "No sources have been uploaded yet. Please complete file uploads before generating.",
+            context={
+                "pending_upload_count": len(rag_sources),
+                "parent_id": str(parent_id),
+            },
+        )
+
     sources_still_indexing = [
         source
-        for source in rag_sources
+        for source in active_sources
         if source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
     ]
 
@@ -86,7 +108,7 @@ async def verify_rag_sources_indexed(
             parent_id=str(parent_id),
             entity_type=entity_type.__name__,
             sources_indexing=len(sources_still_indexing),
-            total_sources=len(rag_sources),
+            total_sources=len(active_sources),
             wait_duration=total_sleep_duration,
             trace_id=trace_id,
         )
@@ -100,9 +122,11 @@ async def verify_rag_sources_indexed(
             max_wait_seconds=max_wait_seconds,
         )
 
-    if not any(source.indexing_status == SourceIndexingStatusEnum.FINISHED for source in rag_sources):
-        failed_sources = [source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED]
-        total_sources = len(rag_sources)
+    if not any(source.indexing_status == SourceIndexingStatusEnum.FINISHED for source in active_sources):
+        failed_sources = [
+            source for source in active_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED
+        ]
+        total_sources = len(active_sources)
 
         logger.warning(
             "Document indexing failed",
@@ -124,13 +148,15 @@ async def verify_rag_sources_indexed(
             },
         )
 
-    finished_sources = [source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FINISHED]
+    finished_sources = [
+        source for source in active_sources if source.indexing_status == SourceIndexingStatusEnum.FINISHED
+    ]
     logger.info(
         "Sources indexed successfully",
         parent_id=str(parent_id),
         entity_type=entity_type.__name__,
         finished_count=len(finished_sources),
-        total_count=len(rag_sources),
+        total_count=len(active_sources),
         total_wait_seconds=total_sleep_duration,
         trace_id=trace_id,
     )

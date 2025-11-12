@@ -8,6 +8,7 @@ class UserRoleEnum(StrEnum):
 
 
 class SourceIndexingStatusEnum(StrEnum):
+    PENDING_UPLOAD = "PENDING_UPLOAD"
     CREATED = "CREATED"
     INDEXING = "INDEXING"
     FINISHED = "FINISHED"

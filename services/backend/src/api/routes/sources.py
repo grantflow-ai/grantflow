@@ -199,7 +199,7 @@ async def handle_create_rag_source(
                 .values(
                     [
                         {
-                            "indexing_status": SourceIndexingStatusEnum.CREATED,
+                            "indexing_status": SourceIndexingStatusEnum.PENDING_UPLOAD,
                             "text_content": "",
                             "source_type": RAG_URL if url else RAG_FILE,  # Set polymorphic identity ~keep
                         }

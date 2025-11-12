@@ -145,13 +145,23 @@ async def handle_file_indexing(
         grant_application_id = parse_result["entity_id"]
 
     claimed_for_processing = False
+    previous_status = None
     async with session_maker() as session, session.begin():
+        previous_status_result = await session.execute(
+            select(RagSource.indexing_status).where(RagSource.id == parse_result["source_id"])
+        )
+        previous_status = previous_status_result.scalar_one_or_none()
+
         result = await session.execute(
             update(RagSource)
             .where(
                 RagSource.id == parse_result["source_id"],
                 RagSource.indexing_status.in_(
-                    [SourceIndexingStatusEnum.CREATED, SourceIndexingStatusEnum.FAILED],
+                    [
+                        SourceIndexingStatusEnum.PENDING_UPLOAD,
+                        SourceIndexingStatusEnum.CREATED,
+                        SourceIndexingStatusEnum.FAILED,
+                    ],
                 ),
             )
             .values(
@@ -166,6 +176,12 @@ async def handle_file_indexing(
         claimed_for_processing = result.scalar_one_or_none() is not None
 
     if claimed_for_processing:
+        if previous_status == SourceIndexingStatusEnum.PENDING_UPLOAD:
+            logger.info(
+                "Transitioned source from PENDING_UPLOAD to INDEXING",
+                source_id=str(parse_result["source_id"]),
+                trace_id=trace_id,
+            )
         logger.debug(
             "Claimed rag source for indexing",
             source_id=str(parse_result["source_id"]),
