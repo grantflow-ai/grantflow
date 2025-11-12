@@ -11,16 +11,16 @@ export const routes = {
 
 	admin: {
 		grantingInstitutions: {
-			detail: (id: string) => `/admin/granting-institutions/${id}`,
-			edit: (id: string) => `/admin/granting-institutions/${id}/edit`,
+			edit: () => "/admin/granting-institutions/edit",
 			list: () => "/admin/granting-institutions",
 			new: () => "/admin/granting-institutions/new",
-		},
-		predefinedTemplates: {
-			detail: (id: string) => `/admin/predefined-templates/${id}`,
-			edit: (id: string) => `/admin/predefined-templates/${id}/edit`,
-			list: () => "/admin/predefined-templates",
-			new: () => "/admin/predefined-templates/new",
+			predefinedTemplates: {
+				detail: (templateId: string) => `/admin/granting-institutions/predefined-templates/${templateId}`,
+				edit: (templateId: string) => `/admin/granting-institutions/predefined-templates/${templateId}/edit`,
+				list: () => "/admin/granting-institutions/predefined-templates",
+				new: () => "/admin/granting-institutions/predefined-templates/new",
+			},
+			sources: () => "/admin/granting-institutions/sources",
 		},
 		root: () => "/admin",
 	},

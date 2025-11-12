@@ -8,17 +8,18 @@ import {
 	deleteGrantingInstitution,
 	updateGrantingInstitution,
 } from "@/actions/granting-institutions";
-import { Button } from "@/components/ui/button";
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+	AppDialog,
+	AppDialogContent,
+	AppDialogDescription,
+	AppDialogFooter,
+	AppDialogHeader,
+	AppDialogTitle,
+} from "@/components/app/app-dialog";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { AppInput } from "@/components/app/fields/app-input";
 import type { API } from "@/types/api-types";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 interface GrantingInstitutionFormProps {
@@ -85,15 +86,14 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 				});
 				toast.success("Granting institution updated successfully");
 			}
-			router.push(routes.admin.grantingInstitutions.list());
-			router.refresh();
-		} catch {
+			router.replace(routes.admin.grantingInstitutions.list());
+		} catch (error) {
+			log.error("Failed to save granting institution:", error);
 			const errorMessage =
 				mode === "create"
 					? "Failed to create granting institution. Please try again."
 					: "Failed to update granting institution. Please try again.";
 			toast.error(errorMessage);
-		} finally {
 			setIsLoading(false);
 		}
 	};
@@ -117,13 +117,13 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 	return (
 		<form className="flex flex-col gap-6" onSubmit={handleSubmit}>
 			<div className="flex flex-col gap-3 w-[340px]">
-				<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">
+				<h3 className="font-semibold text-base leading-[22px] text-app-black">
 					Full Name <span className="text-error">*</span>
 				</h3>
-				<input
+				<AppInput
 					aria-describedby={errors.fullName ? "full_name-error" : undefined}
 					aria-invalid={!!errors.fullName}
-					className={`w-full h-10 px-3 border rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+					className={`w-full h-10 px-3 border rounded bg-white text-sm font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
 						errors.fullName ? "border-error focus:border-error" : "border-app-gray-300 focus:border-primary"
 					} ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
 					data-testid="full-name-input"
@@ -141,18 +141,18 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					value={fullName}
 				/>
 				{errors.fullName ? (
-					<p className="text-[14px] text-error" id="full_name-error">
+					<p className="text-sm text-error" id="full_name-error">
 						{errors.fullName}
 					</p>
 				) : null}
 			</div>
 
 			<div className="flex flex-col gap-3 w-[340px]">
-				<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Abbreviation</h3>
-				<input
+				<h3 className="font-semibold text-base leading-[22px] text-app-black">Abbreviation</h3>
+				<AppInput
 					aria-describedby={errors.abbreviation ? "abbreviation-error" : undefined}
 					aria-invalid={!!errors.abbreviation}
-					className={`w-full h-10 px-3 border rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+					className={`w-full h-10 px-3 border rounded bg-white text-sm font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
 						errors.abbreviation
 							? "border-error focus:border-error"
 							: "border-app-gray-300 focus:border-primary"
@@ -172,7 +172,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					value={abbreviation}
 				/>
 				{errors.abbreviation ? (
-					<p className="text-[14px] text-error" id="abbreviation-error">
+					<p className="text-sm text-error" id="abbreviation-error">
 						{errors.abbreviation}
 					</p>
 				) : null}
@@ -181,66 +181,68 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 			<div className="flex items-center justify-between pt-4 w-[340px]">
 				<div>
 					{mode === "edit" && (
-						<button
-							className="cursor-pointer flex items-center gap-1 px-2 py-1 border border-error rounded bg-white text-error text-[14px] font-button hover:bg-error hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						<AppButton
 							data-testid="delete-button"
 							disabled={isLoading}
 							onClick={() => {
 								setShowDeleteDialog(true);
 							}}
 							type="button"
+							variant="secondary"
 						>
 							Delete
-						</button>
+						</AppButton>
 					)}
 				</div>
 				<div className="flex gap-3">
-					<button
-						className="px-4 py-2 border border-app-gray-300 rounded bg-white text-app-black text-[14px] font-button hover:bg-app-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+					<AppButton
 						data-testid="cancel-button"
 						disabled={isLoading}
 						onClick={() => {
 							router.back();
 						}}
 						type="button"
+						variant="link"
 					>
 						Cancel
-					</button>
-					<button
-						className="px-4 py-2 border border-primary rounded bg-primary text-white text-[14px] font-button hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						data-testid="submit-button"
-						disabled={isLoading}
-						type="submit"
-					>
+					</AppButton>
+					<AppButton data-testid="submit-button" disabled={isLoading} type="submit">
 						{(() => {
 							if (isLoading) return "Saving...";
 							return mode === "create" ? "Create" : "Update";
 						})()}
-					</button>
+					</AppButton>
 				</div>
 			</div>
 
-			<Dialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Delete Granting Institution</DialogTitle>
-						<DialogDescription>
+			<AppDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+				<AppDialogContent className="w-fit min-w-3xl rounded outline-1 outline-primary p-8 border-0">
+					<AppDialogHeader>
+						<AppDialogTitle className="text-app-black text-2xl font-medium font-heading leading-loose">
+							Delete Granting Institution
+						</AppDialogTitle>
+						<AppDialogDescription className="text-app-gray-600 text-base font-normal leading-tight">
 							Are you sure you want to delete &ldquo;{institution?.full_name}&rdquo;? This action cannot
 							be undone.
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter>
-						<DialogClose asChild>
-							<Button disabled={isLoading} type="button" variant="outline">
-								Cancel
-							</Button>
-						</DialogClose>
-						<Button disabled={isLoading} onClick={handleDelete} type="button" variant="destructive">
+						</AppDialogDescription>
+					</AppDialogHeader>
+					<AppDialogFooter className="mt-6">
+						<AppButton
+							disabled={isLoading}
+							onClick={() => {
+								setShowDeleteDialog(false);
+							}}
+							type="button"
+							variant="link"
+						>
+							Cancel
+						</AppButton>
+						<AppButton disabled={isLoading} onClick={handleDelete} type="button" variant="secondary">
 							{isLoading ? "Deleting..." : "Delete"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+						</AppButton>
+					</AppDialogFooter>
+				</AppDialogContent>
+			</AppDialog>
 		</form>
 	);
 }

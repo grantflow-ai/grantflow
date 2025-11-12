@@ -34,8 +34,8 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 
 	if (templates.length === 0) {
 		return (
-			<Card>
-				<CardContent className="py-10 text-center text-sm text-muted-foreground">
+			<Card className="h-full flex items-center justify-center">
+				<CardContent className="py-10 text-center text-sm text-app-gray-600">
 					No predefined templates yet. Create one to seed the catalog.
 				</CardContent>
 			</Card>
@@ -43,7 +43,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 	}
 
 	return (
-		<div className="space-y-3" data-testid="predefined-template-list">
+		<div className="space-y-3 h-full" data-testid="predefined-template-list">
 			{templates.map((template) => (
 				<Card data-testid={`predefined-template-card-${template.id}`} key={template.id}>
 					<CardContent className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
@@ -60,7 +60,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 							</p>
 						</div>
 						<div className="flex gap-2">
-							<Link href={routes.admin.predefinedTemplates.detail(template.id)}>
+							<Link href={routes.admin.grantingInstitutions.predefinedTemplates.detail(template.id)}>
 								<Button
 									data-testid={`predefined-template-card-view-${template.id}`}
 									size="sm"
@@ -69,7 +69,7 @@ export function PredefinedTemplateList({ templates }: PredefinedTemplateListProp
 									View
 								</Button>
 							</Link>
-							<Link href={routes.admin.predefinedTemplates.edit(template.id)}>
+							<Link href={routes.admin.grantingInstitutions.predefinedTemplates.edit(template.id)}>
 								<Button
 									data-testid={`predefined-template-card-edit-${template.id}`}
 									size="sm"

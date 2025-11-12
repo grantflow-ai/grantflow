@@ -9,11 +9,10 @@ import {
 	createPredefinedTemplateSection,
 	PredefinedTemplateSectionsEditor,
 } from "@/components/admin/predefined-templates/sections-editor";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { AppTextarea } from "@/components/app/fields/app-textarea";
 import InputField from "@/components/app/fields/input-field";
-import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
 import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -135,7 +134,7 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 
 	return (
 		<form className="flex flex-col gap-6" data-testid="predefined-template-form" onSubmit={handleSubmit}>
-			<div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+			<div className="grid lg:grid-cols-[360px_1fr]">
 				<TemplateMetadataPanel
 					formState={formState}
 					handleChange={handleChange}
@@ -153,7 +152,7 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 				) : (
 					<span />
 				)}
-				<Button
+				<AppButton
 					className="min-w-[120px]"
 					data-testid="predefined-template-save"
 					disabled={isPending || !isEditable}
@@ -163,7 +162,7 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 						if (isPending) return "Saving...";
 						return mode === PREDEFINED_TEMPLATE_FORM_MODE.CREATE ? "Create template" : "Save changes";
 					})()}
-				</Button>
+				</AppButton>
 			</div>
 		</form>
 	);
@@ -176,7 +175,7 @@ async function persistTemplate({ initialTemplate, mode, requestBody, router }: P
 				requestBody as API.CreateGrantingInstitutionPredefinedTemplate.RequestBody,
 			);
 			toast.success("Predefined template created");
-			router.push(routes.admin.predefinedTemplates.detail(created.id));
+			router.push(routes.admin.grantingInstitutions.predefinedTemplates.detail(created.id));
 			return;
 		}
 
@@ -201,9 +200,9 @@ function TemplateMetadataPanel({
 	selectedInstitution,
 }: TemplateMetadataPanelProps) {
 	return (
-		<WizardLeftPane>
-			<Card>
-				<CardContent className="space-y-4 pt-6">
+		<div className="w-full flex flex-col items-center px-4 py-4 space-y-4">
+			<Card className="w-full">
+				<CardContent className="space-y-4">
 					<InputField
 						label="Template name"
 						onChange={(event) => {
@@ -295,17 +294,21 @@ function TemplateMetadataPanel({
 				</CardContent>
 			</Card>
 			{selectedInstitution?.full_name && (
-				<Card>
-					<CardContent className="space-y-2 pt-6">
-						<p className="text-sm text-muted-foreground">Linked institution</p>
-						<p className="text-base font-medium">{selectedInstitution.full_name}</p>
+				<Card className="w-full max-w-[360px]">
+					<CardContent className="space-y-2">
+						<p className="text-sm text-app-gray-600 font-body leading-tight">Linked institution</p>
+						<p className="text-base font-semibold text-app-black font-heading leading-snug">
+							{selectedInstitution.full_name}
+						</p>
 						{selectedInstitution.abbreviation && (
-							<p className="text-xs text-muted-foreground">{selectedInstitution.abbreviation}</p>
+							<p className="text-xs text-app-gray-600 font-body leading-tight">
+								{selectedInstitution.abbreviation}
+							</p>
 						)}
 					</CardContent>
 				</Card>
 			)}
-		</WizardLeftPane>
+		</div>
 	);
 }
 
