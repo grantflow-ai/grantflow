@@ -351,6 +351,7 @@ export function OrganizationSettingsMembers({
 				onInvite={handleInvite}
 				ownerEmail={ownerEmail}
 				projects={projects}
+				currentUserRole={currentUserRole}
 			/>
 
 			<EditPermissionModal
