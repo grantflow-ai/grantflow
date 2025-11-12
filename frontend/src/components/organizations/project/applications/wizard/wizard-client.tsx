@@ -219,6 +219,8 @@ export function WizardClientComponent({
 		}
 
 		if (hasApplicationData(latestNotification)) {
+			// Only update application state from notifications that contain fresh data
+			// Backend now only includes application_data for RAG generation events that actually modify state
 			setApplication(latestNotification.application_data);
 			log.info("[WebSocket] Updated application state from notification", {
 				event: latestNotification.event,
