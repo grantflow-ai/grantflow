@@ -41,6 +41,7 @@ export function InviteCollaboratorModal({
 	ownerEmail,
 	projectId,
 	projects = [],
+	currentUserRole,
 }: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
