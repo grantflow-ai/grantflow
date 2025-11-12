@@ -29,28 +29,22 @@ async def pull_notifications(
 ) -> list[WebsocketMessage[dict[str, Any]]]:
     notifications_to_send = []
 
+    # Events that actually modify application/template state and need fresh data
+    events_requiring_app_data = {
+        # Template generation events
+        "cfp_data_extracted",
+        "metadata_generated",
+        "grant_template_created",
+        # Application generation events
+        "objectives_enriched",
+        "relationships_extracted",
+        "research_plan_completed",
+        "section_texts_generated",
+        "wikidata_enhancement_complete",
+        "grant_application_generation_completed",
+    }
+
     async with session_maker() as session, session.begin():
-        try:
-            application = await retrieve_application(
-                application_id=application_id,
-                session=session,
-            )
-            app_data = build_application_response(application)
-
-            logger.debug(
-                "Fetched fresh application data for notifications",
-                application_id=str(application_id),
-                status=app_data["status"].value,
-                updated_at=app_data["updated_at"],
-            )
-        except ValidationError as e:
-            logger.error(
-                "Failed to fetch application data for notifications",
-                application_id=str(application_id),
-                error=str(e),
-            )
-            return []
-
         result = await session.execute(
             select(GenerationNotification)
             .where(
@@ -64,25 +58,63 @@ async def pull_notifications(
         )
         notifications = list(result.scalars())
 
-        if notifications:
-            delivered_at = datetime.now(UTC)
+        if not notifications:
+            return []
 
-            for notif in notifications:
-                await session.execute(
-                    update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
+        # Check if any notification requires fresh application data
+        needs_app_data = any(n.event in events_requiring_app_data for n in notifications)
+
+        app_data = None
+        if needs_app_data:
+            try:
+                application = await retrieve_application(
+                    application_id=application_id,
+                    session=session,
+                )
+                app_data = build_application_response(application)
+
+                logger.debug(
+                    "Fetched fresh application data for notifications",
+                    application_id=str(application_id),
+                    status=app_data["status"].value,
+                    updated_at=app_data["updated_at"],
+                )
+            except ValidationError as e:
+                logger.error(
+                    "Failed to fetch application data for notifications",
+                    application_id=str(application_id),
+                    error=str(e),
+                )
+                return []
+
+        delivered_at = datetime.now(UTC)
+
+        for notif in notifications:
+            await session.execute(
+                update_active_by_id(GenerationNotification, notif.id).values(delivered_at=delivered_at)
+            )
+
+        for notification in notifications:
+            # Only include application_data for events that actually modify the application
+            include_app_data = notification.event in events_requiring_app_data
+
+            message: WebsocketMessage[dict[str, Any]] = {
+                "type": notification.notification_type,
+                "parent_id": application_id,
+                "event": notification.event,
+                "data": notification.data if notification.data else {"message": notification.message},
+                "trace_id": "",
+            }
+
+            if include_app_data and app_data:
+                message["application_data"] = dict(app_data)
+                logger.debug(
+                    "Including application_data in notification",
+                    notification_event=notification.event,
+                    application_id=str(application_id),
                 )
 
-            for notification in notifications:
-                message: WebsocketMessage[dict[str, Any]] = {
-                    "type": notification.notification_type,
-                    "parent_id": application_id,
-                    "event": notification.event,
-                    "data": notification.data if notification.data else {"message": notification.message},
-                    "trace_id": "",
-                    "application_data": dict(app_data),
-                }
-
-                notifications_to_send.append(message)
+            notifications_to_send.append(message)
 
     return notifications_to_send
 
@@ -131,13 +163,16 @@ async def handle_grant_application_notifications(
                     )
 
                     for message in notifications_to_send:
-                        logger.debug(
-                            "Sending notification to WebSocket client",
-                            notification_event=message.get("event"),
-                            application_id=str(application_id),
-                            app_status=message["application_data"]["status"].value,
-                            app_updated_at=message["application_data"]["updated_at"],
-                        )
+                        log_data = {
+                            "notification_event": message.get("event"),
+                            "application_id": str(application_id),
+                            "includes_app_data": "application_data" in message,
+                        }
+                        if "application_data" in message:
+                            log_data["app_status"] = message["application_data"]["status"].value
+                            log_data["app_updated_at"] = message["application_data"]["updated_at"]
+
+                        logger.debug("Sending notification to WebSocket client", **log_data)
                         yield message
                 else:
                     logger.debug(
