@@ -1,7 +1,9 @@
 import asyncio
+import hashlib
 import re
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal, NotRequired, TypedDict
+from pathlib import Path
+from typing import Any, Literal, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import msgspec
@@ -30,10 +32,12 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantApplicationSource,
     GrantTemplate,
+    GrantTemplateSource,
     PredefinedGrantTemplate,
     RagFile,
     RagSource,
     RagUrl,
+    TextVector,
 )
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
@@ -42,12 +46,14 @@ from packages.shared_utils.src.exceptions import (
     DatabaseError,
     ValidationError,
 )
+from packages.shared_utils.src.gcs import construct_object_uri, get_bucket
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
+from packages.shared_utils.src.sync import run_sync
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload, with_polymorphic
 from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
@@ -298,6 +304,155 @@ async def _handle_retrieve_application(
             raise NotFoundException("Application not found")
 
     return build_application_response(grant_application)
+
+
+async def _duplicate_rag_source(
+    session: AsyncSession,
+    source: RagSource,
+    new_application_id: UUID,
+    entity_type: Literal["grant_application", "grant_template"],
+) -> UUID:
+    """Duplicate a RAG source including its files/URLs and embeddings."""
+    # Create new RagSource base record
+    # Note: parent_id is not set to avoid filtering by retrieve_application
+    new_source_id = await session.scalar(
+        insert(RagSource)
+        .values(
+            {
+                "indexing_status": source.indexing_status,
+                "text_content": source.text_content,
+                "document_metadata": source.document_metadata,
+                "source_type": source.source_type,
+                "error_type": source.error_type,
+                "error_message": source.error_message,
+                "retry_count": source.retry_count,
+                "last_retry_at": source.last_retry_at,
+            }
+        )
+        .returning(RagSource.id)
+    )
+
+    # Duplicate type-specific data
+    if isinstance(source, RagFile):
+        # Create new object path for the duplicated file
+        # Ensure the object_path doesn't exceed 255 characters (VARCHAR limit)
+        # Fixed parts: "grant_application/" (18) + UUID (36) + "/" + UUID (36) + "/" = 92 chars
+        # Remaining for filename: 255 - 92 = 163 chars
+        max_path_length = 255
+        max_filename_length = 163
+
+        filename = source.filename
+        if len(filename) > max_filename_length:
+            # Truncate filename while preserving extension
+            path = Path(filename)
+            name = path.stem
+            ext = path.suffix
+            # Keep extension and truncate name to fit
+            max_name_length = max_filename_length - len(ext)
+            filename = name[:max_name_length] + ext
+
+        new_object_path = construct_object_uri(
+            entity_type=entity_type,
+            entity_id=new_application_id,
+            source_id=cast("UUID", new_source_id),
+            blob_name=filename,
+        )
+
+        # Final safety check
+        if len(new_object_path) > max_path_length:
+            # If still too long, use a shorter hash-based filename
+            path = Path(source.filename)
+            name = path.stem
+            ext = path.suffix
+            hash_name = hashlib.sha256(name.encode()).hexdigest()[:32]
+            filename = hash_name + ext
+            new_object_path = construct_object_uri(
+                entity_type=entity_type,
+                entity_id=new_application_id,
+                source_id=cast("UUID", new_source_id),
+                blob_name=filename,
+            )
+
+        await session.execute(
+            insert(RagFile).values(
+                {
+                    "id": new_source_id,
+                    "bucket_name": source.bucket_name,
+                    "object_path": new_object_path,
+                    "filename": source.filename,
+                    "mime_type": source.mime_type,
+                    "size": source.size,
+                }
+            )
+        )
+
+        # Copy the actual GCS file if it exists
+        try:
+            bucket = await run_sync(get_bucket)
+            source_blob = bucket.blob(source.object_path)
+
+            # Check if source blob exists before copying
+            if await run_sync(source_blob.exists):
+                new_blob = bucket.blob(new_object_path)
+                await run_sync(lambda: bucket.copy_blob(source_blob, bucket, new_blob.name))
+                logger.info(
+                    "Copied GCS file for duplicated source",
+                    original_path=source.object_path,
+                    new_path=new_object_path,
+                    source_id=str(new_source_id),
+                )
+            else:
+                logger.warning(
+                    "Source GCS file does not exist, skipping copy",
+                    original_path=source.object_path,
+                    source_id=str(source.id),
+                )
+        except Exception as e:
+            logger.error(
+                "Failed to copy GCS file during source duplication",
+                original_path=source.object_path,
+                new_path=new_object_path,
+                error=str(e),
+            )
+            # Continue anyway - the database records are created
+
+    elif isinstance(source, RagUrl):
+        await session.execute(
+            insert(RagUrl).values(
+                {
+                    "id": new_source_id,
+                    "url": source.url,
+                    "title": source.title,
+                    "description": source.description,
+                }
+            )
+        )
+
+    # Duplicate text vectors (embeddings)
+    vectors_result = await session.execute(select(TextVector).where(TextVector.rag_source_id == source.id))
+    vectors = vectors_result.scalars().all()
+
+    if vectors:
+        await session.execute(
+            insert(TextVector).values(
+                [
+                    {
+                        "rag_source_id": new_source_id,
+                        "chunk": vector.chunk,
+                        "embedding": vector.embedding,
+                    }
+                    for vector in vectors
+                ]
+            )
+        )
+        logger.info(
+            "Duplicated text vectors",
+            original_source_id=str(source.id),
+            new_source_id=str(new_source_id),
+            vector_count=len(vectors),
+        )
+
+    return UUID(str(new_source_id))
 
 
 @post(
@@ -741,8 +896,9 @@ async def handle_duplicate_application(
 
             new_app_id = new_app.id
 
+            new_template = None
             if template:
-                await session.scalar(
+                new_template = await session.scalar(
                     insert(GrantTemplate)
                     .values(
                         {
@@ -757,26 +913,67 @@ async def handle_duplicate_application(
                     .returning(GrantTemplate)
                 )
 
-            rag_sources_result = await session.execute(
-                select(GrantApplicationSource.rag_source_id).where(
+            # Duplicate application sources
+            rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
+            app_sources_result = await session.execute(
+                select(rag_poly)
+                .join(GrantApplicationSource, GrantApplicationSource.rag_source_id == rag_poly.id)
+                .where(
                     GrantApplicationSource.grant_application_id == application_id,
                     GrantApplicationSource.deleted_at.is_(None),
+                    rag_poly.deleted_at.is_(None),
                 )
             )
-            rag_source_ids = list(rag_sources_result.scalars())
+            app_sources = app_sources_result.scalars().all()
 
-            if rag_source_ids:
+            for source in app_sources:
+                new_source_id = await _duplicate_rag_source(
+                    session=session,
+                    source=source,
+                    new_application_id=new_app.id,
+                    entity_type="grant_application",
+                )
+
+                # Link to new application
                 await session.execute(
                     insert(GrantApplicationSource).values(
-                        [
-                            {
-                                "grant_application_id": new_app.id,
-                                "rag_source_id": source_id,
-                            }
-                            for source_id in rag_source_ids
-                        ]
+                        {
+                            "grant_application_id": new_app.id,
+                            "rag_source_id": new_source_id,
+                        }
                     )
                 )
+
+            # Duplicate template sources if template exists
+            if template and new_template:
+                template_sources_result = await session.execute(
+                    select(rag_poly)
+                    .join(GrantTemplateSource, GrantTemplateSource.rag_source_id == rag_poly.id)
+                    .where(
+                        GrantTemplateSource.grant_template_id == template.id,
+                        GrantTemplateSource.deleted_at.is_(None),
+                        rag_poly.deleted_at.is_(None),
+                    )
+                )
+                template_sources = template_sources_result.scalars().all()
+
+                for source in template_sources:
+                    new_source_id = await _duplicate_rag_source(
+                        session=session,
+                        source=source,
+                        new_application_id=new_app.id,
+                        entity_type="grant_template",
+                    )
+
+                    # Link to new template
+                    await session.execute(
+                        insert(GrantTemplateSource).values(
+                            {
+                                "grant_template_id": new_template.id,
+                                "rag_source_id": new_source_id,
+                            }
+                        )
+                    )
 
             await session.commit()
 
