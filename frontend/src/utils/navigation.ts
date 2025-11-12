@@ -11,12 +11,12 @@ export const routes = {
 
 	admin: {
 		grantingInstitutions: {
-			detail: (id: string) => `/admin/granting-institutions/${id}`,
-			edit: (id: string) => `/admin/granting-institutions/${id}/edit`,
-			list: () => "/admin/granting-institutions",
-			new: () => "/admin/granting-institutions/new",
+			detail: (id: string) => `/organization/admin/granting-institutions/${id}`,
+			edit: (id: string) => `/organization/admin/granting-institutions/${id}/edit`,
+			list: () => "/organization/admin/granting-institutions",
+			new: () => "/organization/admin/granting-institutions/new",
 		},
-		root: () => "/admin",
+		root: () => "/organization/admin",
 	},
 	finishEmailSignin: () => "/signup/email",
 

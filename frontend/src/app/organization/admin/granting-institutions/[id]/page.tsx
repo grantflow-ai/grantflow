@@ -19,6 +19,7 @@ import { SourceIndexingStatus } from "@/enums";
 import { useGrantingInstitutionStore } from "@/stores/granting-institution-store";
 import type { FileWithId, FileWithSource, UrlWithSource } from "@/types/files";
 import { routes } from "@/utils/navigation";
+import { AdminFooter } from "@/components/admin/admin-footer";
 
 export default function GrantingInstitutionDetailPage() {
 	const params = useParams();
@@ -281,6 +282,7 @@ export default function GrantingInstitutionDetailPage() {
 					</WizardRightPane>
 				)}
 			</div>
+				<AdminFooter />
 		</div>
 	);
 }

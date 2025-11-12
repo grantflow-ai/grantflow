@@ -9,10 +9,10 @@ export default async function GrantingInstitutionsPage() {
 	const institutions = await listGrantingInstitutions();
 
 	return (
-		<div className="container mx-auto py-10">
+		<div className="container  py-10">
 			<div className="flex items-center justify-between mb-6">
 				<div>
-					<h1 className="text-3xl font-bold">Granting Institutions</h1>
+					<h1 className="text-3xl font-bold text-app-black">Granting Institutions</h1>
 					<p className="text-gray-600 mt-2">Manage granting institutions in the system</p>
 				</div>
 				<Link href={routes.admin.grantingInstitutions.new()}>

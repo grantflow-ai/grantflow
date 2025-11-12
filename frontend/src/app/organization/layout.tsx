@@ -22,11 +22,13 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 function ProjectLayoutClient({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const isWizardRoute = pathname.includes("/wizard") || pathname.includes("/new");
+	const isGrantingInstitutionDetailOrEditPage = pathname.startsWith("/organization/admin/granting-institutions/") &&
+		!pathname.endsWith("/new");
 
 	return (
 		<SidebarProvider defaultOpen={false}>
-			<AppSidebar hidden={isWizardRoute} />
-			<SidebarInset className={isWizardRoute ? "h-screen ml-0" : "h-screen"}>
+			<AppSidebar hidden={isWizardRoute || isGrantingInstitutionDetailOrEditPage} />
+			<SidebarInset className={isWizardRoute || isGrantingInstitutionDetailOrEditPage ? "h-screen ml-0" : "h-screen"}>
 				<div className="flex h-screen justify-center bg-preview-bg">
 					<div className="flex-1 w-full h-full overflow-hidden bg-preview-bg">{children}</div>
 					<NotificationContainer />
