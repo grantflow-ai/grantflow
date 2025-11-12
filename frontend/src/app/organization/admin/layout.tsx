@@ -26,8 +26,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 
 	return (
 		<SharedLayout>
-			<div className="min-h-screen bg-preview-bg overflow-hidden">
-				<div className="mx-auto">{children}</div>
+			<div className="min-h-screen bg-preview-bg ">
+				<div className="w-full ">{children}</div>
 			</div>
 		</SharedLayout>
 	);

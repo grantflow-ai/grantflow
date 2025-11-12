@@ -1,5 +1,6 @@
 import SharedLayout from "@/components/layout/shared-layout";
-import Footer from "@/components/public-pages/footer";
+import ConditionalFooter from "@/components/public-pages/conditional-footer";
+
 
 export default function LandingPagesLayout({ children }: { children: React.ReactNode }) {
 	return (
@@ -8,7 +9,7 @@ export default function LandingPagesLayout({ children }: { children: React.React
 				<main className="flex w-full flex-1" data-testid="main-container">
 					{children}
 				</main>
-				<Footer />
+				<ConditionalFooter/>
 			</div>
 		</SharedLayout>
 	);

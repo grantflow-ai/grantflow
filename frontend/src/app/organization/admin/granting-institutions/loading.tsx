@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GrantingInstitutionsLoading() {
 	return (
-		<div className="container mx-auto py-10 px-4 md:px-6 lg:px-8">
+		<div className="container  py-10 px-4 md:px-6 lg:px-8">
 			<div className="mb-4 2xl:mb-6 px-6 2xl:px-10 relative flex flex-col gap-6 2xl:gap-8 py-6 2xl:py-10 rounded-lg bg-white border border-app-gray-100">
 				<div className="flex items-center justify-between">
 					<div className="flex flex-col gap-2">

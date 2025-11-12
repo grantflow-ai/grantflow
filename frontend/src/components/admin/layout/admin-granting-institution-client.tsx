@@ -7,6 +7,7 @@ import { AdminBreadcrumb } from "@/components/admin/shared/admin-breadcrumb";
 import { type GrantingInstitutionTab, TAB_LABELS } from "@/constants/admin";
 import { useAdminStore } from "@/stores/admin-store";
 import { routes } from "@/utils/navigation";
+import { AdminFooter } from "../admin-footer";
 
 interface AdminGrantingInstitutionClientProps {
 	activeTab: GrantingInstitutionTab;
@@ -55,6 +56,7 @@ export function AdminGrantingInstitutionClient({ activeTab, children }: AdminGra
 			>
 				<AdminGrantingInstitutionLayout activeTab={activeTab}>{children}</AdminGrantingInstitutionLayout>
 			</div>
+			<AdminFooter/>
 		</main>
 	);
 }

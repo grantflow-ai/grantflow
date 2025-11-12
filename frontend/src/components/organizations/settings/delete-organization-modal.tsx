@@ -31,8 +31,8 @@ export function DeleteOrganizationModal({
 	const { clearUser } = useUserStore();
 
 	const handleDelete = async () => {
-		if (confirmationText !== organizationName) {
-			toast.error("Organization name does not match");
+		if (confirmationText !== "DELETE") {
+			toast.error("Confirmation text does not match");
 			return;
 		}
 
@@ -65,7 +65,7 @@ export function DeleteOrganizationModal({
 	if (!isOpen) return null;
 
 	return (
-		<button
+		<div
 			aria-label="Close modal"
 			className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 border-none cursor-default"
 			data-testid="delete-organization-modal-overlay"
@@ -73,9 +73,8 @@ export function DeleteOrganizationModal({
 			onKeyDown={(e) => {
 				if (e.key === "Escape") handleClose();
 			}}
-			type="button"
 		>
-			{}
+
 			<div
 				aria-labelledby="delete-organization-modal-title"
 				aria-modal="true"
@@ -109,15 +108,15 @@ export function DeleteOrganizationModal({
 							</button>
 						</div>
 						<p className="text-base leading-5 text-app-black font-body text-left">
-							You are about to delete the organization
-							<span className="font-semibold px-1">{organizationName}</span>. This action will remove all
-							associated data.
+							You are about to permanently delete this  organisation
+							<span className="font-semibold px-1">{organizationName}</span> and all its associated data . This action cannot be undone.
+							
 						</p>
 					</div>
 
 					<div className="flex flex-col gap-6">
 						<h3 className="font-cabin font-semibold text-base leading-[22px] text-left text-app-black">
-							To confirm, please type the name of the <br /> organization below:
+							To confirm, please type DELETE below:
 						</h3>
 
 						<input
@@ -127,7 +126,7 @@ export function DeleteOrganizationModal({
 							onChange={(e) => {
 								setConfirmationText(e.target.value);
 							}}
-							placeholder="Organisation name"
+							placeholder="Type DELETE to confirm"
 							type="text"
 							value={confirmationText}
 						/>
@@ -147,7 +146,7 @@ export function DeleteOrganizationModal({
 						<button
 							className="cursor-pointer px-4 py-2 bg-primary font-normal text-white rounded  text-[18px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							data-testid="delete-organization-confirm-button"
-							disabled={isDeleting || confirmationText !== organizationName}
+							disabled={isDeleting || confirmationText !== "DELETE"}
 							onClick={handleDelete}
 							type="button"
 						>
@@ -156,6 +155,6 @@ export function DeleteOrganizationModal({
 					</div>
 				</div>
 			</div>
-		</button>
+		</div>
 	);
 }
