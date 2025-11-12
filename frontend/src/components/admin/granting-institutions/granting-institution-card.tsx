@@ -4,18 +4,30 @@ import { format } from "date-fns";
 import { Building2, FileText } from "lucide-react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { CardActionMenu } from "@/components/organizations/dashboard/card-action-menu";
+import { cn } from "@/lib/utils";
 import type { API } from "@/types/api-types";
 
 interface GrantingInstitutionCardProps {
 	institution: API.ListGrantingInstitutions.Http200.ResponseBody[0];
+	isSelected?: boolean;
 	onDelete: (id: string) => void;
 	onView: (id: string, name: string) => void;
 }
 
-export function GrantingInstitutionCard({ institution, onDelete, onView }: GrantingInstitutionCardProps) {
+export function GrantingInstitutionCard({
+	institution,
+	isSelected = false,
+	onDelete,
+	onView,
+}: GrantingInstitutionCardProps) {
 	return (
 		<div
-			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4 bg-preview-bg border-[#E1DFEB] hover:border-primary hover:border-2 transition-all"
+			className={cn(
+				"relative flex h-[206px] flex-col rounded-lg border px-4 py-4 bg-preview-bg transition-all",
+				isSelected
+					? "border-primary border-2 ring-2 ring-primary ring-opacity-20"
+					: "border-app-gray-100 hover:border-primary hover:border-2",
+			)}
 			data-testid={`granting-institution-card-${institution.id}`}
 		>
 			<header className="flex flex-col gap-3">
@@ -61,7 +73,7 @@ export function GrantingInstitutionCard({ institution, onDelete, onView }: Grant
 
 			<main className="flex h-full w-full items-end pt-3">
 				<div className="flex gap-2">
-					<div className="w-fit bg-app-lavender-gray px-2 py-1 flex gap-1 rounded-[2px] items-center">
+					<div className="w-fit bg-app-lavender-gray px-2 py-1 flex gap-1 rounded-sm items-center">
 						<FileText className="size-4 text-app-gray-600" />
 						<span className="text-sm font-normal text-app-black">
 							<span className="font-semibold">{institution.source_count}</span>{" "}

@@ -7,9 +7,10 @@ interface GrantingInstitutionListProps {
 	institutions: API.ListGrantingInstitutions.Http200.ResponseBody;
 	onDelete: (id: string) => void;
 	onView: (id: string, name: string) => void;
+	selectedId?: null | string;
 }
 
-export function GrantingInstitutionList({ institutions, onDelete, onView }: GrantingInstitutionListProps) {
+export function GrantingInstitutionList({ institutions, onDelete, onView, selectedId }: GrantingInstitutionListProps) {
 	if (institutions.length === 0) {
 		return (
 			<div className="flex items-center justify-center min-h-[400px]">
@@ -26,6 +27,7 @@ export function GrantingInstitutionList({ institutions, onDelete, onView }: Gran
 			{institutions.map((institution) => (
 				<GrantingInstitutionCard
 					institution={institution}
+					isSelected={selectedId === institution.id}
 					key={institution.id}
 					onDelete={onDelete}
 					onView={onView}

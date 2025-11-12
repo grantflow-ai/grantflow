@@ -41,7 +41,7 @@ describe("DeletePredefinedTemplateButton", () => {
 			expect(deletePredefinedTemplate).toHaveBeenCalledWith("tpl-1");
 		});
 
-		expect(mockRouter.push).toHaveBeenCalledWith(routes.admin.predefinedTemplates.list());
+		expect(mockRouter.push).toHaveBeenCalledWith(routes.admin.grantingInstitutions.predefinedTemplates.list());
 		expect(toastSuccess).toHaveBeenCalledWith("Template deleted");
 	});
 
