@@ -25,6 +25,7 @@ interface InviteCollaboratorModalProps {
 	ownerEmail?: string;
 	projectId?: string;
 	projects: ResearchProject[];
+	currentUserRole:UserRole;
 }
 
 interface ResearchProject {
