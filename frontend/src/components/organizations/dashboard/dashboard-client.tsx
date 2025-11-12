@@ -234,7 +234,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 								Research Projects
 							</h3>
 							<main
-								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-4 2xl:mt-6 overflow-y-auto pr-2 scroll-box"
+								className="grid grid-cols-1  lg:grid-cols-3 gap-6 auto-rows-min mt-4 2xl:mt-6 overflow-y-auto pr-2 scroll-box"
 								data-testid="projects-container"
 							>
 								{projects.length > 0 ? (
