@@ -214,12 +214,24 @@ async def handle_url_crawling(
     async with session_maker() as session, session.begin():
         from packages.db.src.tables import RagSource
 
+        # Capture previous status for logging
+        previous_status_result = await session.execute(
+            select(RagSource.indexing_status).where(
+                RagSource.id == crawling_request["source_id"]
+            )
+        )
+        previous_status = previous_status_result.scalar_one_or_none()
+
         result = await session.execute(
             update(RagSource)
             .where(
                 RagSource.id == crawling_request["source_id"],
                 RagSource.indexing_status.in_(
-                    [SourceIndexingStatusEnum.CREATED, SourceIndexingStatusEnum.FAILED]
+                    [
+                        SourceIndexingStatusEnum.PENDING_UPLOAD,
+                        SourceIndexingStatusEnum.CREATED,
+                        SourceIndexingStatusEnum.FAILED,
+                    ]
                 ),
             )
             .values(
@@ -230,6 +242,13 @@ async def handle_url_crawling(
         )
 
         claimed_id = result.scalar_one_or_none()
+
+        if claimed_id and previous_status == SourceIndexingStatusEnum.PENDING_UPLOAD:
+            logger.info(
+                "Transitioned source from PENDING_UPLOAD to INDEXING",
+                source_id=str(crawling_request["source_id"]),
+                trace_id=trace_id,
+            )
 
         if not claimed_id:
             existing = await session.scalar(

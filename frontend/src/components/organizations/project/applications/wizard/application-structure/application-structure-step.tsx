@@ -2,14 +2,17 @@
 
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/modal/rag-sources-dialog-utils";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
+import { useWaitForSourcesReady } from "@/hooks/use-wait-for-sources-ready";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection } from "@/types/grant-sections";
+import { log } from "@/utils/logger/client";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 
@@ -24,11 +27,16 @@ interface ApplicationStructureStepProps {
 }
 
 export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStepProps) {
+	const application = useApplicationStore((state) => state.application);
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const templateGenerationFailed = useWizardStore((state) => state.templateGenerationFailed);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
+
+	const { waitForSources, isWaiting } = useWaitForSourcesReady({
+		applicationId: application?.id ?? "",
+	});
 
 	const templateRagSources = grantTemplate?.rag_sources ?? [];
 	const dialogDismissedRef = useRef(false);
@@ -41,12 +49,40 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		return shouldTriggerTemplateGeneration();
 	}, [grantTemplate, isGeneratingTemplate, templateGenerationFailed, shouldTriggerTemplateGeneration]);
 
+	const startTemplateGenerationWithWait = useCallback(async () => {
+		if (!canStartTemplateGeneration()) return;
+
+		try {
+			// Get all template source IDs that might be PENDING_UPLOAD
+			const sourceIds = templateRagSources.map((source) => source.sourceId);
+
+			if (sourceIds.length > 0) {
+				log.info("[ApplicationStructureStep] Waiting for sources to be ready before template generation", {
+					sourceCount: sourceIds.length,
+					sourceIds,
+				});
+
+				// Wait for sources to transition from PENDING_UPLOAD
+				await waitForSources(sourceIds);
+
+				log.info("[ApplicationStructureStep] All sources ready, starting template generation");
+			}
+
+			// Start template generation
+			await useWizardStore.getState().startTemplateGeneration();
+		} catch (error) {
+			log.error("[ApplicationStructureStep] Failed to wait for sources or start generation", { error });
+			toast.error("Failed to start template generation. Please try again.");
+		}
+	}, [canStartTemplateGeneration, templateRagSources, waitForSources]);
+
 	useEffect(() => {
 		if (templateRagSources.length === 0) return;
+		if (isWaiting) return; // Don't trigger if already waiting
 
 		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
 		if (allFinished && canStartTemplateGeneration()) {
-			void useWizardStore.getState().startTemplateGeneration();
+			void startTemplateGenerationWithWait();
 			return;
 		}
 
@@ -55,10 +91,17 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 			return;
 		}
 
+		// Check for PENDING_UPLOAD sources
+		const hasPendingUpload = templateRagSources.some((source) => source.status === "PENDING_UPLOAD");
+		if (hasPendingUpload) {
+			log.info("[ApplicationStructureStep] Sources still pending upload, will wait before generation");
+			return;
+		}
+
 		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
 
 		if (!hasFailedSources && canStartTemplateGeneration()) {
-			void useWizardStore.getState().startTemplateGeneration();
+			void startTemplateGenerationWithWait();
 			return;
 		}
 
@@ -73,7 +116,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 					dialogDismissedRef.current = true;
 					dialogRef.current?.close();
 					if (canStartTemplateGeneration()) {
-						void useWizardStore.getState().startTemplateGeneration();
+						void startTemplateGenerationWithWait();
 					}
 				},
 				sourceType: "template",
@@ -95,6 +138,8 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		dialogRef,
 		toPreviousStep,
 		grantTemplate?.grant_sections.length,
+		startTemplateGenerationWithWait,
+		isWaiting,
 	]);
 
 	return (

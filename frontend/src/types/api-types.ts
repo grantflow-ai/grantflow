@@ -251,20 +251,11 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	predefined_template?: {
-	activity_code?: string;
-	description?: string;
-	grant_type: "RESEARCH" | "TRANSLATIONAL";
-	guideline_source?: string;
-	guideline_version?: string;
-	id: string;
-	name: string;
-};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	submission_date?: string;
@@ -276,7 +267,7 @@ export namespace API {
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	research_objectives?: {
@@ -1007,20 +998,11 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	predefined_template?: {
-	activity_code?: string;
-	description?: string;
-	grant_type: "RESEARCH" | "TRANSLATIONAL";
-	guideline_source?: string;
-	guideline_version?: string;
-	id: string;
-	name: string;
-};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	submission_date?: string;
@@ -1032,7 +1014,7 @@ export namespace API {
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	research_objectives?: {
@@ -2033,20 +2015,11 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	predefined_template?: {
-	activity_code?: string;
-	description?: string;
-	grant_type: "RESEARCH" | "TRANSLATIONAL";
-	guideline_source?: string;
-	guideline_version?: string;
-	id: string;
-	name: string;
-};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	submission_date?: string;
@@ -2058,7 +2031,7 @@ export namespace API {
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	research_objectives?: {
@@ -2099,14 +2072,14 @@ export namespace API {
 	created_at: string;
 	description: null | string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	title: null | string;
 	url: string;
 } | {
 	created_at: string;
 	filename: string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	mime_type: string;
 	size: number;
 })[];
@@ -2133,14 +2106,14 @@ export namespace API {
 	created_at: string;
 	description: null | string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	title: null | string;
 	url: string;
 } | {
 	created_at: string;
 	filename: string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	mime_type: string;
 	size: number;
 })[];
@@ -2168,14 +2141,14 @@ export namespace API {
 	created_at: string;
 	description: null | string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	title: null | string;
 	url: string;
 } | {
 	created_at: string;
 	filename: string;
 	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	mime_type: string;
 	size: number;
 })[];
@@ -2374,20 +2347,11 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
-	predefined_template?: {
-	activity_code?: string;
-	description?: string;
-	grant_type: "RESEARCH" | "TRANSLATIONAL";
-	guideline_source?: string;
-	guideline_version?: string;
-	id: string;
-	name: string;
-};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	submission_date?: string;
@@ -2399,7 +2363,7 @@ export namespace API {
 	rag_sources: {
 	filename?: string;
 	sourceId: string;
-	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
 }[];
 	research_objectives?: {

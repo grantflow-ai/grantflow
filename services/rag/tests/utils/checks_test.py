@@ -184,3 +184,112 @@ async def test_mixed_statuses_with_at_least_one_finished(
             GrantApplication,
             trace_id,
         )
+
+
+async def test_pending_upload_sources_are_filtered(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    """Test that PENDING_UPLOAD sources are ignored when other sources are finished."""
+    async with async_session_maker() as session:
+        source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
+        source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+        source3 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+
+        await link_source_to_application(session, grant_application.id, source1.id)
+        await link_source_to_application(session, grant_application.id, source2.id)
+        await link_source_to_application(session, grant_application.id, source3.id)
+        await session.commit()
+
+        # Should succeed because we have at least one FINISHED source (PENDING_UPLOAD are filtered)
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
+
+
+async def test_only_pending_upload_sources_raises_error(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    """Test that having only PENDING_UPLOAD sources raises a validation error."""
+    async with async_session_maker() as session:
+        source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+        source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+
+        await link_source_to_application(session, grant_application.id, source1.id)
+        await link_source_to_application(session, grant_application.id, source2.id)
+        await session.commit()
+
+    with pytest.raises(ValidationError) as exc_info:
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
+
+    assert "No sources have been uploaded yet" in str(exc_info.value)
+    assert exc_info.value.context["pending_upload_count"] == 2
+    assert exc_info.value.context["parent_id"] == str(grant_application.id)
+
+
+async def test_pending_upload_with_failed_sources(
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    """Test that PENDING_UPLOAD sources don't affect failed sources check."""
+    async with async_session_maker() as session:
+        source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
+        source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+        source3 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
+
+        await link_source_to_application(session, grant_application.id, source1.id)
+        await link_source_to_application(session, grant_application.id, source2.id)
+        await link_source_to_application(session, grant_application.id, source3.id)
+        await session.commit()
+
+    with pytest.raises(ValidationError) as exc_info:
+        await verify_rag_sources_indexed(
+            grant_application.id,
+            async_session_maker,
+            GrantApplication,
+            trace_id,
+        )
+
+    # Should fail because all active sources (non-PENDING_UPLOAD) are FAILED
+    assert "all rag sources have failed to be indexed" in str(exc_info.value)
+    assert exc_info.value.context["failed_sources"] == 2
+    assert exc_info.value.context["total_sources"] == 2  # Only counts active sources
+
+
+async def test_pending_upload_with_mixed_statuses_grant_template(
+    grant_template_with_sections: GrantTemplate,
+    async_session_maker: async_sessionmaker[Any],
+    trace_id: str,
+) -> None:
+    """Test PENDING_UPLOAD filtering works for grant templates."""
+    async with async_session_maker() as session:
+        source1 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FINISHED)
+        source2 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+        source3 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.FAILED)
+        source4 = await create_rag_source_with_status(session, SourceIndexingStatusEnum.PENDING_UPLOAD)
+
+        await link_source_to_template(session, grant_template_with_sections.id, source1.id)
+        await link_source_to_template(session, grant_template_with_sections.id, source2.id)
+        await link_source_to_template(session, grant_template_with_sections.id, source3.id)
+        await link_source_to_template(session, grant_template_with_sections.id, source4.id)
+        await session.commit()
+
+        # Should succeed because we have at least one FINISHED source
+        await verify_rag_sources_indexed(
+            grant_template_with_sections.id,
+            async_session_maker,
+            GrantTemplate,
+            trace_id,
+        )
