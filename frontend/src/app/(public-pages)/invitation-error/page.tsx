@@ -1,21 +1,21 @@
 import StreamlineAttribution from '@/components/shared/streamline-attribution';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import React from 'react';
+
 
 const InvitationErrorPage = () => {
   return ( 
-    <>
-    <main className='flex flex-col w-full'>
+    
+    <div className='flex flex-col w-full'>
 
    <header className='pl-10 py-[34px] '>
-     <Image alt=""  src="/assets/logo-horizontal-with-description.svg" width={189} height={141} className=' bg-cover'  />
+     <Image alt=""  className=' bg-cover' height={141} src="/assets/logo-horizontal-with-description.svg" width={189}  />
     </header> 
     <main className='flex items-center justify-center flex-1  w-full'>
       <main className='flex items-center flex-col gap-12'>
 
       <div className='w-[189.04px] h-[141.12px] '>
-      <Image alt=""  src="/assets/invitation-error.svg" width={189} height={141} className=' bg-cover'  />
+      <Image alt=""  className=' bg-cover' height={141} src="/assets/invitation-error.svg" width={189}  />
       </div>
 
     <div className='flex items-center flex-col gap-3'>
@@ -36,8 +36,8 @@ const InvitationErrorPage = () => {
     </div>
       </main>
     </main>
-    </main>
-    </>
+    </div>
+    
   );
 };
 
