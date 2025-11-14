@@ -7,7 +7,7 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
 const POLL_INTERVAL_MS = 1000;
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 30_000;
 
 interface UseWaitForSourcesReadyOptions {
 	/**

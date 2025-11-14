@@ -66,13 +66,15 @@ export function DeleteOrganizationModal({
 
 	return (
 		<div
-			aria-label="Close modal"
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 border-none cursor-default"
+		aria-label="Close modal"
+		className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 border-none cursor-default" 
 			data-testid="delete-organization-modal-overlay"
 			onClick={handleClose}
 			onKeyDown={(e) => {
 				if (e.key === "Escape") handleClose();
 			}}
+			role="button"
+			tabIndex={0}
 		>
 
 			<div

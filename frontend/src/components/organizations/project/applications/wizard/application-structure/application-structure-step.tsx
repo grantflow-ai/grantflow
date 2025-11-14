@@ -34,7 +34,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
 
-	const { waitForSources, isWaiting } = useWaitForSourcesReady({
+	const { isWaiting, waitForSources } = useWaitForSourcesReady({
 		applicationId: application?.id ?? "",
 	});
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import Link from 'next/link'; // Assuming Link is from Next.js
+
+import Link from 'next/link'; 
 
 const StreamlineAttribution = () => {
   return (
