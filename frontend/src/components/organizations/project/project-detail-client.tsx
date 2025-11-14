@@ -33,6 +33,7 @@ import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import { UserRole } from "@/types/user";
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -400,6 +401,7 @@ export function ProjectDetailClient() {
 				ownerEmail={ownerEmail}
 				projectId={project.id}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+				currentUserRole={UserRole.OWNER}
 			/>
 
 			<NewApplicationModal
