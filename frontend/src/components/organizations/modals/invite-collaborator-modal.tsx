@@ -25,7 +25,6 @@ interface InviteCollaboratorModalProps {
 	ownerEmail?: string;
 	projectId?: string;
 	projects: ResearchProject[];
-	currentUserRole?: string;
 }
 
 interface ResearchProject {
@@ -41,7 +40,6 @@ export function InviteCollaboratorModal({
 	ownerEmail,
 	projectId,
 	projects = [],
-	currentUserRole,
 }: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
