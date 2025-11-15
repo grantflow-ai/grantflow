@@ -24,6 +24,7 @@ const statusIcons = {
 	FAILED: <Image alt="Failed" height={20} src="/icons/indexing-failure.svg" width={20} />,
 	FINISHED: <Image alt="Success" height={20} src="/icons/indexing-success.svg" width={20} />,
 	INDEXING: <Image alt="Processing" className="animate-spin" height={20} src="/icons/generating.svg" width={20} />,
+	PENDING_UPLOAD: <Image alt="Pending" height={20} src="/icons/icon-toast-info.svg" width={20} />,
 };
 
 interface RagSourcesContentProps {

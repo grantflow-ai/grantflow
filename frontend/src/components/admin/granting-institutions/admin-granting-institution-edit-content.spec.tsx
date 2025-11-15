@@ -99,7 +99,7 @@ describe("AdminGrantingInstitutionEditContent", () => {
 			render(<AdminGrantingInstitutionEditContent />);
 
 			const container = screen.getByTestId("admin-edit-content");
-			expect(container).toHaveClass("flex", "flex-col", "gap-6", "max-w-[655px]");
+			expect(container).toHaveClass("flex", "flex-col", "h-full");
 		});
 
 		it("should use semantic text sizes", () => {
@@ -109,7 +109,7 @@ describe("AdminGrantingInstitutionEditContent", () => {
 			expect(heading).toHaveClass("text-2xl");
 
 			const description = screen.getByText("Update the details of this granting institution");
-			expect(description).toHaveClass("text-sm");
+			expect(description).toHaveClass("text-muted-foreground-dark", "leading-tight");
 		});
 	});
 });
