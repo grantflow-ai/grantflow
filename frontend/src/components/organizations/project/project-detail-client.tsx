@@ -29,11 +29,11 @@ import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import type { DownloadFormat } from "@/types/download";
+import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { UserRole } from "@/types/user";
 
 export function ProjectDetailClient() {
 	const router = useRouter();
