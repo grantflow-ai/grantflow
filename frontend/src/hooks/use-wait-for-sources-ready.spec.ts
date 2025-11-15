@@ -1,5 +1,5 @@
-import { ApplicationFactory, RagSourceFactory } from "::testing/factories";
-import { act, renderHook,  } from "@testing-library/react";
+import { ApplicationFactory, GrantTemplateFactory, RagSourceFactory } from "::testing/factories";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getApplication } from "@/actions/grant-applications";
 import { SourceIndexingStatus } from "@/enums";
@@ -211,10 +211,10 @@ describe("useWaitForSourcesReady", () => {
 		// Source is in template rag_sources and is CREATED (ready)
 		mockGetApplication.mockResolvedValueOnce(
 			ApplicationFactory.build({
-				grant_template: {
+				grant_template: GrantTemplateFactory.build({
 					id: "template-id",
 					rag_sources: [RagSourceFactory.build({ sourceId, status: SourceIndexingStatus.CREATED })],
-				},
+				}),
 				id: mockApplicationId,
 				project_id: mockProjectId,
 				rag_sources: [],

@@ -5,4 +5,9 @@ packages:
   - crdt
 
 onlyBuiltDependencies:
+  - '@firebase/util'
+  - '@parcel/watcher'
   - esbuild
+  - protobufjs
+  - sharp
+  - unrs-resolver
