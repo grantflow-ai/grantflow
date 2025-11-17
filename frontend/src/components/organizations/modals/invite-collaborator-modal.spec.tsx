@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
+import { UserRole } from "@/types/user";
 import { InviteCollaboratorModal } from "./invite-collaborator-modal";
 
 vi.mock("sonner", () => ({
@@ -12,6 +13,10 @@ vi.mock("sonner", () => ({
 const getLatestModal = async () => {
 	const modals = await screen.findAllByTestId("invite-collaborator-modal");
 	return modals.at(-1)!;
+};
+
+const defaultProps = {
+	currentUserRole: UserRole.OWNER,
 };
 
 describe.sequential("InviteCollaboratorModal", () => {
@@ -29,7 +34,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 	});
 
 	it("renders modal content when open", async () => {
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -43,7 +56,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 	});
 
 	it("does not render visible content when closed", async () => {
-		render(<InviteCollaboratorModal isOpen={false} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={false}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -52,7 +73,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("allows user to enter email address", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const emailInput = within(modal).getByTestId("email-input");
@@ -65,7 +94,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 	});
 
 	it("defaults to collaborator permission", async () => {
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const dropdown = within(modal).getByTestId("permission-dropdown");
@@ -74,7 +111,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("toggles permission dropdown when clicked", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -100,7 +145,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("allows user to select admin permission", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -122,7 +175,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("allows user to select collaborator permission", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -147,7 +208,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 	});
 
 	it("disables send button when email is empty", async () => {
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const sendButton = within(modal).getByTestId("send-invitation-button");
@@ -156,7 +225,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("enables send button when email is provided", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -181,7 +258,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		mockOnInvite.mockResolvedValue(undefined);
 
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -218,6 +303,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		render(
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={true}
 				onClose={mockOnClose}
 				onInvite={mockOnInvite}
@@ -266,6 +352,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		render(
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={true}
 				onClose={mockOnClose}
 				onInvite={mockOnInvite}
@@ -304,6 +391,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		render(
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={true}
 				onClose={mockOnClose}
 				onInvite={mockOnInvite}
@@ -333,7 +421,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		mockOnInvite.mockResolvedValue(undefined);
 
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -375,6 +471,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		render(
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={true}
 				onClose={mockOnClose}
 				onInvite={mockOnInvite}
@@ -407,6 +504,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		render(
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={true}
 				onClose={mockOnClose}
 				onInvite={mockOnInvite}
@@ -440,7 +538,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		mockOnInvite.mockRejectedValue(new Error("Invitation failed"));
 
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -475,7 +581,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("calls onClose when cancel button is clicked", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const cancelButton = within(modal).getByTestId("cancel-button");
@@ -487,7 +601,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("calls onClose when X button is clicked", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const closeButton = within(modal).getByRole("button", { name: "Close" });
@@ -499,7 +621,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("resets form when modal is closed", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const modalQueries = within(modal);
@@ -521,7 +651,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("prevents submission when email is empty", async () => {
 		const user = userEvent.setup();
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
+		render(
+			<InviteCollaboratorModal
+				{...defaultProps}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
 
 		const modal = await getLatestModal();
 		const sendButton = within(modal).getByTestId("send-invitation-button");

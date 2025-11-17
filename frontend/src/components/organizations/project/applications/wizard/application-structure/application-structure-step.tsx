@@ -34,7 +34,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const shouldTriggerTemplateGeneration = useWizardStore((state) => state.shouldTriggerTemplateGeneration);
 
-	const { waitForSources, isWaiting } = useWaitForSourcesReady({
+	const { isWaiting, waitForSources } = useWaitForSourcesReady({
 		applicationId: application?.id ?? "",
 	});
 
@@ -76,71 +76,89 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		}
 	}, [canStartTemplateGeneration, templateRagSources, waitForSources]);
 
+	const checkSourcesStatus = useCallback((sources: typeof templateRagSources) => {
+		const allFinished = sources.every((source) => source.status === "FINISHED");
+		const hasIndexing = sources.some((source) => source.status === "INDEXING");
+		const hasPendingUpload = sources.some((source) => source.status === "PENDING_UPLOAD");
+		const hasFailed = sources.some((source) => source.status === "FAILED");
+
+		return { allFinished, hasFailed, hasIndexing, hasPendingUpload };
+	}, []);
+
+	const handleFailedSources = useCallback(() => {
+		const ragDialog = createRagSourcesDialog({
+			onBackToUploads: () => {
+				dialogDismissedRef.current = true;
+				dialogRef.current?.close();
+				toPreviousStep();
+			},
+			onContinue: () => {
+				dialogDismissedRef.current = true;
+				dialogRef.current?.close();
+				if (canStartTemplateGeneration()) {
+					void startTemplateGenerationWithWait();
+				}
+			},
+			sourceType: "template",
+		});
+
+		dialogRef.current?.open({
+			content: ragDialog.content,
+			description:
+				"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+			dismissOnOutsideClick: false,
+			footer: ragDialog.footer,
+			minWidth: "min-w-4xl",
+			title: "Review Required: Some Uploads Failed",
+		});
+	}, [dialogRef, toPreviousStep, canStartTemplateGeneration, startTemplateGenerationWithWait]);
+
+	const shouldShowFailedDialog = useCallback(
+		(hasFailed: boolean) => {
+			return hasFailed && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length;
+		},
+		[grantTemplate?.grant_sections.length],
+	);
+
+	const handleSourcesReady = useCallback(
+		(status: ReturnType<typeof checkSourcesStatus>) => {
+			const { allFinished, hasFailed } = status;
+
+			if (allFinished || !hasFailed) {
+				void startTemplateGenerationWithWait();
+				return true;
+			}
+
+			if (shouldShowFailedDialog(hasFailed)) {
+				handleFailedSources();
+			}
+			return false;
+		},
+		[startTemplateGenerationWithWait, shouldShowFailedDialog, handleFailedSources],
+	);
+
+	const handleSourcesUpdate = useCallback(() => {
+		if (templateRagSources.length === 0 || isWaiting) {
+			return;
+		}
+
+		const status = checkSourcesStatus(templateRagSources);
+
+		if (status.hasIndexing || status.hasPendingUpload) {
+			if (status.hasPendingUpload) {
+				log.info("[ApplicationStructureStep] Sources still pending upload, will wait before generation");
+			}
+			return;
+		}
+
+		if (canStartTemplateGeneration()) {
+			handleSourcesReady(status);
+		}
+	}, [templateRagSources, isWaiting, checkSourcesStatus, canStartTemplateGeneration, handleSourcesReady]);
+
 	useEffect(() => {
-		if (templateRagSources.length === 0) return;
-		if (isWaiting) return; // Don't trigger if already waiting
-
-		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
-		if (allFinished && canStartTemplateGeneration()) {
-			void startTemplateGenerationWithWait();
-			return;
-		}
-
-		const hasIndexingSources = templateRagSources.some((source) => source.status === "INDEXING");
-		if (hasIndexingSources) {
-			return;
-		}
-
-		// Check for PENDING_UPLOAD sources
-		const hasPendingUpload = templateRagSources.some((source) => source.status === "PENDING_UPLOAD");
-		if (hasPendingUpload) {
-			log.info("[ApplicationStructureStep] Sources still pending upload, will wait before generation");
-			return;
-		}
-
-		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
-
-		if (!hasFailedSources && canStartTemplateGeneration()) {
-			void startTemplateGenerationWithWait();
-			return;
-		}
-
-		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
-			const ragDialog = createRagSourcesDialog({
-				onBackToUploads: () => {
-					dialogDismissedRef.current = true;
-					dialogRef.current?.close();
-					toPreviousStep();
-				},
-				onContinue: () => {
-					dialogDismissedRef.current = true;
-					dialogRef.current?.close();
-					if (canStartTemplateGeneration()) {
-						void startTemplateGenerationWithWait();
-					}
-				},
-				sourceType: "template",
-			});
-
-			dialogRef.current?.open({
-				content: ragDialog.content,
-				description:
-					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
-				dismissOnOutsideClick: false,
-				footer: ragDialog.footer,
-				minWidth: "min-w-4xl",
-				title: "Review Required: Some Uploads Failed",
-			});
-		}
-	}, [
-		canStartTemplateGeneration,
-		templateRagSources,
-		dialogRef,
-		toPreviousStep,
-		grantTemplate?.grant_sections.length,
-		startTemplateGenerationWithWait,
-		isWaiting,
-	]);
+		handleSourcesUpdate();
+	}, [handleSourcesUpdate]);
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">

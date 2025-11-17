@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import SharedLayout from "@/components/layout/shared-layout";
+import AdminLayoutClient from "@/components/layout/admin-layout-client";
 import { SESSION_COOKIE } from "@/constants";
 import { getBackofficeAdminFromJWT } from "@/utils/jwt";
 import { routes } from "@/utils/navigation";
@@ -24,11 +24,5 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 		redirect(routes.organization.root());
 	}
 
-	return (
-		<SharedLayout>
-			<div className="min-h-screen bg-preview-bg overflow-hidden">
-				<div className="mx-auto">{children}</div>
-			</div>
-		</SharedLayout>
-	);
+	return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }

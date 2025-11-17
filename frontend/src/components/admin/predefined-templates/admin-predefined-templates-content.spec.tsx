@@ -49,6 +49,7 @@ vi.mock("@/components/ui/button", () => ({
 			{children}
 		</button>
 	),
+	buttonVariants: vi.fn(() => ""),
 }));
 
 afterEach(() => {
@@ -146,7 +147,7 @@ describe("AdminPredefinedTemplatesContent", () => {
 			render(<AdminPredefinedTemplatesContent />);
 
 			await waitFor(() => {
-				expect(screen.getByText("Predefined templates")).toBeInTheDocument();
+				expect(screen.getByText("Predefined Templates")).toBeInTheDocument();
 				expect(
 					screen.getByText("Manage catalog templates that can be cloned into applications."),
 				).toBeInTheDocument();

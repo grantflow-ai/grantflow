@@ -17,6 +17,13 @@ vi.mock("next/image", () => ({
 	default: ({ alt }: { alt: string }) => <div data-testid={`image-${alt}`} />,
 }));
 
+vi.mock("@/hooks/use-wait-for-sources-ready", () => ({
+	useWaitForSourcesReady: () => ({
+		isWaiting: false,
+		waitForSources: vi.fn().mockResolvedValue(undefined),
+	}),
+}));
+
 describe("ApplicationStructureStep", () => {
 	const mockDialogRef = { current: null };
 
@@ -98,7 +105,7 @@ describe("ApplicationStructureStep", () => {
 			});
 		});
 
-		it("triggers generation when all RAG sources are FINISHED", () => {
+		it("triggers generation when all RAG sources are FINISHED", async () => {
 			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -115,7 +122,9 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
-			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			await vi.waitFor(() => {
+				expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			});
 		});
 
 		it("does not trigger generation when RAG sources are INDEXING", () => {
@@ -200,7 +209,7 @@ describe("ApplicationStructureStep", () => {
 			expect(startTemplateGeneration).not.toHaveBeenCalled();
 		});
 
-		it("triggers generation when no sources are INDEXING and no FAILED sources exist", () => {
+		it("triggers generation when no sources are INDEXING and no FAILED sources exist", async () => {
 			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -217,7 +226,9 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
-			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			await vi.waitFor(() => {
+				expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			});
 		});
 
 		it("does not trigger generation when RAG sources are empty", () => {
@@ -286,7 +297,7 @@ describe("ApplicationStructureStep", () => {
 			expect(startTemplateGeneration).not.toHaveBeenCalled();
 		});
 
-		it("triggers generation when all sources are FINISHED even with mix of file and URL sources", () => {
+		it("triggers generation when all sources are FINISHED even with mix of file and URL sources", async () => {
 			const startTemplateGeneration = vi.fn().mockResolvedValue(undefined);
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
@@ -303,7 +314,9 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
-			expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			await vi.waitFor(() => {
+				expect(startTemplateGeneration).toHaveBeenCalledOnce();
+			});
 		});
 	});
 });
