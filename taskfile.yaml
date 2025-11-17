@@ -94,6 +94,8 @@ tasks:
       - corepack up
       - task: frontend:update
       - task: backend:update
+      - echo "Running prek autoupdate..."
+      - prek autoupdate
       - echo "Ensuring functions requirements.txt is up to date..."
       - task: cloud-functions:generate-requirements
 
