@@ -2,6 +2,7 @@ import asyncio
 from typing import TYPE_CHECKING, TypeGuard
 
 from packages.db.src.json_objects import CFPAnalysis, CFPSection, GrantElement, GrantLongFormSection, LengthConstraint
+from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.template_generation.content_metadata import (
@@ -41,6 +42,14 @@ def merge_and_transform(
     dependency_by_id = {d["id"]: d for d in dependencies}
     length_by_id = {section["id"]: section.get("length_constraint") for section in cfp_sections}
 
+    plan_section_ids = [section["id"] for section in classifications if section["is_plan"]]
+    if len(plan_section_ids) != 1:
+        raise ValidationError(
+            "Template generation requires exactly one research plan section",
+            context={"plan_section_ids": plan_section_ids},
+        )
+    plan_section_id = plan_section_ids[0]
+
     grant_sections: list[GrantElement | GrantLongFormSection] = []
 
     for order, cfp_section in enumerate(cfp_sections, start=1):
@@ -55,7 +64,16 @@ def merge_and_transform(
             logger.warning("Missing classification for section", section_id=section_id)
             continue
 
+        is_plan_section = cls["is_plan"]
+        needs_writing = cls["needs_writing"] or is_plan_section
+        is_long_form = cls["long_form"] or is_plan_section
+
         if cls["title_only"]:
+            if is_plan_section:
+                raise ValidationError(
+                    "Research plan section cannot be title-only",
+                    context={"section_id": section_id, "section_title": cfp_section["title"]},
+                )
             grant_sections.append(
                 GrantElement(
                     id=section_id,
@@ -68,7 +86,7 @@ def merge_and_transform(
             )
             continue
 
-        if not cls["long_form"]:
+        if not is_long_form:
             grant_sections.append(
                 GrantElement(
                     id=section_id,
@@ -76,7 +94,7 @@ def merge_and_transform(
                     title=cfp_section["title"],
                     evidence="",
                     parent_id=cfp_section.get("parent_id"),
-                    needs_applicant_writing=cls["needs_writing"],
+                    needs_applicant_writing=needs_writing,
                 )
             )
             continue
@@ -94,11 +112,11 @@ def merge_and_transform(
             title=cfp_section["title"],
             evidence="",
             parent_id=cfp_section.get("parent_id"),
-            needs_applicant_writing=cls["needs_writing"],
+            needs_applicant_writing=needs_writing,
             depends_on=dep["depends_on"],
             generation_instructions=content["generation_instructions"],
             is_clinical_trial=cls["clinical"],
-            is_detailed_research_plan=cls["is_plan"],
+            is_detailed_research_plan=is_plan_section,
             keywords=content["keywords"],
             search_queries=content["search_queries"],
             topics=content["topics"],
@@ -116,13 +134,22 @@ def merge_and_transform(
         grant_sections.append(long_form_section)
 
     long_form_count = sum(1 for s in grant_sections if is_long_form_section(s))
-    plan_count = sum(1 for s in grant_sections if is_long_form_section(s) and s.get("is_detailed_research_plan"))
+    plan_sections = [s for s in grant_sections if is_long_form_section(s) and s.get("is_detailed_research_plan")]
+
+    if len(plan_sections) != 1:
+        raise ValidationError(
+            "Exactly one long-form research plan section must be present after merging",
+            context={
+                "plan_section_ids": [s["id"] for s in plan_sections],
+                "expected_plan_section": plan_section_id,
+            },
+        )
 
     logger.info(
         "Merged and transformed sections to DB schema",
         total_sections=len(grant_sections),
         long_form_sections=long_form_count,
-        research_plan_sections=plan_count,
+        research_plan_sections=len(plan_sections),
     )
 
     return grant_sections
