@@ -1,489 +1,502 @@
 {
-	"activity_code": "DEEPRAP",
-	"description": "EIC Pathfinder Challenge for Deep Reasoning, Abstraction, and Planning (DeepRAP) to develop trustworthy Cognitive AI Systems that overcome the limitations of current deep learning models.",
-	"grant_sections": [
-		{
-			"evidence": "",
-			"id": "EXCELLENCE",
-			"needs_applicant_writing": false,
-			"order": 1,
-			"parent_id": null,
-			"title": "Excellence"
-		},
-		{
-			"definition": "The vision of a radically new technology and relevant potential solutions towards which the project would contribute in the long term.",
-			"depends_on": [],
-			"evidence": "",
-			"generation_instructions": "Present a compelling, transformative vision of radically new technology that challenges existing paradigms. Articulate the long-term technological possibilities and revolutionary changes this technology could enable. Focus on the fundamental shift in capabilities or approach, not incremental improvements. Demonstrate deep understanding of current limitations and how the envisioned technology transcends them. Balance visionary ambition with scientific grounding. Paint a clear picture of what becomes possible that is impossible today.",
-			"guidelines": [
-				"Describe the vision of radically new technology towards which the project contributes in the long term",
-				"Explain how convincing the vision is and what potential solutions it enables",
-				"Focus on transformative, not incremental, technological change",
-				"Ground the vision in scientific feasibility while maintaining high ambition"
-			],
-			"id": "EXC_VISION",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"Radically new technology",
-				"Long-term vision",
-				"Transformative potential",
-				"Paradigm shift",
-				"Future technology landscape",
-				"Revolutionary capabilities",
-				"Technological breakthrough",
-				"Disruptive innovation"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Vision section allocation (~1.5 pages)",
-				"type": "words",
-				"value": 400
-			},
-			"needs_applicant_writing": true,
-			"order": 2,
-			"parent_id": "EXCELLENCE",
-			"search_queries": [
-				"EIC Pathfinder long-term vision radically new technology",
-				"Articulating transformative technology vision for breakthrough research",
-				"Paradigm-shifting technology proposals European Innovation Council",
-				"Visionary technology concepts for frontier research funding"
-			],
-			"title": "Long-term Vision",
-			"topics": [
-				"Visionary Technology Concept",
-				"Long-term Transformative Potential",
-				"Revolutionary vs Incremental Change",
-				"Future Technological Landscape"
-			]
-		},
-		{
-			"definition": "The concrete, novel and ambitious science-towards-technology breakthrough with respect to the state-of-the-art and its advancement towards realising the envisioned technology.",
-			"depends_on": ["EXC_VISION"],
-			"evidence": "",
-			"generation_instructions": "Provide a concrete, specific description of the science-to-technology breakthrough—not abstract goals but tangible scientific advances. Conduct thorough state-of-the-art analysis showing deep knowledge of the field. Clearly articulate what is currently impossible or extremely limited, and precisely how your approach overcomes these barriers. Demonstrate novelty through comparison with existing approaches. Explain the specific scientific principles, phenomena, or mechanisms you will leverage. Show clear causality: how the scientific breakthrough directly enables the technological vision. Emphasize ground-breaking aspects: new concepts, approaches, or exceptional R&I. Quantify advancement where possible.",
-			"guidelines": [
-				"Describe the science-towards-technology breakthrough in concrete terms",
-				"Explain how the project goes beyond state-of-the-art and the extent of ambition",
-				"Indicate exceptional ground-breaking R&I, novel concepts and approaches",
-				"Describe contribution of the breakthrough to realizing the envisioned technology",
-				"Provide evidence of novelty through comparison with existing work"
-			],
-			"id": "EXC_BREAKTHROUGH",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"State-of-the-art",
-				"Scientific breakthrough",
-				"Technology enablement",
-				"Novel approaches",
-				"Ground-breaking R&I",
-				"Ambitious advancement",
-				"Proof of principle",
-				"Beyond current capabilities",
-				"New concepts",
-				"Exceptional innovation"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Breakthrough section allocation (~2.5 pages)",
-				"type": "words",
-				"value": 750
-			},
-			"needs_applicant_writing": true,
-			"order": 3,
-			"parent_id": "EXCELLENCE",
-			"search_queries": [
-				"EIC Pathfinder science-towards-technology breakthrough definition",
-				"State-of-the-art analysis for frontier research proposals",
-				"Demonstrating novelty and ambition in breakthrough research",
-				"Connecting scientific advances to technology realization EIC",
-				"Ground-breaking R&I concepts for Pathfinder applications"
-			],
-			"title": "Science-towards-Technology Breakthrough",
-			"topics": [
-				"Current State-of-the-Art Analysis",
-				"Scientific Breakthrough Description",
-				"Novelty and Advancement Claims",
-				"Technology Realization Pathway",
-				"Ground-breaking Innovation Elements"
-			]
-		},
-		{
-			"definition": "Concrete, plausible, measurable and verifiable objectives that are realistically achievable within the project duration to reach the envisaged proof of principle.",
-			"depends_on": ["EXC_BREAKTHROUGH"],
-			"evidence": "",
-			"generation_instructions": "Define 3-5 specific, measurable objectives that directly lead to proof-of-principle demonstration. Each objective must be concrete (not vague), measurable (with clear success criteria), and verifiable (testable within project timeline). Explain the high-risk/high-gain balance: why conventional approaches fail and why your risky approach is necessary for the breakthrough. Describe the overall methodology including concepts, models, and assumptions. Explain how the methodology accommodates uncertainties and enables alternative directions. Address any methodological challenges and mitigation strategies. If relevant, explain how gender dimension (sex/gender analysis) is integrated into research content, or justify why it's not applicable. Describe open science practices implementation: data sharing, preprints, open access, citizen science, etc., tailored to your project. Provide detailed research data management plan following FAIR principles.",
-			"guidelines": [
-				"Define concrete, plausible, measurable and verifiable objectives",
-				"Ensure objectives are realistically achievable within project duration to reach proof of principle",
-				"Explain appropriateness of high-risk approach for achieving high-gain objectives",
-				"Describe overall methodology including concepts, models and assumptions",
-				"Explain methodology suitability for dealing with scientific and technological uncertainties",
-				"Show how methodology enables alternative directions and options",
-				"Address important challenges in methodology and how to overcome them",
-				"Describe gender dimension integration in research content or justify why not relevant",
-				"Describe open science practices implementation adapted to the project nature",
-				"Provide research data management plan following FAIR principles"
-			],
-			"id": "EXC_OBJECTIVES",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": true,
-			"keywords": [
-				"Measurable objectives",
-				"Proof of principle",
-				"High-risk high-gain",
-				"Methodology",
-				"Uncertainties management",
-				"Alternative approaches",
-				"Gender dimension",
-				"Open science",
-				"FAIR data principles",
-				"Research data management",
-				"Verifiable outcomes",
-				"Success criteria"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Objectives section including methodology, gender, open science, FAIR (~8 pages)",
-				"type": "words",
-				"value": 2200
-			},
-			"needs_applicant_writing": true,
-			"order": 4,
-			"parent_id": "EXCELLENCE",
-			"search_queries": [
-				"EIC Pathfinder objectives measurable verifiable proof of principle",
-				"High-risk high-gain research approach justification",
-				"Research methodology for breakthrough technology development",
-				"Managing scientific and technological uncertainties in frontier research",
-				"Gender dimension in research and innovation content EIC",
-				"Open science practices implementation Horizon Europe",
-				"FAIR data management principles research proposals",
-				"Interdisciplinary approach for scientific breakthrough"
-			],
-			"title": "Objectives",
-			"topics": [
-				"Specific Measurable Objectives Definition",
-				"High-Risk High-Gain Justification",
-				"Overall Methodology and Approach",
-				"Uncertainty Management and Alternative Pathways",
-				"Gender Dimension Integration",
-				"Open Science Implementation",
-				"FAIR Research Data Management",
-				"Interdisciplinary Approach"
-			]
-		},
-		{
-			"evidence": "",
-			"id": "IMPACT",
-			"needs_applicant_writing": false,
-			"order": 5,
-			"parent_id": null,
-			"title": "Impact"
-		},
-		{
-			"definition": "The expected transformative positive effects that the envisioned new technology would have on economy, environment and society in the long term, beyond the project scope and duration.",
-			"depends_on": ["EXC_VISION", "EXC_BREAKTHROUGH"],
-			"evidence": "",
-			"generation_instructions": "Provide a compelling narrative of transformative impact focusing on your specific project's contribution, not general field advances. Describe concrete transformative effects on economy (new markets, industries), environment (sustainability, climate), and society (quality of life, global challenges). Quantify significance where possible. Be specific about YOUR project's unique contribution to these impacts—avoid generic statements. The expected project outcome is proof-of-principle validation, but explain the pathway from this to long-term technology realization and adoption. Include potential negative environmental outcomes and mitigation strategies, especially at scale. Identify barriers beyond project scope (regulatory, market, user behavior) that could prevent impact, and propose mitigation measures. Distinguish between project outcomes (within timeline) and long-term impacts (beyond project).",
-			"guidelines": [
-				"Describe transformative positive effects of envisioned technology on economy, environment and society",
-				"Explain how significant these transformative effects are",
-				"Be specific to your project's effects, not R&I in general in this field",
-				"Expected outcome is validation of scientific basis through proof of principle demonstration",
-				"Include potential negative environmental outcomes and how harm can be managed",
-				"Describe requirements and barriers beyond project scope that may affect impact achievement",
-				"Indicate if external factors might evolve over time",
-				"Describe mitigating measures within or beyond your project"
-			],
-			"id": "IMP_LONGTERM",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"Transformative impact",
-				"Long-term effects",
-				"Economy environment society",
-				"Proof of principle outcome",
-				"New markets creation",
-				"Global challenges",
-				"Negative outcomes mitigation",
-				"Barriers to impact",
-				"Regulatory environment",
-				"User adoption",
-				"Technology scaling"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Long-term Impact section (~2.5 pages)",
-				"type": "words",
-				"value": 700
-			},
-			"needs_applicant_writing": true,
-			"order": 6,
-			"parent_id": "IMPACT",
-			"search_queries": [
-				"EIC Pathfinder long-term impact narrative beyond project scope",
-				"Transformative technology effects economy environment society",
-				"Proof of principle validation to commercialization pathway",
-				"Assessing potential negative environmental outcomes technology scaling",
-				"Barriers to technology adoption and mitigation strategies",
-				"Regulatory and market requirements for breakthrough technologies"
-			],
-			"title": "Long-term Impact",
-			"topics": [
-				"Transformative Effects on Economy",
-				"Environmental and Sustainability Impact",
-				"Societal Benefits and Global Challenges",
-				"Proof of Principle to Impact Pathway",
-				"Risk Assessment and Negative Outcomes",
-				"Barriers and Mitigation Strategies"
-			]
-		},
-		{
-			"definition": "The envisioned technology's potential for generating disruptive innovations and creating new markets, including exploitation and intellectual property management strategies.",
-			"depends_on": ["IMP_LONGTERM"],
-			"evidence": "",
-			"generation_instructions": "Articulate the disruptive innovation potential: what existing markets or approaches become obsolete, what entirely new markets emerge. Describe concrete exploitation measures to translate research results into innovations—be specific about commercialization pathways, not generic strategies. Address the requirement that beneficiaries must use best efforts to exploit results, prioritizing EU/Associated countries. If exploitation is primarily in non-associated countries, justify why it's still in EU interest. Detail IP management strategy: patents, design rights, copyright, trade secrets. Explain how IP protection supports exploitation and commercialization. Address regulation, certification, and standardization requirements. Explain measures for involving and empowering key actors: early-career researchers, high-tech SMEs, start-ups who can lead translation to innovation. If selected for funding, indicate you understand consortium agreement and results ownership requirements.",
-			"guidelines": [
-				"Describe envisioned technology's potential for generating disruptive innovations and creating new markets",
-				"Describe exploitation measures to facilitate future translation of research results into innovations",
-				"Provide plausible path to commercialize the innovations",
-				"Prioritize exploitation in Member States or Associated countries, justify if primarily in non-associated countries",
-				"Specify IP management strategy including patents, design rights, copyright, trade secrets",
-				"Explain how IP protection supports exploitation",
-				"Describe measures related to regulation, certification, and standardisation",
-				"Explain measures for involving and empowering key actors (early-career researchers, SMEs, start-ups)",
-				"Acknowledge consortium agreement and results ownership requirements if selected"
-			],
-			"id": "IMP_INNOVATION",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"Disruptive innovation",
-				"New markets creation",
-				"Exploitation strategy",
-				"Commercialization pathway",
-				"Intellectual property",
-				"IP management",
-				"Patents and protection",
-				"Regulation certification standardisation",
-				"Technology transfer",
-				"SME involvement",
-				"Start-up empowerment",
-				"Results ownership"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Innovation Potential section (~2 pages)",
-				"type": "words",
-				"value": 600
-			},
-			"needs_applicant_writing": true,
-			"order": 7,
-			"parent_id": "IMPACT",
-			"search_queries": [
-				"EIC Pathfinder exploitation measures innovation translation",
-				"Commercialization pathway breakthrough technologies EU",
-				"Intellectual property management strategy research projects",
-				"Patent protection strategy for frontier research results",
-				"Regulation certification standardisation emerging technologies",
-				"Involving SMEs and start-ups in research exploitation Horizon Europe",
-				"Consortium agreement IP management Horizon Europe projects"
-			],
-			"title": "Innovation Potential",
-			"topics": [
-				"Disruptive Innovation Potential",
-				"Market Creation and Opportunities",
-				"Exploitation and Commercialization Strategy",
-				"Intellectual Property Management",
-				"Regulatory and Certification Requirements",
-				"Empowering Key Innovation Actors"
-			]
-		},
-		{
-			"definition": "The planned dissemination and communication measures to raise awareness about project outcomes to various target groups throughout the project lifecycle.",
-			"depends_on": [],
-			"evidence": "",
-			"generation_instructions": "Describe concrete dissemination and communication plan tailored to specific target groups: scientific community (journals, conferences), end users (workshops, demonstrations), financial actors (pitch events, investor meetings), public at large (media, social media, public events). For scientific community, commit to top-level Open Access publications. Acknowledge that detailed 'plan for dissemination and exploitation including communication activities' is mandatory deliverable within 6 months after signature. Communication activities must run throughout full project lifespan with clear objectives. State main messages for each target group and specific tools/channels to reach them. All measures proportionate to project scale, with concrete actions during and after project end (e.g., standardization activities). Give consideration to project follow-up after completion. Justify why each measure is best suited for its target group. Describe possible feedback to policy measures that will contribute to designing, monitoring, or shaping policy initiatives.",
-			"guidelines": [
-				"Describe dissemination and communication measures with target groups identified",
-				"Target groups may include scientific community, end users, financial actors, public at large",
-				"Project results should include top-level scientific publications in Open Access",
-				"Acknowledge detailed plan required as mandatory deliverable within 6 months after signature",
-				"Communication activities must be strategic, start at outset, continue through project lifetime",
-				"State main messages and tools/channels for each target group",
-				"All measures proportionate to scale, with concrete actions during and after project",
-				"Give consideration to project follow-up after completion",
-				"Justify why each measure is best suited to reach target group",
-				"Describe possible feedback to policy measures generated by the project"
-			],
-			"id": "IMP_COMMUNICATION",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"Dissemination strategy",
-				"Communication plan",
-				"Target groups",
-				"Open Access publications",
-				"Scientific community engagement",
-				"Public outreach",
-				"Stakeholder communication",
-				"Policy feedback",
-				"Media engagement",
-				"Conference presentations",
-				"Project visibility"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Communication and Dissemination section (~1.5 pages)",
-				"type": "words",
-				"value": 400
-			},
-			"needs_applicant_writing": true,
-			"order": 8,
-			"parent_id": "IMPACT",
-			"search_queries": [
-				"EIC Pathfinder dissemination and communication strategy",
-				"Target group specific communication measures research projects",
-				"Open Access publication requirements Horizon Europe",
-				"Communication plan for frontier research projects",
-				"Policy feedback from research project outcomes",
-				"Engaging financial actors and investors in research communication"
-			],
-			"title": "Communication and Dissemination",
-			"topics": [
-				"Target Group Identification and Strategy",
-				"Scientific Dissemination and Open Access",
-				"Public Communication and Outreach",
-				"Stakeholder and Financial Actor Engagement",
-				"Policy Impact and Feedback",
-				"Project Lifetime Communication Plan"
-			]
-		},
-		{
-			"evidence": "",
-			"id": "IMPLEMENTATION",
-			"needs_applicant_writing": false,
-			"order": 9,
-			"parent_id": null,
-			"title": "Quality and Efficiency of Implementation"
-		},
-		{
-			"definition": "The overall work plan structure with detailed work packages, tasks, resource allocation, and implementation strategy.",
-			"depends_on": ["EXC_OBJECTIVES"],
-			"evidence": "",
-			"generation_instructions": "Present brief overview of work plan structure showing logical organization and project stages. Provide detailed description of each work package (WP). Number of WPs should be proportionate to project scale and complexity—each WP must be substantial. Structure each WP by breaking into specific tasks (or organize by type of work/theme if tasks not appropriate). For each task, describe all activities AND quantify them (number of protocols, tests, measurements, study subjects, conferences, publications). Provide sufficient detail to clarify WHO does the work (personnel qualification, person-months) and WHY it's needed, along with equipment, consumables, meetings justification. Include distinct WP for 'project management'. Give visibility to 'data management', 'dissemination and exploitation', and 'communication activities'—either as distinct tasks or WPs. Provide enough quantified information for progress monitoring by consortium and Commission. Use tables for work package summaries and Gantt charts for timeline visualization.",
-			"guidelines": [
-				"Provide brief presentation of overall work plan structure",
-				"Give detailed work description with list of work packages",
-				"Each work package should be substantial and number proportionate to project scale",
-				"Structure each work package by breaking down into tasks",
-				"Describe all activities and quantify them (protocols, tests, measurements, etc.)",
-				"Clarify who will do work (qualification, person-months) and why it's needed",
-				"Justify requested resources (equipment, consumables, meetings)",
-				"Include distinct work package on 'project management'",
-				"Give visibility to 'data management', 'dissemination and exploitation', 'communication activities'",
-				"Provide quantified information for progress monitoring"
-			],
-			"id": "IMPL_WORKPLAN",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": true,
-			"keywords": [
-				"Work packages",
-				"Tasks and activities",
-				"Resource allocation",
-				"Person-months",
-				"Project management WP",
-				"Data management tasks",
-				"Gantt chart",
-				"Milestones deliverables",
-				"Budget justification",
-				"Personnel qualification",
-				"Equipment needs",
-				"Progress monitoring"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Work Plan section (~2.5 pages)",
-				"type": "words",
-				"value": 700
-			},
-			"needs_applicant_writing": true,
-			"order": 10,
-			"parent_id": "IMPLEMENTATION",
-			"search_queries": [
-				"EIC Pathfinder work plan and work packages structure",
-				"Detailed work package description requirements Horizon Europe",
-				"Quantifying activities and resources in research proposals",
-				"Project management work package best practices",
-				"Task breakdown and resource allocation justification",
-				"Gantt chart and timeline visualization for EU proposals"
-			],
-			"title": "Work Plan and Allocation of Resources",
-			"topics": [
-				"Work Plan Structure and Logic",
-				"Work Package Definitions",
-				"Task Breakdown and Quantification",
-				"Resource Justification and Allocation",
-				"Project Management Approach",
-				"Timeline and Dependencies",
-				"Monitoring and Quality Assurance"
-			]
-		},
-		{
-			"definition": "The expertise of consortium members and their complementary contributions to achieving project objectives.",
-			"depends_on": ["IMPL_WORKPLAN"],
-			"evidence": "",
-			"generation_instructions": "Describe each consortium member's specific expertise and demonstrate how collectively they provide ALL necessary knowledge. Show clear alignment between member expertise and project tasks/objectives. Explain role of each partner and their unique, complementary contribution—avoid overlap or redundancy. If appropriate, highlight expertise in social sciences and humanities, open science practices, and gender aspects of R&I. Demonstrate partners have access to critical infrastructure, facilities, and equipment needed for project activities. Justify consortium composition: why this specific combination of partners is necessary and optimal. Address any gaps in expertise and how they will be managed (subcontracting, advisory board, etc.). Show evidence of partners' track record in relevant areas.",
-			"guidelines": [
-				"Describe expertise of consortium members",
-				"Explain how consortium provides all necessary knowledge",
-				"Show how consortium supports proposed interdisciplinary approach",
-				"Demonstrate expertise matches project objectives and tasks",
-				"Explain role of each consortium member and complementary contribution",
-				"If appropriate, show expertise in social sciences, humanities, open science, gender aspects",
-				"Describe partners' access to critical infrastructure needed for project activities",
-				"Justify consortium composition and demonstrate complementarity"
-			],
-			"id": "IMPL_CONSORTIUM",
-			"is_clinical_trial": false,
-			"is_detailed_research_plan": false,
-			"keywords": [
-				"Consortium expertise",
-				"Complementary contributions",
-				"Partner roles",
-				"Interdisciplinary team",
-				"Critical infrastructure",
-				"Track record",
-				"Social sciences humanities",
-				"Open science expertise",
-				"Gender expertise",
-				"Research facilities"
-			],
-			"length_constraint": {
-				"source": "EIC Pathfinder - Consortium Quality section (~1.5 pages)",
-				"type": "words",
-				"value": 400
-			},
-			"needs_applicant_writing": true,
-			"order": 11,
-			"parent_id": "IMPLEMENTATION",
-			"search_queries": [
-				"EIC Pathfinder consortium quality description",
-				"Demonstrating complementary expertise research consortia",
-				"Partner roles and contributions justification EU proposals",
-				"Critical infrastructure access for breakthrough research",
-				"Interdisciplinary team composition for frontier research"
-			],
-			"title": "Quality of the Consortium",
-			"topics": [
-				"Partner Expertise and Qualifications",
-				"Complementarity and Role Distribution",
-				"Interdisciplinary Team Composition",
-				"Infrastructure and Facilities Access",
-				"Track Record and Past Performance"
-			]
-		}
-	],
-	"grant_type": "RESEARCH",
-	"granting_institution_full_name": "European Innovation Council",
-	"guideline_hash": "5da3fbc3d1f18241dd3aa9f54ee9f9fc1d2693a2676d87b3472a6eae6a521c96",
-	"guideline_source": "EIC Pathfinder Challenge - DeepRAP",
-	"guideline_version": "2024",
-	"id": "e6d92290-17f4-41a8-b61d-d5b6eb363b61",
-	"name": "EIC Pathfinder Challenge - DeepRAP"
+    "activity_code": "DEEPRAP",
+    "description": "EIC Pathfinder Challenge for Deep Reasoning, Abstraction, and Planning (DeepRAP) to develop trustworthy Cognitive AI Systems that overcome the limitations of current deep learning models.",
+    "grant_sections": [
+        {
+            "evidence": "",
+            "id": "EXCELLENCE",
+            "needs_applicant_writing": false,
+            "order": 1,
+            "parent_id": null,
+            "title": "Excellence"
+        },
+        {
+            "definition": "The vision of a radically new technology and relevant potential solutions towards which the project would contribute in the long term.",
+            "depends_on": [],
+            "evidence": "",
+            "generation_instructions": "Present a compelling, transformative vision of radically new technology that challenges existing paradigms. Articulate the long-term technological possibilities and revolutionary changes this technology could enable. Focus on the fundamental shift in capabilities or approach, not incremental improvements. Demonstrate deep understanding of current limitations and how the envisioned technology transcends them. Balance visionary ambition with scientific grounding. Paint a clear picture of what becomes possible that is impossible today.",
+            "guidelines": [
+                "Describe the vision of radically new technology towards which the project contributes in the long term",
+                "Explain how convincing the vision is and what potential solutions it enables",
+                "Focus on transformative, not incremental, technological change",
+                "Ground the vision in scientific feasibility while maintaining high ambition"
+            ],
+            "id": "EXC_VISION",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Radically new technology",
+                "Long-term vision",
+                "Transformative potential",
+                "Paradigm shift",
+                "Future technology landscape",
+                "Revolutionary capabilities",
+                "Technological breakthrough",
+                "Disruptive innovation"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Vision section allocation (~1.5 pages)",
+                "type": "words",
+                "value": 400
+            },
+            "needs_applicant_writing": true,
+            "order": 2,
+            "parent_id": "EXCELLENCE",
+            "search_queries": [
+                "EIC Pathfinder long-term vision radically new technology",
+                "Articulating transformative technology vision for breakthrough research",
+                "Paradigm-shifting technology proposals European Innovation Council",
+                "Visionary technology concepts for frontier research funding"
+            ],
+            "title": "Long-term Vision",
+            "topics": [
+                "Visionary Technology Concept",
+                "Long-term Transformative Potential",
+                "Revolutionary vs Incremental Change",
+                "Future Technological Landscape"
+            ]
+        },
+        {
+            "definition": "The concrete, novel and ambitious science-towards-technology breakthrough with respect to the state-of-the-art and its advancement towards realising the envisioned technology.",
+            "depends_on": [
+                "EXC_VISION"
+            ],
+            "evidence": "",
+            "generation_instructions": "Provide a concrete, specific description of the science-to-technology breakthrough—not abstract goals but tangible scientific advances. Conduct thorough state-of-the-art analysis showing deep knowledge of the field. Clearly articulate what is currently impossible or extremely limited, and precisely how your approach overcomes these barriers. Demonstrate novelty through comparison with existing approaches. Explain the specific scientific principles, phenomena, or mechanisms you will leverage. Show clear causality: how the scientific breakthrough directly enables the technological vision. Emphasize ground-breaking aspects: new concepts, approaches, or exceptional R&I. Quantify advancement where possible.",
+            "guidelines": [
+                "Describe the science-towards-technology breakthrough in concrete terms",
+                "Explain how the project goes beyond state-of-the-art and the extent of ambition",
+                "Indicate exceptional ground-breaking R&I, novel concepts and approaches",
+                "Describe contribution of the breakthrough to realizing the envisioned technology",
+                "Provide evidence of novelty through comparison with existing work"
+            ],
+            "id": "EXC_BREAKTHROUGH",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "State-of-the-art",
+                "Scientific breakthrough",
+                "Technology enablement",
+                "Novel approaches",
+                "Ground-breaking R&I",
+                "Ambitious advancement",
+                "Proof of principle",
+                "Beyond current capabilities",
+                "New concepts",
+                "Exceptional innovation"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Breakthrough section allocation (~2.5 pages)",
+                "type": "words",
+                "value": 750
+            },
+            "needs_applicant_writing": true,
+            "order": 3,
+            "parent_id": "EXCELLENCE",
+            "search_queries": [
+                "EIC Pathfinder science-towards-technology breakthrough definition",
+                "State-of-the-art analysis for frontier research proposals",
+                "Demonstrating novelty and ambition in breakthrough research",
+                "Connecting scientific advances to technology realization EIC",
+                "Ground-breaking R&I concepts for Pathfinder applications"
+            ],
+            "title": "Science-towards-Technology Breakthrough",
+            "topics": [
+                "Current State-of-the-Art Analysis",
+                "Scientific Breakthrough Description",
+                "Novelty and Advancement Claims",
+                "Technology Realization Pathway",
+                "Ground-breaking Innovation Elements"
+            ]
+        },
+        {
+            "definition": "Concrete, plausible, measurable and verifiable objectives that are realistically achievable within the project duration to reach the envisaged proof of principle.",
+            "depends_on": [
+                "EXC_BREAKTHROUGH"
+            ],
+            "evidence": "",
+            "generation_instructions": "Define 3-5 specific, measurable objectives that directly lead to proof-of-principle demonstration. Each objective must be concrete (not vague), measurable (with clear success criteria), and verifiable (testable within project timeline). Explain the high-risk/high-gain balance: why conventional approaches fail and why your risky approach is necessary for the breakthrough. Describe the overall methodology including concepts, models, and assumptions. Explain how the methodology accommodates uncertainties and enables alternative directions. Address any methodological challenges and mitigation strategies. If relevant, explain how gender dimension (sex/gender analysis) is integrated into research content, or justify why it's not applicable. Describe open science practices implementation: data sharing, preprints, open access, citizen science, etc., tailored to your project. Provide detailed research data management plan following FAIR principles.",
+            "guidelines": [
+                "Define concrete, plausible, measurable and verifiable objectives",
+                "Ensure objectives are realistically achievable within project duration to reach proof of principle",
+                "Explain appropriateness of high-risk approach for achieving high-gain objectives",
+                "Describe overall methodology including concepts, models and assumptions",
+                "Explain methodology suitability for dealing with scientific and technological uncertainties",
+                "Show how methodology enables alternative directions and options",
+                "Address important challenges in methodology and how to overcome them",
+                "Describe gender dimension integration in research content or justify why not relevant",
+                "Describe open science practices implementation adapted to the project nature",
+                "Provide research data management plan following FAIR principles"
+            ],
+            "id": "EXC_OBJECTIVES",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Measurable objectives",
+                "Proof of principle",
+                "High-risk high-gain",
+                "Methodology",
+                "Uncertainties management",
+                "Alternative approaches",
+                "Gender dimension",
+                "Open science",
+                "FAIR data principles",
+                "Research data management",
+                "Verifiable outcomes",
+                "Success criteria"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Objectives section including methodology, gender, open science, FAIR (~8 pages)",
+                "type": "words",
+                "value": 2200
+            },
+            "needs_applicant_writing": true,
+            "order": 4,
+            "parent_id": "EXCELLENCE",
+            "search_queries": [
+                "EIC Pathfinder objectives measurable verifiable proof of principle",
+                "High-risk high-gain research approach justification",
+                "Research methodology for breakthrough technology development",
+                "Managing scientific and technological uncertainties in frontier research",
+                "Gender dimension in research and innovation content EIC",
+                "Open science practices implementation Horizon Europe",
+                "FAIR data management principles research proposals",
+                "Interdisciplinary approach for scientific breakthrough"
+            ],
+            "title": "Objectives",
+            "topics": [
+                "Specific Measurable Objectives Definition",
+                "High-Risk High-Gain Justification",
+                "Overall Methodology and Approach",
+                "Uncertainty Management and Alternative Pathways",
+                "Gender Dimension Integration",
+                "Open Science Implementation",
+                "FAIR Research Data Management",
+                "Interdisciplinary Approach"
+            ]
+        },
+        {
+            "evidence": "",
+            "id": "IMPACT",
+            "needs_applicant_writing": false,
+            "order": 5,
+            "parent_id": null,
+            "title": "Impact"
+        },
+        {
+            "definition": "The expected transformative positive effects that the envisioned new technology would have on economy, environment and society in the long term, beyond the project scope and duration.",
+            "depends_on": [
+                "EXC_VISION",
+                "EXC_BREAKTHROUGH"
+            ],
+            "evidence": "",
+            "generation_instructions": "Provide a compelling narrative of transformative impact focusing on your specific project's contribution, not general field advances. Describe concrete transformative effects on economy (new markets, industries), environment (sustainability, climate), and society (quality of life, global challenges). Quantify significance where possible. Be specific about YOUR project's unique contribution to these impacts—avoid generic statements. The expected project outcome is proof-of-principle validation, but explain the pathway from this to long-term technology realization and adoption. Include potential negative environmental outcomes and mitigation strategies, especially at scale. Identify barriers beyond project scope (regulatory, market, user behavior) that could prevent impact, and propose mitigation measures. Distinguish between project outcomes (within timeline) and long-term impacts (beyond project).",
+            "guidelines": [
+                "Describe transformative positive effects of envisioned technology on economy, environment and society",
+                "Explain how significant these transformative effects are",
+                "Be specific to your project's effects, not R&I in general in this field",
+                "Expected outcome is validation of scientific basis through proof of principle demonstration",
+                "Include potential negative environmental outcomes and how harm can be managed",
+                "Describe requirements and barriers beyond project scope that may affect impact achievement",
+                "Indicate if external factors might evolve over time",
+                "Describe mitigating measures within or beyond your project"
+            ],
+            "id": "IMP_LONGTERM",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Transformative impact",
+                "Long-term effects",
+                "Economy environment society",
+                "Proof of principle outcome",
+                "New markets creation",
+                "Global challenges",
+                "Negative outcomes mitigation",
+                "Barriers to impact",
+                "Regulatory environment",
+                "User adoption",
+                "Technology scaling"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Long-term Impact section (~2.5 pages)",
+                "type": "words",
+                "value": 700
+            },
+            "needs_applicant_writing": true,
+            "order": 6,
+            "parent_id": "IMPACT",
+            "search_queries": [
+                "EIC Pathfinder long-term impact narrative beyond project scope",
+                "Transformative technology effects economy environment society",
+                "Proof of principle validation to commercialization pathway",
+                "Assessing potential negative environmental outcomes technology scaling",
+                "Barriers to technology adoption and mitigation strategies",
+                "Regulatory and market requirements for breakthrough technologies"
+            ],
+            "title": "Long-term Impact",
+            "topics": [
+                "Transformative Effects on Economy",
+                "Environmental and Sustainability Impact",
+                "Societal Benefits and Global Challenges",
+                "Proof of Principle to Impact Pathway",
+                "Risk Assessment and Negative Outcomes",
+                "Barriers and Mitigation Strategies"
+            ]
+        },
+        {
+            "definition": "The envisioned technology's potential for generating disruptive innovations and creating new markets, including exploitation and intellectual property management strategies.",
+            "depends_on": [
+                "IMP_LONGTERM"
+            ],
+            "evidence": "",
+            "generation_instructions": "Articulate the disruptive innovation potential: what existing markets or approaches become obsolete, what entirely new markets emerge. Describe concrete exploitation measures to translate research results into innovations—be specific about commercialization pathways, not generic strategies. Address the requirement that beneficiaries must use best efforts to exploit results, prioritizing EU/Associated countries. If exploitation is primarily in non-associated countries, justify why it's still in EU interest. Detail IP management strategy: patents, design rights, copyright, trade secrets. Explain how IP protection supports exploitation and commercialization. Address regulation, certification, and standardization requirements. Explain measures for involving and empowering key actors: early-career researchers, high-tech SMEs, start-ups who can lead translation to innovation. If selected for funding, indicate you understand consortium agreement and results ownership requirements.",
+            "guidelines": [
+                "Describe envisioned technology's potential for generating disruptive innovations and creating new markets",
+                "Describe exploitation measures to facilitate future translation of research results into innovations",
+                "Provide plausible path to commercialize the innovations",
+                "Prioritize exploitation in Member States or Associated countries, justify if primarily in non-associated countries",
+                "Specify IP management strategy including patents, design rights, copyright, trade secrets",
+                "Explain how IP protection supports exploitation",
+                "Describe measures related to regulation, certification, and standardisation",
+                "Explain measures for involving and empowering key actors (early-career researchers, SMEs, start-ups)",
+                "Acknowledge consortium agreement and results ownership requirements if selected"
+            ],
+            "id": "IMP_INNOVATION",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Disruptive innovation",
+                "New markets creation",
+                "Exploitation strategy",
+                "Commercialization pathway",
+                "Intellectual property",
+                "IP management",
+                "Patents and protection",
+                "Regulation certification standardisation",
+                "Technology transfer",
+                "SME involvement",
+                "Start-up empowerment",
+                "Results ownership"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Innovation Potential section (~2 pages)",
+                "type": "words",
+                "value": 600
+            },
+            "needs_applicant_writing": true,
+            "order": 7,
+            "parent_id": "IMPACT",
+            "search_queries": [
+                "EIC Pathfinder exploitation measures innovation translation",
+                "Commercialization pathway breakthrough technologies EU",
+                "Intellectual property management strategy research projects",
+                "Patent protection strategy for frontier research results",
+                "Regulation certification standardisation emerging technologies",
+                "Involving SMEs and start-ups in research exploitation Horizon Europe",
+                "Consortium agreement IP management Horizon Europe projects"
+            ],
+            "title": "Innovation Potential",
+            "topics": [
+                "Disruptive Innovation Potential",
+                "Market Creation and Opportunities",
+                "Exploitation and Commercialization Strategy",
+                "Intellectual Property Management",
+                "Regulatory and Certification Requirements",
+                "Empowering Key Innovation Actors"
+            ]
+        },
+        {
+            "definition": "The planned dissemination and communication measures to raise awareness about project outcomes to various target groups throughout the project lifecycle.",
+            "depends_on": [],
+            "evidence": "",
+            "generation_instructions": "Describe concrete dissemination and communication plan tailored to specific target groups: scientific community (journals, conferences), end users (workshops, demonstrations), financial actors (pitch events, investor meetings), public at large (media, social media, public events). For scientific community, commit to top-level Open Access publications. Acknowledge that detailed 'plan for dissemination and exploitation including communication activities' is mandatory deliverable within 6 months after signature. Communication activities must run throughout full project lifespan with clear objectives. State main messages for each target group and specific tools/channels to reach them. All measures proportionate to project scale, with concrete actions during and after project end (e.g., standardization activities). Give consideration to project follow-up after completion. Justify why each measure is best suited for its target group. Describe possible feedback to policy measures that will contribute to designing, monitoring, or shaping policy initiatives.",
+            "guidelines": [
+                "Describe dissemination and communication measures with target groups identified",
+                "Target groups may include scientific community, end users, financial actors, public at large",
+                "Project results should include top-level scientific publications in Open Access",
+                "Acknowledge detailed plan required as mandatory deliverable within 6 months after signature",
+                "Communication activities must be strategic, start at outset, continue through project lifetime",
+                "State main messages and tools/channels for each target group",
+                "All measures proportionate to scale, with concrete actions during and after project",
+                "Give consideration to project follow-up after completion",
+                "Justify why each measure is best suited to reach target group",
+                "Describe possible feedback to policy measures generated by the project"
+            ],
+            "id": "IMP_COMMUNICATION",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Dissemination strategy",
+                "Communication plan",
+                "Target groups",
+                "Open Access publications",
+                "Scientific community engagement",
+                "Public outreach",
+                "Stakeholder communication",
+                "Policy feedback",
+                "Media engagement",
+                "Conference presentations",
+                "Project visibility"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Communication and Dissemination section (~1.5 pages)",
+                "type": "words",
+                "value": 400
+            },
+            "needs_applicant_writing": true,
+            "order": 8,
+            "parent_id": "IMPACT",
+            "search_queries": [
+                "EIC Pathfinder dissemination and communication strategy",
+                "Target group specific communication measures research projects",
+                "Open Access publication requirements Horizon Europe",
+                "Communication plan for frontier research projects",
+                "Policy feedback from research project outcomes",
+                "Engaging financial actors and investors in research communication"
+            ],
+            "title": "Communication and Dissemination",
+            "topics": [
+                "Target Group Identification and Strategy",
+                "Scientific Dissemination and Open Access",
+                "Public Communication and Outreach",
+                "Stakeholder and Financial Actor Engagement",
+                "Policy Impact and Feedback",
+                "Project Lifetime Communication Plan"
+            ]
+        },
+        {
+            "evidence": "",
+            "id": "IMPLEMENTATION",
+            "needs_applicant_writing": false,
+            "order": 9,
+            "parent_id": null,
+            "title": "Quality and Efficiency of Implementation"
+        },
+        {
+            "definition": "The overall work plan structure with detailed work packages, tasks, resource allocation, and implementation strategy.",
+            "depends_on": [
+                "EXC_OBJECTIVES"
+            ],
+            "evidence": "",
+            "generation_instructions": "Present brief overview of work plan structure showing logical organization and project stages. Provide detailed description of each work package (WP). Number of WPs should be proportionate to project scale and complexity—each WP must be substantial. Structure each WP by breaking into specific tasks (or organize by type of work/theme if tasks not appropriate). For each task, describe all activities AND quantify them (number of protocols, tests, measurements, study subjects, conferences, publications). Provide sufficient detail to clarify WHO does the work (personnel qualification, person-months) and WHY it's needed, along with equipment, consumables, meetings justification. Include distinct WP for 'project management'. Give visibility to 'data management', 'dissemination and exploitation', and 'communication activities'—either as distinct tasks or WPs. Provide enough quantified information for progress monitoring by consortium and Commission. Use tables for work package summaries and Gantt charts for timeline visualization.",
+            "guidelines": [
+                "Provide brief presentation of overall work plan structure",
+                "Give detailed work description with list of work packages",
+                "Each work package should be substantial and number proportionate to project scale",
+                "Structure each work package by breaking down into tasks",
+                "Describe all activities and quantify them (protocols, tests, measurements, etc.)",
+                "Clarify who will do work (qualification, person-months) and why it's needed",
+                "Justify requested resources (equipment, consumables, meetings)",
+                "Include distinct work package on 'project management'",
+                "Give visibility to 'data management', 'dissemination and exploitation', 'communication activities'",
+                "Provide quantified information for progress monitoring"
+            ],
+            "id": "IMPL_WORKPLAN",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": true,
+            "keywords": [
+                "Work packages",
+                "Tasks and activities",
+                "Resource allocation",
+                "Person-months",
+                "Project management WP",
+                "Data management tasks",
+                "Gantt chart",
+                "Milestones deliverables",
+                "Budget justification",
+                "Personnel qualification",
+                "Equipment needs",
+                "Progress monitoring"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Work Plan section (~2.5 pages)",
+                "type": "words",
+                "value": 700
+            },
+            "needs_applicant_writing": true,
+            "order": 10,
+            "parent_id": "IMPLEMENTATION",
+            "search_queries": [
+                "EIC Pathfinder work plan and work packages structure",
+                "Detailed work package description requirements Horizon Europe",
+                "Quantifying activities and resources in research proposals",
+                "Project management work package best practices",
+                "Task breakdown and resource allocation justification",
+                "Gantt chart and timeline visualization for EU proposals"
+            ],
+            "title": "Work Plan and Allocation of Resources",
+            "topics": [
+                "Work Plan Structure and Logic",
+                "Work Package Definitions",
+                "Task Breakdown and Quantification",
+                "Resource Justification and Allocation",
+                "Project Management Approach",
+                "Timeline and Dependencies",
+                "Monitoring and Quality Assurance"
+            ]
+        },
+        {
+            "definition": "The expertise of consortium members and their complementary contributions to achieving project objectives.",
+            "depends_on": [
+                "IMPL_WORKPLAN"
+            ],
+            "evidence": "",
+            "generation_instructions": "Describe each consortium member's specific expertise and demonstrate how collectively they provide ALL necessary knowledge. Show clear alignment between member expertise and project tasks/objectives. Explain role of each partner and their unique, complementary contribution—avoid overlap or redundancy. If appropriate, highlight expertise in social sciences and humanities, open science practices, and gender aspects of R&I. Demonstrate partners have access to critical infrastructure, facilities, and equipment needed for project activities. Justify consortium composition: why this specific combination of partners is necessary and optimal. Address any gaps in expertise and how they will be managed (subcontracting, advisory board, etc.). Show evidence of partners' track record in relevant areas.",
+            "guidelines": [
+                "Describe expertise of consortium members",
+                "Explain how consortium provides all necessary knowledge",
+                "Show how consortium supports proposed interdisciplinary approach",
+                "Demonstrate expertise matches project objectives and tasks",
+                "Explain role of each consortium member and complementary contribution",
+                "If appropriate, show expertise in social sciences, humanities, open science, gender aspects",
+                "Describe partners' access to critical infrastructure needed for project activities",
+                "Justify consortium composition and demonstrate complementarity"
+            ],
+            "id": "IMPL_CONSORTIUM",
+            "is_clinical_trial": false,
+            "is_detailed_research_plan": false,
+            "keywords": [
+                "Consortium expertise",
+                "Complementary contributions",
+                "Partner roles",
+                "Interdisciplinary team",
+                "Critical infrastructure",
+                "Track record",
+                "Social sciences humanities",
+                "Open science expertise",
+                "Gender expertise",
+                "Research facilities"
+            ],
+            "length_constraint": {
+                "source": "EIC Pathfinder - Consortium Quality section (~1.5 pages)",
+                "type": "words",
+                "value": 400
+            },
+            "needs_applicant_writing": true,
+            "order": 11,
+            "parent_id": "IMPLEMENTATION",
+            "search_queries": [
+                "EIC Pathfinder consortium quality description",
+                "Demonstrating complementary expertise research consortia",
+                "Partner roles and contributions justification EU proposals",
+                "Critical infrastructure access for breakthrough research",
+                "Interdisciplinary team composition for frontier research"
+            ],
+            "title": "Quality of the Consortium",
+            "topics": [
+                "Partner Expertise and Qualifications",
+                "Complementarity and Role Distribution",
+                "Interdisciplinary Team Composition",
+                "Infrastructure and Facilities Access",
+                "Track Record and Past Performance"
+            ]
+        }
+    ],
+    "grant_type": "RESEARCH",
+    "granting_institution_full_name": "European Innovation Council",
+    "guideline_hash": "5da3fbc3d1f18241dd3aa9f54ee9f9fc1d2693a2676d87b3472a6eae6a521c96",
+    "guideline_source": "EIC Pathfinder Challenge - DeepRAP",
+    "guideline_version": "2024",
+    "id": "e6d92290-17f4-41a8-b61d-d5b6eb363b61",
+    "name": "EIC Pathfinder Challenge - DeepRAP"
 }
