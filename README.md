@@ -161,10 +161,9 @@ task dev
 task test
 
 # Run all linters and formatters
-task lint               # Equivalent to task lint:all
+task lint               # Run all linters on all files
 
 # Run linters by scope
-task lint:all           # Run all linters on all files
 task lint:frontend      # Run Biome, ESLint, and TypeScript for frontend
 task lint:python        # Run Ruff and MyPy for Python
 
@@ -181,7 +180,7 @@ task knip               # Check for unused dependencies and dead code in fronten
 task knip:frontend      # Check frontend package only
 task knip:editor        # Check editor package only
 
-# Terraform linters (specialized - not included in lint:all)
+# Terraform linters (specialized - not included in task lint)
 task lint:terraform     # Run all Terraform linters
 task lint:terraform:fmt # Format Terraform code
 task lint:terraform:validate # Validate Terraform syntax

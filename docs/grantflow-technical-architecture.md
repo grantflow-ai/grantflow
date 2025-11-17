@@ -177,7 +177,7 @@ Parallel processing with shared context significantly improves throughput for mu
 
 **CI/CD Pipeline**
 - GitHub Actions: development → staging, main → production
-- Validation: `task lint:all` + `task test` on every push
+- Validation: `task lint` + `task test` on every push
 - Docker builds pushed to Google Artifact Registry
 - Terraform apply deploys all services within 5-minute window via `sync-services.yaml`
 

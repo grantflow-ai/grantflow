@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS base
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
