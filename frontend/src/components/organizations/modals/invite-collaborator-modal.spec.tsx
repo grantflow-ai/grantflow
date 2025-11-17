@@ -667,4 +667,85 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		expect(mockOnInvite).not.toHaveBeenCalled();
 	});
+
+	it("shows owner option in dropdown when current user is OWNER", async () => {
+		const user = userEvent.setup();
+		render(
+			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+
+		await user.click(dropdown);
+
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
+		});
+
+		expect(modalQueries.getByTestId("owner-option")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+	});
+
+	it("does not show owner option in dropdown when current user is ADMIN", async () => {
+		const user = userEvent.setup();
+		render(
+			<InviteCollaboratorModal
+				currentUserRole={UserRole.ADMIN}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+
+		await user.click(dropdown);
+
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
+		});
+
+		expect(modalQueries.queryByTestId("owner-option")).not.toBeInTheDocument();
+		expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+	});
+
+	it("does not show owner option in dropdown when current user is COLLABORATOR", async () => {
+		const user = userEvent.setup();
+		render(
+			<InviteCollaboratorModal
+				currentUserRole={UserRole.COLLABORATOR}
+				isOpen={true}
+				onClose={mockOnClose}
+				onInvite={mockOnInvite}
+				projects={[]}
+			/>,
+		);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+
+		await user.click(dropdown);
+
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
+		});
+
+		expect(modalQueries.queryByTestId("owner-option")).not.toBeInTheDocument();
+		expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+	});
 });
