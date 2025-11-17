@@ -11,7 +11,8 @@ export const routes = {
 
 	admin: {
 		grantingInstitutions: {
-			edit: () => "/admin/granting-institutions/edit",
+			detail: (id: string) => `/admin/granting-institutions/${id}`,
+			edit: (id: string) => `/admin/granting-institutions/${id}/edit`,
 			list: () => "/admin/granting-institutions",
 			new: () => "/admin/granting-institutions/new",
 			predefinedTemplates: {

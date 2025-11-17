@@ -23,7 +23,7 @@ export function GrantingInstitutionList({ institutions, onDelete, onView, select
 	}
 
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="granting-institution-list">
+		<div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pr-2 scroll-box h-[750px]" data-testid="granting-institution-list">
 			{institutions.map((institution) => (
 				<GrantingInstitutionCard
 					institution={institution}

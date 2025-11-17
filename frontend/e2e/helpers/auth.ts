@@ -39,11 +39,6 @@ const backendUrl = new URL(backendOrigin);
 const backendHostname = backendUrl.hostname;
 const backendPort = backendUrl.port || (backendUrl.protocol === "https:" ? "443" : "80");
 
-function isBackendRequest(url: URL, pathname: string): boolean {
-	const requestPort = url.port || (url.protocol === "https:" ? "443" : "80");
-	return url.hostname === backendHostname && requestPort === backendPort && url.pathname === pathname;
-}
-
 export async function mockBackendLogin(page: Page): Promise<void> {
 	const mockJwt = generateMockJWT();
 
@@ -330,4 +325,9 @@ function generateMockJWT(): string {
 		}),
 	);
 	return `${header}.${payload}.mock-signature`;
+}
+
+function isBackendRequest(url: URL, pathname: string): boolean {
+	const requestPort = url.port || (url.protocol === "https:" ? "443" : "80");
+	return url.hostname === backendHostname && requestPort === backendPort && url.pathname === pathname;
 }

@@ -10,12 +10,14 @@ import { GrantingInstitutionForm } from "./granting-institution-form";
 const mockPush = vi.fn();
 const mockBack = vi.fn();
 const mockRefresh = vi.fn();
+const mockReplace = vi.fn();
 
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({
 		back: mockBack,
 		push: mockPush,
 		refresh: mockRefresh,
+		replace: mockReplace,
 	}),
 }));
 
@@ -83,8 +85,7 @@ describe("GrantingInstitutionForm", () => {
 					full_name: "National Institutes of Health",
 				});
 				expect(toast.success).toHaveBeenCalledWith("Granting institution created successfully");
-				expect(mockPush).toHaveBeenCalledWith("/admin/granting-institutions");
-				expect(mockRefresh).toHaveBeenCalled();
+				expect(mockReplace).toHaveBeenCalledWith("/admin/granting-institutions");
 			});
 		});
 
@@ -176,8 +177,7 @@ describe("GrantingInstitutionForm", () => {
 					full_name: "Updated Name",
 				});
 				expect(toast.success).toHaveBeenCalledWith("Granting institution updated successfully");
-				expect(mockPush).toHaveBeenCalledWith("/admin/granting-institutions");
-				expect(mockRefresh).toHaveBeenCalled();
+				expect(mockReplace).toHaveBeenCalledWith("/admin/granting-institutions");
 			});
 		});
 

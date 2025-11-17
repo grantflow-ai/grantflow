@@ -38,11 +38,11 @@ describe("AdminBreadcrumb", () => {
 	});
 
 	describe("navigation links", () => {
-		it("should link admin to admin root", () => {
+		it("should display admin text", () => {
 			render(<AdminBreadcrumb institutionName="National Institutes of Health" tabLabel="Sources" />);
 
-			const adminLink = screen.getByTestId("breadcrumb-admin");
-			expect(adminLink).toHaveAttribute("href", "/admin");
+			const adminText = screen.getByTestId("breadcrumb-admin");
+			expect(adminText).toHaveTextContent("Admin");
 		});
 
 		it("should link granting institutions to list page", () => {

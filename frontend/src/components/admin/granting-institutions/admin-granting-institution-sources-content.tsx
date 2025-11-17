@@ -118,7 +118,7 @@ export function AdminGrantingInstitutionSourcesContent() {
 	const hasBothFilesAndUrls = (files.length > 0 || pendingUploadsArray.length > 0) && urls.length > 0;
 
 	return (
-		<div className="flex h-full" data-testid="admin-sources-content">
+		<div className="flex h-full " data-testid="admin-sources-content">
 			<WizardLeftPane testId="admin-sources-left-pane">
 				<div>
 					<h2 className="font-heading text-2xl font-medium text-app-black leading-loose">Source Materials</h2>
@@ -236,6 +236,7 @@ export function AdminGrantingInstitutionSourcesContent() {
 					<EmptyStatePreview />
 				</WizardRightPane>
 			)}
+
 		</div>
 	);
 }

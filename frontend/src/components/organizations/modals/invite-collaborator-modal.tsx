@@ -7,6 +7,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { API } from "@/types/api-types";
+import { UserRole } from "@/types/user";
 
 export interface InviteOptions {
 	email: string;
@@ -14,9 +15,10 @@ export interface InviteOptions {
 	projectIds?: string[];
 	role: CollaboratorPermission;
 }
-type CollaboratorPermission = Exclude<API.CreateOrganizationInvitation.RequestBody["role"], "OWNER">;
+type CollaboratorPermission = API.CreateOrganizationInvitation.RequestBody["role"];
 
 interface InviteCollaboratorModalProps {
+	currentUserRole?: string;
 	isOpen: boolean;
 	onClose: () => void;
 	onInvite: (options: InviteOptions) => Promise<void>;
@@ -31,6 +33,7 @@ interface ResearchProject {
 }
 
 export function InviteCollaboratorModal({
+	currentUserRole,
 	isOpen,
 	onClose,
 	onInvite,
@@ -234,6 +237,15 @@ export function InviteCollaboratorModal({
 									className="border border-app-gray-200 bg-white"
 									data-testid="permission-dropdown-menu"
 								>
+									{currentUserRole === UserRole.OWNER && (
+										<SelectItem
+											className="px-3 py-2 cursor-pointer text-app-black text-[14px]"
+											data-testid="owner-option"
+											value="OWNER"
+										>
+											Owner
+										</SelectItem>
+									)}
 									<SelectItem
 										className="px-3 py-2 cursor-pointer  text-app-black text-[14px]"
 										data-testid="collaborator-option"

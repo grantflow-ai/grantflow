@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +17,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
+import StreamlineAttribution from "@/components/shared/streamline-attribution";
 
 const handleCreationError = (error: unknown) => {
 	log.error("create-application", error);
@@ -127,15 +127,7 @@ export function NewApplicationClient() {
 								/>
 							))}
 						</div>
-						<p className="font-normal font-cabin text-[8px] text-black">
-							Free illustrations from{" "}
-							<Link
-								className="text-app-gray-600 underline cursor-pointer"
-								href="https://www.streamlinehq.com"
-							>
-								Streamline
-							</Link>{" "}
-						</p>
+						<StreamlineAttribution/>
 					</div>
 				</main>
 			</div>

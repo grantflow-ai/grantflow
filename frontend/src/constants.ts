@@ -6,7 +6,7 @@ export const COOKIE_CONSENT = "grantflow_cookie_consent";
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 /* eslint-disable perfectionist/sort-objects */
-// biome-ignore assist/source/useSortedKeys: Generate step must fall last in the list
+/* biome-ignore assist/source/useSortedKeys: Generate step must fall last in the list */
 export const WizardStep = {
 	APPLICATION_DETAILS: "Application Details",
 	APPLICATION_STRUCTURE: "Application Structure",

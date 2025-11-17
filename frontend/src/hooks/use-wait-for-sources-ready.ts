@@ -7,7 +7,7 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 
 const POLL_INTERVAL_MS = 1000;
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 30_000;
 
 interface UseWaitForSourcesReadyOptions {
 	/**
@@ -51,6 +51,44 @@ export function useWaitForSourcesReady({ applicationId }: UseWaitForSourcesReady
 	const [isWaiting, setIsWaiting] = useState(false);
 	const abortControllerRef = useRef<AbortController | null>(null);
 
+	const checkIfAborted = useCallback((signal: AbortSignal) => {
+		if (signal.aborted) {
+			throw new Error("Wait for sources aborted");
+		}
+	}, []);
+
+	const getAllSources = useCallback((updatedApplication: Awaited<ReturnType<typeof getApplication>>) => {
+		const allSources: API.RetrieveApplication.Http200.ResponseBody["rag_sources"] = [
+			...updatedApplication.rag_sources,
+			...(updatedApplication.grant_template?.rag_sources ?? []),
+		];
+		return allSources;
+	}, []);
+
+	const checkSourcesReady = useCallback(
+		(relevantSources: API.RetrieveApplication.Http200.ResponseBody["rag_sources"]) => {
+			const failedSources = relevantSources.filter(
+				(source) => source.status === SourceIndexingStatus.FAILED.toString(),
+			);
+
+			if (failedSources.length > 0) {
+				const failedIds = failedSources.map((s) => s.sourceId);
+				log.error("[useWaitForSourcesReady] Sources failed processing", {
+					applicationId,
+					failedSourceIds: failedIds,
+				});
+				throw new Error(`Source processing failed for: ${failedIds.join(", ")}`);
+			}
+
+			const pendingSources = relevantSources.filter(
+				(source) => source.status === SourceIndexingStatus.PENDING_UPLOAD.toString(),
+			);
+
+			return { allReady: pendingSources.length === 0, pendingCount: pendingSources.length };
+		},
+		[applicationId],
+	);
+
 	const waitForSources = useCallback(
 		async (sourceIds: string[]): Promise<void> => {
 			if (sourceIds.length === 0) {
@@ -79,24 +117,15 @@ export function useWaitForSourcesReady({ applicationId }: UseWaitForSourcesReady
 
 			try {
 				while (Date.now() - startTime < TIMEOUT_MS) {
-					if (abortControllerRef.current.signal.aborted) {
-						throw new Error("Wait for sources aborted");
-					}
+					checkIfAborted(abortControllerRef.current.signal);
 
-					// Fetch latest application data
 					const updatedApplication = await getApplication(
 						selectedOrganizationId,
 						application.project_id,
 						applicationId,
 					);
 
-					// Get all RAG sources (template + application sources)
-					const allSources: API.RetrieveApplication.Http200.ResponseBody["rag_sources"] = [
-						...updatedApplication.rag_sources,
-						...(updatedApplication.grant_template?.rag_sources ?? []),
-					];
-
-					// Find sources we're waiting for
+					const allSources = getAllSources(updatedApplication);
 					const relevantSources = allSources.filter((source) => sourceIdsSet.has(source.sourceId));
 
 					if (relevantSources.length === 0) {
@@ -108,26 +137,9 @@ export function useWaitForSourcesReady({ applicationId }: UseWaitForSourcesReady
 						continue;
 					}
 
-					// Check if any sources have failed
-					const failedSources = relevantSources.filter(
-						(source) => source.status === SourceIndexingStatus.FAILED,
-					);
+					const { allReady, pendingCount } = checkSourcesReady(relevantSources);
 
-					if (failedSources.length > 0) {
-						const failedIds = failedSources.map((s) => s.sourceId);
-						log.error("[useWaitForSourcesReady] Sources failed processing", {
-							applicationId,
-							failedSourceIds: failedIds,
-						});
-						throw new Error(`Source processing failed for: ${failedIds.join(", ")}`);
-					}
-
-					// Check if all sources are no longer PENDING_UPLOAD
-					const pendingSources = relevantSources.filter(
-						(source) => source.status === SourceIndexingStatus.PENDING_UPLOAD,
-					);
-
-					if (pendingSources.length === 0) {
+					if (allReady) {
 						log.info("[useWaitForSourcesReady] All sources ready", {
 							applicationId,
 							sourceCount: relevantSources.length,
@@ -138,15 +150,13 @@ export function useWaitForSourcesReady({ applicationId }: UseWaitForSourcesReady
 
 					log.info("[useWaitForSourcesReady] Still waiting for sources", {
 						applicationId,
-						pendingCount: pendingSources.length,
+						pendingCount,
 						totalCount: relevantSources.length,
 					});
 
-					// Wait before next poll
 					await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 				}
 
-				// Timeout reached
 				log.error("[useWaitForSourcesReady] Timeout waiting for sources", {
 					applicationId,
 					sourceIds,
@@ -158,7 +168,7 @@ export function useWaitForSourcesReady({ applicationId }: UseWaitForSourcesReady
 				abortControllerRef.current = null;
 			}
 		},
-		[applicationId],
+		[applicationId, checkIfAborted, getAllSources, checkSourcesReady],
 	);
 
 	return {
