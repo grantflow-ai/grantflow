@@ -28,6 +28,14 @@ const LENGTH_TYPES = [
 	{ label: "Characters", value: "characters" },
 ] as const;
 
+const getLengthLabel = (lengthConstraint: SectionLengthConstraint): string => {
+	const { type, value } = lengthConstraint;
+	if (type === "words") {
+		return `${value.toLocaleString()} words`;
+	}
+	return `${value.toLocaleString()} characters`;
+};
+
 type EditableGrantSection = {
 	generation_instructions: string;
 	is_detailed_research_plan: boolean;
@@ -178,14 +186,6 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 			return section;
 		});
 		updateSections(next);
-	};
-
-	const getLengthLabel = (lengthConstraint: SectionLengthConstraint): string => {
-		const { type, value } = lengthConstraint;
-		if (type === "words") {
-			return `${value.toLocaleString()} words`;
-		}
-		return `${value.toLocaleString()} characters`;
 	};
 
 	const renderSectionHeader = (
