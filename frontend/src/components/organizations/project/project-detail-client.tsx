@@ -29,6 +29,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import type { DownloadFormat } from "@/types/download";
+import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { TrackingEvents, trackEvent } from "@/utils/tracking";
@@ -400,6 +401,7 @@ export function ProjectDetailClient() {
 				ownerEmail={ownerEmail}
 				projectId={project.id}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+				currentUserRole={UserRole.OWNER}
 			/>
 
 			<NewApplicationModal
