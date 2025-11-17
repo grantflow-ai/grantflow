@@ -21,6 +21,8 @@ const nextConfig = {
 		],
 	},
 	output: "standalone",
+	// Exclude pino from server bundling to prevent thread-stream test file issues
+	serverExternalPackages: ["pino", "pino-pretty"],
 	transpilePackages: ["@grantflow/editor"],
 } satisfies NextConfig;
 
