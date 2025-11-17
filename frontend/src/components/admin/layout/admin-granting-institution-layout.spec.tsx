@@ -6,11 +6,13 @@ afterEach(() => {
 	cleanup();
 });
 
+const TEST_INSTITUTION_ID = "test-institution-123";
+
 describe("AdminGrantingInstitutionLayout", () => {
 	describe("rendering", () => {
 		it("should render children within layout", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div data-testid="child-component">Test Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -22,7 +24,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should render all tabs", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -35,7 +37,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should render tab labels", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -47,7 +49,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should render content container", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div data-testid="content">Main Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -60,7 +62,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 	describe("active tab highlighting", () => {
 		it("should highlight sources tab when active", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -71,7 +73,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should highlight predefined-templates tab when active", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="predefined-templates">
+				<AdminGrantingInstitutionLayout activeTab="predefined-templates" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -82,7 +84,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should highlight edit tab when active", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="edit">
+				<AdminGrantingInstitutionLayout activeTab="edit" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -93,7 +95,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should apply light font to inactive tabs", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -109,7 +111,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 	describe("navigation links", () => {
 		it("should render correct href for sources tab", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -120,7 +122,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should render correct href for predefined-templates tab", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="predefined-templates">
+				<AdminGrantingInstitutionLayout activeTab="predefined-templates" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
@@ -131,20 +133,20 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should render correct href for edit tab", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="edit">
+				<AdminGrantingInstitutionLayout activeTab="edit" institutionId={TEST_INSTITUTION_ID}>
 					<div>Content</div>
 				</AdminGrantingInstitutionLayout>,
 			);
 
 			const editLink = screen.getByTestId("admin-granting-institution-tab-edit");
-			expect(editLink).toHaveAttribute("href", "/admin/granting-institutions/edit");
+			expect(editLink).toHaveAttribute("href", `/admin/granting-institutions/${TEST_INSTITUTION_ID}/edit`);
 		});
 	});
 
 	describe("children handling", () => {
 		it("should render multiple children", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div data-testid="first-child">First</div>
 					<div data-testid="second-child">Second</div>
 					<span data-testid="third-child">Third</span>
@@ -158,7 +160,7 @@ describe("AdminGrantingInstitutionLayout", () => {
 
 		it("should handle nested components", () => {
 			render(
-				<AdminGrantingInstitutionLayout activeTab="sources">
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
 					<div data-testid="parent">
 						<div data-testid="nested-child">Nested Content</div>
 					</div>
@@ -171,7 +173,11 @@ describe("AdminGrantingInstitutionLayout", () => {
 		});
 
 		it("should handle null children", () => {
-			render(<AdminGrantingInstitutionLayout activeTab="sources">{null}</AdminGrantingInstitutionLayout>);
+			render(
+				<AdminGrantingInstitutionLayout activeTab="sources" institutionId={TEST_INSTITUTION_ID}>
+					{null}
+				</AdminGrantingInstitutionLayout>,
+			);
 
 			expect(screen.getByTestId("admin-granting-institution-layout")).toBeInTheDocument();
 			expect(screen.getByTestId("admin-granting-institution-tabs")).toBeInTheDocument();

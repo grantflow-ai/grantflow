@@ -54,9 +54,11 @@ export function AdminGrantingInstitutionClient({ activeTab, children }: AdminGra
 				className="flex flex-col flex-1 min-h-0 mb-6 mx-4 sm:mx-6 md:mx-8 lg:mx-10 pt-10 rounded-lg border border-app-gray-100 bg-white"
 				data-testid="admin-granting-institution-main-content"
 			>
-				<AdminGrantingInstitutionLayout activeTab={activeTab}>{children}</AdminGrantingInstitutionLayout>
+				<AdminGrantingInstitutionLayout activeTab={activeTab} institutionId={grantingInstitution.id}>
+					{children}
+				</AdminGrantingInstitutionLayout>
 			</div>
-			<AdminFooter/>
+			<AdminFooter />
 		</main>
 	);
 }
