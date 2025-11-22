@@ -1,7 +1,9 @@
 {
 	"compilerOptions": {
 		"baseUrl": ".",
+		"exactOptionalPropertyTypes": true,
 		"jsx": "react-jsx",
+		"noUncheckedIndexedAccess": true,
 		"outDir": "./dist",
 		"paths": {
 			"::testing/*": ["testing/*"],

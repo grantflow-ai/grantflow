@@ -2,10 +2,12 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"esModuleInterop": true,
+		"exactOptionalPropertyTypes": true,
 		"forceConsistentCasingInFileNames": true,
 		"incremental": false,
 		"module": "ESNext",
 		"moduleResolution": "node",
+		"noUncheckedIndexedAccess": true,
 		"outDir": "dist",
 		"paths": {
 			"@/*": ["src/*"]

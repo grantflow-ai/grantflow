@@ -1,7 +1,9 @@
 {
 	"compilerOptions": {
 		"baseUrl": ".",
+		"exactOptionalPropertyTypes": true,
 		"jsx": "preserve",
+		"noUncheckedIndexedAccess": true,
 		"paths": {
 			"::storybook/*": [".storybook/*"],
 			"::testing/*": ["testing/*"],

@@ -43,7 +43,7 @@
 		"react": "19.2.0",
 		"react-cookie": "^8.0.1",
 		"react-dom": "19.2.0",
-		"react-email": "^5.0.4",
+		"react-email": "^5.0.5",
 		"react-hook-form": "^7.66.1",
 		"react-use-websocket": "^4.13.0",
 		"resend": "^6.5.2",
@@ -58,7 +58,7 @@
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.56.1",
-		"@react-email/preview-server": "5.0.4",
+		"@react-email/preview-server": "5.0.5",
 		"eslint-config-next": "^16.0.3",
 		"playwright": "^1.56.1"
 	},
