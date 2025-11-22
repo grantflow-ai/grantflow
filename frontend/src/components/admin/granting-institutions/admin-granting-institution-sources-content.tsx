@@ -236,7 +236,6 @@ export function AdminGrantingInstitutionSourcesContent() {
 					<EmptyStatePreview />
 				</WizardRightPane>
 			)}
-
 		</div>
 	);
 }
