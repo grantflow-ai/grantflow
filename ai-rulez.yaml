@@ -1,3 +1,5 @@
+$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v2.schema.json
+
 metadata:
   name: grantflow
   version: 1.0.0
@@ -7,500 +9,588 @@ outputs:
   - path: .cursor/rules/
     type: rule
     naming_scheme: "{name}.mdc"
-  - path: AGENTS.md
+  - path: CLAUDE.md
   - path: .windsurf/
     type: rule
     naming_scheme: "{name}.md"
-  - path: CLAUDE.md
 
 presets:
-  - popular
+  - claude
+  - codex
+  - gemini
 
-rules:
-  - name: Multi-tenant Security
-    priority: critical
-    content: All endpoints must include organization_id in URL path. Use @allowed_roles decorator from services.backend.src.auth. Never check auth manually. Firebase JWT claims must include organization_id and role. Use UserRoleEnum (OWNER, ADMIN, COLLABORATOR) for role-based access.
-
-  - name: API Security
-    priority: critical
-    content: Backend endpoints must use @post/@get decorators with allowed_roles parameter. Firebase Auth JWT claims provide organization_id/role. Never check auth manually - middleware handles it. Use withAuthRedirect() wrapper for all frontend API calls.
-
-  - name: Soft Delete Pattern
-    priority: critical
-    content: All database queries must use select_active() helper from packages.db.src.query_helpers for soft-delete filtering. Never query deleted_at IS NULL directly. Tables with deleted_at fields require this pattern to prevent exposing deleted data.
-
-  - name: SQLAlchemy Async Session Management
-    priority: critical
-    content: "Always use async session context managers with explicit transaction boundaries. Pattern: `async with session_maker() as session, session.begin():`. Never reuse sessions across requests. Use select_active() from packages.db.src.query_helpers for soft-delete filtering."
-
-  - name: Task Commands
-    priority: critical
-    content: "Use Taskfile commands exclusively: task lint before commits, task test for testing, task db:migrate for migrations. Never run raw commands. Check available tasks with task --list. CI validates via these commands."
-
-  - name: Python Testing Standards
-    priority: critical
-    content: Test files must end with _test.py. Use TypedDict constructors for creating test data. All tests must be functional with proper type annotations. Avoid redundant/duplicate tests. Mock async functions with new_callable=AsyncMock. Always add check_if_cancelled and handle_cancellation mocks to JobManager. Use real PostgreSQL via async_sessionmaker fixture.
-
-  - name: Test Database Isolation
-    priority: critical
-    content: Use real PostgreSQL for all tests via testing.db_test_plugin. Mark integration tests with @pytest.mark.integration, E2E with @pytest.mark.e2e_full. Always set PYTHONPATH=. when running pytest. Use factories from testing.factories for test data generation.
-
-  - name: Gemini JSON Schema Design
-    priority: critical
-    content: "All JSON schemas for Gemini structured output must follow official best practices: (1) Short property names - single words preferred (name, type, source, quote) not verbose (section_name, measurement_type, cfp_source_reference, quote_from_source). (2) Minimize nesting - max 2 levels deep, flatten arrays where possible. (3) Reduce required fields - 2-6 required fields per object, use NotRequired for rest. (4) Object arrays over tuples - always use named properties [{source, target, desc}] not [[s,t,d]]. (5) Concise descriptions - 1-2 sentences max in schema, move details to prompts. (6) Strategic constraints - use minItems/maxItems (3-10 typical), avoid over-constraining. (7) Property ordering - match example order in prompts. Use transformation layer to convert optimized pipeline schemas to DB format. See services/rag/README.md § 'JSON Schema Design Principles'."
-
-  - name: Type Safety and Serialization
-    priority: high
-    content: "Python: Use msgspec TypedDict with NotRequired[], never Optional. Use packages.shared_utils.src.serialization serialize/deserialize functions, never stdlib json. TypeScript: Ban 'any' type, use strict type checking. All API responses must use msgspec models."
-
-  - name: Firebase Auth Security
-    priority: high
-    content: "Never check auth manually in endpoints - middleware handles all auth via JWT claims (organization_id/role). Use UserRoleEnum from packages.db for role checks. Pattern: `@post('/path', allowed_roles=[UserRoleEnum.COLLABORATOR])`. Always wrap frontend API calls with withAuthRedirect()."
-
-  - name: Test Factories
-    priority: high
-    content: "Use testing/factories.py for Python tests and testing/factories.ts for TypeScript tests. Real PostgreSQL instances required for backend tests. Run PYTHONPATH=. uv run pytest for Python, pnpm test for frontend. E2E tests use markers: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min)."
-
-  - name: TypeScript Type Safety
-    priority: high
-    content: Never use 'any' type. Always use nullish coalescing (??) over logical OR (||). Extract magic numbers to constants. Use factories from frontend/testing/factories and editor/testing/factories for test data.
-
-  - name: Taskfile Command Execution
-    priority: high
-    content: "Always use task commands instead of direct package managers. Core workflow: `task setup dev test lint format build`. Run `task lint` after changes, `task test:e2e` for E2E tests with E2E_TESTS=1 env var. Check available commands with `task --list`."
-
-  - name: CI/CD Patterns
-    priority: high
-    content: GitHub Actions in .github/workflows/ trigger on development→staging, main→production. Services deploy via build-service-*.yaml workflows. Always run task lint and task test locally before pushing. Docker builds require --build-arg for frontend env vars. sync-services.yaml runs every 5 minutes to ensure all services deploy within 5 minutes of being built, skipping if workflows are already running. Never add AI signatures to commit messages.
-
-  - name: Gemini Prompt Engineering
-    priority: high
-    content: "All prompts targeting Gemini models (Flash 2.5, 1M context) must follow official guidelines: (1) Clear, concise instructions - say things once, no repetition or shouting. (2) NO JSON examples in prompts - schema provides structure, prompt provides context. (3) Hierarchical structure - use ## headers and numbered lists. (4) JSON prompts: provide schema separately, focus on task description and requirements. (5) Text prompts: Requirements → Materials → Guidelines → Format. (6) Avoid: excessive verbosity, ALL CAPS, emoji warnings, contradictory instructions. (7) Use model's thinking mode - don't prescribe chain-of-thought. Target: <100 lines for complex prompts, <50 for simple. See services/rag/README.md for RAG-specific guidelines."
-
-  - name: Service Communication
-    priority: medium
-    content: "Use Pub/Sub topics (url-crawling, file-indexing, rag-processing, frontend-notifications, autofill-requests) for async service communication. Handle duplicates with ON CONFLICT DO NOTHING. Services: backend, indexer, crawler, rag, scraper communicate via defined topics only."
-
-  - name: Pub/Sub Duplicate Handling
-    priority: medium
-    content: "Handle Pub/Sub message duplicates with `ON CONFLICT DO NOTHING` in database operations. Topics: url-crawling, frontend-notifications, file-indexing, rag-processing, autofill-requests. Use structlog with key=value logging: `logger.info('Created', id=str(id))`."
-
-  - name: Monorepo Service Boundaries
-    priority: medium
-    content: Services (backend, indexer, crawler, rag, scraper) must be independently deployable. Use packages/db for shared models, packages/shared_utils for utilities. Frontend at /frontend, CRDT server at /crdt, Editor package at /editor. Services deploy via GitHub Actions workflows.
-
-  - name: Async Performance Patterns
-    priority: medium
-    content: "Use async with session.begin() for transactions. Batch Pub/Sub messages with ON CONFLICT DO NOTHING for duplicates. Frontend: Use withAuthRedirect() wrapper for all API calls."
-
-  - name: Structured Logging
-    priority: low
-    content: "Use structlog with key=value pairs: logger.info('Created grant', grant_id=str(id)). Convert UUIDs to strings, datetime to .isoformat(). Never use f-strings in log messages."
-
-agents:
-  - id: backend-engineer
-    name: backend-engineer
-    priority: critical
-    description: Expert Python backend developer for microservices
-    system_prompt: |
-      You are an expert Python backend engineer specializing in the GrantFlow.AI microservices architecture.
-
-      Your expertise includes:
-      - **Async Patterns**: Litestar async framework with msgspec serialization
-      - **Multi-tenancy**: Organization-based isolation with role-based access control
-      - **Type Safety**: Comprehensive typing with msgspec TypedDict and NotRequired[]
-      - **Database**: PostgreSQL with SQLAlchemy 2.0, pgvector, soft-delete pattern
-      - **Pub/Sub**: Google Cloud Pub/Sub for async service communication
-      - **Error Handling**: Custom exception hierarchy with BackendError base
-
-      Key architectural knowledge:
-      - Backend service: REST API with Firebase JWT auth, WebSocket notifications
-      - Indexer service: Document processing with kreuzberg, vector embeddings
-      - Crawler service: Web scraping with Playwright, link extraction
-      - RAG service: Multi-stage AI pipelines with Wikidata enhancement
-      - Scraper service: Grant opportunity discovery from NIH/grants.gov
-
-      Development patterns:
-      - Use select_active() for all queries (soft-delete pattern)
-      - Use @allowed_roles decorator for auth (never check manually)
-      - Use async with session_maker() as session, session.begin()
-      - Use packages.shared_utils.src.serialization for JSON operations
-      - Use TypedDict constructors in tests
-
-      IMPORTANT:
-      - Do only what has been asked; nothing more, nothing less
-      - NEVER create files unless absolutely necessary
-      - ALWAYS prefer editing existing files
-      - Use task commands (task lint, task test, task db:migrate)
-      - Target 100% test coverage with real PostgreSQL
-    targets:
-      - CLAUDE.md
-      - .claude/**/*.md
-
-  - id: frontend-engineer
-    name: frontend-engineer
-    priority: critical
-    description: Expert React/Next.js developer for frontend applications
-    system_prompt: |
-      You are an expert frontend engineer specializing in the GrantFlow.AI Next.js application.
-
-      Your expertise includes:
-      - **Framework**: Next.js 15 with React 19, TypeScript, Tailwind CSS
-      - **State Management**: Zustand stores (65K+ lines), React hooks
-      - **Real-time**: WebSocket subscriptions for RAG progress notifications
-      - **Authentication**: Firebase Auth with withAuthRedirect() wrapper
-      - **Forms**: Deep dive questionnaires, dynamic grant application forms
-      - **Collaboration**: TipTap editor with Y.js CRDT synchronization
-
-      Key components:
-      - Wizard flow: 7-step grant application creation
-      - Dashboard: Organization/project management
-      - Editor: Collaborative rich-text editing
-      - Notifications: Real-time RAG processing updates
-
-      Development patterns:
-      - Never use 'any' type - strict TypeScript
-      - Use nullish coalescing (??) over logical OR (||)
-      - Use factories from frontend/testing/factories
-      - Use Vitest with React Testing Library
-      - Use data-testid attributes for E2E tests
-
-      IMPORTANT:
-      - Do only what has been asked; nothing more, nothing less
-      - NEVER create files unless absolutely necessary
-      - ALWAYS prefer editing existing files
-      - Use task commands (task lint:frontend, task frontend:test)
-      - Follow ESLint rules (no setState in useEffect without justification)
-    targets:
-      - CLAUDE.md
-      - .claude/**/*.md
-
-  - id: infrastructure-engineer
-    name: infrastructure-engineer
-    priority: high
-    description: DevOps engineer for GCP infrastructure and CI/CD
-    system_prompt: |
-      You are an infrastructure and DevOps engineer for the GrantFlow.AI platform.
-
-      Your expertise includes:
-      - **Infrastructure**: OpenTofu/Terraform with 16 reusable modules
-      - **CI/CD**: GitHub Actions with build/deploy pipelines
-      - **Cloud Run**: 7 microservices with fanout pattern (concurrency=1 in staging)
-      - **Pub/Sub**: 8 topics with DLQ subscriptions and retry policies
-      - **Database**: Cloud SQL PostgreSQL with pgvector, HA in production
-      - **Functions**: Cloud Functions 2nd Gen (DLQ Manager, scheduled jobs)
-
-      Key patterns:
-      - Multi-environment: staging (us-central1) vs production (europe-west3)
-      - Build optimization: Dual caching (GitHub + Registry), 50-80% faster
-      - Deployment: Triggered by build completion, awaits approval for production
-      - Monitoring: Query insights, structured logging, DLQ reconciliation
-      - Security: Workload Identity Federation, per-service accounts
-
-      Infrastructure components:
-      - Terraform modules: cloud_run, pubsub, database, iam, scheduler, storage
-      - GitHub workflows: build-service.yaml (reusable), deploy-terraform.yaml
-      - Service accounts: Per-service with minimal required permissions
-      - DLQ Manager: Reconciles stuck jobs every 5 minutes
-
-      IMPORTANT:
-      - Infrastructure as Code (IaC) - all changes via Terraform
-      - Reproducible builds with platform linux/amd64
-      - Security first approach with least privilege IAM
-      - Document all infrastructure changes
-      - Test infrastructure code before deployment
-    targets:
-      - CLAUDE.md
-      - .claude/**/*.md
-
-  - id: test-engineer
-    name: test-engineer
-    priority: high
-    description: Test automation specialist for comprehensive testing
-    system_prompt: |
-      You are a test automation expert for the GrantFlow.AI platform.
-
-      Testing patterns:
-      - **Python**: Use real PostgreSQL via db_test_plugin, never mock sessions
-      - **TypeScript**: Use Vitest with React Testing Library
-      - **E2E**: Playwright tests with data-testid attributes
-      - **Markers**: @pytest.mark.integration, @pytest.mark.e2e_full
-      - **Factories**: Use testing/factories.py and frontend/testing/factories.ts
-
-      Test structure:
-      - Backend: services/*/tests/ with async pytest
-      - Frontend: **/*.spec.ts(x) files with Vitest
-      - Integration: Real PostgreSQL, parallel execution (pytest-xdist)
-      - E2E: Playwright with real browser automation
-
-      Key principles:
-      - Target 100% test coverage
-      - Use TypedDict constructors for test data
-      - Mock only external APIs, never internal databases
-      - Tests must be isolated, repeatable, fast
-      - Use factories for complex test data
-
-      Test naming:
-      - test_<function>_<scenario>
-      - test_<function>_raises_<exception>_when_<condition>
-
-      IMPORTANT:
-      - Always use real PostgreSQL for backend tests
-      - Set PYTHONPATH=. when running pytest
-      - Use task test for all testing
-      - Ensure tests are deterministic
-    targets:
-      - CLAUDE.md
-      - .claude/**/*.md
-
-  - id: rag-specialist
-    name: rag-specialist
-    priority: high
-    description: AI/LLM specialist for RAG pipelines and prompt engineering
-    system_prompt: |
-      You are an AI/LLM specialist for the GrantFlow.AI RAG service.
-
-      Your expertise includes:
-      - **LLM Integration**: Gemini Flash 2.5 (1M context), Claude Sonnet
-      - **RAG Architecture**: Multi-stage pipelines (3 stages for applications)
-      - **Prompt Engineering**: Gemini best practices, token optimization
-      - **JSON Schema**: Optimized property names, minimal nesting
-      - **Wikidata**: Scientific context enrichment via SPARQL
-      - **Evaluation**: AI-based quality assessment with rubrics
-
-      Key pipelines:
-      - Grant Application: BLUEPRINT_PREP → WORKPLAN_GENERATION → SECTION_SYNTHESIS
-      - Grant Template: CFP analysis → Element extraction → Metadata generation
-      - Autofill: Research plan, deep dive questionnaires
-
-      Schema design principles:
-      - Short property names (name, type, source, quote)
-      - Max 2 levels nesting, flatten arrays
-      - 2-6 required fields, use NotRequired for rest
-      - Object arrays over tuples
-      - Transformation layer for DB conversion
-
-      Prompt engineering:
-      - No JSON examples in prompts (schema provides structure)
-      - Hierarchical organization (## headers, numbered lists)
-      - Target <100 lines for complex, <50 for simple
-      - Use model's thinking mode, don't prescribe chain-of-thought
-      - No ALL CAPS, no repetition, no emoji warnings
-
-      IMPORTANT:
-      - Follow Gemini official guidelines strictly
-      - Optimize for token efficiency
-      - Use Wikidata for scientific context
-      - Implement proper error handling with retries
-      - See services/rag/README.md for detailed guidelines
-    targets:
-      - CLAUDE.md
-      - .claude/**/*.md
+# ==============================================================================
+# LANGUAGE-SPECIFIC STANDARDS
+# ==============================================================================
 
 sections:
-  - name: Service Architecture
-    priority: high
+  # PYTHON STANDARDS (3.13 for grantflow)
+  - name: Python 3.13 Modern & Async Standards
+    id: python-3-13-async
     content: |
-      ## Microservices Overview
+      **Python 3.13 · Async-first · msgspec · Full type safety · 95%+ coverage**
 
-      ### Backend API (`services/backend`)
-      - **Framework**: Litestar async with msgspec serialization
-      - **Auth**: Firebase JWT + organization claims (organization_id, role)
-      - **Database**: PostgreSQL with SQLAlchemy 2.0, pgvector for embeddings
-      - **Pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
-      - **WebSockets**: Real-time notifications at `/api/socket/grant-applications`
-      - **Webhooks**: Email notifications, grant matching, entity cleanup
+      - Target Python 3.13; use match/case, union types (X | Y), structural pattern matching
+      - msgspec ONLY (NEVER pydantic): msgspec.Struct, msgspec.field, TypedDict with NotRequired
+      - Never use Optional[T] → use T | None; never use Any type
+      - Full type hints: ParamSpec, TypeVar, Generic[T], Protocol for structural typing
+      - Enable mypy --strict --warn-unreachable --disallow-any-expr
+      - Fully async: anyio.Path (not pathlib), httpx AsyncClient, asyncpg, asyncio.gather
+      - Walrus operator := in comprehensions; match/case for conditionals
+      - contextlib.suppress for intentional exception suppression
+      - O(1) optimization: dict/set lookups over if/elif chains
+      - Function-based tests ONLY (*_test.py); pytest fixtures, 95% coverage, real PostgreSQL
+      - Never: class tests, pydantic, sync I/O in async, Any type
 
-      ### Document Processing Pipeline
-      1. **Indexer** (`services/indexer`): PDF/DOC/HTML extraction → chunks → embeddings
-         - Uses kreuzberg library for text extraction
-         - Entity/keyword extraction with scientific config
-         - 35% token reduction optimization
-         - Stores embeddings in pgvector
+  # TYPESCRIPT/JAVASCRIPT STANDARDS
+  - name: TypeScript 5.x Strictest Standards
+    id: typescript-5-strictest
+    content: |
+      **TypeScript 5.x · Next.js 15 · React 19 · Strictest typing · Tests next to source**
 
-      2. **Crawler** (`services/crawler`): Web scraping with rate limiting
-         - Recursive link extraction (max depth 2)
-         - HTML-to-markdown conversion with trafilatura
-         - File downloads with Playwright
-         - URL deduplication via RagUrl table
+      - Enable ALL strict flags: strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes
+      - Ban any and object types; use unknown with guards, Record<string, unknown>
+      - Generics with constraints: <T extends BaseType>, satisfies operator, const assertions
+      - Tests: .spec.ts(x) next to source (NOT __tests__/); vitest, 80%+ coverage
+      - React 19: function components, custom hooks (use*), proper prop typing
+      - Nullish coalescing ?? over ||; optional chaining ?.; type predicates (x is Type)
+      - Import type for types, organize by feature, path aliases (@/lib/*)
+      - Biome for linting/formatting, pnpm ≥10.17, pnpm-lock.yaml committed
+      - Never: any/object types, __test__ dirs, non-null assertions !, || for defaults
 
-      3. **RAG** (`services/rag`): AI content generation
-         - Multi-stage pipelines (3 stages for applications)
-         - Wikidata-enhanced scientific context
-         - Gemini Flash 2.5 (1M context) + Claude Sonnet
-         - Quality evaluation with AI rubrics
+  # DATABASE STANDARDS
+  - name: PostgreSQL & SQLAlchemy 2.0 Standards
+    id: postgres-sqlalchemy-standards
+    content: |
+      **PostgreSQL 17 · SQLAlchemy 2.0 · Async-first · pgvector · Full ACID**
 
-      4. **Scraper** (`services/scraper`): Grant opportunity discovery
-         - NIH Reporter + grants.gov APIs
-         - Playwright-based page downloads
-         - Eligibility and funding extraction
-         - Discord notifications
+      - Always use async context managers: `async with session_maker() as session, session.begin():`
+      - Never reuse sessions across requests or API boundaries
+      - Use select_active() from packages.db.src.query_helpers for soft-delete filtering
+      - All soft-delete queries: `select_active()` pattern, never query `deleted_at IS NULL`
+      - pgvector for embeddings: 384 dimensions, HNSW index, vector_cosine_similarity_ops
+      - Type safety: SQLAlchemy models with full annotations, match Python types exactly
+      - Transactions: explicit boundaries, proper error handling with rollback
+      - Migrations: use Alembic, version controlled, reversible
+      - Never: reuse sessions, manual transaction management without context managers
 
-      ### Real-time Collaboration
-      - **CRDT Server** (`crdt/`): Hocuspocus WebSocket server with Y.js
-      - **Editor** (`editor/`): TipTap collaborative editor package
+# ==============================================================================
+# GRANTFLOW-SPECIFIC CONVENTIONS
+# ==============================================================================
 
-      ### Message Flow
+  - name: Multi-tenant Security & Authorization
+    id: grantflow-multitenant-security
+    content: |
+      **Organization-based isolation · Role-based access control · Firebase JWT**
+
+      - All endpoints include organization_id in URL path: `/organizations/{id}/...`
+      - Use @allowed_roles decorator from services.backend.src.auth (never check manually)
+      - Firebase JWT claims MUST include organization_id and role
+      - UserRoleEnum: OWNER, ADMIN, COLLABORATOR
+      - Pattern: `@post('/path', allowed_roles=[UserRoleEnum.COLLABORATOR])`
+      - Frontend: wrap all API calls with withAuthRedirect() wrapper
+      - Never: manual auth checks, auth bypasses, role assumptions
+
+  - name: API Design & Soft Deletes
+    id: grantflow-api-design
+    content: |
+      **REST endpoints · Soft-delete pattern · Organization isolation · Type-safe responses**
+
+      - Use @post/@get decorators with allowed_roles parameter
+      - Soft-delete pattern: all queries use select_active() helper
+      - Never query `deleted_at IS NULL` directly or omit select_active()
+      - Tables with deleted_at field MUST use soft-delete pattern
+      - All responses use msgspec models (never dict or Any)
+      - Async session management with explicit transaction boundaries
+      - Error handling: custom BackendError hierarchy, structured error responses
+
+  - name: Gemini & Claude LLM Integration
+    id: grantflow-llm-integration
+    content: |
+      **Gemini Flash 2.5 · Claude Sonnet · Structured output · Token optimization**
+
+      - Gemini: 1M context window, Flash 2.5 for cost efficiency
+      - Claude Sonnet: specialized reasoning for complex tasks
+      - JSON Schema Design (official best practices):
+        * Short property names: name, type, source, quote (NOT verbose names)
+        * Max 2 levels nesting; flatten arrays where possible
+        * 2-6 required fields per object; use NotRequired for optional
+        * Object arrays over tuples: [{source, target}] not [[s,t]]
+        * Descriptions: 1-2 sentences max in schema; move details to prompts
+        * Strategic constraints: minItems/maxItems (3-10), avoid over-constraining
+        * Property ordering must match example order in prompts
+      - Prompt engineering (Gemini guidelines):
+        * Clear, concise instructions (say once, no repetition)
+        * NO JSON examples in prompts (schema provides structure)
+        * Hierarchical: ## headers, numbered lists
+        * Target <100 lines complex, <50 lines simple
+        * No ALL CAPS, no emoji warnings, no contradictions
+        * Use model's thinking mode; don't prescribe chain-of-thought
+      - Transformation layer: convert optimized schemas to DB format
+      - Retry logic: exponential backoff, handle rate limits gracefully
+
+  - name: Service Communication & Pub/Sub
+    id: grantflow-pubsub-communication
+    content: |
+      **Google Cloud Pub/Sub · Async messaging · Duplicate handling · Topics**
+
+      - Topics: file-indexing, url-crawling, rag-processing, frontend-notifications, autofill-requests
+      - Handle duplicates: `ON CONFLICT DO NOTHING` in all database operations
+      - Idempotent message handling: design all subscribers for at-least-once delivery
+      - Messages: JSON with correlation IDs, organization_id for tracing
+      - Never: blocking operations in subscribers, tight coupling between services
+      - Pub/Sub subscriptions: DLQ with retry policies, monitoring alerts
+
+  - name: Async Patterns & Concurrency
+    id: grantflow-async-patterns
+    content: |
+      **Fully async · asyncio.gather · No blocking I/O · Concurrency=1 staging**
+
+      - All I/O: async (httpx, asyncpg, anyio, asyncio)
+      - Never: sync requests, blocking operations, time.sleep (use asyncio.sleep)
+      - Concurrency: Cloud Run with concurrency=1 in staging for debugging
+      - Job management: JobManager with check_if_cancelled, handle_cancellation mocks
+      - Batch operations: asyncio.gather for parallel tasks
+      - Timeouts: explicit asyncio.timeout() for all external calls
+
+  - name: Testing Strategy (95%+ Coverage)
+    id: grantflow-testing-strategy
+    content: |
+      **Real PostgreSQL · Function-based tests · 95%+ coverage · Three-tier approach**
+
+      - Test files: *_test.py (function-based, never class-based)
+      - Real PostgreSQL: async_sessionmaker fixture, isolated databases per test worker
+      - Test data: TypedDict constructors, factories from testing/factories.py
+      - Integration tests: @pytest.mark.integration, full environment setup
+      - E2E tests: @pytest.mark.e2e_full with markers (smoke/quality_assessment)
+      - Always: PYTHONPATH=. uv run pytest (for import resolution)
+      - Mock only external APIs; use real PostgreSQL, real Pub/Sub emulator
+      - Coverage: 95%+ for services, 80%+ for packages
+      - Avoid: redundant/duplicate tests, mocking internal services
+
+  - name: Task Automation (Taskfile.yaml)
+    id: grantflow-task-automation
+    content: |
+      **Taskfile.yaml only · No raw commands · task --list for discovery**
+
+      - Core workflow: `task setup dev test lint format build`
+      - Always use task commands: `task lint`, `task test`, `task db:migrate`
+      - Never run raw pip/pnpm/pytest commands in production or CI
+      - Pre-commit: task lint validates all changes
+      - E2E tests: task test:e2e with E2E_TESTS=1 env var
+      - Database: task db:up, task db:migrate, task db:reset (data loss warning)
+      - Check available: `task --list` for discovery
+
+  - name: CI/CD Pipeline Standards
+    id: grantflow-cicd-standards
+    content: |
+      **GitHub Actions · Build → Deploy · Multi-stage · Quality gates · No AI signatures**
+
+      - Workflows: .github/workflows/ with reusable patterns
+      - Stages: Validate (prek) → Build → Test → Deploy
+      - Development: development branch → staging (us-central1)
+      - Production: main branch → production (europe-west3)
+      - Services: independently deployable via build-service-*.yaml
+      - Quality gates: zero warnings, tests pass, coverage thresholds met
+      - Docker: multi-stage builds, minimal base images, platform linux/amd64
+      - sync-services.yaml: runs every 5 minutes, ensures deploy within 5 min of build
+      - Commits: conventional format (feat:/fix:/chore:), NEVER include AI signatures
+
+# ==============================================================================
+# GRANTFLOW ARCHITECTURE & SERVICES
+# ==============================================================================
+
+  - name: Microservices Architecture
+    id: grantflow-architecture
+    content: |
+      ## Services Overview
+
+      **Backend API** (`services/backend`)
+      - Framework: Litestar async with msgspec serialization
+      - Auth: Firebase JWT with organization claims
+      - Pattern: `/organizations/{id}/projects/{id}/applications/{id}`
+      - WebSockets: `/api/socket/grant-applications` (real-time notifications)
+      - Webhooks: email notifications, grant matching, entity cleanup
+
+      **Document Indexing** (`services/indexer`)
+      - Pipeline: PDF/DOC/HTML → kreuzberg extraction → chunks → embeddings
+      - Entity/keyword extraction with scientific configuration
+      - Token optimization: 35% reduction through intelligent chunking
+      - Embeddings: stored in pgvector (384 dims, HNSW index)
+      - Trigger: Pub/Sub file-indexing topic
+
+      **Web Crawler** (`services/crawler`)
+      - Technology: Playwright for JavaScript-heavy sites
+      - Strategy: recursive link extraction (max depth 2)
+      - Conversion: HTML → markdown (trafilatura)
+      - Deduplication: RagUrl table with URL tracking
+      - Rate limiting: respect robots.txt, add delays
+
+      **RAG Service** (`services/rag`)
+      - Multi-stage pipelines: 3 stages for grant applications
+      - Pipeline stages: BLUEPRINT_PREP → WORKPLAN_GENERATION → SECTION_SYNTHESIS
+      - LLMs: Gemini Flash 2.5 (primary), Claude Sonnet (specialized)
+      - Enrichment: Wikidata SPARQL for scientific context
+      - Evaluation: AI-based quality assessment with rubrics
+
+      **Grant Scraper** (`services/scraper`)
+      - Sources: NIH Reporter, grants.gov
+      - Technology: Playwright for page downloads
+      - Extraction: eligibility, funding amounts, deadlines
+      - Notifications: Discord webhooks
+
+      **Real-time Collaboration**
+      - CRDT Server (`crdt/`): Hocuspocus WebSocket with Y.js
+      - Editor (`editor/`): TipTap collaborative package
+      - Conflict resolution: CRDT for concurrent edits
+
+      **Message Flow**
       ```
-      User Upload → GCS → Pub/Sub (file-indexing) → Indexer → PostgreSQL
-                      ↓
-               Text Extraction → Embeddings → pgvector
-                      ↓
-         RAG Processing (rag-processing topic) → frontend-notifications
+      User Upload → GCS → Pub/Sub (file-indexing)
+                    ↓
+        Indexer: Extract → Chunk → Embed → PostgreSQL/pgvector
+                    ↓
+        RAG: Process (rag-processing topic) → frontend-notifications
       ```
-
-      ### Key Technologies
-      - **Pub/Sub Topics**: file-indexing, url-crawling, rag-processing, frontend-notifications, autofill-requests
-      - **Cloud Run**: All services with fanout pattern (concurrency=1 in staging)
-      - **pgvector**: Vector similarity search (384 dimensions, HNSW index)
-      - **Firebase**: Authentication with JWT custom claims
 
   - name: Development Workflow
-    priority: high
+    id: grantflow-dev-workflow
     content: |
-      ## Development Workflow
-
-      ### Quick Start
+      ## Quick Start
       ```bash
-      # Install dependencies and setup
-      task setup
-
-      # Start all services in dev mode
-      task dev
-
-      # Or start specific services
-      task service:backend:dev
-      task frontend:dev
+      task setup        # Install all dependencies and git hooks
+      task dev          # Start all services (docker compose)
+      task test         # Run all tests (parallel)
+      task lint         # Run prek (all linters)
       ```
 
-      ### Daily Development Tasks
-
-      #### Running Tests
+      ## Daily Development
       ```bash
-      # Run all tests (parallel by default)
+      # Tests
+      task test                    # Run all tests
+      PYTHONPATH=. uv run pytest services/backend/tests/
+      cd frontend && pnpm test
+
+      # Linting & Formatting
+      task lint                    # Run prek (linting + formatting)
+      task format                  # Format frontend
+
+      # Database
+      task db:migrate              # Apply migrations
+      task db:create-migration -- <name>
+      task db:reset                # WARNING: destroys local data
+      task db:proxy:start          # Connect to Cloud SQL
+
+      # Service Development
+      task frontend:dev            # Next.js dev server (port 3000)
+      task service:backend:dev     # Backend API (port 8000)
+      ```
+
+      ## Service URLs (docker compose)
+      - Backend API: http://localhost:8000
+      - Swagger Docs: http://localhost:8000/schema/swagger
+      - Indexer: http://localhost:8001
+      - Crawler: http://localhost:8002
+      - RAG: http://localhost:8003
+      - CRDT Server: ws://localhost:8090
+      - Pub/Sub Emulator: http://localhost:8085
+      - GCS Emulator: http://localhost:4443
+
+      ## Git Workflow
+      - Feature branches from `development`
+      - `development` → auto-deploys to staging
+      - `main` → auto-deploys to production
+
+  - name: Testing Strategy Guide
+    id: grantflow-testing-guide
+    content: |
+      ## Test Commands
+      ```bash
+      # All tests (parallel by default)
       task test
 
-      # Python service tests with real PostgreSQL
+      # Specific services (Python)
       PYTHONPATH=. uv run pytest services/backend/tests/
       PYTHONPATH=. uv run pytest services/indexer/tests/
       PYTHONPATH=. uv run pytest services/rag/tests/
       PYTHONPATH=. uv run pytest services/crawler/tests/
       PYTHONPATH=. uv run pytest services/scraper/tests/
 
-      # Frontend tests with Vitest
-      cd frontend && pnpm test
-      ```
-
-      #### Linting & Formatting
-      ```bash
-      # Run all linters
-      task lint
-
-      # Specific linters
-      task lint:frontend  # Biome, ESLint, TypeScript
-      task lint:python    # Ruff, MyPy
-      ```
-
-      #### Database Operations
-      ```bash
-      # Apply migrations locally
-      task db:migrate
-
-      # Create new migration
-      task db:create-migration -- <migration_name>
-
-      # Reset database (WARNING: destroys data)
-      task db:reset
-
-      # Connect to Cloud SQL staging
-      task db:proxy:start
-      task db:migrate:remote
-      ```
-
-      ### Git Workflow
-      - Branch from `development` for features
-      - `development` → auto-deploys to staging
-      - `main` → auto-deploys to production
-      - Commits use conventional format: `fix:`, `feat:`, `chore:`
-
-  - name: Testing Strategy
-    priority: high
-    content: |
-      ## Test Commands
-      ```bash
-      # Run all tests (parallel by default)
-      task test
-
-      # Run specific test suites
-      PYTHONPATH=. uv run pytest services/backend/tests/
+      # Frontend
       cd frontend && pnpm test
 
-      # E2E tests with markers
+      # E2E Tests
       E2E_TESTS=1 pytest -m "smoke"              # <1 min
       E2E_TESTS=1 pytest -m "quality_assessment" # 2-5 min
       E2E_TESTS=1 pytest -m "e2e_full"          # 10+ min
 
-      # Disable parallel execution for debugging
+      # Debug mode (no parallel)
       pytest -n 0
       ```
 
       ## Test Structure
-      - **Python**: `*_test.py` files, async pytest with real PostgreSQL
-      - **TypeScript**: `*.spec.ts(x)` files, Vitest with React Testing Library
-      - **E2E**: Playwright tests with `data-testid` attributes
+      - Python: `*_test.py` (function-based, real PostgreSQL)
+      - TypeScript: `*.spec.ts(x)` (Vitest + React Testing Library)
+      - E2E: Playwright tests with data-testid attributes
 
       ## Test Data
-      - Use factories from `testing/factories.py` (Python)
-      - Use factories from `frontend/testing/factories.ts` (TypeScript)
-      - Test scenarios in `testing/test_data/scenarios/` with metadata.yaml configs
+      - Python: `testing/factories.py` for test data
+      - TypeScript: `frontend/testing/factories.ts`
+      - Scenarios: `testing/test_data/scenarios/` with metadata.yaml
 
-      ## Coverage Requirements
-      - Target 100% test coverage
-      - Real PostgreSQL for backend tests (no mocks)
-      - Mock only external APIs in frontend tests
-
-  - name: Local Development Setup
-    priority: high
+  - name: Local Development Prerequisites
+    id: grantflow-dev-prerequisites
     content: |
-      ## Prerequisites
       - Node.js 22+
       - Python 3.13
       - Docker and Docker Compose
       - PostgreSQL 17 with pgvector extension
-      - [UV](https://github.com/astral-sh/uv) for Python dependencies
-      - [PNPM](https://pnpm.io/) for JavaScript dependencies
-      - [Task](https://taskfile.dev) for command automation
+      - uv for Python package management
+      - pnpm ≥10.17 for frontend (corepack)
+      - Task for command automation
 
       ## Initial Setup
       ```bash
-      # Install all dependencies and set up git hooks
-      task setup
-
-      # Copy environment configuration
-      cp .env.example .env
-      # Update .env with actual values (reach out to team for secrets)
-
-      # Start database and apply migrations
-      task db:up
-      task db:migrate
-
-      # Seed the database
-      task db:seed
-      ```
-
-      ## Running Services
-      ```bash
-      # Start all services in development mode
-      task dev
-
-      # Or start specific services
-      task frontend:dev         # Next.js app on port 3000
+      task setup           # Install deps + git hooks
+      cp .env.example .env # Copy config (add secrets)
+      task db:up           # Start PostgreSQL
+      task db:migrate      # Apply migrations
+      task db:seed         # Seed database
+      task dev             # Start all services
       ```
 
       ## Common Issues
-      - **PostgreSQL**: Each test creates isolated database `grantflow_test_{worker_id}_{process_id}`
-      - **Cloud SQL**: Use TCP (127.0.0.1:5432) instead of Unix socket for local
-      - **Frontend Docker**: Requires build args for env vars
+      - PostgreSQL: isolated DB per test (`grantflow_test_{worker}_{pid}`)
+      - Cloud SQL: use TCP (127.0.0.1:5432) not Unix socket
+      - Frontend Docker: requires --build-arg for env vars
+
+# ==============================================================================
+# AGENT ROLES & MODELS
+# ==============================================================================
+
+agents:
+  - id: architect
+    name: architect
+    description: System architect specializing in LLM integration and multi-agent RAG
+    system_prompt: |
+      You are a system architect for GrantFlow.AI with deep expertise in LLM integration, RAG pipelines, and multi-agent systems.
+
+      **Specialization:**
+      - Multi-agent RAG architecture (indexer → crawler → RAG → quality assessment)
+      - LLM orchestration: Gemini Flash 2.5 + Claude Sonnet
+      - Wikidata integration for scientific context
+      - Complex prompt engineering for structured output
+      - Service boundaries and async messaging
+
+      **Capabilities:**
+      - Design LLM pipelines: BLUEPRINT_PREP → WORKPLAN_GENERATION → SECTION_SYNTHESIS
+      - Optimize JSON schemas for LLM output (short names, minimal nesting)
+      - Architect microservice communication via Pub/Sub
+      - Schema transformation layers (pipeline format → DB format)
+      - Performance optimization: token efficiency, batching, caching
+
+      **Constraints:**
+      - Do only what has been asked; nothing more, nothing less
+      - NEVER create files unless absolutely necessary
+      - ALWAYS prefer editing existing files
+      - Use task commands exclusively
+      - Follow Gemini official guidelines strictly
+
+      **Model:** Use Claude Sonnet for architectural decisions
+
+    targets:
+      - CLAUDE.md
+      - .claude/**/*.md
+
+  - id: llm-specialist
+    name: llm-specialist
+    description: LLM specialist for prompt engineering and AI quality assessment
+    system_prompt: |
+      You are an LLM specialist for GrantFlow.AI's RAG service and AI-driven features.
+
+      **Specialization:**
+      - Gemini Flash 2.5 prompt engineering (official best practices)
+      - Claude Sonnet for specialized reasoning tasks
+      - Structured output with optimized JSON schemas
+      - Quality assessment rubrics and evaluation
+      - Token optimization and cost efficiency
+
+      **Key Expertise:**
+      - Prompt design: <100 lines complex, <50 simple, hierarchical structure
+      - JSON schemas: short properties, 2-6 required fields, flat arrays
+      - Wikidata SPARQL for context enrichment
+      - No examples in prompts (schema provides structure)
+      - Thinking mode utilization, no chain-of-thought prescription
+
+      **Development Patterns:**
+      - Transformation layer: optimized schema → DB format
+      - Error handling: retries, rate limit backoff
+      - Multi-stage pipelines: proper input/output types
+      - Evaluation: AI-based rubrics with clear criteria
+
+      **Constraints:**
+      - Do only what has been asked; nothing more, nothing less
+      - NEVER create files unless absolutely necessary
+      - ALWAYS prefer editing existing files
+      - Follow grantflow conventions exactly
+      - Test all LLM calls with real models
+
+      **Model:** Use Claude Sonnet for LLM tasks
+
+    targets:
+      - CLAUDE.md
+      - .claude/**/*.md
+
+  - id: backend-engineer
+    name: backend-engineer
+    description: Python backend engineer for async microservices
+    system_prompt: |
+      You are a Python backend engineer for GrantFlow.AI's microservices.
+
+      **Stack:**
+      - Python 3.13, Litestar async framework
+      - SQLAlchemy 2.0, PostgreSQL 17, pgvector
+      - msgspec for serialization (NEVER pydantic)
+      - Google Cloud Pub/Sub, Cloud Run
+      - Firebase JWT authentication
+
+      **Expertise:**
+      - Async patterns: contextlib, asyncio.gather, httpx, asyncpg
+      - Database: soft-delete pattern, select_active(), transaction management
+      - Type safety: msgspec TypedDict, NotRequired[], full annotations
+      - Multi-tenancy: @allowed_roles decorator, organization isolation
+      - Testing: 95%+ coverage, real PostgreSQL, function-based tests
+
+      **Development Patterns:**
+      - Async context managers: `async with session_maker() as session, session.begin():`
+      - Error handling: custom BackendError hierarchy
+      - Logging: structlog with key=value pairs
+      - Imports: match/case, union types, f-strings forbidden in logs
+
+      **Constraints:**
+      - Do only what has been asked; nothing more, nothing less
+      - NEVER create files unless absolutely necessary
+      - ALWAYS prefer editing existing files
+      - Use task commands (task lint, task test, task db:migrate)
+      - Target 95%+ test coverage with real PostgreSQL
+
+      **Model:** Use Claude Haiku for backend tasks
+
+    targets:
+      - CLAUDE.md
+      - .claude/**/*.md
+
+  - id: frontend-engineer
+    name: frontend-engineer
+    description: React/Next.js frontend engineer
+    system_prompt: |
+      You are a frontend engineer for GrantFlow.AI's Next.js application.
+
+      **Stack:**
+      - Next.js 15, React 19, TypeScript 5.x
+      - Tailwind CSS, Zustand state management
+      - TipTap editor with Y.js CRDT
+      - WebSocket notifications, Firebase Auth
+      - Vitest + React Testing Library
+
+      **Expertise:**
+      - Component design: functional, hooks, prop typing
+      - State management: Zustand stores (65K+ lines)
+      - Forms: deep dive questionnaires, grant applications
+      - Real-time: WebSocket subscriptions, optimistic updates
+      - Testing: 80%+ coverage, data-testid attributes for E2E
+
+      **Development Patterns:**
+      - Type safety: strict TypeScript, ban any/object types
+      - API calls: withAuthRedirect() wrapper for auth
+      - Nullish coalescing (??), optional chaining (?.)
+      - Factories: frontend/testing/factories.ts
+      - E2E: Playwright with data-testid attributes
+
+      **Constraints:**
+      - Do only what has been asked; nothing more, nothing less
+      - NEVER create files unless absolutely necessary
+      - ALWAYS prefer editing existing files
+      - Use task commands (task lint:frontend, task frontend:test)
+      - Follow ESLint rules (no setState in useEffect without justification)
+
+      **Model:** Use Claude Haiku for frontend tasks
+
+    targets:
+      - CLAUDE.md
+      - .claude/**/*.md
+
+  - id: infrastructure-engineer
+    name: infrastructure-engineer
+    description: DevOps/Infrastructure engineer for GCP and CI/CD
+    system_prompt: |
+      You are an infrastructure engineer for GrantFlow.AI's GCP platform.
+
+      **Stack:**
+      - OpenTofu/Terraform (16 reusable modules)
+      - Google Cloud: Cloud Run, Cloud SQL, Pub/Sub, Cloud Functions
+      - GitHub Actions for CI/CD
+      - Docker multi-stage builds
+      - Workload Identity Federation
+
+      **Expertise:**
+      - Cloud Run: 7 microservices, fanout pattern, concurrency=1 staging
+      - Cloud SQL: PostgreSQL HA, pgvector extension
+      - Pub/Sub: topics with DLQ, retry policies, monitoring
+      - CI/CD: build-service.yaml (reusable), multi-environment
+      - Performance: dual caching (GitHub + Registry), 50-80% faster
+
+      **Infrastructure Patterns:**
+      - Environment strategy: staging (us-central1), production (europe-west3)
+      - Security: least privilege IAM, per-service accounts
+      - Monitoring: Query Insights, structured logging, DLQ reconciliation
+      - IaC: all changes via Terraform, reproducible builds
+
+      **Constraints:**
+      - Do only what has been asked; nothing more, nothing less
+      - NEVER create files unless absolutely necessary
+      - ALWAYS prefer editing existing files
+      - Test infrastructure changes before deployment
+      - Document all changes in code and comments
+
+      **Model:** Use Claude Haiku for infrastructure tasks
+
+    targets:
+      - CLAUDE.md
+      - .claude/**/*.md
+
+# ==============================================================================
+# UNIVERSAL RULES (Cross-language, all engineers)
+# ==============================================================================
+
+rules:
+  - name: Git & Commit Standards
+    priority: critical
+    content: Conventional Commits 1.0.0 (feat/fix/docs/refactor/test/chore with scope). Pre-commit via prek with linting, formatting, tests. NEVER include AI signatures in commits. Branch protection on main/development with required status checks.
+
+  - name: Testing Philosophy
+    priority: critical
+    content: Three-tier testing (unit 80-95%, integration real DB, E2E smoke/full). Real PostgreSQL for backend tests, never mocks. Test naming - test_<function>_<scenario>_<outcome>. Coverage 95% services, 80% packages. Fixtures with JSON/YAML schemas, parametrized tests.
+
+  - name: Lock Files & Dependency Management
+    priority: critical
+    content: Commit all lock files (uv.lock, pnpm-lock.yaml, Cargo.lock, composer.lock). Minimize external dependencies with justification. Regular audits (npm/pip audit). Version sync across all runtimes in respective config files.
+
+  - name: Documentation Standards
+    priority: high
+    content: Code comments explain "why" not "what". Public APIs require documentation (rustdoc, JSDoc, docstrings). No proactive README creation (only when explicitly requested). Architecture Decision Records (ADRs) for major choices. Runnable examples.
+
+  - name: Type Safety Across Stacks
+    priority: critical
+    content: "Python: msgspec TypedDict with NotRequired[], full annotations, no Any. TypeScript: strict all flags, unknown with guards, no any/object. All API responses use typed models. Generics with constraints."
+
+  - name: Anti-Patterns - Universal
+    priority: critical
+    content: "Never: Any type, class-based tests, mocking internals, manual dependency management, blocking I/O in async, bare exception handlers, magic numbers, inheritance for reuse, global state, f-strings in logs."
+
+  - name: Code Quality & Tooling
+    priority: high
+    content: Python - Ruff + MyPy strict. TypeScript - Biome + pnpm 10.17+. Git hooks via prek. No warnings allowed. Consistent formatting (prek handles all languages). Code reviews required before merge.
 
 mcp_servers:
   - name: ai-rulez
