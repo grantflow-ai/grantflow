@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/biomejs/pre-commit
-    rev: v2.3.6
+    rev: v2.3.7
     hooks:
       - id: biome-format
       - id: biome-lint
@@ -11,7 +11,7 @@ repos:
           - --fix
         id: oxlint
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.5
+    rev: v0.14.6
     hooks:
       - args:
           - --fix

@@ -5,10 +5,11 @@ vars:
 
 tasks:
   # ==============================================================================
+  # CORE LIFECYCLE TASKS
   # ==============================================================================
 
   setup:
-    desc: Initial project setup - installs all dependencies and git hooks
+    desc: "Install all dependencies and initialize project (idempotent - safe to re-run)"
     cmds:
       - task: frontend:install
       - task: backend:install
@@ -16,6 +17,7 @@ tasks:
       - task: generate:ai-rules
       - uv tool install prek
       - uvx prek install
+      - echo "✓ Setup complete - safe to re-run anytime"
 
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)
@@ -50,7 +52,6 @@ tasks:
       - task: backend:test
       - task: frontend:test
 
-
   test:ci:
     desc: Run tests in CI mode (serial execution)
     cmds:
@@ -67,15 +68,33 @@ tasks:
       - task: service:rag:test:e2e
       - task: service:scraper:test:e2e
 
+  check:
+    desc: "Run all checks without modifications (lint:check + format:check) - CI-friendly"
+    cmds:
+      - task: lint:check
+      - task: format:check
+
   lint:
-    desc: Run all linters and formatters using prek
+    desc: "Run all linters WITH auto-fix enabled"
     cmds:
       - prek run --all-files {{.CLI_ARGS}}
 
-  format:
-    desc: Format frontend code
+  lint:check:
+    desc: "Run all linters WITHOUT auto-fix (check-only mode) - CI-friendly"
     cmds:
-      - pnpm --filter './frontend' format
+      - prek run --all-files --check {{.CLI_ARGS}}
+
+  format:
+    desc: "Format all code with modifications"
+    cmds:
+      - task: typescript:format
+      - task: python:format
+
+  format:check:
+    desc: "Check code formatting without modifications - CI-friendly"
+    cmds:
+      - task: typescript:format:check
+      - task: python:format:check
 
   build:
     desc: Build frontend package
@@ -89,15 +108,18 @@ tasks:
       - pnpm knip
 
   update:
-    desc: Update all dependencies (frontend and backend) to latest versions
+    desc: "Update all dependencies to latest versions (TypeScript + Python)"
     cmds:
+      - echo "Updating TypeScript dependencies..."
       - corepack up
-      - task: frontend:update
-      - task: backend:update
+      - task: typescript:update
+      - echo "Updating Python dependencies..."
+      - task: python:update
       - echo "Running prek autoupdate..."
       - prek autoupdate
       - echo "Ensuring functions requirements.txt is up to date..."
       - task: cloud-functions:generate-requirements
+      - echo "✓ All dependencies updated"
 
   generate:api-types:
     desc: Generate TypeScript from backend API
@@ -140,15 +162,25 @@ tasks:
           {{if .CONFIG}}--config {{.CONFIG}}{{end}}{{if .KEYS}} --keys {{.KEYS}}{{end}}{{if .ACTIVITY_CODES_CSV}} --activity-codes-csv {{.ACTIVITY_CODES_CSV}}{{end}} \
           --guidelines-root {{.GUIDELINES_ROOT}}{{if eq .DRY_RUN "true"}} --dry-run{{end}}{{if eq .FORCE "true"}} --force{{end}}
 
+  # ==============================================================================
+  # DATABASE NAMESPACE
+  # ==============================================================================
+
+  db:setup:
+    desc: "Create databases and run migrations (idempotent)"
+    cmds:
+      - task: db:up
+      - task: db:migrate
+
   db:up:
-    desc: Start the local PostgreSQL database container if not already running
+    desc: "Start the local PostgreSQL database container if not already running"
     cmds:
       - docker compose up db --detach
     status:
       - docker ps --format "table {{.Names}}" | grep -q "^db$"
 
   db:down:
-    desc: Stop and remove the local database container
+    desc: "Stop and remove the local database container"
     cmds:
       - docker compose down db
 
@@ -308,15 +340,43 @@ tasks:
       - task: db:migrate
       - echo "✅ Database reset complete!"
 
-  frontend:install:
-    desc: Install dependencies for frontend using pnpm
+  # ==============================================================================
+  # TYPESCRIPT NAMESPACE
+  # ==============================================================================
+
+  typescript:install:
+    desc: "Install TypeScript/Node dependencies using pnpm"
     cmds:
       - pnpm install -r
 
-  frontend:update:
-    desc: Update frontend dependencies to latest versions
+  typescript:update:
+    desc: "Update TypeScript/Node dependencies to latest versions"
     cmds:
       - pnpm up --latest -r
+
+  typescript:format:
+    desc: "Format TypeScript code with modifications (biome)"
+    cmds:
+      - pnpm --filter './frontend' format
+
+  typescript:format:check:
+    desc: "Check TypeScript code formatting without modifications (biome)"
+    cmds:
+      - pnpm --filter './frontend' format --check
+
+  # ==============================================================================
+  # FRONTEND LEGACY ALIASES (for backward compatibility)
+  # ==============================================================================
+
+  frontend:install:
+    desc: "Install dependencies for frontend using pnpm (legacy alias for typescript:install)"
+    cmds:
+      - task: typescript:install
+
+  frontend:update:
+    desc: "Update frontend dependencies to latest versions (legacy alias for typescript:update)"
+    cmds:
+      - task: typescript:update
 
   frontend:test:watch:
     desc: Run frontend tests (interactive mode) - main frontend only
@@ -401,7 +461,6 @@ tasks:
           SECONDS: "1"
       - uv run python scripts/seed_e2e.py
 
-
   frontend:dev:
     desc: Start the main frontend development server
     dir: frontend
@@ -429,25 +488,63 @@ tasks:
     cmds:
       - pnpm test:coverage
 
+  # ==============================================================================
+  # PYTHON NAMESPACE
+  # ==============================================================================
 
-  backend:install:
-    desc: Install services dependencies using uv
+  python:install:
+    desc: "Install Python dependencies using uv"
     cmds:
       - uv sync --all-packages --all-extras --all-groups
 
-  backend:update:
-    desc: Update backend dependencies to latest versions
+  python:update:
+    desc: "Update Python dependencies to latest versions"
     cmds:
+      - uv run uv-bump
       - uv sync --all-packages --all-extras --all-groups --upgrade
-      - uv run uv-bump --pyproject-toml ./pyproject.toml
-      - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./services/rag/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./services/scraper/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
-      - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
-      - task: backend:install
+      - task: python:install
+
+  python:format:
+    desc: "Format Python code with modifications (ruff)"
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run ruff format services/ packages/
+
+  python:format:check:
+    desc: "Check Python code formatting without modifications (ruff)"
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run ruff format --check services/ packages/
+
+  python:lint:
+    desc: "Run Python linters WITH auto-fix (ruff check --fix)"
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run ruff check --fix services/ packages/
+
+  python:lint:check:
+    desc: "Run Python linters WITHOUT auto-fix (ruff check)"
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run ruff check services/ packages/
+
+  # ==============================================================================
+  # BACKEND LEGACY ALIASES (for backward compatibility)
+  # ==============================================================================
+
+  backend:install:
+    desc: "Install services dependencies using uv (legacy alias for python:install)"
+    cmds:
+      - task: python:install
+
+  backend:update:
+    desc: "Update backend dependencies to latest versions (legacy alias for python:update)"
+    cmds:
+      - task: python:update
 
   backend:test:
     desc: Run all backend tests (services and shared packages)
@@ -459,6 +556,9 @@ tasks:
       - task: service:scraper:test
       - task: _packages:test
 
+  # ==============================================================================
+  # MICROSERVICE NAMESPACES (backend, indexer, crawler, rag, scraper)
+  # ==============================================================================
 
   service:backend:test:
     desc: Run backend service tests with detailed output
@@ -477,7 +577,6 @@ tasks:
     cmds:
       - uv run pytest services/backend/tests -v
 
-
   service:indexer:test:
     desc: Run indexer service tests with detailed output
     dotenv: [".env"]
@@ -494,8 +593,6 @@ tasks:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - uv run pytest services/indexer/tests -v
-
-
 
   service:crawler:test:
     desc: Run crawler service tests with detailed output
@@ -514,7 +611,6 @@ tasks:
     cmds:
       - uv run pytest services/crawler/tests -v
 
-
   service:rag:test:
     desc: Run RAG service tests with detailed output (parallel execution)
     dotenv: [".env"]
@@ -523,7 +619,6 @@ tasks:
       PUBSUB_EMULATOR_HOST: "localhost:8085"
     cmds:
       - uv run pytest services/rag/tests -v
-
 
   service:rag:test:e2e:
     desc: Run RAG service end-to-end tests
@@ -535,8 +630,6 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests -v
 
-
-
   service:scraper:test:
     desc: Run scraper service tests with detailed output (parallel execution)
     dotenv: [".env"]
@@ -544,7 +637,6 @@ tasks:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - uv run pytest services/scraper/tests -v
-
 
   service:scraper:test:e2e:
     desc: Run scraper service end-to-end tests
@@ -555,7 +647,9 @@ tasks:
     cmds:
       - uv run pytest services/scraper/tests/e2e/ -v
 
-
+  # ==============================================================================
+  # TERRAFORM AND CLOUD INFRASTRUCTURE
+  # ==============================================================================
 
   lint:terraform:
     desc: Run Terraform linters (fmt, validate, tflint, trivy)
@@ -573,6 +667,9 @@ tasks:
       - cmd: trivy config ./terraform
         ignore_error: true
 
+  # ==============================================================================
+  # CLOUD FUNCTIONS
+  # ==============================================================================
 
   cloud-functions:generate-requirements:
     desc: Generate requirements.txt files from pyproject.toml for cloud functions deployment
@@ -621,6 +718,9 @@ tasks:
     cmds:
       - task: cloud-functions:deploy
 
+  # ==============================================================================
+  # INTERNAL/HELPER TASKS
+  # ==============================================================================
 
   _dev:check:
     internal: true
@@ -745,7 +845,6 @@ tasks:
             exit 1
           "
         platforms: [windows]
-
 
   _packages:test:
     internal: true
