@@ -66,8 +66,8 @@ export function DeleteOrganizationModal({
 
 	return (
 		<div
-		aria-label="Close modal"
-		className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 border-none cursor-default" 
+			aria-label="Close modal"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 border-none cursor-default"
 			data-testid="delete-organization-modal-overlay"
 			onClick={handleClose}
 			onKeyDown={(e) => {
@@ -76,7 +76,6 @@ export function DeleteOrganizationModal({
 			role="button"
 			tabIndex={0}
 		>
-
 			<div
 				aria-labelledby="delete-organization-modal-title"
 				aria-modal="true"
@@ -110,9 +109,9 @@ export function DeleteOrganizationModal({
 							</button>
 						</div>
 						<p className="text-base leading-5 text-app-black font-body text-left">
-							You are about to permanently delete this  organisation
-							<span className="font-semibold px-1">{organizationName}</span> and all its associated data . This action cannot be undone.
-							
+							You are about to permanently delete this organisation
+							<span className="font-semibold px-1">{organizationName}</span> and all its associated data .
+							This action cannot be undone.
 						</p>
 					</div>
 

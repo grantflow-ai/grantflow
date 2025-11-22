@@ -127,7 +127,7 @@ export function NewApplicationClient() {
 								/>
 							))}
 						</div>
-						<StreamlineAttribution/>
+						<StreamlineAttribution />
 					</div>
 				</main>
 			</div>
