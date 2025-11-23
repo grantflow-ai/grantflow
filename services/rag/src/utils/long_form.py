@@ -307,7 +307,9 @@ async def generate_long_form_text(
             max_words=buffered_max_words,
             min_words=buffered_min_words,
             prompt_identifier=f"{prompt_identifier}_shorten_{attempts}",
-            task_description=SHORTEN_TEXT_PROMPT.to_string(text=compressed_text, words_overflow=words_overflow),
+            task_description=SHORTEN_TEXT_PROMPT.to_string(
+                text=compressed_text, words_overflow=words_overflow, MISSING_INFO_FORMAT=MISSING_INFO_FORMAT
+            ),
             model=model,
             timeout=timeout,
             trace_id=trace_id,
