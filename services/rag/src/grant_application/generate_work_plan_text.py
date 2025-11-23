@@ -449,9 +449,12 @@ async def generate_work_plan_component_text(
     elif not rag_results:
         rag_results = ["No relevant context found. Generate based on instructions and requirements."]
 
+    form_inputs_for_validation = (
+        msgspec.structs.asdict(form_inputs) if isinstance(form_inputs, msgspec.Struct) else form_inputs
+    )
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
-        sources={"rag_results": rag_results, "form_inputs": form_inputs},
+        sources={"rag_results": rag_results, "form_inputs": form_inputs_for_validation},
         max_length=max_words,
         trace_id=trace_id,
     ):
