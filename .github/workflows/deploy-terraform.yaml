@@ -70,7 +70,7 @@ jobs:
       frontend_digest: ${{ steps.artifacts.outputs.digest_frontend }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
@@ -234,7 +234,7 @@ jobs:
       plan_output: ${{ steps.plan.outputs.stdout }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python and UV
         uses: astral-sh/setup-uv@v7
@@ -401,7 +401,7 @@ jobs:
       TF_VAR_frontend_image_digest: ${{ needs.collect-build-info.outputs.frontend_digest }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python and UV
         uses: astral-sh/setup-uv@v7
