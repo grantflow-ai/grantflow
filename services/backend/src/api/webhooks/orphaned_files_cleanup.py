@@ -3,10 +3,10 @@ from typing import Any, Literal, TypedDict
 from litestar import post
 from litestar.response import Response
 from litestar.status_codes import HTTP_201_CREATED, HTTP_500_INTERNAL_SERVER_ERROR
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import RagFile
 from packages.shared_utils.src.gcs import get_bucket
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
@@ -34,7 +34,7 @@ async def handle_orphaned_files_cleanup_webhook(
         errors = 0
 
         async with session_maker() as session:
-            stmt = select(RagFile).where(RagFile.deleted_at.is_(None))
+            stmt = select_active(RagFile)
             rag_files = await session.scalars(stmt)
 
             orphaned_file_ids = []
