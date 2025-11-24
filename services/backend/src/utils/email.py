@@ -79,7 +79,7 @@ async def send_application_ready_email(
     docx_content = markdown_to_docx(application_text)
 
     template = jinja_env.get_template("application_ready.html")
-    site_url = get_env("SITE_URL", fallback="https://grantflow.ai")
+    site_url = get_env("SITE_URL", fallback="https://staging.grantflow.ai")
 
     html_content = template.render(
         application_title=application_title,

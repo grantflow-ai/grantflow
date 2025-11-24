@@ -159,6 +159,16 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
+      env {
+        name  = "PLAYWRIGHT_BROWSERS_PATH"
+        value = "/app/.cache/ms-playwright"
+      }
+
+      env {
+        name  = "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"
+        value = "0"
+      }
+
 
       volume_mounts {
         name       = "cloudsql"
