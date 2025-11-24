@@ -118,6 +118,7 @@ module "cloud_run" {
   memory_limit  = "1Gi"
 
   indexer_memory_limit      = "8Gi" # ~keep Indexer needs memory for document processing (increased from 4Gi due to OOM errors)
+  indexer_cpu_limit         = "2"   # ~keep 2 CPU required to support 8Gi memory (Cloud Run ratio: 1 CPU = max 4Gi)
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
   indexer_min_instances     = 1     # ~keep Always have at least 1 instance for availability
   indexer_max_instances     = 10    # ~keep Fanout pattern requires higher max instances to handle bursts

@@ -7,8 +7,8 @@ from packages.shared_utils.src.text import concatenate_segments_with_spacy_coher
 
 from services.rag.src.constants import MISSING_INFO_FORMAT
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
+from services.rag.src.utils.text_compression import compress_text
 
 logger = get_logger(__name__)
 
@@ -193,7 +193,7 @@ async def handle_long_form_text_generation(
 
     time()
     while api_call_num <= max_api_calls:
-        compressed_sources = compress_prompt_text(str(sources), aggressive=True)
+        compressed_sources = compress_text(str(sources), aggressive=True)
 
         full_prompt = LONG_FORM_GENERATION_USER_PROMPT.to_string(
             task_description=task_description,
@@ -301,7 +301,7 @@ async def generate_long_form_text(
     while long_form_length > max_words and attempts < max_shortening_attempts:
         words_overflow = long_form_length - max_words
 
-        compressed_text = compress_prompt_text(long_form_text, aggressive=True)
+        compressed_text = compress_text(long_form_text, aggressive=True)
 
         long_form_text = await handle_long_form_text_generation(
             max_words=buffered_max_words,

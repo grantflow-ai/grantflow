@@ -1,6 +1,6 @@
-from services.rag.src.utils.prompt_compression import (
-    compress_prompt_text,
+from services.rag.src.utils.text_compression import (
     compress_repetitive_phrases,
+    compress_text,
     compress_whitespace,
     estimate_compression_ratio,
 )
@@ -76,7 +76,7 @@ class TestCompressWhitespace:
 class TestCompressPromptText:
     def test_basic_compression(self) -> None:
         text = "The research methodology will comprehensively address various aspects. The research methodology will comprehensively address various aspects."
-        result = compress_prompt_text(text, aggressive=False)
+        result = compress_text(text, aggressive=False)
         assert len(result) < len(text)
         sentences = [s.strip() for s in result.split(".") if s.strip()]
         unique_sentences = {s.lower() for s in sentences}
@@ -84,30 +84,30 @@ class TestCompressPromptText:
 
     def test_aggressive_compression_short_text(self) -> None:
         text = "The research methodology will address various aspects of the study."
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
         assert "the" in result.lower()
 
     def test_aggressive_compression_long_text(self) -> None:
         text = " ".join(["The research methodology will comprehensively address various aspects."] * 100)
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
         assert len(result) < len(text)
         word_count_ratio = len(result.split()) / len(text.split())
         assert word_count_ratio < 0.8
 
     def test_compression_preserves_meaning(self) -> None:
         text = "This innovative research approach will utilize novel methodologies to comprehensively investigate protein interactions."
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
         assert "innovative" in result or "research" in result
         assert "protein" in result
         assert "interactions" in result
 
     def test_empty_text(self) -> None:
-        assert compress_prompt_text("") == ""
-        assert compress_prompt_text("   ") == ""
+        assert compress_text("") == ""
+        assert compress_text("   ") == ""
 
     def test_logging_reduction_calculation(self) -> None:
         text = "This is a sample text for testing compression ratios."
-        result = compress_prompt_text(text, aggressive=False)
+        result = compress_text(text, aggressive=False)
         assert isinstance(result, str)
         assert len(result) <= len(text)
 
@@ -143,7 +143,7 @@ class TestIntegrationScenarios:
         address various aspects of protein folding mechanisms.
         """
 
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
 
         assert "protein" in result
         assert "folding" in result
@@ -160,7 +160,7 @@ class TestIntegrationScenarios:
         24 months with interim analysis at month 12.
         """
 
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
 
         assert "500" in result
         assert "12" in result
@@ -176,7 +176,7 @@ class TestIntegrationScenarios:
         Electroporation parameters include 1200V, 20ms pulse duration, with 2x10^6 cells.
         """
 
-        result = compress_prompt_text(text, aggressive=True)
+        result = compress_text(text, aggressive=True)
 
         assert "CRISPR-Cas9" in result
         assert "genome" in result or "genomic" in result
@@ -193,7 +193,7 @@ class TestIntegrationScenarios:
         """
         large_text = base_text * 50
 
-        result = compress_prompt_text(large_text, aggressive=True)
+        result = compress_text(large_text, aggressive=True)
 
         compression_ratio = len(result) / len(large_text)
         assert compression_ratio < 0.7

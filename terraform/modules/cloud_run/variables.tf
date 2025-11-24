@@ -140,6 +140,12 @@ variable "indexer_memory_limit" {
   default     = ""
 }
 
+variable "indexer_cpu_limit" {
+  description = "CPU allocation for indexer service (defaults to cpu_limit if not set)"
+  type        = string
+  default     = ""
+}
+
 variable "indexer_concurrency_limit" {
   description = "Maximum concurrent requests per indexer instance (defaults to concurrency_limit if not set)"
   type        = number

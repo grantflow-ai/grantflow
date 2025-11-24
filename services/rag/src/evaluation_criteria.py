@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, NotRequired, TypedDict
 
-from packages.db.src.json_objects import GrantLongFormSection
+from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection
 
 from services.rag.src.constants import INITIAL_PASSING_SCORE, MAX_RETRIES, MISSING_INFO_INSTRUCTION, SCORE_INCREMENT
 from services.rag.src.utils.evaluation import EvaluationCriterion
@@ -426,7 +426,7 @@ def get_evaluation_kwargs[T](
     section_config: GrantLongFormSection | None = None,
     rag_context: Any | None = None,
     research_objectives: Any | None = None,
-    cfp_analysis: Any | None = None,
+    cfp_analysis: CFPAnalysis | None = None,
     is_json_content: bool = False,
     **additional_context: Any,
 ) -> EvaluationKwargs[T]:

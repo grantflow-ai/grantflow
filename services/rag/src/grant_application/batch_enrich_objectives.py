@@ -18,8 +18,8 @@ from services.rag.src.grant_application.enrich_research_objective import (
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.src.utils.text_compression import compress_text
 from services.rag.src.utils.token_optimization import estimate_prompt_tokens
 
 logger = get_logger(__name__)
@@ -91,7 +91,7 @@ async def perform_shared_retrieval(
     )
 
     raw_context = "\n".join(retrieval_result)
-    return compress_prompt_text(raw_context, aggressive=True)
+    return compress_text(raw_context, aggressive=True)
 
 
 async def handle_batch_enrich_objectives(

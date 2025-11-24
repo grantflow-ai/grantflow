@@ -11,10 +11,10 @@ from services.rag.src.autofill.constants import (
     TEMPERATURE,
 )
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
+from services.rag.src.utils.text_compression import compress_text
 
 logger = get_logger(__name__)
 
@@ -422,7 +422,7 @@ async def generate_research_plan_content(application: GrantApplication, trace_id
     )
 
     raw_context = "\n".join(retrieval_results)
-    compressed_context = compress_prompt_text(raw_context, aggressive=True)
+    compressed_context = compress_text(raw_context, aggressive=True)
 
     logger.debug(
         "Prepared and compressed context for research plan generation",

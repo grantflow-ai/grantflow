@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
+from services.rag.src.utils.text_compression import compress_text
 
 logger = get_logger(__name__)
 
@@ -342,7 +342,7 @@ async def refine_objective_enrichment(
         else dto["form_inputs"]
     )
 
-    compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)
+    compressed_context = compress_text(dto["retrieval_context"], aggressive=True)
 
     refinement_prompt = ENRICH_RESEARCH_OBJECTIVE_REFINEMENT_PROMPT.substitute(
         objective_and_tasks=dto["research_objective"],
@@ -383,7 +383,7 @@ async def handle_enrich_objective(
         form_inputs=form_inputs_dict,
     )
 
-    compressed_context = compress_prompt_text(dto["retrieval_context"], aggressive=True)
+    compressed_context = compress_text(dto["retrieval_context"], aggressive=True)
 
     logger.debug(
         "Prepared and compressed context for objective enrichment",
