@@ -53,7 +53,7 @@ functions = [
   "db",
   "functions-framework>=3.8.2",
   "google-cloud-pubsub>=2.31.0",
-  "msgspec>=0.19.0",
+  "msgspec>=0.20.0",
   "shared-utils",
   "sqlalchemy[asyncio]>=2.0.41",
   "structlog>=25.4.0",

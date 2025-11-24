@@ -15,7 +15,7 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 
 dependencies = [
   "anyio>=4.9",
-  "msgspec>=0.19",
+  "msgspec>=0.20",
   "structlog>=25.2",
   "tenacity>=9",
 ]
