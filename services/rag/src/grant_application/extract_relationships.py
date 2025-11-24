@@ -14,9 +14,9 @@ from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.src.utils.text_compression import compress_text
 
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
@@ -372,7 +372,7 @@ async def handle_extract_relationships(
         trace_id=trace_id,
     )
 
-    compressed_rag_results = compress_prompt_text("\n".join(rag_results), aggressive=True)
+    compressed_rag_results = compress_text("\n".join(rag_results), aggressive=True)
 
     logger.debug(
         "Prepared and compressed RAG results for relationship extraction",

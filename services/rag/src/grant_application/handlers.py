@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Final, cast
 
 from packages.db.src.json_objects import ResearchDeepDive, TranslationalResearchDeepDive
 from packages.shared_utils.src.constants import NotificationEvents
-from packages.shared_utils.src.exceptions import ValidationError
+from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 from packages.shared_utils.src.text import normalize_markdown
@@ -95,12 +95,10 @@ async def handle_generate_sections_stage(
     generation_coroutines = [
         handle_generate_section_text(
             section=section,
-            research_deep_dives=grant_application.research_objectives or [],
+            form_inputs=grant_application.form_inputs,
             shared_context=shared_context,
             cfp_analysis=cast("CFPAnalysis", grant_application.grant_template.cfp_analysis),
             research_plan_text=research_plan_text,
-            enrichment_responses=enrichment_responses,
-            relationships=relationships,
             trace_id=trace_id,
             job_manager=job_manager,
         )
@@ -119,16 +117,18 @@ async def handle_generate_sections_stage(
 
         if isinstance(result, Exception):
             error_type = type(result).__name__
+            error_details = str(result) if isinstance(result, BackendError) else ""
             logger.error(
                 "Section generation failed",
                 section_id=section_id,
                 section_title=section["title"],
                 error_type=error_type,
                 error=str(result),
+                error_detail=error_details,
                 trace_id=trace_id,
             )
             section_texts[section_id] = (
-                f"[Failed to generate {section['title']} section: {error_type}. Manual completion required.]"
+                f"[Failed to generate {section['title']} section: {error_details}. Manual completion required.]"
             )
             failed_sections.append({"id": section_id, "title": section["title"], "error": error_type})
         else:

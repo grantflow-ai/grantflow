@@ -350,7 +350,7 @@ resource "google_cloud_run_v2_service" "indexer" {
 
       resources {
         limits = {
-          cpu    = var.cpu_limit
+          cpu    = var.indexer_cpu_limit != "" ? var.indexer_cpu_limit : var.cpu_limit
           memory = var.indexer_memory_limit != "" ? var.indexer_memory_limit : var.memory_limit
         }
       }

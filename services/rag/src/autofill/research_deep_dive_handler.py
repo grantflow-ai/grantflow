@@ -8,10 +8,10 @@ from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.autofill.constants import MAX_RETRIEVAL_TOKENS, TEMPERATURE
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
+from services.rag.src.utils.text_compression import compress_text
 
 logger = get_logger(__name__)
 
@@ -311,7 +311,7 @@ async def generate_research_deep_dive_content(application: GrantApplication, tra
     )
     shared_context_text = "\n".join(shared_context)
 
-    compressed_context = compress_prompt_text(shared_context_text, aggressive=True)
+    compressed_context = compress_text(shared_context_text, aggressive=True)
 
     logger.debug(
         "Prepared shared context for deep dive generation",
