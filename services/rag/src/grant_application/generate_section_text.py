@@ -1,7 +1,12 @@
 from functools import partial
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 
-from packages.db.src.json_objects import CFPAnalysis, GrantLongFormSection, ResearchObjective
+from packages.db.src.json_objects import (
+    CFPAnalysis,
+    GrantLongFormSection,
+    ResearchDeepDive,
+    TranslationalResearchDeepDive,
+)
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
@@ -9,9 +14,9 @@ from services.rag.src.evaluation_criteria import get_evaluation_kwargs
 from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.lengths import compute_word_bounds, constraint_to_word_limit
 from services.rag.src.utils.long_form import generate_long_form_text
-from services.rag.src.utils.prompt_compression import compress_prompt_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.source_validation import handle_source_validation
+from services.rag.src.utils.text_compression import compress_text
 
 if TYPE_CHECKING:
     from services.rag.src.grant_application.dto import StageDTO
@@ -88,94 +93,94 @@ def _get_section_length_requirements(section: GrantLongFormSection) -> str:
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="section_generation",
     template="""
-You are a professional grant writer and scientific editor embedded in a system designed to produce high-quality, funder-compliant research sections.
+    You are a professional grant writer and scientific editor embedded in a system designed to produce high-quality, funder-compliant research sections.
 
-Your role is to read, reason, and write the **${section_title}** section for a grant application using the information below.
+    Your role is to read, reason, and write the **${section_title}** section for a grant application using the information below.
 
----
+    ---
 
-## Reasoning Pipeline
+    ## Reasoning Pipeline
 
-### 1. **Read**
-Carefully read and understand all provided materials:
-- CFP requirements, section definition, and length constraints
-- Research objectives and their contexts
-- Relationships between objectives and tasks
-- Scientific literature and RAG context
-- Research plan and prior sections
-- Keywords and topics
+    ### 1. **Read**
+    Carefully read and understand all provided materials:
+    - CFP requirements, section definition, and length constraints
+    - Research objectives and their contexts
+    - Relationships between objectives and tasks
+    - Scientific literature and RAG context
+    - Research plan and prior sections
+    - Keywords and topics
 
-> Your task is to internalize this information before writing. Do not skip or summarize at this stage-read to comprehend purpose, scope, and expectations.
+    > Your task is to internalize this information before writing. Do not skip or summarize at this stage-read to comprehend purpose, scope, and expectations.
 
----
+    ---
 
-### 2. **Identify**
-Identify the following from your reading:
-- The **scientific focus** and purpose of this section (what question or challenge it addresses).
-- The **key requirements** and constraints from the CFP text.
-- The **most relevant objectives, methods, and results** that this section must connect to.
-- Which specific **research goals and tasks** from the work plan are directly applicable to this section's scope.
-- Critical **examples, evidence, or researcher names** mentioned in the scientific literature-use them to substantiate how the research can accomplish the identified goals.
-- Any **missing but logically implied links** between objectives or methods.
+    ### 2. **Identify**
+    Identify the following from your reading:
+    - The **scientific focus** and purpose of this section (what question or challenge it addresses).
+    - The **key requirements** and constraints from the CFP text.
+    - The **most relevant objectives, methods, and results** that this section must connect to.
+    - Which specific **research goals and tasks** from the work plan are directly applicable to this section's scope.
+    - Critical **examples, evidence, or researcher names** mentioned in the scientific literature-use them to substantiate how the research can accomplish the identified goals.
+    - Any **missing but logically implied links** between objectives or methods.
 
-Record mentally how each of these supports the section's purpose and evaluation criteria.
+    Record mentally how each of these supports the section's purpose and evaluation criteria.
 
----
+    ---
 
-### 3. **Reason**
-Before writing, plan how to structure your section:
-- Decide what the introduction, core argument, and conclusion will cover.
-- Connect CFP requirements to the scientific rationale, showing how the section fulfills them.
-- Ensure alignment with the Research Plan (e.g., references like *"as described in Objective 2, Task 2.3"*).
-- Determine which research goals and tasks are directly relevant to this section's purpose. Plan to incorporate them only where they strengthen the scientific argument.
-- Integrate retrieved scientific data and terminology naturally. Use the evidence to show that the proposed objectives are achievable and well-grounded.
-- Use concrete examples, results, and methodological details-these are the best proof of credibility.
-- Ensure that the section is coherent, realistic, and measurable.
+    ### 3. **Reason**
+    Before writing, plan how to structure your section:
+    - Decide what the introduction, core argument, and conclusion will cover.
+    - Connect CFP requirements to the scientific rationale, showing how the section fulfills them.
+    - Ensure alignment with the Research Plan (e.g., references like *"as described in Objective 2, Task 2.3"*).
+    - Determine which research goals and tasks are directly relevant to this section's purpose. Plan to incorporate them only where they strengthen the scientific argument.
+    - Integrate retrieved scientific data and terminology naturally. Use the evidence to show that the proposed objectives are achievable and well-grounded.
+    - Use concrete examples, results, and methodological details-these are the best proof of credibility.
+    - Ensure that the section is coherent, realistic, and measurable.
 
----
+    ---
 
-### 4. **Write**
-Write the full section text following these principles:
-- **Clarity & Structure**: Use markdown (## for main headings, ### for subsections).
-- **Depth**: Include specific hypotheses, methods, data sources, expected outcomes, and challenges.
-- **Integration**: Quote or paraphrase scientific evidence from the context.
-- **Consistency**: Align with the Research Plan and objectives without contradictions.
-- **Goals & Tasks**: When relevant to the section, reference specific research objectives or tasks from the work plan. Adapt the language to fit naturally within the academic tone, and cite details only when supported by the scientific literature context. Demonstrate how the proposed research, grounded in the provided evidence, can feasibly achieve the stated goals.
-- **Style**: Maintain academic tone, precise terminology, and professional flow.
-- **Length**: Stay within ${length_requirements}.
+    ### 4. **Write**
+    Write the full section text following these principles:
+    - **Clarity & Structure**: Use markdown (## for main headings, ### for subsections).
+    - **Depth**: Include specific hypotheses, methods, data sources, expected outcomes, and challenges.
+    - **Integration**: Quote or paraphrase scientific evidence from the context.
+    - **Consistency**: Align with the Research Plan and objectives without contradictions.
+    - **Goals & Tasks**: When relevant to the section, reference specific research objectives or tasks from the work plan. Adapt the language to fit naturally within the academic tone, and cite details only when supported by the scientific literature context. Demonstrate how the proposed research, grounded in the provided evidence, can feasibly achieve the stated goals.
+    - **Style**: Maintain academic tone, precise terminology, and professional flow.
+    - **Length**: Stay within ${length_requirements}.
 
----
+    ---
 
-## Input Materials
+    ## Input Materials
 
-### Section Instructions
-${instructions}
+    ### Section Instructions
+    ${instructions}
 
-### Focus Areas
-${keywords}
+    ### Focus Areas
+    ${keywords}
 
-### Key Topics
-${topics}
+    ### Key Topics
+    ${topics}
 
-### CFP Definition and Requirements
-${cfp_requirements}
+    ### CFP Definition and Requirements
+    ${cfp_requirements}
 
----
+    ---
 
-## Research Materials
+    ## Research Materials
 
-### Scientific Literature Context
-${context}
+    ### Scientific Literature Context
+    ${context}
 
-### Research Plan and Relationships
-${research_plan_context}
+    ### Research Plan
+    ${research_plan_context}
 
----
+    ---
 
-### Output Requirements
-- Deliver a **fully written section** ready for submission.
-- Do **not** include notes, reflections, or internal reasoning-only the final polished text.
-- Ensure the text is self-contained, logically ordered, and persuasive.
+    ### Output Requirements
+    - Deliver a **fully written section** ready for submission.
+    - Do **not** include notes, reflections, or internal reasoning-only the final polished text.
+    - Ensure the text is self-contained, logically ordered, and persuasive.
 """,
 )
 
@@ -192,12 +197,10 @@ async def generate_section_text(task_description: str, *, trace_id: str, min_wor
 
 async def handle_generate_section_text(
     section: GrantLongFormSection,
-    research_deep_dives: list[ResearchObjective],
+    form_inputs: ResearchDeepDive | TranslationalResearchDeepDive | None,
     shared_context: str,
     cfp_analysis: CFPAnalysis,
     research_plan_text: str,
-    enrichment_responses: list[Any],  # noqa: ARG001
-    relationships: dict[str, list[tuple[str, str]]],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -215,58 +218,8 @@ async def handle_generate_section_text(
         section_title=section_title,
         max_words=max_words,
         shared_context_chars=len(shared_context),
-        research_objectives_count=len(research_deep_dives),
         trace_id=trace_id,
     )
-
-    research_context_parts = [
-        f"""
-        ## Research Objective {research_objective["number"]}: {research_objective["title"]}
-
-        **Objective Details:**
-        {research_objective.get("description", research_objective["title"])}
-
-        **Research Context:**
-        {research_objective.get("enriched_text", "No additional context available.")}
-
-        **Key Elements:**
-        - Research Focus: {research_objective.get("focus_area", "Not specified")}
-        - Methodology: {research_objective.get("methodology", "To be determined")}
-        - Expected Outcomes: {research_objective.get("expected_outcomes", "Detailed outcomes to be defined")}
-        """
-        for research_objective in research_deep_dives
-    ]
-
-    research_context = "\n\n".join(research_context_parts)
-
-    relationships_context = (
-        "\n## Key Relationships Between Research Components\n" + "\n".join(rel_parts[:10])
-        if (
-            rel_parts := [
-                f"- {source} -> {target}: {description}"
-                for source, targets in relationships.items()
-                for target, description in targets
-            ]
-        )
-        else ""
-    )
-
-    combined_context = f"""
-# Scientific Research Papers Context
-
-{shared_context}
-
-# Research Objectives (Detailed)
-
-{research_context}
-"""
-
-    research_plan_context_parts = [f"# Approved Research Plan\n\n{research_plan_text}"]
-
-    if relationships_context:
-        research_plan_context_parts.append(relationships_context)
-
-    formatted_research_plan_context = "\n\n".join(research_plan_context_parts)
 
     task_description = f"Generate the {section_title} section. Instructions: {section['generation_instructions']}"
     validation_error = await handle_source_validation(
@@ -274,7 +227,7 @@ async def handle_generate_section_text(
         max_length=max_words,
         minimum_percentage=MIN_WORDS_RATIO * 100,
         retrieval_context=shared_context,
-        research_context=research_context,
+        research_plan_text=research_plan_text,
         trace_id=trace_id,
     )
     if validation_error:
@@ -285,29 +238,20 @@ async def handle_generate_section_text(
             trace_id=trace_id,
         )
 
-    validated_context = combined_context
-
     cfp_requirements_text = _format_cfp_requirements_for_section(section)
     length_requirements = _get_section_length_requirements(section)
 
-    keywords_str = ", ".join(section.get("keywords", []))
-    topics_str = ", ".join(section.get("topics", []))
-
-    compressed_context = compress_prompt_text(validated_context, aggressive=True)
-    compressed_research_plan = compress_prompt_text(formatted_research_plan_context, aggressive=True)
-
+    compressed_research_plan = compress_text(research_plan_text)
     logger.debug(
         "Prepared and compressed context for section generation",
         section_id=section["id"],
         section_title=section_title,
-        original_context_chars=len(validated_context),
-        compressed_context_chars=len(compressed_context),
-        original_research_plan_chars=len(formatted_research_plan_context),
+        original_research_plan_chars=len(research_plan_text),
         compressed_research_plan_chars=len(compressed_research_plan),
         cfp_requirements_chars=len(cfp_requirements_text),
         has_cfp_requirements=bool(cfp_requirements_text),
-        keywords=keywords_str,
-        topics=topics_str,
+        keywords=section.get("keywords", []),
+        topics=section.get("topics", []),
         trace_id=trace_id,
     )
 
@@ -315,10 +259,9 @@ async def handle_generate_section_text(
         section_title=section_title,
         length_requirements=length_requirements,
         instructions=section["generation_instructions"],
-        keywords=keywords_str,
-        topics=topics_str,
+        keywords=section.get("keywords", []),
+        topics=section.get("topics", []),
         cfp_requirements=cfp_requirements_text,
-        context=compressed_context,
         research_plan_context=compressed_research_plan,
     )
 
@@ -333,7 +276,7 @@ async def handle_generate_section_text(
             job_manager,
             section_config=section,
             rag_context=shared_context,
-            research_objectives=research_deep_dives,
+            research_objectives=form_inputs,
             cfp_analysis=cfp_analysis,
         ),
     )
