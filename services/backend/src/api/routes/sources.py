@@ -10,6 +10,7 @@ from litestar.types import Method, OperationIDCreator
 from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.query_helpers import select_active_by_id
 from packages.db.src.tables import (
     GenerationNotification,
     GrantApplication,
@@ -179,11 +180,9 @@ async def handle_create_rag_source(
                 query = (
                     select(RagSource)
                     .join(rag_url_alias, RagSource.id == rag_url_alias.id)
-                    .where(
-                        rag_url_alias.url == normalized_url,
-                        RagSource.deleted_at.is_(None),
-                    )
+                    .where(rag_url_alias.url == normalized_url)
                 )
+                query = query.where(RagSource.deleted_at.is_(None))
 
                 if parent_constraint is not None:
                     query = query.where(RagSource.id.in_(parent_constraint))
@@ -642,7 +641,7 @@ async def handle_create_download_url(
     trace_id = get_trace_id(request)
 
     async with session_maker() as session:
-        rag_file = await session.scalar(select(RagFile).where(RagFile.id == source_id))
+        rag_file = await session.scalar(select_active_by_id(RagFile, source_id))
 
         if not rag_file:
             raise NotFoundException(f"RAG file with source_id {source_id} not found")
