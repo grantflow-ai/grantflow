@@ -117,22 +117,22 @@ module "cloud_run" {
   cpu_limit     = "1"
   memory_limit  = "1Gi"
 
-  indexer_memory_limit      = "4Gi" # ~keep Indexer needs memory for document processing (increased from 2Gi due to OOM errors)
+  indexer_memory_limit      = "8Gi" # ~keep Indexer needs memory for document processing (increased from 4Gi due to OOM errors)
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
   indexer_min_instances     = 1     # ~keep Always have at least 1 instance for availability
-  indexer_max_instances     = 2     # ~keep Updated for staging environment
+  indexer_max_instances     = 10    # ~keep Fanout pattern requires higher max instances to handle bursts
 
   crawler_memory_limit      = "2Gi" # ~keep Reduced memory since processing one URL at a time
   crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
   crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
   crawler_min_instances     = 1     # ~keep Always have at least 1 instance for availability
-  crawler_max_instances     = 2     # ~keep Updated for staging environment
+  crawler_max_instances     = 10    # ~keep Fanout pattern requires higher max instances to handle bursts
 
   rag_memory_limit      = "4Gi" # ~keep Increased memory for AI context windows
   rag_cpu_limit         = "1"   # ~keep Single CPU sufficient for async I/O operations
   rag_concurrency_limit = 1     # ~keep ONE message per instance for AI workloads
   rag_min_instances     = 1     # ~keep Always have at least 1 instance for availability
-  rag_max_instances     = 3     # ~keep Increased for handling cold start issues and concurrent requests
+  rag_max_instances     = 10    # ~keep Fanout pattern requires higher max instances to handle bursts
 
   scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
 
