@@ -37,7 +37,7 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
 from packages.shared_utils.src.url_utils import normalize_url
 from sqlalchemy import insert, select
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy.exc import NoResultFound, OperationalError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased, with_polymorphic
 
@@ -429,6 +429,7 @@ async def handle_delete_rag_source(
                     GrantTemplateSource.grant_template_id == template_id,
                     rag_poly.id == source_id,
                 )
+                .with_for_update(nowait=True)
             )
         elif application_id:
             statement = (
@@ -438,6 +439,7 @@ async def handle_delete_rag_source(
                     GrantApplicationSource.grant_application_id == application_id,
                     rag_poly.id == source_id,
                 )
+                .with_for_update(nowait=True)
             )
         else:
             institution_id = granting_institution_id if granting_institution_id else organization_id
@@ -448,11 +450,21 @@ async def handle_delete_rag_source(
                     GrantingInstitutionSource.granting_institution_id == institution_id,
                     rag_poly.id == source_id,
                 )
+                .with_for_update(nowait=True)
             )
 
         try:
             result = await session.execute(statement)
             source = result.scalar_one()
+
+            # Idempotency: if already deleted, return success without error
+            if source.deleted_at is not None:
+                logger.info(
+                    "Source already deleted, returning success",
+                    source_id=source_id,
+                    deleted_at=source.deleted_at,
+                )
+                return
 
             if template_id:
                 audit_org_id = await session.scalar(
@@ -556,6 +568,20 @@ async def handle_delete_rag_source(
 
         except NoResultFound as e:
             raise NotFoundException from e
+        except OperationalError as e:
+            # Handle NOWAIT lock timeout - row is locked by another transaction
+            if "could not obtain lock" in str(e).lower() or "lock_timeout" in str(e).lower():
+                logger.warning(
+                    "Source is locked by another transaction, returning conflict",
+                    source_id=source_id,
+                    error=str(e),
+                )
+                raise DatabaseError(
+                    "Source is currently being modified by another request", context={"source_id": str(source_id)}
+                ) from e
+            # Re-raise other operational errors
+            logger.error("Operational error deleting RAG source", source_id=source_id, exc_info=e)
+            raise DatabaseError("Error deleting RAG source", context=str(e)) from e
         except SQLAlchemyError as e:
             logger.error("Error deleting RAG source", source_id=source_id, exc_info=e)
             raise DatabaseError("Error deleting RAG source", context=str(e)) from e
