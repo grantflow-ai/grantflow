@@ -12,7 +12,7 @@ export default async function NewPredefinedTemplatePage() {
 	const institutions = await listGrantingInstitutions();
 
 	return (
-		<AdminGrantingInstitutionClient activeTab="predefined-templates">
+		<AdminGrantingInstitutionClient activeTab="templates">
 			<div className="flex flex-col h-full" data-testid="predefined-template-new-page">
 				<div className="px-4 sm:px-6 md:px-8 lg:px-10 py-4">
 					<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

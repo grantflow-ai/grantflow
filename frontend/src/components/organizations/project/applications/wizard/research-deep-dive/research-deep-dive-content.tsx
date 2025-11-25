@@ -163,7 +163,7 @@ function AnswerCard({
 						setDirtyQuestion(selectedQuestion);
 						handleSaveDebounced();
 					}}
-					placeholder={placeholders[questionKey as FormInputKeys]}
+					placeholder={placeholders[questionKey]}
 					testId="research-deep-dive-answer"
 					value={answerValue}
 				/>
