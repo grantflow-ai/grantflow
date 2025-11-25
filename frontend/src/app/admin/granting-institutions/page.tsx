@@ -18,7 +18,7 @@ export default async function GrantingInstitutionsPage() {
 	const EMPTY_PROJECTS: Awaited<ReturnType<typeof getProjects>> = []
 	const organizations = await getOrganizations();
 	const selectedOrganisationId = 
-	(await getSelectedOrgFromCookies()) ?? (organizations.length > 0 ? organizations[0].id: null)
+	(await getSelectedOrgFromCookies()) ?? (organizations?.[0]?.id ?? null)
 	let initialProjects = EMPTY_PROJECTS
 	if(selectedOrganisationId){
 		try{
