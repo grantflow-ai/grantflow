@@ -34,7 +34,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Run Crawler E2E Tests (Smoke)
               uses: ./.github/actions/run-python-e2e-tests
@@ -70,7 +70,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Run Crawler E2E Tests (Quality Assessment)
               uses: ./.github/actions/run-python-e2e-tests
@@ -106,7 +106,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Run Crawler E2E Tests (Full)
               uses: ./.github/actions/run-python-e2e-tests
