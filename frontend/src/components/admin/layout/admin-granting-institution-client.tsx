@@ -23,7 +23,7 @@ interface AdminGrantingInstitutionClientProps {
 export function AdminGrantingInstitutionClient({
   activeTab,
   children,
-  projectTeamMembers = [],
+  projectTeamMembers,
 }: AdminGrantingInstitutionClientProps) {
   const router = useRouter();
   const {
@@ -74,11 +74,11 @@ export function AdminGrantingInstitutionClient({
                 <div className="flex items-center gap-2">
                   <div className="size-8 flex justify-center items-center">
                     <Image
-                      src="/icons/account_balance.svg"
                       alt="Account Balance Icon"
-                      width={26.67}
-                      height={26.67}
                       className="your-custom-tailwind-classes"
+                      height={26.67}
+                      src="/icons/account_balance.svg"
+                      width={26.67}
                     />
                   </div>
                   <h1 className="font-medium text-[36px] leading-[42px] text-app-black">

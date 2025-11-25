@@ -6,14 +6,15 @@ import { Notification } from "@/components/organizations/dashboard/notification"
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface AppHeaderProps {
-	projectTeamMembers: {
+	projectTeamMembers?: {
 		backgroundColor: string;
 		imageUrl?: string;
 		initials: string;
-	}[];
+	}[] | undefined;
 }
 
-export default function AppHeader({ projectTeamMembers }: AppHeaderProps) {
+// eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+export default function AppHeader({ projectTeamMembers = [] }: AppHeaderProps) {
 	const [isNotificationOpen, setNotificationOpen] = useState(false);
 	const notificationRef = useRef<HTMLButtonElement>(null);
 	useOnClickOutside(notificationRef, () => {

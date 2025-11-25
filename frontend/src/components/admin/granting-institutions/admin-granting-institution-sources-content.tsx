@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
+
 import { Globe, Trash2 } from "lucide-react";
 
 import { RagSourceFileUploader } from "@/components/shared/rag-source-file-uploader";
@@ -31,7 +31,7 @@ export function AdminGrantingInstitutionSourcesContent() {
   } = useGrantingInstitutionStore();
 
   useEffect(() => {
-    if (grantingInstitution?.id) {
+    if (grantingInstitution) {
       setInstitutionId(grantingInstitution.id);
       void loadData();
     }
@@ -39,7 +39,7 @@ export function AdminGrantingInstitutionSourcesContent() {
     return () => {
       reset();
     };
-  }, [grantingInstitution?.id, setInstitutionId, loadData, reset]);
+  }, [grantingInstitution, setInstitutionId, loadData, reset]);
 
   useEffect(() => {
     const hasIndexingSources = sources.some(
@@ -158,12 +158,12 @@ export function AdminGrantingInstitutionSourcesContent() {
                 
                 return (
                   <div 
-                    key={file.id} 
-                    className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow"
+                    className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow" 
+                    key={file.id}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="flex-shrink-0 w-8 flex justify-center">
-                        {FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] || FILE_ICON_MAP["txt"]}
+                        {FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-app-black" title={file.name}>
@@ -175,8 +175,8 @@ export function AdminGrantingInstitutionSourcesContent() {
                     
                     <div className="ml-2 flex-shrink-0">
                       <button 
-                        onClick={() => isPending ? removePendingUpload(file.id) : handleDeleteSource(file.id)}
                         className="p-2 hover:bg-app-red/10 rounded-full text-app-gray-400 hover:text-app-red transition-colors"
+                        onClick={() => { isPending ? removePendingUpload(file.id) : void handleDeleteSource(file.id); }}
                         title="Remove file"
                         type="button"
                       >
@@ -195,9 +195,9 @@ export function AdminGrantingInstitutionSourcesContent() {
             <div className="w-full max-w-sm">
              <RagSourceUrlInput
               existingUrls={existingUrls}
+              hideLabel
               onUrlAdd={handleUrlAdd}
               testId="admin-sources-url-input"
-              hideLabel
             />
             </div>
           </header>
@@ -207,10 +207,12 @@ export function AdminGrantingInstitutionSourcesContent() {
                 No links added yet
               </div>
             ) : (
+               
+               
               urls.map((urlItem) => (
                 <div 
-                  key={urlItem.sourceId} 
-                  className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow"
+                  className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow" 
+                  key={urlItem.sourceId}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex-shrink-0 w-8 flex justify-center">
@@ -218,10 +220,10 @@ export function AdminGrantingInstitutionSourcesContent() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <a 
+                        className="truncate text-sm font-medium text-app-black hover:underline block"
                         href={urlItem.url}
-                        target="_blank"
                         rel="noopener noreferrer" 
-                        className="truncate text-sm font-medium text-app-black hover:underline block" 
+                        target="_blank" 
                         title={urlItem.url}
                       >
                         {urlItem.url}
@@ -231,8 +233,8 @@ export function AdminGrantingInstitutionSourcesContent() {
                   
                   <div className="ml-2 flex-shrink-0">
                     <button 
-                      onClick={() => handleDeleteSource(urlItem.sourceId)}
                       className="p-2 hover:bg-app-red/10 rounded-full text-app-gray-400 hover:text-app-red transition-colors"
+                      onClick={() => handleDeleteSource(urlItem.sourceId)}
                       title="Remove link"
                       type="button"
                     >

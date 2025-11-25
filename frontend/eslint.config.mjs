@@ -6,6 +6,7 @@ import eslintJS from "@eslint/js";
 import sonarjs from 'eslint-plugin-sonarjs';
 
 import biomeConfig from "eslint-config-biome";
+ 
 
 import nextConfig from "eslint-config-next";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";

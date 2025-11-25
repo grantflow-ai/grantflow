@@ -86,6 +86,7 @@ export async function trackPageView(pageName: string, properties: Record<string,
 
 	const event = pageViewEvents[pageName];
 
+	 
 	if (!event) {
 		log.warn("Unknown page view", { pageName });
 		return;

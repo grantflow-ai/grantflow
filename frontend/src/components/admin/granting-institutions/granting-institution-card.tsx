@@ -19,7 +19,7 @@ export function GrantingInstitutionCard({
   onView,
 }: GrantingInstitutionCardProps) {
   return (
-    <div
+    <button
       className={cn(
         "relative flex  flex-col rounded-[4px] space-y-6 border  p-6 bg-preview-bg transition-all",
         isSelected
@@ -28,7 +28,13 @@ export function GrantingInstitutionCard({
         "cursor-pointer" // New: Add cursor-pointer class
       )}
       data-testid={`granting-institution-card-${institution.id}`}
-      onClick={() => onView(institution.id, institution.full_name)} // New: Add onClick handler
+      onClick={() => { onView(institution.id, institution.full_name); }} // New: Add onClick handler
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          onView(institution.id, institution.full_name);
+        }
+      }}
+      type="button"
     >
       <header className="flex flex-col gap-3 ">
         <div className="flex items-start justify-between">
@@ -51,10 +57,10 @@ export function GrantingInstitutionCard({
         <div className="flex items-center gap-2">
           <div className="size-4 flex items-center justify-center">
             <Image
+              alt="Institution"
+              height={13.33}
               src="/icons/account_balance.svg"
               width={13.33}
-              height={13.33}
-              alt="Institution"
             />
           </div>
           <h3
@@ -100,10 +106,10 @@ export function GrantingInstitutionCard({
           <div className="w-fit bg-[#DEDDFD] px-1 py-0.5 flex gap-1 rounded-[4px] items-center">
             <div className="size-3.5 flex items-center justify-center">
               <Image
+                alt="Source"
+                height={12.83}
                 src="/icons/source.svg"
                 width={11.08}
-                height={12.83}
-                alt="Source"
               />
             </div>
             <span className="text-sm font-normal  font-sans text-black">
@@ -116,10 +122,10 @@ export function GrantingInstitutionCard({
           <div className="w-fit bg-[#DEDDFD] px-1 py-[2px] flex gap-1 rounded-[4px] items-center">
             <div className="size-3.5 flex items-center justify-center">
               <Image
+                alt="Template"
+                height={11.67}
                 src="/icons/template.svg"
                 width={9.33}
-                height={11.67}
-                alt="Template"
               />
             </div>
             <span className="text-sm font-normal  font-sans text-black">
@@ -131,8 +137,8 @@ export function GrantingInstitutionCard({
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-2"></div>
+        <div className="ml-auto flex items-center gap-2" />
       </main>
-    </div>
+    </button>
   );
 }

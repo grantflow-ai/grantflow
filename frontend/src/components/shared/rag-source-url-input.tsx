@@ -8,12 +8,12 @@ import { isValidUrl } from "@/utils/validation";
 
 interface RagSourceUrlInputProps {
 	existingUrls?: string[];
+	hideLabel?: boolean;
 	onUrlAdd: (url: string) => Promise<void>;
 	testId?: string;
-	hideLabel?: boolean;
 }
 
-export function RagSourceUrlInput({ existingUrls = [], onUrlAdd, testId, hideLabel }: RagSourceUrlInputProps) {
+export function RagSourceUrlInput({ existingUrls = [], hideLabel, onUrlAdd, testId }: RagSourceUrlInputProps) {
 	const [urlInput, setUrlInput] = useState("");
 	const [urlError, setUrlError] = useState<null | string>(null);
 

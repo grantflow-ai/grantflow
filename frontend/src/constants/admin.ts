@@ -1,6 +1,6 @@
 import { routes } from "@/utils/navigation";
 
-export type GrantingInstitutionTab = "settings" | "templates" | "sources";
+export type GrantingInstitutionTab = "settings" | "sources" | "templates";
 
 export const getGrantingInstitutionTabs = (institutionId: string) =>
 	[
@@ -23,6 +23,6 @@ export const getGrantingInstitutionTabs = (institutionId: string) =>
 
 export const TAB_LABELS: Record<GrantingInstitutionTab, string> = {
 	settings: "Settings",
-	"templates": "Predefined Templates",
 	sources: "Sources",
+	"templates": "Predefined Templates",
 };

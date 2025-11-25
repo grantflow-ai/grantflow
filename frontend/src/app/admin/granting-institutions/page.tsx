@@ -68,13 +68,13 @@ export default async function GrantingInstitutionsPage() {
 					</div>
 					<div className="flex space-x-6 items-center">
 					<div className="w-[400px] h-10 flex px-3 border border-app-gray-100 rounded-[4px]">
-						<Input placeholder="Search by Institutions name" className="font-sans border-none !bg-white shadow-none focus-visible:ring-0 text-[14px] text-app-gray-400 placeholder:text-app-gray-400  px-0" />
+						<Input className="font-sans border-none !bg-white shadow-none focus-visible:ring-0 text-[14px] text-app-gray-400 placeholder:text-app-gray-400  px-0" placeholder="Search by Institutions name" />
 						<Image
-							src="/icons/search.svg"
 							alt="Search Icon"
-							width={16}
-							height={16}
 							className=""
+							height={16}
+							src="/icons/search.svg"
+							width={16}
 						/>
 
 					</div>
