@@ -9,19 +9,15 @@ interface AdminBreadcrumbProps {
 	tabLabel: string;
 }
 
-export function AdminBreadcrumb({ institutionName, tabLabel }: AdminBreadcrumbProps) {
+export function AdminBreadcrumb({ institutionName }: AdminBreadcrumbProps) {
 	return (
 		<nav aria-label="Breadcrumb" data-testid="admin-breadcrumb">
 			<ol className="flex items-center gap-2 text-sm text-app-gray-600">
-				<li>
-					<span data-testid="breadcrumb-admin">Admin</span>
-				</li>
-				<li>
-					<ChevronRight className="h-4 w-4" />
-				</li>
+				
+			
 				<li>
 					<Link
-						className="hover:text-app-gray-900 transition-colors"
+						className="hover:text-app-gray-900 font-normal font-sans text-black text-base transition-colors"
 						data-testid="breadcrumb-granting-institutions"
 						href={routes.admin.grantingInstitutions.list()}
 					>
@@ -29,21 +25,14 @@ export function AdminBreadcrumb({ institutionName, tabLabel }: AdminBreadcrumbPr
 					</Link>
 				</li>
 				<li>
-					<ChevronRight className="h-4 w-4" />
+					<ChevronRight className="h-4 w-4 text-black" />
 				</li>
 				<li>
-					<span className="font-medium text-app-gray-900" data-testid="breadcrumb-institution-name">
+					<span className="font-normal font-sans  text-app-gray-400 text-xs" data-testid="breadcrumb-institution-name">
 						{institutionName}
 					</span>
 				</li>
-				<li>
-					<ChevronRight className="h-4 w-4" />
-				</li>
-				<li>
-					<span className="text-app-gray-600" data-testid="breadcrumb-tab-label">
-						{tabLabel}
-					</span>
-				</li>
+			
 			</ol>
 		</nav>
 	);

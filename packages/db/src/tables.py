@@ -317,6 +317,8 @@ class GrantingInstitution(BaseWithUUIDPK):
 
     full_name: Mapped[str] = mapped_column(String(255), unique=True)
     abbreviation: Mapped[str] = mapped_column(String(64), index=True, nullable=True)
+    activity_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+   
 
     grant_templates: Relationship[list["GrantTemplate"]] = relationship(
         "GrantTemplate", back_populates="granting_institution"

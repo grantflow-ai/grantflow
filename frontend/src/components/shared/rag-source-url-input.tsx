@@ -10,9 +10,10 @@ interface RagSourceUrlInputProps {
 	existingUrls?: string[];
 	onUrlAdd: (url: string) => Promise<void>;
 	testId?: string;
+	hideLabel?: boolean;
 }
 
-export function RagSourceUrlInput({ existingUrls = [], onUrlAdd, testId }: RagSourceUrlInputProps) {
+export function RagSourceUrlInput({ existingUrls = [], onUrlAdd, testId, hideLabel }: RagSourceUrlInputProps) {
 	const [urlInput, setUrlInput] = useState("");
 	const [urlError, setUrlError] = useState<null | string>(null);
 
@@ -64,7 +65,7 @@ export function RagSourceUrlInput({ existingUrls = [], onUrlAdd, testId }: RagSo
 			errorMessage={urlError}
 			icon={<Image alt="Globe" className="text-input-icon" height={16} src="/icons/globe.svg" width={16} />}
 			id={testId ? `${testId}-url-input` : "url-input"}
-			label="URL"
+			label={hideLabel ? undefined : "Add URL"}
 			onChange={(e) => {
 				setUrlInput(e.target.value);
 				if (urlError) {

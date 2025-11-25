@@ -1,241 +1,250 @@
 "use client";
 
 import { useEffect } from "react";
-import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
-import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
-import { PendingFilePreviewCard } from "@/components/organizations/project/applications/wizard/pending-file-preview-card";
-import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
+
 import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
-import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
+import { Globe, Trash2 } from "lucide-react";
+
 import { RagSourceFileUploader } from "@/components/shared/rag-source-file-uploader";
 import { RagSourceUrlInput } from "@/components/shared/rag-source-url-input";
-import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
-import { Separator } from "@/components/ui/separator";
+import { FILE_ICON_MAP } from "@/components/shared/file-icon-map";
+
 import { SourceIndexingStatus } from "@/enums";
 import { useAdminStore } from "@/stores/admin-store";
 import { useGrantingInstitutionStore } from "@/stores/granting-institution-store";
 import type { FileWithId, FileWithSource, UrlWithSource } from "@/types/files";
+import { getFileExtension } from "@/utils/file-extensions";
 
 export function AdminGrantingInstitutionSourcesContent() {
-	const { grantingInstitution } = useAdminStore();
-	const {
-		addFile,
-		addUrl,
-		deleteSource,
-		isLoading,
-		loadData,
-		pendingUploads,
-		removePendingUpload,
-		reset,
-		setInstitutionId,
-		sources,
-	} = useGrantingInstitutionStore();
+  const { grantingInstitution } = useAdminStore();
+  const {
+    addFile,
+    addUrl,
+    deleteSource,
+    isLoading,
+    loadData,
+    pendingUploads,
+    removePendingUpload,
+    reset,
+    setInstitutionId,
+    sources,
+  } = useGrantingInstitutionStore();
 
-	useEffect(() => {
-		if (grantingInstitution?.id) {
-			setInstitutionId(grantingInstitution.id);
-			void loadData();
-		}
+  useEffect(() => {
+    if (grantingInstitution?.id) {
+      setInstitutionId(grantingInstitution.id);
+      void loadData();
+    }
 
-		return () => {
-			reset();
-		};
-	}, [grantingInstitution?.id, setInstitutionId, loadData, reset]);
+    return () => {
+      reset();
+    };
+  }, [grantingInstitution?.id, setInstitutionId, loadData, reset]);
 
-	useEffect(() => {
-		const hasIndexingSources = sources.some(
-			(source) =>
-				(source.indexing_status as SourceIndexingStatus) === SourceIndexingStatus.CREATED ||
-				(source.indexing_status as SourceIndexingStatus) === SourceIndexingStatus.INDEXING,
-		);
+  useEffect(() => {
+    const hasIndexingSources = sources.some(
+      (source) =>
+        (source.indexing_status as SourceIndexingStatus) ===
+          SourceIndexingStatus.CREATED ||
+        (source.indexing_status as SourceIndexingStatus) ===
+          SourceIndexingStatus.INDEXING
+    );
 
-		if (!hasIndexingSources) {
-			return;
-		}
+    if (!hasIndexingSources) {
+      return;
+    }
 
-		const pollInterval = setInterval(() => {
-			void loadData();
-		}, 3000);
+    const pollInterval = setInterval(() => {
+      void loadData();
+    }, 3000);
 
-		return () => {
-			clearInterval(pollInterval);
-		};
-	}, [sources, loadData]);
+    return () => {
+      clearInterval(pollInterval);
+    };
+  }, [sources, loadData]);
 
-	const handleFileAdd = async (file: FileWithId) => {
-		await addFile(file);
-	};
+  const handleFileAdd = async (file: FileWithId) => {
+    await addFile(file);
+  };
 
-	const handleUrlAdd = async (url: string) => {
-		await addUrl(url);
-	};
+  const handleUrlAdd = async (url: string) => {
+    await addUrl(url);
+  };
 
-	const handleDeleteSource = async (sourceId: string) => {
-		await deleteSource(sourceId);
-	};
+  const handleDeleteSource = async (sourceId: string) => {
+    await deleteSource(sourceId);
+  };
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center h-full" data-testid="sources-loading">
-				<div className="flex flex-col items-center gap-4">
-					<div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-					<p className="text-app-gray-600">Loading sources...</p>
-				</div>
-			</div>
-		);
-	}
+  if (isLoading) {
+    return (
+      <div
+        className="flex items-center justify-center h-full"
+        data-testid="sources-loading"
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-app-gray-600">Loading sources...</p>
+        </div>
+      </div>
+    );
+  }
 
-	if (!grantingInstitution) {
-		return (
-			<div className="flex items-center justify-center h-full" data-testid="sources-no-institution">
-				<p className="text-app-gray-600">No institution selected</p>
-			</div>
-		);
-	}
+  if (!grantingInstitution) {
+    return (
+      <div
+        className="flex items-center justify-center h-full"
+        data-testid="sources-no-institution"
+      >
+        <p className="text-app-gray-600">No institution selected</p>
+      </div>
+    );
+  }
 
-	const files: FileWithSource[] = sources
-		.filter((source): source is Extract<typeof source, { filename: string }> => "filename" in source)
-		.map((source) => {
-			const file = new File([], source.filename, { type: source.mime_type });
-			return Object.assign(file, {
-				id: source.id,
-				sourceId: source.id,
-				sourceStatus: source.indexing_status,
-			});
-		});
+  const files: FileWithSource[] = sources
+    .filter(
+      (source): source is Extract<typeof source, { filename: string }> =>
+        "filename" in source
+    )
+    .map((source) => {
+      const file = new File([], source.filename, { type: source.mime_type });
+      return Object.assign(file, {
+        id: source.id,
+        sourceId: source.id,
+        sourceStatus: source.indexing_status,
+      });
+    });
 
-	const urls: UrlWithSource[] = sources
-		.filter((source): source is Extract<typeof source, { url: string }> => "url" in source)
-		.map((source) => ({
-			sourceId: source.id,
-			sourceStatus: source.indexing_status,
-			url: source.url,
-		}));
+  const urls: UrlWithSource[] = sources
+    .filter(
+      (source): source is Extract<typeof source, { url: string }> =>
+        "url" in source
+    )
+    .map((source) => ({
+      sourceId: source.id,
+      sourceStatus: source.indexing_status,
+      url: source.url,
+    }));
 
-	const existingUrls = urls.map((u) => u.url);
-	const pendingUploadsArray = [...pendingUploads];
-	const hasFilesOrUrls = files.length > 0 || urls.length > 0 || pendingUploadsArray.length > 0;
-	const hasBothFilesAndUrls = (files.length > 0 || pendingUploadsArray.length > 0) && urls.length > 0;
+  const existingUrls = urls.map((u) => u.url);
+  const pendingUploadsArray = [...pendingUploads];
 
-	return (
-		<div className="flex h-full " data-testid="admin-sources-content">
-			<WizardLeftPane testId="admin-sources-left-pane">
-				<div>
-					<h2 className="font-heading text-2xl font-medium text-app-black leading-loose">Source Materials</h2>
-					<p className="text-muted-foreground-dark leading-tight">
-						Upload documents and add URLs for this granting institution to build knowledge base for grant
-						template analysis and generation.
-					</p>
-				</div>
+  return (
+    <div className="flex flex-col h-full " data-testid="admin-sources-content">
+    
+      
 
-				<div className="space-y-6">
-					<div>
-						<h3 className="font-heading mb-5 text-base font-semibold text-app-black leading-snug">
-							Documents
-						</h3>
-						<RagSourceFileUploader
-							onFileAdd={handleFileAdd}
-							onFileRemove={removePendingUpload}
-							testId="admin-sources-file-upload"
-						/>
-					</div>
+   
+      
 
-					<div>
-						<h3 className="font-heading text-base font-semibold text-app-black leading-snug">Links</h3>
-						<p className="text-muted-foreground-dark mb-5 text-sm leading-none">
-							Use a static link that doesn&apos;t require login, so we can retrieve the information.
-						</p>
-
-						<RagSourceUrlInput
-							existingUrls={existingUrls}
-							onUrlAdd={handleUrlAdd}
-							testId="admin-sources-url-input"
-						/>
-					</div>
-				</div>
-			</WizardLeftPane>
-
-			{hasFilesOrUrls ? (
-				<WizardRightPane padding="p-6 md:p-4" testId="admin-sources-right-pane">
-					<div className="flex-1 min-h-0 overflow-y-auto h-full">
-						<div className="space-y-5">
-							<PreviewCard data-testid="admin-sources-container">
-								{(files.length > 0 || pendingUploadsArray.length > 0) && (
-									<>
-										<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
-											Documents
-										</h4>
-										<div className="flex flex-wrap gap-3" data-testid="admin-sources-files">
-											{files.map((file, index) => (
-												<FilePreviewCard
-													file={file}
-													key={file.name + index.toString()}
-													onDelete={() => {
-														void handleDeleteSource(file.sourceId);
-													}}
-													parentId={grantingInstitution.id}
-													sourceStatus={file.sourceStatus}
-												/>
-											))}
-											{pendingUploadsArray.map((file) => (
-												<PendingFilePreviewCard file={file} key={`pending-${file.id}`} />
-											))}
-										</div>
-									</>
-								)}
-
-								{hasBothFilesAndUrls && (
-									<Separator className="bg-gray-200" data-testid="admin-sources-separator" />
-								)}
-
-								{urls.length > 0 && (
-									<>
-										<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
-											Links
-										</h4>
-										<div className="grid grid-cols-2 gap-x-11" data-testid="admin-sources-urls">
-											<div className="space-y-1">
-												{urls
-													.filter((_, index) => index % 2 === 0)
-													.map((urlSource, index) => (
-														<LinkPreviewItem
-															key={urlSource.url + index.toString()}
-															onDelete={() => {
-																void handleDeleteSource(urlSource.sourceId);
-															}}
-															parentId={grantingInstitution.id}
-															sourceStatus={urlSource.sourceStatus}
-															url={urlSource.url}
-														/>
-													))}
-											</div>
-											<div className="space-y-1">
-												{urls
-													.filter((_, index) => index % 2 === 1)
-													.map((urlSource, index) => (
-														<LinkPreviewItem
-															key={urlSource.url + index.toString()}
-															onDelete={() => {
-																void handleDeleteSource(urlSource.sourceId);
-															}}
-															parentId={grantingInstitution.id}
-															sourceStatus={urlSource.sourceStatus}
-															url={urlSource.url}
-														/>
-													))}
-											</div>
-										</div>
-									</>
-								)}
-							</PreviewCard>
-						</div>
-					</div>
-				</WizardRightPane>
-			) : (
-				<WizardRightPane testId="admin-sources-right-pane">
-					<EmptyStatePreview />
-				</WizardRightPane>
-			)}
-		</div>
-	);
+      <main className="flex  h-[671px] gap-6">
+        <div className="p-6 bg-app-gray-20 flex-1 space-y-6   h-full">
+          <header className="flex items-center justify-between">
+            <h1 className="font-semibold text-base text-black">Files</h1>
+            <RagSourceFileUploader
+              onFileAdd={handleFileAdd}
+              onFileRemove={removePendingUpload}
+              testId="admin-sources-file-upload"
+            />
+          </header>
+          <main className="flex-1 overflow-y-auto space-y-2 mt-4">
+            {[...files, ...pendingUploadsArray].length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-app-gray-400 text-sm italic border-2 border-dashed border-app-gray-200 rounded-lg">
+                No files uploaded yet
+              </div>
+            ) : (
+              [...files, ...pendingUploadsArray].map((file) => {
+                const extension = getFileExtension(file.name);
+                const isPending = !("sourceId" in file);
+                
+                return (
+                  <div 
+                    key={file.id} 
+                    className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex-shrink-0 w-8 flex justify-center">
+                        {FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] || FILE_ICON_MAP["txt"]}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-app-black" title={file.name}>
+                          {file.name}
+                        </p>
+                        {isPending && <p className="text-xs text-app-gray-400">Uploading...</p>}
+                      </div>
+                    </div>
+                    
+                    <div className="ml-2 flex-shrink-0">
+                      <button 
+                        onClick={() => isPending ? removePendingUpload(file.id) : handleDeleteSource(file.id)}
+                        className="p-2 hover:bg-app-red/10 rounded-full text-app-gray-400 hover:text-app-red transition-colors"
+                        title="Remove file"
+                        type="button"
+                      >
+                        <Trash2 className="size-4 text-app-black" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </main>
+        </div>
+        <div className="p-6 bg-app-gray-20 space-y-6  flex-1 h-full">
+          <header className="flex items-center justify-between">
+            <h1 className="font-semibold text-base text-black">Links</h1>
+            <div className="w-full max-w-sm">
+             <RagSourceUrlInput
+              existingUrls={existingUrls}
+              onUrlAdd={handleUrlAdd}
+              testId="admin-sources-url-input"
+              hideLabel
+            />
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto space-y-2 mt-4">
+            {urls.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-app-gray-400 text-sm italic border-2 border-dashed border-app-gray-200 rounded-lg">
+                No links added yet
+              </div>
+            ) : (
+              urls.map((urlItem) => (
+                <div 
+                  key={urlItem.sourceId} 
+                  className="h-[55px] flex items-center justify-between  border-b border-app-gray-100  px-3 shadow-none hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="flex-shrink-0 w-8 flex justify-center">
+                      <Globe className="size-5 text-app-gray-700" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <a 
+                        href={urlItem.url}
+                        target="_blank"
+                        rel="noopener noreferrer" 
+                        className="truncate text-sm font-medium text-app-black hover:underline block" 
+                        title={urlItem.url}
+                      >
+                        {urlItem.url}
+                      </a>
+                    </div>
+                  </div>
+                  
+                  <div className="ml-2 flex-shrink-0">
+                    <button 
+                      onClick={() => handleDeleteSource(urlItem.sourceId)}
+                      className="p-2 hover:bg-app-red/10 rounded-full text-app-gray-400 hover:text-app-red transition-colors"
+                      title="Remove link"
+                      type="button"
+                    >
+                      <Trash2 className="size-4 text-app-gray-700" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </main>
+        </div>
+      </main>
+    </div>
+  );
 }

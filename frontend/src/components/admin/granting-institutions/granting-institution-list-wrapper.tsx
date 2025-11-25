@@ -49,7 +49,7 @@ export function GrantingInstitutionListWrapper({ institutions }: GrantingInstitu
 
 	const handleView = (id: string, _name: string) => {
 		selectGrantingInstitution(id);
-		router.push(routes.admin.grantingInstitutions.sources());
+		router.push(routes.admin.grantingInstitutions.edit(id));
 	};
 
 	const visibleInstitutions = deletingId ? institutions.filter((inst) => inst.id !== deletingId) : institutions;

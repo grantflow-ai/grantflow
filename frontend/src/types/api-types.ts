@@ -454,7 +454,9 @@ export namespace API {
 	full_name: string;
 	id: string;
 	source_count: number;
+	template_count: number;
 	updated_at: string;
+	activity_code?: string;
 };
 };
 
@@ -469,6 +471,7 @@ export namespace API {
 	export type RequestBody = {
 	abbreviation: null | string;
 	full_name: string;
+	activity_code?: string | null;
 };
 };
 
@@ -1316,7 +1319,9 @@ export namespace API {
 	full_name: string;
 	id: string;
 	source_count: number;
+	template_count: number;
 	updated_at: string;
+	activity_code?: string;
 };
 };
 
@@ -1674,7 +1679,9 @@ export namespace API {
 	full_name: string;
 	id: string;
 	source_count: number;
+	template_count: number;
 	updated_at: string;
+	activity_code?: string;
 }[];
 };
 };
@@ -2723,7 +2730,9 @@ export namespace API {
 	full_name: string;
 	id: string;
 	source_count: number;
+	template_count: number;
 	updated_at: string;
+	activity_code?: string;
 };
 };
 
@@ -2742,6 +2751,7 @@ export namespace API {
 	export type RequestBody = {
 	abbreviation?: null | string;
 	full_name?: string;
+	activity_code?: string | null;
 };
 };
 

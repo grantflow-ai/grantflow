@@ -3,7 +3,7 @@ from uuid import UUID
 
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.tables import GrantingInstitution, GrantingInstitutionSource
+from packages.db.src.tables import GrantingInstitution, GrantingInstitutionSource , PredefinedGrantTemplate
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, insert, select, update
@@ -16,20 +16,26 @@ logger = get_logger(__name__)
 class CreateOrganizationRequestBody(TypedDict):
     full_name: str
     abbreviation: str | None
+    activity_code: str | None
+    
 
 
 class UpdateOrganizationRequestBody(TypedDict):
     full_name: NotRequired[str]
     abbreviation: NotRequired[str | None]
+    activity_code: NotRequired[str | None]
 
 
 class GrantingInstitutionResponse(TypedDict):
     id: str
     full_name: str
     abbreviation: str | None
+    activity_code: str | None
     source_count: int
+    template_count: int
     created_at: str
     updated_at: str
+
 
 
 @post("/granting-institutions", requires_backoffice_admin=True, operation_id="CreateGrantingInstitution")
@@ -48,8 +54,10 @@ async def handle_create_organization(
         full_name=organization.full_name,
         abbreviation=organization.abbreviation,
         source_count=0,
+        template_count=0,
         created_at=organization.created_at.isoformat(),
         updated_at=organization.updated_at.isoformat(),
+        activity_code = organization.activity_code,
     )
 
 
@@ -62,32 +70,49 @@ async def handle_retrieve_organizations(
             select(
                 GrantingInstitutionSource.granting_institution_id,
                 func.count(GrantingInstitutionSource.rag_source_id).label("source_count"),
+                
             )
             .group_by(GrantingInstitutionSource.granting_institution_id)
             .subquery()
         )
+         template_count_subquery = (
+            select(
+                PredefinedGrantTemplate.granting_institution_id,
+                func.count(PredefinedGrantTemplate.id).label("template_count"),
+            )
+            .group_by(PredefinedGrantTemplate.granting_institution_id)
+            .subquery()
+        )
+
 
         result = await session.execute(
             select(
                 GrantingInstitution,
                 func.coalesce(source_count_subquery.c.source_count, 0).label("source_count"),
+                func.coalesce(template_count_subquery.c.template_count, 0).label("template_count")
             )
             .outerjoin(
                 source_count_subquery,
                 GrantingInstitution.id == source_count_subquery.c.granting_institution_id,
             )
+            .outerjoin(
+                template_count_subquery,
+                GrantingInstitution.id == template_count_subquery.c.granting_institution_id,
+            )
             .where(GrantingInstitution.deleted_at.is_(None))
             .order_by(GrantingInstitution.full_name.asc())
         )
-
+       
         return [
             GrantingInstitutionResponse(
                 id=str(row[0].id),
                 full_name=row[0].full_name,
                 abbreviation=row[0].abbreviation,
                 source_count=int(row[1]),
+                template_count=int(row[2]),
                 created_at=row[0].created_at.isoformat(),
                 updated_at=row[0].updated_at.isoformat(),
+                activity_code = row[0].activity_code,
             )
             for row in result.all()
         ]
@@ -103,35 +128,51 @@ async def handle_get_organization(
     session_maker: async_sessionmaker[Any],
 ) -> GrantingInstitutionResponse:
     async with session_maker() as session:
+
+
+        source_count_subquery = (
+            select(
+                func.count(GrantingInstitutionSource.rag_source_id).label("source_count"),
+            )
+            .where(GrantingInstitutionSource.granting_institution_id == organization_id)
+            .scalar_subquery()
+        )
+        template_count_subquery = (
+            select(
+                func.count(PredefinedGrantTemplate.id).label("template_count"),
+
+            )
+            .where(PredefinedGrantTemplate.granting_institution_id == organization_id)
+            .scalar_subquery()
+        )
         result = await session.execute(
             select(
                 GrantingInstitution,
-                func.count(GrantingInstitutionSource.rag_source_id).label("source_count"),
-            )
-            .outerjoin(
-                GrantingInstitutionSource,
-                GrantingInstitution.id == GrantingInstitutionSource.granting_institution_id,
+                source_count_subquery,
+                template_count_subquery,
             )
             .where(
                 GrantingInstitution.id == organization_id,
                 GrantingInstitution.deleted_at.is_(None),
             )
-            .group_by(GrantingInstitution.id)
+           
         )
 
         row = result.one_or_none()
         if not row:
             raise ValidationException("Granting institution not found")
 
-        organization, source_count = row
+        organization, source_count, template_count = row
 
         return GrantingInstitutionResponse(
             id=str(organization.id),
             full_name=organization.full_name,
             abbreviation=organization.abbreviation,
-            source_count=int(source_count),
+            source_count=int(source_count or 0),
+            template_count=int(template_count or 0),
             created_at=organization.created_at.isoformat(),
             updated_at=organization.updated_at.isoformat(),
+            activity_code = organization.activity_code,
         )
 
 
@@ -165,14 +206,22 @@ async def handle_update_organization(
                 GrantingInstitutionSource.granting_institution_id == organization_id
             )
         )
+        template_count = await session.scalar(
+            select(func.count(PredefinedGrantTemplate.id)).where(
+                PredefinedGrantTemplate.granting_institution_id == organization_id
+            )
+        )
+        
 
     return GrantingInstitutionResponse(
         id=str(organization.id),
         full_name=organization.full_name,
         abbreviation=organization.abbreviation,
         source_count=source_count or 0,
+        template_count=template_count or 0,
         created_at=organization.created_at.isoformat(),
         updated_at=organization.updated_at.isoformat(),
+        activity_code = organization.activity_code,
     )
 
 

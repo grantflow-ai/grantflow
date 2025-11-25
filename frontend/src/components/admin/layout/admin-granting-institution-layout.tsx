@@ -18,9 +18,9 @@ export function AdminGrantingInstitutionLayout({
 	const tabs = getGrantingInstitutionTabs(institutionId);
 
 	return (
-		<div className="flex flex-col flex-1 min-h-0 font-cabin" data-testid="admin-granting-institution-layout">
+		<div className="flex flex-col gap-6 flex-1 min-h-0 font-cabin" data-testid="admin-granting-institution-layout">
 			<nav
-				className="flex items-center gap-6 border-b-1 border-gray-100 px-4 sm:px-6 md:px-8 lg:px-10 pb-8"
+				className="flex items-center gap-6  border-gray-100 "
 				data-testid="admin-granting-institution-tabs"
 			>
 				{tabs.map((tab) => (
@@ -29,7 +29,7 @@ export function AdminGrantingInstitutionLayout({
 							"relative px-2 py-3 text-base font-cabin text-app-black",
 							activeTab === tab.key
 								? "font-semibold border-b-[3px] border-primary"
-								: "font-light hover:text-app-gray-600",
+								: "font-normal hover:text-app-gray-600 font-sans",
 						)}
 						data-testid={`admin-granting-institution-tab-${tab.key}`}
 						href={tab.href}

@@ -1,9 +1,14 @@
 import { routes } from "@/utils/navigation";
 
-export type GrantingInstitutionTab = "edit" | "predefined-templates" | "sources";
+export type GrantingInstitutionTab = "settings" | "templates" | "sources";
 
 export const getGrantingInstitutionTabs = (institutionId: string) =>
 	[
+		{
+			href: routes.admin.grantingInstitutions.edit(institutionId),
+			key: "settings" as const,
+			label: "Settings",
+		},
 		{
 			href: routes.admin.grantingInstitutions.sources(),
 			key: "sources" as const,
@@ -11,18 +16,13 @@ export const getGrantingInstitutionTabs = (institutionId: string) =>
 		},
 		{
 			href: routes.admin.grantingInstitutions.predefinedTemplates.list(),
-			key: "predefined-templates" as const,
-			label: "Predefined Templates",
-		},
-		{
-			href: routes.admin.grantingInstitutions.edit(institutionId),
-			key: "edit" as const,
-			label: "Edit",
+			key: "templates" as const,
+			label: "Templates",
 		},
 	] as const;
 
 export const TAB_LABELS: Record<GrantingInstitutionTab, string> = {
-	edit: "Edit",
-	"predefined-templates": "Predefined Templates",
+	settings: "Settings",
+	"templates": "Predefined Templates",
 	sources: "Sources",
 };

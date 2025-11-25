@@ -11,17 +11,16 @@ import { SWRProvider } from "@/providers/swr-provider";
 export default function AdminLayoutClient({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const isWizardRoute = pathname.includes("/wizard") || pathname.includes("/new");
-	const isGrantingInstitutionDetailOrEditPage =
-		pathname.startsWith("/admin/granting-institutions/") && !pathname.endsWith("/new");
+	
 
 	return (
 		<SharedLayout>
 			<SWRProvider>
 				<SidebarProvider defaultOpen={false}>
-					<AppSidebar hidden={isWizardRoute || isGrantingInstitutionDetailOrEditPage} />
+					<AppSidebar hidden={isWizardRoute } />
 					<SidebarInset
 						className={
-							isWizardRoute || isGrantingInstitutionDetailOrEditPage ? "h-screen ml-0" : "h-screen"
+							isWizardRoute ? "h-screen ml-0" : "h-screen"
 						}
 					>
 						<div className="flex h-screen justify-center bg-preview-bg">

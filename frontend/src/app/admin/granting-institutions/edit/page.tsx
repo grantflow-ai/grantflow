@@ -3,7 +3,7 @@ import { AdminGrantingInstitutionClient } from "@/components/admin/layout/admin-
 
 export default function GrantingInstitutionEditPage() {
 	return (
-		<AdminGrantingInstitutionClient activeTab="edit">
+		<AdminGrantingInstitutionClient activeTab="settings" projectTeamMembers={[]}>
 			<AdminGrantingInstitutionEditContent />
 		</AdminGrantingInstitutionClient>
 	);
