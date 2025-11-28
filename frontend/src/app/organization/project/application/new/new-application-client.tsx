@@ -27,9 +27,10 @@ const handleCreationError = (error: unknown) => {
 		? "Your application was created! Please return to the applications list to open it."
 		: "Failed to create application. Please try again.";
 
+	const duration = isPersistenceError ? 8000 : null;
 	toast.error(errorMessage, {
-		duration: isPersistenceError ? 8000 : undefined,
 		id: "create-application",
+		...(duration ? { duration } : {}),
 	});
 };
 

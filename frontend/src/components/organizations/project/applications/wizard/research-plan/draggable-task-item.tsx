@@ -85,7 +85,7 @@ export function DraggableTaskItem({
 			<TaskHeader
 				attributes={attributes}
 				isDragDisabled={isDragDisabled}
-				isEditing={isEditing}
+				{...(isEditing === undefined ? {} : { isEditing })}
 				listeners={listeners}
 				objectiveIndex={objectiveIndex}
 				onTaskDelete={handleTaskDelete}

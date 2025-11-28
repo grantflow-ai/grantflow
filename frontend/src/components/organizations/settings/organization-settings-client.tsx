@@ -117,8 +117,8 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 					>
 						<OrganizationSettingsLayout
 							activeTab={activeTab}
-							onInviteClick={inviteHandler}
 							userRole={organization.role as UserRole}
+							{...(inviteHandler ? { onInviteClick: inviteHandler } : {})}
 						>
 							{renderSettingsContent()}
 						</OrganizationSettingsLayout>

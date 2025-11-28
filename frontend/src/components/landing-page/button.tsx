@@ -81,6 +81,7 @@ export function LandingPageButton({
 		landingPageButtonVariants({ size, theme, variant }),
 		className,
 	);
+	const buttonProps = asChild ? { asChild } : {};
 
 	if (asChild && React.isValidElement(children)) {
 		const childProps = children.props as { children?: React.ReactNode };
@@ -93,14 +94,14 @@ export function LandingPageButton({
 		);
 
 		return (
-			<UIButton asChild className={combinedClassNames} {...props}>
+			<UIButton className={combinedClassNames} {...buttonProps} {...props}>
 				{React.cloneElement(children, {}, childContent)}
 			</UIButton>
 		);
 	}
 
 	return (
-		<UIButton asChild={asChild} className={combinedClassNames} {...props}>
+		<UIButton className={combinedClassNames} {...buttonProps} {...props}>
 			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
 			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}

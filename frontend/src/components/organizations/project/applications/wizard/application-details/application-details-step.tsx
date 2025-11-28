@@ -63,21 +63,22 @@ export function ApplicationDetailsStep({
 		}
 	};
 
+	const previewProps = {
+		...(connectionStatus ? { connectionStatus } : {}),
+		...(connectionStatusColor ? { connectionStatusColor } : {}),
+		...(grantTemplateId ? { parentId: grantTemplateId } : {}),
+	};
+
 	return (
 		<div className="flex size-full" data-testid="application-details-step">
 			<UploadPane
 				draftTitle={draftTitle}
-				grantTemplateId={grantTemplateId}
+				{...(grantTemplateId ? { grantTemplateId } : {})}
 				handleInputChange={handleInputChange}
 				showError={showError}
 			/>
 
-			<ApplicationPreview
-				connectionStatus={connectionStatus}
-				connectionStatusColor={connectionStatusColor}
-				draftTitle={draftTitle}
-				parentId={grantTemplateId}
-			/>
+			<ApplicationPreview draftTitle={draftTitle} {...previewProps} />
 		</div>
 	);
 }
@@ -133,7 +134,10 @@ function UploadPane({
 						Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll analyze
 						these to extract key requirements for your application.
 					</p>
-					<TemplateFileUploader parentId={grantTemplateId} sourceType="template" />
+					<TemplateFileUploader
+						{...(grantTemplateId ? { parentId: grantTemplateId } : {})}
+						sourceType="template"
+					/>
 				</div>
 
 				<div>
@@ -143,7 +147,7 @@ function UploadPane({
 						understand the funding requirements.
 					</p>
 
-					<UrlInput parentId={grantTemplateId} />
+					<UrlInput {...(grantTemplateId ? { parentId: grantTemplateId } : {})} />
 				</div>
 			</div>
 		</WizardLeftPane>

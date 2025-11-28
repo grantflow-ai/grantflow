@@ -218,11 +218,14 @@ export function InviteCollaboratorModal({
 							>
 								Permission
 							</label>
+							{/*
+									Only pass a controlled value when it exists to avoid undefined with exact optional property types.
+								*/}
 							<Select
 								onValueChange={(value) => {
 									setPermission(value as CollaboratorPermission);
 								}}
-								value={permission}
+								{...(permission ? { value: permission } : {})}
 							>
 								<SelectTrigger
 									className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-sm text-app-gray-600 outline-none"

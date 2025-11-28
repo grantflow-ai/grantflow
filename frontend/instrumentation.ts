@@ -22,7 +22,7 @@ export function register(): void {
 				logger: Pino.pino(),
 			}),
 		],
-	}) as LogLayerLike;
+	}) as unknown as LogLayerLike;
 
 	if (process.env.NEXT_RUNTIME === "nodejs") {
 		console.error = createConsoleMethod(logger, "error");

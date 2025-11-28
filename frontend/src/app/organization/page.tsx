@@ -7,8 +7,8 @@ const EMPTY_PROJECTS: Awaited<ReturnType<typeof getProjects>> = [];
 
 export default async function DashboardPage() {
 	const organizations = await getOrganizations();
-	const selectedOrganizationId =
-		(await getSelectedOrgFromCookies()) ?? (organizations.length > 0 ? organizations[0].id : null);
+	const fallbackOrganizationId = organizations[0]?.id ?? null;
+	const selectedOrganizationId = (await getSelectedOrgFromCookies()) ?? fallbackOrganizationId;
 
 	let initialProjects = EMPTY_PROJECTS;
 	if (selectedOrganizationId) {

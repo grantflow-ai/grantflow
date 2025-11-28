@@ -4,7 +4,11 @@ import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { KnowledgeBaseStep } from "./knowledge-base-step";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
 
 const meta: Meta<typeof KnowledgeBaseStep> = {
 	component: KnowledgeBaseStep,
@@ -59,7 +63,7 @@ export const WithDocuments: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Climate Change Research Grant",
 				});
@@ -93,7 +97,7 @@ export const WithUrls: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Climate Change Research Grant",
 				});
@@ -132,7 +136,7 @@ export const WithBothDocsAndUrls: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Climate Change Research Grant",
 				});
@@ -163,7 +167,7 @@ export const PendingFileUploads: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Research Project with Pending Files",
 				});
@@ -191,7 +195,7 @@ export const AllPendingFiles: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: [],
 					title: "All Pending Knowledge Base Files",
 				});
@@ -242,7 +246,7 @@ export const PendingWithProcessingStates: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Mixed Processing States in Knowledge Base",
 				});
@@ -269,7 +273,7 @@ export const PendingLargeDocuments: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: [],
 					title: "Pending Large Knowledge Base Documents",
 				});
@@ -313,7 +317,7 @@ export const EmptyWithPendingAddition: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: [],
 					title: "First Knowledge Base Upload",
 				});
@@ -376,7 +380,7 @@ export const ErroredUploadsWithRetry: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Error Recovery in Knowledge Base",
 				});
@@ -426,7 +430,7 @@ export const MixedKnowledgeBaseFormats: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: ragSources,
 					title: "Mixed Knowledge Base Formats and States",
 				});

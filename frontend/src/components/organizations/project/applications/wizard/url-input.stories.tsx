@@ -3,7 +3,14 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { action } from "storybook/actions";
 import { useApplicationStore } from "@/stores/application-store";
+import type { API } from "@/types/api-types";
 import { UrlInput } from "./url-input";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (
+	overrides?: Partial<NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>>,
+) => GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof UrlInput> = {
 	argTypes: {
@@ -42,11 +49,11 @@ export const Empty: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					id: "template-123",
 					rag_sources: [],
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					rag_sources: [],
 				});
@@ -83,11 +90,11 @@ export const Filled: Story = {
 						url: "https://nsf.gov/application-guidelines",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					id: "template-123",
 					rag_sources: ragSources,
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					rag_sources: [],
 				});
@@ -109,7 +116,7 @@ export const ErrorState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					rag_sources: [],
 				});
 				useApplicationStore.setState({
@@ -150,11 +157,11 @@ export const Crawling: Story = {
 						url: "https://nih.gov/research-funding/opportunities",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					id: "template-123",
 					rag_sources: ragSources,
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					rag_sources: [],
 				});
@@ -191,11 +198,11 @@ export const LongUrl: Story = {
 						url: "https://national-science-foundation.gov/funding/programs/biological-sciences/molecular-cellular-biosciences/protein-dynamics-and-interactions/application-procedures/detailed-instructions",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					id: "template-123",
 					rag_sources: ragSources,
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					rag_sources: [],
 				});
@@ -215,7 +222,7 @@ export const LongUrl: Story = {
 
 const AllStatesComponent = () => {
 	useEffect(() => {
-		const grantTemplate = GrantTemplateFactory.build({
+		const grantTemplate = buildGrantTemplate({
 			id: "template-123",
 			rag_sources: [
 				RagSourceFactory.build({
@@ -225,7 +232,7 @@ const AllStatesComponent = () => {
 				}),
 			],
 		});
-		const application = ApplicationWithTemplateFactory.build({
+		const application = buildApplication({
 			grant_template: grantTemplate,
 			rag_sources: [],
 		});

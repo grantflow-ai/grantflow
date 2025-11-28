@@ -4,7 +4,14 @@ import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { WizardFooter } from "./wizard-wrapper-components";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (
+	overrides?: Partial<NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>>,
+) => GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof WizardFooter> = {
 	component: WizardFooter,
@@ -29,8 +36,8 @@ export const FirstStepNoTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "",
 				});
@@ -52,10 +59,10 @@ export const FirstStepTitleNoSources: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -94,10 +101,10 @@ export const FirstStepProcessingDocuments: Story = {
 						status: "CREATED",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -126,10 +133,10 @@ export const FirstStepValid: Story = {
 						status: "FINISHED",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -151,8 +158,8 @@ export const SecondStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -175,8 +182,8 @@ export const SecondStepGenerating: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -199,8 +206,8 @@ export const KnowledgeBaseStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -222,8 +229,8 @@ export const ResearchPlanStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -249,8 +256,8 @@ export const ResearchPlanAutofilling: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -276,10 +283,10 @@ export const ResearchDeepDiveStepGenerate: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
-					text: undefined,
+					text: "",
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -305,8 +312,8 @@ export const ResearchDeepDiveStepNext: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					text: "This is the generated application text.",
 					title: "Climate Change Research Grant Application",
@@ -334,10 +341,10 @@ export const ResearchDeepDiveStepGenerating: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
-					text: undefined,
+					text: "",
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -363,10 +370,10 @@ export const ResearchDeepDiveAutofilling: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
-					text: undefined,
+					text: "",
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -392,8 +399,8 @@ export const FinalStepWithApplicationText: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					text: "This is the complete generated application text ready for dashboard.",
 					title: "Climate Change Research Grant Application",
@@ -417,10 +424,10 @@ export const FinalStepNoApplicationText: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
-					text: undefined,
+					text: "",
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -449,8 +456,8 @@ export const OperationsInProgress: Story = {
 						status: "FINISHED",
 					}),
 				];
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					rag_sources: ragSources,
 					title: "Climate Change Research Grant Application",

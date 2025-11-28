@@ -30,6 +30,10 @@ const detectZoneCollision: CollisionDetection = (args) => {
 	}
 
 	const [primaryCollision] = defaultCollisions;
+	if (!primaryCollision) {
+		return defaultCollisions;
+	}
+
 	const rect = droppableRects.get(primaryCollision.id);
 
 	if (!rect) {

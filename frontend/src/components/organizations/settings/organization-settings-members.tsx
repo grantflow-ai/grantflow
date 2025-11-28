@@ -169,24 +169,30 @@ export function OrganizationSettingsMembers({
 	};
 
 	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
-		try {
-			const result = await inviteOrganizationMember({
-				email,
-				hasAllProjectsAccess,
-				inviterName: user?.displayName ?? "Team Member",
-				organizationId,
-				organizationName: organization?.name ?? "",
-				projectIds,
-				role: role === "ADMIN" ? "admin" : "member",
+		const payload = {
+			email,
+			inviterName: user?.displayName ?? "Team Member",
+			organizationId,
+			organizationName: organization?.name ?? "",
+			role: role === "ADMIN" ? "admin" : "member",
+			...(hasAllProjectsAccess === undefined ? {} : { hasAllProjectsAccess }),
+			...(projectIds === undefined ? {} : { projectIds }),
+		};
+
+		const notifyFailure = (message: string) => {
+			addNotification({
+				message,
+				projectName: "",
+				title: "Invitation failed",
+				type: "warning",
 			});
+		};
+
+		try {
+			const result = await inviteOrganizationMember(payload);
 
 			if (!result.success) {
-				addNotification({
-					message: result.error ?? "Failed to send invitation",
-					projectName: "",
-					title: "Invitation failed",
-					type: "warning",
-				});
+				notifyFailure(result.error ?? "Failed to send invitation");
 				return;
 			}
 
@@ -202,12 +208,7 @@ export function OrganizationSettingsMembers({
 				email,
 				error: error instanceof Error ? error.message : "Unknown error",
 			});
-			addNotification({
-				message: "Failed to send invitation",
-				projectName: "",
-				title: "Error",
-				type: "warning",
-			});
+			notifyFailure("Failed to send invitation");
 		}
 	};
 
@@ -224,12 +225,12 @@ export function OrganizationSettingsMembers({
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
 	const mappedMembers: OrganizationMember[] = members.map((member) => ({
-		displayName: member.display_name ?? undefined,
+		...(member.display_name ? { displayName: member.display_name } : {}),
 		email: member.email,
 		firebaseUid: member.firebase_uid,
 		hasAllProjectsAccess: member.has_all_projects_access,
 		joinedAt: member.created_at,
-		photoUrl: member.photo_url,
+		...(member.photo_url ? { photoUrl: member.photo_url } : {}),
 		projectAccess: member.project_access,
 		role: member.role as UserRole,
 		status: "active" as const,
@@ -325,11 +326,15 @@ export function OrganizationSettingsMembers({
 									<MemberActionMenu
 										currentUserRole={currentUserRole}
 										member={member}
-										onCancelInvitation={
-											member.status === "pending" && member.invitationId
-												? () => handleCancelInvitation(member.invitationId!, member.email!)
-												: undefined
-										}
+										{...(member.status === "pending" && member.invitationId
+											? {
+													onCancelInvitation: () =>
+														handleCancelInvitation(
+															member.invitationId!,
+															member.email ?? "",
+														),
+												}
+											: {})}
 										onEditPermissions={(member) => {
 											setEditingMember(member);
 										}}
@@ -355,7 +360,7 @@ export function OrganizationSettingsMembers({
 					setIsInviteModalOpen(false);
 				}}
 				onInvite={handleInvite}
-				ownerEmail={ownerEmail}
+				ownerEmail={ownerEmail ?? ""}
 				projects={projects}
 			/>
 
@@ -373,7 +378,7 @@ export function OrganizationSettingsMembers({
 						options.hasAllProjectsAccess,
 					);
 				}}
-				ownerEmail={ownerEmail}
+				ownerEmail={ownerEmail ?? ""}
 				projects={projects}
 			/>
 		</div>
@@ -418,9 +423,9 @@ function MemberActionMenu({
 }: {
 	currentUserRole: UserRole;
 	member: OrganizationMember;
-	onCancelInvitation?: () => void;
+	onCancelInvitation?: () => Promise<void> | void;
 	onEditPermissions: (member: OrganizationMember) => void;
-	onRemoveMember: () => void;
+	onRemoveMember: () => Promise<void> | void;
 }) {
 	const canModify =
 		member.role !== UserRole.OWNER && (currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN);

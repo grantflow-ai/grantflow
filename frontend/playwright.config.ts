@@ -41,6 +41,5 @@ export default defineConfig({
 		reuseExistingServer: !process.env.CI,
 		timeout: 120 * 1000,
 	},
-
-	workers: process.env.CI ? 1 : undefined,
+	...(process.env.CI ? { workers: 1 } : {}),
 });

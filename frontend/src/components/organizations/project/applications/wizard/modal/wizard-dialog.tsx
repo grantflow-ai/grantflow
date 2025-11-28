@@ -25,9 +25,9 @@ interface DialogContent {
 export const WizardDialog = forwardRef<WizardDialogRef>((_, ref) => {
 	const [dialog, setDialog] = useState<{ isOpen: boolean } & DialogContent>({
 		content: null,
-		description: undefined,
+		description: "",
 		dismissOnOutsideClick: true,
-		footer: undefined,
+		footer: null,
 		isOpen: false,
 		minWidth: "min-w-3xl",
 		title: "",

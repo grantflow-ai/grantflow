@@ -27,7 +27,10 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 
 		const pathMatch = /\/o\/([^?]+)/.exec(uploadUrl);
 		if (pathMatch) {
-			return decodeURIComponent(pathMatch[1]);
+			const [, matchedPath] = pathMatch;
+			if (matchedPath !== undefined) {
+				return decodeURIComponent(matchedPath);
+			}
 		}
 
 		const pathSegments = url.pathname.split("/").filter(Boolean);

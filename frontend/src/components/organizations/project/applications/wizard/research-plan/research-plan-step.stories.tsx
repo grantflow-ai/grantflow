@@ -4,7 +4,15 @@ import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { ResearchPlanStep } from "./research-plan-step";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildObjective = (
+	overrides?: Parameters<typeof ResearchObjectiveFactory.build>[0],
+): NonNullable<API.CreateApplication.Http201.ResponseBody["research_objectives"]>[number] =>
+	ResearchObjectiveFactory.build(overrides);
 
 const meta: Meta<typeof ResearchPlanStep> = {
 	component: ResearchPlanStep,
@@ -28,8 +36,7 @@ export const EmptyState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
-					research_objectives: undefined,
+				const application = buildApplication({
 					title: "Climate Change Research Grant",
 				});
 				useApplicationStore.setState({
@@ -51,7 +58,7 @@ export const WithSingleObjective: Story = {
 		(Story) => {
 			useEffect(() => {
 				const researchObjectives = [
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Evaluate the effects of rising sea levels and temperature changes on marine biodiversity in coastal regions.",
 						number: 1,
@@ -72,7 +79,7 @@ export const WithSingleObjective: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					research_objectives: researchObjectives,
 					title: "Climate Change Research Grant",
 				});
@@ -95,7 +102,7 @@ export const WithMultipleObjectives: Story = {
 		(Story) => {
 			useEffect(() => {
 				const researchObjectives = [
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Evaluate the effects of rising sea levels and temperature changes on marine biodiversity in coastal regions.",
 						number: 1,
@@ -108,7 +115,7 @@ export const WithMultipleObjectives: Story = {
 						],
 						title: "Assess Climate Change Impact on Coastal Ecosystems",
 					}),
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Create sustainable solutions for coastal communities to adapt to changing environmental conditions.",
 						number: 2,
@@ -126,7 +133,7 @@ export const WithMultipleObjectives: Story = {
 						],
 						title: "Develop Adaptation Strategies",
 					}),
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Establish monitoring systems to track ecosystem health and species migration patterns over time.",
 						number: 3,
@@ -151,7 +158,7 @@ export const WithMultipleObjectives: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					research_objectives: researchObjectives,
 					title: "Climate Change Research Grant",
 				});
@@ -174,7 +181,7 @@ export const WithLongTitles: Story = {
 		(Story) => {
 			useEffect(() => {
 				const researchObjectives = [
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"This objective involves conducting a detailed analysis of how climate change affects marine life in coastal areas, including temperature changes, ocean acidification, and sea level rise impacts on various species.",
 						number: 1,
@@ -194,7 +201,7 @@ export const WithLongTitles: Story = {
 						],
 						title: "Comprehensive Assessment of Climate Change Impact on Coastal Marine Ecosystems and Biodiversity Conservation Strategies",
 					}),
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Focus on creating practical, sustainable, and economically viable solutions that help coastal communities adapt to the changing environmental conditions while maintaining their livelihoods.",
 						number: 2,
@@ -208,7 +215,7 @@ export const WithLongTitles: Story = {
 						],
 						title: "Development of Innovative Adaptation and Mitigation Strategies for Vulnerable Coastal Communities",
 					}),
-					ResearchObjectiveFactory.build({
+					buildObjective({
 						description:
 							"Create comprehensive monitoring networks that can track environmental changes over extended periods and provide early warning systems for extreme weather events and ecosystem changes.",
 						number: 3,
@@ -233,7 +240,7 @@ export const WithLongTitles: Story = {
 					}),
 				];
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					research_objectives: researchObjectives,
 					title: "Climate Change Research Grant with Very Detailed Objectives",
 				});

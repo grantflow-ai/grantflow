@@ -549,6 +549,9 @@ export function DragDropSectionManager({
 		}
 
 		const [collision] = event.collisions;
+		if (!collision) {
+			return;
+		}
 
 		if (collision.data && (Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))) {
 			const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;

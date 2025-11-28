@@ -16,6 +16,9 @@ interface ResearchPlanPreviewProps {
 const handleReorder = async (objectives: ResearchObjective[], oldIndex: number, newIndex: number) => {
 	const reorderedObjectives = [...objectives];
 	const [movedObjective] = reorderedObjectives.splice(oldIndex, 1);
+	if (!movedObjective) {
+		return;
+	}
 	reorderedObjectives.splice(newIndex, 0, movedObjective);
 	await useWizardStore.getState().updateObjectives(reorderedObjectives);
 };

@@ -68,7 +68,7 @@ export function ApplicationEditorPageClient() {
 	return (
 		<EditorContainer
 			documentId={application.editor_document_id}
-			initialContent={application.editor_document_init ? undefined : application.text}
+			{...(application.editor_document_init ? {} : { initialContent: application.text })}
 		/>
 	);
 }

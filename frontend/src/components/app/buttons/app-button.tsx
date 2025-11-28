@@ -95,9 +95,10 @@ export function AppButton({
 		appButtonVariants({ size, theme, variant }),
 		className,
 	);
+	const buttonProps = asChild ? { asChild } : {};
 
 	return (
-		<Button asChild={asChild} className={combinedClassNames} {...props}>
+		<Button className={combinedClassNames} {...buttonProps} {...props}>
 			{leftIcon && (
 				<span className={cn("mr-2 inline-flex items-center", iconContainerClass)}>
 					{resizedIcon(leftIcon, keepIconSize)}{" "}

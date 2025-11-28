@@ -80,7 +80,7 @@
 		"knip": "knip",
 		"knip:fix": "knip --fix",
 		"knip:production": "knip --production",
-		"lint": "biome lint --write . && eslint . --fix",
+		"lint": "biome lint --write . && eslint . --fix && pnpm typecheck",
 		"playwright": "./node_modules/.bin/playwright",
 		"preinstall": "npx only-allow pnpm",
 		"reset-shadcn": "tsx scripts/reset-shadcn.ts",

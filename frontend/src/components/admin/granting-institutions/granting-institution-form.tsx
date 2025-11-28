@@ -133,7 +133,11 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setFullName(e.target.value);
 						if (errors.fullName) {
-							setErrors((prev) => ({ ...prev, fullName: undefined }));
+							setErrors((prev) => {
+								const nextErrors = { ...prev };
+								nextErrors.fullName = undefined;
+								return nextErrors;
+							});
 						}
 					}}
 					placeholder="Enter full institution name"
@@ -164,7 +168,11 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setAbbreviation(e.target.value);
 						if (errors.abbreviation) {
-							setErrors((prev) => ({ ...prev, abbreviation: undefined }));
+							setErrors((prev) => {
+								const nextErrors = { ...prev };
+								nextErrors.abbreviation = undefined;
+								return nextErrors;
+							});
 						}
 					}}
 					placeholder="Enter abbreviation (optional)"

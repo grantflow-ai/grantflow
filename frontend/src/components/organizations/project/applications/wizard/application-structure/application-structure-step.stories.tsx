@@ -1,10 +1,17 @@
 import { ApplicationWithTemplateFactory, GrantSectionDetailedFactory, GrantTemplateFactory } from "::testing/factories";
+import type { GrantTemplateResponse } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { ApplicationStructureStep } from "./application-structure-step";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (overrides?: Partial<GrantTemplateResponse>): GrantTemplateResponse =>
+	GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof ApplicationStructureStep> = {
 	component: ApplicationStructureStep,
@@ -46,9 +53,9 @@ export const WithApplicationTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: {
-						...ApplicationWithTemplateFactory.build().grant_template!,
+						...buildApplication().grant_template!,
 						grant_sections: [],
 					},
 					title: "Climate Change Research Grant",
@@ -70,7 +77,7 @@ export const WithGeneratedSections: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					title: "Climate Change Research Grant",
 				});
 				useApplicationStore.setState({
@@ -90,7 +97,7 @@ export const LoadingState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					title: "AI Ethics Research Proposal",
 				});
 				useApplicationStore.setState({
@@ -111,8 +118,8 @@ export const PartiallyCompleted: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: GrantTemplateFactory.build({
+				const application = buildApplication({
+					grant_template: buildGrantTemplate({
 						grant_sections: [
 							GrantSectionDetailedFactory.build({
 								id: "section-1",
@@ -154,8 +161,8 @@ export const AllSectionsCompleted: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: GrantTemplateFactory.build({
+				const application = buildApplication({
+					grant_template: buildGrantTemplate({
 						grant_sections: [
 							GrantSectionDetailedFactory.build({
 								id: "section-1",
@@ -203,8 +210,8 @@ export const MinimalSingleSection: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: GrantTemplateFactory.build({
+				const application = buildApplication({
+					grant_template: buildGrantTemplate({
 						grant_sections: [
 							GrantSectionDetailedFactory.build({
 								id: "section-1",
@@ -253,8 +260,8 @@ export const Manysections: Story = {
 					}),
 				);
 
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: GrantTemplateFactory.build({
+				const application = buildApplication({
+					grant_template: buildGrantTemplate({
 						grant_sections: sections,
 					}),
 					title: "Comprehensive Research Grant Application",

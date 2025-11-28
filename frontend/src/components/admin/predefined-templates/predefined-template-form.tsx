@@ -123,7 +123,10 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 		};
 
 		startTransition(() => {
-			void persistTemplate({ initialTemplate, mode, requestBody, router });
+			const payload: PersistTemplateArgs = initialTemplate
+				? { initialTemplate, mode, requestBody, router }
+				: { mode, requestBody, router };
+			void persistTemplate(payload);
 		});
 	};
 
@@ -131,6 +134,7 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 		() => institutions.find((institution) => institution.id === formState.granting_institution_id),
 		[formState.granting_institution_id, institutions],
 	);
+	const selectedInstitutionProps = selectedInstitution ? { selectedInstitution } : {};
 
 	return (
 		<form className="flex flex-col gap-6" data-testid="predefined-template-form" onSubmit={handleSubmit}>
@@ -140,7 +144,7 @@ export function PredefinedTemplateForm({ initialTemplate, institutions, mode }: 
 					handleChange={handleChange}
 					institutions={institutions}
 					isEditable={isEditable}
-					selectedInstitution={selectedInstitution}
+					{...selectedInstitutionProps}
 				/>
 				<WizardRightPane padding="p-6">
 					<PredefinedTemplateSectionsEditor onChange={setSections} sections={sections} />

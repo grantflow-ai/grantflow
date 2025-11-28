@@ -43,7 +43,7 @@ const NavLink = ({
 			theme={theme}
 			variant="link"
 		>
-			<Link href={href} onClick={onClick}>
+			<Link href={href} {...(onClick ? { onClick } : {})}>
 				{label}
 			</Link>
 		</LandingPageButton>

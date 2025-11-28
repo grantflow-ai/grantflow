@@ -117,13 +117,17 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 			if (section.parent_id === null) {
 				return;
 			}
-			if (!Object.hasOwn(map, section.parent_id)) {
-				map[section.parent_id] = [];
-			}
-			map[section.parent_id].push(section);
+			const parentKey = section.parent_id;
+			const existing = map[parentKey] ?? [];
+			existing.push(section);
+			map[parentKey] = existing;
 		});
 		Object.keys(map).forEach((key) => {
-			map[key] = map[key].toSorted((a, b) => a.order - b.order);
+			const entries = map[key];
+			if (!entries) {
+				return;
+			}
+			map[key] = entries.toSorted((a, b) => a.order - b.order);
 		});
 		return map;
 	}, [normalizedSections]);
@@ -176,6 +180,7 @@ export function PredefinedTemplateSectionsEditor({ onChange, sections }: Section
 		const swapIndex = direction === "up" ? index - 1 : index + 1;
 		if (swapIndex < 0 || swapIndex >= siblings.length) return;
 		const siblingToSwap = siblings[swapIndex];
+		if (!siblingToSwap) return;
 		const next = normalizedSections.map((section) => {
 			if (section.id === target.id) {
 				return { ...section, order: siblingToSwap.order };

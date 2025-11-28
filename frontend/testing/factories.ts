@@ -11,6 +11,11 @@ import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
 import type { RagEvent } from "@/types/notification-events";
 
+const stripUndefined = <T extends Record<string, unknown>>(value: T) =>
+	Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as {
+		[K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>;
+	};
+
 type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
 export const ErrorResponseFactory = new Factory<HttpErrorResponse>((factory) => ({
@@ -148,7 +153,7 @@ type GrantingInstitution = NonNullable<
 >["granting_institution"];
 
 export const GrantingInstitutionFactory = new Factory<NonNullable<GrantingInstitution>>((factory) => ({
-	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : undefined,
+	...(factory.datatype.boolean() ? { abbreviation: factory.string.alpha({ length: 3 }).toUpperCase() } : {}),
 	created_at: factory.date.past().toISOString(),
 	full_name: factory.company.name(),
 	id: factory.string.uuid(),
@@ -159,13 +164,13 @@ type ResearchObjective = NonNullable<API.CreateApplication.Http201.ResponseBody[
 type ResearchTask = ResearchObjective["research_tasks"][0];
 
 export const ResearchTaskFactory = new Factory<ResearchTask>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	...(factory.datatype.boolean() ? { description: factory.lorem.paragraph() } : {}),
 	number: factory.number.int({ max: 10, min: 1 }),
 	title: factory.lorem.sentence(),
 }));
 
 export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	...(factory.datatype.boolean() ? { description: factory.lorem.paragraph() } : {}),
 	number: factory.number.int({ max: 5, min: 1 }),
 	research_tasks: ResearchTaskFactory.batch(factory.number.int({ max: 4, min: 1 })),
 	title: factory.lorem.sentence(),
@@ -283,43 +288,52 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 
 export type GrantTemplateResponse = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
-export const GrantTemplateFactory = new Factory<GrantTemplateResponse>((factory) => ({
-	created_at: factory.date.past().toISOString(),
-	grant_application_id: factory.string.uuid(),
-	grant_sections: factory.helpers.multiple(
-		() => (factory.datatype.boolean() ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build()),
-		{ count: { max: 10, min: 1 } },
-	),
-	grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
-	granting_institution: factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined,
-	granting_institution_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
-	id: factory.string.uuid(),
-	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
-	submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-	updated_at: factory.date.recent().toISOString(),
-}));
+export const GrantTemplateFactory = new Factory<GrantTemplateResponse>((factory) => {
+	const grantingInstitution = factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined;
+	const grantingInstitutionId = factory.datatype.boolean() ? factory.string.uuid() : undefined;
+
+	return stripUndefined({
+		created_at: factory.date.past().toISOString(),
+		grant_application_id: factory.string.uuid(),
+		grant_sections: factory.helpers.multiple(
+			() => (factory.datatype.boolean() ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build()),
+			{ count: { max: 10, min: 1 } },
+		),
+		grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
+		granting_institution: grantingInstitution,
+		granting_institution_id: grantingInstitutionId,
+		id: factory.string.uuid(),
+		rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
+		submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+		updated_at: factory.date.recent().toISOString(),
+	});
+});
 
 type ApplicationStatus = "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 
-export const ApplicationFactory = new Factory<API.CreateApplication.Http201.ResponseBody>((factory) => ({
-	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
-	created_at: factory.date.past().toISOString(),
-	deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-	editor_document_id: "123",
-	editor_document_init: false,
-	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
-	grant_template: factory.datatype.boolean() ? GrantTemplateFactory.build() : undefined,
-	id: factory.string.uuid(),
-	project_id: factory.string.uuid(),
-	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
-	research_objectives: factory.datatype.boolean()
+export const ApplicationFactory = new Factory<API.CreateApplication.Http201.ResponseBody>((factory) => {
+	const researchObjectives = factory.datatype.boolean()
 		? ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 }))
-		: undefined,
-	status: "IN_PROGRESS",
-	text: factory.datatype.boolean() ? factory.lorem.paragraphs(5) : undefined,
-	title: factory.lorem.sentence(),
-	updated_at: factory.date.recent().toISOString(),
-}));
+		: undefined;
+
+	return stripUndefined({
+		completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
+		created_at: factory.date.past().toISOString(),
+		deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+		editor_document_id: "123",
+		editor_document_init: false,
+		form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
+		grant_template: factory.datatype.boolean() ? GrantTemplateFactory.build() : undefined,
+		id: factory.string.uuid(),
+		project_id: factory.string.uuid(),
+		rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
+		research_objectives: researchObjectives,
+		status: "IN_PROGRESS" as ApplicationStatus,
+		text: factory.datatype.boolean() ? factory.lorem.paragraphs(5) : undefined,
+		title: factory.lorem.sentence(),
+		updated_at: factory.date.recent().toISOString(),
+	});
+});
 
 type RagSourceFile = Extract<RagSourceResponse, { filename: string }>;
 type RagSourceResponse = API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[0];
@@ -363,11 +377,13 @@ export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.Req
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
-export const CreateApplicationRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
-	description: factory.datatype.boolean() ? factory.lorem.sentence() : undefined,
-	grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
-	title: factory.lorem.sentence(),
-}));
+export const CreateApplicationRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) =>
+	stripUndefined({
+		description: factory.datatype.boolean() ? factory.lorem.sentence() : undefined,
+		grant_type: factory.helpers.arrayElement(["RESEARCH", "TRANSLATIONAL"]),
+		title: factory.lorem.sentence(),
+	}),
+);
 
 export const UpdateApplicationRequestFactory = new Factory<Required<API.UpdateApplication.RequestBody>>((factory) => ({
 	description: factory.lorem.paragraph(),
@@ -567,30 +583,32 @@ interface AutofillProgressNotification {
 	total_stages?: number;
 }
 
-export const AutofillProgressNotificationFactory = new Factory<AutofillProgressNotification>((factory) => ({
-	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
-	current_stage: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 1 }) : undefined,
-	data: factory.datatype.boolean()
-		? {
-				[factory.helpers.arrayElement(["field_count", "objectives_count", "questions_count"])]:
-					factory.number.int({
-						max: 10,
-						min: 1,
-					}),
-			}
-		: undefined,
-	field_name: factory.datatype.boolean()
-		? factory.helpers.arrayElement([
-				"research_objectives",
-				"background_context",
-				"hypothesis",
-				"rationale",
-				"impact",
-			])
-		: undefined,
-	message: factory.lorem.sentence(),
-	total_stages: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 3 }) : undefined,
-}));
+export const AutofillProgressNotificationFactory = new Factory<AutofillProgressNotification>((factory) =>
+	stripUndefined({
+		autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+		current_stage: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 1 }) : undefined,
+		data: factory.datatype.boolean()
+			? {
+					[factory.helpers.arrayElement(["field_count", "objectives_count", "questions_count"])]:
+						factory.number.int({
+							max: 10,
+							min: 1,
+						}),
+				}
+			: undefined,
+		field_name: factory.datatype.boolean()
+			? factory.helpers.arrayElement([
+					"research_objectives",
+					"background_context",
+					"hypothesis",
+					"rationale",
+					"impact",
+				])
+			: undefined,
+		message: factory.lorem.sentence(),
+		total_stages: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 3 }) : undefined,
+	}),
+);
 
 export const AutofillProgressMessageFactory = new Factory<WebsocketMessage<AutofillProgressNotification>>((factory) => {
 	const notification = AutofillProgressNotificationFactory.build();
@@ -617,9 +635,7 @@ export const ApplicationListItemFactory = new Factory<ApplicationListItem>((fact
 
 export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.Http201.ResponseBody>(
 	(_factory, _iteration, kwargs) => {
-		const baseApplication = ApplicationFactory.build({
-			text: undefined,
-		});
+		const baseApplication = ApplicationFactory.build();
 
 		const formInputs = kwargs?.form_inputs;
 		const grantType = formInputs?.type ?? "RESEARCH";
@@ -628,13 +644,14 @@ export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.
 			grant_application_id: baseApplication.id,
 			grant_type: grantType,
 		});
-		return {
+
+		return stripUndefined({
 			...baseApplication,
 			editor_document_id: "123",
 			editor_document_init: false,
 			form_inputs: formInputs,
 			grant_template: grantTemplate,
-		};
+		});
 	},
 );
 
@@ -671,7 +688,7 @@ export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.Resp
 	const isFailed = status === "FAILED";
 	const isPending = status === "PENDING";
 
-	return {
+	return stripUndefined({
 		completed_at: isCompleted ? factory.date.recent().toISOString() : undefined,
 		created_at: factory.date.past().toISOString(),
 		current_stage: isPending ? null : factory.number.int({ max: 5, min: 1 }).toString(),
@@ -690,7 +707,7 @@ export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.Resp
 		status,
 		updated_at: factory.date.recent().toISOString(),
 		validation_results: isCompleted ? {} : undefined,
-	};
+	});
 });
 
 export const ProjectMemberFactory = new Factory<API.ListProjectMembers.Http200.ResponseBody[0]>((factory) => ({
@@ -708,22 +725,24 @@ export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMembe
 
 type ApplicationCardData = API.ListApplications.Http200.ResponseBody["applications"][0];
 
-export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) => ({
-	completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()),
-	created_at: factory.date.past().toISOString(),
-	deadline: factory.helpers.maybe(() => factory.date.future().toISOString()),
-	description: factory.helpers.maybe(() => factory.lorem.paragraph()),
-	id: factory.string.uuid(),
-	project_id: factory.string.uuid(),
-	status: factory.helpers.arrayElement<ApplicationStatus>([
-		"WORKING_DRAFT",
-		"IN_PROGRESS",
-		"GENERATING",
-		"CANCELLED",
-	]),
-	title: factory.lorem.sentence({ max: 8, min: 3 }),
-	updated_at: factory.date.recent().toISOString(),
-}));
+export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) =>
+	stripUndefined({
+		completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()) ?? undefined,
+		created_at: factory.date.past().toISOString(),
+		deadline: factory.helpers.maybe(() => factory.date.future().toISOString()) ?? undefined,
+		description: factory.helpers.maybe(() => factory.lorem.paragraph()) ?? undefined,
+		id: factory.string.uuid(),
+		project_id: factory.string.uuid(),
+		status: factory.helpers.arrayElement<ApplicationStatus>([
+			"WORKING_DRAFT",
+			"IN_PROGRESS",
+			"GENERATING",
+			"CANCELLED",
+		]),
+		title: factory.lorem.sentence({ max: 8, min: 3 }),
+		updated_at: factory.date.recent().toISOString(),
+	}),
+);
 
 export const AddOrganizationMemberResponseFactory = new Factory<API.AddOrganizationMember.Http201.ResponseBody>(
 	(factory) => ({
@@ -781,24 +800,25 @@ export const ListOrganizationInvitationsResponseFactory =
 export const ListOrganizationMembersResponseFactory = new Factory<API.ListOrganizationMembers.Http200.ResponseBody>(
 	(factory) =>
 		factory.helpers.multiple(
-			() => ({
-				created_at: factory.date.past().toISOString(),
-				display_name: factory.person.fullName(),
-				email: factory.internet.email(),
-				firebase_uid: factory.string.alphanumeric(28),
-				has_all_projects_access: factory.datatype.boolean(),
-				photo_url: factory.datatype.boolean() ? factory.image.avatar() : undefined,
-				project_access: factory.helpers.multiple(
-					() => ({
-						granted_at: factory.date.past().toISOString(),
-						project_id: factory.string.uuid(),
-						project_name: factory.company.name(),
-					}),
-					{ count: { max: 3, min: 0 } },
-				),
-				role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
-				updated_at: factory.date.recent().toISOString(),
-			}),
+			() =>
+				stripUndefined({
+					created_at: factory.date.past().toISOString(),
+					display_name: factory.person.fullName(),
+					email: factory.internet.email(),
+					firebase_uid: factory.string.alphanumeric(28),
+					has_all_projects_access: factory.datatype.boolean(),
+					photo_url: factory.datatype.boolean() ? factory.image.avatar() : undefined,
+					project_access: factory.helpers.multiple(
+						() => ({
+							granted_at: factory.date.past().toISOString(),
+							project_id: factory.string.uuid(),
+							project_name: factory.company.name(),
+						}),
+						{ count: { max: 3, min: 0 } },
+					),
+					role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+					updated_at: factory.date.recent().toISOString(),
+				}),
 			{ count: { max: 5, min: 1 } },
 		),
 );
@@ -865,24 +885,25 @@ export const UpdateMemberRoleResponseFactory = new Factory<API.UpdateMemberRole.
 
 export const ListApplicationsResponseFactory = new Factory<API.ListApplications.Http200.ResponseBody>((factory) => ({
 	applications: factory.helpers.multiple(
-		() => ({
-			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
-			created_at: factory.date.past().toISOString(),
-			deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-			description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
-			id: factory.string.uuid(),
-			parent_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
-			project_id: factory.string.uuid(),
-			status: factory.helpers.arrayElement<ApplicationStatus>([
-				"WORKING_DRAFT",
-				"IN_PROGRESS",
-				"GENERATING",
-				"CANCELLED",
-			]),
-			submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-			title: factory.lorem.sentence(),
-			updated_at: factory.date.recent().toISOString(),
-		}),
+		() =>
+			stripUndefined({
+				completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
+				created_at: factory.date.past().toISOString(),
+				deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+				description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+				id: factory.string.uuid(),
+				parent_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+				project_id: factory.string.uuid(),
+				status: factory.helpers.arrayElement<ApplicationStatus>([
+					"WORKING_DRAFT",
+					"IN_PROGRESS",
+					"GENERATING",
+					"CANCELLED",
+				]),
+				submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+				title: factory.lorem.sentence(),
+				updated_at: factory.date.recent().toISOString(),
+			}),
 		{ count: { max: 10, min: 0 } },
 	),
 	pagination: {
@@ -893,42 +914,46 @@ export const ListApplicationsResponseFactory = new Factory<API.ListApplications.
 	},
 }));
 
-export const TriggerAutofillResponseFactory = new Factory<API.TriggerAutofill.Http201.ResponseBody>((factory) => ({
-	application_id: factory.string.uuid(),
-	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
-	field_name: factory.datatype.boolean()
-		? factory.helpers.arrayElement([
-				"background_context",
-				"hypothesis",
-				"impact",
-				"novelty_and_innovation",
-				"preliminary_data",
-				"rationale",
-				"research_feasibility",
-				"scientific_infrastructure",
-				"team_excellence",
-			])
-		: undefined,
-	message_id: factory.string.uuid(),
-}));
+export const TriggerAutofillResponseFactory = new Factory<API.TriggerAutofill.Http201.ResponseBody>((factory) =>
+	stripUndefined({
+		application_id: factory.string.uuid(),
+		autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+		field_name: factory.datatype.boolean()
+			? factory.helpers.arrayElement([
+					"background_context",
+					"hypothesis",
+					"impact",
+					"novelty_and_innovation",
+					"preliminary_data",
+					"rationale",
+					"research_feasibility",
+					"scientific_infrastructure",
+					"team_excellence",
+				])
+			: undefined,
+		message_id: factory.string.uuid(),
+	}),
+);
 
-export const TriggerAutofillRequestFactory = new Factory<API.TriggerAutofill.RequestBody>((factory) => ({
-	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"] as const),
-	context: factory.datatype.boolean() ? {} : undefined,
-	field_name: factory.datatype.boolean()
-		? factory.helpers.arrayElement([
-				"background_context",
-				"hypothesis",
-				"impact",
-				"novelty_and_innovation",
-				"preliminary_data",
-				"rationale",
-				"research_feasibility",
-				"scientific_infrastructure",
-				"team_excellence",
-			])
-		: undefined,
-}));
+export const TriggerAutofillRequestFactory = new Factory<API.TriggerAutofill.RequestBody>((factory) =>
+	stripUndefined({
+		autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"] as const),
+		context: factory.datatype.boolean() ? {} : undefined,
+		field_name: factory.datatype.boolean()
+			? factory.helpers.arrayElement([
+					"background_context",
+					"hypothesis",
+					"impact",
+					"novelty_and_innovation",
+					"preliminary_data",
+					"rationale",
+					"research_feasibility",
+					"scientific_infrastructure",
+					"team_excellence",
+				])
+			: undefined,
+	}),
+);
 
 export const DismissNotificationResponseFactory = new Factory<API.DismissNotification.Http200.ResponseBody>(
 	(factory) => ({
@@ -939,19 +964,20 @@ export const DismissNotificationResponseFactory = new Factory<API.DismissNotific
 
 export const ListNotificationsResponseFactory = new Factory<API.ListNotifications.Http200.ResponseBody>((factory) => ({
 	notifications: factory.helpers.multiple(
-		() => ({
-			created_at: factory.date.past().toISOString(),
-			dismissed: factory.datatype.boolean(),
-			expires_at: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-			extra_data: factory.datatype.boolean() ? {} : undefined,
-			id: factory.string.uuid(),
-			message: factory.lorem.sentence(),
-			project_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
-			project_name: factory.datatype.boolean() ? factory.company.name() : undefined,
-			read: factory.datatype.boolean(),
-			title: factory.lorem.sentence(),
-			type: factory.helpers.arrayElement(["info", "warning", "error", "success"]),
-		}),
+		() =>
+			stripUndefined({
+				created_at: factory.date.past().toISOString(),
+				dismissed: factory.datatype.boolean(),
+				expires_at: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+				extra_data: factory.datatype.boolean() ? {} : undefined,
+				id: factory.string.uuid(),
+				message: factory.lorem.sentence(),
+				project_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+				project_name: factory.datatype.boolean() ? factory.company.name() : undefined,
+				read: factory.datatype.boolean(),
+				title: factory.lorem.sentence(),
+				type: factory.helpers.arrayElement(["info", "warning", "error", "success"]),
+			}),
 		{ count: { max: 10, min: 0 } },
 	),
 	total: factory.number.int({ max: 100, min: 0 }),
@@ -964,8 +990,27 @@ export const AddOrganizationMemberRequestFactory = new Factory<API.AddOrganizati
 }));
 
 export const CreateOrganizationInvitationRequestFactory = new Factory<API.CreateOrganizationInvitation.RequestBody>(
+	(factory) =>
+		stripUndefined({
+			email: factory.internet.email(),
+			has_all_projects_access: factory.datatype.boolean(),
+			project_ids: factory.datatype.boolean()
+				? factory.helpers.multiple(() => factory.string.uuid(), {
+						count: { max: 3, min: 1 },
+					})
+				: undefined,
+			role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+		}),
+);
+
+export const UpdateOrganizationInvitationRequestFactory = new Factory<API.UpdateOrganizationInvitation.RequestBody>(
 	(factory) => ({
-		email: factory.internet.email(),
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	}),
+);
+
+export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRole.RequestBody>((factory) =>
+	stripUndefined({
 		has_all_projects_access: factory.datatype.boolean(),
 		project_ids: factory.datatype.boolean()
 			? factory.helpers.multiple(() => factory.string.uuid(), {
@@ -976,27 +1021,11 @@ export const CreateOrganizationInvitationRequestFactory = new Factory<API.Create
 	}),
 );
 
-export const UpdateOrganizationInvitationRequestFactory = new Factory<API.UpdateOrganizationInvitation.RequestBody>(
-	(factory) => ({
-		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
-	}),
-);
-
-export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRole.RequestBody>((factory) => ({
-	has_all_projects_access: factory.datatype.boolean(),
-	project_ids: factory.datatype.boolean()
-		? factory.helpers.multiple(() => factory.string.uuid(), {
-				count: { max: 3, min: 1 },
-			})
-		: undefined,
-	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
-}));
-
 export const GrantFactory = new Factory<Grant>((factory) => {
 	const today = new Date();
 	const futureDate = new Date(today.getTime() + factory.number.int({ max: 90, min: 1 }) * 24 * 60 * 60 * 1000);
 
-	return {
+	return stripUndefined({
 		activity_code: factory.helpers.arrayElement([
 			"R01",
 			"R21",
@@ -1049,43 +1078,45 @@ export const GrantFactory = new Factory<Grant>((factory) => {
 		release_date: factory.date.past().toISOString(),
 		title: factory.lorem.sentence({ max: 12, min: 5 }),
 		url: factory.internet.url(),
-	};
+	});
 });
 
-export const SearchParamsFactory = new Factory<SearchParams>((factory) => ({
-	activityCodes: factory.datatype.boolean()
-		? factory.helpers.multiple(
-				() =>
+export const SearchParamsFactory = new Factory<SearchParams>((factory) =>
+	stripUndefined({
+		activityCodes: factory.datatype.boolean()
+			? factory.helpers.multiple(
+					() =>
+						factory.helpers.arrayElement([
+							"R01",
+							"R21",
+							"R03",
+							"K99",
+							"F31",
+							"F32",
+							"T32",
+							"P01",
+							"U01",
+							"SBIR",
+						]),
+					{ count: { max: 3, min: 1 } },
+				)
+			: undefined,
+		careerStage: factory.datatype.boolean()
+			? [factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"])]
+			: undefined,
+		email: factory.datatype.boolean() ? factory.internet.email() : undefined,
+		institutionLocation: factory.datatype.boolean()
+			? [
 					factory.helpers.arrayElement([
-						"R01",
-						"R21",
-						"R03",
-						"K99",
-						"F31",
-						"F32",
-						"T32",
-						"P01",
-						"U01",
-						"SBIR",
+						"U.S. institution (no foreign component)",
+						"U.S. institution with foreign component",
+						"Non-U.S. (foreign) institution",
 					]),
-				{ count: { max: 3, min: 1 } },
-			)
-		: undefined,
-	careerStage: factory.datatype.boolean()
-		? [factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"])]
-		: undefined,
-	email: factory.datatype.boolean() ? factory.internet.email() : undefined,
-	institutionLocation: factory.datatype.boolean()
-		? [
-				factory.helpers.arrayElement([
-					"U.S. institution (no foreign component)",
-					"U.S. institution with foreign component",
-					"Non-U.S. (foreign) institution",
-				]),
-			]
-		: undefined,
-	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
-}));
+				]
+			: undefined,
+		keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+	}),
+);
 
 export const FormDataFactory = new Factory<FormData>((factory) => ({
 	activityCodes: factory.helpers.multiple(

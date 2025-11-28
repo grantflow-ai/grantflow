@@ -113,8 +113,8 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 
 	const handleNewApplicationClick = async () => {
 		await trackEvent(TrackingEvents.CTA_NEW_APPLICATION_SIDEBAR, {
-			organizationId: organization?.id,
 			source: "sidebar",
+			...(organization?.id ? { organizationId: organization.id } : {}),
 		});
 
 		openModal();
@@ -198,7 +198,7 @@ export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 					<NavMain
 						data-testid="nav-main"
 						isBackofficeAdmin={isBackofficeAdmin}
-						userRole={organization?.role}
+						{...(organization?.role ? { userRole: organization.role } : {})}
 					/>
 				</SidebarContent>
 

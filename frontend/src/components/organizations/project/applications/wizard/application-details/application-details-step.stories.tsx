@@ -4,12 +4,19 @@ import {
 	GrantTemplateFactory,
 	RagSourceFactory,
 } from "::testing/factories";
+import type { GrantTemplateResponse } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { ApplicationDetailsStep } from "./application-details-step";
+
+const buildGrantTemplate = (overrides?: Partial<GrantTemplateResponse>): GrantTemplateResponse =>
+	GrantTemplateFactory.build(overrides);
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
 
 const meta: Meta<typeof ApplicationDetailsStep> = {
 	component: ApplicationDetailsStep,
@@ -36,10 +43,10 @@ export const EmptyState: Story = {
 				const { reset } = useApplicationStore.getState();
 				reset();
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "",
 				});
@@ -64,10 +71,10 @@ export const WithTitle: Story = {
 				const { reset } = useApplicationStore.getState();
 				reset();
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -105,11 +112,11 @@ export const OnlyDocuments: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -148,11 +155,11 @@ export const OnlyUrls: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -201,11 +208,11 @@ export const WithAllContent: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -244,11 +251,11 @@ export const NoTitleWithDocuments: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "",
 				});
@@ -279,11 +286,11 @@ export const PendingUploads: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Climate Change Research Grant Application",
 				});
@@ -311,11 +318,11 @@ export const AllPendingUploads: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Research Grant Application with All Pending Files",
 				});
@@ -362,11 +369,11 @@ export const PendingWithProcessing: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "All Status Types with Pending Files",
 				});
@@ -393,11 +400,11 @@ export const PendingLargeFiles: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Pending Large Files with Long Names",
 				});
@@ -437,10 +444,10 @@ export const LoadingState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Loading Application Data",
 				});
@@ -475,11 +482,11 @@ export const ErrorStatesWithRetry: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Error Recovery and Retry Scenarios",
 				});
@@ -524,11 +531,11 @@ export const MixedFileTypes: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Mixed File Types and Statuses",
 				});
@@ -561,7 +568,7 @@ export const LargeDatasetsWithTruncation: Story = {
 						const extensions = ["pdf", "docx", "xlsx", "pptx", "txt", "csv"];
 						const statuses = ["FINISHED", "INDEXING", "FAILED", "CREATED"] as const;
 						const extension = extensions[i % extensions.length];
-						const status = statuses[i % statuses.length];
+						const status = statuses[i % statuses.length] ?? "FINISHED";
 
 						return RagSourceFactory.build({
 							filename: `very-long-document-name-for-testing-truncation-behavior-file-${i + 1}.${extension}`,
@@ -579,11 +586,11 @@ export const LargeDatasetsWithTruncation: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					title: "Testing Large Datasets with Long Names and Truncation Behavior",
 				});

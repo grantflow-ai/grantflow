@@ -184,12 +184,13 @@ const handleGrantTemplateValidationError = async (httpError: HTTPError): Promise
 
 export const getSubsectionsByParent = (sections: GrantSection[]) => {
 	return sections.reduce<Record<string, GrantSection[]>>((acc, section) => {
-		if (section.parent_id) {
-			if (!(section.parent_id in acc)) {
-				acc[section.parent_id] = [];
-			}
-			acc[section.parent_id].push(section);
+		const parentId = section.parent_id;
+		if (!parentId) {
+			return acc;
 		}
+		const existingGroup = acc[parentId] ?? [];
+		existingGroup.push(section);
+		acc[parentId] = existingGroup;
 		return acc;
 	}, {});
 };
@@ -242,13 +243,19 @@ const syncSectionCharacterCount = (sections: GrantSectionsInput) => {
 			message: "Main section length target updated automatically to reflect changes in sub-sections.",
 			sections: sections.map((section) =>
 				section.id in updatedSectionTargets
-					? {
-							...section,
-							length_constraint: setLengthConstraintWordLimit(
-								hasLengthConstraint(section) ? section.length_constraint : null,
-								updatedSectionTargets[section.id],
-							),
-						}
+					? (() => {
+							const updatedTarget = updatedSectionTargets[section.id];
+							if (updatedTarget === undefined) {
+								return section;
+							}
+							return {
+								...section,
+								length_constraint: setLengthConstraintWordLimit(
+									hasLengthConstraint(section) ? section.length_constraint : null,
+									updatedTarget,
+								),
+							};
+						})()
 					: section,
 			),
 		};
@@ -1153,9 +1160,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication, isSaving: true });
 
 		try {
-			await updateGrantTemplateAPI(application, { grant_sections: processedSections ?? [] });
+			const grantSectionsPayload = (processedSections ?? []) as NonNullable<
+				API.UpdateGrantTemplate.RequestBody["grant_sections"]
+			>;
+
+			await updateGrantTemplateAPI(application, { grant_sections: grantSectionsPayload });
 			log.info("updateGrantSections: Success", {
-				grant_sections: (processedSections ?? []).map((section) => ({
+				grant_sections: grantSectionsPayload.map((section) => ({
 					id: section.id,
 					order: section.order,
 					parent_id: section.parent_id,

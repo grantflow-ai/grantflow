@@ -18,6 +18,9 @@ export function decodeJWT(token: string): JWTClaims | null {
 		}
 
 		const [, payload] = parts;
+		if (!payload) {
+			return null;
+		}
 		const decoded = atob(payload.replaceAll("-", "+").replaceAll("_", "/"));
 		return JSON.parse(decoded) as JWTClaims;
 	} catch {
