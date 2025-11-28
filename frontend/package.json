@@ -59,6 +59,7 @@
 	"devDependencies": {
 		"@playwright/test": "^1.57.0",
 		"@react-email/preview-server": "5.0.5",
+		"baseline-browser-mapping": "^2.8.32",
 		"eslint-config-next": "^16.0.5",
 		"playwright": "^1.57.0"
 	},
