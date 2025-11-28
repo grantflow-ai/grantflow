@@ -8,10 +8,10 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isNodeTypeSelected } from "@/utils";
 
 export interface UseFontFamilyConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	fontFamily: string;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export function canSetFontFamily(editor: Editor | null, fontFamily: string): boolean {

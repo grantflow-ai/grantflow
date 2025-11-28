@@ -11,10 +11,10 @@ import { isNodeTypeSelected } from "@/utils";
 export type UndoRedoAction = "undo" | "redo";
 
 export interface UseUndoRedoConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	action: UndoRedoAction;
-	hideWhenUnavailable?: boolean;
-	onExecuted?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onExecuted?: (() => void) | undefined;
 }
 
 export const UNDO_REDO_SHORTCUT_KEYS: Record<UndoRedoAction, string> = {

@@ -57,6 +57,7 @@ from sqlalchemy.orm import selectinload, with_polymorphic
 from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
+from services.backend.src.api.routes.predefined_templates import PredefinedTemplateResponse
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
 from services.backend.src.utils.docx import markdown_to_docx
@@ -137,6 +138,7 @@ class GrantTemplateResponse(TypedDict):
     grant_application_id: str
     granting_institution_id: NotRequired[str]
     granting_institution: NotRequired[GrantingInstitutionResponse]
+    predefined_template: NotRequired[PredefinedTemplateResponse]
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
@@ -204,6 +206,35 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
         source_response["filename"] = rag_source.filename
 
     return source_response
+
+
+def _build_predefined_template_response(template: PredefinedGrantTemplate) -> PredefinedTemplateResponse:
+    response: PredefinedTemplateResponse = {
+        "id": str(template.id),
+        "name": template.name,
+        "grant_type": template.grant_type.value if isinstance(template.grant_type, GrantType) else template.grant_type,
+        "sections_count": len(template.grant_sections),
+        "created_at": template.created_at.isoformat(),
+        "updated_at": template.updated_at.isoformat(),
+        "grant_sections": template.grant_sections,
+    }
+
+    if template.activity_code:
+        response["activity_code"] = template.activity_code
+    if template.granting_institution:
+        response["granting_institution"] = {
+            "id": str(template.granting_institution.id),
+            "full_name": template.granting_institution.full_name,
+            "abbreviation": template.granting_institution.abbreviation,
+        }
+    if template.description:
+        response["description"] = template.description
+    if template.guideline_source:
+        response["guideline_source"] = template.guideline_source
+    if template.guideline_version:
+        response["guideline_version"] = template.guideline_version
+
+    return response
 
 
 def build_application_response(grant_application: GrantApplication) -> ApplicationResponse:
@@ -280,6 +311,8 @@ def build_application_response(grant_application: GrantApplication) -> Applicati
 
         if template.predefined_template_id:
             template_response["predefined_template_id"] = str(template.predefined_template_id)
+        if template.predefined_template:
+            template_response["predefined_template"] = _build_predefined_template_response(template.predefined_template)
 
         response["grant_template"] = template_response
 

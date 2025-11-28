@@ -422,40 +422,45 @@ async def handle_delete_rag_source(
         rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
 
         if template_id:
-            statement = (
-                select(rag_poly)
-                .join(GrantTemplateSource, GrantTemplateSource.rag_source_id == rag_poly.id)
+            lock_statement = (
+                select(RagSource)
+                .join(GrantTemplateSource, GrantTemplateSource.rag_source_id == RagSource.id)
                 .where(
                     GrantTemplateSource.grant_template_id == template_id,
-                    rag_poly.id == source_id,
+                    RagSource.id == source_id,
                 )
                 .with_for_update(nowait=True)
             )
         elif application_id:
-            statement = (
-                select(rag_poly)
-                .join(GrantApplicationSource, GrantApplicationSource.rag_source_id == rag_poly.id)
+            lock_statement = (
+                select(RagSource)
+                .join(GrantApplicationSource, GrantApplicationSource.rag_source_id == RagSource.id)
                 .where(
                     GrantApplicationSource.grant_application_id == application_id,
-                    rag_poly.id == source_id,
+                    RagSource.id == source_id,
                 )
                 .with_for_update(nowait=True)
             )
         else:
             institution_id = granting_institution_id if granting_institution_id else organization_id
-            statement = (
-                select(rag_poly)
-                .join(GrantingInstitutionSource, GrantingInstitutionSource.rag_source_id == rag_poly.id)
+            lock_statement = (
+                select(RagSource)
+                .join(GrantingInstitutionSource, GrantingInstitutionSource.rag_source_id == RagSource.id)
                 .where(
                     GrantingInstitutionSource.granting_institution_id == institution_id,
-                    rag_poly.id == source_id,
+                    RagSource.id == source_id,
                 )
                 .with_for_update(nowait=True)
             )
 
         try:
-            result = await session.execute(statement)
-            source = result.scalar_one()
+            base_source = await session.scalar(lock_statement)
+            if base_source is None:
+                raise NotFoundException("RAG source not found")
+
+            source = await session.scalar(select(rag_poly).where(rag_poly.id == base_source.id))
+            if source is None:
+                raise NotFoundException("RAG source not found")
 
             # Idempotency: if already deleted, return success without error
             if source.deleted_at is not None:

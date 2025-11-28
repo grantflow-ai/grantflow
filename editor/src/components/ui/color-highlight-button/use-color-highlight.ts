@@ -61,11 +61,11 @@ export const HIGHLIGHT_COLORS = [
 export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number];
 
 export interface UseColorHighlightConfig {
-	editor?: Editor | null;
-	highlightColor?: string;
-	label?: string;
-	hideWhenUnavailable?: boolean;
-	onApplied?: ({ color, label }: { color: string; label: string }) => void;
+	editor?: Editor | null | undefined;
+	highlightColor?: string | undefined;
+	label?: string | undefined;
+	hideWhenUnavailable?: boolean | undefined;
+	onApplied?: (({ color, label }: { color: string; label: string }) => void) | undefined;
 }
 
 export function pickHighlightColorsByValue(values: string[]) {

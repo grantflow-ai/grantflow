@@ -6,7 +6,7 @@ interface MarkChange {
 	type: "delete" | "removeMark";
 	pos: number;
 	endPos: number;
-	markType?: MarkType;
+	markType?: MarkType | undefined;
 }
 
 export function DiffMarkHoverHandler({ editor }: { editor: Editor | null }) {

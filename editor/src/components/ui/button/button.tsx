@@ -6,10 +6,10 @@ import "@/components/ui/button/button-group.scss";
 import "@/components/ui/button/button.scss";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-	className?: string;
-	showTooltip?: boolean;
-	tooltip?: React.ReactNode;
-	shortcutKeys?: string;
+	className?: string | undefined;
+	showTooltip?: boolean | undefined;
+	tooltip?: React.ReactNode | undefined;
+	shortcutKeys?: string | undefined;
 }
 
 export const ShortcutDisplay: React.FC<{ shortcuts: string[] }> = ({ shortcuts }) => {

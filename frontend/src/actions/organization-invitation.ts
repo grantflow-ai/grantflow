@@ -54,7 +54,15 @@ export async function inviteOrganizationMember({
 		const invitationResult = await createOrganizationInvitation(organizationId, requestBody);
 
 		const baseUrl = getEnv().NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const acceptInvitationUrl = `${baseUrl}/accept-invitation?token=${invitationResult.token}`;
+		const token = invitationResult.token;
+		if (!token) {
+			return {
+				error: "Missing invitation token",
+				success: false,
+			};
+		}
+
+		const acceptInvitationUrl = `${baseUrl}/accept-invitation?token=${token}`;
 
 		const emailSubject = organizationName
 			? `Invitation to join ${organizationName}`
@@ -78,7 +86,7 @@ export async function inviteOrganizationMember({
 			};
 		}
 
-		const payload = JSON.parse(atob(invitationResult.token.split(".")[1])) as {
+		const payload = JSON.parse(atob(token.split(".")[1])) as {
 			invitation_id: string;
 		};
 

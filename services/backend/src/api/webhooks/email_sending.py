@@ -146,17 +146,6 @@ async def handle_email_notification_webhook(data: PubSubEvent, session_maker: as
                     message="Application no longer exists; email notification skipped",
                 )
 
-            if application.completion_email_sent_at is not None:
-                logger.info(
-                    "Completion email already sent, skipping duplicate",
-                    application_id=str(application_id),
-                    sent_at=application.completion_email_sent_at.isoformat(),
-                )
-                return EmailResponse(
-                    status="success",
-                    message="Email notification already sent for this application",
-                )
-
         project_id = str(application.project.id)
         application_title = application.title
         application_text = application.text or ""

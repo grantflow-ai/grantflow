@@ -1,3 +1,5 @@
+import asyncio
+import sys
 from typing import Final
 
 from packages.shared_utils.src.exceptions import FileParsingError
@@ -74,12 +76,48 @@ DEFAULT_HTML_TEMPLATE: Final[str] = """
 """
 
 
+async def _install_playwright_browsers() -> None:
+    process = await asyncio.create_subprocess_exec(
+        sys.executable,
+        "-m",
+        "playwright",
+        "install",
+        "chromium",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+
+    if process.returncode != 0:
+        logger.error(
+            "Failed to install Playwright browsers",
+            return_code=process.returncode,
+            stdout=stdout.decode(),
+            stderr=stderr.decode(),
+        )
+        raise FileParsingError(
+            "Failed to install Playwright browsers",
+            context={"stdout": stdout.decode(), "stderr": stderr.decode(), "return_code": process.returncode},
+        )
+
+
 async def html_to_pdf(html_content: str) -> bytes:
     try:
         full_html = DEFAULT_HTML_TEMPLATE.format(html_content=html_content)
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch()
+            try:
+                browser = await p.chromium.launch()
+            except Exception as launch_error:
+                if "Executable doesn't exist" in str(launch_error):
+                    logger.warning(
+                        "Playwright browser missing, attempting installation",
+                        error=str(launch_error),
+                    )
+                    await _install_playwright_browsers()
+                    browser = await p.chromium.launch()
+                else:
+                    raise
             page = await browser.new_page()
             await page.set_content(full_html)
             pdf_bytes: bytes = await page.pdf(format="A4")

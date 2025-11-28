@@ -9,9 +9,9 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isNodeTypeSelected } from "@/utils";
 
 export interface UseFontFamilyDropdownMenuConfig {
-	editor?: Editor | null;
-	fontFamilies?: string[];
-	hideWhenUnavailable?: boolean;
+	editor?: Editor | null | undefined;
+	fontFamilies?: string[] | undefined;
+	hideWhenUnavailable?: boolean | undefined;
 }
 
 export function canToggleFontFamily(editor: Editor | null): boolean {

@@ -8,10 +8,10 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isNodeTypeSelected } from "@/utils";
 
 export interface UseFontSizeConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	fontSize: string;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export function canSetFontSize(editor: Editor | null, fontSize: string): boolean {

@@ -7,9 +7,9 @@ import { canToggle, headingIcons, isHeadingActive, type Level, shouldShowButton 
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 export interface UseHeadingDropdownMenuConfig {
-	editor?: Editor | null;
-	levels?: Level[];
-	hideWhenUnavailable?: boolean;
+	editor?: Editor | null | undefined;
+	levels?: Level[] | undefined;
+	hideWhenUnavailable?: boolean | undefined;
 }
 
 export function getActiveHeadingLevel(editor: Editor | null, levels: Level[] = [1, 2, 3, 4, 5, 6]): Level | undefined {
