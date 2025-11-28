@@ -41,6 +41,34 @@ export default function Signup() {
 	const [submittedEmail, setSubmittedEmail] = useState("");
 	const { hasConsent } = useCookieConsent();
 
+	const handleNewUserSignup = async (user: User, idToken: string) => {
+		toast.success("Account created successfully!");
+
+		setUser(convertFirebaseUser(user));
+
+		await login(idToken, true);
+
+		await analyticsIdentify(user.uid, {
+			email: user.email ?? "",
+			firstName: user.displayName?.split(" ")[0] ?? "",
+			lastName: user.displayName?.split(" ").at(-1) ?? "",
+		});
+
+		checkProfileAndRedirect(user.displayName);
+	};
+
+	const handleExistingUserError = () => {
+		const errorWithLink = (
+			<>
+				This email is already registered.{" "}
+				<Link className="text-primary text-sm hover:underline" href="/login">
+					Log in instead.
+				</Link>
+			</>
+		);
+		setSocialSignInError(errorWithLink);
+	};
+
 	const handleSocialSignUp = async (
 		provider: "google" | "orcid",
 		signupMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
@@ -56,31 +84,11 @@ export default function Signup() {
 			const { idToken, isNewUser, user } = await signupMethod();
 
 			if (isNewUser) {
-				toast.success("Account created successfully!");
-
-				setUser(convertFirebaseUser(user));
-
-				await login(idToken, isNewUser);
-
-				await analyticsIdentify(user.uid, {
-					email: user.email ?? "",
-					firstName: user.displayName?.split(" ")[0] ?? "",
-					lastName: user.displayName?.split(" ").at(-1) ?? "",
-				});
-
-				checkProfileAndRedirect(user.displayName);
+				await handleNewUserSignup(user, idToken);
 				return;
 			}
 
-			const errorWithLink = (
-				<>
-					This email is already registered.{" "}
-					<Link className="text-primary text-sm hover:underline" href="/login">
-						Log in instead.
-					</Link>
-				</>
-			);
-			setSocialSignInError(errorWithLink);
+			handleExistingUserError();
 		} catch (error) {
 			if (!isRedirectError(error)) {
 				toast.error(

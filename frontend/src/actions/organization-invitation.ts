@@ -54,7 +54,7 @@ export async function inviteOrganizationMember({
 		const invitationResult = await createOrganizationInvitation(organizationId, requestBody);
 
 		const baseUrl = getEnv().NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const token = invitationResult.token;
+		const { token } = invitationResult;
 		if (!token) {
 			return {
 				error: "Missing invitation token",
@@ -86,7 +86,16 @@ export async function inviteOrganizationMember({
 			};
 		}
 
-		const payload = JSON.parse(atob(token.split(".")[1])) as {
+		const tokenParts = token.split(".");
+		const [, tokenPayload] = tokenParts;
+		if (!tokenPayload) {
+			return {
+				error: "Invalid token format",
+				success: false,
+			};
+		}
+
+		const payload = JSON.parse(atob(tokenPayload)) as {
 			invitation_id: string;
 		};
 

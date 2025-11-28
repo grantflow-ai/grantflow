@@ -344,6 +344,7 @@ export function OrganizationSettingsMembers({
 			</div>
 
 			<InviteCollaboratorModal
+				currentUserRole={currentUserRole}
 				isOpen={isInviteModalOpen}
 				onClose={() => {
 					setIsInviteModalOpen(false);
@@ -351,7 +352,6 @@ export function OrganizationSettingsMembers({
 				onInvite={handleInvite}
 				ownerEmail={ownerEmail}
 				projects={projects}
-				currentUserRole={currentUserRole}
 			/>
 
 			<EditPermissionModal
