@@ -54,7 +54,7 @@ export async function inviteOrganizationMember({
 		const invitationResult = await createOrganizationInvitation(organizationId, requestBody);
 
 		const baseUrl = getEnv().NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const token = invitationResult.token;
+		const { token } = invitationResult;
 		if (!token) {
 			return {
 				error: "Missing invitation token",
