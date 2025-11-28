@@ -2,15 +2,16 @@ import { getSimplePrettyTerminal } from "@loglayer/transport-simple-pretty-termi
 import { type ILogLayer, LogLayer, type PluginBeforeMessageOutParams } from "loglayer";
 import { serializeError } from "serialize-error";
 import { createLogFacade } from "./shared";
+import type { LogLayerLike } from "./types";
 
-let singleton: ILogLayer | null = null;
+let singleton: LogLayerLike | null = null;
 
-export function getLogger(): ILogLayer {
+export function getLogger(): LogLayerLike {
 	singleton ??= initLogger();
 	return singleton;
 }
 
-function initLogger(): ILogLayer {
+function initLogger(): LogLayerLike {
 	const logger = new LogLayer({
 		errorSerializer: serializeError,
 		plugins: [
@@ -30,7 +31,7 @@ function initLogger(): ILogLayer {
 				viewMode: "inline",
 			}),
 		],
-	});
+	}) as LogLayerLike;
 	logger.withContext({ app: "frontend", env: process.env.NODE_ENV, isServer: false });
 	return logger;
 }

@@ -5,15 +5,16 @@ import { type ILogLayer, LogLayer, type PluginBeforeMessageOutParams } from "log
 import { type Logger, type LoggerOptions, pino } from "pino";
 import { serializeError } from "serialize-error";
 import { createLogFacade } from "./shared";
+import type { LogLayerLike } from "./types";
 
-let singleton: ILogLayer | null = null;
+let singleton: LogLayerLike | null = null;
 
-export function getLogger(): ILogLayer {
+export function getLogger(): LogLayerLike {
 	singleton ??= initLogger();
 	return singleton;
 }
 
-function initLogger(): ILogLayer {
+function initLogger(): LogLayerLike {
 	const pinoOptions: LoggerOptions =
 		process.env.NODE_ENV === "production"
 			? createGcpLoggingPinoConfig(undefined, { level: "info" })
@@ -44,7 +45,7 @@ function initLogger(): ILogLayer {
 				logger: pinoLogger,
 			}),
 		],
-	});
+	}) as LogLayerLike;
 
 	logger.withContext({ app: "frontend", env: process.env.NODE_ENV, isServer: true });
 	return logger;

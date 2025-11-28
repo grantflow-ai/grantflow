@@ -92,6 +92,11 @@ export function OrganizationSettingsMembers({
 		},
 	);
 
+	const editableMember =
+		editingMember && editingMember.role !== UserRole.OWNER
+			? { ...editingMember, role: editingMember.role as CollaboratorPermission }
+			: null;
+
 	const handleRemoveMember = async (firebaseUid: string) => {
 		try {
 			await removeOrganizationMember(organizationId, firebaseUid);
@@ -356,7 +361,7 @@ export function OrganizationSettingsMembers({
 
 			<EditPermissionModal
 				isOpen={editingMember !== null}
-				member={editingMember as ({ role: CollaboratorPermission } & OrganizationMember) | null}
+				member={editableMember}
 				onClose={() => {
 					setEditingMember(null);
 				}}
