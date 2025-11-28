@@ -448,11 +448,11 @@ describe("grant-sections utilities", () => {
 			const result = reorderMainWhenOverMainHasSubSections(sections, "main-3", "main-2", overItem);
 
 			expect(result).toHaveLength(5);
-			expect(result[0].id).toBe("main-1");
-			expect(result[1].id).toBe("sub-1-1");
-			expect(result[2].id).toBe("main-2");
-			expect(result[3].id).toBe("sub-2-1");
-			expect(result[4].id).toBe("main-3");
+			expect(result[0]?.id).toBe("main-1");
+			expect(result[1]?.id).toBe("sub-1-1");
+			expect(result[2]?.id).toBe("main-2");
+			expect(result[3]?.id).toBe("sub-2-1");
+			expect(result[4]?.id).toBe("main-3");
 		});
 
 		it("correctly reorders main section with subsections after target main without subsections", () => {
@@ -475,9 +475,9 @@ describe("grant-sections utilities", () => {
 			const result = reorderMainWhenOverMainHasSubSections(sections, "main-2", "main-1", overItem);
 
 			expect(result).toHaveLength(3);
-			expect(result[0].id).toBe("main-1");
-			expect(result[1].id).toBe("main-2");
-			expect(result[2].id).toBe("sub-2-1");
+			expect(result[0]?.id).toBe("main-1");
+			expect(result[1]?.id).toBe("main-2");
+			expect(result[2]?.id).toBe("sub-2-1");
 		});
 
 		it("returns original sections when trying to drop over a subsection (invalid operation)", () => {
@@ -522,9 +522,9 @@ describe("grant-sections utilities", () => {
 			const result = reorderMainWhenOverMainHasSubSections(sections, "main-3", "main-1", overItem);
 
 			expect(result).toHaveLength(3);
-			expect(result[0].id).toBe("main-1");
-			expect(result[1].id).toBe("main-3");
-			expect(result[2].id).toBe("main-2");
+			expect(result[0]?.id).toBe("main-1");
+			expect(result[1]?.id).toBe("main-3");
+			expect(result[2]?.id).toBe("main-2");
 		});
 
 		it("correctly filters sections to move including all subsections", () => {
@@ -551,10 +551,10 @@ describe("grant-sections utilities", () => {
 			const result = reorderMainWhenOverMainHasSubSections(sections, "main-1", "main-2", overItem);
 
 			expect(result).toHaveLength(4);
-			expect(result[0].id).toBe("main-2");
-			expect(result[1].id).toBe("main-1");
-			expect(result[2].id).toBe("sub-1-1");
-			expect(result[3].id).toBe("sub-1-2");
+			expect(result[0]?.id).toBe("main-2");
+			expect(result[1]?.id).toBe("main-1");
+			expect(result[2]?.id).toBe("sub-1-1");
+			expect(result[3]?.id).toBe("sub-1-2");
 		});
 
 		it("handles edge case with empty sections array", () => {
@@ -584,8 +584,8 @@ describe("grant-sections utilities", () => {
 			const result = reorderMainWhenOverMainHasSubSections(sections, "non-existent", "main-1", overItem);
 
 			expect(result).toHaveLength(2);
-			expect(result[0].id).toBe("main-1");
-			expect(result[1].id).toBe("main-2");
+			expect(result[0]?.id).toBe("main-1");
+			expect(result[1]?.id).toBe("main-2");
 		});
 	});
 
@@ -611,9 +611,9 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections);
 
-			expect(result[0].order).toBe(0);
-			expect(result[1].order).toBe(1);
-			expect(result[2].order).toBe(2);
+			expect(result[0]?.order).toBe(0);
+			expect(result[1]?.order).toBe(1);
+			expect(result[2]?.order).toBe(2);
 		});
 
 		it("preserves existing parent_id when no parentAssignmentFn provided", () => {
@@ -637,9 +637,9 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBe("main-1");
-			expect(result[2].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBe("main-1");
+			expect(result[2]?.parent_id).toBeNull();
 		});
 
 		it("applies parentAssignmentFn when provided", () => {
@@ -663,9 +663,9 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, makeSection2ChildOfSection1);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBe("section-1");
-			expect(result[2].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBe("section-1");
+			expect(result[2]?.parent_id).toBeNull();
 		});
 
 		it("handles parentAssignmentFn returning null", () => {
@@ -684,8 +684,8 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, makeAllParentsNull);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBeNull();
 		});
 
 		it("handles no parentAssignmentFn (falls back to original parent)", () => {
@@ -704,8 +704,8 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections);
 
-			expect(result[0].parent_id).toBe("original-parent");
-			expect(result[1].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBe("original-parent");
+			expect(result[1]?.parent_id).toBeNull();
 		});
 
 		it("handles sections with null parent_id correctly", () => {
@@ -724,10 +724,10 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBeNull();
-			expect(result[0].order).toBe(0);
-			expect(result[1].order).toBe(1);
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBeNull();
+			expect(result[0]?.order).toBe(0);
+			expect(result[1]?.order).toBe(1);
 		});
 
 		it("preserves all other section properties", () => {
@@ -751,8 +751,8 @@ describe("grant-sections utilities", () => {
 			const result = assignOrderAndParent(sections);
 
 			const [updated] = result;
-			expect(updated.id).toBe("test-section");
-			expect(updated.title).toBe("Test Title");
+			expect(updated?.id).toBe("test-section");
+			expect(updated?.title).toBe("Test Title");
 			expect((updated as any).length_constraint?.value).toBe(3000);
 			expect((updated as any).keywords).toEqual(["test", "section"]);
 			expect((updated as any).topics).toEqual(["research"]);
@@ -762,8 +762,8 @@ describe("grant-sections utilities", () => {
 			expect((updated as any).search_queries).toEqual(["test query"]);
 			expect((updated as any).depends_on).toEqual(["other-section"]);
 
-			expect(updated.order).toBe(0);
-			expect(updated.parent_id).toBe("original-parent");
+			expect(updated?.order).toBe(0);
+			expect(updated?.parent_id).toBe("original-parent");
 		});
 
 		it("handles empty sections array", () => {
@@ -784,9 +784,9 @@ describe("grant-sections utilities", () => {
 			const result = assignOrderAndParent(sections);
 
 			expect(result).toHaveLength(1);
-			expect(result[0].order).toBe(0);
-			expect(result[0].parent_id).toBe("parent-id");
-			expect(result[0].id).toBe("solo-section");
+			expect(result[0]?.order).toBe(0);
+			expect(result[0]?.parent_id).toBe("parent-id");
+			expect(result[0]?.id).toBe("solo-section");
 		});
 
 		it("correctly handles complex parentAssignmentFn logic", () => {
@@ -815,15 +815,15 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, reassignSectionToMoveToMain1);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBe("main-1");
-			expect(result[2].parent_id).toBe("different-parent");
-			expect(result[3].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBe("main-1");
+			expect(result[2]?.parent_id).toBe("different-parent");
+			expect(result[3]?.parent_id).toBeNull();
 
-			expect(result[0].order).toBe(0);
-			expect(result[1].order).toBe(1);
-			expect(result[2].order).toBe(2);
-			expect(result[3].order).toBe(3);
+			expect(result[0]?.order).toBe(0);
+			expect(result[1]?.order).toBe(1);
+			expect(result[2]?.order).toBe(2);
+			expect(result[3]?.order).toBe(3);
 		});
 
 		it("uses fallback chain: parentAssignmentFn result -> original parent_id -> null", () => {
@@ -847,9 +847,9 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, reassignParentFallbackChain);
 
-			expect(result[0].parent_id).toBeNull();
-			expect(result[1].parent_id).toBeNull();
-			expect(result[2].parent_id).toBeNull();
+			expect(result[0]?.parent_id).toBeNull();
+			expect(result[1]?.parent_id).toBeNull();
+			expect(result[2]?.parent_id).toBeNull();
 		});
 
 		it("maintains referential integrity - doesn't mutate original sections", () => {
@@ -861,16 +861,16 @@ describe("grant-sections utilities", () => {
 				}),
 			];
 
-			const originalOrder = sections[0].order;
-			const originalParent = sections[0].parent_id;
+			const originalOrder = sections[0]?.order;
+			const originalParent = sections[0]?.parent_id;
 
 			const result = assignOrderAndParent(sections);
 
-			expect(sections[0].order).toBe(originalOrder);
-			expect(sections[0].parent_id).toBe(originalParent);
+			expect(sections[0]?.order).toBe(originalOrder);
+			expect(sections[0]?.parent_id).toBe(originalParent);
 
-			expect(result[0].order).toBe(0);
-			expect(result[0].parent_id).toBe("parent-1");
+			expect(result[0]?.order).toBe(0);
+			expect(result[0]?.parent_id).toBe("parent-1");
 			expect(result[0]).not.toBe(sections[0]);
 		});
 	});
@@ -895,14 +895,14 @@ describe("grant-sections utilities", () => {
 			await updateReorder(sections, 0, 2, mockToUpdateGrantSection, mockUpdateGrantSections);
 
 			expect(mockUpdateGrantSections).toHaveBeenCalledTimes(1);
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
 
-			expect(calledWith[0].id).toBe("section-2");
-			expect(calledWith[0].order).toBe(0);
-			expect(calledWith[1].id).toBe("section-3");
-			expect(calledWith[1].order).toBe(1);
-			expect(calledWith[2].id).toBe("section-1");
-			expect(calledWith[2].order).toBe(2);
+			expect(calledWith?.[0]?.id).toBe("section-2");
+			expect(calledWith?.[0]?.order).toBe(0);
+			expect(calledWith?.[1]?.id).toBe("section-3");
+			expect(calledWith?.[1]?.order).toBe(1);
+			expect(calledWith?.[2]?.id).toBe("section-1");
+			expect(calledWith?.[2]?.order).toBe(2);
 		});
 
 		it("applies parent assignment function when provided", async () => {
@@ -920,9 +920,9 @@ describe("grant-sections utilities", () => {
 				reassignSection1ToNewParent,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[1].parent_id).toBe("new-parent");
-			expect(calledWith[0].parent_id).toBeNull();
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[1]?.parent_id).toBe("new-parent");
+			expect(calledWith?.[0]?.parent_id).toBeNull();
 		});
 
 		it("handles empty sections array", async () => {
@@ -936,9 +936,9 @@ describe("grant-sections utilities", () => {
 
 			await updateReorder(sections, 0, 0, mockToUpdateGrantSection, mockUpdateGrantSections);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].id).toBe("section-1");
-			expect(calledWith[0].order).toBe(0);
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.id).toBe("section-1");
+			expect(calledWith?.[0]?.order).toBe(0);
 		});
 
 		it("calls toUpdateGrantSection for each section", async () => {
@@ -961,13 +961,13 @@ describe("grant-sections utilities", () => {
 
 			await updateReorder(sections, 2, 0, mockToUpdateGrantSection, mockUpdateGrantSections);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].id).toBe("section-3");
-			expect(calledWith[0].order).toBe(0);
-			expect(calledWith[1].id).toBe("section-1");
-			expect(calledWith[1].order).toBe(1);
-			expect(calledWith[2].id).toBe("section-2");
-			expect(calledWith[2].order).toBe(2);
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.id).toBe("section-3");
+			expect(calledWith?.[0]?.order).toBe(0);
+			expect(calledWith?.[1]?.id).toBe("section-1");
+			expect(calledWith?.[1]?.order).toBe(1);
+			expect(calledWith?.[2]?.id).toBe("section-2");
+			expect(calledWith?.[2]?.order).toBe(2);
 		});
 	});
 
@@ -994,10 +994,10 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].order).toBe(0);
-			expect(calledWith[1].order).toBe(1);
-			expect(calledWith[2].order).toBe(2);
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.order).toBe(0);
+			expect(calledWith?.[1]?.order).toBe(1);
+			expect(calledWith?.[2]?.order).toBe(2);
 		});
 
 		it("applies parent assignment function to reordered sections", async () => {
@@ -1013,9 +1013,9 @@ describe("grant-sections utilities", () => {
 				reassignSection2ToNewParent,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].parent_id).toBeNull();
-			expect(calledWith[1].parent_id).toBe("new-parent");
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.parent_id).toBeNull();
+			expect(calledWith?.[1]?.parent_id).toBe("new-parent");
 		});
 
 		it("handles empty reordered sections array", async () => {
@@ -1042,12 +1042,12 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].title).toBe("Test Title");
-			expect(calledWith[0].length_constraint?.value).toBe(5000);
-			expect(calledWith[0].keywords).toEqual(["test"]);
-			expect(calledWith[0].order).toBe(0);
-			expect(calledWith[0].parent_id).toBe("original-parent");
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.title).toBe("Test Title");
+			expect(calledWith?.[0]?.length_constraint?.value).toBe(5000);
+			expect(calledWith?.[0]?.keywords).toEqual(["test"]);
+			expect(calledWith?.[0]?.order).toBe(0);
+			expect(calledWith?.[0]?.parent_id).toBe("original-parent");
 		});
 
 		it("calls toUpdateGrantSection for each section", async () => {
@@ -1078,7 +1078,7 @@ describe("grant-sections utilities", () => {
 		});
 
 		it("calculates target index correctly for forward movement", async () => {
-			const sections = [
+			const sections: [GrantSection, ...GrantSection[]] = [
 				GrantSectionDetailedFactory.build({ id: "active", order: 0 }),
 				GrantSectionDetailedFactory.build({ id: "middle", order: 1 }),
 				GrantSectionDetailedFactory.build({ id: "over", order: 2 }),
@@ -1098,21 +1098,21 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].id).toBe("middle");
-			expect(calledWith[1].id).toBe("over");
-			expect(calledWith[2].id).toBe("active");
-			expect(calledWith[2].parent_id).toBe("new-parent");
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.id).toBe("middle");
+			expect(calledWith?.[1]?.id).toBe("over");
+			expect(calledWith?.[2]?.id).toBe("active");
+			expect(calledWith?.[2]?.parent_id).toBe("new-parent");
 		});
 
 		it("calculates target index correctly for backward movement", async () => {
-			const sections = [
+			const sections: GrantSection[] = [
 				GrantSectionDetailedFactory.build({ id: "over", order: 0 }),
 				GrantSectionDetailedFactory.build({ id: "middle", order: 1 }),
 				GrantSectionDetailedFactory.build({ id: "active", order: 2 }),
 			];
 
-			const { 2: activeItem } = sections;
+			const activeItem = sections[2]!;
 			const activeIndex = 2;
 			const overIndex = 0;
 
@@ -1126,15 +1126,15 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].id).toBe("over");
-			expect(calledWith[1].id).toBe("active");
-			expect(calledWith[1].parent_id).toBe("new-parent");
-			expect(calledWith[2].id).toBe("middle");
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.id).toBe("over");
+			expect(calledWith?.[1]?.id).toBe("active");
+			expect(calledWith?.[1]?.parent_id).toBe("new-parent");
+			expect(calledWith?.[2]?.id).toBe("middle");
 		});
 
 		it("assigns new parent only to active section", async () => {
-			const sections = [
+			const sections: [GrantSection, ...GrantSection[]] = [
 				GrantSectionDetailedFactory.build({ id: "active", parent_id: null }),
 				GrantSectionDetailedFactory.build({ id: "other", parent_id: "existing-parent" }),
 			];
@@ -1151,7 +1151,7 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
 			const activeAfterUpdate = calledWith.find((s: any) => s.id === "active");
 			const otherAfterUpdate = calledWith.find((s: any) => s.id === "other");
 
@@ -1160,7 +1160,7 @@ describe("grant-sections utilities", () => {
 		});
 
 		it("handles null new parent (converting to main section)", async () => {
-			const sections = [
+			const sections: [GrantSection, ...GrantSection[]] = [
 				GrantSectionDetailedFactory.build({ id: "active", parent_id: "old-parent" }),
 				GrantSectionDetailedFactory.build({ id: "other", order: 1 }),
 			];
@@ -1177,14 +1177,14 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
 			const activeAfterUpdate = calledWith.find((s: any) => s.id === "active");
 
 			expect(activeAfterUpdate?.parent_id).toBeNull();
 		});
 
 		it("handles same active and over index", async () => {
-			const sections = [
+			const sections: [GrantSection, ...GrantSection[]] = [
 				GrantSectionDetailedFactory.build({ id: "active", order: 0 }),
 				GrantSectionDetailedFactory.build({ id: "other", order: 1 }),
 			];
@@ -1203,14 +1203,16 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-			expect(calledWith[0].id).toBe("other");
-			expect(calledWith[1].id).toBe("active");
-			expect(calledWith[1].parent_id).toBe("new-parent");
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
+			expect(calledWith?.[0]?.id).toBe("other");
+			expect(calledWith?.[1]?.id).toBe("active");
+			expect(calledWith?.[1]?.parent_id).toBe("new-parent");
 		});
 
 		it("handles edge case with single section", async () => {
-			const sections = [GrantSectionDetailedFactory.build({ id: "only-section", parent_id: null })];
+			const sections: [GrantSection] = [
+				GrantSectionDetailedFactory.build({ id: "only-section", parent_id: null }),
+			];
 
 			const [activeItem] = sections;
 
@@ -1224,11 +1226,11 @@ describe("grant-sections utilities", () => {
 				mockUpdateGrantSections,
 			);
 
-			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
+			const calledWith = mockUpdateGrantSections.mock.calls[0]?.[0];
 			expect(calledWith).toHaveLength(1);
-			expect(calledWith[0].id).toBe("only-section");
-			expect(calledWith[0].parent_id).toBe("new-parent");
-			expect(calledWith[0].order).toBe(0);
+			expect(calledWith?.[0]?.id).toBe("only-section");
+			expect(calledWith?.[0]?.parent_id).toBe("new-parent");
+			expect(calledWith?.[0]?.order).toBe(0);
 		});
 	});
 
@@ -1517,7 +1519,7 @@ describe("grant-sections utilities", () => {
 
 		describe("Complex Real-World Scenarios", () => {
 			it("handles deeply nested hierarchy with multiple parents", () => {
-				const complexSections = [
+				const complexSections: GrantSection[] = [
 					GrantSectionDetailedFactory.build({ id: "main-a", order: 0, parent_id: null }),
 					GrantSectionDetailedFactory.build({ id: "sub-a1", order: 1, parent_id: "main-a" }),
 					GrantSectionDetailedFactory.build({ id: "sub-a2", order: 2, parent_id: "main-a" }),
@@ -1528,8 +1530,8 @@ describe("grant-sections utilities", () => {
 				];
 
 				const result = calculateDropIndicatorVisibility(
-					complexSections[1],
-					complexSections[5],
+					complexSections[1]!,
+					complexSections[5]!,
 					1,
 					5,
 					complexSections,
@@ -1543,15 +1545,15 @@ describe("grant-sections utilities", () => {
 			});
 
 			it("handles single-subsection parent correctly for last subsection logic", () => {
-				const singleSubSections = [
+				const singleSubSections: GrantSection[] = [
 					GrantSectionDetailedFactory.build({ id: "main-1", order: 0, parent_id: null }),
 					GrantSectionDetailedFactory.build({ id: "sub-1-only", order: 1, parent_id: "main-1" }),
 					GrantSectionDetailedFactory.build({ id: "main-2", order: 2, parent_id: null }),
 				];
 
 				const result = calculateDropIndicatorVisibility(
-					singleSubSections[2],
-					singleSubSections[0],
+					singleSubSections[2]!,
+					singleSubSections[0]!,
 					2,
 					0,
 					singleSubSections,

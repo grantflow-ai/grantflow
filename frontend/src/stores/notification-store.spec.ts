@@ -52,9 +52,9 @@ describe("useNotificationStore", () => {
 		});
 
 		expect(result.current.notifications).toHaveLength(2);
-		expect(result.current.notifications[0].id).not.toBe(result.current.notifications[1].id);
-		expect(result.current.notifications[0].message).toBe(mockNotification.message);
-		expect(result.current.notifications[1].message).toBe(mockErrorNotification.message);
+		expect(result.current.notifications[0]?.id).not.toBe(result.current.notifications[1]?.id);
+		expect(result.current.notifications[0]?.message).toBe(mockNotification.message);
+		expect(result.current.notifications[1]?.message).toBe(mockErrorNotification.message);
 	});
 
 	it("removes specific notification by id", () => {
@@ -67,14 +67,14 @@ describe("useNotificationStore", () => {
 
 		expect(result.current.notifications).toHaveLength(2);
 
-		const firstNotificationId = result.current.notifications[0].id;
+		const firstNotificationId = result.current.notifications[0]?.id ?? "";
 
 		act(() => {
 			result.current.removeNotification(firstNotificationId);
 		});
 
 		expect(result.current.notifications).toHaveLength(1);
-		expect(result.current.notifications[0].message).toBe(mockErrorNotification.message);
+		expect(result.current.notifications[0]?.message).toBe(mockErrorNotification.message);
 	});
 
 	it("does nothing when removing non-existent notification", () => {
@@ -91,7 +91,7 @@ describe("useNotificationStore", () => {
 		});
 
 		expect(result.current.notifications).toHaveLength(1);
-		expect(result.current.notifications[0].message).toBe(mockNotification.message);
+		expect(result.current.notifications[0]?.message).toBe(mockNotification.message);
 	});
 
 	it("clears all notifications", () => {
@@ -137,10 +137,10 @@ describe("useNotificationStore", () => {
 		});
 
 		expect(result.current.notifications).toHaveLength(4);
-		expect(result.current.notifications[0].type).toBe("success");
-		expect(result.current.notifications[1].type).toBe("error");
-		expect(result.current.notifications[2].type).toBe("info");
-		expect(result.current.notifications[3].type).toBe("warning");
+		expect(result.current.notifications[0]?.type).toBe("success");
+		expect(result.current.notifications[1]?.type).toBe("error");
+		expect(result.current.notifications[2]?.type).toBe("info");
+		expect(result.current.notifications[3]?.type).toBe("warning");
 	});
 
 	it("handles notifications without optional fields", () => {
@@ -177,9 +177,9 @@ describe("useNotificationStore", () => {
 			result.current.addNotification(thirdNotification);
 		});
 
-		expect(result.current.notifications[0].message).toBe("First");
-		expect(result.current.notifications[1].message).toBe("Second");
-		expect(result.current.notifications[2].message).toBe("Third");
+		expect(result.current.notifications[0]?.message).toBe("First");
+		expect(result.current.notifications[1]?.message).toBe("Second");
+		expect(result.current.notifications[2]?.message).toBe("Third");
 	});
 
 	it("generates incrementing ids", () => {
@@ -189,13 +189,13 @@ describe("useNotificationStore", () => {
 			result.current.addNotification(mockNotification);
 		});
 
-		const firstId = result.current.notifications[0].id;
+		const firstId = result.current.notifications[0]?.id ?? "";
 
 		act(() => {
 			result.current.addNotification(mockNotification);
 		});
 
-		const secondId = result.current.notifications[1].id;
+		const secondId = result.current.notifications[1]?.id ?? "";
 
 		const firstNum = Number.parseInt(firstId.replace("notification-", ""), 10);
 		const secondNum = Number.parseInt(secondId.replace("notification-", ""), 10);
@@ -214,21 +214,21 @@ describe("useNotificationStore", () => {
 
 		expect(result.current.notifications).toHaveLength(3);
 
-		const secondId = result.current.notifications[1].id;
+		const secondId = result.current.notifications[1]?.id ?? "";
 		act(() => {
 			result.current.removeNotification(secondId);
 		});
 
 		expect(result.current.notifications).toHaveLength(2);
-		expect(result.current.notifications[0].message).toBe("First");
-		expect(result.current.notifications[1].message).toBe("Third");
+		expect(result.current.notifications[0]?.message).toBe("First");
+		expect(result.current.notifications[1]?.message).toBe("Third");
 
 		act(() => {
 			result.current.addNotification({ ...mockNotification, message: "Fourth" });
 		});
 
 		expect(result.current.notifications).toHaveLength(3);
-		expect(result.current.notifications[2].message).toBe("Fourth");
+		expect(result.current.notifications[2]?.message).toBe("Fourth");
 
 		act(() => {
 			result.current.clearAllNotifications();
