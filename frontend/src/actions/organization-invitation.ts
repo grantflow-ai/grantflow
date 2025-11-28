@@ -86,7 +86,16 @@ export async function inviteOrganizationMember({
 			};
 		}
 
-		const payload = JSON.parse(atob(token.split(".")[1])) as {
+		const tokenParts = token.split(".");
+		const [, tokenPayload] = tokenParts;
+		if (!tokenPayload) {
+			return {
+				error: "Invalid token format",
+				success: false,
+			};
+		}
+
+		const payload = JSON.parse(atob(tokenPayload)) as {
 			invitation_id: string;
 		};
 
