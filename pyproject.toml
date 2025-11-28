@@ -17,7 +17,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "asyncpg>=0.30.0",
+  "asyncpg>=0.31.0",
   "codespell>=2.4.0",
   "covdefaults>=2.3.0",
   "faker>=37.0.1",
@@ -33,7 +33,7 @@ dev = [
   "opentelemetry-instrumentation-sqlalchemy>=0.56b0",
   "opentelemetry-sdk>=1.35.0",
   "pgvector>=0.4.1",
-  "polyfactory>=2.19.0",
+  "polyfactory>=3.1.0",
   "pyproject-fmt>=2.6.0",
   "pytest>=8.3.5",
   "pytest-asyncio>=0.25.3",
@@ -49,7 +49,7 @@ dev = [
   "uv-bump",
 ]
 functions = [
-  "asyncpg>=0.30.0",
+  "asyncpg>=0.31.0",
   "db",
   "functions-framework>=3.8.2",
   "google-cloud-pubsub>=2.31.0",
