@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 optional-dependencies.ai = [
-  "anthropic>=0.54",
+  "anthropic>=0.75",
   "google-genai>=0.1",
   "prompt-template>=1.2",
 ]
