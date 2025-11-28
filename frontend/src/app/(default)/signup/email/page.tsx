@@ -13,6 +13,7 @@ import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { checkProfileAndRedirect } from "@/utils/onboarding";
+import { analyticsIdentify } from "@/utils/segment";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
@@ -37,6 +38,12 @@ export default function FinalizeEmailLogin() {
 
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);
+
+				await analyticsIdentify(cred.user.uid, {
+					email: cred.user.email ?? "",
+					firstName: cred.user.displayName?.split(" ")[0] ?? "",
+					lastName: cred.user.displayName?.split(" ").at(-1) ?? "",
+				});
 
 				checkProfileAndRedirect(cred.user.displayName);
 			} catch (error) {

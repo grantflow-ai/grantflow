@@ -33,6 +33,7 @@ import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { checkProfileAndRedirect } from "@/utils/onboarding";
+import { analyticsIdentify } from "@/utils/segment";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -98,6 +99,12 @@ export default function Login() {
 		});
 
 		setBackofficeAdmin(loginResult.is_backoffice_admin);
+
+		await analyticsIdentify(user.uid, {
+			email: user.email ?? "",
+			firstName: user.displayName?.split(" ")[0] ?? "",
+			lastName: user.displayName?.split(" ").at(-1) ?? "",
+		});
 
 		if (isMobile) {
 			setShowMobileWarning(true);

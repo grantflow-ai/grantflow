@@ -31,6 +31,7 @@ import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { routes } from "@/utils/navigation";
 import { checkProfileAndRedirect } from "@/utils/onboarding";
+import { analyticsIdentify } from "@/utils/segment";
 
 export default function Signup() {
 	const auth = getFirebaseAuth();
@@ -60,6 +61,12 @@ export default function Signup() {
 				setUser(convertFirebaseUser(user));
 
 				await login(idToken, isNewUser);
+
+				await analyticsIdentify(user.uid, {
+					email: user.email ?? "",
+					firstName: user.displayName?.split(" ")[0] ?? "",
+					lastName: user.displayName?.split(" ").at(-1) ?? "",
+				});
 
 				checkProfileAndRedirect(user.displayName);
 				return;
