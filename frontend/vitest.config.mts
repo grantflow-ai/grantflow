@@ -1,5 +1,6 @@
 import path from "node:path";
 import react from "@vitejs/plugin-react";
+import type { PluginOption } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
@@ -28,7 +29,7 @@ const suppressedErrors = [
 
 export default defineConfig({
 	cacheDir: "node_modules/.vite",
-	plugins: [tsconfigPaths() as any, react() as any],
+	plugins: [tsconfigPaths(), react()] as PluginOption[],
 	resolve: {
 		alias: {
 			"::testing": path.resolve(__dirname, "./testing"),
