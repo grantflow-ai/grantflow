@@ -191,7 +191,7 @@ export function ApplicationStructureLeftPane() {
 
 			<div className="mt-2 2xl:mt-6">
 				<ApplicationStructureSourcesPreview
-					parentId={parentId}
+					{...(parentId ? { parentId } : {})}
 					templateFiles={templateFiles}
 					templateUrls={templateUrls}
 				/>
@@ -205,14 +205,15 @@ export function ApplicationStructureSourcesPreview({
 	templateFiles,
 	templateUrls,
 }: {
-	parentId: string | undefined;
+	parentId?: string;
 	templateFiles: FileWithSource[];
 	templateUrls: UrlWithSource[];
 }) {
+	const parentProps = parentId ? { parentId } : {};
 	return (
 		<div className="space-y-3">
-			{templateFiles.length > 0 && <DocumentsCard parentId={parentId} templateFiles={templateFiles} />}
-			{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
+			{templateFiles.length > 0 && <DocumentsCard {...parentProps} templateFiles={templateFiles} />}
+			{templateUrls.length > 0 && <LinksCard {...parentProps} templateUrls={templateUrls} />}
 		</div>
 	);
 }
@@ -331,16 +332,17 @@ function AnalyzingSteps() {
 }
 
 function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithSource[] }) {
+	const parentProps = parentId ? { parentId } : {};
 	return (
 		<PreviewCard className="gap-2 2xl:gap-5" data-testid="application-documents">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
 			<div className="flex flex-wrap gap-3" data-testid="file-collection">
 				{templateFiles.map((file, index) => (
 					<FilePreviewCard
+						{...parentProps}
 						disableRemove={true}
 						file={file}
 						key={file.name + index.toString()}
-						parentId={parentId}
 						sourceStatus={file.sourceStatus}
 					/>
 				))}
@@ -350,15 +352,16 @@ function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templat
 }
 
 function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: UrlWithSource[] }) {
+	const parentProps = parentId ? { parentId } : {};
 	return (
 		<PreviewCard className="gap-5" data-testid="application-links">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Links</h4>
 			<div className="space-y-1">
 				{templateUrls.map((urlSource, index) => (
 					<LinkPreviewItem
+						{...parentProps}
 						disableRemove={true}
 						key={urlSource.url + index.toString()}
-						parentId={parentId}
 						sourceStatus={urlSource.sourceStatus}
 						url={urlSource.url}
 					/>

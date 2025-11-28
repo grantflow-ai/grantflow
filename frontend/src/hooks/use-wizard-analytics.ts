@@ -38,14 +38,20 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 
 	const lastEventRef = useRef<{ event: string; timestamp: number } | null>(null);
 
-	const context = useMemo(
-		() => ({
-			applicationId: application?.id,
+	const context = useMemo(() => {
+		const base: Omit<BaseEventProperties, "path" | "referrer" | "sessionId" | "timestamp"> = {
 			organizationId: selectedOrganizationId ?? "",
-			projectId: application?.project_id,
-		}),
-		[application?.id, application?.project_id, selectedOrganizationId],
-	);
+		};
+
+		if (application?.id) {
+			base.applicationId = application.id;
+		}
+		if (application?.project_id) {
+			base.projectId = application.project_id;
+		}
+
+		return base;
+	}, [application, selectedOrganizationId]);
 
 	const trackDeduplicatedEvent = useCallback(
 		async (eventName: string, eventKey: keyof typeof TrackingEvents, properties: Record<string, unknown>) => {

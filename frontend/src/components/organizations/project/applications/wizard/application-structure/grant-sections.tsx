@@ -207,7 +207,7 @@ export function SortableSection({
 						limitType={limitType}
 						limitValue={limitValue}
 						listeners={listeners}
-						onAddSubsection={onAddSubsection}
+						{...(onAddSubsection ? { onAddSubsection } : {})}
 						onDelete={_onDelete}
 						onHeaderClick={handleHeaderClick}
 						onToggleExpand={onToggleExpand}

@@ -83,20 +83,22 @@ export function ProjectDetailClient() {
 		}
 	}, [selectedOrganizationId, getProjects]);
 
-	const { data: applicationsData, isLoading: isApplicationsLoading } = useSWR(
+	const applicationsKey =
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
-			: null,
-		() =>
-			project && selectedOrganizationId
-				? listApplications(selectedOrganizationId, project.id, {
-						search: searchQuery || undefined,
-					})
-				: null,
-		{
-			revalidateOnFocus: false,
-		},
-	);
+			: null;
+
+	const fetchApplications = () => {
+		if (!(project && selectedOrganizationId)) {
+			return null;
+		}
+		const searchParams = searchQuery ? { search: searchQuery } : {};
+		return listApplications(selectedOrganizationId, project.id, searchParams);
+	};
+
+	const { data: applicationsData, isLoading: isApplicationsLoading } = useSWR(applicationsKey, fetchApplications, {
+		revalidateOnFocus: false,
+	});
 
 	const { data: OrganizationMember } = useSWR(
 		selectedOrganizationId ? `/organizations/${selectedOrganizationId}/members` : null,
@@ -332,7 +334,8 @@ export function ProjectDetailClient() {
 		return null;
 	}
 
-	const currentUserRole = projectMembers?.find((member) => member.firebase_uid === user?.uid)?.role;
+	const currentUserRole =
+		projectMembers?.find((member) => member.firebase_uid === user?.uid)?.role ?? UserRole.COLLABORATOR;
 	const ownerEmail = OrganizationMember?.find((member) => member.role === "OWNER")?.email;
 
 	return (
@@ -399,7 +402,7 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
-				ownerEmail={ownerEmail}
+				ownerEmail={ownerEmail ?? ""}
 				projectId={project.id}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
 			/>

@@ -81,9 +81,11 @@ function AcceptInvitationContent() {
 
 			const result = await acceptInvitation(invitationId, token);
 			const rawResultPayload = decodeJwtPayload(result.token);
+			const organizationId = extractNonEmptyString(rawResultPayload.organization_id);
+			const projectId = extractNonEmptyString(rawResultPayload.project_id);
 			const resultPayload = {
-				organization_id: extractNonEmptyString(rawResultPayload.organization_id),
-				project_id: extractNonEmptyString(rawResultPayload.project_id),
+				...(organizationId ? { organization_id: organizationId } : {}),
+				...(projectId ? { project_id: projectId } : {}),
 			};
 
 			log.info("Invitation accepted successfully", { invitationId, resultPayload });

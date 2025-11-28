@@ -37,7 +37,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 			...objectiveData,
 			number: objectives.length + 1,
 			research_tasks: tasks.map((task, index) => ({
-				description: task.description,
+				description: task.description ?? "",
 				number: index + 1,
 				title: task.title,
 			})),

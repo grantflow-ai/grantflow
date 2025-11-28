@@ -124,13 +124,15 @@ export function ApplicationPreview({
 						<div className="space-y-5">
 							{(templateFiles.length > 0 || pendingFiles.length > 0) && (
 								<DocumentsCard
-									parentId={parentId}
+									{...(parentId ? { parentId } : {})}
 									pendingFiles={pendingFiles}
 									templateFiles={templateFiles}
 								/>
 							)}
 
-							{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
+							{templateUrls.length > 0 && (
+								<LinksCard {...(parentId ? { parentId } : {})} templateUrls={templateUrls} />
+							)}
 						</div>
 					</div>
 				</div>
@@ -148,15 +150,16 @@ function DocumentsCard({
 	pendingFiles: FileWithId[];
 	templateFiles: FileWithSource[];
 }) {
+	const parentProps = parentId ? { parentId } : {};
 	return (
 		<PreviewCard data-testid="application-documents">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
 			<div className="flex flex-wrap gap-3" data-testid="file-collection">
 				{templateFiles.map((file, index) => (
 					<FilePreviewCard
+						{...parentProps}
 						file={file}
 						key={file.name + index.toString()}
-						parentId={parentId}
 						sourceStatus={file.sourceStatus}
 					/>
 				))}
@@ -169,6 +172,7 @@ function DocumentsCard({
 }
 
 function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: UrlWithSource[] }) {
+	const parentProps = parentId ? { parentId } : {};
 	return (
 		<PreviewCard data-testid="application-links">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Links</h4>
@@ -178,8 +182,8 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 						.filter((_, index) => index % 2 === 0)
 						.map((urlSource, originalIndex) => (
 							<LinkPreviewItem
+								{...parentProps}
 								key={urlSource.url + (originalIndex * 2).toString()}
-								parentId={parentId}
 								sourceStatus={urlSource.sourceStatus}
 								url={urlSource.url}
 							/>
@@ -190,8 +194,8 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 						.filter((_, index) => index % 2 === 1)
 						.map((urlSource, originalIndex) => (
 							<LinkPreviewItem
+								{...parentProps}
 								key={urlSource.url + (originalIndex * 2 + 1).toString()}
-								parentId={parentId}
 								sourceStatus={urlSource.sourceStatus}
 								url={urlSource.url}
 							/>

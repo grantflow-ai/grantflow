@@ -176,6 +176,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 		}
 
 		const [defaultProject] = projects;
+		if (!defaultProject) return;
 
 		navigateToProject(defaultProject.id, defaultProject.name);
 		router.push(routes.organization.project.application.new());
@@ -183,7 +184,7 @@ export function DashboardClient({ initialOrganizations, initialProjects }: Dashb
 
 	return (
 		<div className="relative size-full overflow-y-scroll bg-preview-bg">
-			{projects.length === 1 && projects[0].applications_count === 0 && (
+			{projects.length === 1 && projects[0]?.applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
 

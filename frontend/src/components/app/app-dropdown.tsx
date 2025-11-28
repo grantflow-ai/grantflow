@@ -41,7 +41,8 @@ export function AppDropdownMenuGroup({ ...props }: React.ComponentProps<typeof D
 }
 
 export function AppDropdownMenuItem({ inset, variant = "default", ...props }: AppDropdownMenuItemProps) {
-	return <DropdownMenuItem data-testid="app-dropdown-menu-item" inset={inset} variant={variant} {...props} />;
+	const insetProps = inset ? { inset } : {};
+	return <DropdownMenuItem data-testid="app-dropdown-menu-item" variant={variant} {...insetProps} {...props} />;
 }
 
 export function AppDropdownMenuLabel({ ...props }: React.ComponentProps<typeof DropdownMenuLabel>) {

@@ -230,17 +230,17 @@ const trackAutofillEvent = async (
 		await trackEvent(TrackingEvents.WIZARD_STEP_3_AI, {
 			aiType: "autofill",
 			applicationId,
-			fieldName,
 			organizationId,
 			projectId,
+			...(fieldName ? { fieldName } : {}),
 		});
 	} else if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
 		await trackEvent(TrackingEvents.WIZARD_STEP_5_AI, {
 			aiType: "autofill",
 			applicationId,
-			fieldName,
 			organizationId,
 			projectId,
+			...(fieldName ? { fieldName } : {}),
 		});
 	}
 };
@@ -297,9 +297,11 @@ function validateApplicationDetails(application: API.RetrieveApplication.Http200
 		titleLength: application.title ? application.title.length : 0,
 	});
 
+	const metadataValue = Object.keys(metadata).length > 0 ? metadata : null;
+
 	return {
 		isValid: validation.isValid,
-		metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+		...(metadataValue ? { metadata: metadataValue } : {}),
 		reason: validation.reason,
 	};
 }
@@ -690,6 +692,10 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 
 			const nextStep = WIZARD_STEPS[WIZARD_STEPS.indexOf(currentStep) + 1];
 
+			if (!nextStep) {
+				return;
+			}
+
 			set((state) => ({
 				...state,
 				currentStep: nextStep,
@@ -726,9 +732,14 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				}));
 			}
 
+			const previousStep = WIZARD_STEPS[Math.max(0, currentIndex - 1)];
+			if (!previousStep) {
+				return;
+			}
+
 			set((state) => ({
 				...state,
-				currentStep: WIZARD_STEPS[Math.max(0, currentIndex - 1)],
+				currentStep: previousStep,
 			}));
 		},
 
@@ -810,9 +821,15 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 				type: grantType,
 			};
 
-			await updateApplication({
-				form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],
-			});
+			const sanitizedFormInputs = Object.fromEntries(
+				Object.entries(mergedFormInputs as Record<string, unknown>).filter(([, value]) => value !== undefined),
+			) as NonNullable<API.UpdateApplication.RequestBody["form_inputs"]>;
+
+			const payload: Partial<API.UpdateApplication.RequestBody> = {
+				form_inputs: sanitizedFormInputs,
+			};
+
+			await updateApplication(payload);
 		},
 
 		updateObjective: async (

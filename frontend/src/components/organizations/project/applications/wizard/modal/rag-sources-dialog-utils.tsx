@@ -9,15 +9,14 @@ interface RagSourcesDialogOptions {
 
 export function createRagSourcesDialog(options: RagSourcesDialogOptions) {
 	const { onBackToUploads, onContinue, sourceType } = options;
+	const footerProps = {
+		...(sourceType === "template" && onBackToUploads ? { onBackToUploads } : {}),
+		...(onContinue ? { onContinue } : {}),
+	};
 
 	return {
 		content: <RagSourcesContent sourceType={sourceType} />,
-		footer: (
-			<RagSourcesFooter
-				onBackToUploads={sourceType === "template" ? onBackToUploads : undefined}
-				onContinue={onContinue}
-			/>
-		),
+		footer: <RagSourcesFooter {...footerProps} />,
 	};
 }
 

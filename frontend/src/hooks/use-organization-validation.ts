@@ -95,8 +95,16 @@ function handleInvalidOrganization(
 		invalid_org_id: selectedOrganizationId,
 	});
 
+	const [firstOrganization] = organizations;
+	if (!firstOrganization) {
+		log.warn("Invalid organization ID with no available organizations", {
+			invalid_org_id: selectedOrganizationId,
+		});
+		return;
+	}
+
 	actions.clearOrganizationCookie();
-	const firstOrgId = organizations[0].id;
+	const firstOrgId = firstOrganization.id;
 	actions.setOrganizationCookie(firstOrgId);
 	actions.selectOrganization(firstOrgId);
 
@@ -122,7 +130,13 @@ function handleNoSelectedOrganization(
 	organizations: API.ListOrganizations.Http200.ResponseBody,
 	actions: OrganizationActions,
 ) {
-	const firstOrgId = organizations[0].id;
+	const [firstOrganization] = organizations;
+	if (!firstOrganization) {
+		log.warn("No organization selected and no organizations available");
+		return;
+	}
+
+	const firstOrgId = firstOrganization.id;
 	log.info("No organization selected, setting first available", {
 		organization_id: firstOrgId,
 	});

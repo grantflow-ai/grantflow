@@ -41,7 +41,7 @@ interface ObjectiveHeaderProps {
 
 export function EditableObjective({ index, objective, onCancel: _onCancel, onSave }: EditableObjectiveProps) {
 	const [title, setTitle] = useState(objective.title);
-	const [description, setDescription] = useState(objective.description);
+	const [description, setDescription] = useState(objective.description ?? "");
 	const [tasks, setTasks] = useState<ResearchObjective["research_tasks"]>(objective.research_tasks);
 
 	const handleTaskValueChange = useCallback((newTaskValue: ResearchObjective["research_tasks"][0]) => {
@@ -73,6 +73,9 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 		setTasks((prevTasks: ResearchObjective["research_tasks"]) => {
 			const reorderedTasks = [...prevTasks];
 			const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+			if (!movedTask) {
+				return prevTasks;
+			}
 			reorderedTasks.splice(newIndex, 0, movedTask);
 
 			return reorderedTasks.map((task, index) => ({

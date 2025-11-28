@@ -2,7 +2,14 @@ import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { useApplicationStore } from "@/stores/application-store";
+import type { API } from "@/types/api-types";
 import { Deadline } from "./deadline";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (
+	overrides?: Partial<NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>>,
+) => GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof Deadline> = {
 	component: Deadline,
@@ -28,10 +35,8 @@ export const NoDeadlineSet: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
-					submission_date: undefined,
-				});
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -50,10 +55,10 @@ export const PlentifulTimeRemaining: Story = {
 				const futureDate = new Date();
 				futureDate.setDate(futureDate.getDate() + 30);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: futureDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -73,10 +78,10 @@ export const UrgentDeadline: Story = {
 				const urgentDate = new Date();
 				urgentDate.setDate(urgentDate.getDate() + 1);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: urgentDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -96,10 +101,10 @@ export const VeryUrgentDeadline: Story = {
 				const veryUrgentDate = new Date();
 				veryUrgentDate.setHours(veryUrgentDate.getHours() + 6);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: veryUrgentDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -119,10 +124,10 @@ export const CriticalDeadline: Story = {
 				const criticalDate = new Date();
 				criticalDate.setMinutes(criticalDate.getMinutes() + 45);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: criticalDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -142,10 +147,10 @@ export const DeadlinePassed: Story = {
 				const pastDate = new Date();
 				pastDate.setDate(pastDate.getDate() - 5);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: pastDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -165,10 +170,10 @@ export const RecentlyPassed: Story = {
 				const recentPastDate = new Date();
 				recentPastDate.setHours(recentPastDate.getHours() - 2);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: recentPastDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({
@@ -188,10 +193,10 @@ export const AllDeadlineStates: Story = {
 				const futureDate = new Date();
 				futureDate.setDate(futureDate.getDate() + 7);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: futureDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 				useApplicationStore.setState({

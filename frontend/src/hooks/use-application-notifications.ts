@@ -302,17 +302,19 @@ export function useApplicationNotifications({
 		(message: WebsocketMessage<unknown>): void => {
 			const messageType = getMessageType(message);
 
-			log.info("[useApplicationNotifications] Valid WebSocket message identified", {
-				applicationId,
+			const context = {
 				dataKeys: message.data ? Object.keys(message.data) : [],
 				event: message.event,
 				messageType,
-				organizationId,
-				parentId: message.parent_id,
-				projectId,
-				traceId: message.trace_id,
 				type: message.type,
-			});
+				...(applicationId ? { applicationId } : {}),
+				...(organizationId ? { organizationId } : {}),
+				...(message.parent_id ? { parentId: message.parent_id } : {}),
+				...(projectId ? { projectId } : {}),
+				...(message.trace_id ? { traceId: message.trace_id } : {}),
+			};
+
+			log.info("[useApplicationNotifications] Valid WebSocket message identified", context);
 
 			if (message.parent_id !== applicationId) {
 				return;

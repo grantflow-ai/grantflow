@@ -101,8 +101,9 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 					set({ organizations: response });
 
 					const { selectedOrganizationId } = get();
-					if (!selectedOrganizationId && response.length > 0) {
-						set({ selectedOrganizationId: response[0].id });
+					const [firstOrg] = response;
+					if (!selectedOrganizationId && firstOrg) {
+						set({ selectedOrganizationId: firstOrg.id });
 					}
 
 					log.info("organization-store.ts: getOrganizations", {

@@ -123,7 +123,9 @@ function AnswerCard({
 	showBack: boolean;
 	showNext: boolean;
 }) {
-	const { key: questionKey, question } = questions[selectedQuestion];
+	const fallbackQuestion: QuestionConfig = questions[0] ?? { key: "background_context", question: "" };
+	const selectedConfig = questions[selectedQuestion] ?? fallbackQuestion;
+	const { key: questionKey, question } = selectedConfig;
 	const formInputsAnswer =
 		(formInputs[questionKey as Exclude<keyof FormInputs, "type">] as null | string | undefined) ?? "";
 

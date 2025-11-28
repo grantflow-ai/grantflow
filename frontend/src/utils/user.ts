@@ -19,7 +19,8 @@ export function generateBackgroundColor(userId: string): string {
 		hash = (userId.codePointAt(i) ?? 0) + ((hash << 5) - hash);
 	}
 
-	return colors[Math.abs(hash) % colors.length];
+	const color = colors[Math.abs(hash) % colors.length];
+	return color ?? "#369e94";
 }
 
 export function generateInitials(fullName?: string, email?: string): string {
@@ -27,10 +28,13 @@ export function generateInitials(fullName?: string, email?: string): string {
 		const parts = fullName.trim().split(" ");
 		if (parts.length >= 2) {
 			const lastPart = parts.at(-1);
-			return `${parts[0][0]}${lastPart?.[0] ?? ""}`.toUpperCase();
+			const firstInitial = parts[0]?.[0] ?? "";
+			const lastInitial = lastPart?.[0] ?? "";
+			return `${firstInitial}${lastInitial}`.toUpperCase();
 		}
 		if (parts.length === 1) {
-			return parts[0].slice(0, 2).toUpperCase();
+			const firstPart = parts[0] ?? "";
+			return firstPart.slice(0, 2).toUpperCase();
 		}
 	}
 

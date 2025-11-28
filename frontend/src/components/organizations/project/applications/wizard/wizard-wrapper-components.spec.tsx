@@ -809,7 +809,7 @@ describe.sequential("WizardHeader", () => {
 		it("does not show deadline component when no submission date is set", () => {
 			const applicationWithoutDeadline = ApplicationFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					submission_date: undefined,
+					submission_date: "",
 				}),
 				title: "Test Application",
 			});

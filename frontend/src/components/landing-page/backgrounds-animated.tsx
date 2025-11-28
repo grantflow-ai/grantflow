@@ -17,12 +17,14 @@ const gradientPath = [
 type AnimatedGradientBackgroundProps = Omit<HTMLMotionProps<"div">, "animate" | "initial" | "transition">;
 
 export function AnimatedGradientBackground({ className, ...props }: AnimatedGradientBackgroundProps) {
+	const initialBackground =
+		gradientPath[0] ?? "radial-gradient(60% 100% at 50% 50%, var(--primary) 0%, transparent 100%)";
 	return (
 		<motion.div
 			animate={{ background: gradientPath }}
 			className={cn("opacity-70 relative", className)}
 			data-testid="animated-background"
-			initial={{ background: gradientPath[0] }}
+			initial={{ background: initialBackground }}
 			transition={{
 				duration: 25,
 				ease: "linear",

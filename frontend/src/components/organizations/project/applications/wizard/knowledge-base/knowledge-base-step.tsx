@@ -40,7 +40,10 @@ export function KnowledgeBaseStep() {
 						>
 							Documents
 						</h3>
-						<TemplateFileUploader parentId={applicationId} sourceType="application" />
+						<TemplateFileUploader
+							{...(applicationId ? { parentId: applicationId } : {})}
+							sourceType="application"
+						/>
 					</div>
 
 					<div>
@@ -54,7 +57,7 @@ export function KnowledgeBaseStep() {
 							Use a static link that doesn&apos;t require login, so we can retrieve the information.
 						</p>
 
-						<UrlInput parentId={applicationId} />
+						<UrlInput {...(applicationId ? { parentId: applicationId } : {})} />
 					</div>
 				</div>
 			</WizardLeftPane>
@@ -91,6 +94,7 @@ function KnowledgeBasePreview() {
 	const pendingFiles = [...pendingUploads];
 	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0 || pendingFiles.length > 0;
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
+	const parentProps = applicationId ? { parentId: applicationId } : {};
 
 	if (!hasFilesOrUrls) {
 		return (
@@ -113,9 +117,9 @@ function KnowledgeBasePreview() {
 								<div className="flex flex-wrap gap-3" data-testid="knowledge-base-files">
 									{knowledgeBaseFiles.map((file, index) => (
 										<FilePreviewCard
+											{...parentProps}
 											file={file}
 											key={file.name + index.toString()}
-											parentId={applicationId}
 											sourceStatus={file.sourceStatus}
 										/>
 									))}
@@ -141,8 +145,8 @@ function KnowledgeBasePreview() {
 											.filter((_, index) => index % 2 === 0)
 											.map((urlSource, index) => (
 												<LinkPreviewItem
+													{...parentProps}
 													key={urlSource.url + index.toString()}
-													parentId={applicationId}
 													sourceStatus={urlSource.sourceStatus}
 													url={urlSource.url}
 												/>
@@ -153,8 +157,8 @@ function KnowledgeBasePreview() {
 											.filter((_, index) => index % 2 === 1)
 											.map((urlSource, index) => (
 												<LinkPreviewItem
+													{...parentProps}
 													key={urlSource.url + index.toString()}
-													parentId={applicationId}
 													sourceStatus={urlSource.sourceStatus}
 													url={urlSource.url}
 												/>

@@ -65,23 +65,27 @@ export function DraggableTaskList({
 		async (event: DragEndEvent) => {
 			const { active, over } = event;
 
-			if (!over || active.id === over.id) {
-				return;
-			}
+			if (!over || active.id === over.id) return;
+			if (objectiveNumber === undefined) return;
 
 			const oldIndex = tasks.findIndex((_, index) => `${objectiveIndex}-task-${index}` === active.id);
 			const newIndex = tasks.findIndex((_, index) => `${objectiveIndex}-task-${index}` === over.id);
 
-			if (oldIndex !== -1 && newIndex !== -1) {
-				if (onTaskReorder) {
-					onTaskReorder(oldIndex, newIndex);
-				} else if (objectiveNumber) {
-					const reorderedTasks = [...tasks];
-					const [movedTask] = reorderedTasks.splice(oldIndex, 1);
-					reorderedTasks.splice(newIndex, 0, movedTask);
-					await updateTasksForObjective(objectiveNumber, reorderedTasks);
-				}
+			if (oldIndex === -1 || newIndex === -1) {
+				return;
 			}
+			if (onTaskReorder) {
+				onTaskReorder(oldIndex, newIndex);
+				return;
+			}
+
+			const reorderedTasks = [...tasks];
+			const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+			if (!movedTask) {
+				return;
+			}
+			reorderedTasks.splice(newIndex, 0, movedTask);
+			await updateTasksForObjective(objectiveNumber, reorderedTasks);
 		},
 		[tasks, objectiveIndex, onTaskReorder, objectiveNumber, updateTasksForObjective],
 	);
@@ -125,7 +129,7 @@ export function DraggableTaskList({
 					<div className="space-y-1">
 						{tasks.map((task, taskIndex) => (
 							<DraggableTaskItem
-								isEditing={isEditing}
+								{...(isEditing === undefined ? {} : { isEditing })}
 								key={
 									isEditing
 										? `${objectiveIndex}-task-${taskIndex}-${task.title}`

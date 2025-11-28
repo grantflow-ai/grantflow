@@ -54,17 +54,24 @@ export function AvatarGroup({ className, maxVisible = 4, size = "md", users }: A
 
 	return (
 		<div className={cn("flex flex-row items-center space-x-1", className)} data-testid="avatar-group">
-			{visibleUsers.map((user, index) => (
-				<AppAvatar
-					backgroundColor={user.backgroundColor ?? defaultColors[index % defaultColors.length]}
-					borderRadius="4px"
-					className="rounded-sm"
-					imageUrl={user.imageUrl}
-					initials={user.initials}
-					key={`${user.initials}-${index}`}
-					size={size}
-				/>
-			))}
+			{visibleUsers.map((user, index) =>
+				(() => {
+					const paletteColor = defaultColors[index % defaultColors.length] ?? "#369e94";
+					const backgroundColor = user.backgroundColor ?? paletteColor;
+					const imageProps = user.imageUrl ? { imageUrl: user.imageUrl } : {};
+					return (
+						<AppAvatar
+							backgroundColor={backgroundColor}
+							borderRadius="4px"
+							className="rounded-sm"
+							initials={user.initials}
+							key={`${user.initials}-${index}`}
+							size={size}
+							{...imageProps}
+						/>
+					);
+				})(),
+			)}
 			{remainingCount > 0 && (
 				<AppAvatar
 					backgroundColor="#636170"

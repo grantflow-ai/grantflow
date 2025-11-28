@@ -31,9 +31,56 @@ function initLogger(): LogLayerLike {
 				viewMode: "inline",
 			}),
 		],
-	}) as LogLayerLike;
-	logger.withContext({ app: "frontend", env: process.env.NODE_ENV, isServer: false });
-	return logger;
+	});
+
+	const wrapLayer = (layer: ILogLayer): LogLayerLike => ({
+		debug(message: string) {
+			layer.debug(message);
+		},
+		error(message: string) {
+			layer.error(message);
+		},
+		errorOnly(error: Error) {
+			if (
+				"errorOnly" in layer &&
+				typeof (layer as { errorOnly?: (error: Error) => void }).errorOnly === "function"
+			) {
+				(layer as { errorOnly: (error: Error) => void }).errorOnly(error);
+				return;
+			}
+			layer.error(error.message);
+		},
+		info(message: string) {
+			layer.info(message);
+		},
+		metadataOnly(metadata: Record<string, unknown>) {
+			if (
+				"metadataOnly" in layer &&
+				typeof (layer as { metadataOnly?: (metadata: Record<string, unknown>) => void }).metadataOnly ===
+					"function"
+			) {
+				(layer as { metadataOnly: (metadata: Record<string, unknown>) => void }).metadataOnly(metadata);
+				return;
+			}
+			layer.withMetadata(metadata);
+		},
+		warn(message: string) {
+			layer.warn(message);
+		},
+		withContext(context: Record<string, unknown>) {
+			return wrapLayer(layer.withContext(context) as unknown as ILogLayer);
+		},
+		withError(error: Error) {
+			return wrapLayer(layer.withError(error) as unknown as ILogLayer);
+		},
+		withMetadata(metadata: Record<string, unknown>) {
+			return wrapLayer(layer.withMetadata(metadata) as unknown as ILogLayer);
+		},
+	});
+
+	const wrappedLogger = wrapLayer(logger);
+	wrappedLogger.withContext({ app: "frontend", env: process.env.NODE_ENV, isServer: false });
+	return wrappedLogger;
 }
 
 export const log = createLogFacade(getLogger);

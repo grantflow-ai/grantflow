@@ -22,10 +22,13 @@ export function EditorContainer({ documentId, initialContent }: { documentId: st
 				</div>
 				<div className="container mx-auto max-w-6xl pt-3" data-testid="grant-application-editor">
 					<div className="prose prose-sm max-w-none h-full">
+						{/*
+								Only include initialMarkdownContent when provided to satisfy strict optional property types.
+							*/}
 						<Editor
 							crdtUrl={getEnv().NEXT_PUBLIC_CRDT_SERVER_URL}
 							documentId={documentId}
-							initialMarkdownContent={initialContent}
+							{...(initialContent === undefined ? {} : { initialMarkdownContent: initialContent })}
 							onContentChange={() => {
 								if (editorRef.current) {
 									setEditorSections(editorRef.current.getHeadings());

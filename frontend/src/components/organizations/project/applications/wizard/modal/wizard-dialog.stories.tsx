@@ -3,9 +3,16 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
+import type { API } from "@/types/api-types";
 import { RagSourcesContent } from "./rag-sources-content";
 import { RagSourcesFooter } from "./rag-sources-footer";
 import { WizardDialog, type WizardDialogRef } from "./wizard-dialog";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (
+	overrides?: Partial<NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>>,
+) => GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof WizardDialog> = {
 	component: WizardDialog,
@@ -60,11 +67,11 @@ export const RagSourcesSuccess: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 
@@ -126,11 +133,11 @@ export const RagSourcesWithFailures: Story = {
 					}),
 				];
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: ragSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 
@@ -171,11 +178,11 @@ export const RagSourcesEmpty: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: [],
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 
@@ -328,20 +335,21 @@ export const RagSourcesManyItems: Story = {
 				const statusOptions = ["FINISHED", "FAILED", "INDEXING", "CREATED"] as const;
 				const manyRagSources = Array.from({ length: 15 }, (_, i) => {
 					const isUrl = i % 3 === 0;
+					const status = statusOptions[i % 4] ?? "FINISHED";
 					return RagSourceFactory.build({
 						sourceId: `source-${i}`,
-						status: statusOptions[i % 4],
+						status,
 						...(isUrl
 							? { url: `https://example.com/resource-${i}` }
 							: { filename: `document-${i + 1}.pdf` }),
 					});
 				});
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					rag_sources: manyRagSources,
 				});
 
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 				});
 

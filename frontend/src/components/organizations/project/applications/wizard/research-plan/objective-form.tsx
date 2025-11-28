@@ -108,9 +108,16 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				const newTasks = { ...prev.tasks };
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete newTasks[taskId];
+
+				if (Object.keys(newTasks).length === 0) {
+					const remainingErrors = { ...prev };
+					remainingErrors.tasks = undefined;
+					return remainingErrors;
+				}
+
 				return {
 					...prev,
-					tasks: Object.keys(newTasks).length > 0 ? newTasks : undefined,
+					tasks: newTasks,
 				};
 			});
 		}
@@ -127,7 +134,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			if (!value.trim()) {
 				setFormData((prev) => ({
 					...prev,
-					tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, description: undefined } : task)),
+					tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, description: "" } : task)),
 				}));
 			}
 		}
@@ -147,7 +154,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		const currentTaskCount = formData.tasks.length;
 		setFormData((prev) => ({
 			...prev,
-			tasks: [...prev.tasks, { description: undefined, id: newTaskId, number: currentTaskCount + 1, title: "" }],
+			tasks: [...prev.tasks, { description: "", id: newTaskId, number: currentTaskCount + 1, title: "" }],
 		}));
 
 		requestAnimationFrame(() => {

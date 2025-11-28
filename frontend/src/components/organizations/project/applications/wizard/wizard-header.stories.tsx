@@ -4,7 +4,14 @@ import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { WizardHeader } from "./wizard-wrapper-components";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
+const buildGrantTemplate = (
+	overrides?: Partial<NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>>,
+) => GrantTemplateFactory.build(overrides);
 
 const meta: Meta<typeof WizardHeader> = {
 	component: WizardHeader,
@@ -28,10 +35,8 @@ export const FirstStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
-					submission_date: undefined,
-				});
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-123",
 					title: "",
@@ -54,10 +59,10 @@ export const WithTitleAndDeadline: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-123",
 					title: "Climate Change Research Grant Application",
@@ -83,10 +88,10 @@ export const SecondStep: Story = {
 				const futureDate = new Date();
 				futureDate.setDate(futureDate.getDate() + 30);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: futureDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-123",
 					title: "Climate Change Research Grant Application",
@@ -109,10 +114,10 @@ export const KnowledgeBaseStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-456",
 					title: "Quantum Computing Research Proposal",
@@ -138,10 +143,10 @@ export const ResearchPlanStep: Story = {
 				const urgentDate = new Date();
 				urgentDate.setDate(urgentDate.getDate() + 7);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: urgentDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-789",
 					title: "AI-Powered Healthcare Diagnostics System",
@@ -167,10 +172,10 @@ export const ResearchDeepDiveStep: Story = {
 				const veryUrgentDate = new Date();
 				veryUrgentDate.setDate(veryUrgentDate.getDate() + 2);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: veryUrgentDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-abc",
 					title: "Virtual Reality Learning Platform for STEM Education",
@@ -193,10 +198,10 @@ export const FinalStep: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-123",
 					title: "Climate Change Research Grant Application",
@@ -219,10 +224,8 @@ export const NoDeadlineSet: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
-					submission_date: undefined,
-				});
-				const application = ApplicationWithTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate();
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-xyz",
 					title: "Exploratory Research Project",
@@ -248,10 +251,10 @@ export const DeadlinePassed: Story = {
 				const pastDate = new Date();
 				pastDate.setDate(pastDate.getDate() - 5);
 
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: pastDate.toISOString(),
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-123",
 					title: "Climate Change Research Grant Application",
@@ -274,10 +277,10 @@ export const MaxLengthTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-max",
 					title: "An Interdisciplinary Approach to Understanding Climate Change Impact on Urban Infrastructure and Community Resilience X",
@@ -300,10 +303,10 @@ export const TruncatedTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-truncated",
 					title: "An Interdisciplinary Approach to Understanding Climate Change Impact on Urban Infrastructure and Community Resilience Through Advanced Machine Learning and Social Network Analysis Methods",
@@ -326,10 +329,10 @@ export const TabletResponsive: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build({
+				const grantTemplate = buildGrantTemplate({
 					submission_date: "2024-12-31T23:59:59Z",
 				});
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					grant_template: grantTemplate,
 					project_id: "project-tablet",
 					title: "Tablet Responsive Testing Application with Long Title",

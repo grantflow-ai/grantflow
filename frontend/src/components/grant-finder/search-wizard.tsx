@@ -61,7 +61,9 @@ export function SearchWizard() {
 
 		if (!validation.success) {
 			const [firstError] = validation.error.issues;
-			toast.error(firstError.message);
+			if (firstError) {
+				toast.error(firstError.message);
+			}
 			return;
 		}
 

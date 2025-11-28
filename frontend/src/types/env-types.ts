@@ -1,7 +1,7 @@
 export interface Env {
 	NEXT_PUBLIC_BACKEND_API_BASE_URL: string;
 	NEXT_PUBLIC_CRDT_SERVER_URL: string;
-	NEXT_PUBLIC_DEBUG?: boolean;
+	NEXT_PUBLIC_DEBUG?: boolean | undefined;
 	NEXT_PUBLIC_FIREBASE_API_KEY: string;
 	NEXT_PUBLIC_FIREBASE_APP_ID: string;
 	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: string;
@@ -10,7 +10,7 @@ export interface Env {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: string;
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: string;
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
-	NEXT_PUBLIC_GCS_EMULATOR_URL?: string;
+	NEXT_PUBLIC_GCS_EMULATOR_URL?: string | undefined;
 	NEXT_PUBLIC_SITE_URL: string;
-	RESEND_API_KEY?: string;
+	RESEND_API_KEY?: string | undefined;
 }

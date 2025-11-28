@@ -4,7 +4,11 @@ import { useEffect } from "react";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 import { ResearchDeepDiveStep } from "./research-deep-dive-step";
+
+const buildApplication = (overrides?: Partial<API.CreateApplication.Http201.ResponseBody>) =>
+	ApplicationWithTemplateFactory.build(overrides);
 
 const meta: Meta<typeof ResearchDeepDiveStep> = {
 	component: ResearchDeepDiveStep,
@@ -28,7 +32,7 @@ export const Default: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					title: "Climate Change Research Grant",
 				});
 				useApplicationStore.setState({
@@ -67,7 +71,7 @@ export const ProcessingState: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
-				const application = ApplicationWithTemplateFactory.build({
+				const application = buildApplication({
 					title: "Climate Change Research Grant",
 				});
 				useApplicationStore.setState({
