@@ -16,6 +16,7 @@ import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, up
 import type { UserInfo } from "@/types/user";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
+import { analyticsIdentify } from "@/utils/segment";
 
 const instanceRef: {
 	analytics: Analytics | null;
@@ -218,6 +219,14 @@ export async function updateUserProfile(profileData: { displayName?: string; pho
 			photoURL: profileData.photoURL ? "updated" : "unchanged",
 			uid: user.uid,
 		});
+
+		if (profileData.displayName) {
+			await analyticsIdentify(user.uid, {
+				email: user.email ?? "",
+				firstName: profileData.displayName.split(" ")[0] ?? "",
+				lastName: profileData.displayName.split(" ").at(-1) ?? "",
+			});
+		}
 	} catch (error) {
 		log.error("Error updating user profile", error);
 		throw new Error("Failed to update user profile");
