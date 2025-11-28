@@ -56,7 +56,16 @@ export async function inviteCollaborator({
 			};
 		}
 
-		const payload = JSON.parse(atob(invitationResult.token.split(".")[1])) as {
+		const tokenParts = invitationResult.token.split(".");
+		const [, tokenPayload] = tokenParts;
+		if (!tokenPayload) {
+			return {
+				error: "Invalid token format",
+				success: false,
+			};
+		}
+
+		const payload = JSON.parse(atob(tokenPayload)) as {
 			invitation_id: string;
 		};
 
