@@ -27,7 +27,7 @@ export const hasDetailedResearchPlanUpdate = (
 
 export const hasLengthConstraint = (section: GrantSection) => hasConstraint(section);
 
-export const sectionWordLimit = (section: GrantSection | UpdateGrantSection) =>
+export const sectionWordLimit = (section: GrantSection) =>
 	hasConstraint(section) ? constraintToWordLimit(section.length_constraint) : null;
 
 export type AllKeys<T> = T extends unknown ? keyof T : never;

@@ -1,8 +1,8 @@
-import type { ILogLayer } from "loglayer";
+import type { LogLayerLike } from "./types";
 
 export type LogContext = { traceId?: string } & Record<string, unknown>;
 
-export function createLogFacade(getLogger: () => ILogLayer) {
+export function createLogFacade(getLogger: () => LogLayerLike) {
 	return {
 		error(message: string, error?: unknown, context?: LogContext): void {
 			const meta = toMetadata(context);

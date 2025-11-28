@@ -25,12 +25,14 @@ import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
 import { sectionWordLimit } from "@/types/grant-sections";
 import { getEnv } from "@/utils/env";
-import { setLengthConstraintWordLimit } from "@/utils/length-constraint";
+import { hasLengthConstraint, setLengthConstraintWordLimit } from "@/utils/length-constraint";
 import { log } from "@/utils/logger/client";
 import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
+type ApplicationGrantSections = NonNullable<NonNullable<ApplicationType>["grant_template"]>["grant_sections"];
+type GrantSectionsInput = ApplicationGrantSections | undefined;
 
 const formatRagSources = (application: ApplicationType): string => {
 	if (!application?.grant_template?.rag_sources) {
@@ -192,7 +194,7 @@ export const getSubsectionsByParent = (sections: GrantSection[]) => {
 	}, {});
 };
 
-const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+const syncSectionCharacterCount = (sections: GrantSectionsInput) => {
 	if (!sections) {
 		return {
 			message: null,
@@ -243,7 +245,7 @@ const syncSectionCharacterCount = (sections: API.UpdateGrantTemplate.RequestBody
 					? {
 							...section,
 							length_constraint: setLengthConstraintWordLimit(
-								section.length_constraint ?? null,
+								hasLengthConstraint(section) ? section.length_constraint : null,
 								updatedSectionTargets[section.id],
 							),
 						}
@@ -346,7 +348,7 @@ interface ApplicationActions {
 		applicationId: string,
 		title: string,
 	) => Promise<void>;
-	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
+	updateGrantSections: (sections: GrantSectionsInput) => Promise<void>;
 	updateGrantType: (grantType: API.UpdateGrantTemplate.RequestBody["grant_type"]) => Promise<void>;
 }
 
@@ -1119,7 +1121,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	updateGrantSections: async (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => {
+	updateGrantSections: async (sections: GrantSectionsInput) => {
 		const { application } = get();
 		const previousGrantSections = application?.grant_template?.grant_sections;
 
@@ -1128,7 +1130,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		const createApplicationWithSections = (grantSections: typeof previousGrantSections | typeof sections) =>
+		const createApplicationWithSections = (grantSections: GrantSectionsInput) =>
 			({
 				...application,
 				grant_template: {

@@ -1,8 +1,12 @@
 import { PinoTransport } from "@loglayer/transport-pino";
 import { getSimplePrettyTerminal } from "@loglayer/transport-simple-pretty-terminal";
-import { type ILogLayer, LogLayer } from "loglayer";
+import { LogLayer } from "loglayer";
 import * as Pino from "pino";
 import { serializeError } from "serialize-error";
+import type { LogLayerLike } from "@/utils/logger/types";
+
+type ConsoleMethod = "debug" | "error" | "info" | "log" | "warn";
+type LogLevel = Exclude<ConsoleMethod, "log">;
 
 export function register(): void {
 	const logger = new LogLayer({
@@ -18,7 +22,7 @@ export function register(): void {
 				logger: Pino.pino(),
 			}),
 		],
-	});
+	}) as LogLayerLike;
 
 	if (process.env.NEXT_RUNTIME === "nodejs") {
 		console.error = createConsoleMethod(logger, "error");
@@ -29,8 +33,24 @@ export function register(): void {
 	}
 }
 
-function createConsoleMethod(log: ILogLayer, method: "debug" | "error" | "info" | "log" | "warn") {
-	const mapped: "debug" | "error" | "info" | "warn" = method === "log" ? "info" : method;
+function callLog(log: LogLayerLike, level: LogLevel, message: string): void {
+	if (level === "debug") {
+		log.debug(message);
+		return;
+	}
+	if (level === "error") {
+		log.error(message);
+		return;
+	}
+	if (level === "info") {
+		log.info(message);
+		return;
+	}
+	log.warn(message);
+}
+
+function createConsoleMethod(log: LogLayerLike, method: ConsoleMethod) {
+	const mapped: LogLevel = method === "log" ? "info" : method;
 	return (...args: unknown[]) => {
 		const { data, error, messages } = parseConsoleArgs(args);
 		const finalMessage = finalizeMessage(messages, error);
@@ -39,26 +59,28 @@ function createConsoleMethod(log: ILogLayer, method: "debug" | "error" | "info" 
 }
 
 function emitToLogger(
-	log: ILogLayer,
-	level: "debug" | "error" | "info" | "warn",
+	log: LogLayerLike,
+	level: LogLevel,
 	finalMessage: string,
 	error: Error | null,
 	data: null | Record<string, unknown>,
 ): void {
 	if (error && data && finalMessage) {
-		log.withError(error).withMetadata(data)[level](finalMessage);
+		const contextualLog = log.withError(error).withMetadata(data);
+		callLog(contextualLog, level, finalMessage);
 		return;
 	}
 	if (error && finalMessage) {
-		log.withError(error)[level](finalMessage);
+		callLog(log.withError(error), level, finalMessage);
 		return;
 	}
 	if (data && finalMessage) {
-		log.withMetadata(data)[level](finalMessage);
+		callLog(log.withMetadata(data), level, finalMessage);
 		return;
 	}
 	if (error && data && !finalMessage) {
-		log.withError(error).withMetadata(data)[level]("");
+		const contextualLog = log.withError(error).withMetadata(data);
+		callLog(contextualLog, level, "");
 		return;
 	}
 	if (error && !finalMessage) {
@@ -69,7 +91,7 @@ function emitToLogger(
 		log.metadataOnly(data);
 		return;
 	}
-	log[level](finalMessage);
+	callLog(log, level, finalMessage);
 }
 
 function finalizeMessage(messages: string[], error: Error | null): string {

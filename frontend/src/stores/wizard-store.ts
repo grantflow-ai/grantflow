@@ -24,7 +24,7 @@ export interface ValidationResult {
 		processingCount?: number;
 		totalCount?: number;
 	};
-	reason: ApplicationDetailsValidationReason | string;
+	reason: string;
 }
 
 type RagSourceStatus = NonNullable<
