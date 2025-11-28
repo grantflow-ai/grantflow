@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -37,13 +37,6 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 	const selectedOrganizationId = useOrganizationStore((state) => state.selectedOrganizationId);
 
 	const lastEventRef = useRef<{ event: string; timestamp: number } | null>(null);
-	const mountedRef = useRef(true);
-
-	useEffect(() => {
-		return () => {
-			mountedRef.current = false;
-		};
-	}, []);
 
 	const context = useMemo(
 		() => ({
@@ -56,11 +49,6 @@ export function useWizardAnalytics(): UseWizardAnalyticsReturn {
 
 	const trackDeduplicatedEvent = useCallback(
 		async (eventName: string, eventKey: keyof typeof TrackingEvents, properties: Record<string, unknown>) => {
-			if (!mountedRef.current) {
-				log.warn("Skipping analytics track - component unmounted", { event: eventName });
-				return;
-			}
-
 			if (!context.organizationId) {
 				log.warn("Skipping analytics - missing organizationId", { event: eventName });
 				return;
