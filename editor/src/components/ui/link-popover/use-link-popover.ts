@@ -7,14 +7,14 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isMarkInSchema, sanitizeUrl } from "@/utils";
 
 export interface UseLinkPopoverConfig {
-	editor?: Editor | null;
-	hideWhenUnavailable?: boolean;
-	onSetLink?: () => void;
+	editor?: Editor | null | undefined;
+	hideWhenUnavailable?: boolean | undefined;
+	onSetLink?: (() => void) | undefined;
 }
 
 export interface LinkHandlerProps {
 	editor: Editor | null;
-	onSetLink?: () => void;
+	onSetLink?: (() => void) | undefined;
 }
 
 export function canSetLink(editor: Editor | null): boolean {

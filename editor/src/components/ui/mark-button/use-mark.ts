@@ -18,10 +18,10 @@ import { isMarkInSchema, isNodeTypeSelected } from "@/utils";
 export type Mark = "bold" | "italic" | "strike" | "code" | "underline" | "superscript" | "subscript";
 
 export interface UseMarkConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	type: Mark;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export const markIcons = {

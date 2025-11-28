@@ -12,9 +12,9 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 export const CODE_BLOCK_SHORTCUT_KEY = "mod+alt+c";
 
 export interface UseCodeBlockConfig {
-	editor?: Editor | null;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	editor?: Editor | null | undefined;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export function canToggle(editor: Editor | null, turnInto = true): boolean {

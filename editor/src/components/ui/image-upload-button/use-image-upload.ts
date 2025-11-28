@@ -10,9 +10,9 @@ import { isExtensionAvailable, isNodeTypeSelected } from "@/utils";
 export const IMAGE_UPLOAD_SHORTCUT_KEY = "mod+shift+i";
 
 export interface UseImageUploadConfig {
-	editor?: Editor | null;
-	hideWhenUnavailable?: boolean;
-	onInserted?: () => void;
+	editor?: Editor | null | undefined;
+	hideWhenUnavailable?: boolean | undefined;
+	onInserted?: (() => void) | undefined;
 }
 
 export function canInsertImage(editor: Editor | null): boolean {

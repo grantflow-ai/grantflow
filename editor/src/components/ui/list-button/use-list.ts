@@ -15,10 +15,10 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 export type ListType = "bulletList" | "orderedList" | "taskList";
 
 export interface UseListConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	type: ListType;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export const listIcons = {

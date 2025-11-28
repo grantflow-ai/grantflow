@@ -19,10 +19,10 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 export type Level = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface UseHeadingConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	level: Level;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export const headingIcons = {

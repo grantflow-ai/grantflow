@@ -12,9 +12,9 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 export const BLOCKQUOTE_SHORTCUT_KEY = "mod+shift+b";
 
 export interface UseBlockquoteConfig {
-	editor?: Editor | null;
-	hideWhenUnavailable?: boolean;
-	onToggled?: () => void;
+	editor?: Editor | null | undefined;
+	hideWhenUnavailable?: boolean | undefined;
+	onToggled?: (() => void) | undefined;
 }
 
 export function canToggleBlockquote(editor: Editor | null, turnInto = true): boolean {

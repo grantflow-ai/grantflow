@@ -12,9 +12,9 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isNodeInSchema } from "@/utils";
 
 export interface UseListDropdownMenuConfig {
-	editor?: Editor | null;
-	types?: ListType[];
-	hideWhenUnavailable?: boolean;
+	editor?: Editor | null | undefined;
+	types?: ListType[] | undefined;
+	hideWhenUnavailable?: boolean | undefined;
 }
 
 export interface ListOption {

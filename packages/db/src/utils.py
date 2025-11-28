@@ -14,6 +14,7 @@ from packages.db.src.tables import (
     GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
+    PredefinedGrantTemplate,
     RagFile,
     RagSource,
     RagUrl,
@@ -71,7 +72,9 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
             select(GrantApplication)
             .options(
                 selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution),
-                selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.predefined_template),
+                selectinload(GrantApplication.grant_template)
+                .selectinload(GrantTemplate.predefined_template)
+                .selectinload(PredefinedGrantTemplate.granting_institution),
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)
                 .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)),

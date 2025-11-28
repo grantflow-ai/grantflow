@@ -320,7 +320,10 @@ class GrantingInstitution(BaseWithUUIDPK):
         "GrantTemplate", back_populates="granting_institution"
     )
     predefined_templates: Relationship[list["PredefinedGrantTemplate"]] = relationship(
-        "PredefinedGrantTemplate", back_populates="granting_institution"
+        "PredefinedGrantTemplate",
+        back_populates="granting_institution",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     rag_sources: Relationship[list["GrantingInstitutionSource"]] = relationship(
         "GrantingInstitutionSource",

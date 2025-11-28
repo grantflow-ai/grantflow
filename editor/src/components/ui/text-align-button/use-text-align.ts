@@ -15,10 +15,10 @@ import { isExtensionAvailable, isNodeTypeSelected } from "@/utils";
 export type TextAlign = "left" | "center" | "right" | "justify";
 
 export interface UseTextAlignConfig {
-	editor?: Editor | null;
+	editor?: Editor | null | undefined;
 	align: TextAlign;
-	hideWhenUnavailable?: boolean;
-	onAligned?: () => void;
+	hideWhenUnavailable?: boolean | undefined;
+	onAligned?: (() => void) | undefined;
 }
 
 export const TEXT_ALIGN_SHORTCUT_KEYS: Record<TextAlign, string> = {

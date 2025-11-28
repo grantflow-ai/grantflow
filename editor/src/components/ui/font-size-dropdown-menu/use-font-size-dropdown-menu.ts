@@ -9,9 +9,9 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { isNodeTypeSelected } from "@/utils";
 
 export interface UseFontSizeDropdownMenuConfig {
-	editor?: Editor | null;
-	fontSizes?: string[];
-	hideWhenUnavailable?: boolean;
+	editor?: Editor | null | undefined;
+	fontSizes?: string[] | undefined;
+	hideWhenUnavailable?: boolean | undefined;
 }
 
 export function canToggleFontSize(editor: Editor | null): boolean {

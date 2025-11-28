@@ -8,12 +8,12 @@ export type UploadFunction = (
 ) => Promise<string>;
 
 export interface ImageUploadNodeOptions {
-	accept?: string;
-	limit?: number;
-	maxSize?: number;
-	upload?: UploadFunction;
-	onError?: (error: Error) => void;
-	onSuccess?: (url: string) => void;
+	accept?: string | undefined;
+	limit?: number | undefined;
+	maxSize?: number | undefined;
+	upload?: UploadFunction | undefined;
+	onError?: ((error: Error) => void) | undefined;
+	onSuccess?: ((url: string) => void) | undefined;
 }
 
 declare module "@tiptap/react" {
