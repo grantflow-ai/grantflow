@@ -96,7 +96,7 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result).toBe(defaultCollisions);
-			expect(result[0].data).not.toHaveProperty("zone");
+			expect(result[0]?.data).not.toHaveProperty("zone");
 		});
 
 		it("returns default collisions when no collisions found", () => {
@@ -126,7 +126,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "child",
 				zonePercent: 50,
 			});
@@ -154,7 +154,7 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result).toEqual([subsectionCollision]);
-			expect(result[0].data).not.toHaveProperty("zone");
+			expect(result[0]?.data).not.toHaveProperty("zone");
 		});
 	});
 
@@ -169,7 +169,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 10,
 			});
@@ -185,7 +185,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "child",
 				zonePercent: 50,
 			});
@@ -201,7 +201,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 16,
 			});
@@ -217,7 +217,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "child",
 				zonePercent: 25,
 			});
@@ -233,7 +233,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 0,
 			});
@@ -249,7 +249,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "child",
 				zonePercent: 100,
 			});
@@ -270,11 +270,11 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result).toHaveLength(2);
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 10,
 			});
-			expect(result[1].data).toMatchObject({
+			expect(result[1]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 10,
 			});
@@ -298,7 +298,7 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result).toBe(defaultCollisions);
-			expect(result[0].data).not.toHaveProperty("zone");
+			expect(result[0]?.data).not.toHaveProperty("zone");
 		});
 
 		it("handles missing section data in collision", () => {
@@ -317,7 +317,7 @@ describe("createZoneCollisionDetection", () => {
 			const result = collisionDetection(args);
 
 			expect(result).toEqual([collisionWithoutSection]);
-			expect(result[0].data).not.toHaveProperty("zone");
+			expect(result[0]?.data).not.toHaveProperty("zone");
 		});
 
 		it("preserves existing collision data", () => {
@@ -337,7 +337,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				anotherProperty: 123,
 				existingProperty: "preserved",
 				zone: "child",
@@ -378,7 +378,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result[0].data).toMatchObject({
+			expect(result[0]?.data).toMatchObject({
 				zone: "sibling",
 				zonePercent: 12.5,
 			});
