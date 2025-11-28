@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { getGrantingInstitutionTabs, type GrantingInstitutionTab } from "@/constants/admin";
+import { type GrantingInstitutionTab, getGrantingInstitutionTabs } from "@/constants/admin";
 import { cn } from "@/lib/utils";
 
 interface AdminGrantingInstitutionLayoutProps {

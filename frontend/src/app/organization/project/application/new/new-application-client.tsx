@@ -10,6 +10,7 @@ import {
 	GrantTypeCard,
 	type GrantTypeValue,
 } from "@/components/organizations/project/applications/wizard/application-type/grant-type-options";
+import StreamlineAttribution from "@/components/shared/streamline-attribution";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -17,7 +18,6 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
-import StreamlineAttribution from "@/components/shared/streamline-attribution";
 
 const handleCreationError = (error: unknown) => {
 	log.error("create-application", error);
