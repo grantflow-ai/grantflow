@@ -24,7 +24,7 @@ export const Select = ({ children, onValueChange, value, ...props }: any) => {
 			admin: "Admin (can access all research projects)",
 			collaborator: "Collaborator - Can edit specific Research Projects.",
 		};
-		setDisplayValue(value ? displayMap[value] || value : "");
+		setDisplayValue(value ? (displayMap[value] ?? value) : "");
 	}, [value]);
 
 	const contextValue = {

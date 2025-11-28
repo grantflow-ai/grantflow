@@ -393,6 +393,7 @@ export function ProjectDetailClient() {
 			/>
 
 			<InviteCollaboratorModal
+				currentUserRole={UserRole.OWNER}
 				isOpen={showInviteModal}
 				onClose={() => {
 					setShowInviteModal(false);
@@ -401,7 +402,6 @@ export function ProjectDetailClient() {
 				ownerEmail={ownerEmail}
 				projectId={project.id}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
-				currentUserRole={UserRole.OWNER}
 			/>
 
 			<NewApplicationModal
