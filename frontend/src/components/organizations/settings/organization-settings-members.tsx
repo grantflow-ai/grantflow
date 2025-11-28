@@ -168,6 +168,30 @@ export function OrganizationSettingsMembers({
 		}
 	};
 
+	const notifyInviteFailure = useCallback(
+		(message: string) => {
+			addNotification({
+				message,
+				projectName: "",
+				title: "Invitation failed",
+				type: "warning",
+			});
+		},
+		[addNotification],
+	);
+
+	const notifyInviteSuccess = useCallback(
+		(targetEmail: string) => {
+			addNotification({
+				message: `Invitation email sent to ${targetEmail}`,
+				projectName: "",
+				title: "Invitation sent",
+				type: "success",
+			});
+		},
+		[addNotification],
+	);
+
 	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
 		const payload = {
 			email,
@@ -179,36 +203,22 @@ export function OrganizationSettingsMembers({
 			...(projectIds === undefined ? {} : { projectIds }),
 		};
 
-		const notifyFailure = (message: string) => {
-			addNotification({
-				message,
-				projectName: "",
-				title: "Invitation failed",
-				type: "warning",
-			});
-		};
-
 		try {
 			const result = await inviteOrganizationMember(payload);
 
 			if (!result.success) {
-				notifyFailure(result.error ?? "Failed to send invitation");
+				notifyInviteFailure(result.error ?? "Failed to send invitation");
 				return;
 			}
 
 			await mutate(`/organizations/${organizationId}/invitations`);
-			addNotification({
-				message: `Invitation email sent to ${email}`,
-				projectName: "",
-				title: "Invitation sent",
-				type: "success",
-			});
+			notifyInviteSuccess(email);
 		} catch (error) {
 			log.error("Error inviting collaborator", error, {
 				email,
 				error: error instanceof Error ? error.message : "Unknown error",
 			});
-			notifyFailure("Failed to send invitation");
+			notifyInviteFailure("Failed to send invitation");
 		}
 	};
 
