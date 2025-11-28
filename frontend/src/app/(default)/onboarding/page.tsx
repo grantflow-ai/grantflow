@@ -15,6 +15,7 @@ import { useUserStore } from "@/stores/user-store";
 import { updateUserProfile } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
+import { analyticsIdentify } from "@/utils/segment";
 
 const onboardingFormSchema = z.object({
 	displayName: z.string().min(1, "Display name is required").min(2, "Display name must be at least 2 characters"),
@@ -66,6 +67,12 @@ export default function Onboarding() {
 			setUser({
 				...user,
 				displayName: data.displayName,
+			});
+
+			await analyticsIdentify(user.uid, {
+				email: user.email ?? "",
+				firstName: data.displayName.split(" ")[0] ?? "",
+				lastName: data.displayName.split(" ").at(-1) ?? "",
 			});
 
 			toast.success("Profile completed successfully!");
