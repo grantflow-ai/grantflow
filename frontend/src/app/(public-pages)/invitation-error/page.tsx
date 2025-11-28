@@ -1,6 +1,6 @@
+import Image from "next/image";
 import StreamlineAttribution from "@/components/shared/streamline-attribution";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 
 const InvitationErrorPage = () => {
 	return (
