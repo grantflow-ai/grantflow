@@ -84,7 +84,8 @@ temp/
 *.tmp
 temp_*
 terraform.rc
-testing/test_data/results/
+testing_results/*
+!testing_results/.gitkeep
 test-results/
 tfplan
 venv/
