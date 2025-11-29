@@ -525,6 +525,7 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], projec
     application_data = GrantApplicationFactory.build(
         project_id=project.id,
         deleted_at=None,
+        completion_email_sent_at=None,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)
