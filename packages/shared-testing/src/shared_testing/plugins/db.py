@@ -9,7 +9,18 @@ from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse, urlunparse
 
 import pytest
-from asyncpg import connect
+
+# Import guard for optional db dependencies
+try:
+    from asyncpg import connect
+    from sqlalchemy import NullPool, select
+    from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+    from testcontainers.postgres import PostgresContainer
+except ImportError as e:
+    raise ImportError(
+        "Database testing requires optional dependencies. Install with: uv add --group test grantflow-testing[db]"
+    ) from e
+
 from packages.db.src.connection import engine_ref, get_session_maker
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
@@ -28,11 +39,8 @@ from packages.db.src.tables import (
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from testcontainers.postgres import PostgresContainer
 
-from testing.factories import (
+from shared_testing.factories import (
     GrantApplicationFactory,
     GrantApplicationSourceFactory,
     GrantingInstitutionFactory,
@@ -525,7 +533,6 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], projec
     application_data = GrantApplicationFactory.build(
         project_id=project.id,
         deleted_at=None,
-        completion_email_sent_at=None,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)

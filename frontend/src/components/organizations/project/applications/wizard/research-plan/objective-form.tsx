@@ -110,7 +110,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				delete newTasks[taskId];
 
 				if (Object.keys(newTasks).length === 0) {
-					const remainingErrors = { ...prev , tasks: undefined,};
+					const { tasks: _, ...remainingErrors } = prev;
 					return remainingErrors;
 				}
 
