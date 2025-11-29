@@ -76,10 +76,10 @@ describe.sequential("GrantCard", () => {
 	});
 
 	it("does not display description when not present", () => {
-		const grant = GrantFactory.build({
-			description: undefined,
-		});
-		render(<GrantCard grant={grant} />);
+		const baseGrant = GrantFactory.build();
+		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit description
+		const { description, ...grant } = baseGrant;
+		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-description")).not.toBeInTheDocument();
 	});
@@ -95,10 +95,10 @@ describe.sequential("GrantCard", () => {
 	});
 
 	it("does not display eligibility info when not present", () => {
-		const grant = GrantFactory.build({
-			eligibility: undefined,
-		});
-		render(<GrantCard grant={grant} />);
+		const baseGrant = GrantFactory.build();
+		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit eligibility
+		const { eligibility, ...grant } = baseGrant;
+		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-eligibility")).not.toBeInTheDocument();
 	});
@@ -119,8 +119,10 @@ describe.sequential("GrantCard", () => {
 	});
 
 	it("does not display View Details link when URL is not present", () => {
-		const grant = GrantFactory.build({ url: undefined });
-		render(<GrantCard grant={grant} />);
+		const baseGrant = GrantFactory.build();
+		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit url
+		const { url, ...grant } = baseGrant;
+		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-view-details-link")).not.toBeInTheDocument();
 	});
@@ -136,10 +138,10 @@ describe.sequential("GrantCard", () => {
 		});
 
 		it("displays 'Ongoing' when deadline is not provided", () => {
-			const grant = GrantFactory.build({
-				deadline: undefined,
-			});
-			render(<GrantCard grant={grant} />);
+			const baseGrant = GrantFactory.build();
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit deadline
+			const { deadline, ...grant } = baseGrant;
+			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-deadline")).toHaveTextContent("Ongoing");
 		});
@@ -241,31 +243,28 @@ describe.sequential("GrantCard", () => {
 		});
 
 		it("displays minimum amount with plus when only min is provided", () => {
-			const grant = GrantFactory.build({
-				amount_max: undefined,
-				amount_min: 250_000,
-			});
-			render(<GrantCard grant={grant} />);
+			const baseGrant = GrantFactory.build({ amount_min: 250_000 });
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_max
+			const { amount_max, ...grant } = baseGrant;
+			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("$250,000+");
 		});
 
 		it("displays maximum amount with 'Up to' when only max is provided", () => {
-			const grant = GrantFactory.build({
-				amount_max: 750_000,
-				amount_min: undefined,
-			});
-			render(<GrantCard grant={grant} />);
+			const baseGrant = GrantFactory.build({ amount_max: 750_000 });
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_min
+			const { amount_min, ...grant } = baseGrant;
+			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("Up to $750,000");
 		});
 
 		it("displays 'Amount varies' when neither min nor max are provided", () => {
-			const grant = GrantFactory.build({
-				amount_max: undefined,
-				amount_min: undefined,
-			});
-			render(<GrantCard grant={grant} />);
+			const baseGrant = GrantFactory.build();
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_min and amount_max
+			const { amount_min, amount_max, ...grant } = baseGrant;
+			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("Amount varies");
 		});
