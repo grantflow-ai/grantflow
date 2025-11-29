@@ -72,8 +72,8 @@ export function ProjectSidebar({
 		return (
 			<CollapsedSidebar
 				isCreatingApplication={isCreatingApplication}
-				onCreateApplication={onCreateApplication}
-				onExpand={onExpand}
+				{...(onCreateApplication !== undefined && { onCreateApplication })}
+				{...(onExpand !== undefined && { onExpand })}
 				onLogout={handleLogout}
 				pathname={pathname}
 			/>
