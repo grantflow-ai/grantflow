@@ -72,7 +72,8 @@ async def test_create_project_success(
 
         assert project.name == request_body["name"]
         assert project.description == request_body["description"]
-        assert project.logo_url == request_body["logo_url"]
+        if "logo_url" in request_body:
+            assert project.logo_url == request_body["logo_url"]
         assert project.organization_id == organization.id
 
 

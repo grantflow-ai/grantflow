@@ -14,7 +14,7 @@ requires-python = "==3.13.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 
 dependencies = [
-  "anyio>=4.9",
+  "anyio>=4.12",
   "msgspec>=0.20",
   "structlog>=25.2",
   "tenacity>=9",

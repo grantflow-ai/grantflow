@@ -25,7 +25,7 @@ dev = [
   "google-cloud-pubsub>=2.31.0",
   "greenlet>=3.2.4",
   "litestar>=2.16.0",
-  "mypy>=1.15.0",
+  "mypy>=1.19.0",
   "opentelemetry-api>=1.35.0",
   "opentelemetry-exporter-gcp-trace>=1.9.0",
   "opentelemetry-instrumentation>=0.56b0",
@@ -42,7 +42,7 @@ dev = [
   "pytest-timeout>=2.3.1",
   "python-dotenv>=1.0.1",
   "pyyaml>=6.0.2",
-  "ruff>=0.14.6",
+  "ruff>=0.14.7",
   "sqlalchemy>=2.0.41",
   "structlog>=25.4.0",
   "testcontainers[postgres]>=4.13.2",
@@ -63,6 +63,7 @@ functions = [
 members = [
   "packages/db",
   "packages/shared_utils",
+  "packages/shared-testing",
   "services/backend",
   "services/crawler",
   "services/indexer",
@@ -72,6 +73,7 @@ members = [
 
 [tool.uv.sources]
 db = { workspace = true }
+shared-testing = { workspace = true }
 shared-utils = { workspace = true }
 uv-bump = { git = "https://github.com/Goldziher/uv-bump" }
 
@@ -145,6 +147,14 @@ lint.per-file-ignores."scripts/**/*.*" = [
 lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [
   "B027",
 ] # Allow empty method in base class
+# Lint overrides for packages/shared-testing - test infrastructure code
+lint.per-file-ignores."packages/shared-testing/**/*.*" = [
+  "ARG001",  # Unused function arguments (pytest fixtures with side effects)
+  "S101",    # Use of assert (normal in test utilities)
+  "S311",    # Use of random.choice() (non-cryptographic test data generation)
+  "S608",    # SQL injection warnings (false positives for controlled test DB operations)
+]
+# Temporary overrides for OLD testing/ directory (will be removed in Phase 6)
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -155,6 +165,7 @@ lint.per-file-ignores."testing/**/*.*" = [
   "PT013",
   "RUF012",
   "S",
+  "S101",
 ]
 lint.isort.known-first-party = [ "src", "tests" ]
 lint.mccabe.max-complexity = 25
