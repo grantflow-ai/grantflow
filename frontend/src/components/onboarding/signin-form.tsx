@@ -135,7 +135,7 @@ export function SigninForm({
 							<FormItem className="mt-2 flex flex-row items-start gap-1">
 								<FormControl>
 									<Checkbox
-										checked={field.value ?? false}
+										checked={field.value}
 										data-testid="email-signin-form-gdpr-checkbox"
 										disabled={isLoading || isDisabled}
 										onCheckedChange={field.onChange}
