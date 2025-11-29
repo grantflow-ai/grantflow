@@ -668,11 +668,7 @@ describe.sequential("WizardClientComponent", () => {
 			useWizardStore.setState({ captureTempSourcesSnapshot });
 
 			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: undefined,
-					id: "template-1",
-					rag_sources: [],
-				}),
+				grant_template: GrantTemplateFactory.build({ id: "template-1", rag_sources: [] }),
 			});
 
 			useApplicationStore.setState({ application });

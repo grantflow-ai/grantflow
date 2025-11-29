@@ -161,14 +161,12 @@ describe("ApplicationWizardPageClient", () => {
 
 		it("should fall back to APPLICATION_DETAILS for basic application", async () => {
 			const application = buildRetrieveApplication({
-				form_inputs: undefined,
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 				}),
 				id: "app-123",
 				rag_sources: [],
 				research_objectives: [],
-				text: undefined,
 			});
 
 			useApplicationStore.setState({ application });

@@ -291,7 +291,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 			ResearchObjectiveFactory.build({
 				description: "Test objective description",
 				number: 1,
-				research_tasks: [{ description: undefined, number: 1, title: "Fallback task title" }],
+				research_tasks: [{ number: 1, title: "Fallback task title" }],
 				title: "Test objective title",
 			}),
 		];
@@ -541,13 +541,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 			const mockObjectives = [
 				ResearchObjectiveFactory.build({
 					number: 1,
-					research_tasks: [
-						{
-							description: undefined,
-							number: 1,
-							title: "Fallback title",
-						},
-					],
+					research_tasks: [{ number: 1, title: "Fallback title" }],
 					title: "Objective",
 				}),
 			];

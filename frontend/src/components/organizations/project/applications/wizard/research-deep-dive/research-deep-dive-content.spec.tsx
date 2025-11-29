@@ -22,9 +22,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Component Structure", () => {
 		it("renders main container with correct layout", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -35,9 +33,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 
 		it("renders questions list and answer card", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -52,9 +48,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Question Flow State Logic", () => {
 		it("starts with first question selected when no answers exist", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -103,9 +97,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Question Enabling/Disabling Logic", () => {
 		it("enables first question always", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -118,13 +110,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		it("disables questions beyond the next unanswered one", () => {
 			const formInputs = {
 				background_context: "Some background",
-				hypothesis: undefined,
-				impact: undefined,
-				novelty_and_innovation: undefined,
-				preliminary_data: undefined,
-				rationale: undefined,
-				research_feasibility: undefined,
-				team_excellence: undefined,
 				type: "RESEARCH" as const,
 			};
 			const application = ApplicationWithTemplateFactory.build({
@@ -149,12 +134,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = {
 				background_context: "Background",
 				hypothesis: "Hypothesis",
-				impact: undefined,
-				novelty_and_innovation: undefined,
-				preliminary_data: undefined,
 				rationale: "Rationale",
-				research_feasibility: undefined,
-				team_excellence: undefined,
 				type: "RESEARCH" as const,
 			};
 			const application = ApplicationWithTemplateFactory.build({
@@ -179,9 +159,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("prevents clicking on disabled questions", async () => {
 			const user = userEvent.setup();
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -219,9 +197,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Answer Card Functionality", () => {
 		it("displays correct question text and placeholder", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -260,9 +236,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("updates local state when user types", async () => {
 			const user = userEvent.setup();
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -313,9 +287,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("next Button Behavior", () => {
 		it("disables next button when textarea is empty", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -327,9 +299,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("disables next button when textarea contains only whitespace", async () => {
 			const user = userEvent.setup();
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -344,9 +314,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("enables next button when textarea has content", async () => {
 			const user = userEvent.setup();
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -369,7 +337,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				updateFormInputs: mockUpdateFormInputs,
 			});
 
-			const application = ApplicationWithTemplateFactory.build({ form_inputs: undefined });
+			const application = ApplicationWithTemplateFactory.build({});
 			if (application.grant_template) {
 				application.grant_template.grant_type = "RESEARCH";
 			}
@@ -400,7 +368,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 				updateFormInputs: mockUpdateFormInputs,
 			});
 
-			const application = ApplicationWithTemplateFactory.build({ form_inputs: undefined });
+			const application = ApplicationWithTemplateFactory.build({});
 			if (application.grant_template) {
 				application.grant_template.grant_type = "RESEARCH";
 			}
@@ -424,9 +392,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Back Button Behavior", () => {
 		it("hides back button on first question", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -459,12 +425,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			const formInputs = EmptyFormInputsFactory.build({
 				background_context: "Background",
 				hypothesis: "Hypothesis",
-				impact: undefined,
-				novelty_and_innovation: undefined,
-				preliminary_data: undefined,
-				rationale: undefined,
-				research_feasibility: undefined,
-				team_excellence: undefined,
 			});
 			const application = ApplicationWithTemplateFactory.build({
 				form_inputs: formInputs,
@@ -491,9 +451,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 	describe("Index Badge Display", () => {
 		it("shows numbered badge for unanswered questions", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -522,9 +480,7 @@ describe.sequential("ResearchDeepDiveContent", () => {
 		});
 
 		it("applies disabled styles to disabled question badges", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
-			});
+			const application = ApplicationWithTemplateFactory.build({});
 
 			useApplicationStore.setState({ application });
 
@@ -583,7 +539,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 	describe("Translational Research Grant Type", () => {
 		it("renders translational research questions when grant type is TRANSLATIONAL", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "TRANSLATIONAL",
@@ -601,7 +556,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("displays correct translational research question text", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "TRANSLATIONAL",
@@ -618,7 +572,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("shows correct placeholder for translational research questions", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "TRANSLATIONAL",
@@ -644,7 +597,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			});
 
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "TRANSLATIONAL",
@@ -699,7 +651,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 
 		it("switches question sets when grant type changes", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "RESEARCH",
@@ -714,7 +665,6 @@ describe.sequential("ResearchDeepDiveContent", () => {
 			expect(firstQuestionCard).toHaveTextContent("background");
 
 			const updatedApplication = ApplicationWithTemplateFactory.build({
-				form_inputs: undefined,
 				grant_template: {
 					...ApplicationWithTemplateFactory.build().grant_template!,
 					grant_type: "TRANSLATIONAL",

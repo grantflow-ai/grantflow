@@ -278,9 +278,7 @@ describe("Project Store", () => {
 		});
 
 		it("should handle project without grant_applications gracefully", () => {
-			const project = ProjectFactory.build({
-				grant_applications: undefined,
-			});
+			const project = ProjectFactory.build({});
 
 			useProjectStore.setState({ project });
 
