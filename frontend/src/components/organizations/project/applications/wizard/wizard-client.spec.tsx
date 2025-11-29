@@ -669,7 +669,7 @@ describe.sequential("WizardClientComponent", () => {
 
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: undefined,
+					grant_sections: [],
 					id: "template-1",
 					rag_sources: [],
 				}),

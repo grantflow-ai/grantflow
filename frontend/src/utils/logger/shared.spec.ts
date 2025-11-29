@@ -7,18 +7,34 @@ class FakeLogger {
 	public meta: Record<string, unknown> | undefined;
 
 	error(message: string) {
-		this.calls.push({ error: this.err, level: "error", message, meta: this.meta });
+		const call: { error?: unknown; level: string; message: string; meta?: Record<string, unknown> } = {
+			level: "error",
+			message,
+		};
+		if (this.err !== undefined) call.error = this.err;
+		if (this.meta !== undefined) call.meta = this.meta;
+		this.calls.push(call);
 		this.meta = undefined;
 		this.err = undefined;
 	}
 
 	info(message: string) {
-		this.calls.push({ level: "info", message, meta: this.meta });
+		const call: { level: string; message: string; meta?: Record<string, unknown> } = {
+			level: "info",
+			message,
+		};
+		if (this.meta !== undefined) call.meta = this.meta;
+		this.calls.push(call);
 		this.meta = undefined;
 	}
 
 	warn(message: string) {
-		this.calls.push({ level: "warn", message, meta: this.meta });
+		const call: { level: string; message: string; meta?: Record<string, unknown> } = {
+			level: "warn",
+			message,
+		};
+		if (this.meta !== undefined) call.meta = this.meta;
+		this.calls.push(call);
 		this.meta = undefined;
 	}
 
@@ -44,7 +60,7 @@ describe("createLogFacade", () => {
 
 	it("info without context should call .info with no metadata", () => {
 		facade.info("hello");
-		expect(fake.calls).toEqual([{ level: "info", message: "hello", meta: undefined }]);
+		expect(fake.calls).toEqual([{ level: "info", message: "hello" }]);
 	});
 
 	it("info with context should pass metadata", () => {
@@ -81,6 +97,6 @@ describe("createLogFacade", () => {
 
 	it("error without error/context should just call error(message)", () => {
 		facade.error("just-message");
-		expect(fake.calls[0]).toEqual({ error: undefined, level: "error", message: "just-message", meta: undefined });
+		expect(fake.calls[0]).toEqual({ level: "error", message: "just-message" });
 	});
 });

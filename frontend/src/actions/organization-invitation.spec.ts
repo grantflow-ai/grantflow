@@ -146,8 +146,6 @@ describe("inviteOrganizationMember", () => {
 
 		await inviteOrganizationMember({
 			...defaultParams,
-			hasAllProjectsAccess: undefined,
-			projectIds: undefined,
 		});
 
 		expect(mockCreateOrganizationInvitation).toHaveBeenCalledWith("org-123", {

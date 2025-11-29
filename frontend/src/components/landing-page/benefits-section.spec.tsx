@@ -74,7 +74,7 @@ describe.sequential("BenefitsSection", () => {
 		expect(headingElement).toHaveClass("mx-auto");
 		expect(headingElement).not.toHaveAttribute("data-delay");
 
-		const heading = headingElement.querySelector("h2");
+		const heading = headingElement?.querySelector("h2");
 		expect(heading).toBeInTheDocument();
 		expect(heading).toHaveClass("font-heading font-medium text-stone-800 text-3xl md:text-4xl");
 		expect(heading).toHaveTextContent("Simplify Grant Applications with AI-Powered tools");
@@ -88,7 +88,7 @@ describe.sequential("BenefitsSection", () => {
 		expect(scaleElements.length).toBe(2);
 
 		expect(scaleElements[0]).toHaveAttribute("data-delay", "0");
-		const firstBenefitCard = scaleElements[0].querySelector("article");
+		const firstBenefitCard = scaleElements[0]?.querySelector("article");
 		expect(firstBenefitCard).toBeInTheDocument();
 
 		const firstBadge = firstBenefitCard?.querySelector(".inline-flex");
@@ -96,7 +96,7 @@ describe.sequential("BenefitsSection", () => {
 		expect(firstBadge?.querySelector("svg")).toHaveAttribute("data-testid", "mock-icon-benefit-first");
 
 		expect(scaleElements[1]).toHaveAttribute("data-delay", "0.2");
-		const secondBenefitCard = scaleElements[1].querySelector("article");
+		const secondBenefitCard = scaleElements[1]?.querySelector("article");
 		expect(secondBenefitCard).toBeInTheDocument();
 
 		const secondBadge = secondBenefitCard?.querySelector(".inline-flex");

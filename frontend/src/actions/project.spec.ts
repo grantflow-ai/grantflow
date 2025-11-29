@@ -263,8 +263,8 @@ describe("Project Actions", () => {
 			const result = await duplicateProject(mockOrganizationId, mockProjectId);
 
 			expect(result.grant_applications).toHaveLength(2);
-			expect(result.grant_applications[0].title).toBe("Application 1");
-			expect(result.grant_applications[1].title).toBe("Application 2");
+			expect(result.grant_applications[0]?.title).toBe("Application 1");
+			expect(result.grant_applications[1]?.title).toBe("Application 2");
 		});
 	});
 

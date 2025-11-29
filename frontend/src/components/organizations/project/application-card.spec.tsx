@@ -51,10 +51,7 @@ describe("ApplicationCard", () => {
 	});
 
 	it("should not display description when not provided", () => {
-		const application = ApplicationCardDataFactory.build({
-			description: undefined,
-			id: "app-123",
-		});
+		const application = ApplicationCardDataFactory.build({ id: "app-123" });
 
 		render(<ApplicationCard application={application} {...defaultProps} />);
 
@@ -118,10 +115,7 @@ describe("ApplicationCard", () => {
 	});
 
 	it("should not display deadline when not provided", () => {
-		const application = ApplicationCardDataFactory.build({
-			deadline: undefined,
-			id: "app-123",
-		});
+		const application = ApplicationCardDataFactory.build({ id: "app-123" });
 
 		render(<ApplicationCard application={application} {...defaultProps} />);
 

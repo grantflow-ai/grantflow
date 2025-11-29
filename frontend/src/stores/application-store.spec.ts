@@ -282,13 +282,7 @@ describe("Application Store", () => {
 				}),
 			];
 
-			const application: API.RetrieveApplication.Http200.ResponseBody = {
-				completed_at: undefined,
-				created_at: "2023-01-01T00:00:00Z",
-				deadline: undefined,
-				editor_document_id: "123",
-				editor_document_init: false,
-				form_inputs: undefined,
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
 					grant_sections: [],
@@ -296,13 +290,8 @@ describe("Application Store", () => {
 				},
 				id: "test-app-id",
 				project_id: "test-project-id",
-				rag_sources: [],
-				research_objectives: undefined,
-				status: "WORKING_DRAFT",
-				text: undefined,
 				title: "Test Application",
-				updated_at: "2023-01-01T00:00:00Z",
-			};
+			});
 
 			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
 
@@ -346,15 +335,11 @@ describe("Application Store", () => {
 				}),
 			];
 			const wordCountFixedSections = structuredClone(sections);
-			wordCountFixedSections[0].length_constraint = wordConstraint(700);
+			if (wordCountFixedSections[0]) {
+				wordCountFixedSections[0].length_constraint = wordConstraint(700);
+			}
 
-			const application: API.RetrieveApplication.Http200.ResponseBody = {
-				completed_at: undefined,
-				created_at: "2023-01-01T00:00:00Z",
-				deadline: undefined,
-				editor_document_id: "123",
-				editor_document_init: false,
-				form_inputs: undefined,
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
 					grant_sections: [],
@@ -362,13 +347,8 @@ describe("Application Store", () => {
 				},
 				id: "test-app-id",
 				project_id: "test-project-id",
-				rag_sources: [],
-				research_objectives: undefined,
-				status: "WORKING_DRAFT",
-				text: undefined,
 				title: "Test Application",
-				updated_at: "2023-01-01T00:00:00Z",
-			};
+			});
 
 			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
 
@@ -416,13 +396,7 @@ describe("Application Store", () => {
 				}),
 			];
 
-			const application: API.RetrieveApplication.Http200.ResponseBody = {
-				completed_at: undefined,
-				created_at: "2023-01-01T00:00:00Z",
-				deadline: undefined,
-				editor_document_id: "123",
-				editor_document_init: false,
-				form_inputs: undefined,
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: {
 					...GrantTemplateFactory.build(),
 					grant_sections: [],
@@ -430,13 +404,8 @@ describe("Application Store", () => {
 				},
 				id: "test-app-id",
 				project_id: "test-project-id",
-				rag_sources: [],
-				research_objectives: undefined,
-				status: "WORKING_DRAFT",
-				text: undefined,
 				title: "Test Application",
-				updated_at: "2023-01-01T00:00:00Z",
-			};
+			});
 
 			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
 
@@ -460,27 +429,17 @@ describe("Application Store", () => {
 		it("should handle missing grant template gracefully", async () => {
 			useApplicationStore.getState().reset();
 
-			const application: API.RetrieveApplication.Http200.ResponseBody = {
-				completed_at: undefined,
-				created_at: "2023-01-01T00:00:00Z",
-				deadline: undefined,
-				editor_document_id: "123",
-				editor_document_init: false,
-				form_inputs: undefined,
-				grant_template: undefined,
+			const baseApplication = ApplicationFactory.build({
 				id: "test-app-id-2",
 				project_id: "test-project-id-2",
-				rag_sources: [],
-				research_objectives: undefined,
-				status: "WORKING_DRAFT",
-				text: undefined,
 				title: "Test Application 2",
-				updated_at: "2023-01-01T00:00:00Z",
-			};
+			});
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit grant_template
+			const { grant_template, ...application } = baseApplication;
 
 			vi.mocked(updateGrantTemplate).mockClear();
 
-			useApplicationStore.setState({ application });
+			useApplicationStore.setState({ application: application as API.RetrieveApplication.Http200.ResponseBody });
 
 			const { updateGrantSections } = useApplicationStore.getState();
 
@@ -506,12 +465,13 @@ describe("Application Store", () => {
 
 	describe.sequential("updateGrantType", () => {
 		it("should return early when grant template ID is missing", async () => {
-			const application: API.RetrieveApplication.Http200.ResponseBody = {
-				...ApplicationFactory.build(),
-				grant_template: undefined,
-			};
+			const baseApplication = ApplicationFactory.build();
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit grant_template
+			const { grant_template, ...applicationWithoutTemplate } = baseApplication;
 
-			useApplicationStore.setState({ application });
+			useApplicationStore.setState({
+				application: applicationWithoutTemplate as API.RetrieveApplication.Http200.ResponseBody,
+			});
 
 			const { updateGrantType } = useApplicationStore.getState();
 
@@ -1194,7 +1154,6 @@ describe("Application Store", () => {
 								filename: "existing.pdf",
 								sourceId: "source-1",
 								status: "FINISHED",
-								url: undefined,
 							},
 						],
 					},
@@ -1207,7 +1166,7 @@ describe("Application Store", () => {
 
 				const state = useApplicationStore.getState();
 				expect(state.pendingUploads.template.size).toBe(1);
-				expect([...state.pendingUploads.template][0].name).toBe("notyet.pdf");
+				expect([...state.pendingUploads.template][0]?.name).toBe("notyet.pdf");
 			});
 
 			it("should remove pending uploads when files appear in API response - application", async () => {
@@ -1223,7 +1182,6 @@ describe("Application Store", () => {
 							filename: "existing-app.pdf",
 							sourceId: "app-source-1",
 							status: "FINISHED",
-							url: undefined,
 						},
 					],
 				});
@@ -1235,7 +1193,7 @@ describe("Application Store", () => {
 
 				const state = useApplicationStore.getState();
 				expect(state.pendingUploads.application.size).toBe(1);
-				expect([...state.pendingUploads.application][0].name).toBe("notyet-app.pdf");
+				expect([...state.pendingUploads.application][0]?.name).toBe("notyet-app.pdf");
 			});
 
 			it("should handle cleanup for both template and application scopes simultaneously", async () => {
@@ -1257,7 +1215,6 @@ describe("Application Store", () => {
 								filename: "template-existing.pdf",
 								sourceId: "template-source-1",
 								status: "FINISHED",
-								url: undefined,
 							},
 						],
 					},
@@ -1266,7 +1223,6 @@ describe("Application Store", () => {
 							filename: "app-existing.pdf",
 							sourceId: "app-source-1",
 							status: "FINISHED",
-							url: undefined,
 						},
 					],
 				});
@@ -1279,8 +1235,8 @@ describe("Application Store", () => {
 				const state = useApplicationStore.getState();
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect(state.pendingUploads.application.size).toBe(1);
-				expect([...state.pendingUploads.template][0].name).toBe("template-pending.pdf");
-				expect([...state.pendingUploads.application][0].name).toBe("app-pending.pdf");
+				expect([...state.pendingUploads.template][0]?.name).toBe("template-pending.pdf");
+				expect([...state.pendingUploads.application][0]?.name).toBe("app-pending.pdf");
 			});
 
 			it("should not affect pending uploads when no matching files found in API response", async () => {
@@ -1298,7 +1254,6 @@ describe("Application Store", () => {
 								filename: "different-file.pdf",
 								sourceId: "source-1",
 								status: "FINISHED",
-								url: undefined,
 							},
 						],
 					},
@@ -1307,7 +1262,6 @@ describe("Application Store", () => {
 							filename: "another-different-file.pdf",
 							sourceId: "app-source-1",
 							status: "FINISHED",
-							url: undefined,
 						},
 					],
 				});
@@ -1320,8 +1274,8 @@ describe("Application Store", () => {
 				const state = useApplicationStore.getState();
 				expect(state.pendingUploads.template.size).toBe(1);
 				expect(state.pendingUploads.application.size).toBe(1);
-				expect([...state.pendingUploads.template][0].name).toBe("pending1.pdf");
-				expect([...state.pendingUploads.application][0].name).toBe("pending2.pdf");
+				expect([...state.pendingUploads.template][0]?.name).toBe("pending1.pdf");
+				expect([...state.pendingUploads.application][0]?.name).toBe("pending2.pdf");
 			});
 		});
 

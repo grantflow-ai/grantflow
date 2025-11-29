@@ -102,7 +102,7 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders 'Untitled Application' when title is empty but has files or urls", () => {
-		const mockSources = [RagSourceFactory.build({ filename: "test.pdf", status: "FINISHED", url: undefined })];
+		const mockSources = [RagSourceFactory.build({ filename: "test.pdf", status: "FINISHED" })];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 
@@ -118,12 +118,10 @@ describe("ApplicationPreview", () => {
 			RagSourceFactory.build({
 				filename: "grant-guide.pdf",
 				status: SourceIndexingStatus.INDEXING,
-				url: undefined,
 			}),
 			RagSourceFactory.build({
 				filename: "requirements.docx",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			}),
 		];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
@@ -152,12 +150,10 @@ describe("ApplicationPreview", () => {
 			RagSourceFactory.build({
 				filename: "good.pdf",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			}),
 			RagSourceFactory.build({
 				filename: "failed.pdf",
 				status: SourceIndexingStatus.FAILED,
-				url: undefined,
 			}),
 		];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
@@ -176,12 +172,10 @@ describe("ApplicationPreview", () => {
 	it("renders link preview items for template URLs", () => {
 		const mockSources = [
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.INDEXING,
 				url: "https://example.com/grant1",
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/grant2",
 			}),
@@ -210,12 +204,10 @@ describe("ApplicationPreview", () => {
 	it("filters out failed URL sources", () => {
 		const mockSources = [
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/good",
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FAILED,
 				url: "https://example.com/failed",
 			}),
@@ -236,22 +228,18 @@ describe("ApplicationPreview", () => {
 	it("distributes URLs across two columns", () => {
 		const mockSources = [
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/1",
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/2",
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/3",
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/4",
 			}),
@@ -278,10 +266,8 @@ describe("ApplicationPreview", () => {
 			RagSourceFactory.build({
 				filename: "document.pdf",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com/info",
 			}),
@@ -302,16 +288,17 @@ describe("ApplicationPreview", () => {
 			RagSourceFactory.build({
 				filename: "test.pdf",
 				status: SourceIndexingStatus.INDEXING,
-				url: undefined,
 			}),
 			RagSourceFactory.build({
-				filename: undefined,
 				status: SourceIndexingStatus.FINISHED,
 				url: "https://example.com",
 			}),
 		];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+		const mockApplication = ApplicationFactory.build({
+			grant_template: mockTemplate,
+			rag_sources: [],
+		});
 
 		useApplicationStore.setState({ application: mockApplication });
 
@@ -347,7 +334,6 @@ describe("ApplicationPreview", () => {
 			const uploadedSource = RagSourceFactory.build({
 				filename: "uploaded-doc.pdf",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			});
 			const pendingFile = createMockFile("pending-1", "pending-doc.pdf");
 
@@ -478,12 +464,10 @@ describe("ApplicationPreview", () => {
 			const uploadedSource1 = RagSourceFactory.build({
 				filename: "uploaded1.pdf",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			});
 			const uploadedSource2 = RagSourceFactory.build({
 				filename: "uploaded2.docx",
 				status: SourceIndexingStatus.INDEXING,
-				url: undefined,
 			});
 			const pendingFile1 = createMockFile("pending-1", "pending1.pdf");
 			const pendingFile2 = createMockFile("pending-2", "pending2.txt");
@@ -519,12 +503,10 @@ describe("ApplicationPreview", () => {
 			const goodSource = RagSourceFactory.build({
 				filename: "good.pdf",
 				status: SourceIndexingStatus.FINISHED,
-				url: undefined,
 			});
 			const failedSource = RagSourceFactory.build({
 				filename: "failed.pdf",
 				status: SourceIndexingStatus.FAILED,
-				url: undefined,
 			});
 			const pendingFile = createMockFile("pending-1", "pending.pdf");
 
@@ -583,10 +565,10 @@ describe("ApplicationPreview", () => {
 		});
 
 		it("does not show banner when grant sections is undefined", () => {
-			const mockTemplate = GrantTemplateFactory.build({
-				grant_sections: undefined,
-				rag_sources: [],
-			});
+			const mockTemplate = {
+				...GrantTemplateFactory.build({ rag_sources: [] }),
+				grant_sections: [],
+			};
 			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 
 			useApplicationStore.setState({ application: mockApplication });
@@ -677,7 +659,6 @@ describe("ApplicationPreview", () => {
 				RagSourceFactory.build({
 					filename: "test.pdf",
 					status: SourceIndexingStatus.FINISHED,
-					url: undefined,
 				}),
 			];
 			const mockTemplate = GrantTemplateFactory.build({

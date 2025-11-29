@@ -227,15 +227,10 @@ describe("DraggableTaskList", () => {
 		it("handles missing callback functions gracefully", async () => {
 			const user = userEvent.setup();
 
-			render(
-				<DraggableTaskList
-					{...defaultProps}
-					isEditing={true}
-					onTaskAdd={undefined}
-					onTaskDelete={undefined}
-					onTaskValueChange={undefined}
-				/>,
-			);
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit callback functions
+			const { onTaskAdd, onTaskDelete, onTaskValueChange, ...propsWithoutCallbacks } = defaultProps;
+
+			render(<DraggableTaskList {...propsWithoutCallbacks} isEditing={true} />);
 
 			await expect(user.click(screen.getByTestId("add-task-button"))).resolves.not.toThrow();
 			await expect(user.click(screen.getByTestId("update-task-0"))).resolves.not.toThrow();
@@ -287,7 +282,7 @@ describe("DraggableTaskList", () => {
 
 	describe("Edge Cases", () => {
 		it("handles single task", () => {
-			const singleTask = [mockTasks[0]];
+			const singleTask = [mockTasks[0]].filter((task): task is NonNullable<typeof task> => task !== undefined);
 
 			render(<DraggableTaskList {...defaultProps} tasks={singleTask} />);
 
@@ -303,13 +298,7 @@ describe("DraggableTaskList", () => {
 		});
 
 		it("handles tasks with undefined descriptions", () => {
-			const tasksWithUndefinedDesc = [
-				{
-					description: undefined,
-					number: 1,
-					title: "Task with undefined desc",
-				},
-			];
+			const tasksWithUndefinedDesc = [{ number: 1, title: "Task with undefined desc" }];
 
 			render(<DraggableTaskList {...defaultProps} tasks={tasksWithUndefinedDesc} />);
 

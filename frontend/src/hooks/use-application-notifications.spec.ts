@@ -71,7 +71,11 @@ describe("useApplicationNotifications", () => {
 			expect(mockUseWebSocket).toHaveBeenCalledWith(expect.any(Function), expect.any(Object));
 		});
 
-		const [[getSocketUrl]] = mockUseWebSocket.mock.calls;
+		const calls = mockUseWebSocket.mock.calls as unknown as (() => Promise<string>)[][];
+		const [firstCall] = calls;
+		if (!firstCall) throw new Error("Expected mockUseWebSocket to have been called");
+		const [getSocketUrl] = firstCall;
+		if (!getSocketUrl) throw new Error("Expected getSocketUrl to be defined");
 		const url = await getSocketUrl();
 
 		expect(url).toBe(
@@ -332,7 +336,10 @@ describe("useApplicationNotifications", () => {
 			expect(mockUseWebSocket).toHaveBeenCalled();
 		});
 
-		const [[, options]] = mockUseWebSocket.mock.calls;
+		const calls = mockUseWebSocket.mock.calls as unknown as any[][];
+		const [firstCall] = calls;
+		if (!firstCall) throw new Error("Expected mockUseWebSocket to have been called");
+		const [, options] = firstCall;
 
 		expect(options.shouldReconnect({ code: 1000 })).toBe(false);
 		expect(options.shouldReconnect({ code: 1006 })).toBe(true);
@@ -361,7 +368,10 @@ describe("useApplicationNotifications", () => {
 			expect(mockUseWebSocket).toHaveBeenCalled();
 		});
 
-		const [[, options]] = mockUseWebSocket.mock.calls;
+		const calls = mockUseWebSocket.mock.calls as unknown as any[][];
+		const [firstCall] = calls;
+		if (!firstCall) throw new Error("Expected mockUseWebSocket to have been called");
+		const [, options] = firstCall;
 
 		expect(options.shouldReconnect({ code: 1006 })).toBe(true);
 

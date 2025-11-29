@@ -133,10 +133,9 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setFullName(e.target.value);
 						if (errors.fullName) {
-							setErrors((prev) => {
-								const { fullName: _, ...nextErrors } = prev;
-								return nextErrors;
-							});
+							// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit fullName
+							const { fullName, ...rest } = errors;
+							setErrors(rest);
 						}
 					}}
 					placeholder="Enter full institution name"
@@ -167,10 +166,9 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setAbbreviation(e.target.value);
 						if (errors.abbreviation) {
-							setErrors((prev) => {
-								const { abbreviation: _, ...nextErrors } = prev;
-								return nextErrors;
-							});
+							// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit abbreviation
+							const { abbreviation, ...rest } = errors;
+							setErrors(rest);
 						}
 					}}
 					placeholder="Enter abbreviation (optional)"

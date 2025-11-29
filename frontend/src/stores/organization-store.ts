@@ -16,7 +16,7 @@ type OrganizationsListType = API.ListOrganizations.Http200.ResponseBody;
 interface OrganizationState {
 	organization: null | OrganizationType;
 	organizations: OrganizationsListType;
-	selectedOrganizationId: null | string;
+	selectedOrganizationId: null | string | undefined;
 }
 
 type OrganizationType = API.GetOrganization.Http200.ResponseBody;
@@ -24,7 +24,7 @@ type OrganizationType = API.GetOrganization.Http200.ResponseBody;
 const initialState: OrganizationState = {
 	organization: null,
 	organizations: [],
-	selectedOrganizationId: null,
+	selectedOrganizationId: undefined,
 };
 
 interface OrganizationActions {

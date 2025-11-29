@@ -100,7 +100,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						grant_sections: [],
 						rag_sources: [],
 					}),
-					text: undefined,
+					text: "",
 				},
 			});
 			render(<WizardFooter />);
@@ -330,7 +330,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
-					grant_template: undefined,
 					title: "This is a valid title that meets minimum requirements",
 				},
 				areAppOperationsInProgress: false,
@@ -575,7 +574,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 							filename: "test-file.pdf",
 							sourceId: "test-source-id",
 							status: "FINISHED",
-							url: undefined,
 						},
 					],
 				},
@@ -617,7 +615,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						team_excellence: "Test team excellence",
 						type: "RESEARCH",
 					},
-					text: undefined,
+					text: "",
 				},
 			});
 
@@ -741,7 +739,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						team_excellence: "Team excellence text",
 						type: "RESEARCH",
 					},
-					text: undefined,
+					text: "",
 				},
 			});
 
@@ -847,8 +845,8 @@ describe.sequential("WizardHeader", () => {
 			render(<WizardHeader />);
 
 			const appNames = screen.getAllByTestId("app-name");
-			expect(appNames[0].textContent).toContain("...");
-			expect(appNames[0].textContent.length).toBeLessThan(longTitle.length);
+			expect(appNames[0]?.textContent).toContain("...");
+			expect(appNames[0]?.textContent.length ?? 0).toBeLessThan(longTitle.length);
 		});
 
 		it("hides application info on first step", () => {
@@ -919,7 +917,6 @@ describe.sequential("WizardHeader", () => {
 		it("navigates to projects list if no project_id available", async () => {
 			const user = userEvent.setup();
 			const application = ApplicationFactory.build({
-				project_id: undefined,
 				title: "Test Application",
 			});
 
@@ -1395,8 +1392,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 				application: {
 					...useApplicationStore.getState().application!,
 					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "FAILED", url: undefined },
-						{ filename: "test2.pdf", sourceId: "2", status: "FAILED", url: undefined },
+						{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
 					],
 				},
 			});
@@ -1422,8 +1419,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 				application: {
 					...useApplicationStore.getState().application!,
 					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "FAILED", url: undefined },
-						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED", url: undefined },
+						{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
 					],
 				},
 			});

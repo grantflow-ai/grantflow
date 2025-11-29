@@ -5,7 +5,7 @@ export interface NotificationData {
 	message: string;
 	projectName: string;
 	title: string;
-	type?: "deadline" | "error" | "info" | "success" | "warning";
+	type?: "deadline" | "error" | "info" | "success" | "warning" | undefined;
 }
 
 interface NotificationActions {

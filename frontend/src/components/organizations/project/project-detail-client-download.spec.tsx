@@ -168,13 +168,13 @@ describe("ProjectDetailClient Download Functionality", () => {
 						applications: [
 							ApplicationFactory.build({
 								id: "app-123",
-								status: APPLICATION_STATUS.WORKING_DRAFT,
+								status: "WORKING_DRAFT",
 								text: "Sample content",
 								title: "Test Application",
 							}),
 							ApplicationFactory.build({
 								id: "app-456",
-								status: APPLICATION_STATUS.IN_PROGRESS,
+								status: "IN_PROGRESS",
 								text: "More content",
 								title: "Draft Application",
 							}),
@@ -237,7 +237,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 		});
 
 		const downloadMenus = screen.getAllByTestId("dropdown-menu");
-		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		const downloadButton = downloadMenus[0]?.querySelector("button[type='button']");
 		expect(downloadButton).toBeInTheDocument();
 		await user.click(downloadButton!);
 
@@ -288,7 +288,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 		});
 
 		const downloadMenus = screen.getAllByTestId("dropdown-menu");
-		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		const downloadButton = downloadMenus[0]?.querySelector("button[type='button']");
 		expect(downloadButton).toBeInTheDocument();
 		await user.click(downloadButton!);
 
@@ -317,7 +317,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 		});
 
 		const downloadMenus = screen.getAllByTestId("dropdown-menu");
-		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		const downloadButton = downloadMenus[0]?.querySelector("button[type='button']");
 		expect(downloadButton).toBeInTheDocument();
 		await user.click(downloadButton!);
 
@@ -344,7 +344,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 						applications: [
 							ApplicationFactory.build({
 								id: "app-special",
-								status: APPLICATION_STATUS.WORKING_DRAFT,
+								status: APPLICATION_STATUS.WORKING_DRAFT!,
 								text: "Content",
 								title: 'Test <App> "With" /Special: \\Characters|?*',
 							}),
@@ -379,7 +379,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 		});
 
 		const downloadMenus = screen.getAllByTestId("dropdown-menu");
-		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		const downloadButton = downloadMenus[0]?.querySelector("button[type='button']");
 		expect(downloadButton).toBeInTheDocument();
 		await user.click(downloadButton!);
 
@@ -411,7 +411,7 @@ describe("ProjectDetailClient Download Functionality", () => {
 		});
 
 		const downloadMenus = screen.getAllByTestId("dropdown-menu");
-		const downloadButton = downloadMenus[0].querySelector("button[type='button']");
+		const downloadButton = downloadMenus[0]?.querySelector("button[type='button']");
 		expect(downloadButton).toBeInTheDocument();
 		await user.click(downloadButton!);
 

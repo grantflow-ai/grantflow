@@ -77,7 +77,7 @@ describe.sequential("TestimonialsSection", () => {
 		expect(headingElement).toHaveClass("w-full mx-auto");
 		expect(headingElement).not.toHaveAttribute("data-delay");
 
-		const heading = headingElement.querySelector("h2");
+		const heading = headingElement?.querySelector("h2");
 		expect(heading).toBeInTheDocument();
 		expect(heading).toHaveAttribute("id", "testimonials-heading");
 		expect(heading).toHaveClass("font-heading text-3xl md:text-4xl font-medium");
@@ -85,7 +85,7 @@ describe.sequential("TestimonialsSection", () => {
 		expect(subtitleElement).toHaveClass("w-full mx-auto");
 		expect(subtitleElement).toHaveAttribute("data-delay", "0.1");
 
-		const subtitle = subtitleElement.querySelector("p");
+		const subtitle = subtitleElement?.querySelector("p");
 		expect(subtitle).toBeInTheDocument();
 		expect(subtitle).toHaveClass("mx-1 text-xl md:text-lg lg:text-base");
 	});

@@ -53,7 +53,7 @@ export function ProjectDetailClient() {
 		titleInputRef,
 	} = useProjectTitleEditing({
 		initialTitle: project?.name ?? "",
-		organizationId: selectedOrganizationId,
+		organizationId: selectedOrganizationId ?? "",
 		projectId: project?.id ?? "",
 	});
 

@@ -10,7 +10,7 @@ import {
 	removeOrganizationMember,
 	updateOrganizationMemberRole,
 } from "@/actions/organization";
-import { inviteOrganizationMember } from "@/actions/organization-invitation";
+import { type InviteOrganizationMemberParams, inviteOrganizationMember } from "@/actions/organization-invitation";
 import { getProjects } from "@/actions/project";
 import type { InviteOptions } from "@/components/organizations/modals/invite-collaborator-modal";
 import { InviteCollaboratorModal } from "@/components/organizations/modals/invite-collaborator-modal";
@@ -192,17 +192,31 @@ export function OrganizationSettingsMembers({
 		[addNotification],
 	);
 
-	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
-		const inviteRole: "admin" | "member" = role === "ADMIN" ? "admin" : "member";
-		const payload: Parameters<typeof inviteOrganizationMember>[0] = {
-			email,
-			inviterName: user?.displayName ?? "Team Member",
-			organizationId,
-			organizationName: organization?.name ?? "",
-			role: inviteRole,
-			...(hasAllProjectsAccess !== undefined && { hasAllProjectsAccess }),
-			...(projectIds !== undefined && { projectIds }),
-		};
+	const buildInvitePayload = useCallback(
+		({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions): InviteOrganizationMemberParams => {
+			const basePayload = {
+				email,
+				inviterName: user?.displayName ?? "Team Member",
+				organizationId,
+				organizationName: organization?.name ?? "",
+				role: role === "ADMIN" ? ("admin" as const) : ("member" as const),
+			};
+
+			if (hasAllProjectsAccess !== undefined) {
+				return { ...basePayload, hasAllProjectsAccess };
+			}
+
+			if (projectIds !== undefined) {
+				return { ...basePayload, projectIds };
+			}
+
+			return basePayload;
+		},
+		[user?.displayName, organizationId, organization?.name],
+	);
+
+	const handleInvite = async (options: InviteOptions) => {
+		const payload = buildInvitePayload(options);
 
 		try {
 			const result = await inviteOrganizationMember(payload);
@@ -213,10 +227,10 @@ export function OrganizationSettingsMembers({
 			}
 
 			await mutate(`/organizations/${organizationId}/invitations`);
-			notifyInviteSuccess(email);
+			notifyInviteSuccess(options.email);
 		} catch (error) {
 			log.error("Error inviting collaborator", error, {
-				email,
+				email: options.email,
 				error: error instanceof Error ? error.message : "Unknown error",
 			});
 			notifyInviteFailure("Failed to send invitation");

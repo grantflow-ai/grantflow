@@ -439,8 +439,11 @@ describe("useCookieConsent", () => {
 				result.current.saveConsent(consentData);
 			});
 
-			// eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-			const [[, , options]] = mockSetCookie.mock.calls;
+			const [firstCall] = mockSetCookie.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected setCookie to have been called");
+			}
+			const options = firstCall.at(2);
 			expect(options).toHaveProperty("maxAge", 365 * 24 * 60 * 60);
 			expect(options).toHaveProperty("path", "/");
 			expect(options).toHaveProperty("sameSite", "strict");
@@ -510,7 +513,11 @@ describe("useCookieConsent", () => {
 				result.current.saveConsent(consentData);
 			});
 
-			const [[, savedData]] = mockSetCookie.mock.calls;
+			const [firstCall] = mockSetCookie.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected setCookie to have been called");
+			}
+			const [, savedData] = firstCall;
 			expect(typeof savedData.consentGiven).toBe("boolean");
 			expect(typeof savedData.hasInteracted).toBe("boolean");
 			expect(typeof savedData.preferences.analytics).toBe("boolean");
